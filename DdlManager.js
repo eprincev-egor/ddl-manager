@@ -2,7 +2,7 @@
 
 const fs = require("fs");
 const glob = require("glob");
-const DdlCoach = require("./parser/DdlCoach");
+const DDLCoach = require("./parser/DDLCoach");
 const CreateTrigger = require("./parser/syntax/CreateTrigger");
 const CreateFunction = require("./parser/syntax/CreateFunction");
 const _ = require("lodash");
@@ -55,7 +55,7 @@ class DdlManager {
             return null;
         }
 
-        let coach = new DdlCoach(fileContent);
+        let coach = new DDLCoach(fileContent);
         let func = coach.parseCreateFunction();
 
         let out = {
@@ -170,7 +170,7 @@ class DdlManager {
         result.rows.forEach(row => {
             let {ddl} = row;
 
-            let coach = new DdlCoach(ddl);
+            let coach = new DDLCoach(ddl);
             let func = coach.parseCreateFunction();
             let json = func.toJSON();
 
