@@ -1,0 +1,41 @@
+{
+  "name": "ddl-manager",
+  "version": "1.0.0",
+  "description": "store postgres procedures and triggers in files",
+  "main": "DdlManager.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "mocha tests/**/*-spec.js --exit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eprincev-egor/ddl-manager.git"
+  },
+  "keywords": [
+    "postgres",
+    "ddl",
+    "sql",
+    "trigger",
+    "procedure",
+    "store",
+    "parser",
+    "migration"
+  ],
+  "author": "Eprincev Egor",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/eprincev-egor/ddl-manager/issues"
+  },
+  "homepage": "https://github.com/eprincev-egor/ddl-manager#readme",
+  "dependencies": {
+    "del": "^3.0.0",
+    "glob": "^7.1.3",
+    "lodash": "^4.17.11",
+    "pg": "^7.6.1"
+  },
+  "devDependencies": {
+    "mocha": "^5.1.1"
+  }
+}
