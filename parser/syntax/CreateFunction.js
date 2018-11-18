@@ -67,6 +67,13 @@ class CreateFunction extends Syntax {
         
         this.returns = coach.parsePgReturns();
         coach.skipSpace();
+
+        if ( coach.isWord("language") ) {
+            coach.expectWord("language");
+            coach.skipSpace();
+            coach.expectWord("plpgsql");
+            coach.skipSpace();
+        }
         
         coach.expectWord("as");
         coach.skipSpace();
@@ -75,9 +82,12 @@ class CreateFunction extends Syntax {
         this.body = coach.parsePgString();
         coach.skipSpace();
 
-        coach.expectWord("language");
-        coach.skipSpace();
-        coach.expectWord("plpgsql");
+        if ( coach.isWord("language") ) {
+            coach.expectWord("language");
+            coach.skipSpace();
+            coach.expectWord("plpgsql");
+            coach.skipSpace();
+        }
     }
 
     toString() {
@@ -135,6 +145,44 @@ class CreateFunction extends Syntax {
         clone.body = this.body.clone();
 
         return clone;
+    }
+
+    toJSON() {
+        let returns = this.returns.type;
+        if ( this.returns.table ) {
+            returns = {
+                table: this.returns.table.map(arg => ({
+                    name: arg.name,
+                    type: arg.type
+                }))
+            };
+        }
+
+        let args = [];
+        this.args.forEach(arg => {
+            if ( arg.default ) {
+                args.push({
+                    name: arg.name,
+                    type: arg.type,
+                    default: arg.default
+                });
+            } else {
+                args.push({
+                    name: arg.name,
+                    type: arg.type
+                });
+            }
+        });
+
+        let json = {
+            schema: this.schema,
+            name: this.name,
+            body: this.body.content,
+            args,
+            returns
+        };
+
+        return json;
     }
 }
 

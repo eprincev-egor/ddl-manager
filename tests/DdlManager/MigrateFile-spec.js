@@ -1,15 +1,11 @@
 "use strict";
 
-//  env TEST_DB_ENV=rights32  mocha ./tests/ddl-manager/DDlManager/*-spec.js --exit
-
 const assert = require("assert");
 const getDbClient = require("../utils/getDbClient");
 const DdlManager = require("../../DdlManager");
 
 describe("DddlManager.migrateFile", () => {
     it("migrate null", async() => {
-
-        console.log(process.env.TEST_DB_ENV);
 
         try {
             await DdlManager.migrateFile(null, null);
@@ -106,6 +102,7 @@ describe("DddlManager.migrateFile", () => {
         // clear test state
         await db.query(`
             drop table if exists ddl_manager_test cascade;
+            drop function some_action_on_diu_test();
         `);
         db.end();
     });
@@ -165,6 +162,7 @@ describe("DddlManager.migrateFile", () => {
         // clear test state
         await db.query(`
             drop table if exists ddl_manager_test cascade;
+            drop function some_action_on_diu_test();
         `);
         db.end();
     });

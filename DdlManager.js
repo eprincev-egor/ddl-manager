@@ -58,27 +58,8 @@ class DdlManager {
         let coach = new DdlCoach(fileContent);
         let func = coach.parseCreateFunction();
 
-        let returns = func.returns.type;
-        if ( func.returns.table ) {
-            returns = {
-                table: func.returns.table.map(arg => ({
-                    name: arg.name,
-                    type: arg.type
-                }))
-            };
-        }
-
         let out = {
-            function: {
-                schema: func.schema,
-                name: func.name,
-                body: func.body.content,
-                args: func.args.map(arg => ({
-                    name: arg.name,
-                    type: arg.type
-                })),
-                returns
-            }
+            function: func.toJSON()
         };
 
         coach.skipSpace();
@@ -161,6 +142,42 @@ class DdlManager {
         
 
         await db.query(ddlSql);
+    }
+
+    static async loadState(db) {
+        let state = {
+            functions: [],
+            triggers: []
+        };
+
+        let result = await db.query(`
+            select
+                pg_get_functiondef( pg_proc.oid ) as ddl
+            from information_schema.routines as routines
+
+            left join pg_catalog.pg_proc as pg_proc on
+                routines.specific_name = pg_proc.proname || '_' || pg_proc.oid::text
+
+            where
+                routines.routine_schema <> 'pg_catalog' and
+                routines.routine_schema <> 'information_schema'
+            
+            order by
+                routines.routine_schema, 
+                routines.routine_name
+        `);
+
+        result.rows.forEach(row => {
+            let {ddl} = row;
+
+            let coach = new DdlCoach(ddl);
+            let func = coach.parseCreateFunction();
+            let json = func.toJSON();
+
+            state.functions.push(json);
+        });
+
+        return state;
     }
 }
 
