@@ -14,9 +14,9 @@ const MIN_INTEGER_SIZE = -2147483647;
 
 class PgNumber extends Syntax {
     parse(coach) {
-        let intPart = "",
-            floatPart = "",
-            ePart = "";
+        let intPart = "";
+        let floatPart = "";
+        let ePart = "";
         
         intPart = this.readDigits( coach );
         if ( coach.is(".") ) {

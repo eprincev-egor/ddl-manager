@@ -7,7 +7,8 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "mocha tests/**/*-spec.js --exit"
+    "test": "mocha tests/**/*-spec.js --exit",
+    "lint": "eslint ./**/*.js"
   },
   "repository": {
     "type": "git",

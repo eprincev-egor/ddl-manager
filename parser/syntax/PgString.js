@@ -20,8 +20,8 @@ class PgString extends Syntax {
             return;
         }
 
-        let withEscape = false,
-            withUEscape = false;
+        let withEscape = false;
+        let withUEscape = false;
 
         if ( coach.is(/e/i) ) {
             withEscape = true;
@@ -56,8 +56,8 @@ class PgString extends Syntax {
 
         if ( withUEscape ) {
             for (let i = 0, n = content.length; i < n; i++) {
-                let symbol = content[i],
-                    length;
+                let symbol = content[i];
+                let length;
 
                 if ( symbol == escape ) {
                     let expr;
