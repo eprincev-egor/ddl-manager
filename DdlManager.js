@@ -145,12 +145,13 @@ class DdlManager {
     }
 
     static async loadState(db) {
+        let result;
         let state = {
             functions: [],
             triggers: []
         };
 
-        let result = await db.query(`
+        result = await db.query(`
             select
                 pg_get_functiondef( pg_proc.oid ) as ddl
             from information_schema.routines as routines
@@ -175,6 +176,22 @@ class DdlManager {
             let json = func.toJSON();
 
             state.functions.push(json);
+        });
+
+        result = await db.query(`
+            select
+                pg_get_triggerdef( pg_trigger.oid ) as ddl
+            from pg_trigger
+        `);
+
+        result.rows.forEach(row => {
+            let {ddl} = row;
+
+            let coach = new DDLCoach(ddl);
+            let trigger = coach.parseCreateTrigger();
+            let json = trigger.toJSON();
+
+            state.triggers.push(json);
         });
 
         return state;

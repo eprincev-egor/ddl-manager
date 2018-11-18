@@ -216,6 +216,46 @@ class CreateTrigger extends Syntax {
         return `drop trigger if exists ${trigger.name} 
         on ${ trigger.table.schema }.${ trigger.table.name }`;
     }
+
+    toJSON() {
+        let out = {
+            table: {
+                schema: this.table.schema,
+                name: this.table.name
+            },
+            procedure: {
+                schema: this.procedure.schema,
+                name: this.procedure.name
+            }
+        };
+
+        if ( this.before ) {
+            out.before = true;
+        }
+        else if ( this.after ) {
+            out.after = true;
+        }
+
+        if ( this.insert ) {
+            out.insert = true;
+        }
+        if ( this.update ) {
+            if ( this.update === true ) {
+                out.update = true;
+            } else {
+                out.update = this.update.map(name => name);
+            }
+        }
+        if ( this.delete ) {
+            out.delete = true;
+        }
+
+        if ( this.when ) {
+            out.when = this.when;
+        }
+
+        return out;
+    }
 }
 
 module.exports = CreateTrigger;

@@ -351,4 +351,125 @@ describe("DddlManager.loadState", () => {
         db.end();
     });
 
+    it("load trigger", async() => {
+        let db = await getDbClient();
+
+        let body = `
+            begin
+                return new;
+            end
+        `;
+        await db.query(`
+            drop schema public cascade;
+            create schema public;
+            
+            create table test (
+                name text,
+                note text
+            );
+
+            create function test_func()
+            returns trigger as $body$${ body }$body$
+            language plpgsql;
+
+            create trigger test_trigger
+            after insert or update of name, note or delete
+            on test
+            for each row
+            execute procedure test_func();
+        `);
+
+        let state = await DdlManager.loadState(db);
+        assert.deepEqual(state, {
+            functions: [
+                {
+                    schema: "public",
+                    name: "test_func",
+                    args: [],
+                    returns: "trigger",
+                    body
+                }
+            ],
+            triggers: [
+                {
+                    table: {
+                        schema: "public",
+                        name: "test"
+                    },
+                    after: true,
+                    insert: true,
+                    update: ["name", "note"],
+                    delete: true,
+                    procedure: {
+                        schema: "public",
+                        name: "test_func"
+                    }
+                }
+            ]
+        });
+
+        db.end();
+    });
+
+    it("load trigger with when condition", async() => {
+        let db = await getDbClient();
+
+        let body = `
+            begin
+                return new;
+            end
+        `;
+        await db.query(`
+            drop schema public cascade;
+            create schema public;
+            
+            create table test (
+                name text,
+                note text
+            );
+
+            create function test_func()
+            returns trigger as $body$${ body }$body$
+            language plpgsql;
+
+            create trigger test_trigger
+            after insert or update of name, note or delete
+            on test
+            for each row
+            when (pg_trigger_depth() = 0)
+            execute procedure test_func();
+        `);
+
+        let state = await DdlManager.loadState(db);
+        assert.deepEqual(state, {
+            functions: [
+                {
+                    schema: "public",
+                    name: "test_func",
+                    args: [],
+                    returns: "trigger",
+                    body
+                }
+            ],
+            triggers: [
+                {
+                    table: {
+                        schema: "public",
+                        name: "test"
+                    },
+                    after: true,
+                    insert: true,
+                    update: ["name", "note"],
+                    delete: true,
+                    when: "pg_trigger_depth() = 0",
+                    procedure: {
+                        schema: "public",
+                        name: "test_func"
+                    }
+                }
+            ]
+        });
+
+        db.end();
+    });
 });
