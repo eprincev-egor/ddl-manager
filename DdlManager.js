@@ -196,6 +196,108 @@ class DdlManager {
 
         return state;
     }
+
+    static diffState({
+        filesState,
+        dbState
+    }) {
+        if ( !_.isObject(filesState) ) {
+            throw new Error("undefined filesState");
+        }
+        if ( !_.isArray(filesState.functions) ) {
+            throw new Error("undefined filesState.functions");
+        }
+        if ( !_.isArray(filesState.triggers) ) {
+            throw new Error("undefined filesState.triggers");
+        }
+        if ( !_.isObject(dbState) ) {
+            throw new Error("undefined folder");
+        }
+        if ( !_.isArray(dbState.functions) ) {
+            throw new Error("undefined dbState.functions");
+        }
+        if ( !_.isArray(dbState.triggers) ) {
+            throw new Error("undefined dbState.triggers");
+        }
+
+
+        let drop = {
+            functions: [],
+            triggers: []
+        };
+        let create = {
+            functions: [],
+            triggers: []
+        };
+
+        
+        for (let i = 0, n = dbState.functions.length; i < n; i++) {
+            let func = dbState.functions[ i ];
+            let existsSameFuncFromFile = filesState.functions.some(fileFunc =>
+                equalFunction(fileFunc, func)
+            );
+
+            if ( existsSameFuncFromFile ) {
+                continue;
+            }
+
+            drop.functions.push(func);
+        }
+        for (let i = 0, n = dbState.triggers.length; i < n; i++) {
+            let trigger = dbState.triggers[ i ];
+            let existsSameTriggerFromFile = filesState.triggers.some(fileTrigger =>
+                equalTrigger(fileTrigger, trigger)
+            );
+
+            if ( existsSameTriggerFromFile ) {
+                continue;
+            }
+
+            drop.triggers.push( trigger );
+        }
+
+
+
+        for (let i = 0, n = filesState.functions.length; i < n; i++) {
+            let func = filesState.functions[ i ];
+            let existsSameFuncFromDb = dbState.functions.find(dbFunc =>
+                equalFunction(dbFunc, func)
+            );
+
+            if ( existsSameFuncFromDb ) {
+                continue;
+            }
+
+            create.functions.push(func);
+        }
+        for (let i = 0, n = filesState.triggers.length; i < n; i++) {
+            let trigger = filesState.triggers[ i ];
+            let existsSameTriggerFromDb = dbState.triggers.some(dbTrigger =>
+                equalTrigger(dbTrigger, trigger)
+            );
+
+            if ( existsSameTriggerFromDb ) {
+                continue;
+            }
+
+            create.triggers.push( trigger );
+        }
+
+
+
+        return {
+            drop,
+            create
+        };
+    }
+}
+
+function equalFunction(func1, func2) {
+    return JSON.stringify(func1) == JSON.stringify(func2);
+}
+
+function equalTrigger(trigger1, trigger2) {
+    return JSON.stringify(trigger1) == JSON.stringify(trigger2);
 }
 
 module.exports = DdlManager;

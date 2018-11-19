@@ -1,7 +1,5 @@
 "use strict";
 
-//  env TEST_DB_ENV=rights32  mocha ./tests/ddl-manager/DDlManager/*-spec.js --exit
-
 const assert = require("assert");
 const getDbClient = require("../utils/getDbClient");
 const DdlManager = require("../../DdlManager");
