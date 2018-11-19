@@ -4,7 +4,7 @@ const assert = require("assert");
 const getDbClient = require("../utils/getDbClient");
 const DdlManager = require("../../DdlManager");
 
-describe("DddlManager.migrateFile", () => {
+describe("DlManager.migrateFile", () => {
     it("migrate null", async() => {
 
         try {

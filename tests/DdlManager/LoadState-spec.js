@@ -6,7 +6,7 @@ const assert = require("assert");
 const getDbClient = require("../utils/getDbClient");
 const DdlManager = require("../../DdlManager");
 
-describe("DddlManager.loadState", () => {
+describe("DdlManager.loadState", () => {
 
     it("load empty state", async() => {
         let db = await getDbClient();
