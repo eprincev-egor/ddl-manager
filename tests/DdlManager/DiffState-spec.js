@@ -18,6 +18,10 @@ describe("DddlManager.diffState", () => {
         });
 
         assert.deepEqual(diff, {
+            freeze: {
+                triggers: [],
+                functions: []
+            },
             drop: {
                 triggers: [],
                 functions: []
@@ -63,6 +67,10 @@ describe("DddlManager.diffState", () => {
         });
 
         assert.deepEqual(diff, {
+            freeze: {
+                triggers: [],
+                functions: []
+            },
             drop: {
                 triggers: [],
                 functions: []
@@ -109,6 +117,10 @@ describe("DddlManager.diffState", () => {
         });
 
         assert.deepEqual(diff, {
+            freeze: {
+                triggers: [],
+                functions: []
+            },
             drop: {
                 triggers: [],
                 functions: [
@@ -178,6 +190,10 @@ describe("DddlManager.diffState", () => {
         
 
         assert.deepEqual(diff, {
+            freeze: {
+                triggers: [],
+                functions: []
+            },
             drop: {
                 triggers: [],
                 functions: [
@@ -253,6 +269,10 @@ describe("DddlManager.diffState", () => {
         });
         
         assert.deepEqual(diff, {
+            freeze: {
+                triggers: [],
+                functions: []
+            },
             drop: {
                 triggers: [],
                 functions: [
@@ -295,6 +315,10 @@ describe("DddlManager.diffState", () => {
         });
 
         assert.deepEqual(diff, {
+            freeze: {
+                triggers: [],
+                functions: []
+            },
             drop: {
                 triggers: [],
                 functions: []
@@ -323,6 +347,7 @@ describe("DddlManager.diffState", () => {
             },
             after: true,
             insert: true,
+            name: "some_action_on_some_event_trigger",
             procedure: {
                 schema: "public",
                 name: "some_action_on_some_event"
@@ -335,6 +360,7 @@ describe("DddlManager.diffState", () => {
             },
             before: true,
             insert: true,
+            name: "some_action_on_some_event_trigger",
             procedure: {
                 schema: "public",
                 name: "some_action_on_some_event"
@@ -362,6 +388,10 @@ describe("DddlManager.diffState", () => {
 
 
         assert.deepEqual(diff, {
+            freeze: {
+                triggers: [],
+                functions: []
+            },
             drop: {
                 triggers: [
                     dbTrigger
@@ -394,6 +424,7 @@ describe("DddlManager.diffState", () => {
             },
             after: true,
             insert: true,
+            name: "some_action_on_some_event_trigger",
             procedure: {
                 schema: "public",
                 name: "some_action_on_some_event"
@@ -421,6 +452,10 @@ describe("DddlManager.diffState", () => {
 
 
         assert.deepEqual(diff, {
+            freeze: {
+                triggers: [],
+                functions: []
+            },
             drop: {
                 triggers: [],
                 functions: []

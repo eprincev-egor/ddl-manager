@@ -251,10 +251,22 @@ class DdlManager {
             functions: [],
             triggers: []
         };
+        let freeze = {
+            functions: [],
+            triggers: []
+        };
 
         
         for (let i = 0, n = dbState.functions.length; i < n; i++) {
             let func = dbState.functions[ i ];
+            
+            if ( func.freeze ) {
+                freeze.functions.push(
+                    func
+                );
+                continue;
+            }
+
             let existsSameFuncFromFile = filesState.functions.some(fileFunc =>
                 equalFunction(fileFunc, func)
             );
@@ -267,6 +279,14 @@ class DdlManager {
         }
         for (let i = 0, n = dbState.triggers.length; i < n; i++) {
             let trigger = dbState.triggers[ i ];
+
+            if ( trigger.freeze ) {
+                freeze.triggers.push(
+                    trigger
+                );
+                continue;
+            }
+
             let existsSameTriggerFromFile = filesState.triggers.some(fileTrigger =>
                 equalTrigger(fileTrigger, trigger)
             );
@@ -282,6 +302,16 @@ class DdlManager {
 
         for (let i = 0, n = filesState.functions.length; i < n; i++) {
             let func = filesState.functions[ i ];
+            let identifyFunc = CreateFunction.function2identifySql(func);
+
+            let isFreezeFunction = freeze.functions.some(freezeFunc =>
+                identifyFunc == CreateFunction.function2identifySql(freezeFunc)
+            );
+
+            if ( isFreezeFunction ) {
+                throw new Error(`cannot replace freeze function ${identifyFunc}`);
+            }
+
             let existsSameFuncFromDb = dbState.functions.find(dbFunc =>
                 equalFunction(dbFunc, func)
             );
@@ -294,6 +324,16 @@ class DdlManager {
         }
         for (let i = 0, n = filesState.triggers.length; i < n; i++) {
             let trigger = filesState.triggers[ i ];
+            let identifyTrigger = CreateTrigger.trigger2identifySql(trigger);
+
+            let isFreezeTrigger = freeze.triggers.some(freezeTrigger =>
+                identifyTrigger == CreateTrigger.trigger2identifySql(freezeTrigger)
+            );
+
+            if ( isFreezeTrigger ) {
+                throw new Error(`cannot replace freeze trigger ${identifyTrigger}`);
+            }
+
             let existsSameTriggerFromDb = dbState.triggers.some(dbTrigger =>
                 equalTrigger(dbTrigger, trigger)
             );
@@ -309,7 +349,8 @@ class DdlManager {
 
         return {
             drop,
-            create
+            create,
+            freeze
         };
     }
 }
