@@ -45,6 +45,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    language: "plpgsql",
                     freeze: true,
                     schema: "public",
                     name: "test_func",
@@ -94,6 +95,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    language: "plpgsql",
                     freeze: true,
                     schema: "public",
                     name: "func_1",
@@ -107,6 +109,7 @@ describe("DdlManager.loadState", () => {
                     body: body1
                 },
                 {
+                    language: "plpgsql",
                     freeze: true,
                     schema: "public",
                     name: "func_2",
@@ -156,6 +159,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    language: "plpgsql",
                     freeze: true,
                     schema: "public",
                     name: "func_1",
@@ -169,6 +173,7 @@ describe("DdlManager.loadState", () => {
                     body: body1
                 },
                 {
+                    language: "plpgsql",
                     freeze: true,
                     schema: "public",
                     name: "func_1",
@@ -209,6 +214,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    language: "plpgsql",
                     freeze: true,
                     schema: "public",
                     name: "test_func",
@@ -245,6 +251,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    language: "plpgsql",
                     freeze: true,
                     schema: "public",
                     name: "test_func",
@@ -289,6 +296,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    language: "plpgsql",
                     freeze: true,
                     schema: "public",
                     name: "test_func",
@@ -338,6 +346,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    language: "plpgsql",
                     freeze: true,
                     schema: "public",
                     name: "test_func",
@@ -390,6 +399,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    language: "plpgsql",
                     freeze: true,
                     schema: "public",
                     name: "test_func",
@@ -454,6 +464,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    language: "plpgsql",
                     freeze: true,
                     schema: "public",
                     name: "test_func",
@@ -502,6 +513,7 @@ describe("DdlManager.loadState", () => {
 
         DdlManager.migrateFile(db, {
             function: {
+                language: "plpgsql",
                 schema: "public",
                 name: "test_func",
                 returns: "void",
@@ -519,6 +531,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    language: "plpgsql",
                     freeze: false,
                     schema: "public",
                     name: "test_func",
@@ -559,6 +572,7 @@ describe("DdlManager.loadState", () => {
 
         DdlManager.migrateFile(db, {
             function: {
+                language: "plpgsql",
                 schema: "public",
                 name: "test_func",
                 returns: "trigger",
@@ -586,6 +600,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    language: "plpgsql",
                     freeze: false,
                     schema: "public",
                     name: "test_func",
@@ -639,6 +654,37 @@ describe("DdlManager.loadState", () => {
         let state = await DdlManager.loadState(db);
         assert.deepEqual(state, {
             functions: [],
+            triggers: []
+        });
+
+        db.end();
+    });
+
+    it("load simple function, language sql", async() => {
+        let db = await getDbClient();
+
+        await db.query(`
+            drop schema public cascade;
+            create schema public;
+
+            create function test_func_sql()
+            returns integer as $body$select 1$body$
+            language sql;
+        `);
+
+        let state = await DdlManager.loadState(db);
+        assert.deepEqual(state, {
+            functions: [
+                {
+                    language: "sql",
+                    freeze: true,
+                    schema: "public",
+                    name: "test_func_sql",
+                    args: [],
+                    returns: "integer",
+                    body: "select 1"
+                }
+            ],
             triggers: []
         });
 

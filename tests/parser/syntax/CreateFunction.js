@@ -139,5 +139,23 @@ module.exports = [
                 content: "begin;end"
             }
         }
+    },
+    {
+        str: `create function test_sql_lang()
+            returns integer as $body$select 1$body$
+            language sql;
+        `,
+        result: {
+            schema: "public",
+            name: "test_sql_lang",
+            language: "sql",
+            args: [],
+            returns: {
+                type: "integer"
+            },
+            body: {
+                content: "select 1"
+            }
+        }
     }
 ];

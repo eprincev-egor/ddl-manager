@@ -57,6 +57,7 @@ describe("DdlManager.parseFile", () => {
 
         let expectedResult = {
             function: {
+                language: "plpgsql",
                 schema: "public",
                 name: "test_a_plus_b",
                 args: [
@@ -71,6 +72,34 @@ describe("DdlManager.parseFile", () => {
                 ],
                 returns: "bigint",
                 body
+            }
+        };
+        
+        let actualResult = DdlManager.parseFile(filePath);
+
+        assert.deepEqual(actualResult, expectedResult);
+
+        fs.unlinkSync(filePath);
+    });
+
+    it("parse file with simple sql function", () => {
+        let sql = `
+            create or replace function nice_sql()
+            returns integer as $body$select 1$body$
+            language sql;
+        `.trim();
+        
+        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        fs.writeFileSync(filePath, sql);
+
+        let expectedResult = {
+            function: {
+                schema: "public",
+                name: "nice_sql",
+                args: [],
+                returns: "integer",
+                language: "sql",
+                body: "select 1"
             }
         };
         
@@ -102,6 +131,7 @@ describe("DdlManager.parseFile", () => {
 
         let expectedResult = {
             function: {
+                language: "plpgsql",
                 schema: "public",
                 name: "test_a_plus_b",
                 args: [],
@@ -152,6 +182,7 @@ describe("DdlManager.parseFile", () => {
 
         let expectedResult = {
             function: {
+                language: "plpgsql",
                 schema: "public",
                 name: "some_action_on_diu_company",
                 args: [],

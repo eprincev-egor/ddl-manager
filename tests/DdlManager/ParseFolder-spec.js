@@ -76,6 +76,7 @@ describe("DdlManager.parseFolder", () => {
                 name: "some.sql",
                 content: {
                     function: {
+                        language: "plpgsql",
                         schema: "public",
                         name: "some_func",
                         args: [],
@@ -115,6 +116,7 @@ describe("DdlManager.parseFolder", () => {
                 name: "some.sql",
                 content: {
                     function: {
+                        language: "plpgsql",
                         schema: "public",
                         name: "some_func",
                         args: [],
@@ -157,6 +159,7 @@ describe("DdlManager.parseFolder", () => {
                 name: "some1.sql",
                 content: {
                     function: {
+                        language: "plpgsql",
                         schema: "public",
                         name: "some_func_1",
                         args: [],
@@ -169,6 +172,7 @@ describe("DdlManager.parseFolder", () => {
                 name: "some2.sql",
                 content: {
                     function: {
+                        language: "plpgsql",
                         schema: "public",
                         name: "some_func_2",
                         args: [],
@@ -241,6 +245,7 @@ describe("DdlManager.parseFolder", () => {
                 name: "test1.sql",
                 content: {
                     function: {
+                        language: "plpgsql",
                         schema: "public",
                         name: "test_1",
                         args: [],
@@ -253,6 +258,7 @@ describe("DdlManager.parseFolder", () => {
                 name: "test2.sql",
                 content: {
                     function: {
+                        language: "plpgsql",
                         schema: "public",
                         name: "test_2",
                         args: [],
@@ -265,6 +271,7 @@ describe("DdlManager.parseFolder", () => {
                 name: "test3.sql",
                 content: {
                     function: {
+                        language: "plpgsql",
                         schema: "public",
                         name: "test_3",
                         args: [],
@@ -277,6 +284,7 @@ describe("DdlManager.parseFolder", () => {
                 name: "x.sql",
                 content: {
                     function: {
+                        language: "plpgsql",
                         schema: "public",
                         name: "xx_1",
                         args: [],
@@ -289,6 +297,7 @@ describe("DdlManager.parseFolder", () => {
                 name: "x.sql",
                 content: {
                     function: {
+                        language: "plpgsql",
                         schema: "public",
                         name: "xx_3",
                         args: [],

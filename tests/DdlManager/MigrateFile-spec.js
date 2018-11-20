@@ -27,6 +27,7 @@ describe("DlManager.migrateFile", () => {
 
         await DdlManager.migrateFile(db, {
             function: {
+                language: "plpgsql",
                 schema: "public",
                 name: "test_migrate_function",
                 args: [],
@@ -64,6 +65,7 @@ describe("DlManager.migrateFile", () => {
 
         await DdlManager.migrateFile(db, {
             function: {
+                language: "plpgsql",
                 schema: "public",
                 name: "some_action_on_diu_test",
                 args: [],
@@ -120,6 +122,7 @@ describe("DlManager.migrateFile", () => {
 
         let file = {
             function: {
+                language: "plpgsql",
                 schema: "public",
                 name: "some_action_on_diu_test",
                 args: [],

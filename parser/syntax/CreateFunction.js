@@ -69,9 +69,7 @@ class CreateFunction extends Syntax {
         coach.skipSpace();
 
         if ( coach.isWord("language") ) {
-            coach.expectWord("language");
-            coach.skipSpace();
-            coach.expectWord("plpgsql");
+            this.language = this.parseLanguage(coach);
             coach.skipSpace();
         }
         
@@ -83,11 +81,23 @@ class CreateFunction extends Syntax {
         coach.skipSpace();
 
         if ( coach.isWord("language") ) {
-            coach.expectWord("language");
-            coach.skipSpace();
-            coach.expectWord("plpgsql");
+            this.language = this.parseLanguage(coach);
             coach.skipSpace();
         }
+    }
+
+    parseLanguage(coach) {
+        coach.expectWord("language");
+        coach.skipSpace();
+        
+        let language = coach.expectWord();
+        language = language.toLowerCase();
+
+        if ( language != "plpgsql" && language != "sql" ) {
+            coach.throwError("expected language plpgsql or sql");
+        }
+
+        return language;
     }
 
     toString() {
@@ -99,7 +109,7 @@ class CreateFunction extends Syntax {
             this.returns.toString() 
         } as ${ 
             this.body 
-        } language plpgsql`;
+        } language ${ this.language }`;
     }
 
     static function2sql(func) {
@@ -127,7 +137,7 @@ class CreateFunction extends Syntax {
         function ${ func.schema }.${ func.name }(${argsSql}) 
         returns ${ returnsSql } 
         as $body$${ func.body  }$body$
-        language plpgsql`;
+        language ${ func.language }`;
     }
 
     // public.some_func(bigint, text)
@@ -148,6 +158,7 @@ class CreateFunction extends Syntax {
 
         clone.schema = this.schema;
         clone.name = this.name;
+        clone.language = this.language;
 
         clone.args = this.args.map(arg =>
             arg.clone()
@@ -190,6 +201,7 @@ class CreateFunction extends Syntax {
             schema: this.schema,
             name: this.name,
             body: this.body.content,
+            language: this.language,
             args,
             returns
         };
