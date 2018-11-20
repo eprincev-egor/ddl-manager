@@ -150,7 +150,7 @@ class CreateFunction extends Syntax {
         // public.some_func(bigint, text)
         let identifySql = CreateFunction.function2identifySql(func);
 
-        return `drop function if exists ${ identifySql })`;
+        return `drop function if exists ${ identifySql }`;
     }
 
     clone() {

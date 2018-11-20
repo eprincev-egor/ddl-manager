@@ -383,6 +383,113 @@ class DdlManager {
             freeze
         };
     }
+
+    static files2state(files) {
+        let state = {
+            functions: [],
+            triggers: []
+        };
+
+        files.forEach(file => {
+            let content = file.content;
+
+            state.functions.push(
+                content.function
+            );
+            
+            let trigger = content.trigger;
+            if ( trigger ) {
+                trigger = _.cloneDeep(trigger);
+
+                trigger.procedure = {
+                    schema: content.function.schema,
+                    name: content.function.name
+                };
+
+                state.triggers.push(trigger);
+            }
+        });
+
+        return state;
+    }
+
+    static async build({db, folder}) {
+        let files = DdlManager.parseFolder(folder);
+        let filesState = DdlManager.files2state(files);
+        let dbState = await DdlManager.loadState(db);
+
+        let diff = DdlManager.diffState({
+            filesState,
+            dbState
+        });
+
+
+        // objects, who created without ddl-manager
+        let hasFreezeObjects = (
+            diff.freeze.functions.length ||
+            diff.freeze.triggers.length
+        );
+        if ( hasFreezeObjects ) {
+            let freezeObjects = [];
+
+            diff.freeze.functions.forEach(freezeFunc => {
+                let identifySql = CreateFunction.function2identifySql( freezeFunc );
+                freezeObjects.push(
+                    identifySql
+                );
+            });
+
+            diff.freeze.triggers.forEach(freezeTrigger => {
+                let identifySql = CreateTrigger.trigger2identifySql( freezeTrigger );
+                freezeObjects.push(
+                    identifySql
+                );
+            });
+
+
+            console.error(`
+                found objects without file mirror:
+                    ${ freezeObjects.join("\n") }
+            `);
+        }
+
+
+        // drop old objects
+        let dropSql = [];
+        diff.drop.triggers.map(trigger => {
+            dropSql.push(
+                CreateTrigger.trigger2dropSql(trigger)
+            );
+        });
+        diff.drop.functions.map(func => {
+            dropSql.push(
+                CreateFunction.function2dropSql(func)
+            );
+        });
+        dropSql = dropSql.join(";\n\n");
+
+        await db.query(dropSql);
+
+        
+        // create new objects
+        for (let i = 0, n = diff.create.functions.length; i < n; i++) {
+            let func = diff.create.functions[ i ];
+            let fileContent = {
+                function: func
+            };
+
+            let trigger = filesState.triggers.find(trigger =>
+                trigger.procedure.schema == func.schema &&
+                trigger.procedure.name == func.name
+            );
+
+            if ( trigger ) {
+                fileContent.trigger = trigger;
+            }
+
+            await DdlManager.migrateFile(db, fileContent);
+        }
+    }
 }
 
 function equalFunction(func1, func2) {
