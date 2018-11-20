@@ -147,7 +147,14 @@ class DdlManager {
             ddlSql += `comment on trigger ${ triggerIdentifySql } is 'ddl-manager-sync';`;
         }
         
-        await db.query(ddlSql);
+        try { 
+            await db.query(ddlSql);
+        } catch(err) {
+            // redefine callstack
+            let newErr = new Error(err.message);
+            newErr.originalError = err;
+            throw newErr;
+        }
     }
 
     static async loadState(db) {
@@ -157,23 +164,31 @@ class DdlManager {
             triggers: []
         };
 
-        result = await db.query(`
-            select
-                pg_get_functiondef( pg_proc.oid ) as ddl,
-                pg_catalog.obj_description( pg_proc.oid ) as comment
-            from information_schema.routines as routines
+        try { 
+            result = await db.query(`
+                select
+                    pg_get_functiondef( pg_proc.oid ) as ddl,
+                    pg_catalog.obj_description( pg_proc.oid ) as comment
+                from information_schema.routines as routines
 
-            left join pg_catalog.pg_proc as pg_proc on
-                routines.specific_name = pg_proc.proname || '_' || pg_proc.oid::text
+                left join pg_catalog.pg_proc as pg_proc on
+                    routines.specific_name = pg_proc.proname || '_' || pg_proc.oid::text
 
-            where
-                routines.routine_schema <> 'pg_catalog' and
-                routines.routine_schema <> 'information_schema'
-            
-            order by
-                routines.routine_schema, 
-                routines.routine_name
-        `);
+                where
+                    routines.routine_schema <> 'pg_catalog' and
+                    routines.routine_schema <> 'information_schema'
+                
+                order by
+                    routines.routine_schema, 
+                    routines.routine_name
+            `);
+        } catch(err) {
+            // redefine callstack
+            let newErr = new Error(err.message);
+            newErr.originalError = err;
+            throw newErr;
+        }
+        
 
         result.rows.forEach(row => {
             let {ddl} = row;
@@ -192,12 +207,20 @@ class DdlManager {
             state.functions.push(json);
         });
 
-        result = await db.query(`
-            select
-                pg_get_triggerdef( pg_trigger.oid ) as ddl,
-                pg_catalog.obj_description( pg_trigger.oid ) as comment
-            from pg_trigger
-        `);
+        try { 
+            result = await db.query(`
+                select
+                    pg_get_triggerdef( pg_trigger.oid ) as ddl,
+                    pg_catalog.obj_description( pg_trigger.oid ) as comment
+                from pg_trigger
+            `);
+        } catch(err) {
+            // redefine callstack
+            let newErr = new Error(err.message);
+            newErr.originalError = err;
+            throw newErr;
+        }
+        
 
         result.rows.forEach(row => {
             let {ddl} = row;
