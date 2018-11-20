@@ -617,4 +617,32 @@ describe("DdlManager.loadState", () => {
         db.end();
     });
 
+    it("ignore aggregate functions", async() => {
+        let db = await getDbClient();
+
+        await db.query(`
+            drop schema public cascade;
+            create schema public;
+
+            CREATE FUNCTION first_agg(anyelement, anyelement) RETURNS anyelement
+                LANGUAGE sql IMMUTABLE STRICT
+            AS $_$
+                    SELECT $1;
+            $_$;
+
+            CREATE AGGREGATE first(anyelement) (
+                SFUNC = first_agg,
+                STYPE = anyelement
+            );
+        `);
+
+        let state = await DdlManager.loadState(db);
+        assert.deepEqual(state, {
+            functions: [],
+            triggers: []
+        });
+
+        db.end();
+    });
+
 });
