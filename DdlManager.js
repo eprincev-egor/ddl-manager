@@ -126,6 +126,9 @@ class DdlManager {
         }
 
         let ddlSql = CreateFunction.function2sql( file.function );
+        let funcIdentifySql = CreateFunction.function2identifySql( file.function );
+        ddlSql += ";";
+        ddlSql += `comment on function ${ funcIdentifySql } is 'ddl-manager-sync'`;
         ddlSql += ";";
         
         if ( file.trigger ) {
@@ -138,9 +141,12 @@ class DdlManager {
             ddlSql += CreateTrigger.trigger2dropSql(trigger);
             ddlSql += ";";
             ddlSql += CreateTrigger.trigger2sql(trigger);
+
+            let triggerIdentifySql = CreateTrigger.trigger2identifySql( file.trigger );
+            ddlSql += ";";
+            ddlSql += `comment on trigger ${ triggerIdentifySql } is 'ddl-manager-sync';`;
         }
         
-
         await db.query(ddlSql);
     }
 
@@ -153,7 +159,8 @@ class DdlManager {
 
         result = await db.query(`
             select
-                pg_get_functiondef( pg_proc.oid ) as ddl
+                pg_get_functiondef( pg_proc.oid ) as ddl,
+                pg_catalog.obj_description( pg_proc.oid ) as comment
             from information_schema.routines as routines
 
             left join pg_catalog.pg_proc as pg_proc on
@@ -175,12 +182,20 @@ class DdlManager {
             let func = coach.parseCreateFunction();
             let json = func.toJSON();
 
+            // function was created by ddl manager
+            let canSyncFunction = (
+                row.comment &&
+                /ddl-manager-sync/i.test(row.comment)
+            );
+            json.freeze = !canSyncFunction;
+
             state.functions.push(json);
         });
 
         result = await db.query(`
             select
-                pg_get_triggerdef( pg_trigger.oid ) as ddl
+                pg_get_triggerdef( pg_trigger.oid ) as ddl,
+                pg_catalog.obj_description( pg_trigger.oid ) as comment
             from pg_trigger
         `);
 
@@ -190,6 +205,13 @@ class DdlManager {
             let coach = new DDLCoach(ddl);
             let trigger = coach.parseCreateTrigger();
             let json = trigger.toJSON();
+
+            // trigger was created by ddl manager
+            let canSyncTrigger = (
+                row.comment &&
+                /ddl-manager-sync/i.test(row.comment)
+            );
+            json.freeze = !canSyncTrigger;
 
             state.triggers.push(json);
         });

@@ -45,6 +45,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    freeze: true,
                     schema: "public",
                     name: "test_func",
                     args: [
@@ -93,6 +94,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    freeze: true,
                     schema: "public",
                     name: "func_1",
                     args: [
@@ -105,6 +107,7 @@ describe("DdlManager.loadState", () => {
                     body: body1
                 },
                 {
+                    freeze: true,
                     schema: "public",
                     name: "func_2",
                     args: [
@@ -153,6 +156,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    freeze: true,
                     schema: "public",
                     name: "func_1",
                     args: [
@@ -165,6 +169,7 @@ describe("DdlManager.loadState", () => {
                     body: body1
                 },
                 {
+                    freeze: true,
                     schema: "public",
                     name: "func_1",
                     args: [
@@ -204,6 +209,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    freeze: true,
                     schema: "public",
                     name: "test_func",
                     args: [],
@@ -239,6 +245,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    freeze: true,
                     schema: "public",
                     name: "test_func",
                     args: [],
@@ -282,6 +289,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    freeze: true,
                     schema: "public",
                     name: "test_func",
                     args: [
@@ -330,6 +338,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    freeze: true,
                     schema: "public",
                     name: "test_func",
                     args: [
@@ -381,6 +390,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    freeze: true,
                     schema: "public",
                     name: "test_func",
                     args: [],
@@ -390,10 +400,12 @@ describe("DdlManager.loadState", () => {
             ],
             triggers: [
                 {
+                    freeze: true,
                     table: {
                         schema: "public",
                         name: "test"
                     },
+                    name: "test_trigger",
                     after: true,
                     insert: true,
                     update: ["name", "note"],
@@ -442,6 +454,7 @@ describe("DdlManager.loadState", () => {
         assert.deepEqual(state, {
             functions: [
                 {
+                    freeze: true,
                     schema: "public",
                     name: "test_func",
                     args: [],
@@ -451,10 +464,12 @@ describe("DdlManager.loadState", () => {
             ],
             triggers: [
                 {
+                    freeze: true,
                     table: {
                         schema: "public",
                         name: "test"
                     },
+                    name: "test_trigger",
                     after: true,
                     insert: true,
                     update: ["name", "note"],
@@ -470,4 +485,136 @@ describe("DdlManager.loadState", () => {
 
         db.end();
     });
+
+
+    it("load simple function, created by DdlManager.migrateFile", async() => {
+        let db = await getDbClient();
+
+        let body = `
+            begin
+                raise notice 'test';
+            end
+        `;
+        await db.query(`
+            drop schema public cascade;
+            create schema public;
+        `);
+
+        DdlManager.migrateFile(db, {
+            function: {
+                schema: "public",
+                name: "test_func",
+                returns: "void",
+                args: [
+                    {
+                        name: "id",
+                        type: "bigint"
+                    }
+                ],
+                body
+            }
+        });
+
+        let state = await DdlManager.loadState(db);
+        assert.deepEqual(state, {
+            functions: [
+                {
+                    freeze: false,
+                    schema: "public",
+                    name: "test_func",
+                    args: [
+                        {
+                            name: "id",
+                            type: "bigint"
+                        }
+                    ],
+                    returns: "void",
+                    body
+                }
+            ],
+            triggers: []
+        });
+
+        db.end();
+    });
+
+    
+    it("load trigger, created by DdlManager.migrateFile", async() => {
+        let db = await getDbClient();
+
+        let body = `
+            begin
+                return new;
+            end
+        `;
+        await db.query(`
+            drop schema public cascade;
+            create schema public;
+            
+            create table test (
+                name text,
+                note text
+            );
+        `);
+
+        DdlManager.migrateFile(db, {
+            function: {
+                schema: "public",
+                name: "test_func",
+                returns: "trigger",
+                args: [],
+                body
+            },
+            trigger: {
+                table: {
+                    schema: "public",
+                    name: "test"
+                },
+                after: true,
+                insert: true,
+                name: "test_trigger",
+                update: ["name", "note"],
+                delete: true,
+                procedure: {
+                    schema: "public",
+                    name: "test_func"
+                }
+            }
+        });
+
+        let state = await DdlManager.loadState(db);
+        assert.deepEqual(state, {
+            functions: [
+                {
+                    freeze: false,
+                    schema: "public",
+                    name: "test_func",
+                    args: [],
+                    returns: "trigger",
+                    body
+                }
+            ],
+            triggers: [
+                {
+                    freeze: false,
+                    table: {
+                        schema: "public",
+                        name: "test"
+                    },
+                    after: true,
+                    insert: true,
+                    name: "test_trigger",
+                    update: ["name", "note"],
+                    delete: true,
+                    procedure: {
+                        schema: "public",
+                        name: "test_func"
+                    }
+                }
+            ]
+        });
+
+        db.end();
+    });
+
 });

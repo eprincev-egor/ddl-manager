@@ -130,10 +130,17 @@ class CreateFunction extends Syntax {
         language plpgsql`;
     }
 
-    static function2dropSql(func) {
+    // public.some_func(bigint, text)
+    static function2identifySql(func) {
         let argsSql = func.args.map(arg => arg.type).join(", ");
+        return `${ func.schema }.${ func.name }(${ argsSql })`;
+    }
 
-        return `drop function if exists ${ func.schema }.${ func.name }(${ argsSql })`;
+    static function2dropSql(func) {
+        // public.some_func(bigint, text)
+        let identifySql = CreateFunction.function2identifySql(func);
+
+        return `drop function if exists ${ identifySql })`;
     }
 
     clone() {

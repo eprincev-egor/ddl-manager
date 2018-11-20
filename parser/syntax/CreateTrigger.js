@@ -213,12 +213,18 @@ class CreateTrigger extends Syntax {
     }
 
     static trigger2dropSql(trigger) {
-        return `drop trigger if exists ${trigger.name} 
-        on ${ trigger.table.schema }.${ trigger.table.name }`;
+        let identifySql = CreateTrigger.trigger2identifySql(trigger);
+        return `drop trigger if exists ${ identifySql }`;
+    }
+
+    // some_trigger on public.test
+    static trigger2identifySql(trigger) {
+        return `${trigger.name} on ${ trigger.table.schema }.${ trigger.table.name }`;
     }
 
     toJSON() {
         let out = {
+            name: this.name,
             table: {
                 schema: this.table.schema,
                 name: this.table.name
