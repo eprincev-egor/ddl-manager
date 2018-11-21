@@ -7,10 +7,6 @@ const CreateTrigger = require("./parser/syntax/CreateTrigger");
 const CreateFunction = require("./parser/syntax/CreateFunction");
 const _ = require("lodash");
 
-const create_objects_table_file = __dirname + "/create_objects_table.sql";
-const create_objects_table_sql = fs.readFileSync(create_objects_table_file)
-    .toString();
-
 class DdlManager {
     static parseFolder(folderPath) {
         if ( !fs.existsSync(folderPath) ) {
@@ -96,22 +92,6 @@ class DdlManager {
         }
 
         return out;
-    }
-
-    static async createObjectsTable(db) {
-        try {
-            await db.query( create_objects_table_sql );
-        } catch(err) {
-            if ( /invalid table ddl_manager_objects/.test(err.message) ) {
-                throw new Error("please, drop table public.ddl_manager_objects");
-            }
-
-
-            // redefine callstack
-            let newErr = new Error(err.message);
-            newErr.originalError = err;
-            throw newErr;
-        }
     }
 
     static async migrateFunction(db, func) {
@@ -415,8 +395,6 @@ class DdlManager {
     }
 
     static async build({db, folder}) {
-        await DdlManager.createObjectsTable(db);
-
         let files = DdlManager.parseFolder(folder);
         let filesState = DdlManager.files2state(files);
         let dbState = await DdlManager.loadState(db);
