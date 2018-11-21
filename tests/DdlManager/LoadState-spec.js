@@ -1,8 +1,18 @@
 "use strict";
 
 const assert = require("assert");
+const fs = require("fs");
+const del = require("del");
 const getDbClient = require("../utils/getDbClient");
 const DdlManager = require("../../DdlManager");
+
+const ROOT_TMP_PATH = __dirname + "/tmp";
+
+before(() => {
+    if ( !fs.existsSync(ROOT_TMP_PATH) ) {
+        fs.mkdirSync(ROOT_TMP_PATH);
+    }
+});
 
 describe("DdlManager.loadState", () => {
 
@@ -498,8 +508,16 @@ describe("DdlManager.loadState", () => {
     });
 
 
-    it("load simple function, created by DdlManager.migrateFunction", async() => {
+    it("load simple function, created by DdlManager.build", async() => {
         let db = await getDbClient();
+        let folderPath = ROOT_TMP_PATH + "/simple-func";
+    
+        // we want empty folder!
+        if ( fs.existsSync(folderPath) ) {
+            del.sync(folderPath);
+        }
+        fs.mkdirSync(folderPath);
+
 
         let body = `
             begin
@@ -511,18 +529,15 @@ describe("DdlManager.loadState", () => {
             create schema public;
         `);
 
-        DdlManager.migrateFunction(db, {
-            language: "plpgsql",
-            schema: "public",
-            name: "test_func",
-            returns: "void",
-            args: [
-                {
-                    name: "id",
-                    type: "bigint"
-                }
-            ],
-            body
+        fs.writeFileSync(folderPath + "/test1.sql", `
+            create or replace function test_func(id bigint)
+            returns void as $body$${ body }$body$
+            language plpgsql
+        `);
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
         });
 
         let state = await DdlManager.loadState(db);
@@ -550,8 +565,15 @@ describe("DdlManager.loadState", () => {
     });
 
     
-    it("load trigger, created by DdlManager.migrateFunction", async() => {
+    it("load trigger, created by DdlManager.build", async() => {
         let db = await getDbClient();
+        let folderPath = ROOT_TMP_PATH + "/simple-func";
+    
+        // we want empty folder!
+        if ( fs.existsSync(folderPath) ) {
+            del.sync(folderPath);
+        }
+        fs.mkdirSync(folderPath);
 
         let body = `
             begin
@@ -568,29 +590,21 @@ describe("DdlManager.loadState", () => {
             );
         `);
 
-        await DdlManager.migrateFunction(db, {
-            language: "plpgsql",
-            schema: "public",
-            name: "test_func",
-            returns: "trigger",
-            args: [],
-            body
-        });
+        fs.writeFileSync(folderPath + "/test2.sql", `
+            create or replace function test_func()
+            returns trigger as $body$${ body }$body$
+            language plpgsql;
 
-        await DdlManager.migrateTrigger(db, {
-            table: {
-                schema: "public",
-                name: "test"
-            },
-            after: true,
-            insert: true,
-            name: "test_trigger",
-            update: ["name", "note"],
-            delete: true,
-            procedure: {
-                schema: "public",
-                name: "test_func"
-            }
+            create trigger test_trigger
+            after insert or update of name, note or delete
+            on test
+            for each row
+            execute procedure test_func();
+        `);
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
         });
 
         let state = await DdlManager.loadState(db);

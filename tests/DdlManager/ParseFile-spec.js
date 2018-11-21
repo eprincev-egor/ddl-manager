@@ -194,10 +194,15 @@ describe("DdlManager.parseFile", () => {
                     schema: "public",
                     name: "company"
                 },
+                name: "some_action_on_diu_company_trigger",
                 after: true,
                 insert: true,
                 update: ["name", "deleted"],
-                delete: true
+                delete: true,
+                procedure: {
+                    schema: "public",
+                    name: "some_action_on_diu_company"
+                }
             }
         };
         
