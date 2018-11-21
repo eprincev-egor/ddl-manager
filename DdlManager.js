@@ -120,32 +120,39 @@ class DdlManager {
         return out;
     }
 
-    static async migrateFile(db, file) {
-        if ( file == null ) {
+    static async migrateFunction(db, func) {
+        if ( func == null ) {
             throw new Error("invalid function");
         }
 
-        let ddlSql = CreateFunction.function2sql( file.function );
-        let funcIdentifySql = CreateFunction.function2identifySql( file.function );
+        let ddlSql = CreateFunction.function2sql( func );
+        let funcIdentifySql = CreateFunction.function2identifySql( func );
         ddlSql += ";";
         ddlSql += `comment on function ${ funcIdentifySql } is 'ddl-manager-sync'`;
         ddlSql += ";";
         
-        if ( file.trigger ) {
-            let trigger = _.cloneDeep(file.trigger);
-            trigger.procedure = {
-                schema: file.function.schema,
-                name: file.function.name
-            };
-            
-            ddlSql += CreateTrigger.trigger2dropSql(trigger);
-            ddlSql += ";";
-            ddlSql += CreateTrigger.trigger2sql(trigger);
-
-            let triggerIdentifySql = CreateTrigger.trigger2identifySql( file.trigger );
-            ddlSql += ";";
-            ddlSql += `comment on trigger ${ triggerIdentifySql } is 'ddl-manager-sync';`;
+        try { 
+            await db.query(ddlSql);
+        } catch(err) {
+            // redefine callstack
+            let newErr = new Error(err.message);
+            newErr.originalError = err;
+            throw newErr;
         }
+    }
+
+    static async migrateTrigger(db, trigger) {
+        if ( trigger == null ) {
+            throw new Error("invalid trigger");
+        }
+
+        let ddlSql = CreateTrigger.trigger2dropSql(trigger);
+        ddlSql += ";";
+        ddlSql += CreateTrigger.trigger2sql(trigger);
+
+        let triggerIdentifySql = CreateTrigger.trigger2identifySql( trigger );
+        ddlSql += ";";
+        ddlSql += `comment on trigger ${ triggerIdentifySql } is 'ddl-manager-sync';`;
         
         try { 
             await db.query(ddlSql);
@@ -474,20 +481,17 @@ class DdlManager {
         // create new objects
         for (let i = 0, n = diff.create.functions.length; i < n; i++) {
             let func = diff.create.functions[ i ];
-            let fileContent = {
-                function: func
-            };
 
             let trigger = filesState.triggers.find(trigger =>
                 trigger.procedure.schema == func.schema &&
                 trigger.procedure.name == func.name
             );
 
-            if ( trigger ) {
-                fileContent.trigger = trigger;
-            }
+            await DdlManager.migrateFunction(db, func);
 
-            await DdlManager.migrateFile(db, fileContent);
+            if ( trigger ) {
+                await DdlManager.migrateTrigger(db, trigger);
+            }
         }
     }
 }

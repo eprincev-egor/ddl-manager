@@ -4,15 +4,26 @@ const assert = require("assert");
 const getDbClient = require("../utils/getDbClient");
 const DdlManager = require("../../DdlManager");
 
-describe("DlManager.migrateFile", () => {
-    it("migrate null", async() => {
+describe("DlManager.migrateFunction, DlManager.migrateTrigger", () => {
+    it("migrateFunction null", async() => {
 
         try {
-            await DdlManager.migrateFile(null, null);
+            await DdlManager.migrateFunction(null, null);
             
             assert.ok(false, "expected error for null");
         } catch(err) {
             assert.equal(err.message, "invalid function");
+        }
+    });
+
+    it("migrateTrigger null", async() => {
+
+        try {
+            await DdlManager.migrateTrigger(null, null);
+            
+            assert.ok(false, "expected error for null");
+        } catch(err) {
+            assert.equal(err.message, "invalid trigger");
         }
     });
 
@@ -25,17 +36,15 @@ describe("DlManager.migrateFile", () => {
 
         let rnd = Math.round( 10000 * Math.random() );
 
-        await DdlManager.migrateFile(db, {
-            function: {
-                language: "plpgsql",
-                schema: "public",
-                name: "test_migrate_function",
-                args: [],
-                returns: "bigint",
-                body: `begin
-                    return ${ rnd };
-                end`
-            }
+        await DdlManager.migrateFunction(db, {
+            language: "plpgsql",
+            schema: "public",
+            name: "test_migrate_function",
+            args: [],
+            returns: "bigint",
+            body: `begin
+                return ${ rnd };
+            end`
         });
 
         let result = await db.query("select test_migrate_function()");
@@ -63,26 +72,29 @@ describe("DlManager.migrateFile", () => {
             );
         `);
 
-        await DdlManager.migrateFile(db, {
-            function: {
-                language: "plpgsql",
+        await DdlManager.migrateFunction(db, {
+            language: "plpgsql",
+            schema: "public",
+            name: "some_action_on_diu_test",
+            args: [],
+            returns: "trigger",
+            body: `begin
+            raise exception 'success';
+            end`
+        });
+
+        await DdlManager.migrateTrigger(db, {
+            table: {
                 schema: "public",
-                name: "some_action_on_diu_test",
-                args: [],
-                returns: "trigger",
-                body: `begin
-                    raise exception 'success';
-                end`
+                name: "ddl_manager_test"
             },
-            trigger: {
-                table: {
-                    schema: "public",
-                    name: "ddl_manager_test"
-                },
-                after: true,
-                insert: true,
-                update: ["name", "note"],
-                delete: true
+            after: true,
+            insert: true,
+            update: ["name", "note"],
+            delete: true,
+            procedure: {
+                schema: "public",
+                name: "some_action_on_diu_test"
             }
         });
 
@@ -139,13 +151,17 @@ describe("DlManager.migrateFile", () => {
                 after: true,
                 insert: true,
                 update: ["name", "note"],
-                delete: true
+                delete: true,
+                procedure: {
+                    schema: "public",
+                    name: "some_action_on_diu_test"
+                }
             }
         };
 
         // do it twice without errors
-        await DdlManager.migrateFile(db, file);
-        await DdlManager.migrateFile(db, file);
+        await DdlManager.migrateFunction(db, file.function);
+        await DdlManager.migrateTrigger(db, file.trigger);
 
 
         // check trigger on table

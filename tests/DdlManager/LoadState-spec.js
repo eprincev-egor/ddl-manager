@@ -498,7 +498,7 @@ describe("DdlManager.loadState", () => {
     });
 
 
-    it("load simple function, created by DdlManager.migrateFile", async() => {
+    it("load simple function, created by DdlManager.migrateFunction", async() => {
         let db = await getDbClient();
 
         let body = `
@@ -511,20 +511,18 @@ describe("DdlManager.loadState", () => {
             create schema public;
         `);
 
-        DdlManager.migrateFile(db, {
-            function: {
-                language: "plpgsql",
-                schema: "public",
-                name: "test_func",
-                returns: "void",
-                args: [
-                    {
-                        name: "id",
-                        type: "bigint"
-                    }
-                ],
-                body
-            }
+        DdlManager.migrateFunction(db, {
+            language: "plpgsql",
+            schema: "public",
+            name: "test_func",
+            returns: "void",
+            args: [
+                {
+                    name: "id",
+                    type: "bigint"
+                }
+            ],
+            body
         });
 
         let state = await DdlManager.loadState(db);
@@ -552,7 +550,7 @@ describe("DdlManager.loadState", () => {
     });
 
     
-    it("load trigger, created by DdlManager.migrateFile", async() => {
+    it("load trigger, created by DdlManager.migrateFunction", async() => {
         let db = await getDbClient();
 
         let body = `
@@ -570,29 +568,28 @@ describe("DdlManager.loadState", () => {
             );
         `);
 
-        DdlManager.migrateFile(db, {
-            function: {
-                language: "plpgsql",
+        await DdlManager.migrateFunction(db, {
+            language: "plpgsql",
+            schema: "public",
+            name: "test_func",
+            returns: "trigger",
+            args: [],
+            body
+        });
+
+        await DdlManager.migrateTrigger(db, {
+            table: {
                 schema: "public",
-                name: "test_func",
-                returns: "trigger",
-                args: [],
-                body
+                name: "test"
             },
-            trigger: {
-                table: {
-                    schema: "public",
-                    name: "test"
-                },
-                after: true,
-                insert: true,
-                name: "test_trigger",
-                update: ["name", "note"],
-                delete: true,
-                procedure: {
-                    schema: "public",
-                    name: "test_func"
-                }
+            after: true,
+            insert: true,
+            name: "test_trigger",
+            update: ["name", "note"],
+            delete: true,
+            procedure: {
+                schema: "public",
+                name: "test_func"
             }
         });
 
