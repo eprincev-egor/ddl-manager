@@ -1,6 +1,7 @@
 "use strict";
 
 const assert = require("assert");
+const _ = require("lodash");
 const DdlManager = require("../../DdlManager");
 
 describe("DddlManager.diffState", () => {
@@ -417,6 +418,9 @@ describe("DddlManager.diffState", () => {
                 return new;
             end`
         };
+        let dbFunc = _.cloneDeep(func);
+        dbFunc.freeze = false;
+
         let trigger = {
             table: {
                 schema: "public",
@@ -430,6 +434,8 @@ describe("DddlManager.diffState", () => {
                 name: "some_action_on_some_event"
             }
         };
+        let dbTrigger = _.cloneDeep(trigger);
+        dbTrigger.freeze = false;
 
         let diff = DdlManager.diffState({
             filesState: {
@@ -442,10 +448,10 @@ describe("DddlManager.diffState", () => {
             },
             dbState: {
                 functions: [
-                    func
+                    dbFunc
                 ],
                 triggers: [
-                    trigger
+                    dbTrigger
                 ]
             }
         });

@@ -62,6 +62,7 @@ class DdlManager {
         let out = {
             function: func.toJSON()
         };
+        out.function.freeze = false;
 
         coach.skipSpace();
         if ( coach.is(";") ) {
@@ -89,6 +90,7 @@ class DdlManager {
                 }
             
                 out.trigger = trigger.toJSON();
+                out.trigger.freeze = false;
             }
         }
 
@@ -507,14 +509,38 @@ class DdlManager {
         if ( needCloseConnect ) {
             db.end();
         }
+
+        console.log(folder + " builded");
     }
 }
 
 function equalFunction(func1, func2) {
+    func1 = _.cloneDeep(func1);
+    func2 = _.cloneDeep(func2);
+
+    if ( !func1.freeze ) {
+        delete func1.freeze;
+    }
+
+    if ( !func2.freeze ) {
+        delete func2.freeze;
+    }
+
     return JSON.stringify(func1) == JSON.stringify(func2);
 }
 
 function equalTrigger(trigger1, trigger2) {
+    trigger1 = _.cloneDeep(trigger1);
+    trigger2 = _.cloneDeep(trigger2);
+
+    if ( !trigger1.freeze ) {
+        delete trigger1.freeze;
+    }
+    
+    if ( !trigger2.freeze ) {
+        delete trigger2.freeze;
+    }
+
     return JSON.stringify(trigger1) == JSON.stringify(trigger2);
 }
 

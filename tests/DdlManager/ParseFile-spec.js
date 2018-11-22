@@ -71,7 +71,8 @@ describe("DdlManager.parseFile", () => {
                     }
                 ],
                 returns: "bigint",
-                body
+                body,
+                freeze: false
             }
         };
         
@@ -99,7 +100,8 @@ describe("DdlManager.parseFile", () => {
                 args: [],
                 returns: "integer",
                 language: "sql",
-                body: "select 1"
+                body: "select 1",
+                freeze: false
             }
         };
         
@@ -147,7 +149,8 @@ describe("DdlManager.parseFile", () => {
                         }
                     ]
                 },
-                body
+                body,
+                freeze: false
             }
         };
         
@@ -187,7 +190,8 @@ describe("DdlManager.parseFile", () => {
                 name: "some_action_on_diu_company",
                 args: [],
                 returns: "trigger",
-                body
+                body,
+                freeze: false
             },
             trigger: {
                 table: {
@@ -202,7 +206,8 @@ describe("DdlManager.parseFile", () => {
                 procedure: {
                     schema: "public",
                     name: "some_action_on_diu_company"
-                }
+                },
+                freeze: false
             }
         };
         

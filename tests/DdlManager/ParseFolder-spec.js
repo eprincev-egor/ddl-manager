@@ -81,7 +81,8 @@ describe("DdlManager.parseFolder", () => {
                         name: "some_func",
                         args: [],
                         returns: "void",
-                        body: VOID_BODY
+                        body: VOID_BODY,
+                        freeze: false
                     }
                 }
             }
@@ -121,7 +122,8 @@ describe("DdlManager.parseFolder", () => {
                         name: "some_func",
                         args: [],
                         returns: "void",
-                        body: VOID_BODY
+                        body: VOID_BODY,
+                        freeze: false
                     }
                 }
             }
@@ -164,7 +166,8 @@ describe("DdlManager.parseFolder", () => {
                         name: "some_func_1",
                         args: [],
                         returns: "void",
-                        body: VOID_BODY
+                        body: VOID_BODY,
+                        freeze: false
                     }
                 }
             },
@@ -177,7 +180,8 @@ describe("DdlManager.parseFolder", () => {
                         name: "some_func_2",
                         args: [],
                         returns: "void",
-                        body: VOID_BODY
+                        body: VOID_BODY,
+                        freeze: false
                     }
                 }
             }
@@ -250,7 +254,8 @@ describe("DdlManager.parseFolder", () => {
                         name: "test_1",
                         args: [],
                         returns: "void",
-                        body: VOID_BODY
+                        body: VOID_BODY,
+                        freeze: false
                     }
                 }
             },
@@ -263,7 +268,8 @@ describe("DdlManager.parseFolder", () => {
                         name: "test_2",
                         args: [],
                         returns: "void",
-                        body: VOID_BODY
+                        body: VOID_BODY,
+                        freeze: false
                     }
                 }
             },
@@ -276,7 +282,8 @@ describe("DdlManager.parseFolder", () => {
                         name: "test_3",
                         args: [],
                         returns: "void",
-                        body: VOID_BODY
+                        body: VOID_BODY,
+                        freeze: false
                     }
                 }
             },
@@ -289,7 +296,8 @@ describe("DdlManager.parseFolder", () => {
                         name: "xx_1",
                         args: [],
                         returns: "void",
-                        body: VOID_BODY
+                        body: VOID_BODY,
+                        freeze: false
                     }
                 }
             },
@@ -302,7 +310,8 @@ describe("DdlManager.parseFolder", () => {
                         name: "xx_3",
                         args: [],
                         returns: "void",
-                        body: VOID_BODY
+                        body: VOID_BODY,
+                        freeze: false
                     }
                 }
             }
