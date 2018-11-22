@@ -6,6 +6,7 @@ const DDLCoach = require("./parser/DDLCoach");
 const CreateTrigger = require("./parser/syntax/CreateTrigger");
 const CreateFunction = require("./parser/syntax/CreateFunction");
 const _ = require("lodash");
+const pg = require("pg");
 
 class DdlManager {
     static parseFolder(folderPath) {
@@ -395,6 +396,41 @@ class DdlManager {
     }
 
     static async build({db, folder}) {
+        let needCloseConnect = false;
+
+        // if db is config
+        if ( db && !_.isFunction(db.query) ) {
+            let dbConfig = {
+                database: false,
+                user: false,
+                password: false,
+                host: "localhost",
+                port: 5432
+            };
+
+            if ( "database" in db ) {
+                dbConfig.database = db.database;
+            }
+            if ( "user" in db ) {
+                dbConfig.user = db.user;
+            }
+            if ( "password" in db ) {
+                dbConfig.password = db.password;
+            }
+            if ( "host" in db ) {
+                dbConfig.host = db.host;
+            }
+            if ( "port" in db ) {
+                dbConfig.port = db.port;
+            }
+
+            db = new pg.Client(dbConfig);
+            await db.connect();
+
+            needCloseConnect = true;
+        }
+        
+        
         let files = DdlManager.parseFolder(folder);
         let filesState = DdlManager.files2state(files);
         let dbState = await DdlManager.loadState(db);
@@ -466,6 +502,10 @@ class DdlManager {
             if ( trigger ) {
                 await DdlManager.migrateTrigger(db, trigger);
             }
+        }
+
+        if ( needCloseConnect ) {
+            db.end();
         }
     }
 }
