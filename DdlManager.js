@@ -110,6 +110,9 @@ class DdlManager {
         
         try { 
             await db.query(ddlSql);
+            
+            console.log("created function " + funcIdentifySql);
+
         } catch(err) {
             // redefine callstack
             let newErr = new Error(err.message);
@@ -133,6 +136,8 @@ class DdlManager {
         
         try { 
             await db.query(ddlSql);
+
+            console.log("created trigger " + triggerIdentifySql);
         } catch(err) {
             // redefine callstack
             let newErr = new Error(err.message);
@@ -489,6 +494,15 @@ class DdlManager {
 
         await db.query(dropSql);
 
+        diff.drop.triggers.map(trigger => {
+            let triggerIdentifySql = CreateTrigger.trigger2identifySql(trigger);
+            console.log("dropped trigger " + triggerIdentifySql);
+        });
+        diff.drop.functions.map(func => {
+            let funcIdentifySql = CreateFunction.function2identifySql(func);
+            console.log("dropped function " + funcIdentifySql);
+        });
+
         
         // create new objects
         for (let i = 0, n = diff.create.functions.length; i < n; i++) {
@@ -510,7 +524,7 @@ class DdlManager {
             db.end();
         }
 
-        console.log(folder + " builded");
+        console.log("ddl-manager build success");
     }
 }
 

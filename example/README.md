@@ -1,0 +1,1 @@
+before run build.js or watch.js you need make file /example/database-config.js
