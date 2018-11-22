@@ -100,50 +100,6 @@ describe("DdlManager.build", () => {
         del.sync(folderPath);
     });
 
-    it("build simple function", async() => {
-        let db = await getDbClient();
-        let folderPath = ROOT_TMP_PATH + "/simple-func";
-    
-        // we want empty folder!
-        if ( fs.existsSync(folderPath) ) {
-            del.sync(folderPath);
-        }
-        fs.mkdirSync(folderPath);
-
-        await db.query(`
-            drop schema public cascade;
-            create schema public;
-        `);
-
-        let rnd = Math.round( 1000 * Math.random() );
-        fs.writeFileSync(folderPath + "/nice.sql", `
-            create or replace function nice(a integer)
-            returns integer as $body$
-                begin
-                    return a * ${ rnd };
-                end
-            $body$
-            language plpgsql;
-        `);
-
-
-        await DdlManager.build({
-            db, 
-            folder: folderPath
-        });
-
-        let result = await db.query("select nice(2) as nice");
-        let row = result.rows[0];
-
-        assert.deepEqual(row, {
-            nice: 2 * rnd
-        });
-
-        db.end();
-        // clear state
-        del.sync(folderPath);
-    });
-
     it("replace function", async() => {
         let db = await getDbClient();
         let folderPath = ROOT_TMP_PATH + "/simple-func";
@@ -365,5 +321,139 @@ describe("DdlManager.build", () => {
         // clear state
         del.sync(folderPath);
     });
+
+    
+    it("remove function", async() => {
+        let db = await getDbClient();
+        let folderPath = ROOT_TMP_PATH + "/simple-func";
+    
+        // we want empty folder!
+        if ( fs.existsSync(folderPath) ) {
+            del.sync(folderPath);
+        }
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            drop schema public cascade;
+            create schema public;
+        `);
+
+        fs.writeFileSync(folderPath + "/nice.sql", `
+            create or replace function nice()
+            returns integer as $body$
+                begin
+                    return 1;
+                end
+            $body$
+            language plpgsql;
+        `);
+
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        let result = await db.query("select nice() as nice");
+        let row = result.rows[0];
+
+        assert.deepEqual(row, {
+            nice: 1
+        });
+
+
+        // remove file for remove function from db
+        fs.unlinkSync(folderPath + "/nice.sql");
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        try {
+            await db.query("select nice() as nice");
+            throw new Error("expected error");
+        } catch(err) {
+            assert.equal(err.message, "function nice() does not exist");
+        }
+
+
+        db.end();
+        // clear state
+        del.sync(folderPath);
+    });
+
+
+    it("remove trigger", async() => {
+        let db = await getDbClient();
+        let folderPath = ROOT_TMP_PATH + "/simple-func";
+    
+        // we want empty folder!
+        if ( fs.existsSync(folderPath) ) {
+            del.sync(folderPath);
+        }
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            drop schema public cascade;
+            create schema public;
+
+            create table company (
+                name text,
+                note text
+            );
+        `);
+        
+        // first content
+        fs.writeFileSync(folderPath + "/some_trigger.sql", `
+            create or replace function raise_error_on_some()
+            returns trigger as $body$
+                begin
+                    raise exception 'success';
+                end
+            $body$
+            language plpgsql;
+
+            create trigger raise_error_on_some_trigger
+            after insert or update or delete
+            on company
+            for each row
+            execute procedure raise_error_on_some();
+        `);
+
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        try {
+            await db.query("insert into company default values");
+            throw new Error("expected error");
+        } catch(err) {
+            assert.equal(err.message, "success");
+        }
+
+
+        // remove file for remove trigger from db
+        fs.unlinkSync(folderPath + "/some_trigger.sql");
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        try {
+            await db.query("insert into company default values");
+        } catch(err) {
+            assert.ok(false, "unexpected error: " + err.message);
+        }
+
+
+        db.end();
+        // clear state
+        del.sync(folderPath);
+    });
+
 
 });
