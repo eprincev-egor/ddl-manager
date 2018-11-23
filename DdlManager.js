@@ -8,6 +8,8 @@ const CreateFunction = require("./parser/syntax/CreateFunction");
 const _ = require("lodash");
 const pg = require("pg");
 
+const watchers = [];
+
 class DdlManager {
     static parseFolder(folderPath) {
         if ( !fs.existsSync(folderPath) ) {
@@ -525,6 +527,31 @@ class DdlManager {
         }
 
         console.log("ddl-manager build success");
+    }
+
+    static async watch({db, folder}) {
+        await DdlManager.build({db, folder});
+
+        let watcher = fs.watch(folder, {
+            recursive: true
+        }, async(eventType, fileName) => {
+
+            if ( eventType == "change" ) {
+                let file = DdlManager.parseFile(folder + "/" + fileName);
+                await DdlManager.migrateFunction(db, file.function);
+            }
+
+            console.log(eventType, fileName);
+        });
+
+        watchers.push(watcher);
+    }
+
+    static stopWatch() {
+        watchers.forEach(watcher => {
+            watcher.close();
+        });
+        watchers.splice(0, watchers.length);
     }
 }
 
