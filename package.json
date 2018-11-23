@@ -2,7 +2,7 @@
   "name": "ddl-manager",
   "version": "1.0.0",
   "description": "store postgres procedures and triggers in files",
-  "main": "DdlManager.js",
+  "main": "lib/DdlManager.js",
   "directories": {
     "test": "tests"
   },

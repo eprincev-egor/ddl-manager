@@ -2,7 +2,7 @@
 
 const assert = require("assert");
 const getDbClient = require("../utils/getDbClient");
-const DdlManager = require("../../DdlManager");
+const DdlManager = require("../../lib/DdlManager");
 
 describe("DlManager.migrateFunction, DlManager.migrateTrigger", () => {
     it("migrateFunction null", async() => {

@@ -2,7 +2,7 @@
 
 const assert = require("assert");
 const fs = require("fs");
-const DdlManager = require("../../DdlManager");
+const DdlManager = require("../../lib/DdlManager");
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 

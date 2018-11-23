@@ -1,7 +1,7 @@
 "use strict";
 
 const assert = require("assert");
-const DdlManager = require("../../DdlManager");
+const DdlManager = require("../../lib/DdlManager");
 
 describe("DddlManager.diffState freeze tests", () => {
 

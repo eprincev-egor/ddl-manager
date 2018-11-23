@@ -2,7 +2,7 @@
 
 const assert = require("assert");
 const _ = require("lodash");
-const DdlManager = require("../../DdlManager");
+const DdlManager = require("../../lib/DdlManager");
 
 describe("DddlManager.diffState", () => {
 

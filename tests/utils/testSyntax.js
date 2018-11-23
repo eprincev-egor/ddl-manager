@@ -1,7 +1,7 @@
 "use strict";
 
 const assert = require("assert");
-const DDLCoach = require("../../parser/DDLCoach");
+const DDLCoach = require("../../lib/parser/DDLCoach");
 const weakDeepEqual = require("./weakDeepEqual");
 
 function testSyntax(className, test) {
