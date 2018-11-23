@@ -31,6 +31,7 @@ tests.SquareBrackets = require("./syntax/SquareBrackets");
 tests.Substring = require("./syntax/Substring");
 tests.ToType = require("./syntax/ToType");
 tests.CreateTrigger = require("./syntax/CreateTrigger");
+tests.SqlFile = require("./syntax/SqlFile");
 
 for (let className in tests) {
     describe(className, () => {
