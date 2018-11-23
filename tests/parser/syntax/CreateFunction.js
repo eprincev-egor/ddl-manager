@@ -116,6 +116,23 @@ module.exports = [
         }
     },
     {
+        str: `create Function TEST_NAME()
+            returns void as $body$begin;end$body$
+            language plpgsql;
+        `,
+        result: {
+            schema: "public",
+            name: "test_name",
+            args: [],
+            returns: {
+                type: "void"
+            },
+            body: {
+                content: "begin;end"
+            }
+        }
+    },
+    {
         str: `create Function TEST_NAME(
             a text default 'hi'
         )
