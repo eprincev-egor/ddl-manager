@@ -52,11 +52,11 @@ describe("FilesState watch remove functions", () => {
     });
     
     afterEach(() => {
-        del.sync(ROOT_TMP_PATH);
-
         watchers_to_stop.forEach(filesState => 
             filesState.stopWatch()
         );
+
+        del.sync(ROOT_TMP_PATH);
     });
 
     
@@ -167,8 +167,6 @@ describe("FilesState watch remove functions", () => {
 
 
         filesState.watch();
-
-        await sleep(50);
         
         fs.unlinkSync(filePath);
 
