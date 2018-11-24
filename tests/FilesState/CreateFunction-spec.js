@@ -74,8 +74,10 @@ describe("FilesState watch create functions", () => {
         );
         
         let changes;
+        let counter = 0;
         filesState.on("change", (_changes) => {
             changes = _changes;
+            counter++;
         });
         watchers_to_stop.push(filesState);
         
@@ -84,6 +86,8 @@ describe("FilesState watch create functions", () => {
         fs.writeFileSync(filePath, test_func1_sql);
         
         await sleep(50);
+        
+        assert.equal(counter, 1);
         
         assert.deepEqual(changes, {
             drop: {

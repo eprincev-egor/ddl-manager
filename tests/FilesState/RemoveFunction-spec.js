@@ -142,9 +142,7 @@ describe("FilesState watch remove functions", () => {
     it("remove file from sub dir", async() => {
         let filePath = ROOT_TMP_PATH + "/child/xxx.sql";
         
-        fs.mkdirSync(ROOT_TMP_PATH + "/child", {
-            mode: parseInt("666", 8)
-        });
+        fs.mkdirSync(ROOT_TMP_PATH + "/child");
         fs.writeFileSync(filePath, test_func1_sql);
         
         let filesState = FilesState.create({
