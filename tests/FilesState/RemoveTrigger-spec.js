@@ -15,33 +15,72 @@ const watchers_to_stop = [];
 
 const test_func1_sql = `
     create or replace function some_func1()
-    returns void as $body$select 1$body$
+    returns trigger as $body$select 1$body$
     language sql;
+
+    create trigger some_trigger
+    before insert
+    on operation.company
+    for each row
+    execute procedure some_func1()
 `;
 const test_func1 = {
     language: "sql",
     schema: "public",
     name: "some_func1",
     args: [],
-    returns: "void",
+    returns: "trigger",
     body: "select 1"
 };
+const test_trigger1 = {
+    table: {
+        schema: "operation",
+        name: "company"
+    },
+    name: "some_trigger",
+    before: true,
+    insert: true,
+    procedure: {
+        schema: "public",
+        name: "some_func1"
+    }
+};
+
 
 const test_func2_sql = `
     create or replace function some_func2()
-    returns void as $body$select 2$body$
+    returns trigger as $body$select 2$body$
     language sql;
+
+    create trigger some_trigger2
+    before delete
+    on operation.company
+    for each row
+    execute procedure some_func2()
 `;
 const test_func2 = {
     language: "sql",
     schema: "public",
     name: "some_func2",
     args: [],
-    returns: "void",
+    returns: "trigger",
     body: "select 2"
 };
+const test_trigger2 = {
+    table: {
+        schema: "operation",
+        name: "company"
+    },
+    name: "some_trigger2",
+    before: true,
+    delete: true,
+    procedure: {
+        schema: "public",
+        name: "some_func2"
+    }
+};
 
-describe("FilesState watch remove functions", () => {
+describe("FilesState watch remove triggers", () => {
     const ROOT_TMP_PATH = __dirname + "/tmp";
     
     beforeEach(() => {
@@ -60,7 +99,7 @@ describe("FilesState watch remove functions", () => {
     });
 
     
-    it("remove function", async() => {
+    it("remove trigger", async() => {
         
         let filePath = ROOT_TMP_PATH + "/test-file.sql";
 
@@ -75,6 +114,11 @@ describe("FilesState watch remove functions", () => {
             [test_func1]
         );
 
+        assert.deepEqual(
+            filesState.getTriggers(), 
+            [test_trigger1]
+        );
+
         let changes;
         filesState.on("change", (_changes) => {
             changes = _changes;
@@ -92,7 +136,9 @@ describe("FilesState watch remove functions", () => {
                 functions: [
                     test_func1
                 ],
-                triggers: []
+                triggers: [
+                    test_trigger1
+                ]
             },
             create: {
                 functions: [],
@@ -101,91 +147,9 @@ describe("FilesState watch remove functions", () => {
         });
 
         assert.deepEqual(filesState.getFunctions(), []);
+        assert.deepEqual(filesState.getTriggers(), []);
     });
 
-
-    it("remove .md file", async() => {
-        
-        fs.writeFileSync(ROOT_TMP_PATH + "/test.sql", test_func1_sql);
-        
-        let mdFilePath = ROOT_TMP_PATH + "/test.md";
-        fs.writeFileSync(mdFilePath, test_func1_sql);
-
-        let filesState = FilesState.create({
-            folder: ROOT_TMP_PATH
-        });
-
-        // content from test.sql
-        assert.deepEqual(
-            filesState.getFunctions(), 
-            [test_func1]
-        );
-
-        let hasChanges = false;
-        filesState.on("change", () => {
-            hasChanges = true;
-        });
-        watchers_to_stop.push(filesState);
-
-        filesState.watch();
-
-        // remove .MD file
-        fs.unlinkSync(mdFilePath);
-        
-        await sleep(100);
-
-        assert.strictEqual(hasChanges, false);
-
-        assert.deepEqual(filesState.getFunctions(), [test_func1]);
-    });
-
-    it("remove file from sub dir", async() => {
-        let filePath = ROOT_TMP_PATH + "/sub/test.sql";
-        
-        fs.mkdirSync(ROOT_TMP_PATH + "/sub");
-        fs.writeFileSync(filePath, test_func1_sql);
-        
-        
-        let filesState = FilesState.create({
-            folder: ROOT_TMP_PATH
-        });
-
-        // content from test.sql
-        assert.deepEqual(
-            filesState.getFunctions(), 
-            [test_func1]
-        );
-
-
-        let changes;
-        filesState.on("change", (_changes) => {
-            changes = _changes;
-        });
-        watchers_to_stop.push(filesState);
-
-
-        filesState.watch();
-
-        fs.unlinkSync(filePath);
-
-        await sleep(50);
-
-
-        assert.deepEqual(changes, {
-            drop: {
-                functions: [
-                    test_func1
-                ],
-                triggers: []
-            },
-            create: {
-                functions: [],
-                triggers: []
-            }
-        });
-
-        assert.deepEqual(filesState.getFunctions(), []);
-    });
 
     it("twice remove", async() => {
         let filePath1 = ROOT_TMP_PATH + "/file1.sql";
@@ -199,12 +163,18 @@ describe("FilesState watch remove functions", () => {
             folder: ROOT_TMP_PATH
         });
 
-        // content from test.sql
         assert.deepEqual(
             filesState.getFunctions(), 
             [
                 test_func1,
                 test_func2
+            ]
+        );
+        assert.deepEqual(
+            filesState.getTriggers(), 
+            [
+                test_trigger1,
+                test_trigger2
             ]
         );
 
@@ -227,7 +197,9 @@ describe("FilesState watch remove functions", () => {
                 functions: [
                     test_func1
                 ],
-                triggers: []
+                triggers: [
+                    test_trigger1
+                ]
             },
             create: {
                 functions: [],
@@ -239,6 +211,9 @@ describe("FilesState watch remove functions", () => {
         assert.deepEqual(filesState.getFunctions(), [
             test_func2
         ]);
+        assert.deepEqual(filesState.getTriggers(), [
+            test_trigger2
+        ]);
 
         fs.unlinkSync(filePath2);
 
@@ -249,7 +224,9 @@ describe("FilesState watch remove functions", () => {
                 functions: [
                     test_func2
                 ],
-                triggers: []
+                triggers: [
+                    test_trigger2
+                ]
             },
             create: {
                 functions: [],
@@ -259,7 +236,6 @@ describe("FilesState watch remove functions", () => {
 
 
         assert.deepEqual(filesState.getFunctions(), []);
+        assert.deepEqual(filesState.getTriggers(), []);
     });
-
-
 });
