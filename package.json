@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "mocha tests/**/*-spec.js --exit",
+    "test": "mocha tests/**/*-spec.js --timeout 9999 --exit",
     "lint": "eslint ./**/*.js"
   },
   "repository": {
