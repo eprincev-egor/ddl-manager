@@ -85,7 +85,7 @@ describe("FilesState watch remove functions", () => {
 
         fs.unlinkSync(filePath);
         
-        await sleep(250);
+        await sleep(1000);
 
         assert.deepEqual(changes, {
             drop: {
@@ -167,7 +167,7 @@ describe("FilesState watch remove functions", () => {
         
         fs.unlinkSync(filePath);
 
-        await sleep(250);
+        await sleep(1000);
 
         assert.deepEqual(changes, {
             drop: {
@@ -218,7 +218,7 @@ describe("FilesState watch remove functions", () => {
 
         fs.unlinkSync(filePath1);
 
-        await sleep(250);
+        await sleep(1000);
 
         assert.deepEqual(changes, {
             drop: {
@@ -240,7 +240,7 @@ describe("FilesState watch remove functions", () => {
 
         fs.unlinkSync(filePath2);
 
-        await sleep(250);
+        await sleep(1000);
 
         assert.deepEqual(changes, {
             drop: {

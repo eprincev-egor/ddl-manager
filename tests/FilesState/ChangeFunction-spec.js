@@ -86,7 +86,7 @@ describe("FilesState watch change functions", () => {
         
         
         fs.writeFileSync(filePath, test_func2_sql);
-        await sleep(250);
+        await sleep(1000);
         
         assert.deepEqual(changes, {
             drop: {
@@ -135,7 +135,7 @@ describe("FilesState watch change functions", () => {
         
         
         fs.writeFileSync(filePath, test_func1_sql);
-        await sleep(250);
+        await sleep(1000);
         
         assert.equal(counter, 0);
         
@@ -171,7 +171,7 @@ describe("FilesState watch change functions", () => {
         
         
         fs.writeFileSync(filePath2, test_func1_sql);
-        await sleep(250);
+        await sleep(1000);
         
         assert.equal(error && error.message, "duplicate function public.some_func1()");
 
@@ -208,7 +208,7 @@ describe("FilesState watch change functions", () => {
         
         
         fs.writeFileSync(filePath, test_func2_sql);
-        await sleep(250);
+        await sleep(1000);
         
         assert.deepEqual(changes, {
             drop: {
@@ -233,7 +233,7 @@ describe("FilesState watch change functions", () => {
 
 
         fs.writeFileSync(filePath, test_func1_sql);
-        await sleep(250);
+        await sleep(1000);
         
         assert.deepEqual(changes, {
             drop: {
