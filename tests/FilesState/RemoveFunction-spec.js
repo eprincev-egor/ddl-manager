@@ -81,7 +81,7 @@ describe("FilesState watch remove functions", () => {
         });
         watchers_to_stop.push(filesState);
 
-        filesState.watch();
+        await filesState.watch();
 
         fs.unlinkSync(filePath);
         
@@ -127,7 +127,7 @@ describe("FilesState watch remove functions", () => {
         });
         watchers_to_stop.push(filesState);
 
-        filesState.watch();
+        await filesState.watch();
 
         // remove .MD file
         fs.unlinkSync(mdFilePath);
@@ -163,7 +163,7 @@ describe("FilesState watch remove functions", () => {
         watchers_to_stop.push(filesState);
 
 
-        filesState.watch();
+        await filesState.watch();
         
         fs.unlinkSync(filePath);
 
@@ -214,7 +214,7 @@ describe("FilesState watch remove functions", () => {
         watchers_to_stop.push(filesState);
 
 
-        filesState.watch();
+        await filesState.watch();
 
         fs.unlinkSync(filePath1);
 

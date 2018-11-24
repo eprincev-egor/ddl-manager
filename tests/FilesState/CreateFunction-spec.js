@@ -81,7 +81,7 @@ describe("FilesState watch create functions", () => {
         });
         watchers_to_stop.push(filesState);
         
-        filesState.watch();
+        await filesState.watch();
         
         fs.writeFileSync(filePath, test_func1_sql);
         
@@ -126,7 +126,7 @@ describe("FilesState watch create functions", () => {
             error = err;
         });
 
-        filesState.watch();
+        await filesState.watch();
         
         fs.writeFileSync(filePath1, test_func1_sql);
         await sleep(50);
@@ -161,7 +161,7 @@ describe("FilesState watch create functions", () => {
         });
         watchers_to_stop.push(filesState);
         
-        filesState.watch();
+        await filesState.watch();
         
         fs.writeFileSync(filePath, test_func1_sql);
         
@@ -193,7 +193,7 @@ describe("FilesState watch create functions", () => {
         });
         watchers_to_stop.push(filesState);
         
-        filesState.watch();
+        await filesState.watch();
         
 
 

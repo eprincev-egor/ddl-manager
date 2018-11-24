@@ -82,7 +82,7 @@ describe("FilesState watch change functions", () => {
         });
         watchers_to_stop.push(filesState);
         
-        filesState.watch();
+        await filesState.watch();
         
         
         fs.writeFileSync(filePath, test_func2_sql);
@@ -131,7 +131,7 @@ describe("FilesState watch change functions", () => {
         });
         watchers_to_stop.push(filesState);
         
-        filesState.watch();
+        await filesState.watch();
         
         
         fs.writeFileSync(filePath, test_func1_sql);
@@ -167,7 +167,7 @@ describe("FilesState watch change functions", () => {
         });
         watchers_to_stop.push(filesState);
         
-        filesState.watch();
+        await filesState.watch();
         
         
         fs.writeFileSync(filePath2, test_func1_sql);
@@ -204,7 +204,7 @@ describe("FilesState watch change functions", () => {
         });
         watchers_to_stop.push(filesState);
         
-        filesState.watch();
+        await filesState.watch();
         
         
         fs.writeFileSync(filePath, test_func2_sql);
