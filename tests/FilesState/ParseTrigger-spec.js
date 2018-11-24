@@ -155,5 +155,46 @@ describe("FilesState parse functions and triggers", () => {
         fs.unlinkSync(filePath);
     });
 
+    it("expected error on duplicate trigger", () => {
+        let sql1 = `
+            create or replace function func1()
+            returns trigger as $body$select 1$body$
+            language sql;
+
+            create trigger some_trigger
+            after insert
+            on company
+            for each row
+            execute procedure func1();
+        `;
+        let sql2 = `
+            create or replace function func2()
+            returns trigger as $body$select 2$body$
+            language sql;
+
+            create trigger some_trigger
+            after delete
+            on company
+            for each row
+            execute procedure func2();
+        `;
+        
+        let filePath1 = ROOT_TMP_PATH + "/func1.sql";
+        let filePath2 = ROOT_TMP_PATH + "/func2.sql";
+        fs.writeFileSync(filePath1, sql1);
+        fs.writeFileSync(filePath2, sql2);
+
+        try {
+            FilesState.create({
+                folder: ROOT_TMP_PATH
+            });
+
+            throw new Error("expected error");
+        } catch(err) {
+            assert.equal(err.message, "duplicate trigger some_trigger on public.company");
+        }
+        
+    });
+
 
 });
