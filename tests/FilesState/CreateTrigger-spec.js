@@ -182,11 +182,21 @@ describe("FilesState watch create functions", () => {
         fs.writeFileSync(filePath1, test_func1_sql);
         await sleep(50);
 
-        fs.writeFileSync(filePath2, test_func1_sql);
+        fs.writeFileSync(filePath2, `
+            create or replace function another_func()
+            returns trigger as $body$select 1$body$
+            language sql;
+        
+            create trigger some_trigger
+            before delete
+            on operation.company
+            for each row
+            execute procedure another_func()
+        `);
         await sleep(50);
 
         
-        assert.equal(error && error.message, "duplicate function public.some_func1()");
+        assert.equal(error && error.message, "duplicate trigger some_trigger on operation.company");
 
         assert.deepEqual(filesState.getFunctions(), [
             test_func1
