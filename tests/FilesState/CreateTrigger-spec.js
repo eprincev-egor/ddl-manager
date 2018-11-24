@@ -128,7 +128,7 @@ describe("FilesState watch create functions", () => {
         await filesState.watch();
         
         fs.writeFileSync(filePath, test_func1_sql);
-        await sleep(50);
+        await sleep(150);
         
         assert.deepEqual(changes, {
             drop: {
@@ -180,7 +180,7 @@ describe("FilesState watch create functions", () => {
         await filesState.watch();
         
         fs.writeFileSync(filePath1, test_func1_sql);
-        await sleep(50);
+        await sleep(150);
 
         fs.writeFileSync(filePath2, `
             create or replace function another_func()
@@ -193,7 +193,7 @@ describe("FilesState watch create functions", () => {
             for each row
             execute procedure another_func()
         `);
-        await sleep(50);
+        await sleep(150);
 
         
         assert.equal(error && error.message, "duplicate trigger some_trigger on operation.company");
@@ -238,7 +238,7 @@ describe("FilesState watch create functions", () => {
 
 
         fs.writeFileSync(filePath1, test_func1_sql);
-        await sleep(50);
+        await sleep(150);
         
         assert.deepEqual(changes, {
             drop: {
@@ -264,7 +264,7 @@ describe("FilesState watch create functions", () => {
 
 
         fs.writeFileSync(filePath2, test_func2_sql);
-        await sleep(50);
+        await sleep(150);
         
         assert.deepEqual(changes, {
             drop: {
