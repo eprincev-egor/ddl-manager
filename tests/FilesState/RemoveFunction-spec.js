@@ -168,9 +168,11 @@ describe("FilesState watch remove functions", () => {
 
         filesState.watch();
 
+        await sleep(50);
+        
         fs.unlinkSync(filePath);
 
-        await sleep(200);
+        await sleep(50);
 
         console.log("-----");
         console.log("-----");
