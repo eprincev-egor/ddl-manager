@@ -170,7 +170,7 @@ describe("FilesState watch remove functions", () => {
 
         fs.unlinkSync(filePath);
 
-        await sleep(50);
+        await sleep(200);
 
         console.log("-----");
         console.log("-----");
