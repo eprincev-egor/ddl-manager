@@ -145,7 +145,9 @@ describe("FilesState watch remove functions", () => {
         fs.mkdirSync(ROOT_TMP_PATH + "/sub");
         fs.writeFileSync(filePath, test_func1_sql);
         
-        
+        console.log("start");
+        console.log("-----");
+        console.log("-----");
         let filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
@@ -170,6 +172,9 @@ describe("FilesState watch remove functions", () => {
 
         await sleep(50);
 
+        console.log("-----");
+        console.log("-----");
+        console.log("end");
 
         assert.deepEqual(changes, {
             drop: {
