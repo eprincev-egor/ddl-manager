@@ -58,6 +58,7 @@ describe("FilesState parse files in sub dirs", () => {
         assert.deepEqual(filesState.getFiles(), [
             {
                 name: "some.sql",
+                path: "some.sql",
                 content: {
                     function: func
                 }
@@ -109,12 +110,14 @@ describe("FilesState parse files in sub dirs", () => {
         assert.deepEqual(filesState.getFiles(), [
             {
                 name: "some1.sql",
+                path: "some1.sql",
                 content: {
                     function: func1
                 }
             },
             {
                 name: "some2.sql",
+                path: "some2.sql",
                 content: {
                     function: func2
                 }
@@ -181,6 +184,7 @@ describe("FilesState parse files in sub dirs", () => {
         assert.deepEqual(files, [
             {
                 name: "test1.sql",
+                path: "first/test1.sql",
                 content: {
                     function: {
                         language: "plpgsql",
@@ -194,6 +198,7 @@ describe("FilesState parse files in sub dirs", () => {
             },
             {
                 name: "test2.sql",
+                path: "first/second/test2.sql",
                 content: {
                     function: {
                         language: "plpgsql",
@@ -207,6 +212,7 @@ describe("FilesState parse files in sub dirs", () => {
             },
             {
                 name: "test3.sql",
+                path: "first/second/third/test3.sql",
                 content: {
                     function: {
                         language: "plpgsql",
@@ -220,6 +226,7 @@ describe("FilesState parse files in sub dirs", () => {
             },
             {
                 name: "x.sql",
+                path: "first/x.sql",
                 content: {
                     function: {
                         language: "plpgsql",
@@ -233,6 +240,7 @@ describe("FilesState parse files in sub dirs", () => {
             },
             {
                 name: "x.sql",
+                path: "first/second/third/x.sql",
                 content: {
                     function: {
                         language: "plpgsql",
