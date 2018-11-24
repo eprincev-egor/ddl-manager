@@ -129,7 +129,7 @@ describe("FilesState watch remove triggers", () => {
 
         fs.unlinkSync(filePath);
         
-        await sleep(1000);
+        await sleep(50);
 
         assert.deepEqual(changes, {
             drop: {
@@ -190,7 +190,7 @@ describe("FilesState watch remove triggers", () => {
 
         fs.unlinkSync(filePath1);
 
-        await sleep(1000);
+        await sleep(50);
 
         assert.deepEqual(changes, {
             drop: {
@@ -217,7 +217,7 @@ describe("FilesState watch remove triggers", () => {
 
         fs.unlinkSync(filePath2);
 
-        await sleep(1000);
+        await sleep(50);
 
         assert.deepEqual(changes, {
             drop: {
