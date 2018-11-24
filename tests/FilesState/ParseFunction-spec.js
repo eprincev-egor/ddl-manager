@@ -174,4 +174,84 @@ describe("FilesState parse functions", () => {
         assert.deepEqual(actualResult, expectedResult);
     });
 
+
+
+    it("expected error on duplicate functions", () => {
+        let sql1 = `
+            create or replace function func1()
+            returns bigint as $body$select 1$body$
+            language sql;
+        `;
+        let sql2 = `
+            create or replace function func1()
+            returns integer as $body$select 2$body$
+            language sql;
+        `;
+        
+        let filePath1 = ROOT_TMP_PATH + "/func1.sql";
+        let filePath2 = ROOT_TMP_PATH + "/func2.sql";
+        fs.writeFileSync(filePath1, sql1);
+        fs.writeFileSync(filePath2, sql2);
+
+        try {
+            FilesState.create({
+                folder: ROOT_TMP_PATH
+            });
+
+            throw new Error("expected error");
+        } catch(err) {
+            assert.equal(err.message, "duplicate function public.func1()");
+        }
+        
+    });
+
+    it("same functions, but another args", () => {
+        let sql1 = `
+            create or replace function func1()
+            returns bigint as $body$select 1$body$
+            language sql;
+        `;
+        let func1 = {
+            schema: "public",
+            name: "func1",
+            args: [],
+            returns: "bigint",
+            language: "sql",
+            body: "select 1"
+        };
+        let sql2 = `
+            create or replace function func1(a text)
+            returns integer as $body$select 2$body$
+            language sql;
+        `;
+        let func2 = {
+            schema: "public",
+            name: "func1",
+            args: [
+                {
+                    name: "a",
+                    type: "text"
+                }
+            ],
+            returns: "integer",
+            language: "sql",
+            body: "select 2"
+        };
+        
+        
+        let filePath1 = ROOT_TMP_PATH + "/func1.sql";
+        let filePath2 = ROOT_TMP_PATH + "/func2.sql";
+        fs.writeFileSync(filePath1, sql1);
+        fs.writeFileSync(filePath2, sql2);
+
+        let filesState = FilesState.create({
+            folder: ROOT_TMP_PATH
+        });
+        
+        assert.deepEqual(filesState.getFunctions(), [
+            func1,
+            func2
+        ]);
+    });
+
 });
