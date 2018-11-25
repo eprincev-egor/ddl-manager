@@ -158,6 +158,16 @@ module.exports = [
         }
     },
     {
+        str: `create Function test(
+            a text default null,
+            b integer
+        )
+            returns trigger as $body$begin;end$body$
+            language plpgsql;
+        `,
+        error: Error
+    },
+    {
         str: `create function test_sql_lang()
             returns integer as $body$select 1$body$
             language sql;

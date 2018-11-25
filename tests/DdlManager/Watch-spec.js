@@ -14,15 +14,14 @@ async function sleep(ms) {
     });
 }
 
-before(() => {
-    if ( !fs.existsSync(ROOT_TMP_PATH) ) {
-        fs.mkdirSync(ROOT_TMP_PATH);
-    }
-});
-
-
 describe("DdlManager.watch", () => {
-    
+        
+    before(() => {
+        if ( !fs.existsSync(ROOT_TMP_PATH) ) {
+            fs.mkdirSync(ROOT_TMP_PATH);
+        }
+    });
+
     it("watch nonexistent folder", async() => {
         let db = await getDbClient();
 

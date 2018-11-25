@@ -14,9 +14,9 @@ function testSyntax(className, test) {
             try {
                 let coach = new DDLCoach(str);
                 coach[ parseFuncName ]();
-                assert.ok(false, "expected error: " + str);
+                assert.ok(false, "expected error");
             } catch(err) {
-                assert.ok(true, "expected error: " + str);
+                assert.ok(err.message != "expected error", "expected error: " + str);
             }
         }
 
