@@ -254,4 +254,58 @@ describe("FilesState parse functions", () => {
         ]);
     });
 
+    
+    it("parse file with comments", () => {
+        let body = `
+        begin
+            return a + b;
+        end
+        `;
+
+        let sql = `
+            -- some comment here
+            /*
+                and here
+            */
+           
+            create or replace function public.test_a_plus_b(
+                a bigint,
+                b bigint
+            )
+            returns bigint as $body$${body}$body$
+            language plpgsql;
+        `.trim();
+        
+        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        fs.writeFileSync(filePath, sql);
+
+        let expectedResult = [
+            {
+                language: "plpgsql",
+                schema: "public",
+                name: "test_a_plus_b",
+                args: [
+                    {
+                        name: "a",
+                        type: "bigint"
+                    },
+                    {
+                        name: "b",
+                        type: "bigint"
+                    }
+                ],
+                returns: "bigint",
+                body
+            }
+        ];
+
+        let filesState = FilesState.create({
+            folder: ROOT_TMP_PATH
+        });
+
+        let actualResult = filesState.getFunctions();
+
+        assert.deepEqual(actualResult, expectedResult);
+    });
+
 });
