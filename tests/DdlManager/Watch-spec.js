@@ -115,4 +115,39 @@ describe("DdlManager.watch", () => {
         });
     });
 
+    it("watch with dbConfig", async() => {
+        let folderPath = ROOT_TMP_PATH + "/simple-func";
+        fs.mkdirSync(folderPath);
+
+        await DdlManager.watch({
+            db: {
+                database: db.database,
+                user: db.user,
+                password: db.password,
+                host: db.host,
+                port: db.port
+            }, 
+            folder: folderPath
+        });
+
+        fs.writeFileSync(folderPath + "/nice.sql", `
+            create or replace function nice()
+            returns integer as $body$
+                begin
+                    return 1;
+                end
+            $body$
+            language plpgsql;
+        `);
+
+        await sleep(50);
+
+        let result = await db.query("select nice() as nice");
+        let row = result.rows[0];
+
+        assert.deepEqual(row, {
+            nice: 1
+        });
+    });
+
 });
