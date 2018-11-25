@@ -150,4 +150,37 @@ describe("DdlManager.watch", () => {
         });
     });
 
+    it("watch file with error, and without", async() => {
+
+        await DdlManager.watch({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+        await DdlManager.watch({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+        // file with syntax error
+        fs.writeFileSync(ROOT_TMP_PATH + "/test_errors.sql", `
+            create or replace
+        `);
+        await sleep(50);
+
+        // file without syntax error
+        fs.writeFileSync(ROOT_TMP_PATH + "/test_errors.sql", `
+            create or replace function test()
+            returns integer as $$select 1$$
+            language sql;
+        `);
+        await sleep(50);
+
+        let result = await db.query("select test() as nice");
+        let row = result.rows[0];
+
+        assert.deepEqual(row, {
+            nice: 1
+        });
+    });
 });
