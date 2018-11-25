@@ -1,6 +1,6 @@
 "use strict";
 
-const DdlManager = require("../../DdlManager");
+const DdlManager = require("../../lib/DdlManager");
 const dbConfig = require("../database-config");
 
 (async function() {
