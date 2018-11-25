@@ -225,49 +225,156 @@ describe("DlManager.migrate", () => {
         }
     });
 
-    // it("freeze function with another args", async() => {
-    //     await db.query(`
-    //         create function test(a integer)
-    //         returns integer as $$select 1$$
-    //         language sql;
-    //     `);
+    it("freeze function with another args", async() => {
+        await db.query(`
+            create function test(a integer)
+            returns integer as $$select 1$$
+            language sql;
+        `);
 
-    //     await DdlManager.migrate(db, {
-    //         drop: {
-    //             functions: [],
-    //             triggers: []
-    //         },
-    //         create: {
-    //             functions: [
-    //                 {
-    //                     language: "sql",
-    //                     schema: "public",
-    //                     name: "test",
-    //                     args: [
-    //                         {
-    //                             name: "a",
-    //                             type: "integer"
-    //                         },
-    //                         {
-    //                             name: "b",
-    //                             type: "integer"
-    //                         }
-    //                     ],
-    //                     returns: "integer",
-    //                     body: "select 2"
-    //                 }
-    //             ],
-    //             triggers: []
-    //         }
-    //     });
+        await DdlManager.migrate(db, {
+            drop: {
+                functions: [],
+                triggers: []
+            },
+            create: {
+                functions: [
+                    {
+                        language: "sql",
+                        schema: "public",
+                        name: "test",
+                        args: [
+                            {
+                                name: "a",
+                                type: "integer"
+                            },
+                            {
+                                name: "b",
+                                type: "integer"
+                            }
+                        ],
+                        returns: "integer",
+                        body: "select 2"
+                    }
+                ],
+                triggers: []
+            }
+        });
 
-    //     let result = await db.query("select test(1, 2)");
-    //     let row = result && result.rows[0];
+        let result = await db.query("select test(1, 2)");
+        let row = result && result.rows[0];
         
-    //     result = row.test;
+        result = row.test;
 
-    //     assert.equal(result, 2);
+        assert.equal(result, 2);
 
-    // });
+    });
 
+    
+    it("freeze function with another arg type", async() => {
+        await db.query(`
+            create function test(a numeric)
+            returns integer as $$select 1$$
+            language sql;
+        `);
+
+        await DdlManager.migrate(db, {
+            drop: {
+                functions: [],
+                triggers: []
+            },
+            create: {
+                functions: [
+                    {
+                        language: "sql",
+                        schema: "public",
+                        name: "test",
+                        args: [
+                            {
+                                name: "a",
+                                type: "bigint"
+                            }
+                        ],
+                        returns: "integer",
+                        body: "select 2"
+                    }
+                ],
+                triggers: []
+            }
+        });
+
+        let result = await db.query("select test(1::bigint)");
+        let row = result && result.rows[0];
+        
+        result = row.test;
+
+        assert.equal(result, 2);
+
+    });
+
+    it("error on replace freeze trigger", async() => {
+        await db.query(`
+            create table company (
+                id serial primary key
+            );
+
+            create function test()
+            returns trigger as $$
+            begin
+                return new;
+            end
+            $$
+            language plpgsql;
+            
+            create trigger x
+            after insert
+            on company
+            for each row
+            execute procedure test()
+        `);
+
+        try {
+            await DdlManager.migrate(db, {
+                drop: {
+                    functions: [],
+                    triggers: []
+                },
+                create: {
+                    functions: [
+                        {
+                            language: "plpgsql",
+                            schema: "public",
+                            name: "test2",
+                            args: [],
+                            returns: "trigger",
+                            body: `
+                                begin
+                                    return new;
+                                end
+                            `
+                        }
+                    ],
+                    triggers: [
+                        {
+                            table: {
+                                schema: "public",
+                                name: "company"
+                            },
+                            name: "x",
+                            after: true,
+                            delete: true,
+                            procedure: {
+                                schema: "public",
+                                name: "test"
+                            }
+                        }
+                    ]
+                }
+            });
+
+            throw new Error("expected error");
+        } catch(err) {
+            assert.equal(err.message, "cannot replace freeze trigger x on public.company");
+        }
+    });
 });
