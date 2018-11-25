@@ -225,6 +225,40 @@ describe("DlManager.migrate", () => {
         }
     });
 
+    it("error on drop freeze function", async() => {
+        await db.query(`
+            create function test()
+            returns integer as $$select 1$$
+            language sql;
+        `);
+
+        try {
+            await DdlManager.migrate(db, {
+                drop: {
+                    functions: [
+                        {
+                            language: "sql",
+                            schema: "public",
+                            name: "test",
+                            args: [],
+                            returns: "integer",
+                            body: "select 2"
+                        }
+                    ],
+                    triggers: []
+                },
+                create: {
+                    functions: [],
+                    triggers: []
+                }
+            });
+
+            throw new Error("expected error");
+        } catch(err) {
+            assert.equal(err.message, "cannot drop freeze function public.test()");
+        }
+    });
+
     it("freeze function with another args", async() => {
         await db.query(`
             create function test(a integer)
@@ -375,6 +409,72 @@ describe("DlManager.migrate", () => {
             throw new Error("expected error");
         } catch(err) {
             assert.equal(err.message, "cannot replace freeze trigger x on public.company");
+        }
+    });
+
+    it("error on drop freeze trigger", async() => {
+        await db.query(`
+            create table company (
+                id serial primary key
+            );
+
+            create function test()
+            returns trigger as $$
+            begin
+                return new;
+            end
+            $$
+            language plpgsql;
+            
+            create trigger x
+            after insert
+            on company
+            for each row
+            execute procedure test()
+        `);
+
+        try {
+            await DdlManager.migrate(db, {
+                drop: {
+                    functions: [
+                        {
+                            language: "plpgsql",
+                            schema: "public",
+                            name: "test2",
+                            args: [],
+                            returns: "trigger",
+                            body: `
+                                begin
+                                    return new;
+                                end
+                            `
+                        }
+                    ],
+                    triggers: [
+                        {
+                            table: {
+                                schema: "public",
+                                name: "company"
+                            },
+                            name: "x",
+                            after: true,
+                            delete: true,
+                            procedure: {
+                                schema: "public",
+                                name: "test"
+                            }
+                        }
+                    ]
+                },
+                create: {
+                    functions: [],
+                    triggers: []
+                }
+            });
+
+            throw new Error("expected error");
+        } catch(err) {
+            assert.equal(err.message, "cannot drop freeze trigger x on public.company");
         }
     });
 });

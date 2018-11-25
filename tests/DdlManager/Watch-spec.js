@@ -183,4 +183,75 @@ describe("DdlManager.watch", () => {
             nice: 1
         });
     });
+
+
+    
+    it("don't drop freeze function", async() => {
+        let result;
+        let row;
+
+        await DdlManager.watch({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+        // create freeze function
+        await db.query(`
+            create or replace function test()
+            returns integer as $body$
+                begin
+                    return 1;
+                end
+            $body$
+            language plpgsql;
+        `);
+
+        // create function with same function identify
+        fs.writeFileSync(ROOT_TMP_PATH + "/test.sql", `
+            create or replace function test()
+            returns integer as $body$
+                begin
+                    return 2;
+                end
+            $body$
+            language plpgsql;
+        `);
+        await sleep(50);
+
+        result = await db.query("select test() as test");
+        row = result.rows[0];
+
+        assert.deepEqual(row, {
+            test: 1
+        });
+
+        // change function name
+        fs.writeFileSync(ROOT_TMP_PATH + "/test.sql", `
+            create or replace function test2()
+            returns integer as $body$
+                begin
+                    return 2;
+                end
+            $body$
+            language plpgsql;
+        `);
+        await sleep(50);
+
+        // new function must be created
+        result = await db.query("select test2() as test2");
+        row = result.rows[0];
+
+        assert.deepEqual(row, {
+            test2: 2
+        });
+
+        // freeze function should not be dropped
+        result = await db.query("select test() as test");
+        row = result.rows[0];
+
+        assert.deepEqual(row, {
+            test: 1
+        });
+    });
+
 });
