@@ -3,7 +3,7 @@
 module.exports = [
     {
         str: `create or replace function 
-            TEST_NAME(id integer, names text[])
+            TEST_NAME(xid integer, names text[])
             returns table(
                 id integer, 
                 sum numeric
@@ -15,7 +15,7 @@ module.exports = [
             name: "test_name",
             args: [
                 {
-                    name: "id",
+                    name: "xid",
                     type: "integer"
                 },
                 {
@@ -42,7 +42,39 @@ module.exports = [
     },
     {
         str: `create or replace function 
-            TEST_NAME(id integer, names text[])
+            TEST_NAME(id integer)
+            returns table(
+                id integer
+            ) as $body$begin;end$body$
+            language plpgsql;
+        `,
+        // parameter name "id" used more than once
+        error: Error
+    },
+    {
+        str: `create or replace function 
+            TEST_NAME()
+            returns table(
+                id integer,
+                id text
+            ) as $body$begin;end$body$
+            language plpgsql;
+        `,
+        // parameter name "id" used more than once
+        error: Error
+    },
+    {
+        str: `create or replace function 
+            TEST_NAME(id integer, id text)
+            returns integer as $body$begin;end$body$
+            language plpgsql;
+        `,
+        // parameter name "id" used more than once
+        error: Error
+    },
+    {
+        str: `create or replace function 
+            TEST_NAME(xid integer, names text[])
             returns table(
                 id integer, 
                 sum numeric
@@ -56,7 +88,7 @@ module.exports = [
             name: "test_name",
             args: [
                 {
-                    name: "id",
+                    name: "xid",
                     type: "integer"
                 },
                 {
@@ -136,7 +168,7 @@ module.exports = [
         str: `create Function TEST_NAME(
             a text default 'hi'
         )
-            returns trigger as $body$begin;end$body$
+            returns void as $body$begin;end$body$
             language plpgsql;
         `,
         result: {
@@ -150,7 +182,7 @@ module.exports = [
                 }
             ],
             returns: {
-                type: "trigger"
+                type: "void"
             },
             body: {
                 content: "begin;end"
@@ -162,7 +194,7 @@ module.exports = [
             a text default null,
             b integer
         )
-            returns trigger as $body$begin;end$body$
+            returns void as $body$begin;end$body$
             language plpgsql;
         `,
         error: Error
