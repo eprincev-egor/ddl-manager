@@ -1,7 +1,16 @@
 "use strict";
 
 const assert = require("assert");
-const DdlManager = require("../../lib/DdlManager");
+const DbState = require("../../lib/DbState");
+
+function diffState({filesState, dbState}) {
+    let state = new DbState();
+
+    state.functions = dbState.functions;
+    state.triggers = dbState.triggers;
+
+    return state.getDiff( filesState );
+}
 
 describe("DddlManager.diffState freeze tests", () => {
 
@@ -17,7 +26,7 @@ describe("DddlManager.diffState freeze tests", () => {
             end`
         };
 
-        let diff = DdlManager.diffState({
+        let diff = diffState({
             filesState: {
                 functions: [],
                 triggers: []
@@ -70,7 +79,7 @@ describe("DddlManager.diffState freeze tests", () => {
         };
 
         try {
-            DdlManager.diffState({
+            diffState({
                 filesState: {
                     functions: [
                         fileFunc
@@ -117,7 +126,7 @@ describe("DddlManager.diffState freeze tests", () => {
             }
         };
 
-        let diff = DdlManager.diffState({
+        let diff = diffState({
             filesState: {
                 functions: [],
                 triggers: []
@@ -192,7 +201,7 @@ describe("DddlManager.diffState freeze tests", () => {
         };
 
         try {
-            DdlManager.diffState({
+            diffState({
                 filesState: {
                     functions: [
                         func

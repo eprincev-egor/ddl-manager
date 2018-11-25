@@ -2,12 +2,21 @@
 
 const assert = require("assert");
 const _ = require("lodash");
-const DdlManager = require("../../lib/DdlManager");
+const DbState = require("../../lib/DbState");
 
-describe("DddlManager.diffState", () => {
+function diffState({filesState, dbState}) {
+    let state = new DbState();
+
+    state.functions = dbState.functions;
+    state.triggers = dbState.triggers;
+
+    return state.getDiff( filesState );
+}
+
+describe("DbState.getDiff", () => {
 
     it("sync empty state", () => {
-        let diff = DdlManager.diffState({
+        let diff = diffState({
             filesState: {
                 functions: [],
                 triggers: []
@@ -54,7 +63,7 @@ describe("DddlManager.diffState", () => {
             end`
         };
 
-        let diff = DdlManager.diffState({
+        let diff = diffState({
             filesState: {
                 functions: [
                     func
@@ -104,7 +113,7 @@ describe("DddlManager.diffState", () => {
                 return x + y;
             end`
         };
-        let diff = DdlManager.diffState({
+        let diff = diffState({
             filesState: {
                 functions: [],
                 triggers: []
@@ -174,7 +183,7 @@ describe("DddlManager.diffState", () => {
             end`
         };
 
-        let diff = DdlManager.diffState({
+        let diff = diffState({
             filesState: {
                 functions: [
                     fileFunc
@@ -254,7 +263,7 @@ describe("DddlManager.diffState", () => {
             end`
         };
 
-        let diff = DdlManager.diffState({
+        let diff = diffState({
             filesState: {
                 functions: [
                     fileFunc
@@ -300,7 +309,7 @@ describe("DddlManager.diffState", () => {
             end`
         };
 
-        let diff = DdlManager.diffState({
+        let diff = diffState({
             filesState: {
                 functions: [
                     func
@@ -368,7 +377,7 @@ describe("DddlManager.diffState", () => {
             }
         };
 
-        let diff = DdlManager.diffState({
+        let diff = diffState({
             filesState: {
                 functions: [
                     func
@@ -437,7 +446,7 @@ describe("DddlManager.diffState", () => {
         let dbTrigger = _.cloneDeep(trigger);
         dbTrigger.freeze = false;
 
-        let diff = DdlManager.diffState({
+        let diff = diffState({
             filesState: {
                 functions: [
                     func

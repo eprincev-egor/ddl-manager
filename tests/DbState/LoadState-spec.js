@@ -5,37 +5,42 @@ const fs = require("fs");
 const del = require("del");
 const getDbClient = require("../utils/getDbClient");
 const DdlManager = require("../../lib/DdlManager");
+const DbState = require("../../lib/DbState");
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
-before(() => {
-    if ( !fs.existsSync(ROOT_TMP_PATH) ) {
+describe("DbState.load", () => {
+    let db;
+
+    beforeEach(async() => {
+        if ( fs.existsSync(ROOT_TMP_PATH) ) {
+            del.sync(ROOT_TMP_PATH);
+        }
         fs.mkdirSync(ROOT_TMP_PATH);
-    }
-});
 
-describe("DdlManager.loadState", () => {
-
-    it("load empty state", async() => {
-        let db = await getDbClient();
+        db = await getDbClient();
 
         await db.query(`
             drop schema public cascade;
             create schema public;
         `);
+    });
 
-        let state = await DdlManager.loadState(db);
+    afterEach(async() => {
+        db.end();
+    });
+    
+    it("load empty state", async() => {
+        let state = new DbState(db);
+        await state.load();
 
-        assert.deepEqual(state, {
+        assert.deepEqual(state.toJSON(), {
             functions: [],
             triggers: []
         });
-
-        db.end();
     });
 
     it("load simple function", async() => {
-        let db = await getDbClient();
 
         let body = `
             begin
@@ -43,16 +48,15 @@ describe("DdlManager.loadState", () => {
             end
         `;
         await db.query(`
-            drop schema public cascade;
-            create schema public;
-
             create function test_func(id bigint)
             returns void as $body$${ body }$body$
             language plpgsql;
         `);
 
-        let state = await DdlManager.loadState(db);
-        assert.deepEqual(state, {
+        let state = new DbState(db);
+        await state.load();
+
+        assert.deepEqual(state.toJSON(), {
             functions: [
                 {
                     language: "plpgsql",
@@ -71,12 +75,9 @@ describe("DdlManager.loadState", () => {
             ],
             triggers: []
         });
-
-        db.end();
     });
 
     it("load two functions", async() => {
-        let db = await getDbClient();
 
         let body1 = `
             begin
@@ -89,9 +90,6 @@ describe("DdlManager.loadState", () => {
             end
         `;
         await db.query(`
-            drop schema public cascade;
-            create schema public;
-
             create function func_1(arg_1 bigint)
             returns integer as $body$${ body1 }$body$
             language plpgsql;
@@ -101,8 +99,10 @@ describe("DdlManager.loadState", () => {
             language plpgsql;
         `);
 
-        let state = await DdlManager.loadState(db);
-        assert.deepEqual(state, {
+        let state = new DbState(db);
+        await state.load();
+
+        assert.deepEqual(state.toJSON(), {
             functions: [
                 {
                     language: "plpgsql",
@@ -135,13 +135,9 @@ describe("DdlManager.loadState", () => {
             ],
             triggers: []
         });
-
-        db.end();
     });
 
     it("load two functions with same name", async() => {
-        let db = await getDbClient();
-
         let body1 = `
             begin
                 raise notice 'test 1';
@@ -153,9 +149,6 @@ describe("DdlManager.loadState", () => {
             end
         `;
         await db.query(`
-            drop schema public cascade;
-            create schema public;
-
             create function func_1(arg_1 bigint)
             returns integer as $body$${ body1 }$body$
             language plpgsql;
@@ -165,8 +158,10 @@ describe("DdlManager.loadState", () => {
             language plpgsql;
         `);
 
-        let state = await DdlManager.loadState(db);
-        assert.deepEqual(state, {
+        let state = new DbState(db);
+        await state.load();
+
+        assert.deepEqual(state.toJSON(), {
             functions: [
                 {
                     language: "plpgsql",
@@ -199,12 +194,9 @@ describe("DdlManager.loadState", () => {
             ],
             triggers: []
         });
-
-        db.end();
     });
 
     it("load two function without arguments", async() => {
-        let db = await getDbClient();
 
         let body = `
             begin
@@ -212,16 +204,15 @@ describe("DdlManager.loadState", () => {
             end
         `;
         await db.query(`
-            drop schema public cascade;
-            create schema public;
-
             create function test_func()
             returns void as $body$${ body }$body$
             language plpgsql;
         `);
 
-        let state = await DdlManager.loadState(db);
-        assert.deepEqual(state, {
+        let state = new DbState(db);
+        await state.load();
+
+        assert.deepEqual(state.toJSON(), {
             functions: [
                 {
                     language: "plpgsql",
@@ -235,30 +226,25 @@ describe("DdlManager.loadState", () => {
             ],
             triggers: []
         });
-
-        db.end();
     });
 
     
     it("load two function with returns table", async() => {
-        let db = await getDbClient();
-
         let body = `
             begin
                 raise notice 'test';
             end
         `;
         await db.query(`
-            drop schema public cascade;
-            create schema public;
-
             create function test_func()
             returns table(x text, y integer) as $body$${ body }$body$
             language plpgsql;
         `);
 
-        let state = await DdlManager.loadState(db);
-        assert.deepEqual(state, {
+        let state = new DbState(db);
+        await state.load();
+
+        assert.deepEqual(state.toJSON(), {
             functions: [
                 {
                     language: "plpgsql",
@@ -281,29 +267,24 @@ describe("DdlManager.loadState", () => {
             ],
             triggers: []
         });
-
-        db.end();
     });
 
     it("load two function with returns table and arguments", async() => {
-        let db = await getDbClient();
-
         let body = `
             begin
                 raise notice 'test';
             end
         `;
         await db.query(`
-            drop schema public cascade;
-            create schema public;
-
             create function test_func( nice text )
             returns table(x text, y integer) as $body$${ body }$body$
             language plpgsql;
         `);
 
-        let state = await DdlManager.loadState(db);
-        assert.deepEqual(state, {
+        let state = new DbState(db);
+        await state.load();
+
+        assert.deepEqual(state.toJSON(), {
             functions: [
                 {
                     language: "plpgsql",
@@ -331,29 +312,24 @@ describe("DdlManager.loadState", () => {
             ],
             triggers: []
         });
-
-        db.end();
     });
 
     it("load simple function with arg default", async() => {
-        let db = await getDbClient();
-
         let body = `
             begin
                 raise notice 'test';
             end
         `;
         await db.query(`
-            drop schema public cascade;
-            create schema public;
-
             create function test_func(id bigint default 1)
             returns void as $body$${ body }$body$
             language plpgsql;
         `);
 
-        let state = await DdlManager.loadState(db);
-        assert.deepEqual(state, {
+        let state = new DbState(db);
+        await state.load();
+
+        assert.deepEqual(state.toJSON(), {
             functions: [
                 {
                     language: "plpgsql",
@@ -373,13 +349,9 @@ describe("DdlManager.loadState", () => {
             ],
             triggers: []
         });
-
-        db.end();
     });
 
     it("load trigger", async() => {
-        let db = await getDbClient();
-
         let body = `
             begin
                 return new;
@@ -405,8 +377,10 @@ describe("DdlManager.loadState", () => {
             execute procedure test_func();
         `);
 
-        let state = await DdlManager.loadState(db);
-        assert.deepEqual(state, {
+        let state = new DbState(db);
+        await state.load();
+
+        assert.deepEqual(state.toJSON(), {
             functions: [
                 {
                     language: "plpgsql",
@@ -437,13 +411,9 @@ describe("DdlManager.loadState", () => {
                 }
             ]
         });
-
-        db.end();
     });
 
     it("load trigger with when condition", async() => {
-        let db = await getDbClient();
-
         let body = `
             begin
                 return new;
@@ -470,8 +440,10 @@ describe("DdlManager.loadState", () => {
             execute procedure test_func();
         `);
 
-        let state = await DdlManager.loadState(db);
-        assert.deepEqual(state, {
+        let state = new DbState(db);
+        await state.load();
+
+        assert.deepEqual(state.toJSON(), {
             functions: [
                 {
                     language: "plpgsql",
@@ -503,19 +475,12 @@ describe("DdlManager.loadState", () => {
                 }
             ]
         });
-
-        db.end();
     });
 
 
     it("load simple function, created by DdlManager.build", async() => {
-        let db = await getDbClient();
+
         let folderPath = ROOT_TMP_PATH + "/simple-func";
-    
-        // we want empty folder!
-        if ( fs.existsSync(folderPath) ) {
-            del.sync(folderPath);
-        }
         fs.mkdirSync(folderPath);
 
 
@@ -524,11 +489,7 @@ describe("DdlManager.loadState", () => {
                 raise notice 'test';
             end
         `;
-        await db.query(`
-            drop schema public cascade;
-            create schema public;
-        `);
-
+        
         fs.writeFileSync(folderPath + "/test1.sql", `
             create or replace function test_func(id bigint)
             returns void as $body$${ body }$body$
@@ -540,8 +501,10 @@ describe("DdlManager.loadState", () => {
             folder: folderPath
         });
 
-        let state = await DdlManager.loadState(db);
-        assert.deepEqual(state, {
+        let state = new DbState(db);
+        await state.load();
+
+        assert.deepEqual(state.toJSON(), {
             functions: [
                 {
                     language: "plpgsql",
@@ -560,19 +523,12 @@ describe("DdlManager.loadState", () => {
             ],
             triggers: []
         });
-
-        db.end();
     });
 
     
     it("load trigger, created by DdlManager.build", async() => {
-        let db = await getDbClient();
+
         let folderPath = ROOT_TMP_PATH + "/simple-func";
-    
-        // we want empty folder!
-        if ( fs.existsSync(folderPath) ) {
-            del.sync(folderPath);
-        }
         fs.mkdirSync(folderPath);
 
         let body = `
@@ -581,9 +537,6 @@ describe("DdlManager.loadState", () => {
             end
         `;
         await db.query(`
-            drop schema public cascade;
-            create schema public;
-            
             create table test (
                 name text,
                 note text
@@ -607,8 +560,10 @@ describe("DdlManager.loadState", () => {
             folder: folderPath
         });
 
-        let state = await DdlManager.loadState(db);
-        assert.deepEqual(state, {
+        let state = new DbState(db);
+        await state.load();
+
+        assert.deepEqual(state.toJSON(), {
             functions: [
                 {
                     language: "plpgsql",
@@ -639,17 +594,11 @@ describe("DdlManager.loadState", () => {
                 }
             ]
         });
-
-        db.end();
     });
 
     it("ignore aggregate functions", async() => {
-        let db = await getDbClient();
 
         await db.query(`
-            drop schema public cascade;
-            create schema public;
-
             CREATE FUNCTION first_agg(anyelement, anyelement) RETURNS anyelement
                 LANGUAGE sql IMMUTABLE STRICT
             AS $_$
@@ -662,29 +611,27 @@ describe("DdlManager.loadState", () => {
             );
         `);
 
-        let state = await DdlManager.loadState(db);
-        assert.deepEqual(state, {
+        let state = new DbState(db);
+        await state.load();
+
+        assert.deepEqual(state.toJSON(), {
             functions: [],
             triggers: []
         });
-
-        db.end();
     });
 
     it("load simple function, language sql", async() => {
-        let db = await getDbClient();
-
+        
         await db.query(`
-            drop schema public cascade;
-            create schema public;
-
             create function test_func_sql()
             returns integer as $body$select 1$body$
             language sql;
         `);
 
-        let state = await DdlManager.loadState(db);
-        assert.deepEqual(state, {
+        let state = new DbState(db);
+        await state.load();
+
+        assert.deepEqual(state.toJSON(), {
             functions: [
                 {
                     language: "sql",
@@ -698,8 +645,6 @@ describe("DdlManager.loadState", () => {
             ],
             triggers: []
         });
-
-        db.end();
     });
 
 });
