@@ -12,7 +12,7 @@ function diffState({filesState, dbState}) {
     return state.getDiff( filesState );
 }
 
-describe("DddlManager.diffState freeze tests", () => {
+describe("DbState.getDiff freeze tests", () => {
 
     it("simple freeze function in db, empty diff", () => {
         let freezeFunc = {
