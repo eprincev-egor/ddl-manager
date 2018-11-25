@@ -15,16 +15,28 @@ async function sleep(ms) {
 }
 
 describe("DdlManager.watch", () => {
-        
-    before(() => {
-        if ( !fs.existsSync(ROOT_TMP_PATH) ) {
-            fs.mkdirSync(ROOT_TMP_PATH);
+    let db;
+    
+    beforeEach(async() => {
+        db = await getDbClient();
+
+        await db.query(`
+            drop schema public cascade;
+            create schema public;
+        `);
+
+        if ( fs.existsSync(ROOT_TMP_PATH) ) {
+            del.sync(ROOT_TMP_PATH);
         }
+        fs.mkdirSync(ROOT_TMP_PATH);
+    });
+
+    afterEach(async() => {
+        db.end();
+        DdlManager.stopWatch();
     });
 
     it("watch nonexistent folder", async() => {
-        let db = await getDbClient();
-
         try {
             await DdlManager.watch({
                 db, 
@@ -35,18 +47,10 @@ describe("DdlManager.watch", () => {
         } catch(err) {
             assert.equal(err.message, "folder \"---\" not found");
         }
-
-        db.end();
     });
 
     it("watch empty folder", async() => {
-        let db = await getDbClient();
         let folderPath = ROOT_TMP_PATH + "/empty";
-    
-        // we want empty folder!
-        if ( fs.existsSync(folderPath) ) {
-            del.sync(folderPath);
-        }
         fs.mkdirSync(folderPath);
 
         await DdlManager.watch({
@@ -56,32 +60,15 @@ describe("DdlManager.watch", () => {
 
         // expected build without errors
         assert.ok(true);
-
-        DdlManager.stopWatch();
-
-        db.end();
-        // clear state
-        del.sync(folderPath);
     });
 
 
     it("watch simple function", async() => {
-        let db = await getDbClient();
         let folderPath = ROOT_TMP_PATH + "/watch-func";
         let result;
         let row;
     
-        // we want empty folder!
-        if ( fs.existsSync(folderPath) ) {
-            del.sync(folderPath);
-        }
         fs.mkdirSync(folderPath);
-        fs.chmodSync(folderPath, parseInt("777", 8));
-
-        await db.query(`
-            drop schema public cascade;
-            create schema public;
-        `);
 
         fs.writeFileSync(folderPath + "/watch_test.sql", `
             create or replace function some_func()
@@ -126,14 +113,6 @@ describe("DdlManager.watch", () => {
         assert.deepEqual(row, {
             some_func: 2
         });
-
-        db.end();
-
-        // stop watching before delete folder
-        DdlManager.stopWatch();
-
-        // clear state
-        del.sync(folderPath);
     });
 
 });

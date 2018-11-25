@@ -8,17 +8,28 @@ const DdlManager = require("../../lib/DdlManager");
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
-before(() => {
-    if ( !fs.existsSync(ROOT_TMP_PATH) ) {
-        fs.mkdirSync(ROOT_TMP_PATH);
-    }
-});
-
 describe("DdlManager.build", () => {
+    let db;
     
-    it("build nonexistent folder", async() => {
-        let db = await getDbClient();
+    beforeEach(async() => {
+        db = await getDbClient();
 
+        await db.query(`
+            drop schema public cascade;
+            create schema public;
+        `);
+
+        if ( fs.existsSync(ROOT_TMP_PATH) ) {
+            del.sync(ROOT_TMP_PATH);
+        }
+        fs.mkdirSync(ROOT_TMP_PATH);
+    });
+
+    afterEach(async() => {
+        db.end();
+    });
+
+    it("build nonexistent folder", async() => {
         try {
             await DdlManager.build({
                 db, 
@@ -29,18 +40,10 @@ describe("DdlManager.build", () => {
         } catch(err) {
             assert.equal(err.message, "folder \"---\" not found");
         }
-
-        db.end();
     });
 
     it("build empty folder", async() => {
-        let db = await getDbClient();
         let folderPath = ROOT_TMP_PATH + "/empty";
-    
-        // we want empty folder!
-        if ( fs.existsSync(folderPath) ) {
-            del.sync(folderPath);
-        }
         fs.mkdirSync(folderPath);
 
         await DdlManager.build({
@@ -50,26 +53,11 @@ describe("DdlManager.build", () => {
 
         // expected build without errors
         assert.ok(true);
-
-        db.end();
-        // clear state
-        del.sync(folderPath);
     });
 
     it("build simple function", async() => {
-        let db = await getDbClient();
         let folderPath = ROOT_TMP_PATH + "/simple-func";
-    
-        // we want empty folder!
-        if ( fs.existsSync(folderPath) ) {
-            del.sync(folderPath);
-        }
         fs.mkdirSync(folderPath);
-
-        await db.query(`
-            drop schema public cascade;
-            create schema public;
-        `);
 
         let rnd = Math.round( 1000 * Math.random() );
         fs.writeFileSync(folderPath + "/nice.sql", `
@@ -94,26 +82,11 @@ describe("DdlManager.build", () => {
         assert.deepEqual(row, {
             nice: 2 * rnd
         });
-
-        db.end();
-        // clear state
-        del.sync(folderPath);
     });
 
     it("build with dbConfig", async() => {
-        let db = await getDbClient();
         let folderPath = ROOT_TMP_PATH + "/simple-func";
-    
-        // we want empty folder!
-        if ( fs.existsSync(folderPath) ) {
-            del.sync(folderPath);
-        }
         fs.mkdirSync(folderPath);
-
-        await db.query(`
-            drop schema public cascade;
-            create schema public;
-        `);
 
         fs.writeFileSync(folderPath + "/nice.sql", `
             create or replace function nice()
@@ -143,28 +116,14 @@ describe("DdlManager.build", () => {
         assert.deepEqual(row, {
             nice: 1
         });
-
-        db.end();
-        // clear state
-        del.sync(folderPath);
     });
 
     it("replace function", async() => {
-        let db = await getDbClient();
         let folderPath = ROOT_TMP_PATH + "/simple-func";
         let result;
         let row;
     
-        // we want empty folder!
-        if ( fs.existsSync(folderPath) ) {
-            del.sync(folderPath);
-        }
         fs.mkdirSync(folderPath);
-
-        await db.query(`
-            drop schema public cascade;
-            create schema public;
-        `);
 
         let rnd = Math.round( 1000 * Math.random() );
         fs.writeFileSync(folderPath + "/nice.sql", `
@@ -219,26 +178,13 @@ describe("DdlManager.build", () => {
         } catch(err) {
             assert.equal(err.message, "function nice(integer) does not exist");
         }
-
-        db.end();
-        // clear state
-        del.sync(folderPath);
     });
 
     it("build simple trigger", async() => {
-        let db = await getDbClient();
         let folderPath = ROOT_TMP_PATH + "/simple-trigger";
-    
-        // we want empty folder!
-        if ( fs.existsSync(folderPath) ) {
-            del.sync(folderPath);
-        }
         fs.mkdirSync(folderPath);
 
         await db.query(`
-            drop schema public cascade;
-            create schema public;
-
             create table company (
                 name text primary key,
                 note text
@@ -274,28 +220,16 @@ describe("DdlManager.build", () => {
         assert.deepEqual(row, {
             note: "name: super"
         });
-
-        db.end();
-        // clear state
-        del.sync(folderPath);
     });
 
     it("replace trigger", async() => {
-        let db = await getDbClient();
         let folderPath = ROOT_TMP_PATH + "/simple-trigger";
         let result;
         let row;
     
-        // we want empty folder!
-        if ( fs.existsSync(folderPath) ) {
-            del.sync(folderPath);
-        }
         fs.mkdirSync(folderPath);
 
         await db.query(`
-            drop schema public cascade;
-            create schema public;
-
             create table company (
                 name text primary key,
                 note text
@@ -365,27 +299,12 @@ describe("DdlManager.build", () => {
         assert.deepEqual(row, {
             note: "nice: test"
         });
-
-        db.end();
-        // clear state
-        del.sync(folderPath);
     });
 
     
     it("remove function", async() => {
-        let db = await getDbClient();
         let folderPath = ROOT_TMP_PATH + "/simple-func";
-    
-        // we want empty folder!
-        if ( fs.existsSync(folderPath) ) {
-            del.sync(folderPath);
-        }
         fs.mkdirSync(folderPath);
-
-        await db.query(`
-            drop schema public cascade;
-            create schema public;
-        `);
 
         fs.writeFileSync(folderPath + "/nice.sql", `
             create or replace function nice()
@@ -425,28 +344,14 @@ describe("DdlManager.build", () => {
         } catch(err) {
             assert.equal(err.message, "function nice() does not exist");
         }
-
-
-        db.end();
-        // clear state
-        del.sync(folderPath);
     });
 
 
     it("remove trigger", async() => {
-        let db = await getDbClient();
         let folderPath = ROOT_TMP_PATH + "/simple-func";
-    
-        // we want empty folder!
-        if ( fs.existsSync(folderPath) ) {
-            del.sync(folderPath);
-        }
         fs.mkdirSync(folderPath);
 
         await db.query(`
-            drop schema public cascade;
-            create schema public;
-
             create table company (
                 name text,
                 note text
@@ -497,11 +402,6 @@ describe("DdlManager.build", () => {
         } catch(err) {
             assert.ok(false, "unexpected error: " + err.message);
         }
-
-
-        db.end();
-        // clear state
-        del.sync(folderPath);
     });
 
 
