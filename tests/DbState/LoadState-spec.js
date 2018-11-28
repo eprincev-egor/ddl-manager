@@ -620,6 +620,31 @@ describe("DbState.load", () => {
         });
     });
 
+    it("ignore constraint triggers", async() => {
+
+        await db.query(`
+            create table test (
+                id serial primary key
+            );
+
+            create table test_units (
+                id serial primary key,
+                id_parent integer not null
+                    references test
+                        on update cascade
+                        on delete cascade
+            );
+        `);
+
+        let state = new DbState(db);
+        await state.load();
+
+        assert.deepEqual(state.toJSON(), {
+            functions: [],
+            triggers: []
+        });
+    });
+
     it("load simple function, language sql", async() => {
         
         await db.query(`
