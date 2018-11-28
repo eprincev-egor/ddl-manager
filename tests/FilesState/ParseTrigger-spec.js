@@ -108,15 +108,15 @@ describe("FilesState parse functions and triggers", () => {
         let filePath = ROOT_TMP_PATH + "/test-file.sql";
         fs.writeFileSync(filePath, sql);
 
-        try {
-            FilesState.create({
-                folder: ROOT_TMP_PATH
-            });
+        let err = {message: "expected error"};
+        FilesState.create({
+            folder: ROOT_TMP_PATH,
+            onError(_err) {
+                err = _err;
+            }
+        });
 
-            assert.ok(false, "expected error");
-        } catch(err) {
-            assert.equal(err.message, "wrong procedure name public.some_action_on_diu_company2");
-        }
+        assert.equal(err.message, "wrong procedure name public.some_action_on_diu_company2");
     });
 
     
@@ -142,15 +142,15 @@ describe("FilesState parse functions and triggers", () => {
         let filePath = ROOT_TMP_PATH + "/test-file.sql";
         fs.writeFileSync(filePath, sql);
 
-        try {
-            FilesState.create({
-                folder: ROOT_TMP_PATH
-            });
+        let err = {message: "expected error"};
+        FilesState.create({
+            folder: ROOT_TMP_PATH,
+            onError(_err) {
+                err = _err;
+            }
+        });
 
-            assert.ok(false, "expected error");
-        } catch(err) {
-            assert.equal(err.message, "wrong returns type bigint");
-        }
+        assert.equal(err.message, "wrong returns type bigint");
 
         fs.unlinkSync(filePath);
     });
@@ -184,15 +184,16 @@ describe("FilesState parse functions and triggers", () => {
         fs.writeFileSync(filePath1, sql1);
         fs.writeFileSync(filePath2, sql2);
 
-        try {
-            FilesState.create({
-                folder: ROOT_TMP_PATH
-            });
 
-            throw new Error("expected error");
-        } catch(err) {
-            assert.equal(err.message, "duplicate trigger some_trigger on public.company");
-        }
+        let err = {message: "expected error"};
+        FilesState.create({
+            folder: ROOT_TMP_PATH,
+            onError(_err) {
+                err = _err;
+            }
+        });
+        
+        assert.equal(err.message, "duplicate trigger some_trigger on public.company");
         
     });
 

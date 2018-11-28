@@ -28,10 +28,6 @@ describe("DbState.getDiff", () => {
         });
 
         assert.deepEqual(diff, {
-            freeze: {
-                triggers: [],
-                functions: []
-            },
             drop: {
                 triggers: [],
                 functions: []
@@ -77,10 +73,6 @@ describe("DbState.getDiff", () => {
         });
 
         assert.deepEqual(diff, {
-            freeze: {
-                triggers: [],
-                functions: []
-            },
             drop: {
                 triggers: [],
                 functions: []
@@ -127,10 +119,6 @@ describe("DbState.getDiff", () => {
         });
 
         assert.deepEqual(diff, {
-            freeze: {
-                triggers: [],
-                functions: []
-            },
             drop: {
                 triggers: [],
                 functions: [
@@ -200,10 +188,6 @@ describe("DbState.getDiff", () => {
         
 
         assert.deepEqual(diff, {
-            freeze: {
-                triggers: [],
-                functions: []
-            },
             drop: {
                 triggers: [],
                 functions: [
@@ -279,10 +263,6 @@ describe("DbState.getDiff", () => {
         });
         
         assert.deepEqual(diff, {
-            freeze: {
-                triggers: [],
-                functions: []
-            },
             drop: {
                 triggers: [],
                 functions: [
@@ -325,10 +305,6 @@ describe("DbState.getDiff", () => {
         });
 
         assert.deepEqual(diff, {
-            freeze: {
-                triggers: [],
-                functions: []
-            },
             drop: {
                 triggers: [],
                 functions: []
@@ -398,10 +374,6 @@ describe("DbState.getDiff", () => {
 
 
         assert.deepEqual(diff, {
-            freeze: {
-                triggers: [],
-                functions: []
-            },
             drop: {
                 triggers: [
                     dbTrigger
@@ -428,7 +400,6 @@ describe("DbState.getDiff", () => {
             end`
         };
         let dbFunc = _.cloneDeep(func);
-        dbFunc.freeze = false;
 
         let trigger = {
             table: {
@@ -444,7 +415,6 @@ describe("DbState.getDiff", () => {
             }
         };
         let dbTrigger = _.cloneDeep(trigger);
-        dbTrigger.freeze = false;
 
         let diff = diffState({
             filesState: {
@@ -467,10 +437,6 @@ describe("DbState.getDiff", () => {
 
 
         assert.deepEqual(diff, {
-            freeze: {
-                triggers: [],
-                functions: []
-            },
             drop: {
                 triggers: [],
                 functions: []

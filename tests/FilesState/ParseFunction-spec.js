@@ -193,16 +193,15 @@ describe("FilesState parse functions", () => {
         fs.writeFileSync(filePath1, sql1);
         fs.writeFileSync(filePath2, sql2);
 
-        try {
-            FilesState.create({
-                folder: ROOT_TMP_PATH
-            });
+        let err = {message: "expected error"};
+        FilesState.create({
+            folder: ROOT_TMP_PATH,
+            onError(_err) {
+                err = _err;
+            }
+        });
 
-            throw new Error("expected error");
-        } catch(err) {
-            assert.equal(err.message, "duplicate function public.func1()");
-        }
-        
+        assert.equal(err.message, "duplicate function public.func1()");
     });
 
     it("same functions, but another args", () => {

@@ -405,4 +405,101 @@ describe("DdlManager.build", () => {
     });
 
 
+    it("build two functions, one syntax error, one success", async() => {
+        fs.writeFileSync(ROOT_TMP_PATH + "/func1.sql", `
+            create or replace function func1(a integer)
+            returns integer as $body$
+                begin
+                    return 1;
+                end
+            $body$
+            language ERROR;
+        `);
+
+        fs.writeFileSync(ROOT_TMP_PATH + "/func2.sql", `
+            create or replace function func2(a integer)
+            returns integer as $body$
+                begin
+                    return 2;
+                end
+            $body$
+            language plpgsql;
+        `);
+
+
+        await DdlManager.build({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+        let result = await db.query("select func2(1) as func2");
+        let row = result.rows[0];
+
+        assert.deepEqual(row, {
+            func2: 2
+        });
+
+        try {
+            await db.query("select func1(1)");
+            throw new Error("expected error");
+        } catch(err) {
+            assert.equal(err.message, "function func1(integer) does not exist");
+        }
+    });
+
+
+    it("build two functions, one freeze error, one success", async() => {
+        // create freeze function
+        await db.query(`
+            create or replace function func1(a integer)
+            returns integer as $body$
+                begin
+                    return 0;
+                end
+            $body$
+            language plpgsql;
+        `);
+
+        fs.writeFileSync(ROOT_TMP_PATH + "/func1.sql", `
+            create or replace function func1(a integer)
+            returns integer as $body$
+                begin
+                    return 1;
+                end
+            $body$
+            language plpgsql;
+        `);
+
+        fs.writeFileSync(ROOT_TMP_PATH + "/func2.sql", `
+            create or replace function func2(a integer)
+            returns integer as $body$
+                begin
+                    return 2;
+                end
+            $body$
+            language plpgsql;
+        `);
+
+
+        await DdlManager.build({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+        let result;
+
+        result = await db.query("select func2(1) as func2");
+
+        assert.deepEqual(result.rows[0], {
+            func2: 2
+        });
+
+        result = await db.query("select func1(1) as func1");
+
+        assert.deepEqual(result.rows[0], {
+            func1: 0
+        });
+    });
+
+
 });

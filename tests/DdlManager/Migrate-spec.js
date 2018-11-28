@@ -198,31 +198,29 @@ describe("DlManager.migrate", () => {
             language sql;
         `);
 
-        try {
-            await DdlManager.migrate(db, {
-                drop: {
-                    functions: [],
-                    triggers: []
-                },
-                create: {
-                    functions: [
-                        {
-                            language: "sql",
-                            schema: "public",
-                            name: "test",
-                            args: [],
-                            returns: "integer",
-                            body: "select 2"
-                        }
-                    ],
-                    triggers: []
-                }
-            });
+        let result = await DdlManager.migrate(db, {
+            drop: {
+                functions: [],
+                triggers: []
+            },
+            create: {
+                functions: [
+                    {
+                        language: "sql",
+                        schema: "public",
+                        name: "test",
+                        args: [],
+                        returns: "integer",
+                        body: "select 2"
+                    }
+                ],
+                triggers: []
+            }
+        });
 
-            throw new Error("expected error");
-        } catch(err) {
-            assert.equal(err.message, "cannot replace freeze function public.test()");
-        }
+        assert.equal(result.errors.length, 1);
+        let err = result.errors[0];
+        assert.equal(err.message, "cannot replace freeze function public.test()");
     });
 
     it("error on drop freeze function", async() => {
@@ -232,31 +230,29 @@ describe("DlManager.migrate", () => {
             language sql;
         `);
 
-        try {
-            await DdlManager.migrate(db, {
-                drop: {
-                    functions: [
-                        {
-                            language: "sql",
-                            schema: "public",
-                            name: "test",
-                            args: [],
-                            returns: "integer",
-                            body: "select 2"
-                        }
-                    ],
-                    triggers: []
-                },
-                create: {
-                    functions: [],
-                    triggers: []
-                }
-            });
+        let result = await DdlManager.migrate(db, {
+            drop: {
+                functions: [
+                    {
+                        language: "sql",
+                        schema: "public",
+                        name: "test",
+                        args: [],
+                        returns: "integer",
+                        body: "select 2"
+                    }
+                ],
+                triggers: []
+            },
+            create: {
+                functions: [],
+                triggers: []
+            }
+        });
 
-            throw new Error("expected error");
-        } catch(err) {
-            assert.equal(err.message, "cannot drop freeze function public.test()");
-        }
+        assert.equal(result.errors.length, 1);
+        let err = result.errors[0];
+        assert.equal(err.message, "cannot drop freeze function public.test()");
     });
 
     it("freeze function with another args", async() => {
@@ -367,49 +363,47 @@ describe("DlManager.migrate", () => {
             execute procedure test()
         `);
 
-        try {
-            await DdlManager.migrate(db, {
-                drop: {
-                    functions: [],
-                    triggers: []
-                },
-                create: {
-                    functions: [
-                        {
-                            language: "plpgsql",
+        let result = await DdlManager.migrate(db, {
+            drop: {
+                functions: [],
+                triggers: []
+            },
+            create: {
+                functions: [
+                    {
+                        language: "plpgsql",
+                        schema: "public",
+                        name: "test2",
+                        args: [],
+                        returns: "trigger",
+                        body: `
+                            begin
+                                return new;
+                            end
+                        `
+                    }
+                ],
+                triggers: [
+                    {
+                        table: {
                             schema: "public",
-                            name: "test2",
-                            args: [],
-                            returns: "trigger",
-                            body: `
-                                begin
-                                    return new;
-                                end
-                            `
+                            name: "company"
+                        },
+                        name: "x",
+                        after: true,
+                        delete: true,
+                        procedure: {
+                            schema: "public",
+                            name: "test"
                         }
-                    ],
-                    triggers: [
-                        {
-                            table: {
-                                schema: "public",
-                                name: "company"
-                            },
-                            name: "x",
-                            after: true,
-                            delete: true,
-                            procedure: {
-                                schema: "public",
-                                name: "test"
-                            }
-                        }
-                    ]
-                }
-            });
+                    }
+                ]
+            }
+        });
 
-            throw new Error("expected error");
-        } catch(err) {
-            assert.equal(err.message, "cannot replace freeze trigger x on public.company");
-        }
+        assert.equal(result.errors.length, 1);
+        let err = result.errors[0];
+        assert.equal(err.message, "cannot replace freeze trigger x on public.company");
     });
 
     it("error on drop freeze trigger", async() => {
@@ -433,48 +427,47 @@ describe("DlManager.migrate", () => {
             execute procedure test()
         `);
 
-        try {
-            await DdlManager.migrate(db, {
-                drop: {
-                    functions: [
-                        {
-                            language: "plpgsql",
+        
+        let result = await DdlManager.migrate(db, {
+            drop: {
+                functions: [
+                    {
+                        language: "plpgsql",
+                        schema: "public",
+                        name: "test2",
+                        args: [],
+                        returns: "trigger",
+                        body: `
+                            begin
+                                return new;
+                            end
+                        `
+                    }
+                ],
+                triggers: [
+                    {
+                        table: {
                             schema: "public",
-                            name: "test2",
-                            args: [],
-                            returns: "trigger",
-                            body: `
-                                begin
-                                    return new;
-                                end
-                            `
+                            name: "company"
+                        },
+                        name: "x",
+                        after: true,
+                        delete: true,
+                        procedure: {
+                            schema: "public",
+                            name: "test"
                         }
-                    ],
-                    triggers: [
-                        {
-                            table: {
-                                schema: "public",
-                                name: "company"
-                            },
-                            name: "x",
-                            after: true,
-                            delete: true,
-                            procedure: {
-                                schema: "public",
-                                name: "test"
-                            }
-                        }
-                    ]
-                },
-                create: {
-                    functions: [],
-                    triggers: []
-                }
-            });
+                    }
+                ]
+            },
+            create: {
+                functions: [],
+                triggers: []
+            }
+        });
 
-            throw new Error("expected error");
-        } catch(err) {
-            assert.equal(err.message, "cannot drop freeze trigger x on public.company");
-        }
+        assert.equal(result.errors.length, 1);
+        let err = result.errors[0];
+        assert.equal(err.message, "cannot drop freeze trigger x on public.company");
     });
 });
