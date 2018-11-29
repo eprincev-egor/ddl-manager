@@ -216,5 +216,129 @@ module.exports = [
                 content: "select 1"
             }
         }
+    },
+    {
+        str: `create function some_func()
+            returns integer as $body$begin\nend$body$
+            language plpgsql
+            immutable;
+        `,
+        result: {
+            schema: "public",
+            name: "some_func",
+            language: "plpgsql",
+            args: [],
+            returns: {
+                type: "integer"
+            },
+            body: {
+                content: "begin\nend"
+            },
+            immutable: true
+        }
+    },
+    {
+        str: `create function some_func()
+            returns integer as $body$begin\nend$body$
+            language plpgsql
+            stable;
+        `,
+        result: {
+            schema: "public",
+            name: "some_func",
+            language: "plpgsql",
+            args: [],
+            returns: {
+                type: "integer"
+            },
+            body: {
+                content: "begin\nend"
+            },
+            stable: true
+        }
+    },
+    {
+        str: `create function some_func()
+            returns integer as $body$begin\nend$body$
+            language plpgsql
+            volatile;
+        `,
+        result: {
+            schema: "public",
+            name: "some_func",
+            language: "plpgsql",
+            args: [],
+            returns: {
+                type: "integer"
+            },
+            body: {
+                content: "begin\nend"
+            },
+            volatile: true
+        }
+    },
+    {
+        str: `create function some_func()
+            returns integer as $body$begin\nend$body$
+            language plpgsql
+            cost 101;
+        `,
+        result: {
+            schema: "public",
+            name: "some_func",
+            language: "plpgsql",
+            args: [],
+            returns: {
+                type: "integer"
+            },
+            body: {
+                content: "begin\nend"
+            },
+            cost: 101
+        }
+    },
+    {
+        str: `create function some_func()
+            returns integer as $body$begin\nend$body$
+            language plpgsql
+            volatile
+            cost 101;
+        `,
+        result: {
+            schema: "public",
+            name: "some_func",
+            language: "plpgsql",
+            args: [],
+            returns: {
+                type: "integer"
+            },
+            body: {
+                content: "begin\nend"
+            },
+            volatile: true,
+            cost: 101
+        }
+    },
+    {
+        str: `create function some_func()
+            returns integer as $body$begin\nend$body$
+            language plpgsql
+            stable
+            cost 101;
+        `,
+        result: {
+            schema: "public",
+            name: "some_func",
+            language: "plpgsql",
+            args: [],
+            returns: {
+                type: "integer"
+            },
+            body: {
+                content: "begin\nend"
+            },
+            stable: true,
+            cost: 101
+        }
     }
 ];
