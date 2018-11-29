@@ -307,4 +307,41 @@ describe("FilesState parse functions", () => {
         assert.deepEqual(actualResult, expectedResult);
     });
 
+    it("do not replace comments inside function", () => {
+        let body = `
+        begin
+            -- some comment
+            return 1;
+        end
+        `;
+
+        let sql = `
+            create or replace function public.func_with_comment()
+            returns bigint as $body$${body}$body$
+            language plpgsql;
+        `.trim();
+        
+        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        fs.writeFileSync(filePath, sql);
+
+        let expectedResult = [
+            {
+                language: "plpgsql",
+                schema: "public",
+                name: "func_with_comment",
+                args: [],
+                returns: "bigint",
+                body
+            }
+        ];
+
+        let filesState = FilesState.create({
+            folder: ROOT_TMP_PATH
+        });
+
+        let actualResult = filesState.getFunctions();
+
+        assert.deepEqual(actualResult, expectedResult);
+    });
+
 });
