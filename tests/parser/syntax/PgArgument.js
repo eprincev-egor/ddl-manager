@@ -31,5 +31,25 @@ module.exports = [
             name: "company_id",
             type: "bigint"
         }
+    },
+    {
+        str: "company public.company",
+        result: {
+            name: "company",
+            type: {
+                schema: "public",
+                table: "company"
+            }
+        }
+    },
+    {
+        str: "company company",
+        result: {
+            name: "company",
+            type: {
+                schema: "public",
+                table: "company"
+            }
+        }
     }
 ];

@@ -564,4 +564,45 @@ describe("DlManager.migrate", () => {
             {id: 2}
         ]);
     });
+
+    it("migrate function with arg table", async() => {
+        await db.query(`
+            create table some_table (
+                id serial primary key
+            );
+        `);
+
+        await DdlManager.migrate(db, {
+            drop: {
+                functions: [],
+                triggers: []
+            },
+            create: {
+                functions: [
+                    {
+                        language: "plpgsql",
+                        schema: "public",
+                        name: "test_func",
+                        args: [
+                            {
+                                name: "some_table",
+                                type: {
+                                    schema: "public",
+                                    table: "some_table"
+                                }
+                            }
+                        ],
+                        returns: "void",
+                        body: `
+                        begin
+                        end`
+                    }
+                ],
+                triggers: []
+            }
+        });
+
+        // expected execute without errors
+        await db.query("select test_func(some_table) from some_table");
+    });
 });
