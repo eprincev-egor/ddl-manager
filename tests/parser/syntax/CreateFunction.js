@@ -363,5 +363,24 @@ module.exports = [
             stable: true,
             cost: 101
         }
+    },
+    {
+        str: `create or replace function test_func()
+            returns some_schema.some_table
+            as $body$begin\nend$body$
+            language plpgsql;
+        `,
+        result: {
+            schema: "public",
+            name: "test_func",
+            args: [],
+            returns: {
+                schema: "some_schema",
+                table: "some_table"
+            },
+            body: {
+                content: "begin\nend"
+            }
+        }
     }
 ];

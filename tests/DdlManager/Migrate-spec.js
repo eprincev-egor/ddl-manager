@@ -470,4 +470,47 @@ describe("DlManager.migrate", () => {
         let err = result.errors[0];
         assert.equal(err.message, "cannot drop freeze trigger x on public.company");
     });
+
+
+    it("migrate function with returns table", async() => {
+        await db.query(`
+            create table some_table (
+                id serial primary key
+            );
+        `);
+
+        await DdlManager.migrate(db, {
+            drop: {
+                functions: [],
+                triggers: []
+            },
+            create: {
+                functions: [
+                    {
+                        language: "plpgsql",
+                        schema: "public",
+                        name: "test_func",
+                        args: [],
+                        returns: {
+                            schema: "public",
+                            table: "some_table"
+                        },
+                        body: `
+                        declare some_table_row some_table;
+                        begin
+                            select *
+                            from some_table
+                            into some_table_row;
+
+                            return some_table_row;
+                        end`
+                    }
+                ],
+                triggers: []
+            }
+        });
+
+        // expected execute without errors
+        await db.query("select * from test_func()");
+    });
 });

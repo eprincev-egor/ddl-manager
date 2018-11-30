@@ -21,5 +21,19 @@ module.exports = [
                 }
             ]
         }
+    },
+    {
+        str: "public.company",
+        result: {
+            schema: "public",
+            table: "company"
+        }
+    },
+    {
+        str: "company",
+        result: {
+            schema: "public",
+            table: "company"
+        }
     }
 ];
