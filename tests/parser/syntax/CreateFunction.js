@@ -340,5 +340,28 @@ module.exports = [
             stable: true,
             cost: 101
         }
+    },
+    {
+        str: `create function some_func()
+            returns integer 
+            language plpgsql
+            stable
+            cost 101
+            as $body$begin\nend$body$;
+        `,
+        result: {
+            schema: "public",
+            name: "some_func",
+            language: "plpgsql",
+            args: [],
+            returns: {
+                type: "integer"
+            },
+            body: {
+                content: "begin\nend"
+            },
+            stable: true,
+            cost: 101
+        }
     }
 ];
