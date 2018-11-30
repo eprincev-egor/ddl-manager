@@ -382,5 +382,25 @@ module.exports = [
                 content: "begin\nend"
             }
         }
+    },
+    {
+        str: `create or replace function test_func()
+            returns setof some_schema.some_table
+            as $body$begin\nend$body$
+            language plpgsql;
+        `,
+        result: {
+            schema: "public",
+            name: "test_func",
+            args: [],
+            returns: {
+                setof: true,
+                schema: "some_schema",
+                table: "some_table"
+            },
+            body: {
+                content: "begin\nend"
+            }
+        }
     }
 ];

@@ -35,5 +35,14 @@ module.exports = [
             schema: "public",
             table: "company"
         }
+    },
+    {
+        str: "setof company",
+        result: {
+            setof: true,
+            
+            schema: "public",
+            table: "company"
+        }
     }
 ];

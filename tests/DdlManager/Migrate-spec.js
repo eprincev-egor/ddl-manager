@@ -513,4 +513,55 @@ describe("DlManager.migrate", () => {
         // expected execute without errors
         await db.query("select * from test_func()");
     });
+
+    it("migrate function with returns setof table", async() => {
+        await db.query(`
+            create table some_table (
+                id serial primary key
+            );
+
+            insert into some_table
+            default values;
+
+            insert into some_table
+            default values;
+        `);
+
+        await DdlManager.migrate(db, {
+            drop: {
+                functions: [],
+                triggers: []
+            },
+            create: {
+                functions: [
+                    {
+                        language: "plpgsql",
+                        schema: "public",
+                        name: "test_func",
+                        args: [],
+                        returns: {
+                            setof: true,
+                            schema: "public",
+                            table: "some_table"
+                        },
+                        body: `
+                        begin
+                            return query 
+                                select *
+                                from some_table;
+                        end`
+                    }
+                ],
+                triggers: []
+            }
+        });
+
+        // expected execute without errors
+        let result = await db.query("select * from test_func()");
+
+        assert.deepEqual(result.rows, [
+            {id: 1},
+            {id: 2}
+        ]);
+    });
 });
