@@ -69,7 +69,7 @@ describe("DbState.load", () => {
                             type: "bigint"
                         }
                     ],
-                    returns: "void",
+                    returns: {type: "void"},
                     body
                 }
             ],
@@ -115,7 +115,7 @@ describe("DbState.load", () => {
                             type: "bigint"
                         }
                     ],
-                    returns: "integer",
+                    returns: {type: "integer"},
                     body: body1
                 },
                 {
@@ -129,7 +129,7 @@ describe("DbState.load", () => {
                             type: "text"
                         }
                     ],
-                    returns: "text",
+                    returns: {type: "text"},
                     body: body2
                 }
             ],
@@ -174,7 +174,7 @@ describe("DbState.load", () => {
                             type: "bigint"
                         }
                     ],
-                    returns: "integer",
+                    returns: {type: "integer"},
                     body: body1
                 },
                 {
@@ -188,7 +188,7 @@ describe("DbState.load", () => {
                             type: "text"
                         }
                     ],
-                    returns: "integer",
+                    returns: {type: "integer"},
                     body: body2
                 }
             ],
@@ -220,7 +220,7 @@ describe("DbState.load", () => {
                     schema: "public",
                     name: "test_func",
                     args: [],
-                    returns: "void",
+                    returns: {type: "void"},
                     body
                 }
             ],
@@ -343,7 +343,7 @@ describe("DbState.load", () => {
                             default: "1"
                         }
                     ],
-                    returns: "void",
+                    returns: {type: "void"},
                     body
                 }
             ],
@@ -388,7 +388,7 @@ describe("DbState.load", () => {
                     schema: "public",
                     name: "test_func",
                     args: [],
-                    returns: "trigger",
+                    returns: {type: "trigger"},
                     body
                 }
             ],
@@ -451,7 +451,7 @@ describe("DbState.load", () => {
                     schema: "public",
                     name: "test_func",
                     args: [],
-                    returns: "trigger",
+                    returns: {type: "trigger"},
                     body
                 }
             ],
@@ -517,7 +517,7 @@ describe("DbState.load", () => {
                             type: "bigint"
                         }
                     ],
-                    returns: "void",
+                    returns: {type: "void"},
                     body
                 }
             ],
@@ -571,7 +571,7 @@ describe("DbState.load", () => {
                     schema: "public",
                     name: "test_func",
                     args: [],
-                    returns: "trigger",
+                    returns: {type: "trigger"},
                     body
                 }
             ],
@@ -664,7 +664,7 @@ describe("DbState.load", () => {
                     schema: "public",
                     name: "test_func_sql",
                     args: [],
-                    returns: "integer",
+                    returns: {type: "integer"},
                     body: "select 1"
                 }
             ],
@@ -695,10 +695,7 @@ describe("DbState.load", () => {
                     schema: "public",
                     name: "some_func",
                     args: [],
-                    returns: {
-                        schema: "public",
-                        table: "company"
-                    },
+                    returns: {type: "public.company"},
                     body: "begin\nend"
                 }
             ],
@@ -731,8 +728,7 @@ describe("DbState.load", () => {
                     args: [],
                     returns: {
                         setof: true,
-                        schema: "public",
-                        table: "company"
+                        type: "public.company"
                     },
                     body: "begin\nend"
                 }
@@ -766,13 +762,10 @@ describe("DbState.load", () => {
                     args: [
                         {
                             name: "company",
-                            type: {
-                                schema: "public",
-                                table: "company"
-                            }
+                            type: "public.company"
                         }
                     ],
-                    returns: "void",
+                    returns: {type: "void"},
                     body: "begin\nend"
                 }
             ],

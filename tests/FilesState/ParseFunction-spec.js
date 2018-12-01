@@ -78,7 +78,7 @@ describe("FilesState parse functions", () => {
                         type: "bigint"
                     }
                 ],
-                returns: "bigint",
+                returns: {type: "bigint"},
                 body
             }
         ];
@@ -108,7 +108,7 @@ describe("FilesState parse functions", () => {
                 schema: "public",
                 name: "nice_sql",
                 args: [],
-                returns: "integer",
+                returns: {type: "integer"},
                 language: "sql",
                 body: "select 1"
             }
@@ -214,7 +214,7 @@ describe("FilesState parse functions", () => {
             schema: "public",
             name: "func1",
             args: [],
-            returns: "bigint",
+            returns: {type: "bigint"},
             language: "sql",
             body: "select 1"
         };
@@ -232,7 +232,7 @@ describe("FilesState parse functions", () => {
                     type: "text"
                 }
             ],
-            returns: "integer",
+            returns: {type: "integer"},
             language: "sql",
             body: "select 2"
         };
@@ -293,7 +293,7 @@ describe("FilesState parse functions", () => {
                         type: "bigint"
                     }
                 ],
-                returns: "bigint",
+                returns: {type: "bigint"},
                 body
             }
         ];
@@ -330,7 +330,7 @@ describe("FilesState parse functions", () => {
                 schema: "public",
                 name: "func_with_comment",
                 args: [],
-                returns: "bigint",
+                returns: {type: "bigint"},
                 body
             }
         ];

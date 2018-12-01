@@ -25,15 +25,19 @@ module.exports = [
     {
         str: "public.company",
         result: {
-            schema: "public",
-            table: "company"
+            type: "public.company"
         }
     },
     {
         str: "company",
         result: {
-            schema: "public",
-            table: "company"
+            type: "public.company"
+        }
+    },
+    {
+        str: "company[]",
+        result: {
+            type: "public.company[]"
         }
     },
     {
@@ -41,8 +45,7 @@ module.exports = [
         result: {
             setof: true,
             
-            schema: "public",
-            table: "company"
+            type: "public.company"
         }
     }
 ];

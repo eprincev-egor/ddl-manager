@@ -47,7 +47,7 @@ describe("DlManager.migrate", () => {
                         schema: "public",
                         name: "test_migrate_function",
                         args: [],
-                        returns: "bigint",
+                        returns: {type: "bigint"},
                         body: `begin
                             return ${ rnd };
                         end`
@@ -86,7 +86,7 @@ describe("DlManager.migrate", () => {
                         schema: "public",
                         name: "some_action_on_diu_test",
                         args: [],
-                        returns: "trigger",
+                        returns: {type: "trigger"},
                         body: `begin
                             raise exception 'success';
                         end`
@@ -146,7 +146,7 @@ describe("DlManager.migrate", () => {
                         schema: "public",
                         name: "some_action_on_diu_test",
                         args: [],
-                        returns: "trigger",
+                        returns: {type: "trigger"},
                         body: `begin
                             raise exception 'success';
                         end`
@@ -210,7 +210,7 @@ describe("DlManager.migrate", () => {
                         schema: "public",
                         name: "test",
                         args: [],
-                        returns: "integer",
+                        returns: {type: "integer"},
                         body: "select 2"
                     }
                 ],
@@ -238,7 +238,7 @@ describe("DlManager.migrate", () => {
                         schema: "public",
                         name: "test",
                         args: [],
-                        returns: "integer",
+                        returns: {type: "integer"},
                         body: "select 2"
                     }
                 ],
@@ -283,7 +283,7 @@ describe("DlManager.migrate", () => {
                                 type: "integer"
                             }
                         ],
-                        returns: "integer",
+                        returns: {type: "integer"},
                         body: "select 2"
                     }
                 ],
@@ -325,7 +325,7 @@ describe("DlManager.migrate", () => {
                                 type: "bigint"
                             }
                         ],
-                        returns: "integer",
+                        returns: {type: "integer"},
                         body: "select 2"
                     }
                 ],
@@ -375,7 +375,7 @@ describe("DlManager.migrate", () => {
                         schema: "public",
                         name: "test2",
                         args: [],
-                        returns: "trigger",
+                        returns: {type: "trigger"},
                         body: `
                             begin
                                 return new;
@@ -436,7 +436,7 @@ describe("DlManager.migrate", () => {
                         schema: "public",
                         name: "test2",
                         args: [],
-                        returns: "trigger",
+                        returns: {type: "trigger"},
                         body: `
                             begin
                                 return new;
@@ -492,8 +492,7 @@ describe("DlManager.migrate", () => {
                         name: "test_func",
                         args: [],
                         returns: {
-                            schema: "public",
-                            table: "some_table"
+                            type: "public.some_table"
                         },
                         body: `
                         declare some_table_row some_table;
@@ -541,8 +540,7 @@ describe("DlManager.migrate", () => {
                         args: [],
                         returns: {
                             setof: true,
-                            schema: "public",
-                            table: "some_table"
+                            type: "public.some_table"
                         },
                         body: `
                         begin
@@ -586,13 +584,10 @@ describe("DlManager.migrate", () => {
                         args: [
                             {
                                 name: "some_table",
-                                type: {
-                                    schema: "public",
-                                    table: "some_table"
-                                }
+                                type: "public.some_table"
                             }
                         ],
-                        returns: "void",
+                        returns: {type: "void"},
                         body: `
                         begin
                         end`

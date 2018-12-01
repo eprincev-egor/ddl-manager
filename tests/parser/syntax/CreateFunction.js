@@ -375,8 +375,7 @@ module.exports = [
             name: "test_func",
             args: [],
             returns: {
-                schema: "some_schema",
-                table: "some_table"
+                type: "some_schema.some_table"
             },
             body: {
                 content: "begin\nend"
@@ -395,8 +394,7 @@ module.exports = [
             args: [],
             returns: {
                 setof: true,
-                schema: "some_schema",
-                table: "some_table"
+                type: "some_schema.some_table"
             },
             body: {
                 content: "begin\nend"
@@ -415,16 +413,35 @@ module.exports = [
             args: [
                 {
                     name: "company",
-                    type: {
-                        schema: "public",
-                        table: "company"
-                    }
+                    type: "public.company"
                 }
             ],
             returns: {
                 setof: true,
-                schema: "some_schema",
-                table: "some_table"
+                type: "some_schema.some_table"
+            },
+            body: {
+                content: "begin\nend"
+            }
+        }
+    },
+    {
+        str: `create or replace function test_func(companies public.company[])
+            returns public.company[]
+            as $body$begin\nend$body$
+            language plpgsql;
+        `,
+        result: {
+            schema: "public",
+            name: "test_func",
+            args: [
+                {
+                    name: "companies",
+                    type: "public.company[]"
+                }
+            ],
+            returns: {
+                type: "public.company[]"
             },
             body: {
                 content: "begin\nend"

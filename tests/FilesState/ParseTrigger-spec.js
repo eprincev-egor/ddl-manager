@@ -49,7 +49,7 @@ describe("FilesState parse functions and triggers", () => {
                 schema: "public",
                 name: "some_action_on_diu_company",
                 args: [],
-                returns: "trigger",
+                returns: {type: "trigger"},
                 body
             }
         ];

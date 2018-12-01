@@ -53,7 +53,7 @@ describe("DbState.getDiff", () => {
                     type: "integer"
                 }
             ],
-            returns: "integer",
+            returns: {type: "integer"},
             body: `begin
                 return x + y;
             end`
@@ -100,7 +100,7 @@ describe("DbState.getDiff", () => {
                     type: "integer"
                 }
             ],
-            returns: "integer",
+            returns: {type: "integer"},
             body: `begin
                 return x + y;
             end`
@@ -146,7 +146,7 @@ describe("DbState.getDiff", () => {
                     type: "integer"
                 }
             ],
-            returns: "integer",
+            returns: {type: "integer"},
             body: `begin
                 return x * y;
             end`
@@ -165,7 +165,7 @@ describe("DbState.getDiff", () => {
                     type: "integer"
                 }
             ],
-            returns: "integer",
+            returns: {type: "integer"},
             body: `begin
                 return x + y;
             end`
@@ -221,7 +221,7 @@ describe("DbState.getDiff", () => {
                     type: "integer"
                 }
             ],
-            returns: "integer",
+            returns: {type: "integer"},
             body: `begin
                 return a + b + c;
             end`
@@ -241,7 +241,7 @@ describe("DbState.getDiff", () => {
                     type: "integer"
                 }
             ],
-            returns: "integer",
+            returns: {type: "integer"},
             body: `begin
                 return x + y;
             end`
@@ -283,7 +283,7 @@ describe("DbState.getDiff", () => {
             schema: "public",
             name: "some_test_func3",
             args: [],
-            returns: "integer",
+            returns: {type: "integer"},
             body: `begin
                 return 10;
             end`
@@ -321,7 +321,7 @@ describe("DbState.getDiff", () => {
             schema: "public",
             name: "some_action_on_some_event",
             args: [],
-            returns: "trigger",
+            returns: {type: "trigger"},
             body: `begin
                 return new;
             end`
@@ -394,7 +394,7 @@ describe("DbState.getDiff", () => {
             schema: "public",
             name: "some_action_on_some_event",
             args: [],
-            returns: "trigger",
+            returns: {type: "trigger"},
             body: `begin
                 return new;
             end`

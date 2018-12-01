@@ -79,7 +79,7 @@ describe("DdlManager.dump", () => {
             function: {
                 schema: "public",
                 name: "simple_func",
-                returns: "integer",
+                returns: {type: "integer"},
                 language: "sql",
                 args: [],
                 body: "select 1"

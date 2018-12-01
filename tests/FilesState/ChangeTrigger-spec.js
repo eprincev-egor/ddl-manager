@@ -29,7 +29,7 @@ const test_func1 = {
     schema: "public",
     name: "some_func1",
     args: [],
-    returns: "trigger",
+    returns: {type: "trigger"},
     body: "select 1"
 };
 const test_trigger1 = {
@@ -56,7 +56,7 @@ const only_function = {
     schema: "public",
     name: "nice",
     args: [],
-    returns: "bigint",
+    returns: {type: "bigint"},
     body: "select 1"
 };
 
@@ -77,7 +77,7 @@ const test_func2 = {
     schema: "public",
     name: "some_func2",
     args: [],
-    returns: "trigger",
+    returns: {type: "trigger"},
     body: "select 2"
 };
 const test_trigger2 = {

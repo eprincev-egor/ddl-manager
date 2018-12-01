@@ -38,7 +38,21 @@ module.exports = [
         }
     },
     {
-        str: "char",
-        error: Error
+        str: "public.company",
+        result: {
+            type: "public.company"
+        }
+    },
+    {
+        str: "company",
+        result: {
+            type: "public.company"
+        }
+    },
+    {
+        str: "public.company[]",
+        result: {
+            type: "public.company[]"
+        }
     }
 ];

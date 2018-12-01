@@ -23,7 +23,7 @@ const test_func1 = {
     schema: "public",
     name: "some_func1",
     args: [],
-    returns: "void",
+    returns: {type: "void"},
     body: "select 1"
 };
 

@@ -51,7 +51,7 @@ describe("FilesState parse files in sub dirs", () => {
             schema: "public",
             name: "some_func",
             args: [],
-            returns: "void",
+            returns: {type: "void"},
             body: VOID_BODY
         };
 
@@ -93,7 +93,7 @@ describe("FilesState parse files in sub dirs", () => {
             schema: "public",
             name: "some_func_1",
             args: [],
-            returns: "void",
+            returns: {type: "void"},
             body: VOID_BODY
         };
 
@@ -102,7 +102,7 @@ describe("FilesState parse files in sub dirs", () => {
             schema: "public",
             name: "some_func_2",
             args: [],
-            returns: "void",
+            returns: {type: "void"},
             body: VOID_BODY
         };
 
@@ -191,7 +191,7 @@ describe("FilesState parse files in sub dirs", () => {
                         schema: "public",
                         name: "test_1",
                         args: [],
-                        returns: "void",
+                        returns: {type: "void"},
                         body: VOID_BODY
                     }
                 }
@@ -205,7 +205,7 @@ describe("FilesState parse files in sub dirs", () => {
                         schema: "public",
                         name: "test_2",
                         args: [],
-                        returns: "void",
+                        returns: {type: "void"},
                         body: VOID_BODY
                     }
                 }
@@ -219,7 +219,7 @@ describe("FilesState parse files in sub dirs", () => {
                         schema: "public",
                         name: "test_3",
                         args: [],
-                        returns: "void",
+                        returns: {type: "void"},
                         body: VOID_BODY
                     }
                 }
@@ -233,7 +233,7 @@ describe("FilesState parse files in sub dirs", () => {
                         schema: "public",
                         name: "xx_1",
                         args: [],
-                        returns: "void",
+                        returns: {type: "void"},
                         body: VOID_BODY
                     }
                 }
@@ -247,7 +247,7 @@ describe("FilesState parse files in sub dirs", () => {
                         schema: "public",
                         name: "xx_3",
                         args: [],
-                        returns: "void",
+                        returns: {type: "void"},
                         body: VOID_BODY
                     }
                 }

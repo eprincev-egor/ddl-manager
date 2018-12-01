@@ -36,20 +36,14 @@ module.exports = [
         str: "company public.company",
         result: {
             name: "company",
-            type: {
-                schema: "public",
-                table: "company"
-            }
+            type: "public.company"
         }
     },
     {
         str: "company company",
         result: {
             name: "company",
-            type: {
-                schema: "public",
-                table: "company"
-            }
+            type: "public.company"
         }
     }
 ];
