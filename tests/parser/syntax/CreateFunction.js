@@ -618,7 +618,7 @@ module.exports = [
         str: `create or replace function 
             TEST_NAME()
             returns table(
-                some_arg varying[]
+                some_arg character varying[]
             ) as $body$begin;end$body$
             language plpgsql;
         `,
@@ -630,7 +630,7 @@ module.exports = [
                 table: [
                     {
                         name: "some_arg",
-                        type: "varying[]"
+                        type: "character varying[]"
                     }
                 ]
             },

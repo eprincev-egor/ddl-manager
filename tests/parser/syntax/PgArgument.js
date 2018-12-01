@@ -16,6 +16,13 @@ module.exports = [
         }
     },
     {
+        str: "sum numeric",
+        result: {
+            name: "sum",
+            type: "numeric"
+        }
+    },
+    {
         str: "company_id bigint default null",
         options: {default: true},
         result: {
@@ -82,6 +89,13 @@ module.exports = [
         }
     },
     {
+        str: "date_start time with time zone",
+        result: {
+            name: "date_start",
+            type: "time with time zone"
+        }
+    },
+    {
         str: "out name text",
         result: {
             name: "name",
@@ -95,6 +109,13 @@ module.exports = [
             name: "name",
             type: "text",
             in: true
+        }
+    },
+    {
+        str: "name character varying[]",
+        result: {
+            name: "name",
+            type: "character varying[]"
         }
     }
 ];

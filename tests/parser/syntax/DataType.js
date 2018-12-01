@@ -38,18 +38,6 @@ module.exports = [
         }
     },
     {
-        str: "varying",
-        result: {
-            type: "varying"
-        }
-    },
-    {
-        str: "varying[]",
-        result: {
-            type: "varying[]"
-        }
-    },
-    {
         str: "public.company",
         result: {
             type: "public.company"
@@ -65,6 +53,12 @@ module.exports = [
         str: "public.company[]",
         result: {
             type: "public.company[]"
+        }
+    },
+    {
+        str: "character varying[]",
+        result: {
+            type: "character varying[]"
         }
     }
 ];
