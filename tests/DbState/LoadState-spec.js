@@ -773,4 +773,36 @@ describe("DbState.load", () => {
         });
     });
 
+    it("load simple function, arg without name", async() => {
+        
+        await db.query(`
+            create function some_func(text)
+            returns void as $body$begin\nend$body$
+            language plpgsql;
+        `);
+
+        let state = new DbState(db);
+        await state.load();
+
+        assert.deepEqual(state.toJSON(), {
+            functions: [
+                {
+                    language: "plpgsql",
+                    freeze: true,
+                    schema: "public",
+                    name: "some_func",
+                    args: [
+                        {
+                            name: false,
+                            type: "text"
+                        }
+                    ],
+                    returns: {type: "void"},
+                    body: "begin\nend"
+                }
+            ],
+            triggers: []
+        });
+    });
+
 });

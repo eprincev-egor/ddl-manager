@@ -447,5 +447,32 @@ module.exports = [
                 content: "begin\nend"
             }
         }
+    },
+    {
+        str: `create or replace function test_func(text, integer)
+            returns void
+            as $body$begin\nend$body$
+            language plpgsql;
+        `,
+        result: {
+            schema: "public",
+            name: "test_func",
+            args: [
+                {
+                    name: false,
+                    type: "text"
+                },
+                {
+                    name: false,
+                    type: "integer"
+                }
+            ],
+            returns: {
+                type: "void"
+            },
+            body: {
+                content: "begin\nend"
+            }
+        }
     }
 ];

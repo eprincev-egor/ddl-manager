@@ -45,5 +45,12 @@ module.exports = [
             name: "company",
             type: "public.company"
         }
+    },
+    {
+        str: "text",
+        result: {
+            name: false,
+            type: "text"
+        }
     }
 ];

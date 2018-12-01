@@ -600,4 +600,36 @@ describe("DlManager.migrate", () => {
         // expected execute without errors
         await db.query("select test_func(some_table) from some_table");
     });
+
+    it("migrate function, arg without name", async() => {
+        await DdlManager.migrate(db, {
+            drop: {
+                functions: [],
+                triggers: []
+            },
+            create: {
+                functions: [
+                    {
+                        language: "plpgsql",
+                        schema: "public",
+                        name: "test_func",
+                        args: [
+                            {
+                                name: false,
+                                type: "text"
+                            }
+                        ],
+                        returns: {type: "void"},
+                        body: `
+                        begin
+                        end`
+                    }
+                ],
+                triggers: []
+            }
+        });
+
+        // expected execute without errors
+        await db.query("select test_func('')");
+    });
 });
