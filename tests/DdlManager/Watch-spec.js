@@ -140,7 +140,7 @@ describe("DdlManager.watch", () => {
             language plpgsql;
         `);
 
-        await sleep(50);
+        await sleep(150);
 
         let result = await db.query("select nice() as nice");
         let row = result.rows[0];

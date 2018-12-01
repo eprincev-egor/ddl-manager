@@ -80,5 +80,21 @@ module.exports = [
             name: false,
             type: "time with time zone"
         }
+    },
+    {
+        str: "out name text",
+        result: {
+            name: "name",
+            type: "text",
+            out: true
+        }
+    },
+    {
+        str: "in name text",
+        result: {
+            name: "name",
+            type: "text",
+            in: true
+        }
     }
 ];
