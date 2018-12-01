@@ -273,8 +273,7 @@ module.exports = [
             },
             body: {
                 content: "begin\nend"
-            },
-            volatile: true
+            }
         }
     },
     {
@@ -315,7 +314,6 @@ module.exports = [
             body: {
                 content: "begin\nend"
             },
-            volatile: true,
             cost: 101
         }
     },
@@ -467,6 +465,88 @@ module.exports = [
                     type: "integer"
                 }
             ],
+            returns: {
+                type: "void"
+            },
+            body: {
+                content: "begin\nend"
+            }
+        }
+    },
+    {
+        str: `create or replace function test_func()
+            returns void
+            parallel safe
+            as $body$begin\nend$body$
+            language plpgsql;
+        `,
+        result: {
+            schema: "public",
+            name: "test_func",
+            args: [],
+            parallel: "safe",
+            returns: {
+                type: "void"
+            },
+            body: {
+                content: "begin\nend"
+            }
+        }
+    },
+    {
+        str: `create or replace function test_func()
+            returns void
+            parallel restricted
+            as $body$begin\nend$body$
+            language plpgsql;
+        `,
+        result: {
+            schema: "public",
+            name: "test_func",
+            args: [],
+            parallel: "restricted",
+            returns: {
+                type: "void"
+            },
+            body: {
+                content: "begin\nend"
+            }
+        }
+    },
+    {
+        str: `create or replace function test_func()
+            returns void
+            parallel unsafe
+            as $body$begin\nend$body$
+            language plpgsql;
+        `,
+        result: {
+            schema: "public",
+            name: "test_func",
+            args: [],
+            parallel: "unsafe",
+            returns: {
+                type: "void"
+            },
+            body: {
+                content: "begin\nend"
+            }
+        }
+    },
+    {
+        str: `create or replace function test_func()
+            returns void
+            parallel safe
+            cost 12
+            as $body$begin\nend$body$
+            language plpgsql;
+        `,
+        result: {
+            schema: "public",
+            name: "test_func",
+            args: [],
+            parallel: "safe",
+            cost: 12,
             returns: {
                 type: "void"
             },
