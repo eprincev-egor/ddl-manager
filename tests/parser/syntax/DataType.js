@@ -38,6 +38,18 @@ module.exports = [
         }
     },
     {
+        str: "varying",
+        result: {
+            type: "varying"
+        }
+    },
+    {
+        str: "varying[]",
+        result: {
+            type: "varying[]"
+        }
+    },
+    {
         str: "public.company",
         result: {
             type: "public.company"

@@ -613,5 +613,30 @@ module.exports = [
                 content: "begin\nend"
             }
         }
+    },
+    {
+        str: `create or replace function 
+            TEST_NAME()
+            returns table(
+                some_arg varying[]
+            ) as $body$begin;end$body$
+            language plpgsql;
+        `,
+        result: {
+            schema: "public",
+            name: "test_name",
+            args: [],
+            returns: {
+                table: [
+                    {
+                        name: "some_arg",
+                        type: "varying[]"
+                    }
+                ]
+            },
+            body: {
+                content: "begin;end"
+            }
+        }
     }
 ];
