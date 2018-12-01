@@ -52,5 +52,33 @@ module.exports = [
             name: false,
             type: "text"
         }
+    },
+    {
+        str: "timestamp without time zone",
+        result: {
+            name: false,
+            type: "timestamp without time zone"
+        }
+    },
+    {
+        str: "double precision",
+        result: {
+            name: false,
+            type: "double precision"
+        }
+    },
+    {
+        str: "character varying(2)",
+        result: {
+            name: false,
+            type: "character varying(2)"
+        }
+    },
+    {
+        str: "time with time zone",
+        result: {
+            name: false,
+            type: "time with time zone"
+        }
     }
 ];
