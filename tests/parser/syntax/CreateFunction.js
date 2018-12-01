@@ -554,5 +554,64 @@ module.exports = [
                 content: "begin\nend"
             }
         }
+    },
+    {
+        str: `create or replace function test_func()
+            returns void
+            CALLED ON NULL INPUT
+            as $body$begin\nend$body$
+            language plpgsql;
+        `,
+        result: {
+            schema: "public",
+            name: "test_func",
+            args: [],
+            returns: {
+                type: "void"
+            },
+            body: {
+                content: "begin\nend"
+            }
+        }
+    },
+    {
+        str: `create or replace function test_func()
+            returns void
+            RETURNS NULL ON NULL INPUT
+            as $body$begin\nend$body$
+            language plpgsql;
+        `,
+        result: {
+            schema: "public",
+            name: "test_func",
+            args: [],
+            returnsNullOnNull: true,
+            returns: {
+                type: "void"
+            },
+            body: {
+                content: "begin\nend"
+            }
+        }
+    },
+    {
+        str: `create or replace function test_func()
+            returns void
+            STRICT
+            as $body$begin\nend$body$
+            language plpgsql;
+        `,
+        result: {
+            schema: "public",
+            name: "test_func",
+            args: [],
+            strict: true,
+            returns: {
+                type: "void"
+            },
+            body: {
+                content: "begin\nend"
+            }
+        }
     }
 ];
