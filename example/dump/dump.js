@@ -2,12 +2,18 @@
 
 const DdlManager = require("../../lib/DdlManager");
 const dbConfig = require("../database-config");
+const fs = require("fs");
 
 (async function() {
     try {
+        const dir = __dirname + "/ddl";
+
+        if ( !fs.existsSync(dir)  ) {
+            fs.mkdirSync(dir);
+        }
         
         await DdlManager.dump({
-            folder: __dirname + "/ddl",
+            folder: dir,
             // user, password, database, port, host
             db: dbConfig
         });
