@@ -359,5 +359,140 @@ module.exports = [
                 name: "test"
             }
         }
+    },
+    {
+        str: `create constraint trigger test 
+            after insert
+            on public.company
+            for each row
+            execute procedure public.test()
+        `,
+        result: {
+            name: "test",
+            table: {
+                schema: "public",
+                name: "company"
+            },
+
+            after: true,
+            insert: true,
+
+            constraint: true,
+            
+            procedure: {
+                schema: "public",
+                name: "test"
+            }
+        }
+    },
+    {
+        str: `create constraint trigger test 
+            after insert
+            on public.company
+            NOT DEFERRABLE
+            for each row
+            execute procedure public.test()
+        `,
+        result: {
+            name: "test",
+            table: {
+                schema: "public",
+                name: "company"
+            },
+
+            after: true,
+            insert: true,
+
+            constraint: true,
+            notDeferrable: true,
+            
+            procedure: {
+                schema: "public",
+                name: "test"
+            }
+        }
+    },
+    {
+        str: `create constraint trigger test 
+            after insert
+            on public.company
+            DEFERRABLE
+            for each row
+            execute procedure public.test()
+        `,
+        result: {
+            name: "test",
+            table: {
+                schema: "public",
+                name: "company"
+            },
+
+            after: true,
+            insert: true,
+
+            constraint: true,
+            deferrable: true,
+            
+            procedure: {
+                schema: "public",
+                name: "test"
+            }
+        }
+    },
+    {
+        str: `create constraint trigger test 
+            after insert
+            on public.company
+            DEFERRABLE initially IMMEDIATE
+            for each row
+            execute procedure public.test()
+        `,
+        result: {
+            name: "test",
+            table: {
+                schema: "public",
+                name: "company"
+            },
+
+            after: true,
+            insert: true,
+
+            constraint: true,
+            deferrable: true,
+            initially: "immediate",
+            
+            procedure: {
+                schema: "public",
+                name: "test"
+            }
+        }
+    },
+    {
+        str: `create constraint trigger test 
+            after insert
+            on public.company
+            DEFERRABLE initially DEFERRED
+            for each row
+            execute procedure public.test()
+        `,
+        result: {
+            name: "test",
+            table: {
+                schema: "public",
+                name: "company"
+            },
+
+            after: true,
+            insert: true,
+
+            constraint: true,
+            deferrable: true,
+            initially: "deferred",
+            
+            procedure: {
+                schema: "public",
+                name: "test"
+            }
+        }
     }
 ];
