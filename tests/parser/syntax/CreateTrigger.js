@@ -26,6 +26,31 @@ module.exports = [
     },
     {
         str: `create trigger test 
+            before insert
+            on public.company
+            for each STATEMENT
+            execute procedure public.test()
+        `,
+        result: {
+            name: "test",
+            table: {
+                schema: "public",
+                name: "company"
+            },
+            
+            before: true,
+            insert: true,
+            
+            statement: true,
+
+            procedure: {
+                schema: "public",
+                name: "test"
+            }
+        }
+    },
+    {
+        str: `create trigger test 
             after insert
             on public.company
             for each row
