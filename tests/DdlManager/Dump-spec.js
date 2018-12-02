@@ -18,6 +18,8 @@ describe("DdlManager.dump", () => {
         await db.query(`
             drop schema public cascade;
             create schema public;
+
+            drop schema if exists test cascade;
         `);
 
         if ( fs.existsSync(ROOT_TMP_PATH) ) {
@@ -72,7 +74,7 @@ describe("DdlManager.dump", () => {
             folder: ROOT_TMP_PATH
         });
 
-        let sql = fs.readFileSync(ROOT_TMP_PATH + "/simple_func.sql").toString();
+        let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
         let content = DDLCoach.parseSqlFile(sql);
 
         assert.deepEqual(content, {
@@ -83,6 +85,119 @@ describe("DdlManager.dump", () => {
                 language: "sql",
                 args: [],
                 body: "select 1"
+            }
+        });
+    });
+
+    it("dump simple function from some schema", async() => {
+        await db.query(`
+            create or replace function simple_func()
+            returns integer as $$select 1$$
+            language sql;
+
+            create schema test;
+
+            create or replace function test.simple_func()
+            returns integer as $$select 1$$
+            language sql;
+        `);
+
+        await DdlManager.dump({
+            db: {
+                database: db.database,
+                user: db.user,
+                password: db.password,
+                host: db.host,
+                port: db.port
+            }, 
+            folder: ROOT_TMP_PATH
+        });
+
+        let sql;
+        let content;
+
+        sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
+        content = DDLCoach.parseSqlFile(sql);
+
+        assert.deepEqual(content, {
+            function: {
+                schema: "public",
+                name: "simple_func",
+                returns: {type: "integer"},
+                language: "sql",
+                args: [],
+                body: "select 1"
+            }
+        });
+
+        sql = fs.readFileSync(ROOT_TMP_PATH + "/test/simple_func.sql").toString();
+        content = DDLCoach.parseSqlFile(sql);
+
+        assert.deepEqual(content, {
+            function: {
+                schema: "test",
+                name: "simple_func",
+                returns: {type: "integer"},
+                language: "sql",
+                args: [],
+                body: "select 1"
+            }
+        });
+    });
+
+    it("dump simple function and trigger", async() => {
+        let body = `
+            begin
+                return new;
+            end
+        `;
+        await db.query(`
+            create table company (
+                id serial primary key
+            );
+
+            create or replace function some_func()
+            returns trigger as $body$${ body }$body$
+            language plpgsql;
+
+            create trigger some_trigger
+            after insert or update or delete
+            on company
+            for each row
+            execute procedure some_func();
+        `);
+
+        await DdlManager.dump({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+        let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/some_func.sql").toString();
+        let content = DDLCoach.parseSqlFile(sql);
+
+        assert.deepEqual(content, {
+            function: {
+                schema: "public",
+                name: "some_func",
+                returns: {type: "trigger"},
+                language: "plpgsql",
+                args: [],
+                body
+            },
+            trigger: {
+                table: {
+                    schema: "public",
+                    name: "company"
+                },
+                after: true,
+                insert: true,
+                update: true,
+                delete: true,
+                name: "some_trigger",
+                procedure: {
+                    schema: "public",
+                    name: "some_func"
+                }
             }
         });
     });
