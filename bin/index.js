@@ -25,8 +25,11 @@ const command = commands[ commandName ] || commands.undefined;
 // run command
 (async function() {
     try {
-        
-        await command(args);
+        if ( "help" in args && command != commands.undefined ) {
+            commands.help(args, commandName);
+        } else {
+            await command(args);
+        }
 
     } catch(err) {
         console.error("Error: " + err.message);
