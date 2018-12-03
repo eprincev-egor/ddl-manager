@@ -553,4 +553,49 @@ describe("DdlManager.dump", () => {
         });
     });
 
+    it("dump function with returns table", async() => {
+        let body = `
+            begin
+                id = 1;
+                name = 'nice';
+                return next;
+            end
+        `;
+        await db.query(`
+            create or replace function simple_func()
+            returns table(id integer, name text) as $$${ body }$$
+            language plpgsql;
+        `);
+
+        await DdlManager.dump({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+        let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
+        let content = DDLCoach.parseSqlFile(sql);
+
+        assert.deepEqual(content, {
+            function: {
+                schema: "public",
+                name: "simple_func",
+                returns: {
+                    table: [
+                        {
+                            name: "id",
+                            type: "integer"
+                        },
+                        {
+                            name: "name",
+                            type: "text"
+                        }
+                    ]
+                },
+                language: "plpgsql",
+                args: [],
+                body
+            }
+        });
+    });
+
 });
