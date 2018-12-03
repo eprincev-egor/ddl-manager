@@ -2,7 +2,7 @@
 
 const fs = require("fs");
 
-fs.writeFileSync("./database-config.js", `
+fs.writeFileSync("./ddl-manager-config.js", `
 "use strict";
 
 module.exports = {

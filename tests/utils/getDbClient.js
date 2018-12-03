@@ -13,9 +13,9 @@ async function getDBClient() {
     
     let dbConfigFromFile;
     try {
-        dbConfigFromFile = require("../../database-config");
+        dbConfigFromFile = require("../../ddl-manager-config");
     } catch(err) {
-        throw new Error("Создайте файл database-config.js в корне. Модуль должен возвращать объект, имеющий свойства database, user, password, host, port");
+        throw new Error("Создайте файл ddl-manager-config.js в корне. Модуль должен возвращать объект, имеющий свойства database, user, password, host, port");
     }
 
     if ( dbConfigFromFile.database ) {

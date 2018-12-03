@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "store postgres procedures and triggers in files",
   "main": "lib/DdlManager.js",
+  "bin": {
+    "ddl-manager": "./bin/index"
+  },
   "directories": {
     "test": "tests"
   },
@@ -33,6 +36,7 @@
   "dependencies": {
     "glob": "^7.1.3",
     "lodash": "^4.17.11",
+    "minimist": "^1.2.0",
     "pg": "^7.6.1",
     "watch": "^1.0.2"
   },
