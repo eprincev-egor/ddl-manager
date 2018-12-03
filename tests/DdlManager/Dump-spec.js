@@ -172,7 +172,7 @@ describe("DdlManager.dump", () => {
             folder: ROOT_TMP_PATH
         });
 
-        let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/some_func.sql").toString();
+        let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/company/some_func.sql").toString();
         let content = DDLCoach.parseSqlFile(sql);
 
         assert.deepEqual(content, {
