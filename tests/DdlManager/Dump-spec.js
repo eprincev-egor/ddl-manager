@@ -444,4 +444,113 @@ describe("DdlManager.dump", () => {
         });
     });
 
+    it("dump simple function with comment, check comment in dumped file", async() => {
+        await db.query(`
+            create or replace function simple_func()
+            returns integer as $$select 1$$
+            language sql;
+
+            comment on function public.simple_func() is $$test$$;
+        `);
+
+        await DdlManager.dump({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+        let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
+        sql = sql.trim();
+
+        assert.equal(
+            sql.slice(0, 10),
+            "/*\ntest\n*/"
+        );
+
+        let content = DDLCoach.parseSqlFile(sql);
+
+        assert.deepEqual(content, {
+            function: {
+                schema: "public",
+                name: "simple_func",
+                returns: {type: "integer"},
+                language: "sql",
+                args: [],
+                body: "select 1"
+            }
+        });
+    });
+
+    
+    it("dump simple function and trigger with comment, check comment in dumped file", async() => {
+        let body = `
+            begin
+                return new;
+            end
+        `;
+        await db.query(`
+            create table company (
+                id serial primary key
+            );
+
+            create or replace function some_func()
+            returns trigger as $body$${ body }$body$
+            language plpgsql;
+            comment on function some_func() is $$func$$;
+
+            create trigger some_trigger
+            after insert or update or delete
+            on company
+            for each row
+            execute procedure some_func();
+            comment on trigger some_trigger on company is $$trigger$$;
+        `);
+
+        await DdlManager.dump({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+        let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/company/some_func.sql").toString();
+        sql = sql.trim();
+
+        assert.equal(
+            sql.slice(0, 10),
+            "/*\nfunc\n*/"
+        );
+
+        assert.equal(
+            // TODO: test regexp
+            sql.slice(182, 195),
+            "/*\ntrigger\n*/"
+        );
+
+        let content = DDLCoach.parseSqlFile(sql);
+
+        assert.deepEqual(content, {
+            function: {
+                schema: "public",
+                name: "some_func",
+                returns: {type: "trigger"},
+                language: "plpgsql",
+                args: [],
+                body
+            },
+            trigger: {
+                table: {
+                    schema: "public",
+                    name: "company"
+                },
+                after: true,
+                insert: true,
+                update: true,
+                delete: true,
+                name: "some_trigger",
+                procedure: {
+                    schema: "public",
+                    name: "some_func"
+                }
+            }
+        });
+    });
+
 });
