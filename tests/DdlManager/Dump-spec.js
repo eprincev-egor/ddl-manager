@@ -202,4 +202,63 @@ describe("DdlManager.dump", () => {
         });
     });
 
+    it("dump function from public and trigger table from test schema, file must be in folder test/company", async() => {
+        let body = `
+            begin
+                return new;
+            end
+        `;
+        await db.query(`
+            create schema test;
+
+            create table test.company (
+                id serial primary key
+            );
+
+            create or replace function public.some_func()
+            returns trigger as $body$${ body }$body$
+            language plpgsql;
+
+            create trigger some_trigger
+            after insert or update or delete
+            on test.company
+            for each row
+            execute procedure some_func();
+        `);
+
+        await DdlManager.dump({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+        let sql = fs.readFileSync(ROOT_TMP_PATH + "/test/company/some_func.sql").toString();
+        let content = DDLCoach.parseSqlFile(sql);
+
+        assert.deepEqual(content, {
+            function: {
+                schema: "public",
+                name: "some_func",
+                returns: {type: "trigger"},
+                language: "plpgsql",
+                args: [],
+                body
+            },
+            trigger: {
+                table: {
+                    schema: "test",
+                    name: "company"
+                },
+                after: true,
+                insert: true,
+                update: true,
+                delete: true,
+                name: "some_trigger",
+                procedure: {
+                    schema: "public",
+                    name: "some_func"
+                }
+            }
+        });
+    });
+
 });
