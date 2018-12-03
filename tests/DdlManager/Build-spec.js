@@ -483,7 +483,8 @@ describe("DdlManager.build", () => {
 
         await DdlManager.build({
             db, 
-            folder: ROOT_TMP_PATH
+            folder: ROOT_TMP_PATH,
+            throwError: false
         });
 
         let result;

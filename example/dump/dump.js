@@ -15,7 +15,10 @@ const fs = require("fs");
         await DdlManager.dump({
             folder: dir,
             // user, password, database, port, host
-            db: dbConfig
+            db: dbConfig,
+
+            // if set true, then build will without freeze errors
+            unfreeze: false
         });
 
     } catch(err) {

@@ -261,4 +261,187 @@ describe("DdlManager.dump", () => {
         });
     });
 
+    it("dump simple function and try build, expected freeze error", async() => {
+        await db.query(`
+            create or replace function simple_func()
+            returns integer as $$select 1$$
+            language sql;
+        `);
+
+        await DdlManager.dump({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+        let filePath = ROOT_TMP_PATH + "/public/simple_func.sql";
+
+        let sql = fs.readFileSync(filePath).toString();
+        let content = DDLCoach.parseSqlFile(sql);
+
+        assert.deepEqual(content, {
+            function: {
+                schema: "public",
+                name: "simple_func",
+                returns: {type: "integer"},
+                language: "sql",
+                args: [],
+                body: "select 1"
+            }
+        });
+
+        fs.writeFileSync(filePath, `
+            create or replace function simple_func()
+            returns integer as $$select 2$$
+            language sql;
+        `);
+
+        try {
+            await DdlManager.build({
+                db,
+                folder: ROOT_TMP_PATH,
+                throwError: true
+            });
+            throw new Error("expected error");
+        } catch(err) {
+            assert.equal(err.message, "cannot drop freeze function public.simple_func()");
+        }
+        
+    });
+
+    it("dump with unfreeze function", async() => {
+        await db.query(`
+            create or replace function simple_func()
+            returns integer as $$select 1$$
+            language sql;
+        `);
+
+        await DdlManager.dump({
+            db, 
+            folder: ROOT_TMP_PATH,
+            unfreeze: true
+        });
+
+        let filePath = ROOT_TMP_PATH + "/public/simple_func.sql";
+
+        let sql = fs.readFileSync(filePath).toString();
+        let content = DDLCoach.parseSqlFile(sql);
+
+        assert.deepEqual(content, {
+            function: {
+                schema: "public",
+                name: "simple_func",
+                returns: {type: "integer"},
+                language: "sql",
+                args: [],
+                body: "select 1"
+            }
+        });
+
+        fs.writeFileSync(filePath, `
+            create or replace function simple_func()
+            returns integer as $$select 2$$
+            language sql;
+        `);
+
+        await DdlManager.build({
+            db,
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+        
+        let result = await db.query("select simple_func() as test");
+        assert.deepEqual(result.rows[0], {
+            test: 2
+        });
+    });
+
+    it("dump with unfreeze trigger", async() => {
+        let body = `
+            begin
+                return new;
+            end
+        `;
+        await db.query(`
+            create table company (
+                id serial primary key,
+                name text
+            );
+
+            create or replace function some_func()
+            returns trigger as $body$${ body }$body$
+            language plpgsql;
+
+            create trigger some_trigger
+            after insert or update or delete
+            on company
+            for each row
+            execute procedure some_func();
+        `);
+
+        await DdlManager.dump({
+            db, 
+            folder: ROOT_TMP_PATH,
+            unfreeze: true
+        });
+
+        let filePath = ROOT_TMP_PATH + "/public/company/some_func.sql";
+
+        let sql = fs.readFileSync(filePath).toString();
+        let content = DDLCoach.parseSqlFile(sql);
+
+        assert.deepEqual(content, {
+            function: {
+                schema: "public",
+                name: "some_func",
+                returns: {type: "trigger"},
+                language: "plpgsql",
+                args: [],
+                body
+            },
+            trigger: {
+                table: {
+                    schema: "public",
+                    name: "company"
+                },
+                after: true,
+                insert: true,
+                update: true,
+                delete: true,
+                name: "some_trigger",
+                procedure: {
+                    schema: "public",
+                    name: "some_func"
+                }
+            }
+        });
+
+        fs.writeFileSync(filePath, `
+            create or replace function some_func()
+            returns trigger as $$
+            begin
+                new.name = 'nice';
+                return new;
+            end
+            $$
+            language plpgsql;
+
+            create trigger some_trigger
+            before insert
+            on company
+            for each row
+            execute procedure some_func();
+        `);
+
+        await DdlManager.build({
+            db,
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+        
+        let result = await db.query("insert into company default values returning name");
+        assert.deepEqual(result.rows[0], {
+            name: "nice"
+        });
+    });
+
 });
