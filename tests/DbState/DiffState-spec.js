@@ -10,6 +10,10 @@ function diffState({filesState, dbState}) {
     state.functions = dbState.functions;
     state.triggers = dbState.triggers;
 
+    if ( dbState.comments ) {
+        state.comments = dbState.comments;
+    }
+
     return state.getDiff( filesState );
 }
 
@@ -444,6 +448,58 @@ describe("DbState.getDiff", () => {
             create: {
                 triggers: [],
                 functions: []
+            }
+        });
+    });
+
+    it("create function with comment", () => {
+        let func = {
+            schema: "public",
+            name: "some_test_func",
+            args: [],
+            returns: {type: "integer"},
+            body: `begin
+                return x + y;
+            end`
+        };
+        let comment = {
+            function: {
+                schema: "public",
+                name: "some_test_func",
+                args: []
+            },
+            comment: "test"
+        };
+
+        let diff = diffState({
+            filesState: {
+                functions: [
+                    func
+                ],
+                triggers: [],
+                comments: [
+                    comment
+                ]
+            },
+            dbState: {
+                functions: [],
+                triggers: []
+            }
+        });
+
+        assert.deepEqual(diff, {
+            drop: {
+                triggers: [],
+                functions: []
+            },
+            create: {
+                triggers: [],
+                functions: [
+                    func
+                ],
+                comments: [
+                    comment
+                ]
             }
         });
     });

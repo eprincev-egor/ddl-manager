@@ -536,13 +536,6 @@ describe("DdlManager.dump", () => {
         });
 
         let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
-        sql = sql.trim();
-
-        assert.equal(
-            sql.slice(0, 10),
-            "/*\ntest\n*/"
-        );
-
         let content = DDLCoach.parseSqlFile(sql);
 
         assert.deepEqual(content, {
@@ -553,7 +546,17 @@ describe("DdlManager.dump", () => {
                 language: "sql",
                 args: [],
                 body: "select 1"
-            }
+            },
+            comments: [
+                {
+                    function: {
+                        schema: "public",
+                        name: "simple_func",
+                        args: []
+                    },
+                    comment: "test"
+                }
+            ]
         });
     });
 
@@ -588,19 +591,6 @@ describe("DdlManager.dump", () => {
         });
 
         let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/company/some_func.sql").toString();
-        sql = sql.trim();
-
-        assert.equal(
-            sql.slice(0, 10),
-            "/*\nfunc\n*/"
-        );
-
-        assert.equal(
-            // TODO: test regexp
-            sql.slice(182, 195),
-            "/*\ntrigger\n*/"
-        );
-
         let content = DDLCoach.parseSqlFile(sql);
 
         assert.deepEqual(content, {
@@ -626,7 +616,25 @@ describe("DdlManager.dump", () => {
                     schema: "public",
                     name: "some_func"
                 }
-            }]
+            }],
+            comments: [
+                {
+                    function: {
+                        schema: "public",
+                        name: "some_func",
+                        args: []
+                    },
+                    comment: "func"
+                },
+                {
+                    trigger: {
+                        schema: "public",
+                        table: "company",
+                        name: "some_trigger"
+                    },
+                    comment: "trigger"
+                }
+            ]
         });
     });
 

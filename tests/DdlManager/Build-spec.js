@@ -502,5 +502,44 @@ describe("DdlManager.build", () => {
         });
     });
 
+    it("build simple function with comment", async() => {
+        let folderPath = ROOT_TMP_PATH + "/simple-func";
+        fs.mkdirSync(folderPath);
+
+        fs.writeFileSync(folderPath + "/nice.sql", `
+            create or replace function nice(a integer)
+            returns integer as $body$
+                begin
+                    return a * 1;
+                end
+            $body$
+            language plpgsql;
+
+            comment on function nice(integer) is $$good$$;
+        `);
+
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        let result = await db.query(`
+            select
+                pg_catalog.obj_description( pg_proc.oid ) as comment
+            from information_schema.routines as routines
+
+            left join pg_catalog.pg_proc as pg_proc on
+                routines.specific_name = pg_proc.proname || '_' || pg_proc.oid::text
+        
+            where
+                routines.routine_schema = 'public' and
+                routines.routine_name = 'nice'
+        `);
+
+        assert.deepEqual(result.rows[0], {
+            comment: "good\nddl-manager-sync"
+        });
+    });
 
 });

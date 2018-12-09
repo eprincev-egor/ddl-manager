@@ -736,7 +736,7 @@ describe("DlManager.migrate", () => {
         `);
 
         assert.deepEqual(result.rows[0], {
-            comment: "nice"
+            comment: "nice\nddl-manager-sync"
         });
 
     });
@@ -810,7 +810,7 @@ describe("DlManager.migrate", () => {
         `);
 
         assert.deepEqual(result.rows[0], {
-            comment: "super"
+            comment: "super\nddl-manager-sync"
         });
 
     });
