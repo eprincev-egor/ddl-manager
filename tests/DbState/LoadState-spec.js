@@ -351,6 +351,43 @@ describe("DbState.load", () => {
         });
     });
 
+    it("load simple function with arg default null", async() => {
+        let body = `
+            begin
+                raise notice 'test';
+            end
+        `;
+        await db.query(`
+            create function test_func(id bigint default null)
+            returns void as $body$${ body }$body$
+            language plpgsql;
+        `);
+
+        let state = new DbState(db);
+        await state.load();
+
+        assert.deepEqual(state.toJSON(), {
+            functions: [
+                {
+                    language: "plpgsql",
+                    freeze: true,
+                    schema: "public",
+                    name: "test_func",
+                    args: [
+                        {
+                            name: "id",
+                            type: "bigint",
+                            default: "null ::bigint"
+                        }
+                    ],
+                    returns: {type: "void"},
+                    body
+                }
+            ],
+            triggers: []
+        });
+    });
+
     it("load trigger", async() => {
         let body = `
             begin

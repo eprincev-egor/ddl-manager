@@ -939,4 +939,73 @@ describe("DlManager.migrate", () => {
 
     });
 
+
+    it("migrate function, arg default null", async() => {
+        let func = {
+            language: "plpgsql",
+            schema: "public",
+            name: "test_func",
+            args: [
+                {
+                    name: "id",
+                    type: "integer",
+                    default: "null"
+                }
+            ],
+            returns: {type: "text"},
+            body: `
+            begin
+                return 'nice' || coalesce(id, 2)::text;
+            end`
+        };
+
+        await DdlManager.migrate({db, diff: {
+            drop: {
+                functions: [],
+                triggers: []
+            },
+            create: {
+                functions: [
+                    func
+                ],
+                triggers: []
+            }
+        }});
+
+        let result = await db.query("select test_func() as test");
+
+        assert.deepEqual(result.rows[0], {
+            test: "nice2"
+        });
+
+
+        await DdlManager.migrate({db, diff: {
+            drop: {
+                functions: [
+                    func
+                ],
+                triggers: []
+            },
+            create: {
+                functions: [],
+                triggers: []
+            }
+        }});
+
+        // old function must be dropped
+        try {
+            await db.query("select test_func(1) as nice");
+            assert.ok(false, "expected error");
+        } catch(err) {
+            assert.equal(err.message, "function test_func(integer) does not exist");
+        }
+
+        try {
+            await db.query("select test_func() as nice");
+            assert.ok(false, "expected error");
+        } catch(err) {
+            assert.equal(err.message, "function test_func() does not exist");
+        }
+    });
+
 });

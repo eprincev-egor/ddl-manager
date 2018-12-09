@@ -327,4 +327,65 @@ describe("FilesState watch remove functions", () => {
         assert.deepEqual(filesState.getComments(), []);
     });
 
+
+    it("remove function with default arg", async() => {
+        const func_sql = `
+            create or replace function some_func1(x integer default null)
+            returns void as $body$begin\n\nend$body$
+            language plpgsql;
+        `;
+        const func = {
+            language: "plpgsql",
+            schema: "public",
+            name: "some_func1",
+            args: [{
+                name: "x",
+                type: "integer",
+                default: "null"
+            }],
+            returns: {type: "void"},
+            body: "begin\n\nend"
+        };
+
+        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+
+        fs.writeFileSync(filePath, func_sql);
+
+        let filesState = FilesState.create({
+            folder: ROOT_TMP_PATH
+        });
+
+        assert.deepEqual(
+            filesState.getFunctions(), 
+            [func]
+        );
+
+        let changes;
+        filesState.on("change", (_changes) => {
+            changes = _changes;
+        });
+        watchers_to_stop.push(filesState);
+
+        await filesState.watch();
+
+        fs.unlinkSync(filePath);
+        
+        await sleep(50);
+
+        assert.deepEqual(changes, {
+            drop: {
+                functions: [
+                    func
+                ],
+                triggers: []
+            },
+            create: {
+                functions: [],
+                triggers: []
+            }
+        });
+
+        assert.deepEqual(filesState.getFunctions(), []);
+    });
+
 });
