@@ -344,4 +344,44 @@ describe("FilesState parse functions", () => {
         assert.deepEqual(actualResult, expectedResult);
     });
 
+    it("parse file with comment on function", () => {
+        let sql = `
+            create or replace function public.test()
+            returns integer as $body$select 1$body$
+            language sql;
+
+            comment on function test() is $$yes$$;
+        `.trim();
+        
+        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        fs.writeFileSync(filePath, sql);
+
+        
+        let filesState = FilesState.create({
+            folder: ROOT_TMP_PATH
+        });
+
+        assert.deepEqual(filesState.getFunctions(), [
+            {
+                language: "sql",
+                schema: "public",
+                name: "test",
+                args: [],
+                returns: {type: "integer"},
+                body: "select 1"
+            }
+        ]);
+
+        assert.deepEqual(filesState.getComments(), [
+            {
+                function: {
+                    schema: "public",
+                    name: "test",
+                    args: []
+                },
+                comment: "yes"
+            }
+        ]);
+    });
+
 });

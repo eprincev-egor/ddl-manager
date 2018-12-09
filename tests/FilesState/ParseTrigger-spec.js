@@ -82,7 +82,6 @@ describe("FilesState parse functions and triggers", () => {
         assert.deepEqual(actualFunctions, expectedFunctions);
         assert.deepEqual(actualTriggers, expectedTriggers);
 
-        fs.unlinkSync(filePath);
     });
 
     
@@ -151,8 +150,6 @@ describe("FilesState parse functions and triggers", () => {
         });
 
         assert.equal(err.message, "wrong returns type bigint");
-
-        fs.unlinkSync(filePath);
     });
 
     it("expected error on duplicate trigger", () => {
@@ -195,6 +192,46 @@ describe("FilesState parse functions and triggers", () => {
         
         assert.equal(err.message, "duplicate trigger some_trigger on public.company");
         
+    });
+
+    it("parse trigger with comment", () => {
+        let body = `
+        begin
+            return new;
+        end
+        `;
+
+        let sql = `
+            create or replace function some_action_on_diu_company()
+            returns trigger as $body$${body}$body$
+            language plpgsql;
+
+            create trigger some_action_on_diu_company_trigger
+            after insert or update of name, deleted or delete
+            on company
+            for each row
+            execute procedure some_action_on_diu_company();
+
+            comment on trigger some_action_on_diu_company_trigger on company is $$test$$;
+        `;
+        
+        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        fs.writeFileSync(filePath, sql);
+
+        let filesState = FilesState.create({
+            folder: ROOT_TMP_PATH
+        });
+
+        assert.deepEqual(filesState.getComments(), [
+            {
+                trigger: {
+                    schema: "public",
+                    table: "company",
+                    name: "some_action_on_diu_company_trigger"
+                },
+                comment: "test"
+            }
+        ]);
     });
 
 

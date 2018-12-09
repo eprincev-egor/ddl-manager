@@ -255,4 +255,100 @@ describe("FilesState watch change functions", () => {
             test_func1
         ]);
     });
+
+    it("change comment on function", async() => {
+        
+        let filePath = ROOT_TMP_PATH + "/change-func.sql";
+        fs.writeFileSync(filePath, test_func1_sql + `
+            comment on function some_func1() is 'nice'
+        `);
+        
+
+        let filesState = FilesState.create({
+            folder: ROOT_TMP_PATH
+        });
+        
+        assert.deepEqual(filesState.getFunctions(), [
+            test_func1
+        ]);
+
+        assert.deepEqual(filesState.getComments(), [
+            {
+                function: {
+                    schema: "public",
+                    name: "some_func1",
+                    args: []
+                },
+                comment: "nice"
+            }
+        ]);
+        
+
+        let changes;
+        let counter = 0;
+        filesState.on("change", (_changes) => {
+            changes = _changes;
+            counter++;
+        });
+        watchers_to_stop.push(filesState);
+        
+        await filesState.watch();
+        
+        
+        fs.writeFileSync(filePath, test_func1_sql + `
+            comment on function some_func1() is 'good'
+        `);
+        await sleep(50);
+        
+        assert.deepEqual(changes, {
+            drop: {
+                functions: [
+                    test_func1
+                ],
+                triggers: [],
+                comments: [
+                    {
+                        function: {
+                            schema: "public",
+                            name: "some_func1",
+                            args: []
+                        },
+                        comment: "nice"
+                    }
+                ]
+            },
+            create: {
+                functions: [
+                    test_func1
+                ],
+                triggers: [],
+                comments: [
+                    {
+                        function: {
+                            schema: "public",
+                            name: "some_func1",
+                            args: []
+                        },
+                        comment: "good"
+                    }
+                ]
+            }
+        });
+        assert.equal(counter, 1);
+        
+        assert.deepEqual(filesState.getFunctions(), [
+            test_func1
+        ]);
+
+        assert.deepEqual(filesState.getComments(), [
+            {
+                function: {
+                    schema: "public",
+                    name: "some_func1",
+                    args: []
+                },
+                comment: "good"
+            }
+        ]);
+    });
 });

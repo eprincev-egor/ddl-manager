@@ -684,4 +684,259 @@ describe("DlManager.migrate", () => {
             test: "nice1"
         });
     });
+
+    it("migrate simple function with comment", async() => {
+
+        await DdlManager.migrate({
+            db, 
+            diff: {
+                drop: {
+                    functions: [],
+                    triggers: []
+                },
+                create: {
+                    functions: [
+                        {
+                            language: "plpgsql",
+                            schema: "public",
+                            name: "some_func",
+                            args: [],
+                            returns: {type: "bigint"},
+                            body: `begin
+                                return 1;
+                            end`
+                        }
+                    ],
+                    comments: [
+                        {
+                            function: {
+                                schema: "public",
+                                name: "some_func",
+                                args: []
+                            },
+                            comment: "nice"
+                        }
+                    ],
+                    triggers: []
+                }
+            }
+        });
+
+        let result = await db.query(`
+            select
+                pg_catalog.obj_description( pg_proc.oid ) as comment
+            from information_schema.routines as routines
+
+            left join pg_catalog.pg_proc as pg_proc on
+                routines.specific_name = pg_proc.proname || '_' || pg_proc.oid::text
+        
+            where
+                routines.routine_schema = 'public' and
+                routines.routine_name = 'some_func'
+        `);
+
+        assert.deepEqual(result.rows[0], {
+            comment: "nice"
+        });
+
+    });
+
+    it("migrate simple trigger with comment", async() => {
+
+        await db.query(`
+            create table ddl_manager_test (
+                name text,
+                note text
+            );
+        `);
+
+        await DdlManager.migrate({
+            db, 
+            diff: {
+                drop: {
+                    functions: [],
+                    triggers: []
+                },
+                create: {
+                    functions: [
+                        {
+                            language: "plpgsql",
+                            schema: "public",
+                            name: "some_action_on_diu_test",
+                            args: [],
+                            returns: {type: "trigger"},
+                            body: `begin
+                            raise exception 'success';
+                        end`
+                        }
+                    ],
+                    triggers: [
+                        {
+                            table: {
+                                schema: "public",
+                                name: "ddl_manager_test"
+                            },
+                            after: true,
+                            insert: true,
+                            update: ["name", "note"],
+                            delete: true,
+                            name: "some_action_on_diu_test_trigger",
+                            procedure: {
+                                schema: "public",
+                                name: "some_action_on_diu_test"
+                            }
+                        }
+                    ],
+                    comments: [
+                        {
+                            trigger: {
+                                schema: "public",
+                                table: "ddl_manager_test",
+                                name: "some_action_on_diu_test_trigger"
+                            },
+                            comment: "super"
+                        }
+                    ]
+                }
+            }
+        });
+
+        let result = await db.query(`
+            select
+                pg_catalog.obj_description( pg_trigger.oid ) as comment
+            from pg_trigger
+            where
+                pg_trigger.tgname = 'some_action_on_diu_test_trigger'
+        `);
+
+        assert.deepEqual(result.rows[0], {
+            comment: "super"
+        });
+
+    });
+
+
+    it("migrate drop function comment", async() => {
+
+        await db.query(`
+            create function test(a numeric)
+            returns integer as $$select 1$$
+            language sql;
+
+            comment on function public.test(numeric) is $$xx$$
+        `);
+
+        await DdlManager.migrate({
+            db, 
+            diff: {
+                drop: {
+                    functions: [],
+                    triggers: [],
+                    comments: [
+                        {
+                            function: {
+                                schema: "public",
+                                name: "test",
+                                args: ["numeric"]
+                            },
+                            comment: "xx"
+                        }
+                    ]
+                },
+                create: {
+                    functions: [
+                    ],
+                    triggers: []
+                }
+            }
+        });
+
+        let result = await db.query(`
+            select
+                coalesce(
+                    pg_catalog.obj_description( pg_proc.oid ),
+                    'dropped'
+                ) as comment
+            from information_schema.routines as routines
+
+            left join pg_catalog.pg_proc as pg_proc on
+                routines.specific_name = pg_proc.proname || '_' || pg_proc.oid::text
+        
+            where
+                routines.routine_schema = 'public' and
+                routines.routine_name = 'test'
+        `);
+
+        assert.deepEqual(result.rows[0], {
+            comment: "dropped"
+        });
+
+    });
+
+    it("migrate drop trigger comment", async() => {
+
+        await db.query(`
+            create table company (
+                id serial primary key
+            );
+
+            create function test()
+            returns trigger as $$
+            begin
+                return new;
+            end
+            $$
+            language plpgsql;
+            
+            create trigger x
+            after insert
+            on company
+            for each row
+            execute procedure test();
+
+            comment on trigger x on company is $$xx$$
+        `);
+
+        await DdlManager.migrate({
+            db, 
+            diff: {
+                drop: {
+                    functions: [],
+                    triggers: [],
+                    comments: [
+                        {
+                            trigger: {
+                                schema: "public",
+                                table: "company",
+                                name: "x"
+                            },
+                            comment: "xx"
+                        }
+                    ]
+                },
+                create: {
+                    functions: [
+                    ],
+                    triggers: []
+                }
+            }
+        });
+
+        let result = await db.query(`
+            select
+                coalesce(
+                    pg_catalog.obj_description( pg_trigger.oid ),
+                    'dropped'
+                ) as comment
+            from pg_trigger
+            where
+                pg_trigger.tgname = 'x'
+        `);
+
+        assert.deepEqual(result.rows[0], {
+            comment: "dropped"
+        });
+
+    });
+
 });

@@ -259,5 +259,72 @@ describe("FilesState watch remove functions", () => {
         assert.deepEqual(filesState.getFunctions(), []);
     });
 
+    it("remove function with comments", async() => {
+        
+        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+
+        fs.writeFileSync(filePath, test_func1_sql +  `
+            comment on function some_func1() is 'awesome'
+        `);
+
+        let filesState = FilesState.create({
+            folder: ROOT_TMP_PATH
+        });
+
+        assert.deepEqual(
+            filesState.getFunctions(), 
+            [test_func1]
+        );
+
+        assert.deepEqual(
+            filesState.getComments(),
+            [{
+                function: {
+                    schema: "public",
+                    name: "some_func1",
+                    args: []
+                },
+                comment: "awesome"
+            }]
+        );
+
+        let changes;
+        filesState.on("change", (_changes) => {
+            changes = _changes;
+        });
+        watchers_to_stop.push(filesState);
+
+        await filesState.watch();
+
+        fs.unlinkSync(filePath);
+        
+        await sleep(50);
+
+        assert.deepEqual(changes, {
+            drop: {
+                functions: [
+                    test_func1
+                ],
+                triggers: [],
+                comments: [
+                    {
+                        function: {
+                            schema: "public",
+                            name: "some_func1",
+                            args: []
+                        },
+                        comment: "awesome"
+                    }
+                ]
+            },
+            create: {
+                functions: [],
+                triggers: []
+            }
+        });
+
+        assert.deepEqual(filesState.getFunctions(), []);
+        assert.deepEqual(filesState.getComments(), []);
+    });
 
 });

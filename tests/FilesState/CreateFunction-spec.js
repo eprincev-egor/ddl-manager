@@ -239,4 +239,80 @@ describe("FilesState watch create functions", () => {
             test_func2
         ]);
     });
+
+    it("create function with comment", async() => {
+        
+        let filePath = ROOT_TMP_PATH + "/create-func.sql";
+        
+        let filesState = FilesState.create({
+            folder: ROOT_TMP_PATH
+        });
+        
+        assert.deepEqual(
+            filesState.getFunctions(), 
+            []
+        );
+        
+        assert.deepEqual(
+            filesState.getComments(), 
+            []
+        );
+
+        
+        let changes;
+        let counter = 0;
+        filesState.on("change", (_changes) => {
+            changes = _changes;
+            counter++;
+        });
+        watchers_to_stop.push(filesState);
+        
+        await filesState.watch();
+        
+        fs.writeFileSync(filePath, test_func1_sql + `
+            comment on function some_func1() is 'sweet'
+        `);
+        
+        await sleep(50);
+        
+        assert.equal(counter, 1);
+        
+        assert.deepEqual(changes, {
+            drop: {
+                functions: [],
+                triggers: []
+            },
+            create: {
+                functions: [
+                    test_func1
+                ],
+                triggers: [],
+                comments: [
+                    {
+                        function: {
+                            schema: "public",
+                            name: "some_func1",
+                            args: []
+                        },
+                        comment: "sweet"
+                    }
+                ]
+            }
+        });
+        
+        assert.deepEqual(filesState.getFunctions(), [
+            test_func1
+        ]);
+
+        assert.deepEqual(filesState.getComments(), [
+            {
+                function: {
+                    schema: "public",
+                    name: "some_func1",
+                    args: []
+                },
+                comment: "sweet"
+            }
+        ]);
+    });
 });
