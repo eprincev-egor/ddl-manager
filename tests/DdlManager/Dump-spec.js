@@ -184,7 +184,7 @@ describe("DdlManager.dump", () => {
                 args: [],
                 body
             },
-            trigger: {
+            triggers: [{
                 table: {
                     schema: "public",
                     name: "company"
@@ -198,7 +198,84 @@ describe("DdlManager.dump", () => {
                     schema: "public",
                     name: "some_func"
                 }
-            }
+            }]
+        });
+    });
+
+    
+    it("dump simple function and two triggers", async() => {
+        let body = `
+            begin
+                return new;
+            end
+        `;
+        await db.query(`
+            create table company (
+                id serial primary key
+            );
+
+            create or replace function some_func()
+            returns trigger as $body$${ body }$body$
+            language plpgsql;
+
+            create trigger some_trigger
+            after insert
+            on company
+            for each row
+            execute procedure some_func();
+
+            create trigger some_trigger2
+            after update
+            on company
+            for each row
+            execute procedure some_func();
+        `);
+
+        await DdlManager.dump({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+        let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/company/some_func.sql").toString();
+        let content = DDLCoach.parseSqlFile(sql);
+
+        assert.deepEqual(content, {
+            function: {
+                schema: "public",
+                name: "some_func",
+                returns: {type: "trigger"},
+                language: "plpgsql",
+                args: [],
+                body
+            },
+            triggers: [
+                {
+                    table: {
+                        schema: "public",
+                        name: "company"
+                    },
+                    after: true,
+                    insert: true,
+                    name: "some_trigger",
+                    procedure: {
+                        schema: "public",
+                        name: "some_func"
+                    }
+                },
+                {
+                    table: {
+                        schema: "public",
+                        name: "company"
+                    },
+                    after: true,
+                    update: true,
+                    name: "some_trigger2",
+                    procedure: {
+                        schema: "public",
+                        name: "some_func"
+                    }
+                }
+            ]
         });
     });
 
@@ -243,7 +320,7 @@ describe("DdlManager.dump", () => {
                 args: [],
                 body
             },
-            trigger: {
+            triggers: [{
                 table: {
                     schema: "test",
                     name: "company"
@@ -257,7 +334,7 @@ describe("DdlManager.dump", () => {
                     schema: "public",
                     name: "some_func"
                 }
-            }
+            }]
         });
     });
 
@@ -398,7 +475,7 @@ describe("DdlManager.dump", () => {
                 args: [],
                 body
             },
-            trigger: {
+            triggers: [{
                 table: {
                     schema: "public",
                     name: "company"
@@ -412,7 +489,7 @@ describe("DdlManager.dump", () => {
                     schema: "public",
                     name: "some_func"
                 }
-            }
+            }]
         });
 
         fs.writeFileSync(filePath, `
@@ -535,7 +612,7 @@ describe("DdlManager.dump", () => {
                 args: [],
                 body
             },
-            trigger: {
+            triggers: [{
                 table: {
                     schema: "public",
                     name: "company"
@@ -549,7 +626,7 @@ describe("DdlManager.dump", () => {
                     schema: "public",
                     name: "some_func"
                 }
-            }
+            }]
         });
     });
 
