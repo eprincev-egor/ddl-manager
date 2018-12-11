@@ -1008,4 +1008,98 @@ describe("DlManager.migrate", () => {
         }
     });
 
+    it("migrate two functions, same name, diff args", async() => {
+        let func1 = {
+            language: "plpgsql",
+            schema: "public",
+            name: "test_func",
+            args: [
+                {
+                    name: "x",
+                    type: "integer",
+                    default: "null"
+                }
+            ],
+            returns: {type: "integer"},
+            body: `
+            begin
+                return 1;
+            end`
+        };
+        let func2 = {
+            language: "plpgsql",
+            schema: "public",
+            name: "test_func",
+            args: [
+                {
+                    name: "x",
+                    type: "boolean",
+                    default: "null"
+                }
+            ],
+            returns: {type: "integer"},
+            body: `
+            begin
+                return 2;
+            end`
+        };
+
+        await DdlManager.migrate({db, diff: {
+            drop: {
+                functions: [],
+                triggers: []
+            },
+            create: {
+                functions: [
+                    func1,
+                    func2
+                ],
+                triggers: []
+            }
+        }});
+
+        let result;
+
+        result = await db.query("select test_func(1) as test1");
+        assert.deepEqual(result.rows[0], {
+            test1: 1
+        });
+
+        result = await db.query("select test_func(true) as test2");
+        assert.deepEqual(result.rows[0], {
+            test2: 2
+        });
+
+
+        await DdlManager.migrate({db, diff: {
+            drop: {
+                functions: [
+                    func1,
+                    func2
+                ],
+                triggers: []
+            },
+            create: {
+                functions: [],
+                triggers: []
+            }
+        }});
+
+        // old functions must be dropped
+        try {
+            await db.query("select test_func(1) as nice");
+            assert.ok(false, "expected error");
+        } catch(err) {
+            assert.equal(err.message, "function test_func(integer) does not exist");
+        }
+
+        try {
+            await db.query("select test_func(true) as nice");
+            assert.ok(false, "expected error");
+        } catch(err) {
+            assert.equal(err.message, "function test_func(boolean) does not exist");
+        }
+
+    });
+
 });
