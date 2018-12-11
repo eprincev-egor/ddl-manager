@@ -8,7 +8,7 @@ module.exports = [
             language sql;
         `,
         result: {
-            function: {
+            functions: [{
                 schema: "operation",
                 name: "content_func",
                 language: "sql",
@@ -24,7 +24,7 @@ module.exports = [
                 body: {
                     content: "select $1"
                 }
-            }
+            }]
         }
     },
 
@@ -42,7 +42,7 @@ module.exports = [
             execute procedure operation.some_trigger()
         `,
         result: {
-            function: {
+            functions: [{
                 schema: "operation",
                 name: "some_trigger",
                 args: [],
@@ -53,7 +53,7 @@ module.exports = [
                 body: {
                     content: "begin;return old;end"
                 }
-            },
+            }],
             triggers: [
                 {
                     name: "super_duper",
@@ -94,7 +94,7 @@ module.exports = [
             execute procedure operation.some_trigger()
         `,
         result: {
-            function: {
+            functions: [{
                 schema: "operation",
                 name: "some_trigger",
                 args: [],
@@ -105,7 +105,7 @@ module.exports = [
                 body: {
                     content: "begin;return old;end"
                 }
-            },
+            }],
             triggers: [
                 {
                     name: "super_duper",
@@ -150,7 +150,7 @@ module.exports = [
             comment on function some_func() is $$test$$
         `,
         result: {
-            function: {
+            functions: [{
                 schema: "public",
                 name: "some_func",
                 language: "sql",
@@ -161,7 +161,7 @@ module.exports = [
                 body: {
                     content: "select 1"
                 }
-            },
+            }],
             comments: [
                 {
                     function: {
@@ -247,7 +247,7 @@ module.exports = [
             comment on trigger super_duper2 on operation.company is $$c3$$
         `,
         result: {
-            function: {
+            functions: [{
                 schema: "operation",
                 name: "some_trigger",
                 args: [],
@@ -258,7 +258,7 @@ module.exports = [
                 body: {
                     content: "begin;return old;end"
                 }
-            },
+            }],
             triggers: [
                 {
                     name: "super_duper",
@@ -350,7 +350,7 @@ module.exports = [
             comment on trigger super_duper2 on operation.company is $$c3$$
         `,
         result: {
-            function: {
+            functions: [{
                 schema: "operation",
                 name: "some_trigger",
                 args: [],
@@ -361,7 +361,7 @@ module.exports = [
                 body: {
                     content: "begin;return old;end"
                 }
-            },
+            }],
             triggers: [
                 {
                     name: "super_duper",
@@ -441,7 +441,7 @@ module.exports = [
             comment on trigger super_duper2 on operation.company is $$c3$$
         `,
         result: {
-            function: {
+            functions: [{
                 schema: "operation",
                 name: "some_trigger",
                 args: [],
@@ -452,7 +452,7 @@ module.exports = [
                 body: {
                     content: "begin;return old;end"
                 }
-            },
+            }],
             triggers: [
                 {
                     name: "super_duper",
@@ -615,7 +615,7 @@ module.exports = [
             execute procedure operation.some_trigger();
         `,
         result: {
-            function: {
+            functions: [{
                 schema: "operation",
                 name: "some_trigger",
                 args: [],
@@ -626,7 +626,7 @@ module.exports = [
                 body: {
                     content: "begin;return old;end"
                 }
-            },
+            }],
             triggers: [
                 {
                     name: "super_duper",
@@ -660,5 +660,69 @@ module.exports = [
                 }
             ]
         }
+    },
+
+    {
+        str: `
+           create or replace function some_func(x integer)
+            returns integer as $body$select $1$body$
+            language sql;
+
+           create or replace function some_func(x boolean)
+            returns integer as $body$select $1$body$
+            language sql;
+        `,
+        result: {
+            functions: [
+                {
+                    schema: "public",
+                    name: "some_func",
+                    language: "sql",
+                    args: [
+                        {
+                            name: "x",
+                            type: "integer"
+                        }
+                    ],
+                    returns: {
+                        type: "integer"
+                    },
+                    body: {
+                        content: "select $1"
+                    }
+                },
+                {
+                    schema: "public",
+                    name: "some_func",
+                    language: "sql",
+                    args: [
+                        {
+                            name: "x",
+                            type: "boolean"
+                        }
+                    ],
+                    returns: {
+                        type: "integer"
+                    },
+                    body: {
+                        content: "select $1"
+                    }
+                }
+            ]
+            
+        }
+    },
+
+    {
+        str: `
+           create or replace function some_func(x integer)
+            returns integer as $body$select $1$body$
+            language sql;
+
+           create or replace function some_func(x integer)
+            returns integer as $body$select $1$body$
+            language sql;
+        `,
+        error: Error
     }
 ];

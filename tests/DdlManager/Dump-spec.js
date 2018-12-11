@@ -78,14 +78,14 @@ describe("DdlManager.dump", () => {
         let content = DDLCoach.parseSqlFile(sql);
 
         assert.deepEqual(content, {
-            function: {
+            functions: [{
                 schema: "public",
                 name: "simple_func",
                 returns: {type: "integer"},
                 language: "sql",
                 args: [],
                 body: "select 1"
-            }
+            }]
         });
     });
 
@@ -120,28 +120,28 @@ describe("DdlManager.dump", () => {
         content = DDLCoach.parseSqlFile(sql);
 
         assert.deepEqual(content, {
-            function: {
+            functions: [{
                 schema: "public",
                 name: "simple_func",
                 returns: {type: "integer"},
                 language: "sql",
                 args: [],
                 body: "select 1"
-            }
+            }]
         });
 
         sql = fs.readFileSync(ROOT_TMP_PATH + "/test/simple_func.sql").toString();
         content = DDLCoach.parseSqlFile(sql);
 
         assert.deepEqual(content, {
-            function: {
+            functions: [{
                 schema: "test",
                 name: "simple_func",
                 returns: {type: "integer"},
                 language: "sql",
                 args: [],
                 body: "select 1"
-            }
+            }]
         });
     });
 
@@ -176,14 +176,14 @@ describe("DdlManager.dump", () => {
         let content = DDLCoach.parseSqlFile(sql);
 
         assert.deepEqual(content, {
-            function: {
+            functions: [{
                 schema: "public",
                 name: "some_func",
                 returns: {type: "trigger"},
                 language: "plpgsql",
                 args: [],
                 body
-            },
+            }],
             triggers: [{
                 table: {
                     schema: "public",
@@ -240,14 +240,14 @@ describe("DdlManager.dump", () => {
         let content = DDLCoach.parseSqlFile(sql);
 
         assert.deepEqual(content, {
-            function: {
+            functions: [{
                 schema: "public",
                 name: "some_func",
                 returns: {type: "trigger"},
                 language: "plpgsql",
                 args: [],
                 body
-            },
+            }],
             triggers: [
                 {
                     table: {
@@ -312,14 +312,14 @@ describe("DdlManager.dump", () => {
         let content = DDLCoach.parseSqlFile(sql);
 
         assert.deepEqual(content, {
-            function: {
+            functions: [{
                 schema: "public",
                 name: "some_func",
                 returns: {type: "trigger"},
                 language: "plpgsql",
                 args: [],
                 body
-            },
+            }],
             triggers: [{
                 table: {
                     schema: "test",
@@ -356,14 +356,14 @@ describe("DdlManager.dump", () => {
         let content = DDLCoach.parseSqlFile(sql);
 
         assert.deepEqual(content, {
-            function: {
+            functions: [{
                 schema: "public",
                 name: "simple_func",
                 returns: {type: "integer"},
                 language: "sql",
                 args: [],
                 body: "select 1"
-            }
+            }]
         });
 
         fs.writeFileSync(filePath, `
@@ -404,14 +404,14 @@ describe("DdlManager.dump", () => {
         let content = DDLCoach.parseSqlFile(sql);
 
         assert.deepEqual(content, {
-            function: {
+            functions: [{
                 schema: "public",
                 name: "simple_func",
                 returns: {type: "integer"},
                 language: "sql",
                 args: [],
                 body: "select 1"
-            }
+            }]
         });
 
         fs.writeFileSync(filePath, `
@@ -467,14 +467,14 @@ describe("DdlManager.dump", () => {
         let content = DDLCoach.parseSqlFile(sql);
 
         assert.deepEqual(content, {
-            function: {
+            functions: [{
                 schema: "public",
                 name: "some_func",
                 returns: {type: "trigger"},
                 language: "plpgsql",
                 args: [],
                 body
-            },
+            }],
             triggers: [{
                 table: {
                     schema: "public",
@@ -539,14 +539,14 @@ describe("DdlManager.dump", () => {
         let content = DDLCoach.parseSqlFile(sql);
 
         assert.deepEqual(content, {
-            function: {
+            functions: [{
                 schema: "public",
                 name: "simple_func",
                 returns: {type: "integer"},
                 language: "sql",
                 args: [],
                 body: "select 1"
-            },
+            }],
             comments: [
                 {
                     function: {
@@ -594,14 +594,14 @@ describe("DdlManager.dump", () => {
         let content = DDLCoach.parseSqlFile(sql);
 
         assert.deepEqual(content, {
-            function: {
+            functions: [{
                 schema: "public",
                 name: "some_func",
                 returns: {type: "trigger"},
                 language: "plpgsql",
                 args: [],
                 body
-            },
+            }],
             triggers: [{
                 table: {
                     schema: "public",
@@ -661,7 +661,7 @@ describe("DdlManager.dump", () => {
         let content = DDLCoach.parseSqlFile(sql);
 
         assert.deepEqual(content, {
-            function: {
+            functions: [{
                 schema: "public",
                 name: "simple_func",
                 returns: {
@@ -679,7 +679,67 @@ describe("DdlManager.dump", () => {
                 language: "plpgsql",
                 args: [],
                 body
-            }
+            }]
+        });
+    });
+
+    
+    it("dump function two functions with same name into one file", async() => {
+        let body = `
+            begin
+            end
+        `;
+        await db.query(`
+            create or replace function simple_func(x integer)
+            returns void as $$${ body }$$
+            language plpgsql;
+
+            create or replace function simple_func(x boolean)
+            returns void as $$${ body }$$
+            language plpgsql;
+        `);
+
+        await DdlManager.dump({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+        let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
+        let content = DDLCoach.parseSqlFile(sql);
+
+        assert.deepEqual(content, {
+            functions: [
+                {
+                    schema: "public",
+                    name: "simple_func",
+                    returns: {
+                        type: "void"
+                    },
+                    language: "plpgsql",
+                    args: [
+                        {
+                            name: "x",
+                            type: "integer"
+                        }
+                    ],
+                    body
+                },
+                {
+                    schema: "public",
+                    name: "simple_func",
+                    returns: {
+                        type: "void"
+                    },
+                    language: "plpgsql",
+                    args: [
+                        {
+                            name: "x",
+                            type: "boolean"
+                        }
+                    ],
+                    body
+                }
+            ]
         });
     });
 

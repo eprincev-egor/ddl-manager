@@ -60,7 +60,7 @@ describe("FilesState parse files in sub dirs", () => {
                 name: "some.sql",
                 path: "some.sql",
                 content: {
-                    function: func
+                    functions: [func]
                 }
             }
         ]);
@@ -112,14 +112,14 @@ describe("FilesState parse files in sub dirs", () => {
                 name: "some1.sql",
                 path: "some1.sql",
                 content: {
-                    function: func1
+                    functions: [func1]
                 }
             },
             {
                 name: "some2.sql",
                 path: "some2.sql",
                 content: {
-                    function: func2
+                    functions: [func2]
                 }
             }
         ]);
@@ -176,7 +176,7 @@ describe("FilesState parse files in sub dirs", () => {
         
         // for test stability we sorting result
         files = files.sort((file1, file2) => 
-            file1.content.function.name > file2.content.function.name ?
+            file1.content.functions[0].name > file2.content.functions[0].name ?
                 1 : -1
         );
 
@@ -186,70 +186,70 @@ describe("FilesState parse files in sub dirs", () => {
                 name: "test1.sql",
                 path: "first/test1.sql",
                 content: {
-                    function: {
+                    functions: [{
                         language: "plpgsql",
                         schema: "public",
                         name: "test_1",
                         args: [],
                         returns: {type: "void"},
                         body: VOID_BODY
-                    }
+                    }]
                 }
             },
             {
                 name: "test2.sql",
                 path: "first/second/test2.sql",
                 content: {
-                    function: {
+                    functions: [{
                         language: "plpgsql",
                         schema: "public",
                         name: "test_2",
                         args: [],
                         returns: {type: "void"},
                         body: VOID_BODY
-                    }
+                    }]
                 }
             },
             {
                 name: "test3.sql",
                 path: "first/second/third/test3.sql",
                 content: {
-                    function: {
+                    functions: [{
                         language: "plpgsql",
                         schema: "public",
                         name: "test_3",
                         args: [],
                         returns: {type: "void"},
                         body: VOID_BODY
-                    }
+                    }]
                 }
             },
             {
                 name: "x.sql",
                 path: "first/x.sql",
                 content: {
-                    function: {
+                    functions: [{
                         language: "plpgsql",
                         schema: "public",
                         name: "xx_1",
                         args: [],
                         returns: {type: "void"},
                         body: VOID_BODY
-                    }
+                    }]
                 }
             },
             {
                 name: "x.sql",
                 path: "first/second/third/x.sql",
                 content: {
-                    function: {
+                    functions: [{
                         language: "plpgsql",
                         schema: "public",
                         name: "xx_3",
                         args: [],
                         returns: {type: "void"},
                         body: VOID_BODY
-                    }
+                    }]
                 }
             }
         ]);
