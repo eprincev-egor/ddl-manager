@@ -570,5 +570,95 @@ module.exports = [
             comment on trigger super_duper on operation.company1 is $$c3$$
         `,
         error: Error
+    },
+
+    {
+        str: `
+           create or replace function operation.some_trigger()
+            returns trigger as 
+            $body$begin;return old;end$body$
+            language plpgsql;
+
+            create trigger super_duper
+            after update
+            on operation.company
+            for each row
+            execute procedure operation.some_trigger();
+
+            create trigger super_duper
+            after update
+            on operation.company
+            for each row
+            execute procedure operation.some_trigger();
+        `,
+        error: Error
+    },
+
+    
+    {
+        str: `
+           create or replace function operation.some_trigger()
+            returns trigger as 
+            $body$begin;return old;end$body$
+            language plpgsql;
+
+            create trigger super_duper
+            after insert
+            on operation.company1
+            for each row
+            execute procedure operation.some_trigger();
+
+            create trigger super_duper
+            after insert
+            on operation.company2
+            for each row
+            execute procedure operation.some_trigger();
+        `,
+        result: {
+            function: {
+                schema: "operation",
+                name: "some_trigger",
+                args: [],
+                returns: {
+                    type: "trigger"
+                },
+                language: "plpgsql",
+                body: {
+                    content: "begin;return old;end"
+                }
+            },
+            triggers: [
+                {
+                    name: "super_duper",
+                    table: {
+                        schema: "operation",
+                        name: "company1"
+                    },
+        
+                    after: true,
+                    insert: true,
+        
+                    procedure: {
+                        schema: "operation",
+                        name: "some_trigger"
+                    }
+                },
+                {
+                    name: "super_duper",
+                    table: {
+                        schema: "operation",
+                        name: "company2"
+                    },
+        
+                    after: true,
+                    insert: true,
+        
+                    procedure: {
+                        schema: "operation",
+                        name: "some_trigger"
+                    }
+                }
+            ]
+        }
     }
 ];
