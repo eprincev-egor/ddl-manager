@@ -743,4 +743,144 @@ describe("DdlManager.dump", () => {
         });
     });
 
+    it("dump with unfreeze function with comment", async() => {
+        await db.query(`
+            create or replace function simple_func()
+            returns integer as $$select 1$$
+            language sql;
+
+            comment on function simple_func() is 'nice';
+        `);
+
+        await DdlManager.dump({
+            db, 
+            folder: ROOT_TMP_PATH,
+            unfreeze: true
+        });
+
+        let filePath = ROOT_TMP_PATH + "/public/simple_func.sql";
+
+        let sql = fs.readFileSync(filePath).toString();
+        let content = DDLCoach.parseSqlFile(sql);
+
+        assert.deepEqual(content, {
+            functions: [{
+                schema: "public",
+                name: "simple_func",
+                returns: {type: "integer"},
+                language: "sql",
+                args: [],
+                body: "select 1"
+            }],
+            comments: [{
+                function: {
+                    schema: "public",
+                    name: "simple_func",
+                    args: []
+                },
+                comment: "nice"
+            }]
+        });
+
+        let result = await db.query(`
+            select
+                pg_catalog.obj_description( pg_proc.oid ) as comment
+            from information_schema.routines as routines
+
+            left join pg_catalog.pg_proc as pg_proc on
+                routines.specific_name = pg_proc.proname || '_' || pg_proc.oid::text
+
+            where
+                routines.routine_schema = 'public' and
+                routines.routine_name = 'simple_func'
+        `);
+
+        assert.deepEqual(result.rows[0], {
+            comment: "nice\nddl-manager-sync"
+        });
+    });
+
+    it("dump with unfreeze trigger with comment", async() => {
+        let body = `
+            begin
+                return new;
+            end
+        `;
+        await db.query(`
+            create table company (
+                id serial primary key,
+                name text
+            );
+
+            create or replace function some_func()
+            returns trigger as $body$${ body }$body$
+            language plpgsql;
+
+            create trigger some_trigger
+            after insert or update or delete
+            on company
+            for each row
+            execute procedure some_func();
+
+            comment on trigger some_trigger on company is 'nice';
+        `);
+
+        await DdlManager.dump({
+            db, 
+            folder: ROOT_TMP_PATH,
+            unfreeze: true
+        });
+
+        let filePath = ROOT_TMP_PATH + "/public/company/some_func.sql";
+
+        let sql = fs.readFileSync(filePath).toString();
+        let content = DDLCoach.parseSqlFile(sql);
+
+        assert.deepEqual(content, {
+            functions: [{
+                schema: "public",
+                name: "some_func",
+                returns: {type: "trigger"},
+                language: "plpgsql",
+                args: [],
+                body
+            }],
+            triggers: [{
+                table: {
+                    schema: "public",
+                    name: "company"
+                },
+                after: true,
+                insert: true,
+                update: true,
+                delete: true,
+                name: "some_trigger",
+                procedure: {
+                    schema: "public",
+                    name: "some_func"
+                }
+            }],
+            comments: [{
+                trigger: {
+                    schema: "public",
+                    table: "company",
+                    name: "some_trigger"
+                },
+                comment: "nice"
+            }]
+        });
+
+        let result = await db.query(`
+            select
+                pg_catalog.obj_description( pg_trigger.oid ) as comment
+            from pg_trigger
+            where
+                pg_trigger.tgname = 'some_trigger'
+        `);
+
+        assert.deepEqual(result.rows[0], {
+            comment: "nice\nddl-manager-sync"
+        });
+    });
+
 });
