@@ -749,7 +749,7 @@ describe("DdlManager.dump", () => {
             returns integer as $$select 1$$
             language sql;
 
-            comment on function simple_func() is 'nice';
+            comment on function simple_func() is $tag1$'$$nice\ncomment$tag1$;
         `);
 
         await DdlManager.dump({
@@ -778,7 +778,7 @@ describe("DdlManager.dump", () => {
                     name: "simple_func",
                     args: []
                 },
-                comment: "nice"
+                comment: "'$$nice\ncomment"
             }]
         });
 
@@ -796,7 +796,7 @@ describe("DdlManager.dump", () => {
         `);
 
         assert.deepEqual(result.rows[0], {
-            comment: "nice\nddl-manager-sync"
+            comment: "'$$nice\ncomment\nddl-manager-sync"
         });
     });
 
@@ -822,7 +822,8 @@ describe("DdlManager.dump", () => {
             for each row
             execute procedure some_func();
 
-            comment on trigger some_trigger on company is 'nice';
+            
+            comment on trigger some_trigger on company is $tag1$'$$nice\ncomment$tag1$;
         `);
 
         await DdlManager.dump({
@@ -866,7 +867,7 @@ describe("DdlManager.dump", () => {
                     table: "company",
                     name: "some_trigger"
                 },
-                comment: "nice"
+                comment: "'$$nice\ncomment"
             }]
         });
 
@@ -879,7 +880,7 @@ describe("DdlManager.dump", () => {
         `);
 
         assert.deepEqual(result.rows[0], {
-            comment: "nice\nddl-manager-sync"
+            comment: "'$$nice\ncomment\nddl-manager-sync"
         });
     });
 
