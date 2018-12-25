@@ -17,7 +17,7 @@ const fs = require("fs");
             // user, password, database, port, host
             db: dbConfig,
 
-            // if set true, then build will without freeze errors
+            // if set true, then build will without freeze errors 
             unfreeze: false
         });
 
