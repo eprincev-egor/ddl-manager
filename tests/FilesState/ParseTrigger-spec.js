@@ -149,7 +149,7 @@ describe("FilesState parse functions and triggers", () => {
             }
         });
 
-        assert.equal(err.message, "wrong returns type bigint");
+        assert.equal(err.message, "file must contain function with returns type trigger");
     });
 
     it("expected error on duplicate trigger", () => {

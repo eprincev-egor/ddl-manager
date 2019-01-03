@@ -884,4 +884,86 @@ describe("DdlManager.dump", () => {
         });
     });
 
+    it("dump two functions and trigger", async() => {
+        let triggerBody = `
+            begin
+                PERFORM some_func( new.id );
+                return new;
+            end
+        `;
+        let funcBody = `
+            begin
+                update company set
+                    id = id + 1
+                where id = some_id;
+            end
+        `;
+        await db.query(`
+            create table company (
+                id serial primary key
+            );
+
+            create or replace function some_func(some_id integer)
+            returns void as $body$${ funcBody }$body$
+            language plpgsql;
+
+            create or replace function some_func()
+            returns trigger as $body$${ triggerBody }$body$
+            language plpgsql;
+
+            create trigger some_trigger
+            after insert or update or delete
+            on company
+            for each row
+            execute procedure some_func();
+        `);
+
+        await DdlManager.dump({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+        let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/company/some_func.sql").toString();
+        let content = DDLCoach.parseSqlFile(sql);
+
+        assert.deepEqual(content, {
+            functions: [
+                {
+                    schema: "public",
+                    name: "some_func",
+                    returns: {type: "void"},
+                    language: "plpgsql",
+                    args: [{
+                        name: "some_id",
+                        type: "integer"
+                    }],
+                    body: funcBody
+                },
+                {
+                    schema: "public",
+                    name: "some_func",
+                    returns: {type: "trigger"},
+                    language: "plpgsql",
+                    args: [],
+                    body: triggerBody
+                }
+            ],
+            triggers: [{
+                table: {
+                    schema: "public",
+                    name: "company"
+                },
+                after: true,
+                insert: true,
+                update: true,
+                delete: true,
+                name: "some_trigger",
+                procedure: {
+                    schema: "public",
+                    name: "some_func"
+                }
+            }]
+        });
+    });
+
 });
