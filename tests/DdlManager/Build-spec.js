@@ -542,4 +542,114 @@ describe("DdlManager.build", () => {
         });
     });
 
+    it("drop function with comment, after dump", async() => {
+        let folderPath = ROOT_TMP_PATH + "/simple-trigger";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create or replace function test()
+            returns bigint as $body$
+                begin
+                    return 1;
+                end
+            $body$
+            language plpgsql;
+
+            comment on function test() is 'test';
+        `);
+
+        let result;
+        let row;
+
+        result = await db.query("select test() as test");
+        row = result.rows[0];
+
+        assert.deepEqual(row, {
+            test: 1
+        });
+
+        await DdlManager.dump({
+            db,
+            folder: folderPath,
+            unfreeze: true
+        });
+
+        // remove file with trigger
+        fs.unlinkSync(folderPath + "/public/test.sql");
+        
+        // drop trigger by build command
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        try {
+            await db.query("select test()");
+            assert.ok(false, "expected error");
+        } catch(err) {
+            assert.equal(err.message, "function test() does not exist");
+        }
+    });
+
+    it("drop trigger with comment, after dump", async() => {
+        let folderPath = ROOT_TMP_PATH + "/simple-trigger";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table company (
+                name text primary key,
+                note text
+            );
+
+            create or replace function set_note_before_insert_or_update_name()
+            returns trigger as $body$
+                begin
+                    new.note = 'name: ' || new.name;
+                    return new;
+                end
+            $body$
+            language plpgsql;
+
+            create trigger set_note_before_insert_or_update_name_trigger
+            before insert or update of name
+            on company
+            for each row
+            execute procedure set_note_before_insert_or_update_name();
+
+            comment on trigger set_note_before_insert_or_update_name_trigger
+            on company is 'test';
+        `);
+
+        let result;
+        let row;
+
+        result = await db.query("insert into company (name) values ('super') returning note");
+        row = result.rows[0];
+
+        assert.deepEqual(row, {
+            note: "name: super"
+        });
+
+        await DdlManager.dump({
+            db,
+            folder: folderPath,
+            unfreeze: true
+        });
+
+        // remove file with trigger
+        fs.unlinkSync(folderPath + "/public/company/set_note_before_insert_or_update_name.sql");
+        
+        // drop trigger by build command
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        result = await db.query("insert into company (name) values ('super 2') returning note");
+        row = result.rows[0];
+
+        assert.deepEqual(row, {
+            note: null
+        });
+    });
 });
