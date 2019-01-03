@@ -652,4 +652,130 @@ describe("DdlManager.build", () => {
             note: null
         });
     });
+
+    it("build function with comment, after dump, comment must be exists", async() => {
+        let folderPath = ROOT_TMP_PATH + "/simple-trigger";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create or replace function test()
+            returns bigint as $body$
+                begin
+                    return 1;
+                end
+            $body$
+            language plpgsql;
+
+            comment on function test() is 'test';
+        `);
+
+        let result;
+        let row;
+
+        result = await db.query("select test() as test");
+        row = result.rows[0];
+
+        assert.deepEqual(row, {
+            test: 1
+        });
+
+        await DdlManager.dump({
+            db,
+            folder: folderPath,
+            unfreeze: true
+        });
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        // comment must be exists
+        result = await db.query(`
+            select
+                coalesce(
+                    pg_catalog.obj_description( pg_proc.oid ),
+                    'dropped'
+                ) as comment
+            from information_schema.routines as routines
+
+            left join pg_catalog.pg_proc as pg_proc on
+                routines.specific_name = pg_proc.proname || '_' || pg_proc.oid::text
+        
+            where
+                routines.routine_schema = 'public' and
+                routines.routine_name = 'test'
+        `);
+
+        assert.deepEqual(result.rows[0], {
+            comment: "test\nddl-manager-sync"
+        });
+    });
+
+    it("build trigger with comment, after dump, comment must be exists", async() => {
+        let folderPath = ROOT_TMP_PATH + "/simple-trigger";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table company (
+                name text primary key,
+                note text
+            );
+
+            create or replace function set_note_before_insert_or_update_name()
+            returns trigger as $body$
+                begin
+                    new.note = 'name: ' || new.name;
+                    return new;
+                end
+            $body$
+            language plpgsql;
+
+            create trigger set_note_before_insert_or_update_name_trigger
+            before insert or update of name
+            on company
+            for each row
+            execute procedure set_note_before_insert_or_update_name();
+
+            comment on trigger set_note_before_insert_or_update_name_trigger
+            on company is 'test';
+        `);
+
+        let result;
+        let row;
+
+        result = await db.query("insert into company (name) values ('super') returning note");
+        row = result.rows[0];
+
+        assert.deepEqual(row, {
+            note: "name: super"
+        });
+
+        await DdlManager.dump({
+            db,
+            folder: folderPath,
+            unfreeze: true
+        });
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        // comment must be exists
+        result = await db.query(`
+            select
+                coalesce(
+                    pg_catalog.obj_description( pg_trigger.oid ),
+                    'dropped'
+                ) as comment
+            from pg_trigger
+            where
+                pg_trigger.tgname = 'set_note_before_insert_or_update_name_trigger'
+        `);
+
+        assert.deepEqual(result.rows[0], {
+            comment: "test\nddl-manager-sync"
+        });
+    });
 });
