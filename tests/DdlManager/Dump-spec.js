@@ -966,4 +966,85 @@ describe("DdlManager.dump", () => {
         });
     });
 
+    it("dump function two functions with same name and various comments, into one file", async() => {
+        let body = `
+            begin
+            end
+        `;
+        await db.query(`
+            create or replace function simple_func(x integer)
+            returns void as $$${ body }$$
+            language plpgsql;
+
+            comment on function simple_func(integer) is 'x';
+
+            create or replace function simple_func(y boolean)
+            returns void as $$${ body }$$
+            language plpgsql;
+
+            comment on function simple_func(boolean) is 'y';
+        `);
+
+        await DdlManager.dump({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+        let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
+        let content = DDLCoach.parseSqlFile(sql);
+
+        assert.deepEqual(content, {
+            functions: [
+                {
+                    schema: "public",
+                    name: "simple_func",
+                    returns: {
+                        type: "void"
+                    },
+                    language: "plpgsql",
+                    args: [
+                        {
+                            name: "x",
+                            type: "integer"
+                        }
+                    ],
+                    body
+                },
+                {
+                    schema: "public",
+                    name: "simple_func",
+                    returns: {
+                        type: "void"
+                    },
+                    language: "plpgsql",
+                    args: [
+                        {
+                            name: "y",
+                            type: "boolean"
+                        }
+                    ],
+                    body
+                }
+            ],
+            comments: [
+                {
+                    function: {
+                        schema: "public",
+                        name: "simple_func",
+                        args: ["integer"]
+                    },
+                    comment: "x"
+                },
+                {
+                    function: {
+                        schema: "public",
+                        name: "simple_func",
+                        args: ["boolean"]
+                    },
+                    comment: "y"
+                }
+            ]
+        });
+    });
+
 });
