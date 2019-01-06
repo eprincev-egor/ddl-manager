@@ -254,4 +254,56 @@ describe("DdlManager.watch", () => {
         });
     });
 
+    it("watch folder '/../some' ", async() => {
+        let folderPath = ROOT_TMP_PATH + "/watch";
+        let result;
+        let row;
+    
+        fs.mkdirSync(folderPath);
+
+        fs.writeFileSync(folderPath + "/watch_test.sql", `
+            create or replace function some_func()
+            returns integer as $body$
+                begin
+                    return 1;
+                end
+            $body$
+            language plpgsql;
+        `);
+
+
+        await DdlManager.watch({
+            db, 
+            folder: folderPath + "/../watch"
+        });
+
+        result = await db.query("select some_func() as some_func");
+        row = result.rows[0];
+
+        assert.deepEqual(row, {
+            some_func: 1
+        });
+
+        // change function
+        fs.writeFileSync(folderPath + "/watch_test.sql", `
+            create or replace function some_func()
+            returns integer as $body$
+                begin
+                    return 2;
+                end
+            $body$
+            language plpgsql;
+        `);
+        
+        await sleep(100);
+
+        result = await db.query("select some_func() as some_func");
+        row = result.rows[0];
+
+
+        assert.deepEqual(row, {
+            some_func: 2
+        });
+    });
+
 });
