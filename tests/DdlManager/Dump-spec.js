@@ -338,7 +338,7 @@ describe("DdlManager.dump", () => {
         });
     });
 
-    it("dump simple function and try build, expected freeze error", async() => {
+    it("dump simple function and build, build should not replace freezed object", async() => {
         await db.query(`
             create or replace function simple_func()
             returns integer as $$select 1$$
@@ -380,7 +380,7 @@ describe("DdlManager.dump", () => {
             });
             throw new Error("expected error");
         } catch(err) {
-            assert.equal(err.message, "cannot drop freeze function public.simple_func()");
+            assert.equal(err.message, "cannot replace freeze function public.simple_func()");
         }
         
     });

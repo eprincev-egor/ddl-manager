@@ -503,4 +503,94 @@ describe("DbState.getDiff", () => {
             }
         });
     });
+
+    it("empty diff on new freeze function", () => {
+        let func = {
+            schema: "public",
+            name: "some_func",
+            args: [],
+            returns: {type: "integer"},
+            body: `begin
+                return 1;
+            end`,
+            freeze: true
+        };
+
+        let diff = diffState({
+            filesState: {
+                functions: [],
+                triggers: []
+            },
+            dbState: {
+                functions: [
+                    func
+                ],
+                triggers: []
+            }
+        });
+
+        assert.deepEqual(diff, {
+            drop: {
+                triggers: [],
+                functions: []
+            },
+            create: {
+                triggers: [],
+                functions: []
+            }
+        });
+    });
+
+    it("empty diff on new freeze trigger", () => {
+        let func = {
+            schema: "public",
+            name: "some_action_on_some_event",
+            args: [],
+            returns: {type: "trigger"},
+            body: `begin
+                return new;
+            end`,
+            freeze: true
+        };
+        let trigger = {
+            table: {
+                schema: "public",
+                name: "company"
+            },
+            after: true,
+            insert: true,
+            name: "some_action_on_some_event_trigger",
+            procedure: {
+                schema: "public",
+                name: "some_action_on_some_event"
+            },
+            freeze: true
+        };
+
+        let diff = diffState({
+            filesState: {
+                functions: [],
+                triggers: []
+            },
+            dbState: {
+                functions: [
+                    func
+                ],
+                triggers: [
+                    trigger
+                ]
+            }
+        });
+
+        assert.deepEqual(diff, {
+            drop: {
+                triggers: [],
+                functions: []
+            },
+            create: {
+                triggers: [],
+                functions: []
+            }
+        });
+    });
 });
