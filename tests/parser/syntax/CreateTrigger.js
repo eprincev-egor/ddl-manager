@@ -302,7 +302,7 @@ module.exports = [
             },
 
             after: true,
-            update: ["name", "deleted"],
+            update: ["deleted", "name"],
 
             procedure: {
                 schema: "public",
@@ -326,7 +326,7 @@ module.exports = [
 
             after: true,
             insert: true,
-            update: ["name", "deleted"],
+            update: ["deleted", "name"],
 
             procedure: {
                 schema: "public",

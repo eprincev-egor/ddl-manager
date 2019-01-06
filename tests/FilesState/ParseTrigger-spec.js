@@ -63,7 +63,7 @@ describe("FilesState parse functions and triggers", () => {
                 name: "some_action_on_diu_company_trigger",
                 after: true,
                 insert: true,
-                update: ["name", "deleted"],
+                update: ["deleted", "name"],
                 delete: true,
                 procedure: {
                     schema: "public",
