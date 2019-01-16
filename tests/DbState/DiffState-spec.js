@@ -593,4 +593,134 @@ describe("DbState.getDiff", () => {
             }
         });
     });
+
+    it("drop trigger, if function has change, but trigger not", () => {
+        let func1 = {
+            schema: "public",
+            name: "some_action_on_some_event",
+            args: [],
+            returns: {type: "trigger"},
+            body: `begin
+                return new;
+            end`
+        };
+        let func2 = {
+            schema: "public",
+            name: "some_action_on_some_event",
+            args: [],
+            returns: {type: "trigger"},
+            body: `begin
+                -- some change
+                return new;
+            end`
+        };
+        let trigger1 = {
+            table: {
+                schema: "public",
+                name: "company"
+            },
+            after: true,
+            insert: true,
+            name: "some_action_on_some_event_trigger",
+            procedure: {
+                schema: "public",
+                name: "some_action_on_some_event"
+            }
+        };
+        let trigger2 = {
+            table: {
+                schema: "public",
+                name: "company"
+            },
+            before: true,
+            insert: true,
+            name: "some_action_on_some_event_trigger",
+            procedure: {
+                schema: "public",
+                name: "some_action_on_some_event"
+            }
+        };
+
+        let diff;
+
+        // for drop function, need drop trigger, who call it function
+        diff = diffState({
+            filesState: {
+                functions: [
+                    func1
+                ],
+                triggers: [
+                    trigger1
+                ]
+            },
+            dbState: {
+                functions: [
+                    func2
+                ],
+                triggers: [
+                    trigger1
+                ]
+            }
+        });
+
+        assert.deepEqual(diff, {
+            drop: {
+                triggers: [
+                    trigger1
+                ],
+                functions: [
+                    func2
+                ]
+            },
+            create: {
+                triggers: [
+                    trigger1
+                ],
+                functions: [
+                    func1
+                ]
+            }
+        });
+
+
+        // check diff on duplicate trigger
+        // when we have changes in trigger and function
+        diff = diffState({
+            filesState: {
+                functions: [
+                    func1
+                ],
+                triggers: [
+                    trigger2
+                ]
+            },
+            dbState: {
+                functions: [
+                    func2
+                ],
+                triggers: [
+                    trigger1
+                ]
+            }
+        });
+
+        assert.deepEqual(diff, {
+            drop: {
+                triggers: [
+                    trigger1
+                ],
+                functions: [
+                    func2
+                ]
+            },
+            create: {
+                triggers: [
+                    trigger2
+                ],
+                functions: [
+                    func1
+                ]
+            }
+        });
+    });
 });
