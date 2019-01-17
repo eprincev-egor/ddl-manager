@@ -28,7 +28,7 @@ describe("DdlManager.build", () => {
     afterEach(async() => {
         db.end();
     });
-
+/*
     it("build nonexistent folder", async() => {
         try {
             await DdlManager.build({
@@ -776,6 +776,81 @@ describe("DdlManager.build", () => {
 
         assert.deepEqual(result.rows[0], {
             comment: "test\nddl-manager-sync"
+        });
+    });
+*/
+    it("build when function has change, but trigger not", async() => {
+        let result;
+        let row;
+
+        let folderPath = ROOT_TMP_PATH + "/simple-trigger";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table company (
+                name text primary key,
+                note text
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/set_note_trigger.sql", `
+            create or replace function set_note_before_insert_or_update_name()
+            returns trigger as $body$
+                begin
+                    new.note = 'name: ' || new.name;
+                    return new;
+                end
+            $body$
+            language plpgsql;
+
+            create trigger set_note_before_insert_or_update_name_trigger
+            before insert or update of name
+            on company
+            for each row
+            execute procedure set_note_before_insert_or_update_name();
+        `);
+
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        result = await db.query("insert into company (name) values ('super') returning note");
+        row = result.rows[0];
+
+        assert.deepEqual(row, {
+            note: "name: super"
+        });
+
+        // change only function
+        fs.writeFileSync(folderPath + "/set_note_trigger.sql", `
+            create or replace function set_note_before_insert_or_update_name()
+            returns trigger as $body$
+                begin
+                    new.note = 'changed: ' || new.name;
+                    return new;
+                end
+            $body$
+            language plpgsql;
+
+            create trigger set_note_before_insert_or_update_name_trigger
+            before insert or update of name
+            on company
+            for each row
+            execute procedure set_note_before_insert_or_update_name();
+        `);
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        result = await db.query("insert into company (name) values ('super 2') returning note");
+        row = result.rows[0];
+
+        assert.deepEqual(row, {
+            note: "changed: super 2"
         });
     });
 });
