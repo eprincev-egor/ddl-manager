@@ -1047,4 +1047,32 @@ describe("DdlManager.dump", () => {
         });
     });
 
+    
+    it("dump simple function, file should end with ;", async() => {
+        await db.query(`
+            create or replace function simple_func()
+            returns integer as $$select 1$$
+            language sql;
+        `);
+
+        await DdlManager.dump({
+            db: {
+                database: db.database,
+                user: db.user,
+                password: db.password,
+                host: db.host,
+                port: db.port
+            }, 
+            folder: ROOT_TMP_PATH
+        });
+
+        let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
+        sql = sql.trim();
+
+        assert.ok(
+            /;$/.test(sql)
+        );
+    });
+
+
 });
