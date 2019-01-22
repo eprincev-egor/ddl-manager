@@ -15,7 +15,7 @@ async function getDBClient() {
     try {
         dbConfigFromFile = require("../../ddl-manager-config");
     } catch(err) {
-        throw new Error("Создайте файл ddl-manager-config.js в корне. Модуль должен возвращать объект, имеющий свойства database, user, password, host, port");
+        throw new Error("Please make file ddl-manager-config.js in project. Modules must return object, with properties: database, user, password, host, port");
     }
 
     if ( dbConfigFromFile.database ) {
@@ -35,7 +35,7 @@ async function getDBClient() {
     }
 
     if ( !dbConfig.user && !dbConfig.password && !dbConfig.database ) {
-        throw new Error("Настройки подключения к базе не переданы!");
+        throw new Error("Connect options does not exists!");
     }
 
     let dbClient;
@@ -44,7 +44,7 @@ async function getDBClient() {
         await dbClient.connect();
     } catch(err) {
         throw new Error(
-            "Не удалось подключится к базе данных с настройками: " + 
+            "Failed db connection: " + 
             JSON.stringify(dbConfig, null, 4) + 
             "\n" +
             "\n" +
