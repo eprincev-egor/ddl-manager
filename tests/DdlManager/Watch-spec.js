@@ -304,6 +304,28 @@ describe("DdlManager.watch", () => {
         assert.deepEqual(row, {
             some_func: 2
         });
+
+        
+        // change function again, but by another path
+        fs.writeFileSync(folderPath + "/../watch/watch_test.sql", `
+            create or replace function some_func()
+            returns integer as $body$
+                begin
+                    return 3;
+                end
+            $body$
+            language plpgsql;
+        `);
+        
+        await sleep(100);
+
+        result = await db.query("select some_func() as some_func");
+        row = result.rows[0];
+
+
+        assert.deepEqual(row, {
+            some_func: 3
+        });
     });
 
 });
