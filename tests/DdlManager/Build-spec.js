@@ -28,7 +28,7 @@ describe("DdlManager.build", () => {
     afterEach(async() => {
         db.end();
     });
-/*
+
     it("build nonexistent folder", async() => {
         try {
             await DdlManager.build({
@@ -778,7 +778,7 @@ describe("DdlManager.build", () => {
             comment: "test\nddl-manager-sync"
         });
     });
-*/
+
     it("build when function has change, but trigger not", async() => {
         let result;
         let row;
@@ -853,4 +853,63 @@ describe("DdlManager.build", () => {
             note: "changed: super 2"
         });
     });
+
+
+    
+    it("build function(returns record), after dump", async() => {
+        let folderPath = ROOT_TMP_PATH + "/simple-func";
+        fs.mkdirSync(folderPath);
+
+        let body1 = `
+            begin
+                x = 10;
+            end
+        `;
+        let body2 = `
+            begin
+                z = a;
+            end
+        `;
+
+        await db.query(`
+            create or replace function test(out x integer, out y text)
+            returns record as $body$${ body1 }$body$
+            language plpgsql;
+        `);
+
+        await DdlManager.dump({
+            db,
+            folder: folderPath,
+            unfreeze: true
+        });
+
+        // add new function to file
+        let fileContent = fs.readFileSync( folderPath + "/public/test.sql" ).toString();
+        fileContent += `
+
+create or replace function test(a integer, out z integer, out y text)
+returns record as $body$${ body2 }$body$
+language plpgsql;
+        `;
+        
+        fs.writeFileSync( folderPath + "/public/test.sql", fileContent );
+
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        let result = await db.query(`
+            select
+                f1.x + f2.z as total
+            from test() as f1, test(30) as f2
+        `);
+        let row = result.rows[0];
+
+        assert.deepEqual(row, {
+            total: 40
+        });
+    });
+
 });

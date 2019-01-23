@@ -38,6 +38,12 @@ module.exports = [
         }
     },
     {
+        str: "record",
+        result: {
+            type: "record"
+        }
+    },
+    {
         str: "public.company",
         result: {
             type: "public.company"
