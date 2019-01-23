@@ -912,4 +912,52 @@ language plpgsql;
         });
     });
 
+    it("build two functions from one file, using two separators ';'", async() => {
+        let folderPath = ROOT_TMP_PATH + "/simple-func";
+        fs.mkdirSync(folderPath);
+
+        let body1 = `
+            begin
+                return 1;
+            end
+        `;
+        let body2 = `
+            begin
+                return x;
+            end
+        `;
+
+        fs.writeFileSync( folderPath + "/test.sql", `
+create or replace function test()
+returns bigint as $$${ body1 }$$
+language plpgsql;
+
+;
+;
+;
+
+create or replace function test(x integer)
+returns bigint as $$${ body2 }$$
+language plpgsql;
+        `);
+
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        let result = await db.query(`
+            select
+                f1 + f2 as total
+            from test() as f1, test(30) as f2
+        `);
+        let row = result.rows[0];
+
+        assert.deepEqual(row, {
+            total: 31
+        });
+    });
+
+
 });
