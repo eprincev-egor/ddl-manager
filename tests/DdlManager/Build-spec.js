@@ -959,5 +959,98 @@ language plpgsql;
         });
     });
 
+    it("build function with type public.\"order\" inside arguments", async() => {
+        let folderPath = ROOT_TMP_PATH + "/quotes-arg-func";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table public.order (
+                id serial primary key,
+                name text not null unique
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/zip_order.sql", `
+            create or replace function zip_order(
+                order_row public.order
+            )
+            returns text as $body$
+                begin
+                    return order_row.id || ',' || order_row.name;
+                end
+            $body$
+            language plpgsql;
+        `);
+
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        let result;
+        let row;
+        
+        result = await db.query(`
+            insert into public.order 
+                (name) 
+            values 
+                ('test')
+            returning *
+        `);
+        row = result.rows[0];
+
+        assert.deepEqual(row, {
+            id: 1,
+            name: "test"
+        });
+
+        // test function
+        result = await db.query(`
+            select 
+                zip_order( order_row ) as zip 
+            from public.order as order_row
+            where 
+                id = 1
+        `);
+        row = result.rows[0];
+
+        assert.deepEqual(row, {
+            zip: "1,test"
+        });
+
+        // change function code
+        fs.writeFileSync(folderPath + "/zip_order.sql", `
+            create or replace function zip_order(
+                order_row public.order
+            )
+            returns text as $body$
+                begin
+                    return order_row.id || ':' || order_row.name;
+                end
+            $body$
+            language plpgsql;
+        `);
+
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        // and again test function
+        result = await db.query(`
+            select 
+                zip_order( order_row ) as zip 
+            from public.order as order_row
+            where 
+                id = 1
+        `);
+        row = result.rows[0];
+
+        assert.deepEqual(row, {
+            zip: "1:test"
+        });
+    });
 
 });

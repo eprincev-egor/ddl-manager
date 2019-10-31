@@ -66,5 +66,29 @@ module.exports = [
         result: {
             type: "character varying[]"
         }
+    },
+    {
+        str: "\"char\"",
+        result: {
+            type: "\"char\""
+        }
+    },
+    {
+        str: "\"order\"",
+        result: {
+            type: "public.order"
+        }
+    },
+    {
+        str: "public.\"order\"",
+        result: {
+            type: "public.order"
+        }
+    },
+    {
+        str: "\"public\".\"order\"",
+        result: {
+            type: "public.order"
+        }
     }
 ];
