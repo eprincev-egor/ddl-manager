@@ -1,3 +1,4 @@
 node_modules
 database.json
 .vscode
+dist

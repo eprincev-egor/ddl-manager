@@ -13,8 +13,10 @@
     "ddl-manager": "./bin/index.js"
   },
   "scripts": {
-    "test": "mocha tests/**/*-spec.js --timeout 9999 --exit",
-    "lint": "eslint ./**/*.js"
+    "build": "tsc",
+    "lint": "tslint -c tslint.json 'lib/**/*.ts' && tslint -c test/tslint.json 'test/**/*.ts'",
+    "test": "nyc mocha",
+    "prepublishOnly": "tsc"
   },
   "repository": {
     "type": "git",
@@ -49,10 +51,12 @@
     "url": "https://github.com/eprincev-egor/ddl-manager/issues"
   },
   "homepage": "https://github.com/eprincev-egor/ddl-manager#readme",
-  "dependencies": {},
+  "dependencies": {
+    "model-layer": "^2.0.10"
+  },
   "devDependencies": {
     "@types/mocha": "^7.0.1",
-    "@types/node": "^13.7.0",
+    "@types/node": "12.6.9",
     "mocha": "^7.0.1",
     "nyc": "^15.0.0",
     "source-map-support": "^0.5.16",
