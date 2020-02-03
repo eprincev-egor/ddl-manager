@@ -38,6 +38,12 @@ module.exports = [
         }
     },
     {
+        str: "record",
+        result: {
+            type: "record"
+        }
+    },
+    {
         str: "public.company",
         result: {
             type: "public.company"
@@ -59,6 +65,30 @@ module.exports = [
         str: "character varying[]",
         result: {
             type: "character varying[]"
+        }
+    },
+    {
+        str: "\"char\"",
+        result: {
+            type: "\"char\""
+        }
+    },
+    {
+        str: "\"order\"",
+        result: {
+            type: "public.order"
+        }
+    },
+    {
+        str: "public.\"order\"",
+        result: {
+            type: "public.order"
+        }
+    },
+    {
+        str: "\"public\".\"order\"",
+        result: {
+            type: "public.order"
         }
     }
 ];

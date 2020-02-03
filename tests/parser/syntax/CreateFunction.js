@@ -638,5 +638,32 @@ module.exports = [
                 content: "begin;end"
             }
         }
+    },
+    {
+        str: `create or replace function some_func(out x bigint, out y text[])
+            returns record as $body$begin;end$body$
+            language plpgsql;
+        `,
+        result: {
+            schema: "public",
+            name: "some_func",
+            args: [
+                {
+                    name: "x",
+                    type: "bigint",
+                    out: true
+                }, {
+                    name: "y",
+                    type: "text[]",
+                    out: true
+                }
+            ],
+            returns: {
+                type: "record"
+            },
+            body: {
+                content: "begin;end"
+            }
+        }
     }
 ];

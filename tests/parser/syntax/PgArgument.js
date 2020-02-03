@@ -47,6 +47,13 @@ module.exports = [
         }
     },
     {
+        str: "order_row \"order\"",
+        result: {
+            name: "order_row",
+            type: "public.order"
+        }
+    },
+    {
         str: "company company",
         result: {
             name: "company",
