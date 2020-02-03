@@ -1,4 +1,3 @@
 node_modules
-package-lock.json
-ddl-manager-config.js
+database.json
 .vscode
