@@ -2,27 +2,113 @@ import State from "../lib/State";
 import assert from "assert";
 
 describe("State", () => {
-    
-    it("migrate simple function", () => {
+
+    describe("generateMigration", () => {
         
-        const fsState = new State({
-            functions: [{
+        it("create function for empty db", () => {
+            
+            const fsState = new State({
+                functions: [{
+                    schema: "public",
+                    name: "test"
+                }]
+            });
+
+            const dbState = new State({
+                functions: []
+            });
+
+            const migration = fsState.generateMigration(dbState);
+            const commands = migration.get("commands");
+
+            assert.strictEqual(commands.length, 1);
+            const firstCommand = commands.first();
+
+            assert.strictEqual(firstCommand.get("type"), "CreateFunction");
+        });
+
+        it("remove on function for db with one function", () => {
+            
+            const fsState = new State({
+                functions: []
+            });
+
+            const dbState = new State({
+                functions: [{
+                    schema: "public",
+                    name: "test"
+                }]
+            });
+
+            const migration = fsState.generateMigration(dbState);
+            const commands = migration.get("commands");
+
+            assert.strictEqual(commands.length, 1);
+            const firstCommand = commands.first();
+
+            assert.strictEqual(firstCommand.get("type"), "DropFunction");
+        });
+
+        it("db and fs has only one function, empty migration", () => {
+            
+            const fsState = new State({
+                functions: [{
+                    schema: "public",
+                    name: "test"
+                }]
+            });
+
+            const dbState = new State({
+                functions: [{
+                    schema: "public",
+                    name: "test"
+                }]
+            });
+
+            const migration = fsState.generateMigration(dbState);
+            const commands = migration.get("commands");
+
+            assert.strictEqual(commands.length, 0);
+        });
+
+        it("db and fs has only one function, but that different functions", () => {
+            
+            const fsState = new State({
+                functions: [{
+                    schema: "public",
+                    name: "test1"
+                }]
+            });
+
+            const dbState = new State({
+                functions: [{
+                    schema: "public",
+                    name: "test2"
+                }]
+            });
+
+            const migration = fsState.generateMigration(dbState);
+            const commands = migration.get("commands");
+
+            assert.strictEqual(commands.length, 2);
+
+            // first the 'drop'
+            const firstCommand = commands.first();
+            assert.strictEqual(firstCommand.get("type"), "DropFunction");
+            assert.deepStrictEqual(firstCommand.get("function").toJSON(), {
                 schema: "public",
-                name: "test"
-            }]
+                name: "test2"
+            });
+            
+            // second the 'create'
+            const lastCommand = commands.last();
+            assert.strictEqual(lastCommand.get("type"), "CreateFunction");
+            assert.deepStrictEqual(lastCommand.get("function").toJSON(), {
+                schema: "public",
+                name: "test1"
+            });
         });
 
-        const dbState = new State({
-            functions: []
-        });
-
-        const migration = fsState.generateMigration(dbState);
-        const commands = migration.get("commands");
-
-        assert.strictEqual(commands.length, 1);
-        const firstCommand = commands.first();
-
-        assert.strictEqual(firstCommand.get("type"), "CreateFunction");
     });
-
+    
 });
