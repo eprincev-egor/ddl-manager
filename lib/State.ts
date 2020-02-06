@@ -1,7 +1,7 @@
 import {Model, Types} from "model-layer";
-import {FunctionsCollection} from "./Functions";
-import {TriggersCollection} from "./Triggers";
-import {ViewsCollection} from "./Views";
+import FunctionsCollection from "./objects/FunctionsCollection";
+import TriggersCollection from "./objects/TriggersCollection";
+import ViewsCollection from "./objects/ViewsCollection";
 import Migration from "./migration/Migration";
 import CommandModel from "./migration/commands/CommandModel";
 import CreateFunctionCommandModel from "./migration/commands/CreateFunctionCommandModel";
@@ -38,7 +38,7 @@ export default class State extends Model<State> {
         // drop functions
         dbFunctions.each((dbFunctionModel) => {
             const dbFuncIdentify = dbFunctionModel.getIdentify();
-            const fsFunctionModel = fsFunctions.getFunctionByIdentify(dbFuncIdentify);
+            const fsFunctionModel = fsFunctions.getByIdentify(dbFuncIdentify);
 
             if ( fsFunctionModel ) {
                 return;
@@ -53,7 +53,7 @@ export default class State extends Model<State> {
         // create functions
         fsFunctions.each((fsFunctionModel) => {
             const fsFuncIdentify = fsFunctionModel.getIdentify();
-            const dbFunctionModel = dbFunctions.getFunctionByIdentify(fsFuncIdentify);
+            const dbFunctionModel = dbFunctions.getByIdentify(fsFuncIdentify);
 
             if ( dbFunctionModel ) {
                 return;
@@ -68,7 +68,7 @@ export default class State extends Model<State> {
         // drop views
         dbViews.each((dbViewModel) => {
             const dbViewIdentify = dbViewModel.getIdentify();
-            const fsViewModel = fsViews.getViewByIdentify(dbViewIdentify);
+            const fsViewModel = fsViews.getByIdentify(dbViewIdentify);
 
             if ( fsViewModel ) {
                 return;
@@ -83,7 +83,7 @@ export default class State extends Model<State> {
         // create views
         fsViews.each((fsViewModel) => {
             const fsViewIdentify = fsViewModel.getIdentify();
-            const dbViewModel = dbViews.getViewByIdentify(fsViewIdentify);
+            const dbViewModel = dbViews.getByIdentify(fsViewIdentify);
 
             if ( dbViewModel ) {
                 return;

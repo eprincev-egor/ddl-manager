@@ -97,7 +97,8 @@ describe("State", () => {
             assert.strictEqual(firstCommand.get("type"), "DropFunction");
             assert.deepStrictEqual(firstCommand.get("function").toJSON(), {
                 schema: "public",
-                name: "test2"
+                name: "test2",
+                args: ""
             });
             
             // second the 'create'
@@ -105,7 +106,8 @@ describe("State", () => {
             assert.strictEqual(lastCommand.get("type"), "CreateFunction");
             assert.deepStrictEqual(lastCommand.get("function").toJSON(), {
                 schema: "public",
-                name: "test1"
+                name: "test1",
+                args: ""
             });
         });
 

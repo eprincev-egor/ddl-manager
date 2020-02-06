@@ -1,5 +1,5 @@
 import {Model, Types} from "model-layer";
-import CommandsCollection from "./CommandsCollection";
+import CommandsCollection from "./commands/CommandsCollection";
 
 export default class Migration extends Model<Migration> {
     structure() {

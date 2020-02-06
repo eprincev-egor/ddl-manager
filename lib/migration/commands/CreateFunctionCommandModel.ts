@@ -1,6 +1,6 @@
 import {Types} from "model-layer";
 import CommandModel from "./CommandModel";
-import {FunctionModel} from "../../Functions";
+import FunctionModel from "../../objects/FunctionModel";
 
 export default class CreateFunctionCommandModel extends CommandModel<CreateFunctionCommandModel> {
     structure() {
