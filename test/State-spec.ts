@@ -27,7 +27,7 @@ describe("State", () => {
             assert.strictEqual(firstCommand.get("type"), "CreateFunction");
         });
 
-        it("remove on function for db with one function", () => {
+        it("remove function for db with one function", () => {
             
             const fsState = new State({
                 functions: []
@@ -107,6 +107,51 @@ describe("State", () => {
                 schema: "public",
                 name: "test1"
             });
+        });
+
+        it("create view for empty db", () => {
+            
+            const fsState = new State({
+                views: [{
+                    schema: "public",
+                    name: "operations_view"
+                }]
+            });
+
+            const dbState = new State({
+                views: []
+            });
+
+            const migration = fsState.generateMigration(dbState);
+            const commands = migration.get("commands");
+
+            assert.strictEqual(commands.length, 1);
+            const firstCommand = commands.first();
+
+            assert.strictEqual(firstCommand.get("type"), "CreateView");
+        });
+
+        
+        it("remove view for db with one view", () => {
+            
+            const fsState = new State({
+                views: []
+            });
+
+            const dbState = new State({
+                views: [{
+                    schema: "public",
+                    name: "test"
+                }]
+            });
+
+            const migration = fsState.generateMigration(dbState);
+            const commands = migration.get("commands");
+
+            assert.strictEqual(commands.length, 1);
+            const firstCommand = commands.first();
+
+            assert.strictEqual(firstCommand.get("type"), "DropView");
         });
 
     });

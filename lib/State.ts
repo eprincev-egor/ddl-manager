@@ -6,6 +6,8 @@ import Migration from "./migration/Migration";
 import CommandModel from "./migration/commands/CommandModel";
 import CreateFunctionCommandModel from "./migration/commands/CreateFunctionCommandModel";
 import DropFunctionCommandModel from "./migration/commands/DropFunctionCommandModel";
+import CreateViewCommandModel from "./migration/commands/CreateViewCommandModel";
+import DropViewCommandModel from "./migration/commands/DropViewCommandModel";
 
 export default class State extends Model<State> {
     structure() {
@@ -29,9 +31,11 @@ export default class State extends Model<State> {
         const fsState: State = this;
         const fsFunctions = fsState.get("functions");
         const dbFunctions = dbState.get("functions");
+        const fsViews = fsState.get("views");
+        const dbViews = dbState.get("views");
         const commands: CommandModel[] = [];
 
-        // find functions for drop
+        // drop functions
         dbFunctions.each((dbFunctionModel) => {
             const dbFuncIdentify = dbFunctionModel.getIdentify();
             const fsFunctionModel = fsFunctions.getFunctionByIdentify(dbFuncIdentify);
@@ -46,7 +50,7 @@ export default class State extends Model<State> {
             commands.push( command );
         });
 
-        // find functions for create
+        // create functions
         fsFunctions.each((fsFunctionModel) => {
             const fsFuncIdentify = fsFunctionModel.getIdentify();
             const dbFunctionModel = dbFunctions.getFunctionByIdentify(fsFuncIdentify);
@@ -61,6 +65,35 @@ export default class State extends Model<State> {
             commands.push( command );
         });
 
+        // drop views
+        dbViews.each((dbViewModel) => {
+            const dbViewIdentify = dbViewModel.getIdentify();
+            const fsViewModel = fsViews.getViewByIdentify(dbViewIdentify);
+
+            if ( fsViewModel ) {
+                return;
+            }
+
+            const command = new DropViewCommandModel({
+                view: dbViewModel
+            });
+            commands.push( command );
+        });
+
+        // create views
+        fsViews.each((fsViewModel) => {
+            const fsViewIdentify = fsViewModel.getIdentify();
+            const dbViewModel = dbViews.getViewByIdentify(fsViewIdentify);
+
+            if ( dbViewModel ) {
+                return;
+            }
+
+            const command = new CreateViewCommandModel({
+                view: fsViewModel
+            });
+            commands.push(command);
+        });
 
         // output migration
         return new Migration({
