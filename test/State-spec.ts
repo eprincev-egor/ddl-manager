@@ -1,4 +1,4 @@
-import State from "../lib/state/State";
+import State from "../lib/State";
 import assert from "assert";
 
 describe("State", () => {
@@ -17,8 +17,12 @@ describe("State", () => {
         });
 
         const migration = dbState.generateMigration(fsState);
+        const commands = migration.get("commands");
 
-        
+        assert.strictEqual(commands.length, 1);
+        const firstCommand = commands.first();
+
+        assert.strictEqual(firstCommand.get("type"), "CreateFunction");
     });
 
 });

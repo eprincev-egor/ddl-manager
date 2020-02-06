@@ -2,6 +2,7 @@ import {Model, Types} from "model-layer";
 import {FunctionsCollection} from "./Functions";
 import {TriggersCollection} from "./Triggers";
 import {ViewsCollection} from "./Views";
+import Migration from "./migration/Migration";
 
 export default class State extends Model<State> {
     structure() {
@@ -21,8 +22,8 @@ export default class State extends Model<State> {
         };
     }
 
-    generateMigration(fsState: State) {
-        const dbState: State = this;
-
+    generateMigration(dbState: State): Migration {
+        const fsState: State = this;
+        return new Migration();
     }
 }

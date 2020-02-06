@@ -2,3 +2,5 @@ node_modules
 database.json
 .vscode
 dist
+coverage
+.nyc_output
