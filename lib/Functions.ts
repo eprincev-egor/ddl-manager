@@ -15,4 +15,12 @@ export class FunctionModel extends Model<FunctionModel> {
 
 export class FunctionsCollection extends Collection<FunctionModel> {
     Model() {return FunctionModel;}
+
+    getFunctionByIdentify(functionIdentify: string): FunctionModel {
+        const existsFunctionModel = this.find(functionModel =>
+            functionModel.getIdentify() === functionIdentify
+        );
+
+        return existsFunctionModel;
+    }
 }

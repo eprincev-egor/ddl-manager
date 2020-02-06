@@ -16,7 +16,7 @@ describe("State", () => {
             functions: []
         });
 
-        const migration = dbState.generateMigration(fsState);
+        const migration = fsState.generateMigration(dbState);
         const commands = migration.get("commands");
 
         assert.strictEqual(commands.length, 1);
