@@ -4,10 +4,8 @@ import TriggersCollection from "./objects/TriggersCollection";
 import ViewsCollection from "./objects/ViewsCollection";
 import Migration from "./migration/Migration";
 import CommandModel from "./migration/commands/CommandModel";
-import CreateFunctionCommandModel from "./migration/commands/CreateFunctionCommandModel";
-import DropFunctionCommandModel from "./migration/commands/DropFunctionCommandModel";
-import CreateViewCommandModel from "./migration/commands/CreateViewCommandModel";
-import DropViewCommandModel from "./migration/commands/DropViewCommandModel";
+import FunctionCommandModel from "./migration/commands/FunctionCommandModel";
+import ViewCommandModel from "./migration/commands/ViewCommandModel";
 
 export default class State extends Model<State> {
     structure() {
@@ -44,7 +42,8 @@ export default class State extends Model<State> {
                 return;
             }
 
-            const command = new DropFunctionCommandModel({
+            const command = new FunctionCommandModel({
+                type: "drop",
                 function: dbFunctionModel
             });
             commands.push( command );
@@ -59,7 +58,8 @@ export default class State extends Model<State> {
                 return;
             }
 
-            const command = new CreateFunctionCommandModel({
+            const command = new FunctionCommandModel({
+                type: "create",
                 function: fsFunctionModel
             });
             commands.push( command );
@@ -74,7 +74,8 @@ export default class State extends Model<State> {
                 return;
             }
 
-            const command = new DropViewCommandModel({
+            const command = new ViewCommandModel({
+                type: "drop",
                 view: dbViewModel
             });
             commands.push( command );
@@ -89,7 +90,8 @@ export default class State extends Model<State> {
                 return;
             }
 
-            const command = new CreateViewCommandModel({
+            const command = new ViewCommandModel({
+                type: "create",
                 view: fsViewModel
             });
             commands.push(command);

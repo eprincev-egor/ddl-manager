@@ -21,10 +21,16 @@ describe("State", () => {
             const migration = fsState.generateMigration(dbState);
             const commands = migration.get("commands");
 
-            assert.strictEqual(commands.length, 1);
-            const firstCommand = commands.first();
-
-            assert.strictEqual(firstCommand.get("type"), "CreateFunction");
+            assert.deepStrictEqual(commands.toJSON(), [
+                {
+                    type: "create",
+                    function: {
+                        schema: "public",
+                        name: "test",
+                        args: ""
+                    }
+                }
+            ]);
         });
 
         it("remove function for db with one function", () => {
@@ -43,10 +49,16 @@ describe("State", () => {
             const migration = fsState.generateMigration(dbState);
             const commands = migration.get("commands");
 
-            assert.strictEqual(commands.length, 1);
-            const firstCommand = commands.first();
-
-            assert.strictEqual(firstCommand.get("type"), "DropFunction");
+            assert.deepStrictEqual(commands.toJSON(), [
+                {
+                    type: "drop",
+                    function: {
+                        schema: "public",
+                        name: "test",
+                        args: ""
+                    }
+                }
+            ]);
         });
 
         it("db and fs has only one function, empty migration", () => {
@@ -68,7 +80,8 @@ describe("State", () => {
             const migration = fsState.generateMigration(dbState);
             const commands = migration.get("commands");
 
-            assert.strictEqual(commands.length, 0);
+            assert.deepStrictEqual(commands.toJSON(), [
+            ]);
         });
 
         it("db and fs has only one function, but that different functions", () => {
@@ -90,25 +103,26 @@ describe("State", () => {
             const migration = fsState.generateMigration(dbState);
             const commands = migration.get("commands");
 
-            assert.strictEqual(commands.length, 2);
-
-            // first the 'drop'
-            const firstCommand = commands.first();
-            assert.strictEqual(firstCommand.get("type"), "DropFunction");
-            assert.deepStrictEqual(firstCommand.get("function").toJSON(), {
-                schema: "public",
-                name: "test2",
-                args: ""
-            });
-            
-            // second the 'create'
-            const lastCommand = commands.last();
-            assert.strictEqual(lastCommand.get("type"), "CreateFunction");
-            assert.deepStrictEqual(lastCommand.get("function").toJSON(), {
-                schema: "public",
-                name: "test1",
-                args: ""
-            });
+            assert.deepStrictEqual(commands.toJSON(), [
+                // first the 'drop'
+                {
+                    type: "drop",
+                    function: {
+                        schema: "public",
+                        name: "test2",
+                        args: ""
+                    }
+                },
+                // second the 'create'
+                {
+                    type: "create",
+                    function: {
+                        schema: "public",
+                        name: "test1",
+                        args: ""
+                    }
+                }
+            ]);
         });
 
         it("create view for empty db", () => {
@@ -127,10 +141,15 @@ describe("State", () => {
             const migration = fsState.generateMigration(dbState);
             const commands = migration.get("commands");
 
-            assert.strictEqual(commands.length, 1);
-            const firstCommand = commands.first();
-
-            assert.strictEqual(firstCommand.get("type"), "CreateView");
+            assert.deepStrictEqual(commands.toJSON(), [
+                {
+                    type: "create",
+                    view: {
+                        schema: "public",
+                        name: "operations_view"
+                    }
+                }
+            ]);
         });
 
         
@@ -143,17 +162,22 @@ describe("State", () => {
             const dbState = new State({
                 views: [{
                     schema: "public",
-                    name: "test"
+                    name: "operations_view"
                 }]
             });
 
             const migration = fsState.generateMigration(dbState);
             const commands = migration.get("commands");
 
-            assert.strictEqual(commands.length, 1);
-            const firstCommand = commands.first();
-
-            assert.strictEqual(firstCommand.get("type"), "DropView");
+            assert.deepStrictEqual(commands.toJSON(), [
+                {
+                    type: "drop",
+                    view: {
+                        schema: "public",
+                        name: "operations_view"
+                    }
+                }
+            ]);
         });
 
     });

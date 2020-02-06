@@ -4,7 +4,8 @@ export default class CommandModel<Child extends CommandModel = any> extends Mode
     structure() {
         return {
             type: Types.String({
-                required: true
+                required: true,
+                enum: ["create", "drop"]
             })
         };
     }

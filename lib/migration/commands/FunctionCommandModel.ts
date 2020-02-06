@@ -2,13 +2,11 @@ import {Types} from "model-layer";
 import CommandModel from "./CommandModel";
 import FunctionModel from "../../objects/FunctionModel";
 
-export default class DropFunctionCommandModel extends CommandModel<DropFunctionCommandModel> {
+export default class FunctionCommandModel extends CommandModel<FunctionCommandModel> {
     structure() {
         return {
-            type: Types.String({
-                required: true,
-                default: "DropFunction"
-            }),
+            ...super.structure(),
+            
             function: Types.Model({
                 Model: FunctionModel,
                 required: true
