@@ -257,6 +257,44 @@ describe("State", () => {
                 }
             ]);
         });
+
+        
+        it("db and fs has only one same table, empty migration", () => {
+            
+            const fsState = new State({
+                tables: [{
+                    schema: "public",
+                    name: "company",
+                    columns: [{
+                        key: "id",
+                        type: "integer"
+                    }, {
+                        key: "name",
+                        type: "text"
+                    }]
+                }]
+            });
+
+            const dbState = new State({
+                tables: [{
+                    schema: "public",
+                    name: "company",
+                    columns: [{
+                        key: "id",
+                        type: "integer"
+                    }, {
+                        key: "name",
+                        type: "text"
+                    }]
+                }]
+            });
+
+            const migration = fsState.generateMigration(dbState);
+            const commands = migration.get("commands");
+
+            assert.deepStrictEqual(commands.toJSON(), [
+            ]);
+        });
         
     });
     
