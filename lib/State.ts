@@ -2,10 +2,13 @@ import {Model, Types} from "model-layer";
 import FunctionsCollection from "./objects/FunctionsCollection";
 import TriggersCollection from "./objects/TriggersCollection";
 import ViewsCollection from "./objects/ViewsCollection";
+import TablesCollection from "./objects/TablesCollection";
 import Migration from "./migration/Migration";
 import CommandModel from "./migration/commands/CommandModel";
 import FunctionCommandModel from "./migration/commands/FunctionCommandModel";
 import ViewCommandModel from "./migration/commands/ViewCommandModel";
+import TableCommandModel from "./migration/commands/TableCommandModel";
+import ColumnCommandModel from "./migration/commands/ColumnCommandModel";
 
 export default class State extends Model<State> {
     structure() {
@@ -21,22 +24,32 @@ export default class State extends Model<State> {
             views: Types.Collection({
                 Collection: ViewsCollection,
                 default: () => new ViewsCollection()
+            }),
+            tables: Types.Collection({
+                Collection: TablesCollection,
+                default: () => new TablesCollection()
             })
         };
     }
 
     generateMigration(dbState: State): Migration {
         const fsState: State = this;
-        const fsFunctions = fsState.get("functions");
-        const dbFunctions = dbState.get("functions");
-        const fsViews = fsState.get("views");
-        const dbViews = dbState.get("views");
+        const fs = {
+            functions: fsState.get("functions"),
+            views: fsState.get("views"),
+            tables: fsState.get("tables")
+        };
+        const db = {
+            functions: dbState.get("functions"),
+            views: dbState.get("views"),
+            tables: dbState.get("tables")
+        };
         const commands: CommandModel[] = [];
 
         // drop functions
-        dbFunctions.each((dbFunctionModel) => {
+        db.functions.each((dbFunctionModel) => {
             const dbFuncIdentify = dbFunctionModel.getIdentify();
-            const fsFunctionModel = fsFunctions.getByIdentify(dbFuncIdentify);
+            const fsFunctionModel = fs.functions.getByIdentify(dbFuncIdentify);
 
             if ( fsFunctionModel ) {
                 return;
@@ -50,9 +63,9 @@ export default class State extends Model<State> {
         });
 
         // create functions
-        fsFunctions.each((fsFunctionModel) => {
+        fs.functions.each((fsFunctionModel) => {
             const fsFuncIdentify = fsFunctionModel.getIdentify();
-            const dbFunctionModel = dbFunctions.getByIdentify(fsFuncIdentify);
+            const dbFunctionModel = db.functions.getByIdentify(fsFuncIdentify);
 
             if ( dbFunctionModel ) {
                 return;
@@ -66,9 +79,9 @@ export default class State extends Model<State> {
         });
 
         // drop views
-        dbViews.each((dbViewModel) => {
+        db.views.each((dbViewModel) => {
             const dbViewIdentify = dbViewModel.getIdentify();
-            const fsViewModel = fsViews.getByIdentify(dbViewIdentify);
+            const fsViewModel = fs.views.getByIdentify(dbViewIdentify);
 
             if ( fsViewModel ) {
                 return;
@@ -82,9 +95,9 @@ export default class State extends Model<State> {
         });
 
         // create views
-        fsViews.each((fsViewModel) => {
+        fs.views.each((fsViewModel) => {
             const fsViewIdentify = fsViewModel.getIdentify();
-            const dbViewModel = dbViews.getByIdentify(fsViewIdentify);
+            const dbViewModel = db.views.getByIdentify(fsViewIdentify);
 
             if ( dbViewModel ) {
                 return;
@@ -95,6 +108,45 @@ export default class State extends Model<State> {
                 view: fsViewModel
             });
             commands.push(command);
+        });
+
+        // create tables
+        fs.tables.each((fsTableModel) => {
+            const fsTableIdentify = fsTableModel.getIdentify();
+            const dbTableModel = db.tables.getByIdentify(fsTableIdentify);
+
+            if ( dbTableModel ) {
+                // create columns
+                const dbColumns = dbTableModel.get("columns");
+                const fsColumns = fsTableModel.get("columns");
+
+                fsColumns.forEach((fsColumnModel) => {
+                    const key = fsColumnModel.get("key");
+                    const existsDbColumn = dbColumns.find((dbColumn) =>
+                        dbColumn.get("key") === key
+                    );
+
+                    if ( existsDbColumn ) {
+                        return;
+                    }
+
+                    const createColumnCommand = new ColumnCommandModel({
+                        type: "create",
+                        schema: dbTableModel.get("schema"),
+                        table: dbTableModel.get("name"),
+                        column: fsColumnModel
+                    });
+                    commands.push(createColumnCommand);
+                });
+
+                return;
+            }
+
+            const createTableCommand = new TableCommandModel({
+                type: "create",
+                table: fsTableModel
+            });
+            commands.push(createTableCommand);
         });
 
         // output migration

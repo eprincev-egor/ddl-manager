@@ -9,7 +9,7 @@ export default class BaseDBObjectCollection<
     ChildCollection extends BaseDBObjectCollection<any> & IChildCollection
 > extends Collection<ChildCollection> {
     
-    getByIdentify(identify: string): BaseDBObjectModel<any> {
+    getByIdentify(identify: string): this["TModel"] {
         const existsModel = this.find(model =>
             model.getIdentify() === identify
         );
