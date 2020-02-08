@@ -9,6 +9,7 @@ import FunctionCommandModel from "./migration/commands/FunctionCommandModel";
 import ViewCommandModel from "./migration/commands/ViewCommandModel";
 import TableCommandModel from "./migration/commands/TableCommandModel";
 import ColumnCommandModel from "./migration/commands/ColumnCommandModel";
+import TriggerCommandModel from "./migration/commands/TriggerCommandModel";
 
 export default class State extends Model<State> {
     structure() {
@@ -37,12 +38,14 @@ export default class State extends Model<State> {
         const fs = {
             functions: fsState.get("functions"),
             views: fsState.get("views"),
-            tables: fsState.get("tables")
+            tables: fsState.get("tables"),
+            triggers: fsState.get("triggers")
         };
         const db = {
             functions: dbState.get("functions"),
             views: dbState.get("views"),
-            tables: dbState.get("tables")
+            tables: dbState.get("tables"),
+            triggers: dbState.get("triggers")
         };
         const commands: CommandsCollection["TInput"] = [];
 
@@ -147,6 +150,38 @@ export default class State extends Model<State> {
                 table: fsTableModel
             });
             commands.push(createTableCommand);
+        });
+
+        // drop trigger
+        db.triggers.each((dbTriggerModel) => {
+            const dbTriggerIdentify = dbTriggerModel.getIdentify();
+            const fsTriggerModel = fs.views.getByIdentify(dbTriggerIdentify);
+
+            if ( fsTriggerModel ) {
+                return;
+            }
+
+            const command = new TriggerCommandModel({
+                type: "drop",
+                trigger: dbTriggerModel
+            });
+            commands.push( command );
+        });
+
+        // create trigger
+        fs.triggers.each((fsTriggerModel) => {
+            const fsTriggerIdentify = fsTriggerModel.getIdentify();
+            const dbTriggerModel = db.views.getByIdentify(fsTriggerIdentify);
+
+            if ( dbTriggerModel ) {
+                return;
+            }
+
+            const command = new TriggerCommandModel({
+                type: "create",
+                trigger: fsTriggerModel
+            });
+            commands.push(command);
         });
 
         // output migration

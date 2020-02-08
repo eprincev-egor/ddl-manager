@@ -4,6 +4,7 @@ import BaseObjectModel from "./BaseDBObjectModel";
 export default class TriggerModel extends BaseObjectModel<TriggerModel> {
     structure() {
         return {
+            schema: Types.String,
             table: Types.String,
             name: Types.String
         };

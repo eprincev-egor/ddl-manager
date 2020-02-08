@@ -274,7 +274,111 @@ describe("State", () => {
                 }
             });
         });
+
         
+        it("create trigger", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [{
+                        schema: "public",
+                        name: "company",
+                        columns: [{
+                            key: "id",
+                            type: "integer"
+                        }]
+                    }],
+                    functions: [{
+                        schema: "public",
+                        name: "create_role",
+                        args: ""
+                    }],
+                    triggers: [{
+                        schema: "public",
+                        table: "company",
+                        name: "create_role_trigger"
+                    }]
+                },
+                db: {
+                    tables: [{
+                        schema: "public",
+                        name: "company",
+                        columns: [{
+                            key: "id",
+                            type: "integer"
+                        }]
+                    }],
+                    functions: [{
+                        schema: "public",
+                        name: "create_role",
+                        args: ""
+                    }]
+                },
+                migration: {
+                    commands: [
+                        {
+                            type: "create",
+                            trigger: {
+                                schema: "public",
+                                table: "company",
+                                name: "create_role_trigger"
+                            }
+                        }
+                    ]
+                }
+            });
+        });
+        
+        it("drop trigger", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [{
+                        schema: "public",
+                        name: "company",
+                        columns: [{
+                            key: "id",
+                            type: "integer"
+                        }]
+                    }],
+                    functions: [{
+                        schema: "public",
+                        name: "create_role",
+                        args: ""
+                    }]
+                },
+                db: {
+                    tables: [{
+                        schema: "public",
+                        name: "company",
+                        columns: [{
+                            key: "id",
+                            type: "integer"
+                        }]
+                    }],
+                    functions: [{
+                        schema: "public",
+                        name: "create_role",
+                        args: ""
+                    }],
+                    triggers: [{
+                        schema: "public",
+                        table: "company",
+                        name: "create_role_trigger"
+                    }]
+                },
+                migration: {
+                    commands: [
+                        {
+                            type: "drop",
+                            trigger: {
+                                schema: "public",
+                                table: "company",
+                                name: "create_role_trigger"
+                            }
+                        }
+                    ]
+                }
+            });
+        });
     });
     
 });
