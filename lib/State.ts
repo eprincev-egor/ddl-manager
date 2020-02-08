@@ -4,7 +4,7 @@ import TriggersCollection from "./objects/TriggersCollection";
 import ViewsCollection from "./objects/ViewsCollection";
 import TablesCollection from "./objects/TablesCollection";
 import Migration from "./migration/Migration";
-import CommandModel from "./migration/commands/CommandModel";
+import CommandsCollection from "./migration/commands/CommandsCollection";
 import FunctionCommandModel from "./migration/commands/FunctionCommandModel";
 import ViewCommandModel from "./migration/commands/ViewCommandModel";
 import TableCommandModel from "./migration/commands/TableCommandModel";
@@ -44,7 +44,7 @@ export default class State extends Model<State> {
             views: dbState.get("views"),
             tables: dbState.get("tables")
         };
-        const commands: CommandModel[] = [];
+        const commands: CommandsCollection["TInput"] = [];
 
         // drop functions
         db.functions.each((dbFunctionModel) => {
