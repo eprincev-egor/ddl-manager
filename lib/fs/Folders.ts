@@ -11,7 +11,7 @@ export class FolderModel extends Model<FolderModel> {
     }
 }
 
-export class FoldersCollection extends Collection<FolderModel> {
+export class FoldersCollection extends Collection<FoldersCollection> {
     Model() {
         return FolderModel;
     }

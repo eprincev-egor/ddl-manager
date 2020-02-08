@@ -1,12 +1,15 @@
 import {Collection} from "model-layer";
 import BaseDBObjectModel, {IChildObjectModel} from "./BaseDBObjectModel";
 
+interface IChildCollection {
+    Model(): (new (...args: any[]) => BaseDBObjectModel<any> & IChildObjectModel);
+}
+
 export default class BaseDBObjectCollection<
-    ChildModel extends BaseDBObjectModel<any> & 
-    IChildObjectModel
-> extends Collection<ChildModel> {
+    ChildCollection extends BaseDBObjectCollection<any> & IChildCollection
+> extends Collection<ChildCollection> {
     
-    getByIdentify(identify: string): ChildModel {
+    getByIdentify(identify: string): BaseDBObjectModel<any> {
         const existsModel = this.find(model =>
             model.getIdentify() === identify
         );

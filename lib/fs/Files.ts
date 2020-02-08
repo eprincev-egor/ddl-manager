@@ -8,7 +8,7 @@ export class FileModel extends Model<FileModel> {
     }
 }
 
-export class FilesCollection extends Collection<FileModel> {
+export class FilesCollection extends Collection<FilesCollection> {
     Model() {
         return FileModel;
     }
