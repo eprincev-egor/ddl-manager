@@ -11,7 +11,7 @@ import TableCommandModel from "./migration/commands/TableCommandModel";
 import ColumnCommandModel from "./migration/commands/ColumnCommandModel";
 import TriggerCommandModel from "./migration/commands/TriggerCommandModel";
 
-export default class State extends Model<State> {
+export default class State<Child extends State = State<any>> extends Model<Child> {
     structure() {
         return {
             functions: Types.Collection({
