@@ -1,5 +1,5 @@
-import State from "../lib/State";
-import Migration from "../lib/migration/Migration";
+import State from "../../lib/State";
+import Migration from "../../lib/migration/Migration";
 import assert from "assert";
 
 type InputState = State["TInputData"];
