@@ -1,6 +1,8 @@
 import FSState from "../../lib/FSState";
 import TestFSDriver from "./TestFSDriver";
+import TestParser from "./TestParser";
 import assert from "assert";
+import FunctionModel from "../../lib/objects/FunctionModel";
 
 describe("FSState", () => {
 
@@ -22,16 +24,25 @@ describe("FSState", () => {
 
             }
         });
+
+        const testParser = new TestParser({
+            [testFuncSQL]: [
+                new FunctionModel({
+                    schema: "public",
+                    name: "test",
+                    args: ""
+                })
+            ]
+        });
         
         const fsState = new FSState({
-            driver: fsDriver
+            driver: fsDriver,
+            parser: testParser
         });
 
         await fsState.load("./");
 
         assert.deepStrictEqual(fsState.toJSON(), {
-            driver: null,
-            parser: null,
             folder: {
                 path: "./",
                 name: "",

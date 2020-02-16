@@ -8,6 +8,7 @@ import FSDriver from "./fs/FSDriver";
 import {Types} from "model-layer";
 import FileModel from "./fs/FileModel";
 import Parser from "./parser/Parser";
+import FunctionModel from "./objects/FunctionModel";
 
 export default class FSState extends State<FSState> {
     structure() {
@@ -27,11 +28,28 @@ export default class FSState extends State<FSState> {
     }
 
     async load(folderPath: string): Promise<void> {
+        const parser = this.row.parser;
         const folderModel = await this.readFolder(folderPath);
         
         this.set({
             folder: folderModel
         });
+
+        const files = folderModel.filterChildrenByInstance(FileModel);
+        const functions: FunctionModel[] = [];
+
+        for (const fileModel of files) {
+            const sql = fileModel.get("content");
+            const dbObjects = parser.parseFile(sql);
+
+            for (const dbo of dbObjects) {
+                if ( dbo instanceof FunctionModel ) {
+                    functions.push(dbo);
+                }
+            }
+        }
+
+        this.row.functions.push(...functions);
     }
 
     async readFolder(folderPath: string): Promise<FolderModel> {
@@ -79,5 +97,10 @@ export default class FSState extends State<FSState> {
         }
 
         return new FolderModel(folderRow);
+    }
+
+    prepareJSON(json) {
+        delete json.driver;
+        delete json.parser;
     }
 }
