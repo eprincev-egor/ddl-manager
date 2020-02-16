@@ -11,7 +11,7 @@ export default class PgParser extends Parser {
         const coach = new GrapeQLCoach(fileContent);
         const objects: BaseDBObjectModel<any>[] = [];
 
-        for (let i = 0, n = coach.str.length; i < n; i++) {
+        for (; coach.i < coach.str.length; coach.i++) {
             if ( coach.is(CreateFunction) ) {
                 const parsedFunction = coach.parse(CreateFunction);
                 const funcModel = new FunctionModel({
