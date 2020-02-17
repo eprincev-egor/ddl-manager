@@ -50,7 +50,8 @@ describe("State", () => {
                                 parsed: null
                             }
                         }
-                    ]
+                    ],
+                    errors: []
                 }
             });
         });
@@ -100,6 +101,34 @@ describe("State", () => {
                                 name: "create_role_trigger",
                                 parsed: null
                             }
+                        }
+                    ],
+                    errors: []
+                }
+            });
+        });
+
+        
+        it("error on unknown table", () => {
+            testGenerateMigration({
+                fs: {
+                    triggers: [{
+                        identify: "create_role_trigger on public.company",
+                        tableIdentify: "public.company",
+                        name: "create_role_trigger"
+                    }]
+                },
+                db: {
+                    
+                },
+                migration: {
+                    commands: [],
+                    errors: [
+                        {
+                            code: "UnknownTableForTriggerErrorModel",
+                            message: "not found table public.company for trigger create_role_trigger",
+                            tableIdentify: "public.company",
+                            triggerName: "create_role_trigger"
                         }
                     ]
                 }

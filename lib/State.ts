@@ -10,6 +10,8 @@ import ViewCommandModel from "./migration/commands/ViewCommandModel";
 import TableCommandModel from "./migration/commands/TableCommandModel";
 import ColumnCommandModel from "./migration/commands/ColumnCommandModel";
 import TriggerCommandModel from "./migration/commands/TriggerCommandModel";
+import MigrationErrorsCollection from "./migration/errors/MigrationErrorsCollection";
+import UnknownTableForTriggerErrorModel from "./migration/errors/UnknownTableForTriggerErrorModel";
 
 export default class State<Child extends State = State<any>> extends Model<Child> {
     structure() {
@@ -48,6 +50,7 @@ export default class State<Child extends State = State<any>> extends Model<Child
             triggers: dbState.get("triggers")
         };
         const commands: CommandsCollection["TInput"] = [];
+        const errors: MigrationErrorsCollection["TModel"][] = [];
 
         // drop functions
         db.functions.each((dbFunctionModel) => {
@@ -176,6 +179,19 @@ export default class State<Child extends State = State<any>> extends Model<Child
                 return;
             }
 
+            const tableIdentify = fsTriggerModel.get("tableIdentify");
+            const fsTableModel = fs.tables.getByIdentify(tableIdentify);
+
+            if ( !fsTableModel ) {
+                const errorModel = new UnknownTableForTriggerErrorModel({
+                    tableIdentify,
+                    triggerName: fsTriggerModel.get("name")
+                });
+
+                errors.push(errorModel);
+                return;
+            }
+
             const command = new TriggerCommandModel({
                 type: "create",
                 trigger: fsTriggerModel
@@ -185,7 +201,8 @@ export default class State<Child extends State = State<any>> extends Model<Child
 
         // output migration
         return new Migration({
-            commands
+            commands,
+            errors
         });
     }
 }

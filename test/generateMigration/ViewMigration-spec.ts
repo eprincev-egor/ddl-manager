@@ -25,7 +25,8 @@ describe("State", () => {
                                 parsed: null
                             }
                         }
-                    ]
+                    ],
+                    errors: []
                 }
             });
         });
@@ -52,7 +53,8 @@ describe("State", () => {
                                 parsed: null
                             }
                         }
-                    ]
+                    ],
+                    errors: []
                 }
             });
         });

@@ -25,7 +25,8 @@ describe("State", () => {
                                 parsed: null
                             }
                         }
-                    ]
+                    ],
+                    errors: []
                 }
             });
         });
@@ -51,7 +52,8 @@ describe("State", () => {
                                 parsed: null
                             }
                         }
-                    ]
+                    ],
+                    errors: []
                 }
             });
         });
@@ -71,7 +73,8 @@ describe("State", () => {
                     }]
                 },
                 migration: {
-                    commands: []
+                    commands: [],
+                    errors: []
                 }
             });
         });
@@ -110,7 +113,8 @@ describe("State", () => {
                                 parsed: null
                             }
                         }
-                    ]
+                    ],
+                    errors: []
                 }
             });
         });
