@@ -15,6 +15,7 @@ import UnknownTableForTriggerErrorModel from "./migration/errors/UnknownTableFor
 import UnknownFunctionForTriggerErrorModel from "./migration/errors/UnknownFunctionForTriggerErrorModel";
 import MaxObjectNameSizeErrorModel from "./migration/errors/MaxObjectNameSizeErrorModel";
 import CannotDropColumnErrorModel from "./migration/errors/CannotDropColumnErrorModel";
+import CannotDropTableErrorModel from "./migration/errors/CannotDropTableErrorModel";
 
 export default class State<Child extends State = State<any>> extends Model<Child> {
     structure() {
@@ -215,6 +216,21 @@ export default class State<Child extends State = State<any>> extends Model<Child
                 table: fsTableModel
             });
             commands.push(createTableCommand);
+        });
+
+        db.tables.each((dbTableModel) => {
+            const dbTableIdentify = dbTableModel.getIdentify();
+            const fsTableModel = fs.tables.getByIdentify(dbTableIdentify);
+
+            if ( fsTableModel ) {
+                return;
+            }
+
+            const errorModel = new CannotDropTableErrorModel({
+                filePath: "(database)",
+                tableIdentify: dbTableIdentify
+            });
+            errors.push(errorModel);
         });
 
         // drop trigger

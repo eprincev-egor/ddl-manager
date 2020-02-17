@@ -307,6 +307,36 @@ describe("State", () => {
             });
         });
         
+        it("error on drop table", () => {
+            testGenerateMigration({
+                fs: {
+                },
+                db: {
+                    tables: [{
+                        identify: "public.company",
+                        name: "company",
+                        columns: [
+                            {
+                                identify: "id",
+                                key: "id"
+                            }
+                        ]
+                    }]
+                },
+                migration: {
+                    commands: [],
+                    errors: [
+                        {
+                            filePath: "(database)",
+                            code: "CannotDropTableError",
+                            message: "cannot drop table public.company, please use deprecated keyword before table definition",
+                            tableIdentify: "public.company"
+                        }
+                    ]
+                }
+            });
+        });
+
     });
     
 });
