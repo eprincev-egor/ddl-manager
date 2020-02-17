@@ -232,8 +232,81 @@ describe("State", () => {
             );
         });
 
-        
 
+        it("create table for empty db, without deprecated columns", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [{
+                        identify: "public.company",
+                        name: "company",
+                        columns: [{
+                            identify: "id",
+                            key: "id"
+                        }],
+                        deprecatedColumns: ["name"]
+                    }]
+                },
+                db: {
+                    tables: []
+                },
+                migration: {
+                    commands: [
+                        {
+                            type: "create",
+                            table: {
+                                filePath: null,
+                                identify: "public.company",
+                                name: "company",
+                                parsed: null,
+                                deprecatedColumns: ["name"],
+                                columns: [{
+                                    filePath: null,
+                                    identify: "id",
+                                    key: "id",
+                                    parsed: null
+                                }]
+                            }
+                        }
+                    ],
+                    errors: []
+                }
+            });
+        });
+             
+
+        it("don't drop deprecated column", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [{
+                        identify: "public.company",
+                        name: "company",
+                        columns: [{
+                            identify: "id",
+                            key: "id"
+                        }],
+                        deprecatedColumns: ["name"]
+                    }]
+                },
+                db: {
+                    tables: [{
+                        identify: "public.company",
+                        name: "company",
+                        columns: [{
+                            identify: "id",
+                            key: "id"
+                        }, {
+                            identify: "name",
+                            key: "name"
+                        }]
+                    }]
+                },
+                migration: {
+                    commands: [],
+                    errors: []
+                }
+            });
+        });
+        
     });
     
 });

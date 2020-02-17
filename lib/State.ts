@@ -194,6 +194,11 @@ export default class State<Child extends State = State<any>> extends Model<Child
                         return;
                     }
 
+                    const isDeprecatedColumn = fsTableModel.row.deprecatedColumns.includes(key);
+                    if ( isDeprecatedColumn ) {
+                        return;
+                    }
+
                     const errorModel = new CannotDropColumnErrorModel({
                         filePath: fsTableModel.get("filePath"),
                         tableIdentify: fsTableIdentify,
