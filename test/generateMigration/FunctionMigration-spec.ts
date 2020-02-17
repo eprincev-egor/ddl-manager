@@ -123,6 +123,32 @@ describe("State", () => {
             });
         });
 
+        it("maximum function name size is 64 symbols", () => {
+            testGenerateMigration({
+                fs: {
+                    functions: [{
+                        filePath: "my_func.sql",
+                        identify: "public.abcd012345678901234567890123456789012345678901234567890123456789_tail()",
+                        name: "abcd012345678901234567890123456789012345678901234567890123456789_tail"
+                    }]
+                },
+                db: {
+                },
+                migration: {
+                    commands: [],
+                    errors: [
+                        {
+                            filePath: "my_func.sql",
+                            code: "MaxObjectNameSizeError",
+                            message: "function name too long: abcd012345678901234567890123456789012345678901234567890123456789_tail, max size is 64 symbols",
+                            name: "abcd012345678901234567890123456789012345678901234567890123456789_tail",
+                            objectType: "function"
+                        }
+                    ]
+                }
+            });
+        });
+
     });
     
 });

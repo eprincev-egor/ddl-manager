@@ -61,6 +61,32 @@ describe("State", () => {
             });
         });
 
+        it("maximum view name size is 64 symbols", () => {
+            testGenerateMigration({
+                fs: {
+                    views: [{
+                        filePath: "my_view.sql",
+                        identify: "public.abcd012345678901234567890123456789012345678901234567890123456789_tail",
+                        name: "abcd012345678901234567890123456789012345678901234567890123456789_tail"
+                    }]
+                },
+                db: {
+                },
+                migration: {
+                    commands: [],
+                    errors: [
+                        {
+                            filePath: "my_view.sql",
+                            code: "MaxObjectNameSizeError",
+                            message: "view name too long: abcd012345678901234567890123456789012345678901234567890123456789_tail, max size is 64 symbols",
+                            name: "abcd012345678901234567890123456789012345678901234567890123456789_tail",
+                            objectType: "view"
+                        }
+                    ]
+                }
+            });
+        });
+
     });
     
 });

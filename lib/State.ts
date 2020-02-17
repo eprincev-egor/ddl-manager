@@ -13,6 +13,7 @@ import TriggerCommandModel from "./migration/commands/TriggerCommandModel";
 import MigrationErrorsCollection from "./migration/errors/MigrationErrorsCollection";
 import UnknownTableForTriggerErrorModel from "./migration/errors/UnknownTableForTriggerErrorModel";
 import UnknownFunctionForTriggerErrorModel from "./migration/errors/UnknownFunctionForTriggerErrorModel";
+import MaxObjectNameSizeErrorModel from "./migration/errors/MaxObjectNameSizeErrorModel";
 
 export default class State<Child extends State = State<any>> extends Model<Child> {
     structure() {
@@ -78,6 +79,18 @@ export default class State<Child extends State = State<any>> extends Model<Child
                 return;
             }
 
+            const functionName = fsFunctionModel.get("name");
+            if ( functionName.length > 64 ) {
+                const errorModel = new MaxObjectNameSizeErrorModel({
+                    filePath: fsFunctionModel.get("filePath"),
+                    objectType: "function",
+                    name: functionName
+                });
+
+                errors.push(errorModel);
+                return;
+            }
+
             const command = new FunctionCommandModel({
                 type: "create",
                 function: fsFunctionModel
@@ -110,6 +123,18 @@ export default class State<Child extends State = State<any>> extends Model<Child
                 return;
             }
 
+            const viewName = fsViewModel.get("name");
+            if ( viewName.length > 64 ) {
+                const errorModel = new MaxObjectNameSizeErrorModel({
+                    filePath: fsViewModel.get("filePath"),
+                    objectType: "view",
+                    name: viewName
+                });
+
+                errors.push(errorModel);
+                return;
+            }
+
             const command = new ViewCommandModel({
                 type: "create",
                 view: fsViewModel
@@ -121,6 +146,18 @@ export default class State<Child extends State = State<any>> extends Model<Child
         fs.tables.each((fsTableModel) => {
             const fsTableIdentify = fsTableModel.getIdentify();
             const dbTableModel = db.tables.getByIdentify(fsTableIdentify);
+
+            const tableName = fsTableModel.get("name");
+            if ( tableName.length > 64 ) {
+                const errorModel = new MaxObjectNameSizeErrorModel({
+                    filePath: fsTableModel.get("filePath"),
+                    objectType: "table",
+                    name: tableName
+                });
+
+                errors.push(errorModel);
+                return;
+            }
 
             if ( dbTableModel ) {
                 // create columns
@@ -177,6 +214,18 @@ export default class State<Child extends State = State<any>> extends Model<Child
             const dbTriggerModel = db.views.getByIdentify(fsTriggerIdentify);
 
             if ( dbTriggerModel ) {
+                return;
+            }
+
+            const triggerName = fsTriggerModel.get("name");
+            if ( triggerName.length > 64 ) {
+                const errorModel = new MaxObjectNameSizeErrorModel({
+                    filePath: fsTriggerModel.get("filePath"),
+                    objectType: "trigger",
+                    name: triggerName
+                });
+
+                errors.push(errorModel);
                 return;
             }
 

@@ -180,6 +180,35 @@ describe("State", () => {
                 }
             });
         });
+        
+        it("maximum trigger name size is 64 symbols", () => {
+            testGenerateMigration({
+                fs: {
+                    triggers: [{
+                        filePath: "my_trigger.sql",
+                        identify: "public.abcd012345678901234567890123456789012345678901234567890123456789_tail on public.company",
+                        name: "abcd012345678901234567890123456789012345678901234567890123456789_tail",
+                        functionIdentify: "public.test()",
+                        tableIdentify: "public.company"
+                    }]
+                },
+                db: {
+                },
+                migration: {
+                    commands: [],
+                    errors: [
+                        {
+                            filePath: "my_trigger.sql",
+                            code: "MaxObjectNameSizeError",
+                            message: "trigger name too long: abcd012345678901234567890123456789012345678901234567890123456789_tail, max size is 64 symbols",
+                            name: "abcd012345678901234567890123456789012345678901234567890123456789_tail",
+                            objectType: "trigger"
+                        }
+                    ]
+                }
+            });
+        });
+
     });
     
 });
