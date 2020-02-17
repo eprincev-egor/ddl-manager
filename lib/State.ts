@@ -12,6 +12,7 @@ import ColumnCommandModel from "./migration/commands/ColumnCommandModel";
 import TriggerCommandModel from "./migration/commands/TriggerCommandModel";
 import MigrationErrorsCollection from "./migration/errors/MigrationErrorsCollection";
 import UnknownTableForTriggerErrorModel from "./migration/errors/UnknownTableForTriggerErrorModel";
+import UnknownFunctionForTriggerErrorModel from "./migration/errors/UnknownFunctionForTriggerErrorModel";
 
 export default class State<Child extends State = State<any>> extends Model<Child> {
     structure() {
@@ -176,6 +177,18 @@ export default class State<Child extends State = State<any>> extends Model<Child
             const dbTriggerModel = db.views.getByIdentify(fsTriggerIdentify);
 
             if ( dbTriggerModel ) {
+                return;
+            }
+
+            const functionIdentify = fsTriggerModel.get("functionIdentify");
+            const fsFunctionModel = fs.functions.getByIdentify(functionIdentify);
+            if ( !fsFunctionModel ) {
+                const errorModel = new UnknownFunctionForTriggerErrorModel({
+                    functionIdentify,
+                    triggerName: fsTriggerModel.get("name")
+                });
+
+                errors.push(errorModel);
                 return;
             }
 

@@ -9,6 +9,9 @@ export default class TriggerModel extends BaseObjectModel<TriggerModel> {
             tableIdentify: Types.String({
                 required: true
             }),
+            functionIdentify: Types.String({
+                required: true
+            }),
             name: Types.String({
                 required: true
             })

@@ -22,6 +22,7 @@ describe("State", () => {
                     triggers: [{
                         identify: "create_role_trigger on public.company",
                         tableIdentify: "public.company",
+                        functionIdentify: "public.create_role()",
                         name: "create_role_trigger"
                     }]
                 },
@@ -47,6 +48,7 @@ describe("State", () => {
                                 filePath: null,
                                 identify: "create_role_trigger on public.company",
                                 tableIdentify: "public.company",
+                                functionIdentify: "public.create_role()",
                                 name: "create_role_trigger",
                                 parsed: null
                             }
@@ -89,6 +91,7 @@ describe("State", () => {
                     triggers: [{
                         identify: "create_role_trigger on public.company",
                         tableIdentify: "public.company",
+                        functionIdentify: "public.create_role()",
                         name: "create_role_trigger"
                     }]
                 },
@@ -100,6 +103,7 @@ describe("State", () => {
                                 filePath: null,
                                 identify: "create_role_trigger on public.company",
                                 tableIdentify: "public.company",
+                                functionIdentify: "public.create_role()",
                                 name: "create_role_trigger",
                                 parsed: null
                             }
@@ -114,9 +118,46 @@ describe("State", () => {
         it("error on unknown table", () => {
             testGenerateMigration({
                 fs: {
+                    functions: [{
+                        identify: "public.create_role()",
+                        name: "create_role"
+                    }],
                     triggers: [{
                         identify: "create_role_trigger on public.company",
                         tableIdentify: "public.company",
+                        functionIdentify: "public.create_role()",
+                        name: "create_role_trigger"
+                    }]
+                },
+                db: {
+                    functions: [{
+                        identify: "public.create_role()",
+                        name: "create_role"
+                    }]
+                },
+                migration: {
+                    commands: [],
+                    errors: [
+                        {
+                            filePath: null,
+                            code: "UnknownTableForTriggerError",
+                            message: "not found table public.company for trigger create_role_trigger",
+                            tableIdentify: "public.company",
+                            triggerName: "create_role_trigger"
+                        }
+                    ]
+                }
+            });
+        });
+
+        
+        it("error on unknown function", () => {
+            testGenerateMigration({
+                fs: {
+                    triggers: [{
+                        identify: "create_role_trigger on public.company",
+                        tableIdentify: "public.company",
+                        functionIdentify: "public.create_role()",
                         name: "create_role_trigger"
                     }]
                 },
@@ -128,9 +169,9 @@ describe("State", () => {
                     errors: [
                         {
                             filePath: null,
-                            code: "UnknownTableForTriggerError",
-                            message: "not found table public.company for trigger create_role_trigger",
-                            tableIdentify: "public.company",
+                            code: "UnknownFunctionForTriggerError",
+                            message: "not found function public.create_role() for trigger create_role_trigger",
+                            functionIdentify: "public.create_role()",
                             triggerName: "create_role_trigger"
                         }
                     ]
