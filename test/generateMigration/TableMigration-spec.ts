@@ -1,4 +1,6 @@
 import testGenerateMigration from "./testGenerateMigration";
+import State from "../../lib/State";
+import assert from "assert";
 
 describe("State", () => {
 
@@ -28,6 +30,7 @@ describe("State", () => {
                                 identify: "public.company",
                                 name: "company",
                                 parsed: null,
+                                deprecatedColumns: [],
                                 columns: [{
                                     filePath: null,
                                     identify: "id",
@@ -41,7 +44,7 @@ describe("State", () => {
                 }
             });
         });
-
+        
         it("create column", () => {
             testGenerateMigration({
                 fs: {
@@ -200,6 +203,37 @@ describe("State", () => {
                 }
             });
         });
+
+        
+        it("columns should be only actual or only deprecated", () => {
+            assert.throws(
+                () => {
+                    const state = new State({
+                        tables: [{
+                            filePath: "my_table.sql",
+                            identify: "public.company",
+                            name: "company",
+                            columns: [
+                                {
+                                    identify: "id",
+                                    key: "id"
+                                },
+                                {
+                                    identify: "name",
+                                    key: "name"
+                                }
+                            ],
+                            deprecatedColumns: ["id", "name"]
+                        }]
+                    });
+                },
+                (err) =>
+                    err.message === "columns should be only actual or only deprecated: id,name"
+            );
+        });
+
+        
+
     });
     
 });
