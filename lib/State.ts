@@ -14,6 +14,7 @@ import MigrationErrorsCollection from "./migration/errors/MigrationErrorsCollect
 import UnknownTableForTriggerErrorModel from "./migration/errors/UnknownTableForTriggerErrorModel";
 import UnknownFunctionForTriggerErrorModel from "./migration/errors/UnknownFunctionForTriggerErrorModel";
 import MaxObjectNameSizeErrorModel from "./migration/errors/MaxObjectNameSizeErrorModel";
+import CannotDropColumnErrorModel from "./migration/errors/CannotDropColumnErrorModel";
 
 export default class State<Child extends State = State<any>> extends Model<Child> {
     structure() {
@@ -180,6 +181,25 @@ export default class State<Child extends State = State<any>> extends Model<Child
                         column: fsColumnModel
                     });
                     commands.push(createColumnCommand);
+                });
+
+                // dropped columns
+                dbColumns.forEach((dbColumnModel) => {
+                    const key = dbColumnModel.get("key");
+                    const existsFsColumn = fsColumns.find((fsColumn) =>
+                        fsColumn.get("key") === key
+                    );
+
+                    if ( existsFsColumn ) {
+                        return;
+                    }
+
+                    const errorModel = new CannotDropColumnErrorModel({
+                        filePath: fsTableModel.get("filePath"),
+                        tableIdentify: fsTableIdentify,
+                        columnKey: key
+                    });
+                    errors.push(errorModel);
                 });
 
                 return;

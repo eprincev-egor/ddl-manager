@@ -153,6 +153,53 @@ describe("State", () => {
             });
         });
 
+        
+        it("error on drop column", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [{
+                        filePath: "my_table.sql",
+                        identify: "public.company",
+                        name: "company",
+                        columns: [
+                            {
+                                identify: "id",
+                                key: "id"
+                            }
+                        ]
+                    }]
+                },
+                db: {
+                    tables: [{
+                        filePath: "my_table.sql",
+                        identify: "public.company",
+                        name: "company",
+                        columns: [
+                            {
+                                identify: "id",
+                                key: "id"
+                            },
+                            {
+                                identify: "name",
+                                key: "name"
+                            }
+                        ]
+                    }]
+                },
+                migration: {
+                    commands: [],
+                    errors: [
+                        {
+                            filePath: "my_table.sql",
+                            code: "CannotDropColumnError",
+                            message: "cannot drop column public.company.name, please use deprecated section",
+                            tableIdentify: "public.company",
+                            columnKey: "name"
+                        }
+                    ]
+                }
+            });
+        });
     });
     
 });
