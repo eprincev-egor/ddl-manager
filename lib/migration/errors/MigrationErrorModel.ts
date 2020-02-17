@@ -7,7 +7,7 @@ extends Model<ChildError> {
             filePath: Types.String,
             code: Types.String({
                 required: true,
-                default: () => this.constructor.name
+                default: () => this.constructor.name.replace(/Model$/, "")
             }),
             message: Types.String({
                 required: true

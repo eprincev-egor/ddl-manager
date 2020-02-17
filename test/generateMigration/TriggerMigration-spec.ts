@@ -128,7 +128,7 @@ describe("State", () => {
                     errors: [
                         {
                             filePath: null,
-                            code: "UnknownTableForTriggerErrorModel",
+                            code: "UnknownTableForTriggerError",
                             message: "not found table public.company for trigger create_role_trigger",
                             tableIdentify: "public.company",
                             triggerName: "create_role_trigger"
