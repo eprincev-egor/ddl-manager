@@ -4,7 +4,9 @@ export default class MigrationErrorModel<ChildError extends MigrationErrorModel<
 extends Model<ChildError> {
     structure() {
         return {
-            filePath: Types.String,
+            filePath: Types.String({
+                required: true
+            }),
             code: Types.String({
                 required: true,
                 default: () => this.constructor.name.replace(/Model$/, "")

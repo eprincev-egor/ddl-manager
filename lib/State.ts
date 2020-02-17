@@ -184,6 +184,7 @@ export default class State<Child extends State = State<any>> extends Model<Child
             const fsFunctionModel = fs.functions.getByIdentify(functionIdentify);
             if ( !fsFunctionModel ) {
                 const errorModel = new UnknownFunctionForTriggerErrorModel({
+                    filePath: fsTriggerModel.get("filePath"),
                     functionIdentify,
                     triggerName: fsTriggerModel.get("name")
                 });
@@ -197,6 +198,7 @@ export default class State<Child extends State = State<any>> extends Model<Child
 
             if ( !fsTableModel ) {
                 const errorModel = new UnknownTableForTriggerErrorModel({
+                    filePath: fsTriggerModel.get("filePath"),
                     tableIdentify,
                     triggerName: fsTriggerModel.get("name")
                 });

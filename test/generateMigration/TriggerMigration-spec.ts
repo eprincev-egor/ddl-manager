@@ -123,6 +123,7 @@ describe("State", () => {
                         name: "create_role"
                     }],
                     triggers: [{
+                        filePath: "my_trigger.sql",
                         identify: "create_role_trigger on public.company",
                         tableIdentify: "public.company",
                         functionIdentify: "public.create_role()",
@@ -139,7 +140,7 @@ describe("State", () => {
                     commands: [],
                     errors: [
                         {
-                            filePath: null,
+                            filePath: "my_trigger.sql",
                             code: "UnknownTableForTriggerError",
                             message: "not found table public.company for trigger create_role_trigger",
                             tableIdentify: "public.company",
@@ -155,6 +156,7 @@ describe("State", () => {
             testGenerateMigration({
                 fs: {
                     triggers: [{
+                        filePath: "my_trigger.sql",
                         identify: "create_role_trigger on public.company",
                         tableIdentify: "public.company",
                         functionIdentify: "public.create_role()",
@@ -168,7 +170,7 @@ describe("State", () => {
                     commands: [],
                     errors: [
                         {
-                            filePath: null,
+                            filePath: "my_trigger.sql",
                             code: "UnknownFunctionForTriggerError",
                             message: "not found function public.create_role() for trigger create_role_trigger",
                             functionIdentify: "public.create_role()",
