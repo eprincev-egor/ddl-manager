@@ -28,9 +28,8 @@ describe("FSState", () => {
         const testParser = new TestParser({
             [testFuncSQL]: [
                 new FunctionModel({
-                    schema: "public",
-                    name: "test",
-                    args: ""
+                    identify: "public.test()",
+                    name: "test"
                 })
             ]
         });
@@ -57,9 +56,9 @@ describe("FSState", () => {
             },
             functions: [
                 {
-                    schema: "public",
+                    identify: "public.test()",
                     name: "test",
-                    args: ""
+                    parsed: null
                 }
             ],
             triggers: [],

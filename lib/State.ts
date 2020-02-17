@@ -135,8 +135,7 @@ export default class State<Child extends State = State<any>> extends Model<Child
 
                     const createColumnCommand = new ColumnCommandModel({
                         type: "create",
-                        schema: dbTableModel.get("schema"),
-                        table: dbTableModel.get("name"),
+                        tableIdentify: dbTableModel.get("identify"),
                         column: fsColumnModel
                     });
                     commands.push(createColumnCommand);

@@ -4,12 +4,8 @@ import BaseObjectModel from "./BaseDBObjectModel";
 export default class ViewModel extends BaseObjectModel<ViewModel> {
     structure() {
         return {
-            schema: Types.String,
+            ...super.structure(),
             name: Types.String
         };
-    }
-
-    getIdentify() {
-        return this.row.schema + "." + this.row.name;
     }
 }

@@ -8,7 +8,7 @@ describe("State", () => {
             testGenerateMigration({
                 fs: {
                     functions: [{
-                        schema: "public",
+                        identify: "public.test()",
                         name: "test"
                     }]
                 },
@@ -20,9 +20,9 @@ describe("State", () => {
                         {
                             type: "create",
                             function: {
-                                schema: "public",
+                                identify: "public.test()",
                                 name: "test",
-                                args: ""
+                                parsed: null
                             }
                         }
                     ]
@@ -37,7 +37,7 @@ describe("State", () => {
                 },
                 db: {
                     functions: [{
-                        schema: "public",
+                        identify: "public.test()",
                         name: "test"
                     }]
                 },
@@ -46,9 +46,9 @@ describe("State", () => {
                         {
                             type: "drop",
                             function: {
-                                schema: "public",
+                                identify: "public.test()",
                                 name: "test",
-                                args: ""
+                                parsed: null
                             }
                         }
                     ]
@@ -60,13 +60,13 @@ describe("State", () => {
             testGenerateMigration({
                 fs: {
                     functions: [{
-                        schema: "public",
+                        identify: "public.test()",
                         name: "test"
                     }]
                 },
                 db: {
                     functions: [{
-                        schema: "public",
+                        identify: "public.test()",
                         name: "test"
                     }]
                 },
@@ -80,13 +80,13 @@ describe("State", () => {
             testGenerateMigration({
                 fs: {
                     functions: [{
-                        schema: "public",
+                        identify: "public.test1()",
                         name: "test1"
                     }]
                 },
                 db: {
                     functions: [{
-                        schema: "public",
+                        identify: "public.test2()",
                         name: "test2"
                     }]
                 },
@@ -96,18 +96,18 @@ describe("State", () => {
                         {
                             type: "drop",
                             function: {
-                                schema: "public",
+                                identify: "public.test2()",
                                 name: "test2",
-                                args: ""
+                                parsed: null
                             }
                         },
                         // second the 'create'
                         {
                             type: "create",
                             function: {
-                                schema: "public",
+                                identify: "public.test1()",
                                 name: "test1",
-                                args: ""
+                                parsed: null
                             }
                         }
                     ]
@@ -119,7 +119,7 @@ describe("State", () => {
             testGenerateMigration({
                 fs: {
                     views: [{
-                        schema: "public",
+                        identify: "public.operations_view",
                         name: "operations_view"
                     }]
                 },
@@ -131,8 +131,9 @@ describe("State", () => {
                         {
                             type: "create",
                             view: {
-                                schema: "public",
-                                name: "operations_view"
+                                identify: "public.operations_view",
+                                name: "operations_view",
+                                parsed: null
                             }
                         }
                     ]
@@ -148,7 +149,7 @@ describe("State", () => {
                 },
                 db: {
                     views: [{
-                        schema: "public",
+                        identify: "public.operations_view",
                         name: "operations_view"
                     }]
                 },
@@ -157,8 +158,9 @@ describe("State", () => {
                         {
                             type: "drop",
                             view: {
-                                schema: "public",
-                                name: "operations_view"
+                                identify: "public.operations_view",
+                                name: "operations_view",
+                                parsed: null
                             }
                         }
                     ]
@@ -170,11 +172,11 @@ describe("State", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        schema: "public",
+                        identify: "public.company",
                         name: "company",
                         columns: [{
-                            key: "id",
-                            type: "integer"
+                            identify: "id",
+                            key: "id"
                         }]
                     }]
                 },
@@ -186,11 +188,13 @@ describe("State", () => {
                         {
                             type: "create",
                             table: {
-                                schema: "public",
+                                identify: "public.company",
                                 name: "company",
+                                parsed: null,
                                 columns: [{
+                                    identify: "id",
                                     key: "id",
-                                    type: "integer"
+                                    parsed: null
                                 }]
                             }
                         }
@@ -203,24 +207,24 @@ describe("State", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        schema: "public",
+                        identify: "public.company",
                         name: "company",
                         columns: [{
-                            key: "id",
-                            type: "integer"
+                            identify: "id",
+                            key: "id"
                         }, {
-                            key: "name",
-                            type: "text"
+                            identify: "name",
+                            key: "name"
                         }]
                     }]
                 },
                 db: {
                     tables: [{
-                        schema: "public",
+                        identify: "public.company",
                         name: "company",
                         columns: [{
-                            key: "id",
-                            type: "integer"
+                            identify: "id",
+                            key: "id"
                         }]
                     }]
                 },
@@ -228,11 +232,11 @@ describe("State", () => {
                     commands: [
                         {
                             type: "create",
-                            schema: "public",
-                            table: "company",
+                            tableIdentify: "public.company",
                             column: {
+                                identify: "name",
                                 key: "name",
-                                type: "text"
+                                parsed: null
                             }
                         }
                     ]
@@ -245,27 +249,27 @@ describe("State", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        schema: "public",
+                        identify: "public.company",
                         name: "company",
                         columns: [{
-                            key: "id",
-                            type: "integer"
+                            identify: "id",
+                            key: "id"
                         }, {
-                            key: "name",
-                            type: "text"
+                            identify: "name",
+                            key: "name"
                         }]
                     }]
                 },
                 db: {
                     tables: [{
-                        schema: "public",
+                        identify: "public.company",
                         name: "company",
                         columns: [{
-                            key: "id",
-                            type: "integer"
+                            identify: "id",
+                            key: "id"
                         }, {
-                            key: "name",
-                            type: "text"
+                            identify: "name",
+                            key: "name"
                         }]
                     }]
                 },
@@ -280,37 +284,35 @@ describe("State", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        schema: "public",
+                        identify: "public.company",
                         name: "company",
                         columns: [{
-                            key: "id",
-                            type: "integer"
+                            identify: "id",
+                            key: "id"
                         }]
                     }],
                     functions: [{
-                        schema: "public",
-                        name: "create_role",
-                        args: ""
+                        identify: "public.create_role()",
+                        name: "create_role"
                     }],
                     triggers: [{
-                        schema: "public",
-                        table: "company",
+                        identify: "create_role_trigger on public.company",
+                        tableIdentify: "public.company",
                         name: "create_role_trigger"
                     }]
                 },
                 db: {
                     tables: [{
-                        schema: "public",
+                        identify: "public.company",
                         name: "company",
                         columns: [{
-                            key: "id",
-                            type: "integer"
+                            identify: "id",
+                            key: "id"
                         }]
                     }],
                     functions: [{
-                        schema: "public",
-                        name: "create_role",
-                        args: ""
+                        identify: "public.create_role()",
+                        name: "create_role"
                     }]
                 },
                 migration: {
@@ -318,9 +320,10 @@ describe("State", () => {
                         {
                             type: "create",
                             trigger: {
-                                schema: "public",
-                                table: "company",
-                                name: "create_role_trigger"
+                                identify: "create_role_trigger on public.company",
+                                tableIdentify: "public.company",
+                                name: "create_role_trigger",
+                                parsed: null
                             }
                         }
                     ]
@@ -332,36 +335,34 @@ describe("State", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        schema: "public",
+                        identify: "public.company",
                         name: "company",
                         columns: [{
-                            key: "id",
-                            type: "integer"
+                            identify: "id",
+                            key: "id"
                         }]
                     }],
                     functions: [{
-                        schema: "public",
-                        name: "create_role",
-                        args: ""
+                        identify: "public.create_role()",
+                        name: "create_role"
                     }]
                 },
                 db: {
                     tables: [{
-                        schema: "public",
+                        identify: "public.company",
                         name: "company",
                         columns: [{
-                            key: "id",
-                            type: "integer"
+                            identify: "id",
+                            key: "id"
                         }]
                     }],
                     functions: [{
-                        schema: "public",
-                        name: "create_role",
-                        args: ""
+                        identify: "public.create_role()",
+                        name: "create_role"
                     }],
                     triggers: [{
-                        schema: "public",
-                        table: "company",
+                        identify: "create_role_trigger on public.company",
+                        tableIdentify: "public.company",
                         name: "create_role_trigger"
                     }]
                 },
@@ -370,9 +371,10 @@ describe("State", () => {
                         {
                             type: "drop",
                             trigger: {
-                                schema: "public",
-                                table: "company",
-                                name: "create_role_trigger"
+                                identify: "create_role_trigger on public.company",
+                                tableIdentify: "public.company",
+                                name: "create_role_trigger",
+                                parsed: null
                             }
                         }
                     ]

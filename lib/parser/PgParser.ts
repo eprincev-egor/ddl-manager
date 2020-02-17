@@ -14,10 +14,13 @@ export default class PgParser extends Parser {
         for (; coach.i < coach.str.length; coach.i++) {
             if ( coach.is(CreateFunction) ) {
                 const parsedFunction = coach.parse(CreateFunction);
+                const {schema, name, args} = parsedFunction.row;
+                const functionIdentify = `${schema}.${name}(${args.join(",")})`;
+
                 const funcModel = new FunctionModel({
-                    schema: parsedFunction.get("schema"),
+                    identify: functionIdentify,
                     name: parsedFunction.get("name"),
-                    args: parsedFunction.get("args").join(",")
+                    parsed: parsedFunction
                 });
                 
                 objects.push(funcModel);
