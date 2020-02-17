@@ -28,6 +28,7 @@ describe("FSState", () => {
         const testParser = new TestParser({
             [testFuncSQL]: [
                 new FunctionModel({
+                    filePath: "./test.sql",
                     identify: "public.test()",
                     name: "test"
                 })
@@ -56,6 +57,7 @@ describe("FSState", () => {
             },
             functions: [
                 {
+                    filePath: "./test.sql",
                     identify: "public.test()",
                     name: "test",
                     parsed: null

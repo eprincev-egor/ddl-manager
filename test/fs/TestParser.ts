@@ -13,7 +13,7 @@ export default class TestParser extends Parser {
         this.state = state;
     }
 
-    parseFile(fileContent: string) {
+    parseFile(filePath: string, fileContent: string) {
         return this.state[ fileContent ];
     }
 }

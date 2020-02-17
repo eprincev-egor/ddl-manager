@@ -15,7 +15,7 @@ describe("PgParser", () => {
         end
         `;
         
-        const result = parser.parseFile(`
+        const result = parser.parseFile("test.sql", `
             create function public.test()
             returns void as $body$${body}$body$
             language plpgsql;
@@ -32,6 +32,7 @@ describe("PgParser", () => {
         );
         
         assert.deepStrictEqual(result[0].toJSON(), {
+            filePath: "test.sql",
             identify: "public.test()",
             name: "test",
             parsed: {

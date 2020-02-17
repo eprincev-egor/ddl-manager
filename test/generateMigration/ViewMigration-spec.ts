@@ -20,6 +20,7 @@ describe("State", () => {
                         {
                             type: "create",
                             view: {
+                                filePath: null,
                                 identify: "public.operations_view",
                                 name: "operations_view",
                                 parsed: null
@@ -48,6 +49,7 @@ describe("State", () => {
                         {
                             type: "drop",
                             view: {
+                                filePath: null,
                                 identify: "public.operations_view",
                                 name: "operations_view",
                                 parsed: null

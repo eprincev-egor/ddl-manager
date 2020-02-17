@@ -24,10 +24,12 @@ describe("State", () => {
                         {
                             type: "create",
                             table: {
+                                filePath: null,
                                 identify: "public.company",
                                 name: "company",
                                 parsed: null,
                                 columns: [{
+                                    filePath: null,
                                     identify: "id",
                                     key: "id",
                                     parsed: null
@@ -71,6 +73,7 @@ describe("State", () => {
                             type: "create",
                             tableIdentify: "public.company",
                             column: {
+                                filePath: null,
                                 identify: "name",
                                 key: "name",
                                 parsed: null

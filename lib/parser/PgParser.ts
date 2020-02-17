@@ -7,7 +7,7 @@ import {
 } from "grapeql-lang";
 
 export default class PgParser extends Parser {
-    parseFile(fileContent: string): BaseDBObjectModel<any>[] {
+    parseFile(filePath: string, fileContent: string): BaseDBObjectModel<any>[] {
         const coach = new GrapeQLCoach(fileContent);
         const objects: BaseDBObjectModel<any>[] = [];
 
@@ -18,6 +18,7 @@ export default class PgParser extends Parser {
                 const functionIdentify = `${schema}.${name}(${args.join(",")})`;
 
                 const funcModel = new FunctionModel({
+                    filePath,
                     identify: functionIdentify,
                     name: parsedFunction.get("name"),
                     parsed: parsedFunction

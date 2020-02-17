@@ -1,7 +1,7 @@
 import BaseDBObjectModel from "../objects/BaseDBObjectModel";
 
 export default class Parser {
-    parseFile(fileContent: string): BaseDBObjectModel<any>[] {
+    parseFile(filePath: string, fileContent: string): BaseDBObjectModel<any>[] {
         return [];
     };
 }

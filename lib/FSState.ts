@@ -39,8 +39,9 @@ export default class FSState extends State<FSState> {
         const functions: FunctionModel[] = [];
 
         for (const fileModel of files) {
+            const filePath = fileModel.get("path");
             const sql = fileModel.get("content");
-            const dbObjects = parser.parseFile(sql);
+            const dbObjects = parser.parseFile(filePath, sql);
 
             for (const dbo of dbObjects) {
                 if ( dbo instanceof FunctionModel ) {

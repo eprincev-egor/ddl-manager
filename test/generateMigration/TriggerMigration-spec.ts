@@ -44,6 +44,7 @@ describe("State", () => {
                         {
                             type: "create",
                             trigger: {
+                                filePath: null,
                                 identify: "create_role_trigger on public.company",
                                 tableIdentify: "public.company",
                                 name: "create_role_trigger",
@@ -96,6 +97,7 @@ describe("State", () => {
                         {
                             type: "drop",
                             trigger: {
+                                filePath: null,
                                 identify: "create_role_trigger on public.company",
                                 tableIdentify: "public.company",
                                 name: "create_role_trigger",
@@ -125,6 +127,7 @@ describe("State", () => {
                     commands: [],
                     errors: [
                         {
+                            filePath: null,
                             code: "UnknownTableForTriggerErrorModel",
                             message: "not found table public.company for trigger create_role_trigger",
                             tableIdentify: "public.company",

@@ -20,6 +20,7 @@ describe("State", () => {
                         {
                             type: "create",
                             function: {
+                                filePath: null,
                                 identify: "public.test()",
                                 name: "test",
                                 parsed: null
@@ -47,6 +48,7 @@ describe("State", () => {
                         {
                             type: "drop",
                             function: {
+                                filePath: null,
                                 identify: "public.test()",
                                 name: "test",
                                 parsed: null
@@ -99,6 +101,7 @@ describe("State", () => {
                         {
                             type: "drop",
                             function: {
+                                filePath: null,
                                 identify: "public.test2()",
                                 name: "test2",
                                 parsed: null
@@ -108,6 +111,7 @@ describe("State", () => {
                         {
                             type: "create",
                             function: {
+                                filePath: null,
                                 identify: "public.test1()",
                                 name: "test1",
                                 parsed: null

@@ -8,7 +8,8 @@ export default abstract class BaseDBObjectModel<
             identify: Types.String({
                 required: true
             }),
-            parsed: Types.Any
+            parsed: Types.Any,
+            filePath: Types.String
         };
     }
 
