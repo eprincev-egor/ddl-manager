@@ -32,6 +32,7 @@ describe("State", () => {
                                 name: "company",
                                 parsed: null,
                                 deprecatedColumns: [],
+                                deprecated: false,
                                 columns: [{
                                     filePath: null,
                                     identify: "id",
@@ -362,6 +363,7 @@ describe("State", () => {
                             type: "create",
                             table: {
                                 filePath: null,
+                                deprecated: false,
                                 identify: "public.company",
                                 name: "company",
                                 parsed: null,

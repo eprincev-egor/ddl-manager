@@ -7,6 +7,10 @@ export default class TableModel extends BaseObjectModel<TableModel> {
         return {
             ...super.structure(),
             
+            deprecated: Types.Boolean({
+                required: true,
+                default: false
+            }),
             name: Types.String,
             columns: Types.Array({
                 element: ColumnModel
