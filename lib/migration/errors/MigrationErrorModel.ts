@@ -1,6 +1,6 @@
 import { Model, Types } from "model-layer";
 
-export default class MigrationErrorModel<ChildError extends MigrationErrorModel<any>> 
+export default abstract class MigrationErrorModel<ChildError extends MigrationErrorModel<any>> 
 extends Model<ChildError> {
     structure() {
         return {
@@ -17,9 +17,7 @@ extends Model<ChildError> {
         };
     }
 
-    generateMessage(row: this["TInputData"]): string {
-        throw new Error("method generateMessage not defined");
-    }
+    abstract generateMessage(row: this["TInputData"]): string;
 
     prepare(row: this["TInputData"]) {
         row.message = this.generateMessage(row);
