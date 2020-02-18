@@ -5,9 +5,11 @@ import UnknownFunctionForTriggerErrorModel from "./UnknownFunctionForTriggerErro
 import MaxObjectNameSizeErrorModel from "./MaxObjectNameSizeErrorModel";
 import CannotDropColumnErrorModel from "./CannotDropColumnErrorModel";
 import CannotDropTableErrorModel from "./CannotDropTableErrorModel";
+import CannotChangeColumnTypeErrorModel from "./CannotChangeColumnTypeErrorModel";
 
 export default class MigrationErrorsCollection extends Collection<MigrationErrorsCollection> {
     Model(): (
+        (new (...args: any[]) => CannotChangeColumnTypeErrorModel) |
         (new (...args: any[]) => CannotDropTableErrorModel) |
         (new (...args: any[]) => CannotDropColumnErrorModel) |
         (new (...args: any[]) => MaxObjectNameSizeErrorModel) |

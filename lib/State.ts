@@ -16,6 +16,7 @@ import UnknownFunctionForTriggerErrorModel from "./migration/errors/UnknownFunct
 import MaxObjectNameSizeErrorModel from "./migration/errors/MaxObjectNameSizeErrorModel";
 import CannotDropColumnErrorModel from "./migration/errors/CannotDropColumnErrorModel";
 import CannotDropTableErrorModel from "./migration/errors/CannotDropTableErrorModel";
+import CannotChangeColumnTypeErrorModel from "./migration/errors/CannotChangeColumnTypeErrorModel";
 
 export interface IMigrationOptions {
     mode: "dev" | "prod";
@@ -180,6 +181,20 @@ export default class State<Child extends State = State<any>> extends Model<Child
                     );
 
                     if ( existsDbColumn ) {
+                        const newType = fsColumnModel.get("type");
+                        const oldType = existsDbColumn.get("type");
+
+                        if ( newType !== oldType ) {
+                            const errorModel = new CannotChangeColumnTypeErrorModel({
+                                filePath: fsTableModel.get("filePath"),
+                                tableIdentify: fsTableIdentify,
+                                columnKey: key,
+                                oldType,
+                                newType
+                            });
+                            errors.push(errorModel);
+                        }
+
                         return;
                     }
 
