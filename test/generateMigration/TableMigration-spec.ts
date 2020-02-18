@@ -420,8 +420,11 @@ describe("State", () => {
             });
         });
         
-        it("error on drop table", () => {
+        it("error on drop table, dev database", () => {
             testGenerateMigration({
+                options: {
+                    mode: "dev"
+                },
                 fs: {
                 },
                 db: {
@@ -450,6 +453,74 @@ describe("State", () => {
                 }
             });
         });
+
+        
+        it("no error on drop table, prod database", () => {
+            testGenerateMigration({
+                options: {
+                    mode: "prod"
+                },
+                fs: {
+                },
+                db: {
+                    tables: [{
+                        filePath: "my_table.sql",
+                        identify: "public.company",
+                        name: "company",
+                        columns: [
+                            {
+                                identify: "id",
+                                key: "id",
+                                type: "integer"
+                            },
+                            {
+                                identify: "name",
+                                key: "name",
+                                type: "text"
+                            }
+                        ]
+                    }]
+                },
+                migration: {
+                    commands: [],
+                    errors: []
+                }
+            });
+        });
+        
+        it("no error on drop table, prod database (default behavior)", () => {
+            testGenerateMigration({
+                options: {
+                    mode: "prod"
+                },
+                fs: {
+                },
+                db: {
+                    tables: [{
+                        filePath: "my_table.sql",
+                        identify: "public.company",
+                        name: "company",
+                        columns: [
+                            {
+                                identify: "id",
+                                key: "id",
+                                type: "integer"
+                            },
+                            {
+                                identify: "name",
+                                key: "name",
+                                type: "text"
+                            }
+                        ]
+                    }]
+                },
+                migration: {
+                    commands: [],
+                    errors: []
+                }
+            });
+        });
+        
 
         it("error on change column type", () => {
             testGenerateMigration({

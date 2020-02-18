@@ -255,11 +255,13 @@ export default class State<Child extends State = State<any>> extends Model<Child
                 return;
             }
 
-            const errorModel = new CannotDropTableErrorModel({
-                filePath: "(database)",
-                tableIdentify: dbTableIdentify
-            });
-            errors.push(errorModel);
+            if ( options.mode === "dev" ) {
+                const errorModel = new CannotDropTableErrorModel({
+                    filePath: "(database)",
+                    tableIdentify: dbTableIdentify
+                });
+                errors.push(errorModel);
+            }
         });
 
         // drop trigger
