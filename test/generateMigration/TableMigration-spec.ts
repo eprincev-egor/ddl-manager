@@ -497,30 +497,30 @@ describe("State", () => {
             });
         });
 
+        it("don't create deprecated table", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [{
+                        identify: "public.company",
+                        name: "company",
+                        deprecated: true,
+                        columns: [{
+                            identify: "id",
+                            key: "id",
+                            type: "integer"
+                        }]
+                    }]
+                },
+                db: {
+                    tables: []
+                },
+                migration: {
+                    commands: [],
+                    errors: []
+                }
+            });
+        });
+        
     });
 
-    it("don't create deprecated table", () => {
-        testGenerateMigration({
-            fs: {
-                tables: [{
-                    identify: "public.company",
-                    name: "company",
-                    deprecated: true,
-                    columns: [{
-                        identify: "id",
-                        key: "id",
-                        type: "integer"
-                    }]
-                }]
-            },
-            db: {
-                tables: []
-            },
-            migration: {
-                commands: [],
-                errors: []
-            }
-        });
-    });
-    
 });
