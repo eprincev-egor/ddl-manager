@@ -213,6 +213,57 @@ describe("State", () => {
             });
         });
 
+        it("fs and db has same trigger, empty migration", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [{
+                        identify: "public.company",
+                        name: "company",
+                        columns: [{
+                            identify: "id",
+                            key: "id",
+                            type: "integer"
+                        }]
+                    }],
+                    functions: [{
+                        identify: "public.create_role()",
+                        name: "create_role"
+                    }],
+                    triggers: [{
+                        identify: "create_role_trigger on public.company",
+                        tableIdentify: "public.company",
+                        functionIdentify: "public.create_role()",
+                        name: "create_role_trigger"
+                    }]
+                },
+                db: {
+                    tables: [{
+                        identify: "public.company",
+                        name: "company",
+                        columns: [{
+                            identify: "id",
+                            key: "id",
+                            type: "integer"
+                        }]
+                    }],
+                    functions: [{
+                        identify: "public.create_role()",
+                        name: "create_role"
+                    }],
+                    triggers: [{
+                        identify: "create_role_trigger on public.company",
+                        tableIdentify: "public.company",
+                        functionIdentify: "public.create_role()",
+                        name: "create_role_trigger"
+                    }]
+                },
+                migration: {
+                    commands: [],
+                    errors: []
+                }
+            });
+        });
+        
     });
     
 });

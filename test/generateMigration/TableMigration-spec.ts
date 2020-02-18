@@ -222,6 +222,52 @@ describe("State", () => {
             });
         });
 
+        it("no error if: fs has deprecated column, db has actual column", () => {
+            testGenerateMigration({
+                options: {
+                    mode: "dev"
+                },
+                fs: {
+                    tables: [{
+                        filePath: "my_table.sql",
+                        identify: "public.company",
+                        name: "company",
+                        columns: [
+                            {
+                                identify: "id",
+                                key: "id",
+                                type: "integer"
+                            }
+                        ],
+                        deprecatedColumns: ["name"]
+                    }]
+                },
+                db: {
+                    tables: [{
+                        filePath: "my_table.sql",
+                        identify: "public.company",
+                        name: "company",
+                        columns: [
+                            {
+                                identify: "id",
+                                key: "id",
+                                type: "integer"
+                            },
+                            {
+                                identify: "name",
+                                key: "name",
+                                type: "text"
+                            }
+                        ]
+                    }]
+                },
+                migration: {
+                    commands: [],
+                    errors: []
+                }
+            });
+        });
+
         it("no error on drop column, prod database", () => {
             testGenerateMigration({
                 options: {

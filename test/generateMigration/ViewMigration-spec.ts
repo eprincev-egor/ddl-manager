@@ -87,6 +87,27 @@ describe("State", () => {
             });
         });
 
+        it("fs and db has same view, empty migration", () => {
+            testGenerateMigration({
+                fs: {
+                    views: [{
+                        identify: "public.operations_view",
+                        name: "operations_view"
+                    }]
+                },
+                db: {
+                    views: [{
+                        identify: "public.operations_view",
+                        name: "operations_view"
+                    }]
+                },
+                migration: {
+                    commands: [],
+                    errors: []
+                }
+            });
+        });
+
     });
     
 });

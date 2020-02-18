@@ -267,7 +267,7 @@ export default class State<Child extends State = State<any>> extends Model<Child
         // drop trigger
         db.triggers.each((dbTriggerModel) => {
             const dbTriggerIdentify = dbTriggerModel.getIdentify();
-            const fsTriggerModel = fs.views.getByIdentify(dbTriggerIdentify);
+            const fsTriggerModel = fs.triggers.getByIdentify(dbTriggerIdentify);
 
             if ( fsTriggerModel ) {
                 return;
@@ -283,7 +283,7 @@ export default class State<Child extends State = State<any>> extends Model<Child
         // create trigger
         fs.triggers.each((fsTriggerModel) => {
             const fsTriggerIdentify = fsTriggerModel.getIdentify();
-            const dbTriggerModel = db.views.getByIdentify(fsTriggerIdentify);
+            const dbTriggerModel = db.triggers.getByIdentify(fsTriggerIdentify);
 
             if ( dbTriggerModel ) {
                 return;
