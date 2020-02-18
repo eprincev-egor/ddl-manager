@@ -17,6 +17,10 @@ import MaxObjectNameSizeErrorModel from "./migration/errors/MaxObjectNameSizeErr
 import CannotDropColumnErrorModel from "./migration/errors/CannotDropColumnErrorModel";
 import CannotDropTableErrorModel from "./migration/errors/CannotDropTableErrorModel";
 
+export interface IMigrationOptions {
+    mode: "dev" | "prod";
+};
+
 export default class State<Child extends State = State<any>> extends Model<Child> {
     structure() {
         return {
@@ -39,7 +43,10 @@ export default class State<Child extends State = State<any>> extends Model<Child
         };
     }
 
-    generateMigration(dbState: State): Migration {
+    generateMigration(
+        dbState: State, 
+        options: IMigrationOptions = {mode: "prod"}
+    ): Migration {
         const fsState: State = this;
         const fs = {
             functions: fsState.get("functions"),
@@ -185,28 +192,30 @@ export default class State<Child extends State = State<any>> extends Model<Child
                 });
 
                 // dropped columns
-                dbColumns.forEach((dbColumnModel) => {
-                    const key = dbColumnModel.get("key");
-                    const existsFsColumn = fsColumns.find((fsColumn) =>
-                        fsColumn.get("key") === key
-                    );
+                if ( options.mode === "dev" ) {
+                    dbColumns.forEach((dbColumnModel) => {
+                        const key = dbColumnModel.get("key");
+                        const existsFsColumn = fsColumns.find((fsColumn) =>
+                            fsColumn.get("key") === key
+                        );
 
-                    if ( existsFsColumn ) {
-                        return;
-                    }
+                        if ( existsFsColumn ) {
+                            return;
+                        }
 
-                    const isDeprecatedColumn = fsTableModel.row.deprecatedColumns.includes(key);
-                    if ( isDeprecatedColumn ) {
-                        return;
-                    }
+                        const isDeprecatedColumn = fsTableModel.row.deprecatedColumns.includes(key);
+                        if ( isDeprecatedColumn ) {
+                            return;
+                        }
 
-                    const errorModel = new CannotDropColumnErrorModel({
-                        filePath: fsTableModel.get("filePath"),
-                        tableIdentify: fsTableIdentify,
-                        columnKey: key
+                        const errorModel = new CannotDropColumnErrorModel({
+                            filePath: fsTableModel.get("filePath"),
+                            tableIdentify: fsTableIdentify,
+                            columnKey: key
+                        });
+                        errors.push(errorModel);
                     });
-                    errors.push(errorModel);
-                });
+                }
 
                 return;
             }

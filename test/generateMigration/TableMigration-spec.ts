@@ -157,8 +157,11 @@ describe("State", () => {
         });
 
         
-        it("error on drop column", () => {
+        it("error on drop column, dev database", () => {
             testGenerateMigration({
+                options: {
+                    mode: "dev"
+                },
                 fs: {
                     tables: [{
                         filePath: "my_table.sql",
@@ -200,6 +203,87 @@ describe("State", () => {
                             columnKey: "name"
                         }
                     ]
+                }
+            });
+        });
+
+        it("no error on drop column, prod database", () => {
+            testGenerateMigration({
+                options: {
+                    mode: "prod"
+                },
+                fs: {
+                    tables: [{
+                        filePath: "my_table.sql",
+                        identify: "public.company",
+                        name: "company",
+                        columns: [
+                            {
+                                identify: "id",
+                                key: "id"
+                            }
+                        ]
+                    }]
+                },
+                db: {
+                    tables: [{
+                        filePath: "my_table.sql",
+                        identify: "public.company",
+                        name: "company",
+                        columns: [
+                            {
+                                identify: "id",
+                                key: "id"
+                            },
+                            {
+                                identify: "name",
+                                key: "name"
+                            }
+                        ]
+                    }]
+                },
+                migration: {
+                    commands: [],
+                    errors: []
+                }
+            });
+        });
+
+        it("no error on drop column, prod database (default behavior)", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [{
+                        filePath: "my_table.sql",
+                        identify: "public.company",
+                        name: "company",
+                        columns: [
+                            {
+                                identify: "id",
+                                key: "id"
+                            }
+                        ]
+                    }]
+                },
+                db: {
+                    tables: [{
+                        filePath: "my_table.sql",
+                        identify: "public.company",
+                        name: "company",
+                        columns: [
+                            {
+                                identify: "id",
+                                key: "id"
+                            },
+                            {
+                                identify: "name",
+                                key: "name"
+                            }
+                        ]
+                    }]
+                },
+                migration: {
+                    commands: [],
+                    errors: []
                 }
             });
         });
