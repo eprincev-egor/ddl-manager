@@ -14,7 +14,8 @@ describe("State", () => {
                         name: "company",
                         columns: [{
                             identify: "id",
-                            key: "id"
+                            key: "id",
+                            type: "integer"
                         }]
                     }]
                 },
@@ -35,7 +36,8 @@ describe("State", () => {
                                     filePath: null,
                                     identify: "id",
                                     key: "id",
-                                    parsed: null
+                                    parsed: null,
+                                    type: "integer"
                                 }]
                             }
                         }
@@ -53,10 +55,12 @@ describe("State", () => {
                         name: "company",
                         columns: [{
                             identify: "id",
-                            key: "id"
+                            key: "id",
+                            type: "integer"
                         }, {
                             identify: "name",
-                            key: "name"
+                            key: "name",
+                            type: "text"
                         }]
                     }]
                 },
@@ -66,7 +70,8 @@ describe("State", () => {
                         name: "company",
                         columns: [{
                             identify: "id",
-                            key: "id"
+                            key: "id",
+                            type: "integer"
                         }]
                     }]
                 },
@@ -79,7 +84,8 @@ describe("State", () => {
                                 filePath: null,
                                 identify: "name",
                                 key: "name",
-                                parsed: null
+                                parsed: null,
+                                type: "text"
                             }
                         }
                     ],
@@ -97,10 +103,12 @@ describe("State", () => {
                         name: "company",
                         columns: [{
                             identify: "id",
-                            key: "id"
+                            key: "id",
+                            type: "integer"
                         }, {
                             identify: "name",
-                            key: "name"
+                            key: "name",
+                            type: "text"
                         }]
                     }]
                 },
@@ -110,10 +118,12 @@ describe("State", () => {
                         name: "company",
                         columns: [{
                             identify: "id",
-                            key: "id"
+                            key: "id",
+                            type: "integer"
                         }, {
                             identify: "name",
-                            key: "name"
+                            key: "name",
+                            type: "text"
                         }]
                     }]
                 },
@@ -135,7 +145,8 @@ describe("State", () => {
                         name: "abcd012345678901234567890123456789012345678901234567890123456789_tail",
                         columns: [{
                             identify: "id",
-                            key: "id"
+                            key: "id",
+                            type: "integer"
                         }]
                     }]
                 },
@@ -170,7 +181,8 @@ describe("State", () => {
                         columns: [
                             {
                                 identify: "id",
-                                key: "id"
+                                key: "id",
+                                type: "integer"
                             }
                         ]
                     }]
@@ -183,11 +195,13 @@ describe("State", () => {
                         columns: [
                             {
                                 identify: "id",
-                                key: "id"
+                                key: "id",
+                                type: "integer"
                             },
                             {
                                 identify: "name",
-                                key: "name"
+                                key: "name",
+                                type: "text"
                             }
                         ]
                     }]
@@ -220,7 +234,8 @@ describe("State", () => {
                         columns: [
                             {
                                 identify: "id",
-                                key: "id"
+                                key: "id",
+                                type: "integer"
                             }
                         ]
                     }]
@@ -233,11 +248,13 @@ describe("State", () => {
                         columns: [
                             {
                                 identify: "id",
-                                key: "id"
+                                key: "id",
+                                type: "integer"
                             },
                             {
                                 identify: "name",
-                                key: "name"
+                                key: "name",
+                                type: "text"
                             }
                         ]
                     }]
@@ -259,7 +276,8 @@ describe("State", () => {
                         columns: [
                             {
                                 identify: "id",
-                                key: "id"
+                                key: "id",
+                                type: "integer"
                             }
                         ]
                     }]
@@ -272,11 +290,13 @@ describe("State", () => {
                         columns: [
                             {
                                 identify: "id",
-                                key: "id"
+                                key: "id",
+                                type: "integer"
                             },
                             {
                                 identify: "name",
-                                key: "name"
+                                key: "name",
+                                type: "text"
                             }
                         ]
                     }]
@@ -300,11 +320,13 @@ describe("State", () => {
                             columns: [
                                 {
                                     identify: "id",
-                                    key: "id"
+                                    key: "id",
+                                    type: "integer"
                                 },
                                 {
                                     identify: "name",
-                                    key: "name"
+                                    key: "name",
+                                    type: "text"
                                 }
                             ],
                             deprecatedColumns: ["id", "name"]
@@ -325,7 +347,8 @@ describe("State", () => {
                         name: "company",
                         columns: [{
                             identify: "id",
-                            key: "id"
+                            key: "id",
+                            type: "integer"
                         }],
                         deprecatedColumns: ["name"]
                     }]
@@ -347,7 +370,8 @@ describe("State", () => {
                                     filePath: null,
                                     identify: "id",
                                     key: "id",
-                                    parsed: null
+                                    parsed: null,
+                                    type: "integer"
                                 }]
                             }
                         }
@@ -366,7 +390,8 @@ describe("State", () => {
                         name: "company",
                         columns: [{
                             identify: "id",
-                            key: "id"
+                            key: "id",
+                            type: "integer"
                         }],
                         deprecatedColumns: ["name"]
                     }]
@@ -377,10 +402,12 @@ describe("State", () => {
                         name: "company",
                         columns: [{
                             identify: "id",
-                            key: "id"
+                            key: "id",
+                            type: "integer"
                         }, {
                             identify: "name",
-                            key: "name"
+                            key: "name",
+                            type: "text"
                         }]
                     }]
                 },
@@ -402,7 +429,8 @@ describe("State", () => {
                         columns: [
                             {
                                 identify: "id",
-                                key: "id"
+                                key: "id",
+                                type: "integer"
                             }
                         ]
                     }]

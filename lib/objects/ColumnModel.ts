@@ -8,6 +8,9 @@ export default class ColumnModel extends BaseObjectModel<ColumnModel> {
 
             key: Types.String({
                 required: true
+            }),
+            type: Types.String({
+                required: true
             })
         };
     }

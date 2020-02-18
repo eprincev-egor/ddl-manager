@@ -227,6 +227,7 @@ export default class State<Child extends State = State<any>> extends Model<Child
             commands.push(createTableCommand);
         });
 
+        // error on drop columns
         db.tables.each((dbTableModel) => {
             const dbTableIdentify = dbTableModel.getIdentify();
             const fsTableModel = fs.tables.getByIdentify(dbTableIdentify);

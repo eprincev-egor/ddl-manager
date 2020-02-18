@@ -12,7 +12,8 @@ describe("State", () => {
                         name: "company",
                         columns: [{
                             identify: "id",
-                            key: "id"
+                            key: "id",
+                            type: "integer"
                         }]
                     }],
                     functions: [{
@@ -32,7 +33,8 @@ describe("State", () => {
                         name: "company",
                         columns: [{
                             identify: "id",
-                            key: "id"
+                            key: "id",
+                            type: "integer"
                         }]
                     }],
                     functions: [{
@@ -67,7 +69,8 @@ describe("State", () => {
                         name: "company",
                         columns: [{
                             identify: "id",
-                            key: "id"
+                            key: "id",
+                            type: "integer"
                         }]
                     }],
                     functions: [{
@@ -81,7 +84,8 @@ describe("State", () => {
                         name: "company",
                         columns: [{
                             identify: "id",
-                            key: "id"
+                            key: "id",
+                            type: "integer"
                         }]
                     }],
                     functions: [{
