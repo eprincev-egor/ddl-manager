@@ -154,6 +154,10 @@ export default class State<Child extends State = State<any>> extends Model<Child
 
         // create tables
         fs.tables.each((fsTableModel) => {
+            if ( fsTableModel.get("deprecated") ) {
+                return;
+            }
+
             const fsTableIdentify = fsTableModel.getIdentify();
             const dbTableModel = db.tables.getByIdentify(fsTableIdentify);
 
