@@ -14,43 +14,64 @@ import CannotDropColumnErrorModel from "./errors/CannotDropColumnErrorModel";
 import CannotDropTableErrorModel from "./errors/CannotDropTableErrorModel";
 import CannotChangeColumnTypeErrorModel from "./errors/CannotChangeColumnTypeErrorModel";
 
-export interface IMigrationOptions {
-    mode: "dev" | "prod";
-};
-interface IMigrationControllerParams {
+type TMigrationMode = "dev" | "prod";
+
+export interface IMigrationControllerParams {
     fs: State; 
     db: State;
+    mode: TMigrationMode;
 }
 
 export default class MigrationController {
     fs: State;
     db: State;
+    mode: TMigrationMode;
 
     constructor(params: IMigrationControllerParams) {
         this.fs = params.fs;
         this.db = params.db;
+        this.mode = params.mode || "prod";
     }
 
-    generateMigration(options: IMigrationOptions): MigrationModel {
-        const fs = {
-            functions: this.fs.get("functions"),
-            views: this.fs.get("views"),
-            tables: this.fs.get("tables"),
-            triggers: this.fs.get("triggers")
-        };
-        const db = {
-            functions: this.db.get("functions"),
-            views: this.db.get("views"),
-            tables: this.db.get("tables"),
-            triggers: this.db.get("triggers")
-        };
+    generateMigration(): MigrationModel {
         const commands: CommandsCollection["TInput"] = [];
         const errors: MigrationErrorsCollection["TModel"][] = [];
 
+        this.generateFunctions(
+            commands,
+            errors
+        );
+
+        this.generateViews(
+            commands,
+            errors
+        );
+
+        this.generateTables(
+            commands,
+            errors
+        );
+
+        this.generateTriggers(
+            commands,
+            errors
+        );
+
+        // output migration
+        return new MigrationModel({
+            commands,
+            errors
+        });
+    }
+
+    generateFunctions(
+        commands: CommandsCollection["TInput"],
+        errors: MigrationErrorsCollection["TModel"][]
+    ) {
         // drop functions
-        db.functions.each((dbFunctionModel) => {
+        this.db.row.functions.each((dbFunctionModel) => {
             const dbFuncIdentify = dbFunctionModel.getIdentify();
-            const fsFunctionModel = fs.functions.getByIdentify(dbFuncIdentify);
+            const fsFunctionModel = this.fs.row.functions.getByIdentify(dbFuncIdentify);
 
             if ( fsFunctionModel ) {
                 return;
@@ -64,9 +85,9 @@ export default class MigrationController {
         });
 
         // create functions
-        fs.functions.each((fsFunctionModel) => {
+        this.fs.row.functions.each((fsFunctionModel) => {
             const fsFuncIdentify = fsFunctionModel.getIdentify();
-            const dbFunctionModel = db.functions.getByIdentify(fsFuncIdentify);
+            const dbFunctionModel = this.db.row.functions.getByIdentify(fsFuncIdentify);
 
             if ( dbFunctionModel ) {
                 return;
@@ -91,10 +112,17 @@ export default class MigrationController {
             commands.push( command );
         });
 
+    }
+
+    generateViews(
+        commands: CommandsCollection["TInput"],
+        errors: MigrationErrorsCollection["TModel"][]
+    ) {
+
         // drop views
-        db.views.each((dbViewModel) => {
+        this.db.row.views.each((dbViewModel) => {
             const dbViewIdentify = dbViewModel.getIdentify();
-            const fsViewModel = fs.views.getByIdentify(dbViewIdentify);
+            const fsViewModel = this.fs.row.views.getByIdentify(dbViewIdentify);
 
             if ( fsViewModel ) {
                 return;
@@ -108,9 +136,9 @@ export default class MigrationController {
         });
 
         // create views
-        fs.views.each((fsViewModel) => {
+        this.fs.row.views.each((fsViewModel) => {
             const fsViewIdentify = fsViewModel.getIdentify();
-            const dbViewModel = db.views.getByIdentify(fsViewIdentify);
+            const dbViewModel = this.db.row.views.getByIdentify(fsViewIdentify);
 
             if ( dbViewModel ) {
                 return;
@@ -135,14 +163,21 @@ export default class MigrationController {
             commands.push(command);
         });
 
+    }
+
+    generateTables(
+        commands: CommandsCollection["TInput"],
+        errors: MigrationErrorsCollection["TModel"][]
+    ) {
+
         // create tables
-        fs.tables.each((fsTableModel) => {
+        this.fs.row.tables.each((fsTableModel) => {
             if ( fsTableModel.get("deprecated") ) {
                 return;
             }
 
             const fsTableIdentify = fsTableModel.getIdentify();
-            const dbTableModel = db.tables.getByIdentify(fsTableIdentify);
+            const dbTableModel = this.db.row.tables.getByIdentify(fsTableIdentify);
 
             const tableName = fsTableModel.get("name");
             if ( tableName.length > 64 ) {
@@ -194,7 +229,7 @@ export default class MigrationController {
                 });
 
                 // dropped columns
-                if ( options.mode === "dev" ) {
+                if ( this.mode === "dev" ) {
                     dbColumns.forEach((dbColumnModel) => {
                         const key = dbColumnModel.get("key");
                         const existsFsColumn = fsColumns.find((fsColumn) =>
@@ -230,15 +265,15 @@ export default class MigrationController {
         });
 
         // error on drop columns
-        db.tables.each((dbTableModel) => {
+        this.db.row.tables.each((dbTableModel) => {
             const dbTableIdentify = dbTableModel.getIdentify();
-            const fsTableModel = fs.tables.getByIdentify(dbTableIdentify);
+            const fsTableModel = this.fs.row.tables.getByIdentify(dbTableIdentify);
 
             if ( fsTableModel ) {
                 return;
             }
 
-            if ( options.mode === "dev" ) {
+            if ( this.mode === "dev" ) {
                 const errorModel = new CannotDropTableErrorModel({
                     filePath: "(database)",
                     tableIdentify: dbTableIdentify
@@ -246,11 +281,17 @@ export default class MigrationController {
                 errors.push(errorModel);
             }
         });
+    }
+
+    generateTriggers(
+        commands: CommandsCollection["TInput"],
+        errors: MigrationErrorsCollection["TModel"][]
+    ) {
 
         // drop trigger
-        db.triggers.each((dbTriggerModel) => {
+        this.db.row.triggers.each((dbTriggerModel) => {
             const dbTriggerIdentify = dbTriggerModel.getIdentify();
-            const fsTriggerModel = fs.triggers.getByIdentify(dbTriggerIdentify);
+            const fsTriggerModel = this.fs.row.triggers.getByIdentify(dbTriggerIdentify);
 
             if ( fsTriggerModel ) {
                 return;
@@ -264,9 +305,9 @@ export default class MigrationController {
         });
 
         // create trigger
-        fs.triggers.each((fsTriggerModel) => {
+        this.fs.row.triggers.each((fsTriggerModel) => {
             const fsTriggerIdentify = fsTriggerModel.getIdentify();
-            const dbTriggerModel = db.triggers.getByIdentify(fsTriggerIdentify);
+            const dbTriggerModel = this.db.row.triggers.getByIdentify(fsTriggerIdentify);
 
             if ( dbTriggerModel ) {
                 return;
@@ -285,7 +326,7 @@ export default class MigrationController {
             }
 
             const functionIdentify = fsTriggerModel.get("functionIdentify");
-            const fsFunctionModel = fs.functions.getByIdentify(functionIdentify);
+            const fsFunctionModel = this.fs.row.functions.getByIdentify(functionIdentify);
             if ( !fsFunctionModel ) {
                 const errorModel = new UnknownFunctionForTriggerErrorModel({
                     filePath: fsTriggerModel.get("filePath"),
@@ -298,7 +339,7 @@ export default class MigrationController {
             }
 
             const tableIdentify = fsTriggerModel.get("tableIdentify");
-            const fsTableModel = fs.tables.getByIdentify(tableIdentify);
+            const fsTableModel = this.fs.row.tables.getByIdentify(tableIdentify);
 
             if ( !fsTableModel ) {
                 const errorModel = new UnknownTableForTriggerErrorModel({
@@ -318,10 +359,5 @@ export default class MigrationController {
             commands.push(command);
         });
 
-        // output migration
-        return new MigrationModel({
-            commands,
-            errors
-        });
     }
 }

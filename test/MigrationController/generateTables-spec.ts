@@ -2,9 +2,9 @@ import testGenerateMigration from "./testGenerateMigration";
 import State from "../../lib/State";
 import assert from "assert";
 
-describe("State", () => {
+describe("MigrationController", () => {
 
-    describe("generateMigration for tables", () => {
+    describe("generateTables", () => {
         
         it("create table for empty db", () => {
             testGenerateMigration({

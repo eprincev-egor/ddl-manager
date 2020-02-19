@@ -4,11 +4,9 @@ import TriggersCollection from "./objects/TriggersCollection";
 import ViewsCollection from "./objects/ViewsCollection";
 import TablesCollection from "./objects/TablesCollection";
 import MigrationModel from "./migration/MigrationModel";
-import MigrationController from "./migration/MigrationController";
+import MigrationController, {IMigrationControllerParams} from "./migration/MigrationController";
 
-export interface IMigrationOptions {
-    mode: "dev" | "prod";
-};
+export type IMigrationOptions = Omit<IMigrationControllerParams, "db" | "fs">;
 
 export default class State<Child extends State = State<any>> extends Model<Child> {
     structure() {
@@ -34,15 +32,16 @@ export default class State<Child extends State = State<any>> extends Model<Child
 
     generateMigration(
         dbState: State, 
-        options: IMigrationOptions = {mode: "prod"}
+        options: IMigrationOptions
     ): MigrationModel {
         const fsState = this;
 
         const migrationController = new MigrationController({
+            ...options,
             db: dbState,
             fs: fsState
         });
 
-        return migrationController.generateMigration(options);
+        return migrationController.generateMigration();
     }
 }

@@ -1,8 +1,8 @@
 import testGenerateMigration from "./testGenerateMigration";
 
-describe("State", () => {
+describe("MigrationController", () => {
 
-    describe("generateMigration for triggers", () => {
+    describe("generateTriggers", () => {
         
         it("create trigger", () => {
             testGenerateMigration({

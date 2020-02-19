@@ -1,8 +1,8 @@
 import testGenerateMigration from "./testGenerateMigration";
 
-describe("State", () => {
+describe("MigrationController", () => {
 
-    describe("generateMigration for functions", () => {
+    describe("generateFunctions", () => {
         
         it("create function for empty db", () => {
             testGenerateMigration({
