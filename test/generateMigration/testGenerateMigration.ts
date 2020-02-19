@@ -1,5 +1,5 @@
 import State, {IMigrationOptions} from "../../lib/State";
-import Migration from "../../lib/migration/Migration";
+import MigrationModel from "../../lib/migration/MigrationModel";
 import assert from "assert";
 
 type InputState = State["TInputData"];
@@ -7,7 +7,7 @@ interface IGenerateMigrationTest {
     options?: IMigrationOptions;
     fs: InputState;
     db: InputState;
-    migration: Migration["TJson"];
+    migration: MigrationModel["TJson"];
 };
 
 export default function testGenerateMigration(test: IGenerateMigrationTest) {
