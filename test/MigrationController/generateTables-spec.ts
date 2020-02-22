@@ -39,7 +39,8 @@ describe("MigrationController", () => {
                                     key: "id",
                                     parsed: null,
                                     type: "integer"
-                                }]
+                                }],
+                                rows: null
                             }
                         }
                     ],
@@ -420,7 +421,8 @@ describe("MigrationController", () => {
                                     key: "id",
                                     parsed: null,
                                     type: "integer"
-                                }]
+                                }],
+                                rows: null
                             }
                         }
                     ],
