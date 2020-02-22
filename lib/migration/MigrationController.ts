@@ -332,13 +332,13 @@ export default class MigrationController {
                     }
                 }
 
-                const fsConstraints = fsTableModel.get("constraints");
-                const dbConstraints = dbTableModel.get("constraints");
+                const fsCheckConstraints = fsTableModel.get("checkConstraints");
+                const dbCheckConstraints = dbTableModel.get("checkConstraints");
 
                 // create constraints
-                for (const fsConstraint of fsConstraints) {
+                for (const fsConstraint of fsCheckConstraints) {
                     const name = fsConstraint.get("name");
-                    const existsDbConstraint = dbConstraints.find(dbConstraint =>
+                    const existsDbConstraint = dbCheckConstraints.find(dbConstraint =>
                         dbConstraint.get("name") === name
                     );
 
@@ -372,9 +372,9 @@ export default class MigrationController {
                 }
 
                 // drop constraints
-                for (const dbConstraint of dbConstraints) {
+                for (const dbConstraint of dbCheckConstraints) {
                     const name = dbConstraint.get("name");
-                    const existsFsConstraint = fsConstraints.find(fsConstraint =>
+                    const existsFsConstraint = fsCheckConstraints.find(fsConstraint =>
                         fsConstraint.get("name") === name
                     );
 

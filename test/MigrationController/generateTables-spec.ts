@@ -35,6 +35,7 @@ describe("MigrationController", () => {
                                 deprecatedColumns: [],
                                 deprecated: false,
                                 primaryKey: null,
+                                uniqueConstraints: [],
                                 checkConstraints: [],
                                 columns: [{
                                     filePath: null,
@@ -423,6 +424,7 @@ describe("MigrationController", () => {
                                 parsed: null,
                                 deprecatedColumns: ["name"],
                                 primaryKey: null,
+                                uniqueConstraints: [],
                                 checkConstraints: [],
                                 columns: [{
                                     filePath: null,
@@ -804,6 +806,7 @@ describe("MigrationController", () => {
                                 parsed: null,
                                 deprecatedColumns: [],
                                 deprecated: false,
+                                uniqueConstraints: [],
                                 checkConstraints: [],
                                 columns: [
                                     {
@@ -878,6 +881,7 @@ describe("MigrationController", () => {
                                 parsed: null,
                                 deprecatedColumns: [],
                                 deprecated: false,
+                                uniqueConstraints: [],
                                 checkConstraints: [],
                                 columns: [
                                     {
@@ -913,6 +917,7 @@ describe("MigrationController", () => {
                                 parsed: null,
                                 deprecatedColumns: [],
                                 deprecated: false,
+                                uniqueConstraints: [],
                                 checkConstraints: [],
                                 columns: [
                                     {
@@ -1220,6 +1225,7 @@ describe("MigrationController", () => {
                             key: "name",
                             type: "text"
                         }],
+                        uniqueConstraints: [],
                         checkConstraints: [
                             {
                                 identify: "name",
@@ -1279,6 +1285,7 @@ describe("MigrationController", () => {
                             key: "name",
                             type: "text"
                         }],
+                        uniqueConstraints: [],
                         checkConstraints: []
                     }]
                 },
@@ -1295,6 +1302,7 @@ describe("MigrationController", () => {
                             key: "name",
                             type: "text"
                         }],
+                        uniqueConstraints: [],
                         checkConstraints: [
                             {
                                 identify: "name",
@@ -1339,6 +1347,7 @@ describe("MigrationController", () => {
                             key: "name",
                             type: "text"
                         }],
+                        uniqueConstraints: [],
                         checkConstraints: [
                             {
                                 identify: "name",
@@ -1361,6 +1370,7 @@ describe("MigrationController", () => {
                             key: "name",
                             type: "text"
                         }],
+                        uniqueConstraints: [],
                         checkConstraints: [
                             {
                                 identify: "name",
@@ -1416,6 +1426,7 @@ describe("MigrationController", () => {
                             key: "name",
                             type: "text"
                         }],
+                        uniqueConstraints: [],
                         checkConstraints: [
                             {
                                 identify: "name",
@@ -1438,6 +1449,7 @@ describe("MigrationController", () => {
                             key: "name",
                             type: "text"
                         }],
+                        uniqueConstraints: [],
                         checkConstraints: [
                             {
                                 identify: "name",

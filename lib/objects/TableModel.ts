@@ -2,6 +2,7 @@ import {Types} from "model-layer";
 import BaseObjectModel from "./BaseDBObjectModel";
 import ColumnModel from "./ColumnModel";
 import CheckConstraintModel from "./CheckConstraintModel";
+import UniqueConstraintModel from "./UniqueConstraintModel";
 
 export default class TableModel extends BaseObjectModel<TableModel> {
     structure() {
@@ -32,6 +33,18 @@ export default class TableModel extends BaseObjectModel<TableModel> {
                 unique: true
             }),
             checkConstraints: Types.Array({
+                element: Types.Model({
+                    Model: CheckConstraintModel
+                }),
+                default: () => [],
+                sort(
+                    a: CheckConstraintModel, 
+                    b: CheckConstraintModel
+                ) {
+                    return a.get("name") > b.get("name") ? 1 : -1;
+                }
+            }),
+            uniqueConstraints: Types.Array({
                 element: Types.Model({
                     Model: CheckConstraintModel
                 }),
