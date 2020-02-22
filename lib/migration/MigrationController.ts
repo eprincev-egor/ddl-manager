@@ -18,6 +18,7 @@ import CreateRowsCommandModel from "./commands/RowsCommandModel";
 import ColumnNotNullCommandModel from "./commands/ColumnNotNullCommandModel";
 import PrimaryKeyCommandModel from "./commands/PrimaryKeyCommandModel";
 import CheckConstraintCommandModel from "./commands/CheckConstraintCommandModel";
+import UniqueConstraintCommandModel from "./commands/UniqueConstraintCommandModel";
 
 type TMigrationMode = "dev" | "prod";
 
@@ -335,7 +336,7 @@ export default class MigrationController {
                 const fsCheckConstraints = fsTableModel.get("checkConstraints");
                 const dbCheckConstraints = dbTableModel.get("checkConstraints");
 
-                // create constraints
+                // create check constraints
                 for (const fsConstraint of fsCheckConstraints) {
                     const name = fsConstraint.get("name");
                     const existsDbConstraint = dbCheckConstraints.find(dbConstraint =>
@@ -371,7 +372,7 @@ export default class MigrationController {
                     }
                 }
 
-                // drop constraints
+                // drop check constraints
                 for (const dbConstraint of dbCheckConstraints) {
                     const name = dbConstraint.get("name");
                     const existsFsConstraint = fsCheckConstraints.find(fsConstraint =>
@@ -387,6 +388,64 @@ export default class MigrationController {
                         commands.push(constraintCommand);
                     }
                 }
+
+                
+                const fsUniqueConstraints = fsTableModel.get("uniqueConstraints");
+                const dbUniqueConstraints = dbTableModel.get("uniqueConstraints");
+
+                // create unique constraints
+                for (const fsConstraint of fsUniqueConstraints) {
+                    const name = fsConstraint.get("name");
+                    const existsDbConstraint = dbUniqueConstraints.find(dbConstraint =>
+                        dbConstraint.get("name") === name
+                    );
+
+                    if ( existsDbConstraint ) {
+                        const isEqual = existsDbConstraint.equal(fsConstraint);
+                        
+                        if ( !isEqual ) {
+                            const dropConstraintCommand = new UniqueConstraintCommandModel({
+                                type: "drop",
+                                tableIdentify: fsTableIdentify,
+                                constraint: existsDbConstraint
+                            });
+                            commands.push(dropConstraintCommand);
+
+                            const createConstraintCommand = new UniqueConstraintCommandModel({
+                                type: "create",
+                                tableIdentify: fsTableIdentify,
+                                constraint: fsConstraint
+                            });
+                            commands.push(createConstraintCommand);
+                        }
+                    }
+                    else {
+                        const constraintCommand = new UniqueConstraintCommandModel({
+                            type: "create",
+                            tableIdentify: fsTableIdentify,
+                            constraint: fsConstraint
+                        });
+                        commands.push(constraintCommand);
+                    }
+                }
+
+                // drop unique constraints
+                for (const dbConstraint of dbUniqueConstraints) {
+                    const name = dbConstraint.get("name");
+                    const existsFsConstraint = fsUniqueConstraints.find(fsConstraint =>
+                        fsConstraint.get("name") === name
+                    );
+
+                    if ( !existsFsConstraint ) {
+                        const constraintCommand = new UniqueConstraintCommandModel({
+                            type: "drop",
+                            tableIdentify: fsTableIdentify,
+                            constraint: dbConstraint
+                        });
+                        commands.push(constraintCommand);
+                    }
+                }
+
             }
             else {
                 const createTableCommand = new TableCommandModel({

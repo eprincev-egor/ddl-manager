@@ -46,12 +46,12 @@ export default class TableModel extends BaseObjectModel<TableModel> {
             }),
             uniqueConstraints: Types.Array({
                 element: Types.Model({
-                    Model: CheckConstraintModel
+                    Model: UniqueConstraintModel
                 }),
                 default: () => [],
                 sort(
-                    a: CheckConstraintModel, 
-                    b: CheckConstraintModel
+                    a: UniqueConstraintModel, 
+                    b: UniqueConstraintModel
                 ) {
                     return a.get("name") > b.get("name") ? 1 : -1;
                 }
