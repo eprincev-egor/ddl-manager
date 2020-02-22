@@ -35,7 +35,7 @@ describe("MigrationController", () => {
                                 deprecatedColumns: [],
                                 deprecated: false,
                                 primaryKey: null,
-                                constraints: [],
+                                checkConstraints: [],
                                 columns: [{
                                     filePath: null,
                                     identify: "id",
@@ -423,7 +423,7 @@ describe("MigrationController", () => {
                                 parsed: null,
                                 deprecatedColumns: ["name"],
                                 primaryKey: null,
-                                constraints: [],
+                                checkConstraints: [],
                                 columns: [{
                                     filePath: null,
                                     identify: "id",
@@ -804,7 +804,7 @@ describe("MigrationController", () => {
                                 parsed: null,
                                 deprecatedColumns: [],
                                 deprecated: false,
-                                constraints: [],
+                                checkConstraints: [],
                                 columns: [
                                     {
                                         filePath: null,
@@ -878,7 +878,7 @@ describe("MigrationController", () => {
                                 parsed: null,
                                 deprecatedColumns: [],
                                 deprecated: false,
-                                constraints: [],
+                                checkConstraints: [],
                                 columns: [
                                     {
                                         filePath: null,
@@ -913,7 +913,7 @@ describe("MigrationController", () => {
                                 parsed: null,
                                 deprecatedColumns: [],
                                 deprecated: false,
-                                constraints: [],
+                                checkConstraints: [],
                                 columns: [
                                     {
                                         filePath: null,
@@ -1220,7 +1220,7 @@ describe("MigrationController", () => {
                             key: "name",
                             type: "text"
                         }],
-                        constraints: [
+                        checkConstraints: [
                             {
                                 identify: "name",
                                 name: "name",
@@ -1279,7 +1279,7 @@ describe("MigrationController", () => {
                             key: "name",
                             type: "text"
                         }],
-                        constraints: []
+                        checkConstraints: []
                     }]
                 },
                 db: {
@@ -1295,7 +1295,7 @@ describe("MigrationController", () => {
                             key: "name",
                             type: "text"
                         }],
-                        constraints: [
+                        checkConstraints: [
                             {
                                 identify: "name",
                                 name: "name",
@@ -1339,7 +1339,7 @@ describe("MigrationController", () => {
                             key: "name",
                             type: "text"
                         }],
-                        constraints: [
+                        checkConstraints: [
                             {
                                 identify: "name",
                                 name: "name",
@@ -1361,7 +1361,7 @@ describe("MigrationController", () => {
                             key: "name",
                             type: "text"
                         }],
-                        constraints: [
+                        checkConstraints: [
                             {
                                 identify: "name",
                                 name: "name",
@@ -1416,7 +1416,7 @@ describe("MigrationController", () => {
                             key: "name",
                             type: "text"
                         }],
-                        constraints: [
+                        checkConstraints: [
                             {
                                 identify: "name",
                                 name: "name",
@@ -1438,7 +1438,7 @@ describe("MigrationController", () => {
                             key: "name",
                             type: "text"
                         }],
-                        constraints: [
+                        checkConstraints: [
                             {
                                 identify: "name",
                                 name: "name",
@@ -1453,6 +1453,7 @@ describe("MigrationController", () => {
                 }
             });
         });
+
     });
 
 });

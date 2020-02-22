@@ -31,14 +31,15 @@ export default class TableModel extends BaseObjectModel<TableModel> {
                 element: Types.String,
                 unique: true
             }),
-            constraints: Types.Array({
-                element: Types.Or({
-                    or: [
-                        CheckConstraintModel
-                    ]
+            checkConstraints: Types.Array({
+                element: Types.Model({
+                    Model: CheckConstraintModel
                 }),
                 default: () => [],
-                sort(a: CheckConstraintModel, b: CheckConstraintModel) {
+                sort(
+                    a: CheckConstraintModel, 
+                    b: CheckConstraintModel
+                ) {
                     return a.get("name") > b.get("name") ? 1 : -1;
                 }
             })
