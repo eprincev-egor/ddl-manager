@@ -15,6 +15,7 @@ import CannotDropTableErrorModel from "./errors/CannotDropTableErrorModel";
 import CannotChangeColumnTypeErrorModel from "./errors/CannotChangeColumnTypeErrorModel";
 import ExpectedPrimaryKeyForRowsErrorModel from "./errors/ExpectedPrimaryKeyForRowsErrorModel";
 import CreateRowsCommandModel from "./commands/RowsCommandModel";
+import ColumnNotNullCommandModel from "./commands/ColumnNotNullCommandModel";
 
 type TMigrationMode = "dev" | "prod";
 
@@ -230,6 +231,22 @@ export default class MigrationController {
                                 newType
                             });
                             errors.push(errorModel);
+                        }
+
+                        const fsNulls = fsColumnModel.get("nulls");
+                        const dbNulls = existsDbColumn.get("nulls")
+                        if ( fsNulls !== dbNulls ) {
+                            const isDrop = (
+                                fsNulls === true && 
+                                dbNulls === false
+                            );
+
+                            const notNullCommand = new ColumnNotNullCommandModel({
+                                type: isDrop ? "drop" : "create",
+                                tableIdentify: fsTableIdentify,
+                                columnIdentify: fsColumnModel.get("identify")
+                            });
+                            commands.push(notNullCommand);
                         }
 
                         return;

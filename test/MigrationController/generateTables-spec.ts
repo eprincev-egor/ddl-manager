@@ -941,6 +941,86 @@ describe("MigrationController", () => {
             });
         });
 
+        it("drop not null for column", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [{
+                        identify: "public.company",
+                        name: "company",
+                        columns: [{
+                            identify: "id",
+                            key: "id",
+                            type: "integer",
+                            nulls: true
+                        }]
+                    }]
+                },
+                db: {
+                    tables: [{
+                        identify: "public.company",
+                        name: "company",
+                        columns: [{
+                            identify: "id",
+                            key: "id",
+                            type: "integer",
+                            nulls: false
+                        }]
+                    }]
+                },
+                migration: {
+                    commands: [
+                        {
+                            type: "drop",
+                            command: "ColumnNotNull",
+                            tableIdentify: "public.company",
+                            columnIdentify: "id"
+                        }
+                    ],
+                    errors: []
+                }
+            });
+        });
+        
+        it("create not null for column", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [{
+                        identify: "public.company",
+                        name: "company",
+                        columns: [{
+                            identify: "id",
+                            key: "id",
+                            type: "integer",
+                            nulls: false
+                        }]
+                    }]
+                },
+                db: {
+                    tables: [{
+                        identify: "public.company",
+                        name: "company",
+                        columns: [{
+                            identify: "id",
+                            key: "id",
+                            type: "integer",
+                            nulls: true
+                        }]
+                    }]
+                },
+                migration: {
+                    commands: [
+                        {
+                            type: "create",
+                            command: "ColumnNotNull",
+                            tableIdentify: "public.company",
+                            columnIdentify: "id"
+                        }
+                    ],
+                    errors: []
+                }
+            });
+        });
+        
     });
 
 });
