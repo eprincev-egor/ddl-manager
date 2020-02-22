@@ -6,6 +6,10 @@ export default class CommandModel<Child extends CommandModel = any> extends Mode
             type: Types.String({
                 required: true,
                 enum: ["create", "drop"]
+            }),
+            command: Types.String({
+                required: true,
+                default: () => this.constructor.name.replace(/(Command)?Model$/, "")
             })
         };
     }

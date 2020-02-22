@@ -26,6 +26,7 @@ describe("MigrationController", () => {
                     commands: [
                         {
                             type: "create",
+                            command: "Table",
                             table: {
                                 filePath: null,
                                 identify: "public.company",
@@ -82,6 +83,7 @@ describe("MigrationController", () => {
                     commands: [
                         {
                             type: "create",
+                            command: "Column",
                             tableIdentify: "public.company",
                             column: {
                                 filePath: null,
@@ -409,6 +411,7 @@ describe("MigrationController", () => {
                     commands: [
                         {
                             type: "create",
+                            command: "Table",
                             table: {
                                 filePath: null,
                                 deprecated: false,
@@ -787,6 +790,7 @@ describe("MigrationController", () => {
                         
                         {
                             type: "create",
+                            command: "Rows",
                             table: {
                                 filePath: "order_type.sql",
                                 identify: "order_type",
@@ -857,6 +861,7 @@ describe("MigrationController", () => {
                     commands: [
                         {
                             type: "create",
+                            command: "Table",
                             table: {
                                 filePath: "order_type.sql",
                                 identify: "order_type",
@@ -888,6 +893,7 @@ describe("MigrationController", () => {
                         },
                         {
                             type: "create",
+                            command: "Rows",
                             table: {
                                 filePath: "order_type.sql",
                                 identify: "order_type",

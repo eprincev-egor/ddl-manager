@@ -46,6 +46,7 @@ describe("MigrationController", () => {
                     commands: [
                         {
                             type: "create",
+                            command: "Trigger",
                             trigger: {
                                 filePath: null,
                                 identify: "create_role_trigger on public.company",
@@ -103,6 +104,7 @@ describe("MigrationController", () => {
                     commands: [
                         {
                             type: "drop",
+                            command: "Trigger",
                             trigger: {
                                 filePath: null,
                                 identify: "create_role_trigger on public.company",

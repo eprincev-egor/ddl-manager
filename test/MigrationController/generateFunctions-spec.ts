@@ -19,6 +19,7 @@ describe("MigrationController", () => {
                     commands: [
                         {
                             type: "create",
+                            command: "Function",
                             function: {
                                 filePath: null,
                                 identify: "public.test()",
@@ -47,6 +48,7 @@ describe("MigrationController", () => {
                     commands: [
                         {
                             type: "drop",
+                            command: "Function",
                             function: {
                                 filePath: null,
                                 identify: "public.test()",
@@ -100,6 +102,7 @@ describe("MigrationController", () => {
                         // first the 'drop'
                         {
                             type: "drop",
+                            command: "Function",
                             function: {
                                 filePath: null,
                                 identify: "public.test2()",
@@ -110,6 +113,7 @@ describe("MigrationController", () => {
                         // second the 'create'
                         {
                             type: "create",
+                            command: "Function",
                             function: {
                                 filePath: null,
                                 identify: "public.test1()",

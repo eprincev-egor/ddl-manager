@@ -19,6 +19,7 @@ describe("MigrationController", () => {
                     commands: [
                         {
                             type: "create",
+                            command: "View",
                             view: {
                                 filePath: null,
                                 identify: "public.operations_view",
@@ -48,6 +49,7 @@ describe("MigrationController", () => {
                     commands: [
                         {
                             type: "drop",
+                            command: "View",
                             view: {
                                 filePath: null,
                                 identify: "public.operations_view",

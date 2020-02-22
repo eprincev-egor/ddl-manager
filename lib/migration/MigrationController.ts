@@ -14,7 +14,7 @@ import CannotDropColumnErrorModel from "./errors/CannotDropColumnErrorModel";
 import CannotDropTableErrorModel from "./errors/CannotDropTableErrorModel";
 import CannotChangeColumnTypeErrorModel from "./errors/CannotChangeColumnTypeErrorModel";
 import ExpectedPrimaryKeyForRowsErrorModel from "./errors/ExpectedPrimaryKeyForRowsErrorModel";
-import CreateRowsCommandModel from "./commands/CreateRowsCommandModel";
+import CreateRowsCommandModel from "./commands/RowsCommandModel";
 
 type TMigrationMode = "dev" | "prod";
 

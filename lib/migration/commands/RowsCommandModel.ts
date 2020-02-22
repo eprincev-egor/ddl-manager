@@ -2,8 +2,8 @@ import {Types} from "model-layer";
 import CommandModel from "./CommandModel";
 import TableModel from "../../objects/TableModel";
 
-export default class CreateRowsCommandModel 
-extends CommandModel<CreateRowsCommandModel> {
+export default class RowsCommandModel 
+extends CommandModel<RowsCommandModel> {
     structure() {
         return {
             ...super.structure(),
