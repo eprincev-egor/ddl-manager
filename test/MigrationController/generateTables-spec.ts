@@ -1,6 +1,7 @@
 import testGenerateMigration from "./testGenerateMigration";
 import State from "../../lib/State";
 import assert from "assert";
+import { Model } from "model-layer";
 
 describe("MigrationController", () => {
 
@@ -35,6 +36,7 @@ describe("MigrationController", () => {
                                 deprecatedColumns: [],
                                 deprecated: false,
                                 primaryKey: null,
+                                constraints: [],
                                 columns: [{
                                     filePath: null,
                                     identify: "id",
@@ -422,6 +424,7 @@ describe("MigrationController", () => {
                                 parsed: null,
                                 deprecatedColumns: ["name"],
                                 primaryKey: null,
+                                constraints: [],
                                 columns: [{
                                     filePath: null,
                                     identify: "id",
@@ -802,6 +805,7 @@ describe("MigrationController", () => {
                                 parsed: null,
                                 deprecatedColumns: [],
                                 deprecated: false,
+                                constraints: [],
                                 columns: [
                                     {
                                         filePath: null,
@@ -875,6 +879,7 @@ describe("MigrationController", () => {
                                 parsed: null,
                                 deprecatedColumns: [],
                                 deprecated: false,
+                                constraints: [],
                                 columns: [
                                     {
                                         filePath: null,
@@ -909,6 +914,7 @@ describe("MigrationController", () => {
                                 parsed: null,
                                 deprecatedColumns: [],
                                 deprecated: false,
+                                constraints: [],
                                 columns: [
                                     {
                                         filePath: null,
@@ -1198,7 +1204,7 @@ describe("MigrationController", () => {
                 }
             });
         });
-        
+
     });
 
 });
