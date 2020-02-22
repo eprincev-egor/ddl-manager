@@ -642,6 +642,290 @@ describe("MigrationController", () => {
             });
         });
         
+        it("create rows, expected primary key error", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [{
+                        filePath: "order_type.sql",
+                        identify: "order_type",
+                        name: "order_type",
+                        columns: [
+                            {
+                                identify: "id",
+                                key: "id",
+                                type: "integer"
+                            },
+                            {
+                                identify: "name",
+                                key: "name",
+                                type: "text"
+                            }
+                        ],
+                        rows: [
+                            {id: 1, name: "FCL"}
+                        ]
+                    }]
+                },
+                db: {
+                    tables: [{
+                        identify: "order_type",
+                        name: "order_type",
+                        columns: [
+                            {
+                                identify: "id",
+                                key: "id",
+                                type: "integer"
+                            },
+                            {
+                                identify: "name",
+                                key: "name",
+                                type: "text"
+                            }
+                        ]
+                    }]
+                },
+                migration: {
+                    commands: [],
+                    errors: [
+                        {
+                            filePath: "order_type.sql",
+                            code: "ExpectedPrimaryKeyForRowsError",
+                            message: "table order_type should have primary key for creating rows",
+                            tableIdentify: "order_type"
+                        }                        
+                    ]
+                }
+            });
+        });
+        
+        it("create rows, expected primary key error, empty db", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [{
+                        filePath: "order_type.sql",
+                        identify: "order_type",
+                        name: "order_type",
+                        columns: [
+                            {
+                                identify: "id",
+                                key: "id",
+                                type: "integer"
+                            },
+                            {
+                                identify: "name",
+                                key: "name",
+                                type: "text"
+                            }
+                        ],
+                        rows: [
+                            {id: 1, name: "FCL"}
+                        ]
+                    }]
+                },
+                db: {
+                    tables: []
+                },
+                migration: {
+                    commands: [],
+                    errors: [
+                        {
+                            filePath: "order_type.sql",
+                            code: "ExpectedPrimaryKeyForRowsError",
+                            message: "table order_type should have primary key for creating rows",
+                            tableIdentify: "order_type"
+                        }                        
+                    ]
+                }
+            });
+        });
+        
+        it("create rows, db table exists", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [{
+                        filePath: "order_type.sql",
+                        identify: "order_type",
+                        name: "order_type",
+                        columns: [
+                            {
+                                identify: "id",
+                                key: "id",
+                                type: "integer"
+                            },
+                            {
+                                identify: "name",
+                                key: "name",
+                                type: "text"
+                            }
+                        ],
+                        primaryKey: ["id"],
+                        rows: [
+                            {id: 1, name: "FCL"}
+                        ]
+                    }]
+                },
+                db: {
+                    tables: [{
+                        identify: "order_type",
+                        name: "order_type",
+                        columns: [
+                            {
+                                identify: "id",
+                                key: "id",
+                                type: "integer"
+                            },
+                            {
+                                identify: "name",
+                                key: "name",
+                                type: "text"
+                            }
+                        ]
+                    }]
+                },
+                migration: {
+                    commands: [
+                        
+                        {
+                            type: "create",
+                            table: {
+                                filePath: "order_type.sql",
+                                identify: "order_type",
+                                name: "order_type",
+                                parsed: null,
+                                deprecatedColumns: [],
+                                deprecated: false,
+                                columns: [
+                                    {
+                                        filePath: null,
+                                        identify: "id",
+                                        key: "id",
+                                        parsed: null,
+                                        type: "integer"
+                                    },
+                                    {
+                                        filePath: null,
+                                        identify: "name",
+                                        key: "name",
+                                        parsed: null,
+                                        type: "text"
+                                    }
+                                ],
+                                primaryKey: ["id"],
+                                rows: [
+                                    {id: 1, name: "FCL"}
+                                ]
+                            },
+                            rows: [
+                                {id: 1, name: "FCL"}
+                            ]
+                        }
+                    ],
+                    errors: []
+                }
+            });
+        });
+
+        it("create table and rows, db is empty", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [{
+                        filePath: "order_type.sql",
+                        identify: "order_type",
+                        name: "order_type",
+                        columns: [
+                            {
+                                identify: "id",
+                                key: "id",
+                                type: "integer"
+                            },
+                            {
+                                identify: "name",
+                                key: "name",
+                                type: "text"
+                            }
+                        ],
+                        primaryKey: ["id"],
+                        rows: [
+                            {id: 1, name: "FCL"}
+                        ]
+                    }]
+                },
+                db: {
+                    tables: []
+                },
+                migration: {
+                    commands: [
+                        {
+                            type: "create",
+                            table: {
+                                filePath: "order_type.sql",
+                                identify: "order_type",
+                                name: "order_type",
+                                parsed: null,
+                                deprecatedColumns: [],
+                                deprecated: false,
+                                columns: [
+                                    {
+                                        filePath: null,
+                                        identify: "id",
+                                        key: "id",
+                                        parsed: null,
+                                        type: "integer"
+                                    },
+                                    {
+                                        filePath: null,
+                                        identify: "name",
+                                        key: "name",
+                                        parsed: null,
+                                        type: "text"
+                                    }
+                                ],
+                                primaryKey: ["id"],
+                                rows: [
+                                    {id: 1, name: "FCL"}
+                                ]
+                            }
+                        },
+                        {
+                            type: "create",
+                            table: {
+                                filePath: "order_type.sql",
+                                identify: "order_type",
+                                name: "order_type",
+                                parsed: null,
+                                deprecatedColumns: [],
+                                deprecated: false,
+                                columns: [
+                                    {
+                                        filePath: null,
+                                        identify: "id",
+                                        key: "id",
+                                        parsed: null,
+                                        type: "integer"
+                                    },
+                                    {
+                                        filePath: null,
+                                        identify: "name",
+                                        key: "name",
+                                        parsed: null,
+                                        type: "text"
+                                    }
+                                ],
+                                primaryKey: ["id"],
+                                rows: [
+                                    {id: 1, name: "FCL"}
+                                ]
+                            },
+                            rows: [
+                                {id: 1, name: "FCL"}
+                            ]
+                        }
+                    ],
+                    errors: []
+                }
+            });
+        });
+        
     });
 
 });

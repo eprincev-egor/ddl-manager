@@ -13,6 +13,8 @@ import MaxObjectNameSizeErrorModel from "./errors/MaxObjectNameSizeErrorModel";
 import CannotDropColumnErrorModel from "./errors/CannotDropColumnErrorModel";
 import CannotDropTableErrorModel from "./errors/CannotDropTableErrorModel";
 import CannotChangeColumnTypeErrorModel from "./errors/CannotChangeColumnTypeErrorModel";
+import ExpectedPrimaryKeyForRowsErrorModel from "./errors/ExpectedPrimaryKeyForRowsErrorModel";
+import CreateRowsCommandModel from "./commands/CreateRowsCommandModel";
 
 type TMigrationMode = "dev" | "prod";
 
@@ -191,6 +193,19 @@ export default class MigrationController {
                 return;
             }
 
+            if ( fsTableModel.get("rows") ) {
+                const primaryKey = fsTableModel.get("primaryKey");
+                if ( !primaryKey ) {
+                    const errorModel = new ExpectedPrimaryKeyForRowsErrorModel({
+                        filePath: fsTableModel.get("filePath"),
+                        tableIdentify: fsTableIdentify
+                    });
+    
+                    errors.push(errorModel);
+                    return;
+                }
+            }
+
             if ( dbTableModel ) {
                 // create columns
                 const dbColumns = dbTableModel.get("columns");
@@ -253,18 +268,27 @@ export default class MigrationController {
                         errors.push(errorModel);
                     });
                 }
-
-                return;
+            }
+            else {
+                const createTableCommand = new TableCommandModel({
+                    type: "create",
+                    table: fsTableModel
+                });
+                commands.push(createTableCommand);
+    
             }
 
-            const createTableCommand = new TableCommandModel({
-                type: "create",
-                table: fsTableModel
-            });
-            commands.push(createTableCommand);
+            if ( fsTableModel.get("rows") ) {
+                const createRowsCommand = new CreateRowsCommandModel({
+                    type: "create",
+                    table: fsTableModel,
+                    rows: fsTableModel.get("rows")
+                });
+                commands.push(createRowsCommand);
+            }
         });
 
-        // error on drop columns
+        // error on drop table
         this.db.row.tables.each((dbTableModel) => {
             const dbTableIdentify = dbTableModel.getIdentify();
             const fsTableModel = this.fs.row.tables.getByIdentify(dbTableIdentify);
