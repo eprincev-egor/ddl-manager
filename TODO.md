@@ -1,0 +1,5 @@
+- check migrations before build
+- change schema for table
+- fs: delete dir
+- fs: create dir
+- fs: rename dir
