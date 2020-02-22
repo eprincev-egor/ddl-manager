@@ -50,4 +50,46 @@ describe("TableModel", () => {
         );
     });
 
+    it("validate primaryKey, empty array", () => {
+        assert.throws(
+            () => {
+                const model = new TableModel({
+                    identify: "test",
+                    name: "test",
+                    columns: [
+                        {
+                            identify: "id",
+                            key: "id",
+                            type: "integer"
+                        }
+                    ],
+                    primaryKey: []
+                });
+            },
+            err =>
+                err.message === "primary key cannot be empty array"
+        );
+    });
+
+    it("validate primaryKey, unknown column", () => {
+        assert.throws(
+            () => {
+                const model = new TableModel({
+                    identify: "test",
+                    name: "test",
+                    columns: [
+                        {
+                            identify: "id",
+                            key: "id",
+                            type: "integer"
+                        }
+                    ],
+                    primaryKey: ["id", "name"]
+                });
+            },
+            err =>
+                err.message === "unknown primary key columns: name"
+        );
+    });
+
 });

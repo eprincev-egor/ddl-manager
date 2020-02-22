@@ -33,6 +33,7 @@ describe("MigrationController", () => {
                                 parsed: null,
                                 deprecatedColumns: [],
                                 deprecated: false,
+                                primaryKey: null,
                                 columns: [{
                                     filePath: null,
                                     identify: "id",
@@ -415,6 +416,7 @@ describe("MigrationController", () => {
                                 name: "company",
                                 parsed: null,
                                 deprecatedColumns: ["name"],
+                                primaryKey: null,
                                 columns: [{
                                     filePath: null,
                                     identify: "id",

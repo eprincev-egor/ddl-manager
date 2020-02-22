@@ -25,6 +25,10 @@ export default class TableModel extends BaseObjectModel<TableModel> {
             }),
             rows: Types.Array({
                 element: Types.Object
+            }),
+            primaryKey: Types.Array({
+                element: Types.String,
+                unique: true
             })
         };
     }
@@ -32,6 +36,7 @@ export default class TableModel extends BaseObjectModel<TableModel> {
     validate(table: this["row"]) {
         this.validateDeprecatedColumns(table);
         this.validateRows(table);
+        this.validatePrimaryKey(table);
     }
 
     validateRows(table: this["row"]) {
@@ -71,6 +76,31 @@ export default class TableModel extends BaseObjectModel<TableModel> {
 
         if ( duplicatedKeys.length ) {
             throw new Error("columns should be only actual or only deprecated: " + duplicatedKeys);
+        }
+    }
+
+    validatePrimaryKey(table: this["row"]) {
+        if ( !table.primaryKey ) {
+            return;
+        }
+
+        if ( !table.primaryKey.length ) {
+            throw new Error("primary key cannot be empty array");
+        }
+
+        const unknownColumns = [];
+        table.primaryKey.forEach(key => {
+            const existsColumn = table.columns.find((column) => 
+                column.get("key") === key
+            );
+
+            if ( !existsColumn ) {
+                unknownColumns.push(key);
+            }
+        });
+
+        if ( unknownColumns.length ) {
+            throw new Error(`unknown primary key columns: ${ unknownColumns }`);
         }
     }
 }
