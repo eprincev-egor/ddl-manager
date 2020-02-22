@@ -16,6 +16,7 @@ import CannotChangeColumnTypeErrorModel from "./errors/CannotChangeColumnTypeErr
 import ExpectedPrimaryKeyForRowsErrorModel from "./errors/ExpectedPrimaryKeyForRowsErrorModel";
 import CreateRowsCommandModel from "./commands/RowsCommandModel";
 import ColumnNotNullCommandModel from "./commands/ColumnNotNullCommandModel";
+import PrimaryKeyCommandModel from "./commands/PrimaryKeyCommandModel";
 
 type TMigrationMode = "dev" | "prod";
 
@@ -284,6 +285,50 @@ export default class MigrationController {
                         });
                         errors.push(errorModel);
                     });
+                }
+
+                const fsPrimaryKey = fsTableModel.get("primaryKey");
+                const dbPrimaryKey = dbTableModel.get("primaryKey");
+
+                if ( fsPrimaryKey && !dbPrimaryKey ) {
+                    const primaryKeyCommand = new PrimaryKeyCommandModel({
+                        type: "create",
+                        tableIdentify: fsTableIdentify,
+                        primaryKey: fsPrimaryKey
+                    });
+                    commands.push(primaryKeyCommand);
+                }
+
+                if ( !fsPrimaryKey && dbPrimaryKey ) {
+                    const primaryKeyCommand = new PrimaryKeyCommandModel({
+                        type: "drop",
+                        tableIdentify: fsTableIdentify,
+                        primaryKey: dbPrimaryKey
+                    });
+                    commands.push(primaryKeyCommand);
+                }
+
+                if ( fsPrimaryKey && dbPrimaryKey ) {
+                    const isEqual = (
+                        fsPrimaryKey.length === dbPrimaryKey.length &&
+                        fsPrimaryKey.every(key => dbPrimaryKey.includes(key))
+                    );
+
+                    if ( !isEqual ) {
+                        const dropPrimaryKeyCommand = new PrimaryKeyCommandModel({
+                            type: "drop",
+                            tableIdentify: fsTableIdentify,
+                            primaryKey: dbPrimaryKey
+                        });
+                        commands.push(dropPrimaryKeyCommand);
+
+                        const createPrimaryKeyCommand = new PrimaryKeyCommandModel({
+                            type: "create",
+                            tableIdentify: fsTableIdentify,
+                            primaryKey: fsPrimaryKey
+                        });
+                        commands.push(createPrimaryKeyCommand);
+                    }
                 }
             }
             else {

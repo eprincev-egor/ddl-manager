@@ -7,9 +7,11 @@ import ColumnCommandModel from "./ColumnCommandModel";
 import TriggerCommandModel from "./TriggerCommandModel";
 import RowsCommandModel from "./RowsCommandModel";
 import ColumnNotNullCommandModel from "./ColumnNotNullCommandModel";
+import PrimaryKeyCommandModel from "./PrimaryKeyCommandModel";
 
 export default class CommandsCollection extends Collection<CommandsCollection> {
     Model(): (
+        (new (...args: any[]) => PrimaryKeyCommandModel) |
         (new (...args: any[]) => ColumnNotNullCommandModel) |
         (new (...args: any[]) => RowsCommandModel) |
         (new (...args: any[]) => FunctionCommandModel) |
