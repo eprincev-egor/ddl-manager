@@ -1,5 +1,6 @@
 - check migrations before build
 - change schema for table
+- indexes
 - fs: delete dir
 - fs: create dir
 - fs: rename dir

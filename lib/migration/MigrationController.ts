@@ -17,6 +17,7 @@ import ExpectedPrimaryKeyForRowsErrorModel from "./errors/ExpectedPrimaryKeyForR
 import CreateRowsCommandModel from "./commands/RowsCommandModel";
 import ColumnNotNullCommandModel from "./commands/ColumnNotNullCommandModel";
 import PrimaryKeyCommandModel from "./commands/PrimaryKeyCommandModel";
+import CheckConstraintCommandModel from "./commands/CheckConstraintCommandModel";
 
 type TMigrationMode = "dev" | "prod";
 
@@ -328,6 +329,62 @@ export default class MigrationController {
                             primaryKey: fsPrimaryKey
                         });
                         commands.push(createPrimaryKeyCommand);
+                    }
+                }
+
+                const fsConstraints = fsTableModel.get("constraints");
+                const dbConstraints = dbTableModel.get("constraints");
+
+                // create constraints
+                for (const fsConstraint of fsConstraints) {
+                    const name = fsConstraint.get("name");
+                    const existsDbConstraint = dbConstraints.find(dbConstraint =>
+                        dbConstraint.get("name") === name
+                    );
+
+                    if ( existsDbConstraint ) {
+                        const isEqual = existsDbConstraint.equal(fsConstraint);
+                        
+                        if ( !isEqual ) {
+                            const dropConstraintCommand = new CheckConstraintCommandModel({
+                                type: "drop",
+                                tableIdentify: fsTableIdentify,
+                                constraint: existsDbConstraint
+                            });
+                            commands.push(dropConstraintCommand);
+
+                            const createConstraintCommand = new CheckConstraintCommandModel({
+                                type: "create",
+                                tableIdentify: fsTableIdentify,
+                                constraint: fsConstraint
+                            });
+                            commands.push(createConstraintCommand);
+                        }
+                    }
+                    else {
+                        const constraintCommand = new CheckConstraintCommandModel({
+                            type: "create",
+                            tableIdentify: fsTableIdentify,
+                            constraint: fsConstraint
+                        });
+                        commands.push(constraintCommand);
+                    }
+                }
+
+                // drop constraints
+                for (const dbConstraint of dbConstraints) {
+                    const name = dbConstraint.get("name");
+                    const existsFsConstraint = fsConstraints.find(fsConstraint =>
+                        fsConstraint.get("name") === name
+                    );
+
+                    if ( !existsFsConstraint ) {
+                        const constraintCommand = new CheckConstraintCommandModel({
+                            type: "drop",
+                            tableIdentify: fsTableIdentify,
+                            constraint: dbConstraint
+                        });
+                        commands.push(constraintCommand);
                     }
                 }
             }

@@ -9,9 +9,6 @@ extends BaseObjectModel<CheckConstraintModel> {
 
             name: Types.String({
                 required: true
-            }),
-            check: Types.Any({
-                required: true
             })
         };
     }
