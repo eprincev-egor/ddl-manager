@@ -11,6 +11,10 @@ export default class ColumnModel extends BaseObjectModel<ColumnModel> {
             }),
             type: Types.String({
                 required: true
+            }),
+            nulls: Types.Boolean({
+                required: true,
+                default: true
             })
         };
     }

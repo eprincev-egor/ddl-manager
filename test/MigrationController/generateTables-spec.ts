@@ -40,6 +40,7 @@ describe("MigrationController", () => {
                                     identify: "id",
                                     key: "id",
                                     parsed: null,
+                                    nulls: true,
                                     type: "integer"
                                 }],
                                 rows: null
@@ -90,6 +91,7 @@ describe("MigrationController", () => {
                                 identify: "name",
                                 key: "name",
                                 parsed: null,
+                                nulls: true,
                                 type: "text"
                             }
                         }
@@ -425,6 +427,7 @@ describe("MigrationController", () => {
                                     identify: "id",
                                     key: "id",
                                     parsed: null,
+                                    nulls: true,
                                     type: "integer"
                                 }],
                                 rows: null
@@ -804,6 +807,7 @@ describe("MigrationController", () => {
                                         identify: "id",
                                         key: "id",
                                         parsed: null,
+                                        nulls: true,
                                         type: "integer"
                                     },
                                     {
@@ -811,6 +815,7 @@ describe("MigrationController", () => {
                                         identify: "name",
                                         key: "name",
                                         parsed: null,
+                                        nulls: true,
                                         type: "text"
                                     }
                                 ],
@@ -875,6 +880,7 @@ describe("MigrationController", () => {
                                         identify: "id",
                                         key: "id",
                                         parsed: null,
+                                        nulls: true,
                                         type: "integer"
                                     },
                                     {
@@ -882,6 +888,7 @@ describe("MigrationController", () => {
                                         identify: "name",
                                         key: "name",
                                         parsed: null,
+                                        nulls: true,
                                         type: "text"
                                     }
                                 ],
@@ -907,6 +914,7 @@ describe("MigrationController", () => {
                                         identify: "id",
                                         key: "id",
                                         parsed: null,
+                                        nulls: true,
                                         type: "integer"
                                     },
                                     {
@@ -914,6 +922,7 @@ describe("MigrationController", () => {
                                         identify: "name",
                                         key: "name",
                                         parsed: null,
+                                        nulls: true,
                                         type: "text"
                                     }
                                 ],
@@ -931,7 +940,7 @@ describe("MigrationController", () => {
                 }
             });
         });
-        
+
     });
 
 });
