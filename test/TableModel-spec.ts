@@ -146,4 +146,97 @@ describe("TableModel", () => {
         );
     });
 
+    it("validate foreignKeyConstraint, empty array of columns", () => {
+        assert.throws(
+            () => {
+                const model = new TableModel({
+                    identify: "test",
+                    name: "test",
+                    columns: [
+                        {
+                            identify: "id",
+                            key: "id",
+                            type: "integer"
+                        }
+                    ],
+                    foreignKeysConstraints: [
+                        {
+                            identify: "country_fk",
+                            name: "country_fk",
+                            columns: [],
+                            referenceTableIdentify: "country",
+                            referenceColumns: ["id"]
+                        }
+                    ]
+                });
+            },
+            err =>
+                err.message === "columns inside foreign key constraint 'country_fk' cannot be empty array"
+        );
+    });
+
+    it("validate foreignKeyConstraint, empty array of referenceColumns", () => {
+        assert.throws(
+            () => {
+                const model = new TableModel({
+                    identify: "test",
+                    name: "test",
+                    columns: [
+                        {
+                            identify: "id",
+                            key: "id",
+                            type: "integer"
+                        },
+                        {
+                            identify: "id_country",
+                            key: "id_country",
+                            type: "integer"
+                        }
+                    ],
+                    foreignKeysConstraints: [
+                        {
+                            identify: "country_fk",
+                            name: "country_fk",
+                            columns: ["id_country"],
+                            referenceTableIdentify: "country",
+                            referenceColumns: []
+                        }
+                    ]
+                });
+            },
+            err =>
+                err.message === "referenceColumns inside foreign key constraint 'country_fk' cannot be empty array"
+        );
+    });
+
+    
+    it("validate foreign key constraint, unknown columns", () => {
+        assert.throws(
+            () => {
+                const model = new TableModel({
+                    identify: "test",
+                    name: "test",
+                    columns: [
+                        {
+                            identify: "id",
+                            key: "id",
+                            type: "integer"
+                        }
+                    ],
+                    foreignKeysConstraints: [
+                        {
+                            identify: "country_fk",
+                            name: "country_fk",
+                            columns: ["id_country"],
+                            referenceTableIdentify: "country",
+                            referenceColumns: ["id"]
+                        }
+                    ]
+                });
+            },
+            err =>
+                err.message === "foreign key constraint 'country_fk' contain unknown columns: id_country"
+        );
+    });
+
 });

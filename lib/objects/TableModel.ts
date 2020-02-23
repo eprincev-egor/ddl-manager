@@ -77,6 +77,7 @@ export default class TableModel extends BaseObjectModel<TableModel> {
         this.validateRows(table);
         this.validatePrimaryKey(table);
         this.validateUnique(table);
+        this.validateForeignKeys(table);
     }
 
     validateRows(table: this["row"]) {
@@ -172,5 +173,39 @@ export default class TableModel extends BaseObjectModel<TableModel> {
             }
         });
         
+    }
+
+    validateForeignKeys(table: this["row"]) {
+        if ( !table.foreignKeysConstraints ) {
+            return;
+        }
+
+        table.foreignKeysConstraints.forEach(foreignKeyConstraint => {
+            const columns = foreignKeyConstraint.get("columns");
+
+            if ( !columns.length ) {
+                throw new Error(`columns inside foreign key constraint '${ foreignKeyConstraint.row.name }' cannot be empty array`);
+            }
+
+            const unknownColumns = [];
+            columns.forEach(key => {
+                const existsColumn = table.columns.find((column) => 
+                    column.get("key") === key
+                );
+
+                if ( !existsColumn ) {
+                    unknownColumns.push(key);
+                }
+            });
+            if ( unknownColumns.length ) {
+                throw new Error(`foreign key constraint '${ foreignKeyConstraint.row.name }' contain unknown columns: ${unknownColumns}`);
+            }
+
+
+            const referenceColumns = foreignKeyConstraint.get("referenceColumns");
+            if ( !referenceColumns.length ) {
+                throw new Error(`referenceColumns inside foreign key constraint '${ foreignKeyConstraint.row.name }' cannot be empty array`);
+            }
+        });
     }
 }
