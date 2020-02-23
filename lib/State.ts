@@ -4,7 +4,8 @@ import TriggersCollection from "./objects/TriggersCollection";
 import ViewsCollection from "./objects/ViewsCollection";
 import TablesCollection from "./objects/TablesCollection";
 import MigrationModel from "./migration/MigrationModel";
-import MigrationController, {IMigrationControllerParams} from "./migration/MigrationController";
+import MigrationController from "./migration/MigrationController";
+import {IMigrationControllerParams} from "./migration/IMigrationControllerParams";
 
 export type IMigrationOptions = Omit<IMigrationControllerParams, "db" | "fs">;
 
