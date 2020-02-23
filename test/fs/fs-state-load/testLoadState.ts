@@ -8,17 +8,16 @@ import assert from "assert";
 
 type TTestModel = {
     type: "function";
+    sql: string;
     row: FunctionModel["TInputData"];
 } | {
     type: "table";
+    sql: string;
     row: TableModel["TInputData"]
 };
 
 export interface ITestFiles {
-    [filePath: string]: {
-        sql: string;
-        models: TTestModel[]
-    }
+    [filePath: string]: TTestModel[]
 }
 
 interface ITest {
@@ -32,8 +31,8 @@ export default async function testLoadState(test: ITest) {
     const parserParams: IState = {};
 
     for (const filePath in test.files) {
-        const {sql, models} = test.files[ filePath ];
-        driverParams[ filePath ] = sql;
+        const models = test.files[ filePath ];
+        const sql = testLoadState.getFileSql(models);
 
         const objects: BaseDBObjectModel<any>[] = [];
         for (const model of models) {
@@ -58,6 +57,7 @@ export default async function testLoadState(test: ITest) {
 
         }
 
+        driverParams[ filePath ] = sql;
         parserParams[ sql ] = objects;
     }
 
@@ -73,3 +73,7 @@ export default async function testLoadState(test: ITest) {
 
     assert.deepStrictEqual(fsState.toJSON(), test.expectedState);
 }
+
+testLoadState.getFileSql = (models: TTestModel[]) => {
+    return models.map(model => model.sql).join("\n");
+};
