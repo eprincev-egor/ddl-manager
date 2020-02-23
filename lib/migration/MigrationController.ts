@@ -19,6 +19,9 @@ import ColumnNotNullCommandModel from "./commands/ColumnNotNullCommandModel";
 import PrimaryKeyCommandModel from "./commands/PrimaryKeyCommandModel";
 import CheckConstraintCommandModel from "./commands/CheckConstraintCommandModel";
 import UniqueConstraintCommandModel from "./commands/UniqueConstraintCommandModel";
+import ForeignKeyConstraintCommandModel from "./commands/ForeignKeyConstraintCommandModel";
+import ReferenceToUnknownTableErrorModel from "./errors/ReferenceToUnknownTableErrorModel";
+import ReferenceToUnknownColumnErrorModel from "./errors/ReferenceToUnknownColumnErrorModel";
 
 type TMigrationMode = "dev" | "prod";
 
@@ -289,6 +292,7 @@ export default class MigrationController {
                     });
                 }
 
+                // create/drop primary key
                 const fsPrimaryKey = fsTableModel.get("primaryKey");
                 const dbPrimaryKey = dbTableModel.get("primaryKey");
 
@@ -333,10 +337,10 @@ export default class MigrationController {
                     }
                 }
 
+                // create/drop check constraints
                 const fsCheckConstraints = fsTableModel.get("checkConstraints");
                 const dbCheckConstraints = dbTableModel.get("checkConstraints");
 
-                // create check constraints
                 for (const fsConstraint of fsCheckConstraints) {
                     const name = fsConstraint.get("name");
                     const existsDbConstraint = dbCheckConstraints.find(dbConstraint =>
@@ -372,7 +376,6 @@ export default class MigrationController {
                     }
                 }
 
-                // drop check constraints
                 for (const dbConstraint of dbCheckConstraints) {
                     const name = dbConstraint.get("name");
                     const existsFsConstraint = fsCheckConstraints.find(fsConstraint =>
@@ -390,10 +393,10 @@ export default class MigrationController {
                 }
 
                 
+                // create/drop unique constraints
                 const fsUniqueConstraints = fsTableModel.get("uniqueConstraints");
                 const dbUniqueConstraints = dbTableModel.get("uniqueConstraints");
 
-                // create unique constraints
                 for (const fsConstraint of fsUniqueConstraints) {
                     const name = fsConstraint.get("name");
                     const existsDbConstraint = dbUniqueConstraints.find(dbConstraint =>
@@ -407,14 +410,14 @@ export default class MigrationController {
                             const dropConstraintCommand = new UniqueConstraintCommandModel({
                                 type: "drop",
                                 tableIdentify: fsTableIdentify,
-                                constraint: existsDbConstraint
+                                unique: existsDbConstraint
                             });
                             commands.push(dropConstraintCommand);
 
                             const createConstraintCommand = new UniqueConstraintCommandModel({
                                 type: "create",
                                 tableIdentify: fsTableIdentify,
-                                constraint: fsConstraint
+                                unique: fsConstraint
                             });
                             commands.push(createConstraintCommand);
                         }
@@ -423,13 +426,12 @@ export default class MigrationController {
                         const constraintCommand = new UniqueConstraintCommandModel({
                             type: "create",
                             tableIdentify: fsTableIdentify,
-                            constraint: fsConstraint
+                            unique: fsConstraint
                         });
                         commands.push(constraintCommand);
                     }
                 }
 
-                // drop unique constraints
                 for (const dbConstraint of dbUniqueConstraints) {
                     const name = dbConstraint.get("name");
                     const existsFsConstraint = fsUniqueConstraints.find(fsConstraint =>
@@ -440,12 +442,107 @@ export default class MigrationController {
                         const constraintCommand = new UniqueConstraintCommandModel({
                             type: "drop",
                             tableIdentify: fsTableIdentify,
-                            constraint: dbConstraint
+                            unique: dbConstraint
                         });
                         commands.push(constraintCommand);
                     }
                 }
 
+
+                // create/drop foreign key constraints
+                const fsForeignKeyConstraints = fsTableModel.get("foreignKeysConstraints");
+                const dbForeignKeyConstraints = dbTableModel.get("foreignKeysConstraints");
+
+                for (const fsConstraint of fsForeignKeyConstraints) {
+                    const name = fsConstraint.get("name");
+
+                    // validate
+                    const referenceTableIdentify = fsConstraint.get("referenceTableIdentify");
+                    const referenceTableModel = this.db.row.tables.getByIdentify(referenceTableIdentify);
+
+                    if ( !referenceTableModel ) {
+                        const errorModel = new ReferenceToUnknownTableErrorModel({
+                            filePath: fsTableModel.get("filePath"),
+                            foreignKeyName: name,
+                            tableIdentify: fsTableIdentify,
+                            referenceTableIdentify
+                        });
+                        errors.push(errorModel);
+                        continue;
+                    }
+
+                    const referenceColumns = fsConstraint.get("referenceColumns");
+                    const unknownColumns = [];
+                    referenceColumns.forEach(key => {
+                        const existsColumn = referenceTableModel.get("columns").find(column =>
+                            column.get("key") === key
+                        );
+
+                        if ( !existsColumn ) {
+                            unknownColumns.push(key);
+                        }
+                    });
+                    if ( unknownColumns.length ) {
+                        const errorModel = new ReferenceToUnknownColumnErrorModel({
+                            filePath: fsTableModel.get("filePath"),
+                            foreignKeyName: name,
+                            tableIdentify: fsTableIdentify,
+                            referenceTableIdentify,
+                            referenceColumns: unknownColumns
+                        });
+                        errors.push(errorModel);
+                        continue;
+                    }
+
+                    // migrate
+                    const existsDbConstraint = dbForeignKeyConstraints.find(dbConstraint =>
+                        dbConstraint.get("name") === name
+                    );
+
+                    if ( existsDbConstraint ) {
+                        const isEqual = existsDbConstraint.equal(fsConstraint);
+                        
+                        if ( !isEqual ) {
+                            const dropConstraintCommand = new ForeignKeyConstraintCommandModel({
+                                type: "drop",
+                                tableIdentify: fsTableIdentify,
+                                foreignKey: existsDbConstraint
+                            });
+                            commands.push(dropConstraintCommand);
+
+                            const createConstraintCommand = new ForeignKeyConstraintCommandModel({
+                                type: "create",
+                                tableIdentify: fsTableIdentify,
+                                foreignKey: fsConstraint
+                            });
+                            commands.push(createConstraintCommand);
+                        }
+                    }
+                    else {
+                        const constraintCommand = new ForeignKeyConstraintCommandModel({
+                            type: "create",
+                            tableIdentify: fsTableIdentify,
+                            foreignKey: fsConstraint
+                        });
+                        commands.push(constraintCommand);
+                    }
+                }
+
+                for (const dbConstraint of dbForeignKeyConstraints) {
+                    const name = dbConstraint.get("name");
+                    const existsFsConstraint = fsForeignKeyConstraints.find(fsConstraint =>
+                        fsConstraint.get("name") === name
+                    );
+
+                    if ( !existsFsConstraint ) {
+                        const constraintCommand = new ForeignKeyConstraintCommandModel({
+                            type: "drop",
+                            tableIdentify: fsTableIdentify,
+                            foreignKey: dbConstraint
+                        });
+                        commands.push(constraintCommand);
+                    }
+                }
             }
             else {
                 const createTableCommand = new TableCommandModel({
@@ -456,6 +553,7 @@ export default class MigrationController {
     
             }
 
+            // (re)create table rows
             if ( fsTableModel.get("rows") ) {
                 const createRowsCommand = new CreateRowsCommandModel({
                     type: "create",

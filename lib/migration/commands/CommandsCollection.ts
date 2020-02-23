@@ -10,9 +10,11 @@ import ColumnNotNullCommandModel from "./ColumnNotNullCommandModel";
 import PrimaryKeyCommandModel from "./PrimaryKeyCommandModel";
 import CheckConstraintCommandModel from "./CheckConstraintCommandModel";
 import UniqueConstraintCommandModel from "./UniqueConstraintCommandModel";
+import ForeignKeyConstraintCommandModel from "./ForeignKeyConstraintCommandModel";
 
 export default class CommandsCollection extends Collection<CommandsCollection> {
     Model(): (
+        (new (...args: any[]) => ForeignKeyConstraintCommandModel) |
         (new (...args: any[]) => UniqueConstraintCommandModel) |
         (new (...args: any[]) => CheckConstraintCommandModel) |
         (new (...args: any[]) => PrimaryKeyCommandModel) |

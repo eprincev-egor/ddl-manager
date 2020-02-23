@@ -1,9 +1,9 @@
 import {Types} from "model-layer";
 import CommandModel from "./CommandModel";
-import UniqueConstraintModel from "../../objects/UniqueConstraintModel";
+import ForeignKeyConstraintModel from "../../objects/ForeignKeyConstraintModel";
 
-export default class UniqueConstraintCommandModel 
-extends CommandModel<UniqueConstraintCommandModel> {
+export default class ForeignKeyConstraintCommandModel 
+extends CommandModel<ForeignKeyConstraintCommandModel> {
     structure() {
         return {
             ...super.structure(),
@@ -12,8 +12,8 @@ extends CommandModel<UniqueConstraintCommandModel> {
                 required: true
             }),
             
-            unique: Types.Model({
-                Model: UniqueConstraintModel,
+            foreignKey: Types.Model({
+                Model: ForeignKeyConstraintModel,
                 required: true
             })
         };
