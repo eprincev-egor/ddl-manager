@@ -1,59 +1,56 @@
 import FSDriver, {IDirContent} from "../../lib/fs/FSDriver";
 
-export interface ITestDir {
-    files: {[key: string]: string};
-    folders: {[key: string]: ITestDir};
-};
+export interface IFiles {
+    [key: string]: string;
+}
 
 export default class TestFSDriver extends FSDriver {
-    rootDir: ITestDir;
+    files: IFiles;
+    dirContentByPath: {[filePath: string]: IDirContent};
 
-    constructor(testDir: ITestDir) {
+    constructor(files: IFiles) {
         super();
-        this.rootDir = testDir;
-    }
+        this.files = files;
 
-    private findDir(folderPath): ITestDir {
-        const names = folderPath
-            .split(/[\\\/]/g)
-            .slice(0, -1)
-            .filter(name => 
-                name !== "" &&
-                name !== "."
-            )
-            .join("/");
-        
-        let dir = this.rootDir;
-        for (const name of names) {
-            dir = dir.folders[ name ];
+        this.dirContentByPath = {};
+
+        // filePath: "path/to/some/file.sql"
+        for (const filePath in files) {
+            // dirNames: ["path", "to", "some"]
+            const dirNames = filePath.split("/").slice(0, 1);
+            const fileName = filePath.split("/").pop();
+
+            let folderPath = "";
+            let lastDirContent: IDirContent;
+            for (const dirName of dirNames) {
+                folderPath = folderPath + "/" + dirName;
+
+                let dirContent = this.dirContentByPath[ folderPath ];
+                if ( !dirContent ) {
+                    dirContent = {
+                        files: [],
+                        folders: []
+                    };
+
+                    this.dirContentByPath[ folderPath ] = dirContent;
+                }
+
+                if ( lastDirContent ) {
+                    lastDirContent.folders.push( dirName );
+                }
+
+                lastDirContent = dirContent;
+            }
+
+            lastDirContent.files.push(fileName);
         }
-
-        return dir;
     }
 
     async readFile(filePath: string): Promise<string> {
-        const pathElems = filePath
-            .split(/[\\\/]/g)
-            .filter(name => 
-                name !== "" &&
-                name !== "."
-            );
-        const folderPath = pathElems.slice(0, -1).join("/");
-        const fileName = pathElems.pop();
-
-        const dir = this.findDir(folderPath);
-
-        return dir.files[ fileName ];
+        return this.files[ filePath ];
     }
 
     async readFolder(folderPath: string): Promise<IDirContent> {
-        const dir = this.findDir(folderPath);
-        const files = Object.keys(dir.files);
-        const folders = Object.keys( dir.folders );
-
-        return {
-            files,
-            folders
-        };
+        return this.dirContentByPath[ folderPath ];
     }
 }

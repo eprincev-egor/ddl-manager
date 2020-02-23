@@ -1,10 +1,10 @@
-import FSState from "../../lib/FSState";
-import TestFSDriver, {ITestDir} from "./TestFSDriver";
-import TestParser, {IState} from "./TestParser";
-import FunctionModel from "../../lib/objects/FunctionModel";
+import FSState from "../../../lib/FSState";
+import TestFSDriver, {IFiles} from "../TestFSDriver";
+import TestParser, {IState} from "../TestParser";
+import FunctionModel from "../../../lib/objects/FunctionModel";
+import BaseDBObjectModel from "../../../lib/objects/BaseDBObjectModel";
+import TableModel from "../../../lib/objects/TableModel";
 import assert from "assert";
-import BaseDBObjectModel from "../../lib/objects/BaseDBObjectModel";
-import TableModel from "../../lib/objects/TableModel";
 
 type TTestModel = {
     type: "function";
@@ -23,16 +23,12 @@ export interface ITestFiles {
 
 interface ITest {
     files: ITestFiles;
-    folders: {[key: string]: ITestDir};
     expectedState: FSState["TJson"];
 }
 
 export default async function testLoadState(test: ITest) {
 
-    const driverParams: ITestDir = {
-        files: {},
-        folders: test.folders
-    };
+    const driverParams: IFiles = {};
     const parserParams: IState = {};
 
     for (const filePath in test.files) {

@@ -27,7 +27,6 @@ describe("FSState", () => {
 
         testLoadState({
             files,
-            folders: {},
             expectedState: {
                 folder: {
                     path: "./",
