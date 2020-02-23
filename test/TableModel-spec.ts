@@ -92,4 +92,58 @@ describe("TableModel", () => {
         );
     });
 
+    it("validate uniqueConstraint, empty array", () => {
+        assert.throws(
+            () => {
+                const model = new TableModel({
+                    identify: "test",
+                    name: "test",
+                    columns: [
+                        {
+                            identify: "id",
+                            key: "id",
+                            type: "integer"
+                        }
+                    ],
+                    uniqueConstraints: [
+                        {
+                            identify: "test",
+                            name: "test",
+                            unique: []
+                        }
+                    ]
+                });
+            },
+            err =>
+                err.message === "unique constraint 'test' cannot be empty array"
+        );
+    });
+
+    it("validate uniqueConstraint, unknown column", () => {
+        assert.throws(
+            () => {
+                const model = new TableModel({
+                    identify: "test",
+                    name: "test",
+                    columns: [
+                        {
+                            identify: "id",
+                            key: "id",
+                            type: "integer"
+                        }
+                    ],
+                    uniqueConstraints: [
+                        {
+                            identify: "test",
+                            name: "test",
+                            unique: ["name"]
+                        }
+                    ]
+                });
+            },
+            err =>
+                err.message === "unique constraint 'test' contain unknown columns: name"
+        );
+    });
+
 });

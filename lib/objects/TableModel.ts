@@ -76,6 +76,7 @@ export default class TableModel extends BaseObjectModel<TableModel> {
         this.validateDeprecatedColumns(table);
         this.validateRows(table);
         this.validatePrimaryKey(table);
+        this.validateUnique(table);
     }
 
     validateRows(table: this["row"]) {
@@ -141,5 +142,35 @@ export default class TableModel extends BaseObjectModel<TableModel> {
         if ( unknownColumns.length ) {
             throw new Error(`unknown primary key columns: ${ unknownColumns }`);
         }
+    }
+
+    validateUnique(table: this["row"]) {
+        if ( !table.uniqueConstraints ) {
+            return;
+        }
+
+        table.uniqueConstraints.forEach(uniqueConstraint => {
+            const uniqueColumns = uniqueConstraint.get("unique");
+
+            if ( !uniqueColumns.length ) {
+                throw new Error(`unique constraint '${ uniqueConstraint.row.name }' cannot be empty array`);
+            }
+
+            const unknownColumns = [];
+            uniqueColumns.forEach(key => {
+                const existsColumn = table.columns.find((column) => 
+                    column.get("key") === key
+                );
+
+                if ( !existsColumn ) {
+                    unknownColumns.push(key);
+                }
+            });
+
+            if ( unknownColumns.length ) {
+                throw new Error(`unique constraint '${uniqueConstraint.row.name}' contain unknown columns: ${unknownColumns}`);
+            }
+        });
+        
     }
 }
