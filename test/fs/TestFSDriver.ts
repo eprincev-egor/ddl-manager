@@ -1,6 +1,6 @@
 import FSDriver, {IDirContent} from "../../lib/fs/FSDriver";
 
-interface ITestDir {
+export interface ITestDir {
     files: {[key: string]: string};
     folders: {[key: string]: ITestDir};
 };

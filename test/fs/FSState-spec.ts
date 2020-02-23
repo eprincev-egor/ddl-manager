@@ -1,72 +1,60 @@
-import FSState from "../../lib/FSState";
-import TestFSDriver from "./TestFSDriver";
-import TestParser from "./TestParser";
-import assert from "assert";
-import FunctionModel from "../../lib/objects/FunctionModel";
+import testLoadState, {ITestFiles} from "./testLoadState";
 
 describe("FSState", () => {
 
     it("load dir with one file with function", async() => {
-        const testFuncSQL = `
-            create function public.test()
-            returns void as $body$
-            begin
-            end
-            $body$
-            language plpgsql;
-        `;
+        const files: ITestFiles = {
+            "test.sql": {
+                sql: `
+                    create function public.test()
+                    returns void as $body$
+                    begin
+                    end
+                    $body$
+                    language plpgsql;
+                `,
+                models: [
+                    {
+                        type: "function",
+                        row: {
+                            identify: "public.test()",
+                            name: "test"
+                        }
+                    }
+                ]
+            }
+        };
 
-        const fsDriver = new TestFSDriver({
-            files: {
-                "test.sql": testFuncSQL
-            },
-            folders: {
-
+        testLoadState({
+            files,
+            folders: {},
+            expectedState: {
+                folder: {
+                    path: "./",
+                    name: "",
+                    files: [
+                        {
+                            path: "./test.sql",
+                            name: "test.sql",
+                            content: files["test.sql"].sql
+                        }
+                    ],
+                    folders: []
+                },
+                functions: [
+                    {
+                        filePath: "./test.sql",
+                        identify: "public.test()",
+                        name: "test",
+                        parsed: null
+                    }
+                ],
+                triggers: [],
+                tables: [],
+                views: []
             }
         });
 
-        const testParser = new TestParser({
-            [testFuncSQL]: [
-                new FunctionModel({
-                    filePath: "./test.sql",
-                    identify: "public.test()",
-                    name: "test"
-                })
-            ]
-        });
-        
-        const fsState = new FSState({
-            driver: fsDriver,
-            parser: testParser
-        });
-
-        await fsState.load("./");
-
-        assert.deepStrictEqual(fsState.toJSON(), {
-            folder: {
-                path: "./",
-                name: "",
-                files: [
-                    {
-                        path: "./test.sql",
-                        name: "test.sql",
-                        content: testFuncSQL
-                    }
-                ],
-                folders: []
-            },
-            functions: [
-                {
-                    filePath: "./test.sql",
-                    identify: "public.test()",
-                    name: "test",
-                    parsed: null
-                }
-            ],
-            triggers: [],
-            tables: [],
-            views: []
-        });
     });
     
 });
