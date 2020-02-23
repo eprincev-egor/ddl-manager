@@ -3,6 +3,7 @@ import BaseObjectModel from "./BaseDBObjectModel";
 import ColumnModel from "./ColumnModel";
 import CheckConstraintModel from "./CheckConstraintModel";
 import UniqueConstraintModel from "./UniqueConstraintModel";
+import ForeignKeyConstraintModel from "./ForeignKeyConstraintModel";
 
 export default class TableModel extends BaseObjectModel<TableModel> {
     structure() {
@@ -52,6 +53,18 @@ export default class TableModel extends BaseObjectModel<TableModel> {
                 sort(
                     a: UniqueConstraintModel, 
                     b: UniqueConstraintModel
+                ) {
+                    return a.get("name") > b.get("name") ? 1 : -1;
+                }
+            }),
+            foreignKeysConstraints: Types.Array({
+                element: Types.Model({
+                    Model: ForeignKeyConstraintModel
+                }),
+                default: () => [],
+                sort(
+                    a: ForeignKeyConstraintModel, 
+                    b: ForeignKeyConstraintModel
                 ) {
                     return a.get("name") > b.get("name") ? 1 : -1;
                 }

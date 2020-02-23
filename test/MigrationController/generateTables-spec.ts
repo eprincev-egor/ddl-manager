@@ -36,6 +36,7 @@ describe("MigrationController", () => {
                                 deprecated: false,
                                 primaryKey: null,
                                 uniqueConstraints: [],
+                                foreignKeysConstraints: [],
                                 checkConstraints: [],
                                 columns: [{
                                     filePath: null,
@@ -425,6 +426,7 @@ describe("MigrationController", () => {
                                 deprecatedColumns: ["name"],
                                 primaryKey: null,
                                 uniqueConstraints: [],
+                                foreignKeysConstraints: [],
                                 checkConstraints: [],
                                 columns: [{
                                     filePath: null,
@@ -807,6 +809,7 @@ describe("MigrationController", () => {
                                 deprecatedColumns: [],
                                 deprecated: false,
                                 uniqueConstraints: [],
+                                foreignKeysConstraints: [],
                                 checkConstraints: [],
                                 columns: [
                                     {
@@ -882,6 +885,7 @@ describe("MigrationController", () => {
                                 deprecatedColumns: [],
                                 deprecated: false,
                                 uniqueConstraints: [],
+                                foreignKeysConstraints: [],
                                 checkConstraints: [],
                                 columns: [
                                     {
@@ -918,6 +922,7 @@ describe("MigrationController", () => {
                                 deprecatedColumns: [],
                                 deprecated: false,
                                 uniqueConstraints: [],
+                                foreignKeysConstraints: [],
                                 checkConstraints: [],
                                 columns: [
                                     {
@@ -1226,6 +1231,7 @@ describe("MigrationController", () => {
                             type: "text"
                         }],
                         uniqueConstraints: [],
+                        foreignKeysConstraints: [],
                         checkConstraints: [
                             {
                                 identify: "name",
@@ -1286,6 +1292,7 @@ describe("MigrationController", () => {
                             type: "text"
                         }],
                         uniqueConstraints: [],
+                        foreignKeysConstraints: [],
                         checkConstraints: []
                     }]
                 },
@@ -1303,6 +1310,7 @@ describe("MigrationController", () => {
                             type: "text"
                         }],
                         uniqueConstraints: [],
+                        foreignKeysConstraints: [],
                         checkConstraints: [
                             {
                                 identify: "name",
@@ -1348,6 +1356,7 @@ describe("MigrationController", () => {
                             type: "text"
                         }],
                         uniqueConstraints: [],
+                        foreignKeysConstraints: [],
                         checkConstraints: [
                             {
                                 identify: "name",
@@ -1371,6 +1380,7 @@ describe("MigrationController", () => {
                             type: "text"
                         }],
                         uniqueConstraints: [],
+                        foreignKeysConstraints: [],
                         checkConstraints: [
                             {
                                 identify: "name",
@@ -1427,6 +1437,7 @@ describe("MigrationController", () => {
                             type: "text"
                         }],
                         uniqueConstraints: [],
+                        foreignKeysConstraints: [],
                         checkConstraints: [
                             {
                                 identify: "name",
@@ -1450,6 +1461,7 @@ describe("MigrationController", () => {
                             type: "text"
                         }],
                         uniqueConstraints: [],
+                        foreignKeysConstraints: [],
                         checkConstraints: [
                             {
                                 identify: "name",
@@ -1723,7 +1735,78 @@ describe("MigrationController", () => {
             });
         });
 
-
+        it("create foreign key", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [
+                        {
+                            filePath: "company.sql",
+                            identify: "public.company",
+                            name: "company",
+                            columns: [{
+                                identify: "id",
+                                key: "id",
+                                type: "integer"
+                            }, {
+                                identify: "id_country",
+                                key: "id_country",
+                                type: "integer"
+                            }]
+                        },
+                        {
+                            filePath: "country.sql",
+                            identify: "public.country",
+                            name: "country",
+                            columns: [{
+                                identify: "id",
+                                key: "id",
+                                type: "integer"
+                            }, {
+                                identify: "code",
+                                key: "code",
+                                type: "text"
+                            }]
+                        }
+                    ]
+                },
+                db: {
+                    tables: [
+                        {
+                            filePath: "company.sql",
+                            identify: "public.company",
+                            name: "company",
+                            columns: [{
+                                identify: "id",
+                                key: "id",
+                                type: "integer"
+                            }, {
+                                identify: "id_country",
+                                key: "id_country",
+                                type: "integer"
+                            }]
+                        },
+                        {
+                            filePath: "country.sql",
+                            identify: "public.country",
+                            name: "country",
+                            columns: [{
+                                identify: "id",
+                                key: "id",
+                                type: "integer"
+                            }, {
+                                identify: "code",
+                                key: "code",
+                                type: "text"
+                            }]
+                        }
+                    ]
+                },
+                migration: {
+                    commands: [],
+                    errors: []
+                }
+            });
+        });
     });
 
 });
