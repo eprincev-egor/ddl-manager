@@ -4,7 +4,7 @@ describe("FSState", () => {
 
     it("load dir with one file with function", async() => {
         const files: ITestFiles = {
-            "test.sql": [
+            "./test.sql": [
                 {
                     type: "function",
                     sql: `
@@ -23,7 +23,7 @@ describe("FSState", () => {
             ]
         };
 
-        testLoadState({
+        await testLoadState({
             files,
             expectedState: {
                 folder: {
@@ -33,7 +33,7 @@ describe("FSState", () => {
                         {
                             path: "./test.sql",
                             name: "test.sql",
-                            content: files["test.sql"][0].sql
+                            content: testLoadState.getFileSql( files["./test.sql"] )
                         }
                     ],
                     folders: []
@@ -56,7 +56,7 @@ describe("FSState", () => {
     
     it("load dir with one file with two functions", async() => {
         const files: ITestFiles = {
-            "test.sql": [
+            "./test.sql": [
                 {
                     type: "function",
                     sql: `
@@ -92,7 +92,7 @@ describe("FSState", () => {
             ]
         };
 
-        testLoadState({
+        await testLoadState({
             files,
             expectedState: {
                 folder: {
@@ -102,7 +102,7 @@ describe("FSState", () => {
                         {
                             path: "./test.sql",
                             name: "test.sql",
-                            content: testLoadState.getFileSql( files["test.sql"] )
+                            content: testLoadState.getFileSql( files["./test.sql"] )
                         }
                     ],
                     folders: []

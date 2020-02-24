@@ -12,18 +12,24 @@ export default class TestFSDriver extends FSDriver {
         super();
         this.files = files;
 
-        this.dirContentByPath = {};
+        this.dirContentByPath = {
+            ".": {
+                files: [],
+                folders: []
+            }
+        };
 
-        // filePath: "path/to/some/file.sql"
+        // filePath: "./path/to/some/file.sql"
         for (const filePath in files) {
-            // dirNames: ["path", "to", "some"]
-            const dirNames = filePath.split("/").slice(0, 1);
+            // dirNames: [".", "path", "to", "some"]
+            const dirNames = filePath.split("/").slice(0, -1);
+            // fileName: "file.sql"
             const fileName = filePath.split("/").pop();
 
-            let folderPath = "";
             let lastDirContent: IDirContent;
-            for (const dirName of dirNames) {
-                folderPath = folderPath + "/" + dirName;
+            for (let i = 0, n = dirNames.length; i < n; i++) {
+                const dirName = dirNames[i];
+                const folderPath = dirNames.slice(0, i + 1).join("/");
 
                 let dirContent = this.dirContentByPath[ folderPath ];
                 if ( !dirContent ) {

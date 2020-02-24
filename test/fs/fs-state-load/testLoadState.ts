@@ -71,7 +71,8 @@ export default async function testLoadState(test: ITest) {
 
     await fsState.load("./");
 
-    assert.deepStrictEqual(fsState.toJSON(), test.expectedState);
+    const actualState = fsState.toJSON();
+    assert.deepStrictEqual(actualState, test.expectedState);
 }
 
 testLoadState.getFileSql = (models: TTestModel[]) => {
