@@ -20,6 +20,25 @@ export default class MigrationViewsController extends BaseController {
             const fsViewModel = this.fs.row.views.getByIdentify(dbViewIdentify);
 
             if ( fsViewModel ) {
+                const isEqual = fsViewModel.equal(dbViewModel);
+                if ( !isEqual ) {
+                    const dropCommand = new ViewCommandModel({
+                        type: "drop",
+                        view: dbViewModel
+                    });
+                    commands.push( dropCommand );
+
+                    const createCommand = new ViewCommandModel({
+                        type: "create",
+                        view: fsViewModel
+                    });
+                    commands.push( createCommand );
+                }
+
+                return;
+            }
+
+            if ( !dbViewModel.get("createdByDDLManager") ) {
                 return;
             }
 

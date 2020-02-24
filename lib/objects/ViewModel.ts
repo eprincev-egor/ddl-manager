@@ -5,7 +5,11 @@ export default class ViewModel extends BaseObjectModel<ViewModel> {
     structure() {
         return {
             ...super.structure(),
-            name: Types.String
+            name: Types.String,
+            createdByDDLManager: Types.Boolean({
+                default: true,
+                required: true
+            })
         };
     }
 }

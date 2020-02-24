@@ -24,7 +24,8 @@ describe("MigrationController", () => {
                                 filePath: null,
                                 identify: "public.operations_view",
                                 name: "operations_view",
-                                parsed: null
+                                parsed: null,
+                                createdByDDLManager: true
                             }
                         }
                     ],
@@ -54,7 +55,8 @@ describe("MigrationController", () => {
                                 filePath: null,
                                 identify: "public.operations_view",
                                 name: "operations_view",
-                                parsed: null
+                                parsed: null,
+                                createdByDDLManager: true
                             }
                         }
                     ],
@@ -105,6 +107,119 @@ describe("MigrationController", () => {
                 },
                 migration: {
                     commands: [],
+                    errors: []
+                }
+            });
+        });
+
+        
+        it("change view (drop/create)", () => {
+            testGenerateMigration({
+                fs: {
+                    views: [{
+                        identify: "public.operations_view",
+                        name: "operations_view",
+                        parsed: "xxx"
+                    }]
+                },
+                db: {
+                    views: [{
+                        identify: "public.operations_view",
+                        name: "operations_view",
+                        parsed: "yyy"
+                    }]
+                },
+                migration: {
+                    commands: [
+                        {
+                            type: "drop",
+                            command: "View",
+                            view: {
+                                filePath: null,
+                                identify: "public.operations_view",
+                                name: "operations_view",
+                                parsed: "yyy",
+                                createdByDDLManager: true
+                            }
+                        },
+                        {
+                            type: "create",
+                            command: "View",
+                            view: {
+                                filePath: null,
+                                identify: "public.operations_view",
+                                name: "operations_view",
+                                parsed: "xxx",
+                                createdByDDLManager: true
+                            }
+                        }
+                    ],
+                    errors: []
+                }
+            });
+        });
+        
+        it("don't drop view if she was created without ddl-manager", () => {
+            testGenerateMigration({
+                fs: {},
+                db: {
+                    views: [{
+                        identify: "public.operations_view",
+                        name: "operations_view",
+                        createdByDDLManager: false
+                    }]
+                },
+                migration: {
+                    commands: [],
+                    errors: []
+                }
+            });
+        });
+
+
+        it("replace view if she was created without ddl-manager and" +
+        " exists view with same identify", () => {
+            testGenerateMigration({
+                fs: {
+                    views: [{
+                        identify: "public.operations_view",
+                        name: "operations_view",
+                        parsed: "xxx"
+                    }]
+                },
+                db: {
+                    views: [{
+                        identify: "public.operations_view",
+                        name: "operations_view",
+                        createdByDDLManager: false,
+                        parsed: "yyy"
+                    }]
+                },
+                migration: {
+                    commands: [
+                        {
+                            type: "drop",
+                            command: "View",
+                            view: {
+                                filePath: null,
+                                identify: "public.operations_view",
+                                name: "operations_view",
+                                parsed: "yyy",
+                                createdByDDLManager: false
+                            }
+                        },
+                        {
+                            type: "create",
+                            command: "View",
+                            view: {
+                                filePath: null,
+                                identify: "public.operations_view",
+                                name: "operations_view",
+                                parsed: "xxx",
+                                createdByDDLManager: true
+                            }
+                        }
+                    ],
                     errors: []
                 }
             });

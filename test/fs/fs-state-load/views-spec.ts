@@ -39,7 +39,8 @@ describe("FSState", () => {
                         filePath: "./view.sql",
                         identify: "public.companies",
                         name: "companies",
-                        parsed: null
+                        parsed: null,
+                        createdByDDLManager: true
                     }
                 ],
                 triggers: [],
@@ -98,13 +99,15 @@ describe("FSState", () => {
                         filePath: "./view.sql",
                         identify: "public.companies",
                         name: "companies",
-                        parsed: null
+                        parsed: null,
+                        createdByDDLManager: true
                     },
                     {
                         filePath: "./view.sql",
                         identify: "public.orders",
                         name: "orders",
-                        parsed: null
+                        parsed: null,
+                        createdByDDLManager: true
                     }
                 ],
                 triggers: [],
