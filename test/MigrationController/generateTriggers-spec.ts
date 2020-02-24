@@ -268,6 +268,220 @@ describe("MigrationController", () => {
             });
         });
         
+        
+        it("change trigger (drop/create)", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [{
+                        identify: "public.company",
+                        name: "company",
+                        columns: [{
+                            identify: "id",
+                            key: "id",
+                            type: "integer"
+                        }]
+                    }],
+                    functions: [{
+                        identify: "public.create_role()",
+                        name: "create_role"
+                    }],
+                    triggers: [{
+                        identify: "create_role_trigger on public.company",
+                        tableIdentify: "public.company",
+                        functionIdentify: "public.create_role()",
+                        name: "create_role_trigger",
+                        parsed: "xxx"
+                    }]
+                },
+                db: {
+                    tables: [{
+                        identify: "public.company",
+                        name: "company",
+                        columns: [{
+                            identify: "id",
+                            key: "id",
+                            type: "integer"
+                        }]
+                    }],
+                    functions: [{
+                        identify: "public.create_role()",
+                        name: "create_role"
+                    }],
+                    triggers: [{
+                        identify: "create_role_trigger on public.company",
+                        tableIdentify: "public.company",
+                        functionIdentify: "public.create_role()",
+                        name: "create_role_trigger",
+                        parsed: "yyy"
+                    }]
+                },
+                migration: {
+                    commands: [
+                        {
+                            type: "drop",
+                            command: "Trigger",
+                            trigger: {
+                                filePath: null,
+                                identify: "create_role_trigger on public.company",
+                                tableIdentify: "public.company",
+                                functionIdentify: "public.create_role()",
+                                name: "create_role_trigger",
+                                parsed: "yyy",
+                                createdByDDLManager: true
+                            }
+                        },
+                        {
+                            type: "create",
+                            command: "Trigger",
+                            trigger: {
+                                filePath: null,
+                                identify: "create_role_trigger on public.company",
+                                tableIdentify: "public.company",
+                                functionIdentify: "public.create_role()",
+                                name: "create_role_trigger",
+                                parsed: "xxx",
+                                createdByDDLManager: true
+                            }
+                        }
+                    ],
+                    errors: []
+                }
+            });
+        });
+
+        it("don't drop trigger if he was created without ddl-manager", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [{
+                        identify: "public.company",
+                        name: "company",
+                        columns: [{
+                            identify: "id",
+                            key: "id",
+                            type: "integer"
+                        }]
+                    }],
+                    functions: [{
+                        identify: "public.create_role()",
+                        name: "create_role"
+                    }]
+                },
+                db: {
+                    tables: [{
+                        identify: "public.company",
+                        name: "company",
+                        columns: [{
+                            identify: "id",
+                            key: "id",
+                            type: "integer"
+                        }]
+                    }],
+                    functions: [{
+                        identify: "public.create_role()",
+                        name: "create_role"
+                    }],
+                    triggers: [{
+                        identify: "create_role_trigger on public.company",
+                        tableIdentify: "public.company",
+                        functionIdentify: "public.create_role()",
+                        name: "create_role_trigger",
+                        parsed: "yyy",
+                        createdByDDLManager: false
+                    }]
+                },
+                migration: {
+                    commands: [],
+                    errors: []
+                }
+            });
+        });
+
+        it("replace trigger if he was created without ddl-manager and" +
+        " exists trigger with same identify", () => {
+
+            it("change trigger (drop/create)", () => {
+                testGenerateMigration({
+                    fs: {
+                        tables: [{
+                            identify: "public.company",
+                            name: "company",
+                            columns: [{
+                                identify: "id",
+                                key: "id",
+                                type: "integer"
+                            }]
+                        }],
+                        functions: [{
+                            identify: "public.create_role()",
+                            name: "create_role"
+                        }],
+                        triggers: [{
+                            identify: "create_role_trigger on public.company",
+                            tableIdentify: "public.company",
+                            functionIdentify: "public.create_role()",
+                            name: "create_role_trigger",
+                            parsed: "xxx"
+                        }]
+                    },
+                    db: {
+                        tables: [{
+                            identify: "public.company",
+                            name: "company",
+                            columns: [{
+                                identify: "id",
+                                key: "id",
+                                type: "integer"
+                            }]
+                        }],
+                        functions: [{
+                            identify: "public.create_role()",
+                            name: "create_role"
+                        }],
+                        triggers: [{
+                            identify: "create_role_trigger on public.company",
+                            tableIdentify: "public.company",
+                            functionIdentify: "public.create_role()",
+                            name: "create_role_trigger",
+                            parsed: "yyy",
+                            createdByDDLManager: false
+                        }]
+                    },
+                    migration: {
+                        commands: [
+                            {
+                                type: "drop",
+                                command: "Trigger",
+                                trigger: {
+                                    filePath: null,
+                                    identify: "create_role_trigger on public.company",
+                                    tableIdentify: "public.company",
+                                    functionIdentify: "public.create_role()",
+                                    name: "create_role_trigger",
+                                    parsed: "yyy",
+                                    createdByDDLManager: false
+                                }
+                            },
+                            {
+                                type: "create",
+                                command: "Trigger",
+                                trigger: {
+                                    filePath: null,
+                                    identify: "create_role_trigger on public.company",
+                                    tableIdentify: "public.company",
+                                    functionIdentify: "public.create_role()",
+                                    name: "create_role_trigger",
+                                    parsed: "xxx",
+                                    createdByDDLManager: true
+                                }
+                            }
+                        ],
+                        errors: []
+                    }
+                });
+            });
+    
+        });
+        
     });
     
 });

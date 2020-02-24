@@ -157,7 +157,7 @@ describe("MigrationController", () => {
             });
         });
 
-        it("don't drop function if she created without ddl-manager", () => {
+        it("don't drop function if she was created without ddl-manager", () => {
             testGenerateMigration({
                 fs: {},
                 db: {
@@ -221,7 +221,8 @@ describe("MigrationController", () => {
         });
 
         
-        it("replace function if she created without ddl-manager and exists inside fs with another body", () => {
+        it("replace function if she was created without ddl-manager and" +
+        " exists function with same identify", () => {
             testGenerateMigration({
                 fs: {
                     functions: [{

@@ -22,6 +22,25 @@ export default class MigrationTriggerController extends BaseController {
             const fsTriggerModel = this.fs.row.triggers.getByIdentify(dbTriggerIdentify);
 
             if ( fsTriggerModel ) {
+                const isEqual = fsTriggerModel.equal(dbTriggerModel);
+                if ( !isEqual ) {
+                    const dropCommand = new TriggerCommandModel({
+                        type: "drop",
+                        trigger: dbTriggerModel
+                    });
+                    commands.push( dropCommand );
+
+                    const createCommand = new TriggerCommandModel({
+                        type: "create",
+                        trigger: fsTriggerModel
+                    });
+                    commands.push( createCommand );
+                }
+
+                return;
+            }
+
+            if ( !dbTriggerModel.get("createdByDDLManager") ) {
                 return;
             }
 
