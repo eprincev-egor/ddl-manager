@@ -9,6 +9,7 @@ import {Types} from "model-layer";
 import FileModel from "./fs/FileModel";
 import Parser from "./parser/Parser";
 import FunctionModel from "./objects/FunctionModel";
+import TableModel from "./objects/TableModel";
 
 export default class FSState extends State<FSState> {
     structure() {
@@ -37,6 +38,7 @@ export default class FSState extends State<FSState> {
 
         const files = folderModel.filterChildrenByInstance(FileModel);
         const functions: FunctionModel[] = [];
+        const tables: TableModel[] = [];
 
         for (const fileModel of files) {
             const filePath = fileModel.get("path");
@@ -47,10 +49,14 @@ export default class FSState extends State<FSState> {
                 if ( dbo instanceof FunctionModel ) {
                     functions.push(dbo);
                 }
+                else if ( dbo instanceof TableModel ) {
+                    tables.push(dbo);
+                }
             }
         }
 
         this.row.functions.push(...functions);
+        this.row.tables.push(...tables);
     }
 
     async readFolder(folderPath: string): Promise<FolderModel> {

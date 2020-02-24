@@ -17,6 +17,7 @@ describe("FSState", () => {
                         name: "company",
                         columns: [
                             {
+                                filePath: "./company.sql",
                                 identify: "id",
                                 key: "id",
                                 type: "integer"
@@ -45,10 +46,27 @@ describe("FSState", () => {
                 },
                 tables: [
                     {
-                        filePath: "./test.sql",
-                        identify: "public.test()",
-                        name: "test",
-                        parsed: null
+                        filePath: "./company.sql",
+                        identify: "public.company",
+                        parsed: null,
+                        name: "company",
+                        columns: [
+                            {
+                                filePath: "./company.sql",
+                                identify: "id",
+                                key: "id",
+                                type: "integer",
+                                nulls: true,
+                                parsed: null
+                            }
+                        ],
+                        deprecated: false,
+                        deprecatedColumns: [],
+                        primaryKey: ["id"],
+                        checkConstraints: [],
+                        foreignKeysConstraints: [],
+                        uniqueConstraints: [],
+                        rows: null
                     }
                 ],
                 triggers: [],
