@@ -5,6 +5,8 @@ import FunctionModel from "../../../lib/objects/FunctionModel";
 import BaseDBObjectModel from "../../../lib/objects/BaseDBObjectModel";
 import TableModel from "../../../lib/objects/TableModel";
 import assert from "assert";
+import ViewModel from "../../../lib/objects/ViewModel";
+import TriggerModel from "../../../lib/objects/TriggerModel";
 
 type TTestModel = {
     type: "function";
@@ -14,6 +16,14 @@ type TTestModel = {
     type: "table";
     sql: string;
     row: TableModel["TInputData"]
+}| {
+    type: "view";
+    sql: string;
+    row: ViewModel["TInputData"]
+} | {
+    type: "trigger";
+    sql: string;
+    row: TriggerModel["TInputData"]
 };
 
 export interface ITestFiles {
@@ -55,6 +65,23 @@ export default async function testLoadState(test: ITest) {
                 );
             }
 
+            if ( model.type === "view" ) {
+                objects.push(
+                    new ViewModel({
+                        ...model.row,
+                        filePath
+                    })
+                );
+            }
+
+            if ( model.type === "trigger" ) {
+                objects.push(
+                    new TriggerModel({
+                        ...model.row,
+                        filePath
+                    })
+                );
+            }
         }
 
         driverParams[ filePath ] = sql;

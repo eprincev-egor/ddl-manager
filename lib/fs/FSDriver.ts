@@ -29,12 +29,7 @@ async function readdir(path: string): Promise<string[]> {
 async function isDirectory(path: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
         fs.stat(path, (err, stat) => {
-            if ( err ) {
-                reject(err);
-            }
-            else {
-                resolve( stat.isDirectory() );
-            }
+            resolve( stat.isDirectory() );
         });
     });
 }
