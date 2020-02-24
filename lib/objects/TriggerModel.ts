@@ -14,6 +14,10 @@ export default class TriggerModel extends BaseObjectModel<TriggerModel> {
             }),
             name: Types.String({
                 required: true
+            }),
+            createdByDDLManager: Types.Boolean({
+                default: true,
+                required: true
             })
         };
     }

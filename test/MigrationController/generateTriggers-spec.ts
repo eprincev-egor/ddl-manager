@@ -53,7 +53,8 @@ describe("MigrationController", () => {
                                 tableIdentify: "public.company",
                                 functionIdentify: "public.create_role()",
                                 name: "create_role_trigger",
-                                parsed: null
+                                parsed: null,
+                                createdByDDLManager: true
                             }
                         }
                     ],
@@ -111,7 +112,8 @@ describe("MigrationController", () => {
                                 tableIdentify: "public.company",
                                 functionIdentify: "public.create_role()",
                                 name: "create_role_trigger",
-                                parsed: null
+                                parsed: null,
+                                createdByDDLManager: true
                             }
                         }
                     ],

@@ -63,7 +63,8 @@ describe("FSState", () => {
                         tableIdentify: "public.companies",
                         functionIdentify: "public.create_role()",
                         name: "create_role_trigger",
-                        parsed: null
+                        parsed: null,
+                        createdByDDLManager: true
                     }
                 ],
                 functions: [
@@ -181,7 +182,8 @@ describe("FSState", () => {
                         tableIdentify: "public.companies",
                         functionIdentify: "public.create_role()",
                         name: "create_role_trigger",
-                        parsed: null
+                        parsed: null,
+                        createdByDDLManager: true
                     },
                     {
                         filePath: "./role_trigger.sql",
@@ -189,7 +191,8 @@ describe("FSState", () => {
                         tableIdentify: "public.companies",
                         functionIdentify: "public.delete_role()",
                         name: "delete_role_trigger",
-                        parsed: null
+                        parsed: null,
+                        createdByDDLManager: true
                     }
                 ],
                 functions: [
