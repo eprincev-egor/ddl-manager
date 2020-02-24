@@ -11,6 +11,7 @@ import Parser from "./parser/Parser";
 import FunctionModel from "./objects/FunctionModel";
 import TableModel from "./objects/TableModel";
 import ViewModel from "./objects/ViewModel";
+import TriggerModel from "./objects/TriggerModel";
 
 export default class FSState extends State<FSState> {
     structure() {
@@ -53,6 +54,9 @@ export default class FSState extends State<FSState> {
                 }
                 else if ( dbo instanceof ViewModel ) {
                     this.row.views.push(dbo);
+                }
+                else if ( dbo instanceof TriggerModel ) {
+                    this.row.triggers.push(dbo);
                 }
             }
         }
