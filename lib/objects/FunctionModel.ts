@@ -5,7 +5,11 @@ export default class FunctionModel extends BaseObjectModel<FunctionModel> {
     structure() {
         return {
             ...super.structure(),
-            name: Types.String
+            name: Types.String,
+            createdByDDLManager: Types.Boolean({
+                default: true,
+                required: true
+            })
         }
     }
 }

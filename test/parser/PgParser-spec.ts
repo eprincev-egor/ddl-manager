@@ -35,6 +35,7 @@ describe("PgParser", () => {
             filePath: "test.sql",
             identify: "public.test()",
             name: "test",
+            createdByDDLManager: true,
             parsed: {
                 args: [],
                 body: {

@@ -71,7 +71,8 @@ describe("FSState", () => {
                         filePath: "./create_role.sql",
                         identify: "public.create_role()",
                         name: "create_role",
-                        parsed: null
+                        parsed: null,
+                        createdByDDLManager: true
                     }
                 ],
                 tables: [],
@@ -196,13 +197,15 @@ describe("FSState", () => {
                         filePath: "./role_trigger.sql",
                         identify: "public.create_role()",
                         name: "create_role",
-                        parsed: null
+                        parsed: null,
+                        createdByDDLManager: true
                     },
                     {
                         filePath: "./role_trigger.sql",
                         identify: "public.delete_role()",
                         name: "delete_role",
-                        parsed: null
+                        parsed: null,
+                        createdByDDLManager: true
                     }
                 ],
                 tables: [],

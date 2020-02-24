@@ -24,7 +24,8 @@ describe("MigrationController", () => {
                                 filePath: null,
                                 identify: "public.test()",
                                 name: "test",
-                                parsed: null
+                                parsed: null,
+                                createdByDDLManager: true
                             }
                         }
                     ],
@@ -53,7 +54,8 @@ describe("MigrationController", () => {
                                 filePath: null,
                                 identify: "public.test()",
                                 name: "test",
-                                parsed: null
+                                parsed: null,
+                                createdByDDLManager: true
                             }
                         }
                     ],
@@ -107,7 +109,8 @@ describe("MigrationController", () => {
                                 filePath: null,
                                 identify: "public.test2()",
                                 name: "test2",
-                                parsed: null
+                                parsed: null,
+                                createdByDDLManager: true
                             }
                         },
                         // second the 'create'
@@ -118,7 +121,8 @@ describe("MigrationController", () => {
                                 filePath: null,
                                 identify: "public.test1()",
                                 name: "test1",
-                                parsed: null
+                                parsed: null,
+                                createdByDDLManager: true
                             }
                         }
                     ],

@@ -57,7 +57,8 @@ describe("FSState", () => {
                         filePath: "./sub/dir/test.sql",
                         identify: "public.test()",
                         name: "test",
-                        parsed: null
+                        parsed: null,
+                        createdByDDLManager: true
                     }
                 ],
                 triggers: [],

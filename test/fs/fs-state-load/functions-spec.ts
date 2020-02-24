@@ -43,7 +43,8 @@ describe("FSState", () => {
                         filePath: "./test.sql",
                         identify: "public.test()",
                         name: "test",
-                        parsed: null
+                        parsed: null,
+                        createdByDDLManager: true
                     }
                 ],
                 triggers: [],
@@ -112,13 +113,15 @@ describe("FSState", () => {
                         filePath: "./test.sql",
                         identify: "test1()",
                         name: "test1",
-                        parsed: null
+                        parsed: null,
+                        createdByDDLManager: true
                     },
                     {
                         filePath: "./test.sql",
                         identify: "test2()",
                         name: "test2",
-                        parsed: null
+                        parsed: null,
+                        createdByDDLManager: true
                     }
                 ],
                 triggers: [],
