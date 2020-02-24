@@ -87,6 +87,10 @@ export default class FSState extends State<FSState> {
         const {files, folders} = await fs.readFolder(folderPath);
 
         for (const fileName of files) {
+            if ( !/\.sql/.test(fileName) ) {
+                continue;
+            }
+
             const filePath = folderPath + "/" + fileName;
             const fileContent = await fs.readFile(filePath);
             
