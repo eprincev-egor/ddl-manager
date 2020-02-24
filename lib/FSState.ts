@@ -23,7 +23,7 @@ export default class FSState extends State<FSState> {
                 toJSON: () => null
             }),
             parser: Types.CustomClass({
-                constructor: Parser,
+                constructor: Parser as (new () => Parser),
                 toJSON: () => null
             }),
             folder: FolderModel
