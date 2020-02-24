@@ -20,6 +20,26 @@ export default class MigrationFunctionsController extends BaseController {
             const fsFunctionModel = this.fs.row.functions.getByIdentify(dbFuncIdentify);
 
             if ( fsFunctionModel ) {
+                const isEqual = fsFunctionModel.equal(dbFunctionModel);
+                if ( !isEqual ) {
+                    
+                    const dropCommand = new FunctionCommandModel({
+                        type: "drop",
+                        function: dbFunctionModel
+                    });
+                    commands.push( dropCommand );
+
+                    const createCommand = new FunctionCommandModel({
+                        type: "create",
+                        function: fsFunctionModel
+                    });
+                    commands.push( createCommand );
+                }
+
+                return;
+            }
+
+            if ( !dbFunctionModel.get("createdByDDLManager") ) {
                 return;
             }
 

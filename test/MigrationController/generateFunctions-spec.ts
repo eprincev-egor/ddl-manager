@@ -157,6 +157,118 @@ describe("MigrationController", () => {
             });
         });
 
+        it("don't drop function if she created without ddl-manager", () => {
+            testGenerateMigration({
+                fs: {},
+                db: {
+                    functions: [{
+                        identify: "public.sys_admin_func()",
+                        name: "sys_admin_func",
+                        createdByDDLManager: false
+                    }]
+                },
+                migration: {
+                    commands: [],
+                    errors: []
+                }
+            });
+        });
+
+        it("change function (drop/create)", () => {
+            testGenerateMigration({
+                fs: {
+                    functions: [{
+                        identify: "public.my_func()",
+                        name: "my_func",
+                        parsed: "xxx"
+                    }]
+                },
+                db: {
+                    functions: [{
+                        identify: "public.my_func()",
+                        name: "my_func",
+                        parsed: "yyy"
+                    }]
+                },
+                migration: {
+                    commands: [
+                        {
+                            type: "drop",
+                            command: "Function",
+                            function: {
+                                filePath: null,
+                                identify: "public.my_func()",
+                                name: "my_func",
+                                parsed: "yyy",
+                                createdByDDLManager: true
+                            }
+                        },
+                        {
+                            type: "create",
+                            command: "Function",
+                            function: {
+                                filePath: null,
+                                identify: "public.my_func()",
+                                name: "my_func",
+                                parsed: "xxx",
+                                createdByDDLManager: true
+                            }
+                        }
+                    ],
+                    errors: []
+                }
+            });
+        });
+
+        
+        it("replace function if she created without ddl-manager and exists inside fs with another body", () => {
+            testGenerateMigration({
+                fs: {
+                    functions: [{
+                        identify: "public.sys_admin_func()",
+                        name: "sys_admin_func",
+                        parsed: "xxx"
+                    }]
+                },
+                db: {
+                    functions: [{
+                        identify: "public.sys_admin_func()",
+                        name: "sys_admin_func",
+                        createdByDDLManager: false,
+                        parsed: "yyy"
+                    }]
+                },
+                migration: {
+                    commands: [
+                        {
+                            type: "drop",
+                            command: "Function",
+                            function: {
+                                filePath: null,
+                                identify: "public.sys_admin_func()",
+                                name: "sys_admin_func",
+                                parsed: "yyy",
+                                createdByDDLManager: false
+                            }
+                        },
+                        {
+                            type: "create",
+                            command: "Function",
+                            function: {
+                                filePath: null,
+                                identify: "public.sys_admin_func()",
+                                name: "sys_admin_func",
+                                parsed: "xxx",
+                                createdByDDLManager: true
+                            }
+                        }
+                    ],
+                    errors: []
+                }
+            });
+        });
+
+
     });
     
 });
