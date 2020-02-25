@@ -4,9 +4,11 @@ import Parser from "./Parser";
 import {
     GrapeQLCoach,
     CreateFunction,
-    CreateTrigger
+    CreateTrigger,
+    CreateView
 } from "grapeql-lang";
 import TriggerModel from "../objects/TriggerModel";
+import ViewModel from "../objects/ViewModel";
 
 export default class PgParser extends Parser {
     parseFile(filePath: string, fileContent: string): BaseDBObjectModel<any>[] {
@@ -46,6 +48,22 @@ export default class PgParser extends Parser {
                 });
 
                 objects.push(triggerModel);
+            }
+
+            // create view
+            if ( coach.is(CreateView) ) {
+                const parsedView = coach.parse(CreateView);
+                const {schema, name} = parsedView.row;
+                const viewIdentify = (schema || "public").toString() + "." + name.toString();
+                
+                const viewModel = new ViewModel({
+                    filePath,
+                    name: name.toString(),
+                    identify: viewIdentify,
+                    parsed: parsedView
+                });
+
+                objects.push(viewModel);
             }
         }
 
