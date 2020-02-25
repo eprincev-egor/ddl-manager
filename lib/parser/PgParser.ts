@@ -3,8 +3,10 @@ import FunctionModel from "../objects/FunctionModel";
 import Parser from "./Parser";
 import {
     GrapeQLCoach,
-    CreateFunction
+    CreateFunction,
+    CreateTrigger
 } from "grapeql-lang";
+import TriggerModel from "../objects/TriggerModel";
 
 export default class PgParser extends Parser {
     parseFile(filePath: string, fileContent: string): BaseDBObjectModel<any>[] {
@@ -12,6 +14,7 @@ export default class PgParser extends Parser {
         const objects: BaseDBObjectModel<any>[] = [];
 
         for (; coach.i < coach.str.length; coach.i++) {
+            // create or replace function
             if ( coach.is(CreateFunction) ) {
                 const parsedFunction = coach.parse(CreateFunction);
                 const {schema, name, args} = parsedFunction.row;
@@ -25,6 +28,24 @@ export default class PgParser extends Parser {
                 });
                 
                 objects.push(funcModel);
+            }
+
+            // create trigger
+            if ( coach.is(CreateTrigger) ) {
+                const parsedTrigger = coach.parse(CreateTrigger);
+                const {name, table, procedure} = parsedTrigger.row;
+                const triggerIdentify = name + " on " + table.toString();
+                
+                const triggerModel = new TriggerModel({
+                    filePath,
+                    name,
+                    identify: triggerIdentify,
+                    parsed: parsedTrigger,
+                    tableIdentify: table.toString(),
+                    functionIdentify: procedure.toString()
+                });
+
+                objects.push(triggerModel);
             }
         }
 
