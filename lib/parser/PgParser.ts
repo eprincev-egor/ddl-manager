@@ -9,7 +9,8 @@ import {
     CreateTrigger,
     CreateView,
     CreateTable,
-    PrimaryKeyConstraint
+    PrimaryKeyConstraint,
+    UniqueConstraint
 } from "grapeql-lang";
 import TableModel from "../objects/TableModel";
 
@@ -72,8 +73,8 @@ export default class PgParser extends Parser {
             // create table
             if ( coach.is(CreateTable) ) {
                 const parsedTable: CreateTable = coach.parse(CreateTable);
-                const {name, schema, columns} = parsedTable.row;
-                const tableIdentify = (schema || "public").toString() + "." + name.toString();
+                const {name: tableName, schema, columns} = parsedTable.row;
+                const tableIdentify = (schema || "public").toString() + "." + tableName.toString();
                 
                 // get primary key constraint from parsedTable.constraints
                 // or from columns
@@ -107,10 +108,52 @@ export default class PgParser extends Parser {
                     rows = parsedRows;
                 }
 
+                // table (..., constraint x unique(...))
+                const parsedUniqueConstraints = parsedTable.row.constraints.filter(constraint =>
+                    constraint instanceof UniqueConstraint
+                ) as UniqueConstraint[];
+
+                parsedTable.get("columns").forEach(column => {
+                    const uniqueConstraint = column.get("unique");
+                    
+                    if ( !uniqueConstraint ) {
+                        return;
+                    }
+
+                    parsedUniqueConstraints.push(uniqueConstraint);
+                });
+
+                const uniqueConstraints = parsedUniqueConstraints.map(uniqueConstraint => {
+                    let name = (
+                        uniqueConstraint.get("name") &&
+                        uniqueConstraint.get("name").toString()
+                    );
+                    if ( !name ) {
+                        name = (
+                            tableName.toString() + 
+                            "_" +
+                            uniqueConstraint.get("column").toString() + 
+                            "_key"
+                        );
+                    }
+
+                    return {
+                        filePath,
+                        identify: name,
+                        name,
+                        parsed: uniqueConstraint,
+                        unique: uniqueConstraint.get("unique").map(column =>
+                            column.toString()
+                        )
+                    };
+                });
+
+
+
                 const tableModel = new TableModel({
                     filePath,
                     identify: tableIdentify,
-                    name: name.toString(),
+                    name: tableName.toString(),
                     columns: columns.map(parseColumn => {
                         const key = parseColumn.get("name").toString();
 
@@ -127,6 +170,7 @@ export default class PgParser extends Parser {
                     deprecated: parsedTable.get("deprecated"),
                     deprecatedColumns,
                     rows,
+                    uniqueConstraints,
                     parsed: parsedTable
                 });
 

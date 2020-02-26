@@ -213,4 +213,63 @@ describe("PgParser", () => {
         ]);
     });
 
+    it("parse table with unique constraint inside column", () => {
+        const parser = new PgParser();
+        
+        const result = parser.parseFile("test.sql", `
+            create table order_type (
+                id serial primary key,
+                name text not null unique
+            )
+        `);
+
+        const tableModel = result[0] as TableModel;
+
+        assert.deepStrictEqual(tableModel.toJSON().uniqueConstraints, [
+            {
+                filePath: "test.sql",
+                identify: "order_type_name_key", 
+                name: "order_type_name_key", 
+                unique: ["name"],
+                parsed: {
+                    name: null,
+                    column: {content: null, word: "name"},
+                    unique: [
+                        {content: null, word: "name"}
+                    ]
+                }
+            }
+        ]);
+    });
+
+    it("parse table with unique constraint inside table body", () => {
+        const parser = new PgParser();
+        
+        const result = parser.parseFile("test.sql", `
+            create table order_type (
+                id serial primary key,
+                name text not null,
+                constraint test_uniq unique (name)
+            )
+        `);
+
+        const tableModel = result[0] as TableModel;
+
+        assert.deepStrictEqual(tableModel.toJSON().uniqueConstraints, [
+            {
+                filePath: "test.sql",
+                identify: "test_uniq", 
+                name: "test_uniq", 
+                unique: ["name"],
+                parsed: {
+                    name: {content: null, word: "test_uniq"},
+                    column: null,
+                    unique: [
+                        {content: null, word: "name"}
+                    ]
+                }
+            }
+        ]);
+    });
+
 });
