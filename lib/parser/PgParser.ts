@@ -95,6 +95,18 @@ export default class PgParser extends Parser {
                     );
                 }
 
+                // table test (...) deprecated (...)
+                const deprecatedColumns = parsedTable.row.deprecatedColumns.map(columnName =>
+                    columnName.toString()
+                );
+
+                // table test (...) values (...)
+                let rows = null;
+                const parsedRows = parsedTable.get("values");
+                if ( parsedRows && parsedRows.length ) {
+                    rows = parsedRows;
+                }
+
                 const tableModel = new TableModel({
                     filePath,
                     identify: tableIdentify,
@@ -112,6 +124,9 @@ export default class PgParser extends Parser {
                         };
                     }),
                     primaryKey,
+                    deprecated: parsedTable.get("deprecated"),
+                    deprecatedColumns,
+                    rows,
                     parsed: parsedTable
                 });
 

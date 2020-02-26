@@ -7,7 +7,7 @@ import {
 
 describe("PgParser", () => {
 
-    it("parseFile with simple table", async() => {
+    it("parseFile with simple table", () => {
         const parser = new PgParser();
         
         const result = parser.parseFile("test.sql", `
@@ -156,4 +156,61 @@ describe("PgParser", () => {
         });
     });
     
+    
+    it("parse deprecated table", () => {
+        const parser = new PgParser();
+        
+        const result = parser.parseFile("test.sql", `
+            deprecated table companies (
+                id serial primary key,
+                name text not null
+            )
+        `);
+
+        const tableModel = result[0] as TableModel;
+
+        assert.strictEqual(tableModel.get("deprecated"), true);
+    });
+
+    
+    it("parse table with deprecated columns", () => {
+        const parser = new PgParser();
+        
+        const result = parser.parseFile("test.sql", `
+            create table companies (
+                id serial primary key,
+                name text not null
+            )
+            deprecated (
+                note
+            )
+        `);
+
+        const tableModel = result[0] as TableModel;
+
+        assert.deepStrictEqual(tableModel.get("deprecatedColumns"), ["note"]);
+    });
+
+    it("parse table with rows", () => {
+        const parser = new PgParser();
+        
+        const result = parser.parseFile("test.sql", `
+            create table order_type (
+                id serial primary key,
+                name text not null
+            )
+            values (
+                (1, 'FCL'),
+                (2, 'LRL')
+            )
+        `);
+
+        const tableModel = result[0] as TableModel;
+
+        assert.deepStrictEqual(tableModel.get("rows"), [
+            {id: 1, name: "FCL"},
+            {id: 2, name: "LRL"}
+        ]);
+    });
+
 });
