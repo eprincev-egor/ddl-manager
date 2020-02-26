@@ -1,14 +1,17 @@
 import BaseDBObjectModel from "../objects/BaseDBObjectModel";
 import FunctionModel from "../objects/FunctionModel";
+import TriggerModel from "../objects/TriggerModel";
+import ViewModel from "../objects/ViewModel";
 import Parser from "./Parser";
 import {
     GrapeQLCoach,
     CreateFunction,
     CreateTrigger,
-    CreateView
+    CreateView,
+    CreateTable,
+    PrimaryKeyConstraint
 } from "grapeql-lang";
-import TriggerModel from "../objects/TriggerModel";
-import ViewModel from "../objects/ViewModel";
+import TableModel from "../objects/TableModel";
 
 export default class PgParser extends Parser {
     parseFile(filePath: string, fileContent: string): BaseDBObjectModel<any>[] {
@@ -64,6 +67,55 @@ export default class PgParser extends Parser {
                 });
 
                 objects.push(viewModel);
+            }
+
+            // create table
+            if ( coach.is(CreateTable) ) {
+                const parsedTable: CreateTable = coach.parse(CreateTable);
+                const {name, schema, columns} = parsedTable.row;
+                const tableIdentify = (schema || "public").toString() + "." + name.toString();
+                
+                // get primary key constraint from parsedTable.constraints
+                // or from columns
+                let primaryKeyConstraint = parsedTable.row.constraints.find(constraint => 
+                    constraint instanceof PrimaryKeyConstraint
+                ) as PrimaryKeyConstraint;
+                if ( !primaryKeyConstraint ) {
+                    parsedTable.row.columns.forEach(column => {
+                        if ( column.get("primaryKey") ) {
+                            primaryKeyConstraint = column.get("primaryKey");
+                        }
+                    });
+                }
+                
+                let primaryKey = null;
+                if ( primaryKeyConstraint ) {
+                    primaryKey = primaryKeyConstraint.get("primaryKey").map(column => 
+                        column.toString()
+                    );
+                }
+
+                const tableModel = new TableModel({
+                    filePath,
+                    identify: tableIdentify,
+                    name: name.toString(),
+                    columns: columns.map(parseColumn => {
+                        const key = parseColumn.get("name").toString();
+
+                        return {
+                            filePath,
+                            identify: key,
+                            key,
+                            type: parseColumn.get("type").toString(),
+                            parsed: parseColumn,
+                            nulls: parseColumn.get("nulls")
+                        };
+                    }),
+                    primaryKey,
+                    parsed: parsedTable
+                });
+
+                objects.push(tableModel);
             }
         }
 

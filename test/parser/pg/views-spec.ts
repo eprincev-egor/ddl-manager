@@ -18,7 +18,7 @@ describe("PgParser", () => {
         assert.ok(result.length === 1, "result.length === 1");
         assert.ok(
             result[0] instanceof ViewModel, 
-            "instanceof FunctionModel"
+            "instanceof ViewModel"
         );
         assert.ok(
             result[0].get("parsed") instanceof CreateView, 
