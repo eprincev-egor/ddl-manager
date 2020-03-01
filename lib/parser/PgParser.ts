@@ -10,7 +10,8 @@ import {
     CreateView,
     CreateTable,
     PrimaryKeyConstraint,
-    UniqueConstraint
+    UniqueConstraint,
+    CheckConstraint
 } from "grapeql-lang";
 import TableModel from "../objects/TableModel";
 
@@ -148,6 +149,42 @@ export default class PgParser extends Parser {
                     };
                 });
 
+                const parsedCheckConstraints = parsedTable.row.constraints.filter(constraint =>
+                    constraint instanceof CheckConstraint
+                ) as CheckConstraint[];
+
+                parsedTable.get("columns").forEach(column => {
+                    const checkConstraint = column.get("check");
+
+                    if ( !checkConstraint ) {
+                        return;
+                    }
+
+                    parsedCheckConstraints.push(checkConstraint);
+                });
+
+                const checkConstraints = parsedCheckConstraints.map(checkConstraint => {
+                    let name = (
+                        checkConstraint.get("name") &&
+                        checkConstraint.get("name").toString()
+                    );
+
+                    if ( !name ) {
+                        name = (
+                            tableName.toString() + 
+                            "_" +
+                            checkConstraint.get("column").toString() + 
+                            "_check"
+                        );
+                    }
+
+                    return {
+                        filePath,
+                        identify: name,
+                        name,
+                        parsed: checkConstraint
+                    };
+                });
 
 
                 const tableModel = new TableModel({
@@ -171,6 +208,7 @@ export default class PgParser extends Parser {
                     deprecatedColumns,
                     rows,
                     uniqueConstraints,
+                    checkConstraints,
                     parsed: parsedTable
                 });
 

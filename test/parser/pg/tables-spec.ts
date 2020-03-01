@@ -272,4 +272,83 @@ describe("PgParser", () => {
         ]);
     });
 
+    it("parse table with check constraint at near column definition", () => {
+        const parser = new PgParser();
+        
+        const result = parser.parseFile("test.sql", `
+            create table order_type (
+                id serial primary key,
+                name text check( name is not null )
+            )
+        `);
+
+        const tableModel = result[0] as TableModel;
+
+        assert.deepStrictEqual(tableModel.toJSON().checkConstraints, [
+            {
+                filePath: "test.sql",
+                identify: "order_type_name_check", 
+                name: "order_type_name_check",
+                parsed: {
+                    name: null,
+                    column: {
+                        content: null,
+                        word: "name"
+                    },
+                    check: {
+                        elements: [
+                            {link: [{
+                                content: null, word: "name"
+                            }], star: false},
+
+                            {operator: "is not"},
+
+                            {null: true}
+                        ]
+                    }
+                }
+            }
+        ]);
+    });
+
+    it("parse table with check constraint inside table body", () => {
+        const parser = new PgParser();
+        
+        const result = parser.parseFile("test.sql", `
+            create table order_type (
+                id serial primary key,
+                name text, 
+                constraint hello_name check( name is not null )
+            )
+        `);
+
+        const tableModel = result[0] as TableModel;
+
+        assert.deepStrictEqual(tableModel.toJSON().checkConstraints, [
+            {
+                filePath: "test.sql",
+                identify: "hello_name", 
+                name: "hello_name",
+                parsed: {
+                    name: {
+                        content: null,
+                        word: "hello_name"
+                    },
+                    column: null,
+                    check: {
+                        elements: [
+                            {link: [{
+                                content: null, word: "name"
+                            }], star: false},
+
+                            {operator: "is not"},
+                            
+                            {null: true}
+                        ]
+                    }
+                }
+            }
+        ]);
+    });
+
 });
