@@ -351,4 +351,91 @@ describe("PgParser", () => {
         ]);
     });
 
+    it("parse table with foreign key at near column definition", () => {
+        const parser = new PgParser();
+        
+        const result = parser.parseFile("test.sql", `
+            create table companies (
+                id serial primary key,
+                country_id integer references countries
+            )
+        `);
+
+        const tableModel = result[0] as TableModel;
+
+        assert.deepStrictEqual(tableModel.toJSON().foreignKeysConstraints, [
+            {
+                filePath: "test.sql",
+                identify: "companies_country_id_fkey", 
+                name: "companies_country_id_fkey",
+                columns: ["country_id"],
+                referenceColumns: ["id"],
+                referenceTableIdentify: "countries",
+                parsed: {
+                    name: null,
+                    column: {
+                        content: null,
+                        word: "country_id"
+                    },
+                    columns: [{
+                        content: null,
+                        word: "country_id"
+                    }],
+                    match: null,
+                    onDelete: null,
+                    onUpdate: null,
+                    referenceTable: {link: [
+                        {content: null, word: "countries"}
+                    ], star: false},
+                    referenceColumns: null
+                }
+            }
+        ]);
+    });
+
+    it("parse table with foreign key inside table body", () => {
+        const parser = new PgParser();
+        
+        const result = parser.parseFile("test.sql", `
+            create table companies (
+                id serial primary key,
+                country_id integer,
+                constraint country_fk 
+                    foreign key (country_id) 
+                    references countries
+            )
+        `);
+
+        const tableModel = result[0] as TableModel;
+
+        assert.deepStrictEqual(tableModel.toJSON().foreignKeysConstraints, [
+            {
+                filePath: "test.sql",
+                identify: "country_fk", 
+                name: "country_fk",
+                columns: ["country_id"],
+                referenceColumns: ["id"],
+                referenceTableIdentify: "countries",
+                parsed: {
+                    name: {
+                        content: null,
+                        word: "country_fk"
+                    },
+                    column: null,
+                    columns: [{
+                        content: null,
+                        word: "country_id"
+                    }],
+                    match: null,
+                    onDelete: null,
+                    onUpdate: null,
+                    referenceTable: {link: [
+                        {content: null, word: "countries"}
+                    ], star: false},
+                    referenceColumns: null
+                }
+            }
+        ]);
+    });
+
 });

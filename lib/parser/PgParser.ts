@@ -11,7 +11,8 @@ import {
     CreateTable,
     PrimaryKeyConstraint,
     UniqueConstraint,
-    CheckConstraint
+    CheckConstraint,
+    ForeignKeyConstraint
 } from "grapeql-lang";
 import TableModel from "../objects/TableModel";
 
@@ -117,11 +118,9 @@ export default class PgParser extends Parser {
                 parsedTable.get("columns").forEach(column => {
                     const uniqueConstraint = column.get("unique");
                     
-                    if ( !uniqueConstraint ) {
-                        return;
+                    if ( uniqueConstraint ) {
+                        parsedUniqueConstraints.push(uniqueConstraint);
                     }
-
-                    parsedUniqueConstraints.push(uniqueConstraint);
                 });
 
                 const uniqueConstraints = parsedUniqueConstraints.map(uniqueConstraint => {
@@ -156,11 +155,9 @@ export default class PgParser extends Parser {
                 parsedTable.get("columns").forEach(column => {
                     const checkConstraint = column.get("check");
 
-                    if ( !checkConstraint ) {
-                        return;
+                    if ( checkConstraint ) {
+                        parsedCheckConstraints.push(checkConstraint);
                     }
-
-                    parsedCheckConstraints.push(checkConstraint);
                 });
 
                 const checkConstraints = parsedCheckConstraints.map(checkConstraint => {
@@ -183,6 +180,58 @@ export default class PgParser extends Parser {
                         identify: name,
                         name,
                         parsed: checkConstraint
+                    };
+                });
+
+                const parsedForeignKeys = parsedTable.row.constraints.filter(constraint => 
+                    constraint instanceof ForeignKeyConstraint
+                ) as ForeignKeyConstraint[];
+
+                parsedTable.get("columns").forEach(column => {
+                    const foreignKey = column.get("foreignKey");
+
+                    if ( foreignKey ) {
+                        parsedForeignKeys.push( foreignKey );
+                    }
+                });
+
+                const foreignKeys = parsedForeignKeys.map(foreignKey => {
+                    let name = (
+                        foreignKey.get("name") &&
+                        foreignKey.get("name").toString()
+                    );
+                    
+                    if ( !name ) {
+                        name = (
+                            tableName.toString() + 
+                            "_" +
+                            foreignKey.get("column").toString() + 
+                            "_fkey"
+                        );
+                    }
+
+                    const selfColumns = foreignKey.get("columns").map(column =>
+                        column.toString()
+                    );
+
+                    let referenceColumns = [];
+                    if ( foreignKey.row.referenceColumns ) {
+                        referenceColumns = foreignKey.get("referenceColumns").map(refColumn => 
+                            refColumn.toString()
+                        );
+                    }
+                    if ( !referenceColumns.length ) {
+                        referenceColumns = ["id"];
+                    }
+
+                    return {
+                        filePath,
+                        identify: name,
+                        name,
+                        columns: selfColumns,
+                        referenceTableIdentify: foreignKey.row.referenceTable.toString(),
+                        referenceColumns,
+                        parsed: foreignKey
                     };
                 });
 
@@ -209,6 +258,7 @@ export default class PgParser extends Parser {
                     rows,
                     uniqueConstraints,
                     checkConstraints,
+                    foreignKeysConstraints: foreignKeys,
                     parsed: parsedTable
                 });
 
