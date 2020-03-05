@@ -1,4 +1,5 @@
-import testLoadState, {ITestFiles} from "./testLoadState";
+import {TestState, ITestFiles} from "../TestState";
+
 
 describe("FSState", () => {
 
@@ -41,7 +42,7 @@ describe("FSState", () => {
             ]
         };
 
-        await testLoadState({
+        await TestState.testLoading({
             files,
             expectedState: {
                 folder: {
@@ -51,7 +52,7 @@ describe("FSState", () => {
                         {
                             path: "./create_role.sql",
                             name: "create_role.sql",
-                            content: testLoadState.getFileSql( files["./create_role.sql"] )
+                            content: TestState.concatFilesSql( files["./create_role.sql"] )
                         }
                     ],
                     folders: []
@@ -160,7 +161,7 @@ describe("FSState", () => {
             ]
         };
 
-        await testLoadState({
+        await TestState.testLoading({
             files,
             expectedState: {
                 folder: {
@@ -170,7 +171,7 @@ describe("FSState", () => {
                         {
                             path: "./role_trigger.sql",
                             name: "role_trigger.sql",
-                            content: testLoadState.getFileSql( files["./role_trigger.sql"] )
+                            content: TestState.concatFilesSql( files["./role_trigger.sql"] )
                         }
                     ],
                     folders: []

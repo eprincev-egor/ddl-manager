@@ -1,4 +1,4 @@
-import testLoadState, {ITestFiles} from "./testLoadState";
+import {TestState, ITestFiles} from "../TestState";
 
 describe("FSState", () => {
 
@@ -90,7 +90,7 @@ describe("FSState", () => {
             ]
         };
 
-        await testLoadState({
+        await TestState.testLoading({
             files,
             expectedState: {
                 folder: {
@@ -100,7 +100,7 @@ describe("FSState", () => {
                         {
                             path: "./company.sql",
                             name: "company.sql",
-                            content: testLoadState.getFileSql( files["./company.sql"] )
+                            content: TestState.concatFilesSql( files["./company.sql"] )
                         }
                     ],
                     folders: []

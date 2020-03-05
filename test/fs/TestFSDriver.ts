@@ -10,7 +10,7 @@ export default class TestFSDriver extends FSDriver {
 
     constructor(files: IFiles) {
         super();
-        this.files = files;
+        this.files = {};
 
         this.dirContentByPath = {
             ".": {
@@ -21,35 +21,42 @@ export default class TestFSDriver extends FSDriver {
 
         // filePath: "./path/to/some/file.sql"
         for (const filePath in files) {
-            // dirNames: [".", "path", "to", "some"]
-            const dirNames = filePath.split("/").slice(0, -1);
-            // fileName: "file.sql"
-            const fileName = filePath.split("/").pop();
+            const fileContent = files[ filePath ];
+            this.addTestFile(filePath, fileContent);
+        }
+    }
 
-            let lastDirContent: IDirContent;
-            for (let i = 0, n = dirNames.length; i < n; i++) {
-                const dirName = dirNames[i];
-                const folderPath = dirNames.slice(0, i + 1).join("/");
+    addTestFile(filePath: string, fileContent: string) {
+        this.files[ filePath ] = fileContent;
 
-                let dirContent = this.dirContentByPath[ folderPath ];
-                if ( !dirContent ) {
-                    dirContent = {
-                        files: [],
-                        folders: []
-                    };
+        // dirNames: [".", "path", "to", "some"]
+        const dirNames = filePath.split("/").slice(0, -1);
+        // fileName: "file.sql"
+        const fileName = filePath.split("/").pop();
 
-                    this.dirContentByPath[ folderPath ] = dirContent;
-                }
+        let lastDirContent: IDirContent;
+        for (let i = 0, n = dirNames.length; i < n; i++) {
+            const dirName = dirNames[i];
+            const folderPath = dirNames.slice(0, i + 1).join("/");
 
-                if ( lastDirContent ) {
-                    lastDirContent.folders.push( dirName );
-                }
+            let dirContent = this.dirContentByPath[ folderPath ];
+            if ( !dirContent ) {
+                dirContent = {
+                    files: [],
+                    folders: []
+                };
 
-                lastDirContent = dirContent;
+                this.dirContentByPath[ folderPath ] = dirContent;
             }
 
-            lastDirContent.files.push(fileName);
+            if ( lastDirContent ) {
+                lastDirContent.folders.push( dirName );
+            }
+
+            lastDirContent = dirContent;
         }
+
+        lastDirContent.files.push(fileName);
     }
 
     async readFile(filePath: string): Promise<string> {

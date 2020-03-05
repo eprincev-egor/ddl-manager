@@ -1,4 +1,5 @@
 import fs from "fs";
+import { EventEmitter } from "events";
 
 async function readFile(path: string): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -39,7 +40,7 @@ export interface IDirContent {
     folders: string[];
 }
 
-export default class FSDriver {
+export default class FSDriver extends EventEmitter {
     async readFile(filePath: string): Promise<string> {
         const fileContent = await readFile(filePath);
         return fileContent;

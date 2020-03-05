@@ -1,4 +1,4 @@
-import testLoadState, {ITestFiles} from "./testLoadState";
+import {TestState, ITestFiles} from "../TestState";
 
 describe("FSState", () => {
 
@@ -19,7 +19,7 @@ describe("FSState", () => {
             ]
         };
 
-        await testLoadState({
+        await TestState.testLoading({
             files,
             expectedState: {
                 folder: {
@@ -29,7 +29,7 @@ describe("FSState", () => {
                         {
                             path: "./view.sql",
                             name: "view.sql",
-                            content: testLoadState.getFileSql( files["./view.sql"] )
+                            content: TestState.concatFilesSql( files["./view.sql"] )
                         }
                     ],
                     folders: []
@@ -79,7 +79,7 @@ describe("FSState", () => {
             ]
         };
 
-        await testLoadState({
+        await TestState.testLoading({
             files,
             expectedState: {
                 folder: {
@@ -89,7 +89,7 @@ describe("FSState", () => {
                         {
                             path: "./view.sql",
                             name: "view.sql",
-                            content: testLoadState.getFileSql( files["./view.sql"] )
+                            content: TestState.concatFilesSql( files["./view.sql"] )
                         }
                     ],
                     folders: []

@@ -13,6 +13,13 @@ import TableModel from "./objects/TableModel";
 import ViewModel from "./objects/ViewModel";
 import TriggerModel from "./objects/TriggerModel";
 
+type TDBObject = (
+    FunctionModel |
+    TableModel |
+    ViewModel |
+    TriggerModel
+);
+
 export default class FSState extends State<FSState> {
     structure() {
         return {
@@ -30,6 +37,18 @@ export default class FSState extends State<FSState> {
         };
     }
 
+    constructor(inputData: FSState["TInputData"]) {
+        super(inputData);
+
+        this.row.driver.on("change", (path: string) => {
+            this.onFSChange(path);
+        });
+    }
+
+    async onFSChange(filePath: string) {
+        await this.addFile(filePath);
+    }
+
     async load(folderPath: string): Promise<void> {
         const parser = this.row.parser;
         const folderModel = await this.readFolder(folderPath);
@@ -43,26 +62,73 @@ export default class FSState extends State<FSState> {
         for (const fileModel of files) {
             const filePath = fileModel.get("path");
             const sql = fileModel.get("content");
-            const dbObjects = parser.parseFile(filePath, sql);
+            const dbObjects = parser.parseFile(filePath, sql) as TDBObject[];
 
-            for (const dbo of dbObjects) {
-                if ( dbo instanceof FunctionModel ) {
-                    this.row.functions.push(dbo);
-                }
-                else if ( dbo instanceof TableModel ) {
-                    this.row.tables.push(dbo);
-                }
-                else if ( dbo instanceof ViewModel ) {
-                    this.row.views.push(dbo);
-                }
-                else if ( dbo instanceof TriggerModel ) {
-                    this.row.triggers.push(dbo);
-                }
-            }
+            this.addObjects(dbObjects);
         }
     }
 
-    async readFolder(folderPath: string): Promise<FolderModel> {
+    private async addFile(filePath: string) {
+        const sql = await this.row.driver.readFile(filePath);
+        const dbObjects = this.row.parser.parseFile(filePath, sql) as TDBObject[];
+
+        const fileName = filePath.split("/").pop();
+        const fileRow: FileModel["TInputData"] = {
+            name: fileName,
+            path: filePath,
+            content: sql
+        };
+        const fileModel = new FileModel(fileRow);
+
+        let folder = this.row.folder;
+        if ( !folder ) {
+            const folderPath = filePath.split("/").slice(0, -1).join("/");
+            const folderRow: FolderModel["TInputData"] = {
+                path: (
+                    folderPath === "." ? 
+                        "./" : 
+                        folderPath
+                ),
+                name: folderPath
+                    .split(/[\\\/]/g)
+                    .filter(name =>
+                        name !== "" &&
+                        name !== "."
+                    )
+                    .pop() || "",
+                files: [],
+                folders: []
+            };
+            folder = new FolderModel(folderRow);
+            this.set({ folder });
+        }
+        folder.row.files.add(fileModel);
+
+        this.addObjects(dbObjects);
+    }
+
+    private addObjects(dbObjects: TDBObject[]) {
+        for (const dbo of dbObjects) {
+            this.addObject(dbo);
+        }
+    }
+
+    private addObject(dbo: TDBObject) {
+        if ( dbo instanceof FunctionModel ) {
+            this.row.functions.push(dbo);
+        }
+        else if ( dbo instanceof TableModel ) {
+            this.row.tables.push(dbo);
+        }
+        else if ( dbo instanceof ViewModel ) {
+            this.row.views.push(dbo);
+        }
+        else if ( dbo instanceof TriggerModel ) {
+            this.row.triggers.push(dbo);
+        }
+    }
+
+    private async readFolder(folderPath: string): Promise<FolderModel> {
         folderPath = folderPath.replace(/\/$/, "");
 
         const folderRow: FolderModel["TInputData"] = {
