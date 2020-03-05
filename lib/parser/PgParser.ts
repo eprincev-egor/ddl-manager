@@ -22,6 +22,9 @@ export default class PgParser extends Parser {
         const objects: BaseDBObjectModel<any>[] = [];
 
         for (; coach.i < coach.str.length; coach.i++) {
+            // need ignore comments (inside comment can be invalid syntax)
+            coach.skipSpace();
+
             // create or replace function
             if ( coach.is(CreateFunction) ) {
                 const parsedFunction = coach.parse(CreateFunction);
