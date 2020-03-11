@@ -25,6 +25,7 @@ describe("FSState, watching", () => {
             ]
         });
         const fsState = testState.fsState;
+        await fsState.load("./");
 
         // check first state
         assert.deepStrictEqual(
@@ -57,8 +58,28 @@ describe("FSState, watching", () => {
             }
         );
 
+        testState.setTestFile("./test.sql", [
+            {
+                type: "function",
+                sql: `
+                    create or replace function test2()
+                    returns void as $body$
+                    begin
+
+                    end
+                    $body$
+                    language plpgsql;
+                `,
+                row: {
+                    identify: "test2()",
+                    name: "test2"
+                }
+            }
+        ]);
+
         await testState.emitFS("change", "./test.sql");
 
+        // check changed state
         assert.deepStrictEqual(
             fsState.toJSON(),
             {
@@ -77,8 +98,8 @@ describe("FSState, watching", () => {
                 functions: [
                     {
                         filePath: "./test.sql",
-                        identify: "test()",
-                        name: "test",
+                        identify: "test2()",
+                        name: "test2",
                         parsed: null,
                         createdByDDLManager: true
                     }
