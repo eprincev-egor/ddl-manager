@@ -60,7 +60,7 @@ export class TestState {
         for (const filePath in files) {
             const objects = files[ filePath ];
 
-            this.addTestFile(filePath, objects);
+            this.setTestFile(filePath, objects);
         }
     
         this.fsState = new FSState({
@@ -69,52 +69,52 @@ export class TestState {
         });
     }
 
-    addTestFile(filePath: string, testModels: TTestModel[]) {
+    setTestFile(filePath: string, testModels: TTestModel[]) {
 
         const models: BaseDBObjectModel<any>[] = [];
         const sql = TestState.concatFilesSql(testModels);
 
         for (const testModel of testModels) {
-
-            if ( testModel.type === "function" ) {
-                models.push(
-                    new FunctionModel({
-                        ...testModel.row,
-                        filePath
-                    })
-                );
-            }
-
-            if ( testModel.type === "table" ) {
-                models.push(
-                    new TableModel({
-                        ...testModel.row,
-                        filePath
-                    })
-                );
-            }
-
-            if ( testModel.type === "view" ) {
-                models.push(
-                    new ViewModel({
-                        ...testModel.row,
-                        filePath
-                    })
-                );
-            }
-
-            if ( testModel.type === "trigger" ) {
-                models.push(
-                    new TriggerModel({
-                        ...testModel.row,
-                        filePath
-                    })
-                );
-            }
+            const dboModel = this.createTestDBOModel(filePath, testModel);
+            models.push( dboModel );
         }
 
-        this.driver.addTestFile(filePath, sql);
-        this.parser.addTestFile(sql, models);
+        this.driver.setTestFile(filePath, sql);
+        this.parser.setTestFile(sql, models);
+    }
+
+    createTestDBOModel(filePath: string, testModel: TTestModel): BaseDBObjectModel<any> {
+        let outputDBOModel: BaseDBObjectModel<any>;
+
+        if ( testModel.type === "function" ) {
+            outputDBOModel = new FunctionModel({
+                ...testModel.row,
+                filePath
+            });
+        }
+
+        if ( testModel.type === "table" ) {
+            outputDBOModel = new TableModel({
+                ...testModel.row,
+                filePath
+            });
+        }
+
+        if ( testModel.type === "view" ) {
+            outputDBOModel = new ViewModel({
+                ...testModel.row,
+                filePath
+            });
+        }
+
+        if ( testModel.type === "trigger" ) {
+            outputDBOModel = new TriggerModel({
+                ...testModel.row,
+                filePath
+            });
+        }
+
+        return outputDBOModel;
     }
 
     getFileSQL(filePath: string) {
