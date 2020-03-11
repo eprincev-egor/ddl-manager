@@ -1,22 +1,20 @@
-import FSDriver, {IDirContent} from "../../lib/fs/FSDriver";
+import FSDriver, {IDirectory} from "../../lib/fs/FSDriver";
+import {TestFSDirectory} from "./TestFSDirectory";
 
 export interface IFiles {
     [key: string]: string;
 }
 
 export default class TestFSDriver extends FSDriver {
-    files: IFiles;
-    dirContentByPath: {[filePath: string]: IDirContent};
+    private files: IFiles;
+    private dirContentByPath: {[filePath: string]: TestFSDirectory};
 
     constructor(files: IFiles) {
         super();
         this.files = {};
 
         this.dirContentByPath = {
-            ".": {
-                files: [],
-                folders: []
-            }
+            ".": new TestFSDirectory()
         };
 
         // filePath: "./path/to/some/file.sql"
@@ -37,29 +35,41 @@ export default class TestFSDriver extends FSDriver {
         // fileName: "file.sql"
         const fileName = filePath.split("/").pop();
 
-        let lastDirContent: IDirContent;
+        let lastDirContent: TestFSDirectory;
         for (let i = 0, n = dirNames.length; i < n; i++) {
             const dirName = dirNames[i];
             const folderPath = dirNames.slice(0, i + 1).join("/");
 
-            let dirContent = this.dirContentByPath[ folderPath ];
-            if ( !dirContent ) {
-                dirContent = {
-                    files: [],
-                    folders: []
-                };
-
-                this.dirContentByPath[ folderPath ] = dirContent;
-            }
+            const directory = this.getOrCreateDirectory( folderPath );
 
             if ( lastDirContent ) {
-                lastDirContent.folders.push( dirName );
+                lastDirContent.addDirectory(dirName);
             }
 
-            lastDirContent = dirContent;
+            lastDirContent = directory;
         }
 
-        lastDirContent.files.push(fileName);
+        lastDirContent.addFile(fileName);
+    }
+
+    getFile(filePath: string): string {
+        return this.files[ filePath ];
+    }
+
+    private getDirectory(directoryPath: string): TestFSDirectory {
+        return this.dirContentByPath[ directoryPath ];
+    }
+
+    private getOrCreateDirectory(directoryPath: string): TestFSDirectory {
+        const existentDirectory = this.getDirectory( directoryPath );
+        if ( existentDirectory ) {
+            return existentDirectory;
+        }
+
+        const newDirectory = new TestFSDirectory();
+        this.dirContentByPath[ directoryPath ] = newDirectory;
+        
+        return newDirectory;
     }
 
     removeTestFile(filePath: string) {
@@ -72,30 +82,20 @@ export default class TestFSDriver extends FSDriver {
             const dirName = dirNames[i];
             const folderPath = dirNames.slice(0, i + 1).join("/");
 
-            const dirContent = this.dirContentByPath[ folderPath ];
-            if ( !dirContent ) {
+            const directory = this.getDirectory(folderPath);
+            if ( !directory ) {
                 continue;
             }
 
-            const fileIndexInsideDirectory = dirContent.files.indexOf(fileName);
-            if ( fileIndexInsideDirectory !== -1 ) {
-                dirContent.files.splice(fileIndexInsideDirectory, 1);
-            }
+            directory.removeFile(fileName);
 
-            const isEmptyDirectory = (
-                dirContent.files.length === 0 &&
-                dirContent.folders.length === 0
-            );
-            if ( isEmptyDirectory ) {
+            if ( directory.isEmpty() ) {
                 delete this.dirContentByPath[ folderPath ];
 
                 if ( i > 0 ) {
                     const parentDirectoryPath = dirNames.slice(0, i).join("/");
-                    const parentDirectoryContent = this.dirContentByPath[ parentDirectoryPath ];
-                    const currentDirectoryIndexInsideParentDirectory = parentDirectoryContent.folders.indexOf( dirName );
-                    if ( currentDirectoryIndexInsideParentDirectory !== -1 ) {
-                        parentDirectoryContent.folders.splice(currentDirectoryIndexInsideParentDirectory, 1);
-                    }
+                    const parentDirectory = this.getDirectory(parentDirectoryPath);
+                    parentDirectory.removeDirectory( dirName );
                 }
             }
         }
@@ -105,7 +105,7 @@ export default class TestFSDriver extends FSDriver {
         return this.files[ filePath ];
     }
 
-    async readFolder(folderPath: string): Promise<IDirContent> {
-        return this.dirContentByPath[ folderPath ];
+    async readFolder(folderPath: string): Promise<IDirectory> {
+        return this.getDirectory( folderPath );
     }
 }

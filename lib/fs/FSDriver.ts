@@ -27,7 +27,7 @@ async function readdir(path: string): Promise<string[]> {
     });
 }
 
-async function isDirectory(path: string): Promise<boolean> {
+async function checkIsDirectory(path: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
         fs.stat(path, (err, stat) => {
             resolve( stat.isDirectory() );
@@ -35,9 +35,9 @@ async function isDirectory(path: string): Promise<boolean> {
     });
 }
 
-export interface IDirContent {
+export interface IDirectory {
     files: string[]; 
-    folders: string[];
+    directories: string[];
 }
 
 export default class FSDriver extends EventEmitter {
@@ -46,26 +46,28 @@ export default class FSDriver extends EventEmitter {
         return fileContent;
     }
 
-    async readFolder(folderPath: string): Promise<IDirContent> {
-        const filesOrFolders = await readdir(folderPath);
+    async readFolder(folderPath: string): Promise<IDirectory> {
+        const filesOrDirectories = await readdir(folderPath);
         const files: string[] = [];
-        const folders: string[] = [];
+        const directories: string[] = [];
 
-        for (const fileOrFolder of filesOrFolders) {
-            const path = folderPath + "/" + fileOrFolder;
-            const isFolder = await isDirectory(path);
+        for (const fileOrDirName of filesOrDirectories) {
+            const path = folderPath + "/" + fileOrDirName;
+            const isDirectory = await checkIsDirectory(path);
 
-            if ( isFolder ) {
-                folders.push( fileOrFolder );
+            if ( isDirectory ) {
+                const dirName = fileOrDirName;
+                directories.push( dirName );
             }
             else {
-                files.push( fileOrFolder );
+                const fileName = fileOrDirName;
+                files.push( fileName );
             }
         }
 
         return {
             files,
-            folders
+            directories
         };
     }
 }

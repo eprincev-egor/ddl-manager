@@ -150,7 +150,7 @@ export default class FSState extends State<FSState> {
 
 
         const fs = this.row.driver;
-        const {files, folders} = await fs.readFolder(folderPath);
+        const {files, directories} = await fs.readFolder(folderPath);
 
         for (const fileName of files) {
             if ( !/\.sql/.test(fileName) ) {
@@ -169,7 +169,7 @@ export default class FSState extends State<FSState> {
             folderRow.files.push(fileRow);
         }
 
-        for (const folderName of folders) {
+        for (const folderName of directories) {
             const subFolderPath = folderPath + "/" + folderName;
             const subFolderModel = await this.readFolder( subFolderPath );
 

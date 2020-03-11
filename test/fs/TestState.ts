@@ -118,7 +118,7 @@ export class TestState {
     }
 
     getFileSQL(filePath: string) {
-        return this.driver.files[ filePath ];
+        return this.driver.getFile( filePath );
     }
 
     async emitFS(eventType: string, path: string) {

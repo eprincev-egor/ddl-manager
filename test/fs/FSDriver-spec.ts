@@ -14,10 +14,10 @@ describe("FSDriver", () => {
     it("read dir", async() => {
         const folderPath = __dirname + "/fs-driver/test";
         const fsDriver = new FSDriver();
-        const {files, folders} = await fsDriver.readFolder(folderPath);
+        const {files, directories} = await fsDriver.readFolder(folderPath);
 
         assert.deepStrictEqual(files, ["x.sql"]);
-        assert.deepStrictEqual(folders, ["a"]);
+        assert.deepStrictEqual(directories, ["a"]);
     });
 
     it("read nonexistent file", async() => {
