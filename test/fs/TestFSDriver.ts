@@ -22,12 +22,15 @@ export default class TestFSDriver extends FSDriver {
         // filePath: "./path/to/some/file.sql"
         for (const filePath in files) {
             const fileContent = files[ filePath ];
-            this.addTestFile(filePath, fileContent);
+            this.setTestFile(filePath, fileContent);
         }
     }
 
-    addTestFile(filePath: string, fileContent: string) {
+    setTestFile(filePath: string, fileContent: string) {
         this.files[ filePath ] = fileContent;
+        
+        // delete directories structure, if file
+        this.removeTestFile( filePath );
 
         // dirNames: [".", "path", "to", "some"]
         const dirNames = filePath.split("/").slice(0, -1);
@@ -57,6 +60,45 @@ export default class TestFSDriver extends FSDriver {
         }
 
         lastDirContent.files.push(fileName);
+    }
+
+    removeTestFile(filePath: string) {
+        // dirNames: [".", "path", "to", "some"]
+        const dirNames = filePath.split("/").slice(0, -1);
+        // fileName: "file.sql"
+        const fileName = filePath.split("/").pop();
+
+        for (let i = dirNames.length - 1; i >= 0; i--) {
+            const dirName = dirNames[i];
+            const folderPath = dirNames.slice(0, i + 1).join("/");
+
+            const dirContent = this.dirContentByPath[ folderPath ];
+            if ( !dirContent ) {
+                continue;
+            }
+
+            const fileIndexInsideDirectory = dirContent.files.indexOf(fileName);
+            if ( fileIndexInsideDirectory !== -1 ) {
+                dirContent.files.splice(fileIndexInsideDirectory, 1);
+            }
+
+            const isEmptyDirectory = (
+                dirContent.files.length === 0 &&
+                dirContent.folders.length === 0
+            );
+            if ( isEmptyDirectory ) {
+                delete this.dirContentByPath[ folderPath ];
+
+                if ( i > 0 ) {
+                    const parentDirectoryPath = dirNames.slice(0, i).join("/");
+                    const parentDirectoryContent = this.dirContentByPath[ parentDirectoryPath ];
+                    const currentDirectoryIndexInsideParentDirectory = parentDirectoryContent.folders.indexOf( dirName );
+                    if ( currentDirectoryIndexInsideParentDirectory !== -1 ) {
+                        parentDirectoryContent.folders.splice(currentDirectoryIndexInsideParentDirectory, 1);
+                    }
+                }
+            }
+        }
     }
 
     async readFile(filePath: string): Promise<string> {

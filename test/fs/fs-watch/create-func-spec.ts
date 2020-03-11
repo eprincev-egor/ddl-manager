@@ -18,7 +18,7 @@ describe("FSState, watching", () => {
             }
         );
 
-        testState.addTestFile("./test.sql", [
+        testState.setTestFile("./test.sql", [
             {
                 type: "function",
                 sql: `
