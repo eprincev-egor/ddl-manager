@@ -80,7 +80,7 @@ export class TestState {
         }
 
         this.driver.setTestFile(filePath, sql);
-        this.parser.setTestFile(sql, models);
+        this.parser.setTestFile(filePath, sql, models);
     }
 
     createTestDBOModel(filePath: string, testModel: TTestModel): BaseDBObjectModel<any> {

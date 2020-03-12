@@ -13,11 +13,11 @@ export default class TestParser extends Parser {
         this.state = state;
     }
 
-    setTestFile(fileContent: string, objects: BaseDBObjectModel<any>[]) {
-        this.state[ fileContent ] = objects;
+    setTestFile(filePath: string, fileContent: string, objects: BaseDBObjectModel<any>[]) {
+        this.state[ filePath ] = objects;
     }
 
     parseFile(filePath: string, fileContent: string): BaseDBObjectModel<any>[] {
-        return this.state[ fileContent ];
+        return this.state[ filePath ];
     }
 }

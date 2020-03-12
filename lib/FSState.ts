@@ -45,10 +45,6 @@ export default class FSState extends State<FSState> {
         });
     }
 
-    async onFSChange(filePath: string) {
-        await this.addFile(filePath);
-    }
-
     async load(folderPath: string): Promise<void> {
         const parser = this.row.parser;
         const folderModel = await this.readFolder(folderPath);
@@ -66,6 +62,11 @@ export default class FSState extends State<FSState> {
 
             this.addObjects(dbObjects);
         }
+    }
+
+    private async onFSChange(filePath: string) {
+        this.removeFile(filePath);
+        await this.addFile(filePath);
     }
 
     private async addFile(filePath: string) {
@@ -107,6 +108,40 @@ export default class FSState extends State<FSState> {
         this.addObjects(dbObjects);
     }
 
+    private removeFile(filePath: string) {
+        const folder = this.row.folder;
+        if ( !folder ) {
+            return;
+        }
+
+        const fileModel = folder.getFile(filePath) as FileModel;
+        if ( fileModel ) {
+            let dbObjects: TDBObject[];
+
+            dbObjects = this.row.functions.filter(dbo =>
+                dbo.get("filePath") === filePath
+            );
+            this.removeObjects( dbObjects );
+
+            dbObjects = this.row.tables.filter(dbo =>
+                dbo.get("filePath") === filePath
+            );
+            this.removeObjects( dbObjects );
+
+            dbObjects = this.row.triggers.filter(dbo =>
+                dbo.get("filePath") === filePath
+            );
+            this.removeObjects( dbObjects );
+
+            dbObjects = this.row.views.filter(dbo =>
+                dbo.get("filePath") === filePath
+            );
+            this.removeObjects( dbObjects );
+
+            folder.removeFile(filePath);
+        }
+    }
+
     private addObjects(dbObjects: TDBObject[]) {
         for (const dbo of dbObjects) {
             this.addObject(dbo);
@@ -125,6 +160,27 @@ export default class FSState extends State<FSState> {
         }
         else if ( dbo instanceof TriggerModel ) {
             this.row.triggers.push(dbo);
+        }
+    }
+
+    private removeObjects(dbObjects: TDBObject[]) {
+        for (const dbo of dbObjects) {
+            this.removeObject(dbo);
+        }
+    }
+
+    private removeObject(dbo: TDBObject) {
+        if ( dbo instanceof FunctionModel ) {
+            this.row.functions.remove(dbo);
+        }
+        else if ( dbo instanceof TableModel ) {
+            this.row.tables.remove(dbo);
+        }
+        else if ( dbo instanceof ViewModel ) {
+            this.row.views.remove(dbo);
+        }
+        else if ( dbo instanceof TriggerModel ) {
+            this.row.triggers.remove(dbo);
         }
     }
 
@@ -158,12 +214,12 @@ export default class FSState extends State<FSState> {
             }
 
             const filePath = folderPath + "/" + fileName;
-            const fileContent = await fs.readFile(filePath);
+            const sql = await fs.readFile(filePath);
             
             const fileRow: FileModel["TInputData"] = {
                 name: fileName,
                 path: filePath,
-                content: fileContent
+                content: sql
             };
 
             folderRow.files.push(fileRow);
