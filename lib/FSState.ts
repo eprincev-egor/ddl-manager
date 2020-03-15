@@ -1,4 +1,4 @@
-import State from "./State";
+import State, {TDBObject} from "./State";
 import * as Path from "path";
 
 // @see fs/index.ts
@@ -9,17 +9,6 @@ import FSDriver from "./fs/FSDriver";
 import {Types} from "model-layer";
 import FileModel from "./fs/FileModel";
 import Parser from "./parser/Parser";
-import FunctionModel from "./objects/FunctionModel";
-import TableModel from "./objects/TableModel";
-import ViewModel from "./objects/ViewModel";
-import TriggerModel from "./objects/TriggerModel";
-
-type TDBObject = (
-    FunctionModel |
-    TableModel |
-    ViewModel |
-    TriggerModel
-);
 
 export default class FSState extends State<FSState> {
     structure() {
@@ -126,48 +115,6 @@ export default class FSState extends State<FSState> {
             this.removeObjects( dbObjects );
 
             folder.removeFile(filePath);
-        }
-    }
-
-    private addObjects(dbObjects: TDBObject[]) {
-        for (const dbo of dbObjects) {
-            this.addObject(dbo);
-        }
-    }
-
-    private addObject(dbo: TDBObject) {
-        if ( dbo instanceof FunctionModel ) {
-            this.row.functions.push(dbo);
-        }
-        else if ( dbo instanceof TableModel ) {
-            this.row.tables.push(dbo);
-        }
-        else if ( dbo instanceof ViewModel ) {
-            this.row.views.push(dbo);
-        }
-        else if ( dbo instanceof TriggerModel ) {
-            this.row.triggers.push(dbo);
-        }
-    }
-
-    private removeObjects(dbObjects: TDBObject[]) {
-        for (const dbo of dbObjects) {
-            this.removeObject(dbo);
-        }
-    }
-
-    private removeObject(dbo: TDBObject) {
-        if ( dbo instanceof FunctionModel ) {
-            this.row.functions.remove(dbo);
-        }
-        else if ( dbo instanceof TableModel ) {
-            this.row.tables.remove(dbo);
-        }
-        else if ( dbo instanceof ViewModel ) {
-            this.row.views.remove(dbo);
-        }
-        else if ( dbo instanceof TriggerModel ) {
-            this.row.triggers.remove(dbo);
         }
     }
 
