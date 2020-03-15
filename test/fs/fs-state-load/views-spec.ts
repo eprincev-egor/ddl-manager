@@ -4,7 +4,7 @@ describe("FSState", () => {
 
     it("load dir with one file with view", async() => {
         const files: ITestFiles = {
-            "./view.sql": [
+            "view.sql": [
                 {
                     type: "view",
                     sql: `
@@ -27,16 +27,16 @@ describe("FSState", () => {
                     name: "",
                     files: [
                         {
-                            path: "./view.sql",
+                            path: "view.sql",
                             name: "view.sql",
-                            content: TestState.concatFilesSql( files["./view.sql"] )
+                            content: TestState.concatFilesSql( files["view.sql"] )
                         }
                     ],
                     folders: []
                 },
                 views: [
                     {
-                        filePath: "./view.sql",
+                        filePath: "view.sql",
                         identify: "public.companies",
                         name: "companies",
                         parsed: null,
@@ -53,7 +53,7 @@ describe("FSState", () => {
     
     it("load dir with one file with two views", async() => {
         const files: ITestFiles = {
-            "./view.sql": [
+            "view.sql": [
                 {
                     type: "view",
                     sql: `
@@ -87,23 +87,23 @@ describe("FSState", () => {
                     name: "",
                     files: [
                         {
-                            path: "./view.sql",
+                            path: "view.sql",
                             name: "view.sql",
-                            content: TestState.concatFilesSql( files["./view.sql"] )
+                            content: TestState.concatFilesSql( files["view.sql"] )
                         }
                     ],
                     folders: []
                 },
                 views: [
                     {
-                        filePath: "./view.sql",
+                        filePath: "view.sql",
                         identify: "public.companies",
                         name: "companies",
                         parsed: null,
                         createdByDDLManager: true
                     },
                     {
-                        filePath: "./view.sql",
+                        filePath: "view.sql",
                         identify: "public.orders",
                         name: "orders",
                         parsed: null,

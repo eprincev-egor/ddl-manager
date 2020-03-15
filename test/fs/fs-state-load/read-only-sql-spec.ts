@@ -32,12 +32,12 @@ describe("FSState", () => {
                     files: [],
                     folders: [
                         {
-                            path: "./sub",
+                            path: "sub",
                             name: "sub",
                             files: [],
                             folders: [
                                 {
-                                    path: "./sub/dir",
+                                    path: "sub/dir",
                                     name: "dir",
                                     files: [],
                                     folders: []

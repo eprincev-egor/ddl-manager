@@ -8,12 +8,36 @@ export default class FolderModel extends Model<FolderModel> {
         return {
             path: Types.String,
             name: Types.String,
-            files: FilesCollection,
+            files: Types.Collection({
+                Collection: FilesCollection,
+                default: () => new FilesCollection()
+            }),
             folders: Types.Collection({
                 Collection: index.FoldersCollection,
                 default: () => new index.FoldersCollection()
             })
         };
+    }
+
+    setPath(dirPath: string) {
+        dirPath = dirPath.replace(/\/$/, "");
+
+        const dirName = dirPath
+            .split(/[\\\/]/g)
+            .filter(name =>
+                name !== "" &&
+                name !== "."
+            )
+            .pop() || "";
+        
+        const changes = {
+            name: dirName,
+            path: dirPath === "." ? 
+                "./" : 
+                dirPath
+        };
+
+        this.set(changes);
     }
 
     removeFile(filePath: string): void {

@@ -4,7 +4,7 @@ describe("FSState", () => {
 
     it("load dir with one file with table", async() => {
         const files: ITestFiles = {
-            "./company.sql": [
+            "company.sql": [
                 {
                     type: "table",
                     sql: `
@@ -17,7 +17,7 @@ describe("FSState", () => {
                         name: "company",
                         columns: [
                             {
-                                filePath: "./company.sql",
+                                filePath: "company.sql",
                                 identify: "id",
                                 key: "id",
                                 type: "integer"
@@ -37,22 +37,22 @@ describe("FSState", () => {
                     name: "",
                     files: [
                         {
-                            path: "./company.sql",
+                            path: "company.sql",
                             name: "company.sql",
-                            content: TestState.concatFilesSql(files["./company.sql"])
+                            content: TestState.concatFilesSql(files["company.sql"])
                         }
                     ],
                     folders: []
                 },
                 tables: [
                     {
-                        filePath: "./company.sql",
+                        filePath: "company.sql",
                         identify: "public.company",
                         parsed: null,
                         name: "company",
                         columns: [
                             {
-                                filePath: "./company.sql",
+                                filePath: "company.sql",
                                 identify: "id",
                                 key: "id",
                                 type: "integer",
@@ -80,7 +80,7 @@ describe("FSState", () => {
     
     it("load dir with one file with two tables", async() => {
         const files: ITestFiles = {
-            "./tables.sql": [
+            "tables.sql": [
                 {
                     type: "table",
                     sql: `
@@ -93,7 +93,7 @@ describe("FSState", () => {
                         name: "company",
                         columns: [
                             {
-                                filePath: "./tables.sql",
+                                filePath: "tables.sql",
                                 identify: "id",
                                 key: "id",
                                 type: "integer"
@@ -115,13 +115,13 @@ describe("FSState", () => {
                         name: "orders",
                         columns: [
                             {
-                                filePath: "./tables.sql",
+                                filePath: "tables.sql",
                                 identify: "id",
                                 key: "id",
                                 type: "integer"
                             },
                             {
-                                filePath: "./tables.sql",
+                                filePath: "tables.sql",
                                 identify: "id_company",
                                 key: "id_company",
                                 type: "integer",
@@ -142,22 +142,22 @@ describe("FSState", () => {
                     name: "",
                     files: [
                         {
-                            path: "./tables.sql",
+                            path: "tables.sql",
                             name: "tables.sql",
-                            content: TestState.concatFilesSql(files["./tables.sql"])
+                            content: TestState.concatFilesSql(files["tables.sql"])
                         }
                     ],
                     folders: []
                 },
                 tables: [
                     {
-                        filePath: "./tables.sql",
+                        filePath: "tables.sql",
                         identify: "public.company",
                         parsed: null,
                         name: "company",
                         columns: [
                             {
-                                filePath: "./tables.sql",
+                                filePath: "tables.sql",
                                 identify: "id",
                                 key: "id",
                                 type: "integer",
@@ -174,13 +174,13 @@ describe("FSState", () => {
                         rows: null
                     },
                     {
-                        filePath: "./tables.sql",
+                        filePath: "tables.sql",
                         identify: "public.orders",
                         parsed: null,
                         name: "orders",
                         columns: [
                             {
-                                filePath: "./tables.sql",
+                                filePath: "tables.sql",
                                 identify: "id",
                                 key: "id",
                                 type: "integer",
@@ -188,7 +188,7 @@ describe("FSState", () => {
                                 parsed: null
                             },
                             {
-                                filePath: "./tables.sql",
+                                filePath: "tables.sql",
                                 identify: "id_company",
                                 key: "id_company",
                                 type: "integer",

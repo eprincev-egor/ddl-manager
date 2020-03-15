@@ -5,7 +5,7 @@ describe("FSState, watching", () => {
 
     it("removing file", async() => {
         const testState = new TestState({
-            "./test.sql": [
+            "test.sql": [
                 {
                     type: "function",
                     sql: `
@@ -36,16 +36,16 @@ describe("FSState, watching", () => {
                     name: "",
                     files: [
                         {
-                            path: "./test.sql",
+                            path: "test.sql",
                             name: "test.sql",
-                            content: testState.getFileSQL( "./test.sql" )
+                            content: testState.getFileSQL( "test.sql" )
                         }
                     ],
                     folders: []
                 },
                 functions: [
                     {
-                        filePath: "./test.sql",
+                        filePath: "test.sql",
                         identify: "test()",
                         name: "test",
                         parsed: null,
@@ -58,8 +58,8 @@ describe("FSState, watching", () => {
             }
         );
 
-        testState.removeTestFile("./test.sql");
-        await testState.emitFS("unlink", "./test.sql");
+        testState.removeTestFile("test.sql");
+        await testState.emitFS("unlink", "test.sql");
 
         // check changed state
         assert.deepStrictEqual(

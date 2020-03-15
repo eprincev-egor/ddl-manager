@@ -1,4 +1,5 @@
 import State from "./State";
+import * as Path from "path";
 
 // @see fs/index.ts
 import FolderModel from "./fs/FolderModel";
@@ -33,7 +34,10 @@ export default class FSState extends State<FSState> {
                 constructor: Parser as (new () => Parser),
                 toJSON: () => null
             }),
-            folder: FolderModel
+            folder: Types.Model({
+                Model: FolderModel,
+                default: () => new FolderModel()
+            })
         };
     }
 
@@ -51,13 +55,11 @@ export default class FSState extends State<FSState> {
 
     async load(folderPath: string): Promise<void> {
         const parser = this.row.parser;
-        const folderModel = await this.readFolder(folderPath);
-        
-        this.set({
-            folder: folderModel
-        });
 
-        const files = folderModel.filterChildrenByInstance(FileModel);
+        this.row.folder.setPath(folderPath);
+        await this.readFolder(folderPath);
+        
+        const files = this.row.folder.filterChildrenByInstance(FileModel);
 
         for (const fileModel of files) {
             const filePath = fileModel.get("path");
@@ -82,36 +84,13 @@ export default class FSState extends State<FSState> {
         const dbObjects = this.row.parser.parseFile(filePath, sql) as TDBObject[];
 
         const fileName = filePath.split("/").pop();
-        const fileRow: FileModel["TInputData"] = {
+        const fileModel = new FileModel({
             name: fileName,
             path: filePath,
             content: sql
-        };
-        const fileModel = new FileModel(fileRow);
+        });
 
-        let folder = this.row.folder;
-        if ( !folder ) {
-            const folderPath = filePath.split("/").slice(0, -1).join("/");
-            const folderRow: FolderModel["TInputData"] = {
-                path: (
-                    folderPath === "." ? 
-                        "./" : 
-                        folderPath
-                ),
-                name: folderPath
-                    .split(/[\\\/]/g)
-                    .filter(name =>
-                        name !== "" &&
-                        name !== "."
-                    )
-                    .pop() || "",
-                files: [],
-                folders: []
-            };
-            folder = new FolderModel(folderRow);
-            this.set({ folder });
-        }
-        folder.row.files.add(fileModel);
+        this.row.folder.row.files.add(fileModel);
 
         this.addObjects(dbObjects);
     }
@@ -192,36 +171,20 @@ export default class FSState extends State<FSState> {
         }
     }
 
-    private async readFolder(folderPath: string): Promise<FolderModel> {
-        folderPath = folderPath.replace(/\/$/, "");
-
-        const folderRow: FolderModel["TInputData"] = {
-            path: (
-                folderPath === "." ? 
-                    "./" : 
-                    folderPath
-            ),
-            name: folderPath
-                .split(/[\\\/]/g)
-                .filter(name =>
-                    name !== "" &&
-                    name !== "."
-                )
-                .pop() || "",
-            files: [],
-            folders: []
-        };
-
-
+    private async readFolder(
+        folderPath: string, 
+        folderModel: FolderModel = this.row.folder
+    ): Promise<void> {
         const fs = this.row.driver;
-        const {files, directories} = await fs.readFolder(folderPath);
+        const folder = await fs.readFolder(folderPath);
+        const {files, directories} = folder;
 
         for (const fileName of files) {
             if ( !/\.sql/.test(fileName) ) {
                 continue;
             }
 
-            const filePath = folderPath + "/" + fileName;
+            const filePath = joinPath(folderPath, fileName);
             const sql = await fs.readFile(filePath);
             
             const fileRow: FileModel["TInputData"] = {
@@ -230,21 +193,30 @@ export default class FSState extends State<FSState> {
                 content: sql
             };
 
-            folderRow.files.push(fileRow);
+            folderModel.row.files.push(fileRow);
         }
 
         for (const folderName of directories) {
-            const subFolderPath = folderPath + "/" + folderName;
-            const subFolderModel = await this.readFolder( subFolderPath );
+            const subFolderPath = joinPath(folderPath, folderName);
 
-            folderRow.folders.push( subFolderModel );
+            const subFolderModel = new FolderModel();
+            subFolderModel.setPath(subFolderPath);
+
+            await this.readFolder( subFolderPath, subFolderModel );
+
+            folderModel.row.folders.push( subFolderModel );
         }
 
-        return new FolderModel(folderRow);
     }
 
     prepareJSON(json) {
         delete json.driver;
         delete json.parser;
     }
+}
+
+function joinPath(...paths: string[]) {
+    let joinedPath = Path.join(...paths);
+    joinedPath = joinedPath.replace(/\\/g, "/");
+    return joinedPath;
 }

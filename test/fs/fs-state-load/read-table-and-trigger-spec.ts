@@ -4,7 +4,7 @@ describe("FSState", () => {
 
     it("load file with table and trigger inside one file", async() => {
         const files: ITestFiles = {
-            "./company.sql": [
+            "company.sql": [
                 {
                     type: "function",
                     sql: `
@@ -53,7 +53,7 @@ describe("FSState", () => {
                         name: "companies",
                         columns: [
                             {
-                                filePath: "./company.sql",
+                                filePath: "company.sql",
                                 identify: "id",
                                 key: "id",
                                 type: "serial",
@@ -61,7 +61,7 @@ describe("FSState", () => {
                                 parsed: null
                             },
                             {
-                                filePath: "./company.sql",
+                                filePath: "company.sql",
                                 identify: "name",
                                 key: "name",
                                 type: "text",
@@ -69,7 +69,7 @@ describe("FSState", () => {
                                 parsed: null
                             },
                             {
-                                filePath: "./company.sql",
+                                filePath: "company.sql",
                                 identify: "note",
                                 key: "note",
                                 type: "text",
@@ -98,16 +98,16 @@ describe("FSState", () => {
                     name: "",
                     files: [
                         {
-                            path: "./company.sql",
+                            path: "company.sql",
                             name: "company.sql",
-                            content: TestState.concatFilesSql( files["./company.sql"] )
+                            content: TestState.concatFilesSql( files["company.sql"] )
                         }
                     ],
                     folders: []
                 },
                 triggers: [
                     {
-                        filePath: "./company.sql",
+                        filePath: "company.sql",
                         identify: "create_role_trigger on public.companies",
                         tableIdentify: "public.companies",
                         functionIdentify: "public.create_role()",
@@ -118,7 +118,7 @@ describe("FSState", () => {
                 ],
                 functions: [
                     {
-                        filePath: "./company.sql",
+                        filePath: "company.sql",
                         identify: "public.create_role()",
                         name: "create_role",
                         parsed: null,
@@ -127,12 +127,12 @@ describe("FSState", () => {
                 ],
                 tables: [
                     {
-                        filePath: "./company.sql",
+                        filePath: "company.sql",
                         identify: "public.companies",
                         name: "companies",
                         columns: [
                             {
-                                filePath: "./company.sql",
+                                filePath: "company.sql",
                                 identify: "id",
                                 key: "id",
                                 type: "serial",
@@ -140,7 +140,7 @@ describe("FSState", () => {
                                 parsed: null
                             },
                             {
-                                filePath: "./company.sql",
+                                filePath: "company.sql",
                                 identify: "name",
                                 key: "name",
                                 type: "text",
@@ -148,7 +148,7 @@ describe("FSState", () => {
                                 parsed: null
                             },
                             {
-                                filePath: "./company.sql",
+                                filePath: "company.sql",
                                 identify: "note",
                                 key: "note",
                                 type: "text",

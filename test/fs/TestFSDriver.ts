@@ -14,7 +14,7 @@ export default class TestFSDriver extends FSDriver {
         this.files = {};
 
         this.dirContentByPath = {
-            ".": new TestFSDirectory()
+            "": new TestFSDirectory()
         };
 
         // filePath: "./path/to/some/file.sql"
@@ -25,27 +25,27 @@ export default class TestFSDriver extends FSDriver {
     }
 
     setTestFile(filePath: string, fileContent: string) {
+        filePath = normalizeFilePath(filePath);
+        
         this.files[ filePath ] = fileContent;
         
         // delete directories structure, if file
         this.removeTestFile( filePath );
 
-        // dirNames: [".", "path", "to", "some"]
+        // dirNames: ["path", "to", "some"]
         const dirNames = filePath.split("/").slice(0, -1);
+
         // fileName: "file.sql"
         const fileName = filePath.split("/").pop();
 
-        let lastDirContent: TestFSDirectory;
+        let lastDirContent = this.getDirectory("");
         for (let i = 0, n = dirNames.length; i < n; i++) {
             const dirName = dirNames[i];
             const folderPath = dirNames.slice(0, i + 1).join("/");
 
             const directory = this.getOrCreateDirectory( folderPath );
 
-            if ( lastDirContent ) {
-                lastDirContent.addDirectory(dirName);
-            }
-
+            lastDirContent.addDirectory(dirName);
             lastDirContent = directory;
         }
 
@@ -57,10 +57,13 @@ export default class TestFSDriver extends FSDriver {
     }
 
     private getDirectory(directoryPath: string): TestFSDirectory {
+        directoryPath = normalizeDirPath(directoryPath);
         return this.dirContentByPath[ directoryPath ];
     }
 
     private getOrCreateDirectory(directoryPath: string): TestFSDirectory {
+        directoryPath = normalizeDirPath(directoryPath);
+
         const existentDirectory = this.getDirectory( directoryPath );
         if ( existentDirectory ) {
             return existentDirectory;
@@ -73,6 +76,8 @@ export default class TestFSDriver extends FSDriver {
     }
 
     removeTestFile(filePath: string) {
+        filePath = normalizeFilePath(filePath);
+
         // dirNames: [".", "path", "to", "some"]
         const dirNames = filePath.split("/").slice(0, -1);
         // fileName: "file.sql"
@@ -102,10 +107,24 @@ export default class TestFSDriver extends FSDriver {
     }
 
     async readFile(filePath: string): Promise<string> {
+        filePath = normalizeFilePath(filePath);
+
         return this.files[ filePath ];
     }
 
     async readFolder(folderPath: string): Promise<IDirectory> {
         return this.getDirectory( folderPath );
     }
+}
+
+function normalizeDirPath(dirPath: string): string {
+    dirPath = dirPath.replace(/^\.\//, "");
+    dirPath = dirPath.replace(/\\/g, "/");
+    dirPath = dirPath.replace(/\/$/, "");
+    return dirPath;
+}
+
+function normalizeFilePath(filePath: string): string {
+    filePath = normalizeDirPath(filePath);
+    return filePath;
 }

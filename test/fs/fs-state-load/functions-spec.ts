@@ -4,7 +4,7 @@ describe("FSState", () => {
 
     it("load dir with one file with function", async() => {
         const files: ITestFiles = {
-            "./test.sql": [
+            "test.sql": [
                 {
                     type: "function",
                     sql: `
@@ -31,16 +31,16 @@ describe("FSState", () => {
                     name: "",
                     files: [
                         {
-                            path: "./test.sql",
+                            path: "test.sql",
                             name: "test.sql",
-                            content: TestState.concatFilesSql( files["./test.sql"] )
+                            content: TestState.concatFilesSql( files["test.sql"] )
                         }
                     ],
                     folders: []
                 },
                 functions: [
                     {
-                        filePath: "./test.sql",
+                        filePath: "test.sql",
                         identify: "public.test()",
                         name: "test",
                         parsed: null,
@@ -57,7 +57,7 @@ describe("FSState", () => {
     
     it("load dir with one file with two functions", async() => {
         const files: ITestFiles = {
-            "./test.sql": [
+            "test.sql": [
                 {
                     type: "function",
                     sql: `
@@ -101,23 +101,23 @@ describe("FSState", () => {
                     name: "",
                     files: [
                         {
-                            path: "./test.sql",
+                            path: "test.sql",
                             name: "test.sql",
-                            content: TestState.concatFilesSql( files["./test.sql"] )
+                            content: TestState.concatFilesSql( files["test.sql"] )
                         }
                     ],
                     folders: []
                 },
                 functions: [
                     {
-                        filePath: "./test.sql",
+                        filePath: "test.sql",
                         identify: "test1()",
                         name: "test1",
                         parsed: null,
                         createdByDDLManager: true
                     },
                     {
-                        filePath: "./test.sql",
+                        filePath: "test.sql",
                         identify: "test2()",
                         name: "test2",
                         parsed: null,

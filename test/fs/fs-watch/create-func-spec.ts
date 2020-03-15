@@ -7,10 +7,17 @@ describe("FSState, watching", () => {
         const testState = new TestState({});
         const fsState = testState.fsState;
 
+        await fsState.load("./");
+        
         assert.deepStrictEqual(
             fsState.toJSON(),
             {
-                folder: null,
+                folder: {
+                    name: "",
+                    path: "./",
+                    files: [],
+                    folders: []
+                },
                 functions: [],
                 triggers: [],
                 tables: [],
@@ -18,7 +25,8 @@ describe("FSState, watching", () => {
             }
         );
 
-        testState.setTestFile("./test.sql", [
+
+        testState.setTestFile("test.sql", [
             {
                 type: "function",
                 sql: `
@@ -36,7 +44,7 @@ describe("FSState, watching", () => {
                 }
             }
         ]);
-        await testState.emitFS("change", "./test.sql");
+        await testState.emitFS("change", "test.sql");
 
         assert.deepStrictEqual(
             fsState.toJSON(),
@@ -46,16 +54,16 @@ describe("FSState, watching", () => {
                     name: "",
                     files: [
                         {
-                            path: "./test.sql",
+                            path: "test.sql",
                             name: "test.sql",
-                            content: testState.getFileSQL( "./test.sql" )
+                            content: testState.getFileSQL( "test.sql" )
                         }
                     ],
                     folders: []
                 },
                 functions: [
                     {
-                        filePath: "./test.sql",
+                        filePath: "test.sql",
                         identify: "test()",
                         name: "test",
                         parsed: null,
