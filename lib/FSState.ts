@@ -43,6 +43,10 @@ export default class FSState extends State<FSState> {
         this.row.driver.on("change", (path: string) => {
             this.onFSChange(path);
         });
+
+        this.row.driver.on("unlink", (path: string) => {
+            this.onFSUnlink(path);
+        });
     }
 
     async load(folderPath: string): Promise<void> {
@@ -67,6 +71,10 @@ export default class FSState extends State<FSState> {
     private async onFSChange(filePath: string) {
         this.removeFile(filePath);
         await this.addFile(filePath);
+    }
+
+    private async onFSUnlink(filePath: string) {
+        this.removeFile(filePath);
     }
 
     private async addFile(filePath: string) {

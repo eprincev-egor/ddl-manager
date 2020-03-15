@@ -83,6 +83,11 @@ export class TestState {
         this.parser.setTestFile(filePath, sql, models);
     }
 
+    removeTestFile(filePath: string) {
+        this.driver.removeTestFile(filePath);
+        this.parser.removeTestFile(filePath);
+    }
+
     createTestDBOModel(filePath: string, testModel: TTestModel): BaseDBObjectModel<any> {
         let outputDBOModel: BaseDBObjectModel<any>;
 
@@ -123,6 +128,6 @@ export class TestState {
 
     async emitFS(eventType: string, path: string) {
         this.driver.emit(eventType, path);
-        await sleep(1000);
+        await sleep(10);
     }
 }

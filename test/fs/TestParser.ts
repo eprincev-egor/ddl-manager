@@ -17,6 +17,10 @@ export default class TestParser extends Parser {
         this.state[ filePath ] = objects;
     }
 
+    removeTestFile(filePath: string) {
+        delete this.state[ filePath ];
+    }
+
     parseFile(filePath: string, fileContent: string): BaseDBObjectModel<any>[] {
         return this.state[ filePath ];
     }
