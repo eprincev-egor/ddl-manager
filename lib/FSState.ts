@@ -94,22 +94,7 @@ export default class FSState extends State<FSState> {
         if ( fileModel ) {
             let dbObjects: TDBObject[];
 
-            dbObjects = this.row.functions.filter(dbo =>
-                dbo.get("filePath") === filePath
-            );
-            this.removeObjects( dbObjects );
-
-            dbObjects = this.row.tables.filter(dbo =>
-                dbo.get("filePath") === filePath
-            );
-            this.removeObjects( dbObjects );
-
-            dbObjects = this.row.triggers.filter(dbo =>
-                dbo.get("filePath") === filePath
-            );
-            this.removeObjects( dbObjects );
-
-            dbObjects = this.row.views.filter(dbo =>
+            dbObjects = this.findObjects((dbo) =>
                 dbo.get("filePath") === filePath
             );
             this.removeObjects( dbObjects );

@@ -10,16 +10,11 @@ import FunctionModel from "./objects/FunctionModel";
 import TableModel from "./objects/TableModel";
 import ViewModel from "./objects/ViewModel";
 import TriggerModel from "./objects/TriggerModel";
+import BaseDBObjectModel from "./objects/BaseDBObjectModel";
 
 export type IMigrationOptions = Omit<IMigrationControllerParams, "db" | "fs">;
 
-export type TDBObject = (
-    FunctionModel |
-    TableModel |
-    ViewModel |
-    TriggerModel
-);
-
+export type TDBObject = BaseDBObjectModel<any>;
 
 export default class State<Child extends State = State<any>> extends Model<Child> {
     structure() {
@@ -101,4 +96,17 @@ export default class State<Child extends State = State<any>> extends Model<Child
         }
     }
 
+    protected findObjects(filter: ((dbo: TDBObject) => boolean)): TDBObject[] {
+        const funcs = this.row.functions.filter(filter);
+        const tables = this.row.tables.filter(filter);
+        const triggers = this.row.triggers.filter(filter);
+        const views = this.row.views.filter(filter);
+
+        return [
+            ...funcs,
+            ...tables,
+            ...triggers,
+            ...views
+        ];
+    }
 }
