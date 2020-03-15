@@ -88,6 +88,16 @@ export class TestState {
         this.parser.removeTestFile(filePath);
     }
 
+    moveTestFile(oldFilePath: string, newFilePath: string) {
+        const sql = this.getFileSQL(oldFilePath);
+        const models = this.parser.parseFile(oldFilePath, sql);
+
+        this.removeTestFile(oldFilePath);
+
+        this.driver.setTestFile(newFilePath, sql);
+        this.parser.setTestFile(newFilePath, sql, models);
+    }
+
     createTestDBOModel(filePath: string, testModel: TTestModel): BaseDBObjectModel<any> {
         let outputDBOModel: BaseDBObjectModel<any>;
 
