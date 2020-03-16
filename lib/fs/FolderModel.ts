@@ -47,11 +47,16 @@ export default class FolderModel extends Model<FolderModel> {
         this.row.files.removeFile( fileName );
     }
 
-    getFile(filePath: string): FileModel {
+    getFileByPath(filePath: string): FileModel {
         const pathParts = filePath.split("/");
 
         const fileName = pathParts.pop();
-        const fileModel = this.row.files.getFile(fileName);
+        const fileModel = this.row.files.getFileByPath(fileName);
+        return fileModel as FileModel;
+    }
+
+    getFileByContent(fileContent: string): FileModel {
+        const fileModel = this.row.files.getFileByContent(fileContent);
         return fileModel as FileModel;
     }
 }

@@ -94,6 +94,12 @@ export class TestState {
 
         this.removeTestFile(oldFilePath);
 
+        models.forEach(model => {
+            model.set({
+                filePath: newFilePath
+            });
+        });
+
         this.driver.setTestFile(newFilePath, sql);
         this.parser.setTestFile(newFilePath, sql, models);
     }

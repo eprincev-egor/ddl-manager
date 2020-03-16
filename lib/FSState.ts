@@ -34,7 +34,7 @@ export default class FSState extends State<FSState> {
         super(inputData);
 
         this.row.driver.on("change", (path: string) => {
-            this.onFSChange(path);
+            this.onFSChangeOrRenameOrAdd(path);
         });
 
         this.row.driver.on("unlink", (path: string) => {
@@ -59,18 +59,76 @@ export default class FSState extends State<FSState> {
         }
     }
 
-    private async onFSChange(filePath: string) {
-        this.removeFile(filePath);
-        await this.addFile(filePath);
+    private async onFSChangeOrRenameOrAdd(filePath: string) {
+        const fileModel = await this.readFile(filePath);
+        const sql = fileModel.get("content");
+
+        const existentFile = this.getFileByPath(filePath);
+        const fileWithSameContent = this.getFileByContent(sql);
+
+        let isRename = false;
+        if ( fileWithSameContent ) {
+            const oldFilePath = fileWithSameContent.get("path");
+            const existsOldFile = await this.row.driver.existsFile(oldFilePath);
+
+            if ( !existsOldFile ) {
+                isRename = true;
+            }
+        }
+
+        const isChange = (
+            !isRename &&
+            !!existentFile
+        );
+
+        if ( isRename ) {
+            this.onFSRename(fileWithSameContent, fileModel);
+        }
+        else if ( isChange ) {
+            this.onFSChange(fileModel);
+        }
+        else {
+            this.onFSAdd(fileModel);
+        }
+    }
+
+    private onFSChange(fileModel) {
+        const filePath = fileModel.get("path");
+        this.removeFile( filePath );
+
+        this.addFile(fileModel);
+    }
+
+    private onFSAdd(fileModel: FileModel) {
+        this.addFile(fileModel);
+    }
+
+    private onFSRename(oldFileModel: FileModel, newFileModel: FileModel) {
+        this.removeFile(oldFileModel.get("path"));
+        this.addFile(newFileModel);
     }
 
     private async onFSUnlink(filePath: string) {
         this.removeFile(filePath);
     }
 
-    private async addFile(filePath: string) {
-        const sql = await this.row.driver.readFile(filePath);
+    private async addFile(fileModel: FileModel) {
+        this.row.folder.row.files.add(fileModel);
+
+        const dbObjects = this.parseFile(fileModel);
+        this.addObjects(dbObjects);
+    }
+
+    private parseFile(fileModel: FileModel): TDBObject[] {
+        const filePath = fileModel.get("path");
+        const sql = fileModel.get("content");
         const dbObjects = this.row.parser.parseFile(filePath, sql) as TDBObject[];
+
+        return dbObjects;
+    }
+
+    private async readFile(filePath: string): Promise<FileModel> {
+        const sql = await this.row.driver.readFile(filePath);
 
         const fileName = filePath.split("/").pop();
         const fileModel = new FileModel({
@@ -79,28 +137,31 @@ export default class FSState extends State<FSState> {
             content: sql
         });
 
-        this.row.folder.row.files.add(fileModel);
-
-        this.addObjects(dbObjects);
+        return fileModel;
     }
 
     private removeFile(filePath: string) {
-        const folder = this.row.folder;
-        if ( !folder ) {
+        const fileModel = this.getFileByPath(filePath);
+        if ( !fileModel ) {
             return;
         }
+    
+        let dbObjects: TDBObject[];
 
-        const fileModel = folder.getFile(filePath) as FileModel;
-        if ( fileModel ) {
-            let dbObjects: TDBObject[];
+        dbObjects = this.findObjects((dbo) =>
+            dbo.get("filePath") === filePath
+        );
+        this.removeObjects( dbObjects );
 
-            dbObjects = this.findObjects((dbo) =>
-                dbo.get("filePath") === filePath
-            );
-            this.removeObjects( dbObjects );
+        this.row.folder.removeFile(filePath);
+    }
 
-            folder.removeFile(filePath);
-        }
+    private getFileByPath(filePath: string): FileModel {
+        return this.row.folder.getFileByPath(filePath) as FileModel;
+    }
+
+    private getFileByContent(fileContent: string): FileModel {
+        return this.row.folder.getFileByContent(fileContent) as FileModel;
     }
 
     private async readFolder(

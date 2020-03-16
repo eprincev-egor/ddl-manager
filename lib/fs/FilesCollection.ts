@@ -6,7 +6,7 @@ export default class FilesCollection extends Collection<FilesCollection> {
         return FileModel;
     }
 
-    getFile(fileName: string): FileModel {
+    getFileByPath(fileName: string): FileModel {
         const existentFileModel = this.find((fileModel) =>
             fileModel.get("name") === fileName
         );
@@ -14,8 +14,16 @@ export default class FilesCollection extends Collection<FilesCollection> {
         return existentFileModel;
     }
 
+    getFileByContent(fileContent: string): FileModel {
+        const existentFileModel = this.find((fileModel) =>
+            fileModel.get("content") === fileContent
+        );
+
+        return existentFileModel;
+    }
+
     removeFile(fileName: string): void {
-        const existentFileModel = this.getFile(fileName);
+        const existentFileModel = this.getFileByPath(fileName);
 
         if ( existentFileModel ) {
             this.remove(existentFileModel);

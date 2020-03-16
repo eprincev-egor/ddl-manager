@@ -35,12 +35,25 @@ async function checkIsDirectory(path: string): Promise<boolean> {
     });
 }
 
+async function existsFile(path: string): Promise<boolean> {
+    return new Promise((resolve) => {
+        fs.exists(path, (exists) => {
+            resolve( exists );
+        });
+    });
+}
+
 export interface IDirectory {
     files: string[]; 
     directories: string[];
 }
 
 export default class FSDriver extends EventEmitter {
+    async existsFile(filePath: string): Promise<boolean> {
+        const exists = await existsFile(filePath);
+        return exists;
+    }
+
     async readFile(filePath: string): Promise<string> {
         const fileContent = await readFile(filePath);
         return fileContent;

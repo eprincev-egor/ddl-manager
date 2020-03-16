@@ -27,11 +27,11 @@ export default class TestFSDriver extends FSDriver {
     setTestFile(filePath: string, fileContent: string) {
         filePath = normalizeFilePath(filePath);
         
-        this.files[ filePath ] = fileContent;
-        
-        // delete directories structure, if file
+        // delete directories structure, if file exists
         this.removeTestFile( filePath );
 
+        this.files[ filePath ] = fileContent;
+        
         // dirNames: ["path", "to", "some"]
         const dirNames = filePath.split("/").slice(0, -1);
 
@@ -78,6 +78,8 @@ export default class TestFSDriver extends FSDriver {
     removeTestFile(filePath: string) {
         filePath = normalizeFilePath(filePath);
 
+        delete this.files[ filePath ];
+
         // dirNames: [".", "path", "to", "some"]
         const dirNames = filePath.split("/").slice(0, -1);
         // fileName: "file.sql"
@@ -114,6 +116,10 @@ export default class TestFSDriver extends FSDriver {
 
     async readFolder(folderPath: string): Promise<IDirectory> {
         return this.getDirectory( folderPath );
+    }
+
+    async existsFile(filePath: string): Promise<boolean> {
+        return filePath in this.files;
     }
 }
 
