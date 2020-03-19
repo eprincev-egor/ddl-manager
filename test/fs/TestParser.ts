@@ -25,7 +25,14 @@ export default class TestParser extends Parser {
 
     parseFile(filePath: string, fileContent: string): BaseDBObjectModel<any>[] {
         filePath = normalizeFilePath(filePath);
-        return this.state[ filePath ];
+        const models = this.state[ filePath ];
+
+        if ( models ) {
+            const clones = models.map(model =>
+                model.clone()
+            );
+            return clones;
+        }
     }
 }
 
