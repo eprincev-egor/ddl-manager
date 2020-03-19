@@ -1,5 +1,6 @@
 import {Types} from "model-layer";
 import AbstractTableModel from "./AbstractTableModel";
+import ColumnModel from "./ColumnModel";
 
 export default class TableModel extends AbstractTableModel<TableModel> {
     structure() {
@@ -7,6 +8,11 @@ export default class TableModel extends AbstractTableModel<TableModel> {
             ...super.structure(),
             
             name: Types.String({
+                required: true
+            }),
+
+            columns: Types.Array({
+                element: ColumnModel,
                 required: true
             })
         };

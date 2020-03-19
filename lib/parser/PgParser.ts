@@ -2,6 +2,8 @@ import BaseDBObjectModel from "../objects/BaseDBObjectModel";
 import FunctionModel from "../objects/FunctionModel";
 import TriggerModel from "../objects/TriggerModel";
 import ViewModel from "../objects/ViewModel";
+import TableModel from "../objects/TableModel";
+import ExtensionModel from "../objects/ExtensionModel";
 import Parser from "./Parser";
 import {
     GrapeQLCoach,
@@ -12,9 +14,9 @@ import {
     PrimaryKeyConstraint,
     UniqueConstraint,
     CheckConstraint,
-    ForeignKeyConstraint
+    ForeignKeyConstraint,
+    Extension
 } from "grapeql-lang";
-import TableModel from "../objects/TableModel";
 
 export default class PgParser extends Parser {
     parseFile(filePath: string, fileContent: string): BaseDBObjectModel<any>[] {
@@ -266,6 +268,26 @@ export default class PgParser extends Parser {
                 });
 
                 objects.push(tableModel);
+            }
+
+            // extension
+            if ( coach.is(Extension) ) {
+                const parsedExtension: Extension = coach.parse(Extension);
+                const {name, forTable} = parsedExtension.row;
+                const forTableIdentify = (
+                    forTable.row.link.length === 1 ?
+                        "public." + forTable.row.link[0].toString() :
+                        forTable.toString()
+                );
+                
+                const extensionModel = new ExtensionModel({
+                    filePath,
+                    identify: `extension ${name} for ${forTableIdentify}`,
+                    forTableIdentify,
+                    parsed: parsedExtension
+                });
+
+                objects.push(extensionModel);
             }
         }
 

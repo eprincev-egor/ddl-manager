@@ -16,8 +16,7 @@ extends BaseObjectModel<ChildModel> {
                 default: false
             }),
             columns: Types.Array({
-                element: ColumnModel,
-                required: true
+                element: ColumnModel
             }),
             deprecatedColumns: Types.Array({
                 element: Types.String,
