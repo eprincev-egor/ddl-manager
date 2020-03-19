@@ -1,4 +1,4 @@
-import State from "../State";
+import State from "../state/State";
 
 export type TMigrationMode = "dev" | "prod";
 

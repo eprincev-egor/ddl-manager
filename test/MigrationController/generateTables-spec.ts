@@ -1,5 +1,5 @@
 import testGenerateMigration from "./testGenerateMigration";
-import State from "../../lib/State";
+import State from "../../lib/state/State";
 import assert from "assert";
 
 describe("MigrationController", () => {

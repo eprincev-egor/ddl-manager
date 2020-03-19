@@ -1,16 +1,16 @@
 import {Model, Types} from "model-layer";
-import FunctionsCollection from "./objects/FunctionsCollection";
-import TriggersCollection from "./objects/TriggersCollection";
-import ViewsCollection from "./objects/ViewsCollection";
-import TablesCollection from "./objects/TablesCollection";
-import MigrationModel from "./migration/MigrationModel";
-import MigrationController from "./migration/MigrationController";
-import {IMigrationControllerParams} from "./migration/IMigrationControllerParams";
-import FunctionModel from "./objects/FunctionModel";
-import TableModel from "./objects/TableModel";
-import ViewModel from "./objects/ViewModel";
-import TriggerModel from "./objects/TriggerModel";
-import BaseDBObjectModel from "./objects/BaseDBObjectModel";
+import FunctionsCollection from "../objects/FunctionsCollection";
+import TriggersCollection from "../objects/TriggersCollection";
+import ViewsCollection from "../objects/ViewsCollection";
+import TablesCollection from "../objects/TablesCollection";
+import MigrationModel from "../migration/MigrationModel";
+import MigrationController from "../migration/MigrationController";
+import {IMigrationControllerParams} from "../migration/IMigrationControllerParams";
+import FunctionModel from "../objects/FunctionModel";
+import TableModel from "../objects/TableModel";
+import ViewModel from "../objects/ViewModel";
+import TriggerModel from "../objects/TriggerModel";
+import BaseDBObjectModel from "../objects/BaseDBObjectModel";
 
 export type IMigrationOptions = Omit<IMigrationControllerParams, "db" | "fs">;
 

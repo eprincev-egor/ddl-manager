@@ -1,4 +1,4 @@
-import State, {IMigrationOptions} from "../../lib/State";
+import State, {IMigrationOptions} from "../../lib/state/State";
 import MigrationModel from "../../lib/migration/MigrationModel";
 import assert from "assert";
 

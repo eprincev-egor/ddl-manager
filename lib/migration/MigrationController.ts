@@ -1,4 +1,4 @@
-import State from "../State";
+import State from "../state/State";
 import MigrationModel from "./MigrationModel";
 import {IMigrationControllerParams, TMigrationMode} from "./IMigrationControllerParams";
 

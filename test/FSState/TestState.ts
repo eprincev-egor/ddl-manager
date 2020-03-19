@@ -5,7 +5,7 @@ import BaseDBObjectModel from "../../lib/objects/BaseDBObjectModel";
 import TableModel from "../../lib/objects/TableModel";
 import ViewModel from "../../lib/objects/ViewModel";
 import TriggerModel from "../../lib/objects/TriggerModel";
-import FSState from "../../lib/FSState";
+import FSState from "../../lib/state/FSState";
 import assert from "assert";
 import {sleep} from "../utils";
 

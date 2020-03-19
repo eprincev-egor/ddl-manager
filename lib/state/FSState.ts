@@ -2,13 +2,13 @@ import State, {TDBObject} from "./State";
 import * as Path from "path";
 
 // @see fs/index.ts
-import FolderModel from "./fs/FolderModel";
-import "./fs/FoldersCollection";
+import FolderModel from "../fs/FolderModel";
+import "../fs/FoldersCollection";
 
-import FSDriver from "./fs/FSDriver";
+import FSDriver from "../fs/FSDriver";
 import {Types} from "model-layer";
-import FileModel from "./fs/FileModel";
-import Parser from "./parser/Parser";
+import FileModel from "../fs/FileModel";
+import Parser from "../parser/Parser";
 
 export default class FSState extends State<FSState> {
     structure() {
