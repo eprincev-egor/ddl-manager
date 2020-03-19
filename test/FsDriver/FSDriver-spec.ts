@@ -4,7 +4,7 @@ import assert from "assert";
 describe("FSDriver", () => {
 
     it("read file", async() => {
-        const filePath = __dirname + "/fs-driver/test.sql";
+        const filePath = __dirname + "/fixtures/test.sql";
         const fsDriver = new FSDriver();
         const fileContent = await fsDriver.readFile(filePath);
 
@@ -12,7 +12,7 @@ describe("FSDriver", () => {
     });
 
     it("read dir", async() => {
-        const folderPath = __dirname + "/fs-driver/test";
+        const folderPath = __dirname + "/fixtures/test";
         const fsDriver = new FSDriver();
         const {files, directories} = await fsDriver.readFolder(folderPath);
 
@@ -21,7 +21,7 @@ describe("FSDriver", () => {
     });
 
     it("read nonexistent file", async() => {
-        const filePath = __dirname + "/fs-driver/unknown";
+        const filePath = __dirname + "/fixtures/unknown";
         const fsDriver = new FSDriver();
         
         let hasError = false;
@@ -37,7 +37,7 @@ describe("FSDriver", () => {
 
 
     it("read nonexistent folder", async() => {
-        const folderPath = __dirname + "/fs-driver/unknown";
+        const folderPath = __dirname + "/fixtures/unknown";
         const fsDriver = new FSDriver();
         
         let hasError = false;

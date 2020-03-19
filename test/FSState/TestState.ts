@@ -1,5 +1,5 @@
-import TestFSDriver from "./TestFSDriver";
-import TestParser from "./TestParser";
+import TestFSDriver from "./FaketFSDriver";
+import TestParser from "./FakeParser";
 import FunctionModel from "../../lib/objects/FunctionModel";
 import BaseDBObjectModel from "../../lib/objects/BaseDBObjectModel";
 import TableModel from "../../lib/objects/TableModel";

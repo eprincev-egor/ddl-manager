@@ -1,5 +1,5 @@
 import FSDriver, {IDirectory} from "../../lib/fs/FSDriver";
-import {TestFSDirectory} from "./TestFSDirectory";
+import {TestFSDirectory} from "./FakeFSDirectory";
 
 export interface IFiles {
     [key: string]: string;
