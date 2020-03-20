@@ -1,4 +1,4 @@
-import PgParser from "../../../lib/parser/PgParser";
+import PgParser from "../../../lib/parser/pg/PgParser";
 import assert from "assert";
 import TableModel from "../../../lib/objects/TableModel";
 import {

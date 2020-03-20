@@ -1,10 +1,10 @@
-import BaseDBObjectModel from "../objects/BaseDBObjectModel";
-import FunctionModel from "../objects/FunctionModel";
-import TriggerModel from "../objects/TriggerModel";
-import ViewModel from "../objects/ViewModel";
-import TableModel from "../objects/TableModel";
-import ExtensionModel from "../objects/ExtensionModel";
-import Parser from "./Parser";
+import BaseDBObjectModel from "../../objects/BaseDBObjectModel";
+import FunctionModel from "../../objects/FunctionModel";
+import TriggerModel from "../../objects/TriggerModel";
+import ViewModel from "../../objects/ViewModel";
+import TableModel from "../../objects/TableModel";
+import ExtensionModel from "../../objects/ExtensionModel";
+import Parser from "../Parser";
 import {
     GrapeQLCoach,
     CreateFunction,
