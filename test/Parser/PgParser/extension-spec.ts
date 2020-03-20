@@ -36,6 +36,10 @@ describe("PgParser", () => {
                     }
                 ]
             },
+            name: {
+                word: "companies_note",
+                content: null
+            },
             deprecatedColumns: [],
             constraints: [],
             deprecated: false,
@@ -63,13 +67,14 @@ describe("PgParser", () => {
             filePath: "test.sql",
             identify: "extension companies_note for public.companies",
             forTableIdentify: "public.companies",
+            name: "companies_note",
             columns: [
                 {
                     filePath: "test.sql",
                     identify: "note",
                     key: "note",
                     type: "text",
-                    nulls: false,
+                    nulls: true,
                     parsed: {
                         check: null,
                         default: null,
@@ -82,7 +87,7 @@ describe("PgParser", () => {
                             type: "text"
                         },
                         unique: null,
-                        nulls: false,
+                        nulls: true,
                         primaryKey: null
                     }
                 }
