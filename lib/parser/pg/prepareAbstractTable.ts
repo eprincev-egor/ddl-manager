@@ -1,4 +1,7 @@
 import AbstractTableModel from "../../objects/AbstractTableModel";
+import UniqueConstraintModel from "../../objects/UniqueConstraintModel";
+import CheckConstraintModel from "../../objects/CheckConstraintModel";
+import ForeignKeyConstraintModel from "../../objects/ForeignKeyConstraintModel";
 import {
     CreateTable,
     Extension,
@@ -14,26 +17,6 @@ export function prepareAbstractTable(
     parsedTable: CreateTable | Extension
 ): AbstractTableModel<any>["TInputData"] {
         
-    // get primary key constraint from parsedTable.constraints
-    // or from columns
-    let primaryKeyConstraint = parsedTable.row.constraints.find(constraint => 
-        constraint instanceof PrimaryKeyConstraint
-    ) as PrimaryKeyConstraint;
-    if ( !primaryKeyConstraint ) {
-        parsedTable.row.columns.forEach(column => {
-            if ( column.get("primaryKey") ) {
-                primaryKeyConstraint = column.get("primaryKey");
-            }
-        });
-    }
-    
-    let primaryKey = null;
-    if ( primaryKeyConstraint ) {
-        primaryKey = primaryKeyConstraint.get("primaryKey").map(column => 
-            column.toString()
-        );
-    }
-
     // table test (...) deprecated (...)
     const deprecatedColumns = parsedTable.row.deprecatedColumns.map(columnName =>
         columnName.toString()
@@ -48,6 +31,83 @@ export function prepareAbstractTable(
         }
     }
 
+    const primaryKey = preparePrimaryKey(parsedTable);
+
+    const uniqueConstraints = prepareUniqueConstraints(
+        filePath,
+        tableName,
+        parsedTable
+    );
+
+    const checkConstraints = prepareCheckConstraints(
+        filePath,
+        tableName,
+        parsedTable
+    );
+
+    const foreignKeys = prepareForeignKeys(
+        filePath,
+        tableName,
+        parsedTable
+    );
+
+    return {
+        columns: parsedTable.row.columns.map(parseColumn => {
+            const key = parseColumn.get("name").toString();
+
+            return {
+                filePath,
+                identify: key,
+                key,
+                type: parseColumn.get("type").toString(),
+                parsed: parseColumn,
+                nulls: parseColumn.get("nulls")
+            };
+        }),
+        primaryKey,
+        deprecated: parsedTable.row.deprecated,
+        deprecatedColumns,
+        rows,
+        uniqueConstraints,
+        checkConstraints,
+        foreignKeysConstraints: foreignKeys
+    };
+}
+
+function preparePrimaryKey(
+    parsedTable
+): string[] {
+
+    // get primary key constraint from parsedTable.constraints
+    // or from columns
+    let primaryKeyConstraint = parsedTable.row.constraints.find(constraint => 
+        constraint instanceof PrimaryKeyConstraint
+    ) as PrimaryKeyConstraint;
+
+    if ( !primaryKeyConstraint ) {
+        parsedTable.row.columns.forEach(column => {
+            if ( column.get("primaryKey") ) {
+                primaryKeyConstraint = column.get("primaryKey");
+            }
+        });
+    }
+    
+    let primaryKey: string[] = null;
+    if ( primaryKeyConstraint ) {
+        primaryKey = primaryKeyConstraint.get("primaryKey").map(column => 
+            column.toString()
+        );
+    }
+
+    return primaryKey;
+}
+
+function prepareUniqueConstraints(
+    filePath: string,
+    tableName: string,
+    parsedTable: CreateTable | Extension
+): UniqueConstraintModel["TInputData"][] {
+ 
     // table (..., constraint x unique(...))
     const parsedUniqueConstraints = parsedTable.row.constraints.filter(constraint =>
         constraint instanceof UniqueConstraint
@@ -68,7 +128,7 @@ export function prepareAbstractTable(
         );
         if ( !name ) {
             name = (
-                tableName.toString() + 
+                tableName + 
                 "_" +
                 uniqueConstraint.get("column").toString() + 
                 "_key"
@@ -85,6 +145,15 @@ export function prepareAbstractTable(
             )
         };
     });
+   
+    return uniqueConstraints;
+}
+
+function prepareCheckConstraints(
+    filePath: string,
+    tableName: string,
+    parsedTable: CreateTable | Extension
+): CheckConstraintModel["TInputData"][] {
 
     const parsedCheckConstraints = parsedTable.row.constraints.filter(constraint =>
         constraint instanceof CheckConstraint
@@ -106,7 +175,7 @@ export function prepareAbstractTable(
 
         if ( !name ) {
             name = (
-                tableName.toString() + 
+                tableName + 
                 "_" +
                 checkConstraint.get("column").toString() + 
                 "_check"
@@ -120,6 +189,15 @@ export function prepareAbstractTable(
             parsed: checkConstraint
         };
     });
+
+    return checkConstraints;
+}
+
+function prepareForeignKeys(
+    filePath: string,
+    tableName: string,
+    parsedTable: CreateTable | Extension
+): ForeignKeyConstraintModel["TInputData"][] {
 
     const parsedForeignKeys = parsedTable.row.constraints.filter(constraint => 
         constraint instanceof ForeignKeyConstraint
@@ -141,7 +219,7 @@ export function prepareAbstractTable(
         
         if ( !name ) {
             name = (
-                tableName.toString() + 
+                tableName + 
                 "_" +
                 foreignKey.get("column").toString() + 
                 "_fkey"
@@ -173,26 +251,5 @@ export function prepareAbstractTable(
         };
     });
 
-
-    return {
-        columns: parsedTable.row.columns.map(parseColumn => {
-            const key = parseColumn.get("name").toString();
-
-            return {
-                filePath,
-                identify: key,
-                key,
-                type: parseColumn.get("type").toString(),
-                parsed: parseColumn,
-                nulls: parseColumn.get("nulls")
-            };
-        }),
-        primaryKey,
-        deprecated: parsedTable.row.deprecated,
-        deprecatedColumns,
-        rows,
-        uniqueConstraints,
-        checkConstraints,
-        foreignKeysConstraints: foreignKeys
-    };
+    return foreignKeys;
 }
