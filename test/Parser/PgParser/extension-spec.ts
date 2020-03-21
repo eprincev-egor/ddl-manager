@@ -106,4 +106,39 @@ describe("PgParser", () => {
     });
     
     
+    it("parse deprecated extension", () => {
+        const parser = new PgParser();
+        
+        const result = parser.parseFile("test.sql", `
+            deprecated 
+            extension companies_note 
+            for companies (
+                note text
+            )
+        `);
+
+        const extensionModel = result[0] as ExtensionModel;
+
+        assert.strictEqual(extensionModel.get("deprecated"), true);
+    });
+
+   
+    it("parse extension with deprecated columns", () => {
+        const parser = new PgParser();
+        
+        const result = parser.parseFile("test.sql", `
+            extension companies_note
+            for companies (
+                note text
+            )
+            deprecated (
+                note
+            )
+        `);
+
+        const extensionModel = result[0] as ExtensionModel;
+
+        assert.deepStrictEqual(extensionModel.get("deprecatedColumns"), ["note"]);
+    });
+ 
 });
