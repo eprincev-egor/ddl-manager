@@ -5,10 +5,10 @@ import {IMigrationControllerParams, TMigrationMode} from "./IMigrationController
 import CommandsCollection from "./commands/CommandsCollection";
 import MigrationErrorsCollection from "./errors/MigrationErrorsCollection";
 
-import MigrationTriggerController from "./MigrationTriggerController";
-import MigrationViewsController from "./MigrationViewsController";
-import MigrationFunctionsController from "./MigrationFunctionsController";
-import MigrationTablesController from "./MigrationTablesController";
+import MigrationTriggerController from "./controllers/MigrationTriggerController";
+import MigrationViewsController from "./controllers/MigrationViewsController";
+import MigrationFunctionsController from "./controllers/MigrationFunctionsController";
+import MigrationTablesController from "./controllers/MigrationTablesController";
 
 export default class MigrationController {
     fs: State;

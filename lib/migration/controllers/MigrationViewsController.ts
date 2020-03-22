@@ -1,11 +1,11 @@
 import BaseController from "./BaseController";
 
-import CommandsCollection from "./commands/CommandsCollection";
-import MigrationErrorsCollection from "./errors/MigrationErrorsCollection";
+import CommandsCollection from "../commands/CommandsCollection";
+import MigrationErrorsCollection from "../errors/MigrationErrorsCollection";
 
-import ViewCommandModel from "./commands/ViewCommandModel";
+import ViewCommandModel from "../commands/ViewCommandModel";
 
-import MaxObjectNameSizeErrorModel from "./errors/MaxObjectNameSizeErrorModel";
+import MaxObjectNameSizeErrorModel from "../errors/MaxObjectNameSizeErrorModel";
 
 
 export default class MigrationViewsController extends BaseController {

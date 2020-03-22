@@ -1,13 +1,13 @@
 import BaseController from "./BaseController";
 
-import CommandsCollection from "./commands/CommandsCollection";
-import MigrationErrorsCollection from "./errors/MigrationErrorsCollection";
+import CommandsCollection from "../commands/CommandsCollection";
+import MigrationErrorsCollection from "../errors/MigrationErrorsCollection";
 
-import TriggerCommandModel from "./commands/TriggerCommandModel";
+import TriggerCommandModel from "../commands/TriggerCommandModel";
 
-import UnknownTableForTriggerErrorModel from "./errors/UnknownTableForTriggerErrorModel";
-import UnknownFunctionForTriggerErrorModel from "./errors/UnknownFunctionForTriggerErrorModel";
-import MaxObjectNameSizeErrorModel from "./errors/MaxObjectNameSizeErrorModel";
+import UnknownTableForTriggerErrorModel from "../errors/UnknownTableForTriggerErrorModel";
+import UnknownFunctionForTriggerErrorModel from "../errors/UnknownFunctionForTriggerErrorModel";
+import MaxObjectNameSizeErrorModel from "../errors/MaxObjectNameSizeErrorModel";
 
 
 export default class MigrationTriggerController extends BaseController {

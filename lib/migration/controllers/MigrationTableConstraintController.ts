@@ -1,15 +1,15 @@
 import BaseController from "./BaseController";
 
-import CommandsCollection from "./commands/CommandsCollection";
-import MigrationErrorsCollection from "./errors/MigrationErrorsCollection";
+import CommandsCollection from "../commands/CommandsCollection";
+import MigrationErrorsCollection from "../errors/MigrationErrorsCollection";
 
-import PrimaryKeyCommandModel from "./commands/PrimaryKeyCommandModel";
-import CheckConstraintCommandModel from "./commands/CheckConstraintCommandModel";
-import UniqueConstraintCommandModel from "./commands/UniqueConstraintCommandModel";
-import ForeignKeyConstraintCommandModel from "./commands/ForeignKeyConstraintCommandModel";
-import ReferenceToUnknownTableErrorModel from "./errors/ReferenceToUnknownTableErrorModel";
-import ReferenceToUnknownColumnErrorModel from "./errors/ReferenceToUnknownColumnErrorModel";
-import TableModel from "../objects/TableModel";
+import PrimaryKeyCommandModel from "../commands/PrimaryKeyCommandModel";
+import CheckConstraintCommandModel from "../commands/CheckConstraintCommandModel";
+import UniqueConstraintCommandModel from "../commands/UniqueConstraintCommandModel";
+import ForeignKeyConstraintCommandModel from "../commands/ForeignKeyConstraintCommandModel";
+import ReferenceToUnknownTableErrorModel from "../errors/ReferenceToUnknownTableErrorModel";
+import ReferenceToUnknownColumnErrorModel from "../errors/ReferenceToUnknownColumnErrorModel";
+import TableModel from "../../objects/TableModel";
 
 export default class MigrationTableConstraintController extends BaseController {
 

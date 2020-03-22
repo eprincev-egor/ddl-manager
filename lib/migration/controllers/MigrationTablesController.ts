@@ -1,21 +1,21 @@
 import BaseController from "./BaseController";
-import {IMigrationControllerParams} from "./IMigrationControllerParams";
+import {IMigrationControllerParams} from "../IMigrationControllerParams";
 import MigrationTableConstraintController from "./MigrationTableConstraintController";
 
-import CommandsCollection from "./commands/CommandsCollection";
-import MigrationErrorsCollection from "./errors/MigrationErrorsCollection";
+import CommandsCollection from "../commands/CommandsCollection";
+import MigrationErrorsCollection from "../errors/MigrationErrorsCollection";
 
-import TableCommandModel from "./commands/TableCommandModel";
-import ColumnCommandModel from "./commands/ColumnCommandModel";
+import TableCommandModel from "../commands/TableCommandModel";
+import ColumnCommandModel from "../commands/ColumnCommandModel";
 
-import MaxObjectNameSizeErrorModel from "./errors/MaxObjectNameSizeErrorModel";
-import CannotDropColumnErrorModel from "./errors/CannotDropColumnErrorModel";
-import CannotDropTableErrorModel from "./errors/CannotDropTableErrorModel";
-import CannotChangeColumnTypeErrorModel from "./errors/CannotChangeColumnTypeErrorModel";
-import ExpectedPrimaryKeyForRowsErrorModel from "./errors/ExpectedPrimaryKeyForRowsErrorModel";
-import CreateRowsCommandModel from "./commands/RowsCommandModel";
-import ColumnNotNullCommandModel from "./commands/ColumnNotNullCommandModel";
-import TableModel from "../objects/TableModel";
+import MaxObjectNameSizeErrorModel from "../errors/MaxObjectNameSizeErrorModel";
+import CannotDropColumnErrorModel from "../errors/CannotDropColumnErrorModel";
+import CannotDropTableErrorModel from "../errors/CannotDropTableErrorModel";
+import CannotChangeColumnTypeErrorModel from "../errors/CannotChangeColumnTypeErrorModel";
+import ExpectedPrimaryKeyForRowsErrorModel from "../errors/ExpectedPrimaryKeyForRowsErrorModel";
+import CreateRowsCommandModel from "../commands/RowsCommandModel";
+import ColumnNotNullCommandModel from "../commands/ColumnNotNullCommandModel";
+import TableModel from "../../objects/TableModel";
 
 
 export default class MigrationTablesController extends BaseController {

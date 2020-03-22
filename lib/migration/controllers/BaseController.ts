@@ -1,11 +1,8 @@
-import State from "../state/State";
+import State from "../../state/State";
 import {
     IMigrationControllerParams, 
     TMigrationMode
 } from "./IMigrationControllerParams";
-
-import CommandsCollection from "./commands/CommandsCollection";
-import MigrationErrorsCollection from "./errors/MigrationErrorsCollection";
 
 export default abstract class BaseController implements IMigrationControllerParams {
     fs: State; 
