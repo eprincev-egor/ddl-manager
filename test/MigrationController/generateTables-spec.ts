@@ -1,5 +1,5 @@
 import testGenerateMigration from "./testGenerateMigration";
-import State from "../../lib/state/State";
+import DDLState from "../../lib/state/DDLState";
 import assert from "assert";
 
 describe("MigrationController", () => {
@@ -368,7 +368,7 @@ describe("MigrationController", () => {
         it("columns should be only actual or only deprecated", () => {
             assert.throws(
                 () => {
-                    const state = new State({
+                    const state = new DDLState({
                         tables: [{
                             filePath: "my_table.sql",
                             identify: "public.company",
