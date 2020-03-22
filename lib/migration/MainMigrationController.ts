@@ -1,4 +1,4 @@
-import State from "../state/State";
+import DDLState from "../state/DDLState";
 import MigrationModel from "./MigrationModel";
 import {IMigrationControllerParams, TMigrationMode} from "./IMigrationControllerParams";
 
@@ -11,8 +11,8 @@ import FunctionsController from "./controllers/FunctionsController";
 import TablesController from "./controllers/TablesController";
 
 export default class MainMigrationController {
-    fs: State;
-    db: State;
+    fs: DDLState;
+    db: DDLState;
     mode: TMigrationMode;
     triggersController: TriggerController;
     viewsController: ViewsController;

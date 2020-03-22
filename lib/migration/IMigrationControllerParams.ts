@@ -1,9 +1,9 @@
-import State from "../state/State";
+import DDLState from "../state/DDLState";
 
 export type TMigrationMode = "dev" | "prod";
 
 export interface IMigrationControllerParams {
-    fs: State; 
-    db: State;
+    fs: DDLState; 
+    db: DDLState;
     mode: TMigrationMode;
 }

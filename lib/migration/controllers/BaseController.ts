@@ -1,12 +1,12 @@
-import State from "../../state/State";
+import DDLState from "../../state/DDLState";
 import {
     IMigrationControllerParams, 
     TMigrationMode
 } from "../IMigrationControllerParams";
 
 export default abstract class BaseController implements IMigrationControllerParams {
-    fs: State; 
-    db: State;
+    fs: DDLState; 
+    db: DDLState;
     mode: TMigrationMode;
 
     constructor(params: IMigrationControllerParams) {

@@ -1,4 +1,4 @@
-import State, {TDBObject} from "./State";
+import DDLState, {TDBObject} from "./DDLState";
 import * as Path from "path";
 
 // @see fs/index.ts
@@ -10,7 +10,7 @@ import {Types} from "model-layer";
 import FileModel from "../fs/FileModel";
 import Parser from "../parser/Parser";
 
-export default class FSState extends State<FSState> {
+export default class FSState extends DDLState<FSState> {
     structure() {
         return {
             ...super.structure(),
