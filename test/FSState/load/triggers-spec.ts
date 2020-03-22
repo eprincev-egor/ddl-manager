@@ -1,10 +1,10 @@
-import {TestState} from "../TestState";
+import {FSTest} from "../FSTest";
 
 
 describe("FSDDLState", () => {
 
     it("load dir with one file with trigger", async() => {
-        const test = new TestState({
+        const test = new FSTest({
             "create_role.sql": [
                 {
                     type: "function",
@@ -80,7 +80,7 @@ describe("FSDDLState", () => {
     
 
     it("load dir with one file with two triggers", async() => {
-        const test = new TestState({
+        const test = new FSTest({
             "role_trigger.sql": [
                 {
                     type: "function",

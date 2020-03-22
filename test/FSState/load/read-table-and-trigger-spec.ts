@@ -1,9 +1,9 @@
-import {TestState} from "../TestState";
+import {FSTest} from "../FSTest";
 
 describe("FSDDLState", () => {
 
     it("load file with table and trigger inside one file", async() => {
-        const test = new TestState({
+        const test = new FSTest({
             "company.sql": [
                 {
                     type: "function",

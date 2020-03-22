@@ -1,9 +1,9 @@
-import {TestState} from "../TestState";
+import {FSTest} from "../FSTest";
 
 describe("FSDDLState", () => {
 
     it("load dir with one file with function", async() => {
-        const test = new TestState({
+        const test = new FSTest({
             "test.sql": [
                 {
                     type: "function",
@@ -50,7 +50,7 @@ describe("FSDDLState", () => {
     });
     
     it("load dir with one file with two functions", async() => {
-        const test = new TestState({
+        const test = new FSTest({
             "test.sql": [
                 {
                     type: "function",

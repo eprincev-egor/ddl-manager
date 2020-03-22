@@ -1,10 +1,10 @@
-import {TestState} from "../TestState";
+import {FSTest} from "../FSTest";
 import assert from "assert";
 
 describe("FSDDLState, watching", () => {
 
     it("removing file", async() => {
-        const testState = new TestState({
+        const test = new FSTest({
             "test.sql": [
                 {
                     type: "function",
@@ -24,8 +24,8 @@ describe("FSDDLState, watching", () => {
                 }
             ]
         });
-        const fsState = testState.fsState;
-        const fsController = testState.controller;
+        const fsState = test.fsState;
+        const fsController = test.controller;
         
         await fsController.load("./");
 
@@ -37,7 +37,7 @@ describe("FSDDLState, watching", () => {
                     path: "./",
                     name: "",
                     files: [
-                        testState.getFileJSON( "test.sql" )
+                        test.getFileJSON( "test.sql" )
                     ],
                     folders: []
                 },
@@ -57,8 +57,8 @@ describe("FSDDLState, watching", () => {
             }
         );
 
-        testState.removeTestFile("test.sql");
-        await testState.emitFS("unlink", "test.sql");
+        test.removeTestFile("test.sql");
+        await test.emitFS("unlink", "test.sql");
 
         // check changed state
         assert.deepStrictEqual(

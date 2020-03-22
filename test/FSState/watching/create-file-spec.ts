@@ -1,12 +1,12 @@
-import {TestState} from "../TestState";
+import {FSTest} from "../FSTest";
 import assert from "assert";
 
 describe("FSDDLState, watching", () => {
 
     it("create empty state, then create file with function for test watching", async() => {
-        const testState = new TestState({});
-        const fsState = testState.fsState;
-        const fsController = testState.controller;
+        const test = new FSTest({});
+        const fsState = test.fsState;
+        const fsController = test.controller;
         
         await fsController.load("./");
         
@@ -28,7 +28,7 @@ describe("FSDDLState, watching", () => {
         );
 
 
-        testState.setTestFile("test.sql", [
+        test.setTestFile("test.sql", [
             {
                 type: "function",
                 sql: `
@@ -46,7 +46,7 @@ describe("FSDDLState, watching", () => {
                 }
             }
         ]);
-        await testState.emitFS("change", "test.sql");
+        await test.emitFS("change", "test.sql");
 
         assert.deepStrictEqual(
             fsState.toJSON(),
@@ -55,7 +55,7 @@ describe("FSDDLState, watching", () => {
                     path: "./",
                     name: "",
                     files: [
-                        testState.getFileJSON( "test.sql" )
+                        test.getFileJSON( "test.sql" )
                     ],
                     folders: []
                 },

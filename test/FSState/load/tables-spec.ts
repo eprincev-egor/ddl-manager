@@ -1,9 +1,9 @@
-import {TestState} from "../TestState";
+import {FSTest} from "../FSTest";
 
 describe("FSDDLState", () => {
 
     it("load dir with one file with table", async() => {
-        const test = new TestState({
+        const test = new FSTest({
             "company.sql": [
                 {
                     type: "table",
@@ -73,7 +73,7 @@ describe("FSDDLState", () => {
     
     
     it("load dir with one file with two tables", async() => {
-        const test = new TestState({
+        const test = new FSTest({
             "tables.sql": [
                 {
                     type: "table",

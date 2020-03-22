@@ -1,10 +1,10 @@
-import {TestState} from "../TestState";
+import {FSTest} from "../FSTest";
 import assert from "assert";
 
 describe("FSDDLState, watching", () => {
 
     it("rename file with one function", async() => {
-        const testState = new TestState({
+        const test = new FSTest({
             "test.sql": [
                 {
                     type: "function",
@@ -24,8 +24,8 @@ describe("FSDDLState, watching", () => {
                 }
             ]
         });
-        const fsState = testState.fsState;
-        const fsController = testState.controller;
+        const fsState = test.fsState;
+        const fsController = test.controller;
         
         await fsController.load("./");
 
@@ -37,7 +37,7 @@ describe("FSDDLState, watching", () => {
                     path: "./",
                     name: "",
                     files: [
-                        testState.getFileJSON( "test.sql" )
+                        test.getFileJSON( "test.sql" )
                     ],
                     folders: []
                 },
@@ -57,9 +57,9 @@ describe("FSDDLState, watching", () => {
             }
         );
 
-        testState.moveTestFile("test.sql", "test2.sql");
+        test.moveTestFile("test.sql", "test2.sql");
 
-        await testState.emitFS("change", "test2.sql");
+        await test.emitFS("change", "test2.sql");
 
         // check changed state
         assert.deepStrictEqual(
@@ -69,7 +69,7 @@ describe("FSDDLState, watching", () => {
                     path: "./",
                     name: "",
                     files: [
-                        testState.getFileJSON( "test2.sql" )
+                        test.getFileJSON( "test2.sql" )
                     ],
                     folders: []
                 },

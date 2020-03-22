@@ -1,10 +1,10 @@
-import {TestState} from "../TestState";
+import {FSTest} from "../FSTest";
 
 describe("FSDDLState", () => {
 
     it("load dir with one file with view", async() => {
         
-        const test = new TestState({
+        const test = new FSTest({
             "view.sql": [
                 {
                     type: "view",
@@ -46,7 +46,7 @@ describe("FSDDLState", () => {
     });
     
     it("load dir with one file with two views", async() => {
-        const test = new TestState({
+        const test = new FSTest({
             "view.sql": [
                 {
                     type: "view",

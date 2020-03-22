@@ -1,9 +1,9 @@
-import {TestState} from "../TestState";
+import {FSTest} from "../FSTest";
 
 describe("FSDDLState", () => {
 
     it("read only sql files", async() => {
-        const test = new TestState({
+        const test = new FSTest({
             "./sub/dir/test.md": [
                 {
                     type: "function",

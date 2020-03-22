@@ -1,9 +1,9 @@
-import {TestState} from "../TestState";
+import {FSTest} from "../FSTest";
 
 describe("FSDDLState", () => {
 
     it("load dir with one file with extension", async() => {
-        const test = new TestState({
+        const test = new FSTest({
             "test.sql": [
                 {
                     type: "extension",
@@ -72,7 +72,7 @@ describe("FSDDLState", () => {
     });
     
     it("load dir with one file with two extensions", async() => {
-        const test = new TestState({
+        const test = new FSTest({
             "test.sql": [
                 {
                     type: "extension",

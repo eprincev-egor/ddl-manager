@@ -42,7 +42,7 @@ interface ITest {
     expectedState: FSDDLState["TJson"];
 }
 
-export class TestState {
+export class FSTest {
     driver: TestFSDriver;
     parser: TestParser;
     fsState: FSDDLState;
@@ -53,7 +53,7 @@ export class TestState {
     }
 
     static async testLoading(test: ITest) {
-        const {fsState, controller} = new TestState(test.files);
+        const {fsState, controller} = new FSTest(test.files);
         await controller.load("./");
 
         const actualState = fsState.toJSON();
@@ -90,7 +90,7 @@ export class TestState {
     setTestFile(filePath: string, testModels: TTestModel[]) {
 
         const models: BaseDBObjectModel<any>[] = [];
-        const sql = TestState.concatFilesSql(testModels);
+        const sql = FSTest.concatFilesSql(testModels);
 
         for (const testModel of testModels) {
             const dboModel = this.createTestDBOModel(filePath, testModel);

@@ -1,9 +1,9 @@
-import {TestState} from "../TestState";
+import {FSTest} from "../FSTest";
 
 describe("FSDDLState", () => {
 
     it("load sub dir", async() => {
-        const test = new TestState({
+        const test = new FSTest({
             "./sub/dir/test.sql": [
                 {
                     type: "function",
