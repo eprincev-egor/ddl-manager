@@ -9,7 +9,6 @@ import TriggerController from "./controllers/TriggerController";
 import ViewsController from "./controllers/ViewsController";
 import FunctionsController from "./controllers/FunctionsController";
 import TablesController from "./controllers/TablesController";
-import ExtensionsController from "./controllers/ExtensionsController";
 
 export default class MigrationController {
     fs: State;
@@ -19,7 +18,6 @@ export default class MigrationController {
     viewsController: ViewsController;
     functionsController: FunctionsController;
     tablesController: TablesController;
-    extensionsController: ExtensionsController;
 
     constructor(params: IMigrationControllerParams) {
         this.fs = params.fs;
@@ -30,7 +28,6 @@ export default class MigrationController {
         this.viewsController = new ViewsController(params);
         this.functionsController = new FunctionsController(params);
         this.tablesController = new TablesController(params);
-        this.extensionsController = new ExtensionsController(params);
     }
 
     generateMigration(): MigrationModel {
@@ -53,11 +50,6 @@ export default class MigrationController {
         );
 
         this.triggersController.generate(
-            commands,
-            errors
-        );
-
-        this.extensionsController.generate(
             commands,
             errors
         );

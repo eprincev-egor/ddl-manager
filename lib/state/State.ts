@@ -59,6 +59,9 @@ export default class State<Child extends State = State<any>> extends Model<Child
         return migrationController.generateMigration();
     }
 
+    findExtensionsForTable(tableIdentify: string): ExtensionModel[] {
+        return this.row.extensions.findExtensionsForTable(tableIdentify);
+    }
     
     protected addObjects(dbObjects: TDBObject[]) {
         for (const dbo of dbObjects) {

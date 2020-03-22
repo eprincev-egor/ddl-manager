@@ -4,6 +4,7 @@ import TableConstraintController from "./TableConstraintController";
 
 import CommandsCollection from "../commands/CommandsCollection";
 import MigrationErrorsCollection from "../errors/MigrationErrorsCollection";
+import UnknownTableForExtensionErrorModel from "../errors/UnknownTableForExtensionErrorModel";
 
 import TableCommandModel from "../commands/TableCommandModel";
 import ColumnCommandModel from "../commands/ColumnCommandModel";
@@ -32,6 +33,22 @@ export default class TablesController extends BaseController {
         commands: CommandsCollection["TInput"],
         errors: MigrationErrorsCollection["TModel"][]
     ) {
+
+        this.fs.row.extensions.each((fsExtensionModel) => {
+            const tableIdentify = fsExtensionModel.get("forTableIdentify");
+            const fsTableModel = this.fs.row.tables.getByIdentify(tableIdentify);
+
+            if ( !fsTableModel ) {
+                const errorModel = new UnknownTableForExtensionErrorModel({
+                    filePath: fsExtensionModel.get("filePath"),
+                    tableIdentify,
+                    extensionName: fsExtensionModel.get("name")
+                });
+
+                errors.push(errorModel);
+                return;
+            }
+        });
 
         // create tables
         this.fs.row.tables.each((fsTableModel) => {
@@ -125,13 +142,18 @@ export default class TablesController extends BaseController {
 
         // create columns
         const dbColumns = dbTableModel.get("columns");
-        const fsColumns = fsTableModel.get("columns");
+
+        const fsColumns = fsTableModel.get("columns").slice();
+        const extensions = this.fs.findExtensionsForTable( fsTableIdentify );
+        extensions.forEach(extension => {
+            extension.get("columns").forEach(column => {
+                fsColumns.push(column);
+            });
+        });
 
         fsColumns.forEach((fsColumnModel) => {
             const key = fsColumnModel.get("key");
-            const existsDbColumn = dbColumns.find((dbColumn) =>
-                dbColumn.get("key") === key
-            );
+            const existsDbColumn = dbTableModel.getColumnByKey(key);
 
             if ( existsDbColumn ) {
                 const newType = fsColumnModel.get("type");

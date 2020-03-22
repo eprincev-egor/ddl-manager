@@ -24,10 +24,4 @@ export default class TableModel extends AbstractTableModel<TableModel> {
         this.validateUnique(table);
         this.validateForeignKeys(table);
     }
-
-    getColumnByKey(key: string) {
-        return this.row.columns.find(column => 
-            column.get("key") === key
-        );
-    }
 }

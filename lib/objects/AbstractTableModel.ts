@@ -175,4 +175,10 @@ extends BaseObjectModel<ChildModel> {
             }
         });
     }
+    
+    getColumnByKey(key: string) {
+        return this.row.columns.find(column => 
+            column.get("key") === key
+        );
+    }
 }

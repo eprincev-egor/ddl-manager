@@ -5,4 +5,10 @@ export default class ExtensionsCollection extends BaseDBObjectCollection<Extensi
     Model() {
         return ExtensionModel;
     }
+
+    findExtensionsForTable(tableIdentify: string): ExtensionModel[] {
+        return this.models.filter(extension =>
+            extension.get("forTableIdentify") === tableIdentify
+        );
+    }
 }
