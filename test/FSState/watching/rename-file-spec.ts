@@ -1,7 +1,7 @@
 import {TestState} from "../TestState";
 import assert from "assert";
 
-describe("FSState, watching", () => {
+describe("FSDDLState, watching", () => {
 
     it("rename file with one function", async() => {
         const testState = new TestState({

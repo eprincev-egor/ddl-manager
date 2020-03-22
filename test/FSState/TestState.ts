@@ -5,7 +5,7 @@ import BaseDBObjectModel from "../../lib/objects/BaseDBObjectModel";
 import TableModel from "../../lib/objects/TableModel";
 import ViewModel from "../../lib/objects/ViewModel";
 import TriggerModel from "../../lib/objects/TriggerModel";
-import FSState from "../../lib/state/FSState";
+import FSDDLState from "../../lib/state/FSDDLState";
 import assert from "assert";
 import {sleep} from "../utils";
 import ExtensionModel from "../../lib/objects/ExtensionModel";
@@ -38,13 +38,13 @@ export interface ITestFiles {
 
 interface ITest {
     files: ITestFiles;
-    expectedState: FSState["TJson"];
+    expectedState: FSDDLState["TJson"];
 }
 
 export class TestState {
     driver: TestFSDriver;
     parser: TestParser;
-    fsState: FSState;
+    fsState: FSDDLState;
 
     static concatFilesSql(models: TTestModel[]) {
         return models.map(model => model.sql).join("\n");
@@ -68,7 +68,7 @@ export class TestState {
             this.setTestFile(filePath, objects);
         }
     
-        this.fsState = new FSState({
+        this.fsState = new FSDDLState({
             driver: this.driver,
             parser: this.parser
         });

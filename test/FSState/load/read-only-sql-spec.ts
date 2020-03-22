@@ -1,6 +1,6 @@
 import {TestState, ITestFiles} from "../TestState";
 
-describe("FSState", () => {
+describe("FSDDLState", () => {
 
     it("read only sql files", async() => {
         const files: ITestFiles = {

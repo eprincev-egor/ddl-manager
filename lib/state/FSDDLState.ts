@@ -10,7 +10,7 @@ import {Types} from "model-layer";
 import FileModel from "../fs/FileModel";
 import Parser from "../parser/Parser";
 
-export default class FSState extends DDLState<FSState> {
+export default class FSDDLState extends DDLState<FSDDLState> {
     structure() {
         return {
             ...super.structure(),
@@ -30,7 +30,7 @@ export default class FSState extends DDLState<FSState> {
         };
     }
 
-    constructor(inputData: FSState["TInputData"]) {
+    constructor(inputData: FSDDLState["TInputData"]) {
         super(inputData);
 
         this.row.driver.on("change", (path: string) => {

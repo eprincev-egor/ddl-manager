@@ -18,7 +18,8 @@ export type IMigrationOptions = Omit<IMigrationControllerParams, "db" | "fs">;
 
 export type TDBObject = BaseDBObjectModel<any>;
 
-export default class State<Child extends State = State<any>> extends Model<Child> {
+export default class DDLState<Child extends DDLState = DDLState<any>> 
+extends Model<Child> {
     structure() {
         return {
             functions: Types.Collection({
@@ -45,7 +46,7 @@ export default class State<Child extends State = State<any>> extends Model<Child
     }
 
     generateMigration(
-        dbState: State, 
+        dbState: DDLState, 
         options: IMigrationOptions
     ): MigrationModel {
         const fsState = this;

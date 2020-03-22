@@ -1,7 +1,7 @@
 import {TestState} from "../TestState";
 import assert from "assert";
 
-describe("FSState, watching", () => {
+describe("FSDDLState, watching", () => {
 
     it("create empty state, then create file with function for test watching", async() => {
         const testState = new TestState({

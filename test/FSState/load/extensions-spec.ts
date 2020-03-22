@@ -1,6 +1,6 @@
 import {TestState, ITestFiles} from "../TestState";
 
-describe("FSState", () => {
+describe("FSDDLState", () => {
 
     it("load dir with one file with extension", async() => {
         const files: ITestFiles = {

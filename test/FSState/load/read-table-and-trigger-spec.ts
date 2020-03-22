@@ -1,6 +1,6 @@
 import {TestState, ITestFiles} from "../TestState";
 
-describe("FSState", () => {
+describe("FSDDLState", () => {
 
     it("load file with table and trigger inside one file", async() => {
         const files: ITestFiles = {
