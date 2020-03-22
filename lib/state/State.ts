@@ -5,7 +5,7 @@ import ViewsCollection from "../objects/ViewsCollection";
 import TablesCollection from "../objects/TablesCollection";
 import ExtensionsCollection from "../objects/ExtensionsCollection";
 import MigrationModel from "../migration/MigrationModel";
-import MigrationController from "../migration/MigrationController";
+import MainMigrationController from "../migration/MainMigrationController";
 import {IMigrationControllerParams} from "../migration/IMigrationControllerParams";
 import FunctionModel from "../objects/FunctionModel";
 import TableModel from "../objects/TableModel";
@@ -50,7 +50,7 @@ export default class State<Child extends State = State<any>> extends Model<Child
     ): MigrationModel {
         const fsState = this;
 
-        const migrationController = new MigrationController({
+        const migrationController = new MainMigrationController({
             ...options,
             db: dbState,
             fs: fsState

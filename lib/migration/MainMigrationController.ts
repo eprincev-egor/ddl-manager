@@ -10,7 +10,7 @@ import ViewsController from "./controllers/ViewsController";
 import FunctionsController from "./controllers/FunctionsController";
 import TablesController from "./controllers/TablesController";
 
-export default class MigrationController {
+export default class MainMigrationController {
     fs: State;
     db: State;
     mode: TMigrationMode;
