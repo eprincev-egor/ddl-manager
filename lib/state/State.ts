@@ -3,6 +3,7 @@ import FunctionsCollection from "../objects/FunctionsCollection";
 import TriggersCollection from "../objects/TriggersCollection";
 import ViewsCollection from "../objects/ViewsCollection";
 import TablesCollection from "../objects/TablesCollection";
+import ExtensionsCollection from "../objects/ExtensionsCollection";
 import MigrationModel from "../migration/MigrationModel";
 import MigrationController from "../migration/MigrationController";
 import {IMigrationControllerParams} from "../migration/IMigrationControllerParams";
@@ -10,6 +11,7 @@ import FunctionModel from "../objects/FunctionModel";
 import TableModel from "../objects/TableModel";
 import ViewModel from "../objects/ViewModel";
 import TriggerModel from "../objects/TriggerModel";
+import ExtensionModel from "../objects/ExtensionModel";
 import BaseDBObjectModel from "../objects/BaseDBObjectModel";
 
 export type IMigrationOptions = Omit<IMigrationControllerParams, "db" | "fs">;
@@ -34,6 +36,10 @@ export default class State<Child extends State = State<any>> extends Model<Child
             tables: Types.Collection({
                 Collection: TablesCollection,
                 default: () => new TablesCollection()
+            }),
+            extensions: Types.Collection({
+                Collection: ExtensionsCollection,
+                default: () => new ExtensionsCollection()
             })
         };
     }
@@ -73,6 +79,9 @@ export default class State<Child extends State = State<any>> extends Model<Child
         else if ( dbo instanceof TriggerModel ) {
             this.row.triggers.push(dbo);
         }
+        else if ( dbo instanceof ExtensionModel ) {
+            this.row.extensions.push(dbo);
+        }
     }
 
     protected removeObjects(dbObjects: TDBObject[]) {
@@ -94,6 +103,9 @@ export default class State<Child extends State = State<any>> extends Model<Child
         else if ( dbo instanceof TriggerModel ) {
             this.row.triggers.remove(dbo);
         }
+        else if ( dbo instanceof ExtensionModel ) {
+            this.row.extensions.remove(dbo);
+        }
     }
 
     protected findObjects(filter: ((dbo: TDBObject) => boolean)): TDBObject[] {
@@ -101,12 +113,14 @@ export default class State<Child extends State = State<any>> extends Model<Child
         const tables = this.row.tables.filter(filter);
         const triggers = this.row.triggers.filter(filter);
         const views = this.row.views.filter(filter);
+        const extensions = this.row.extensions.filter(filter);
 
         return [
             ...funcs,
             ...tables,
             ...triggers,
-            ...views
+            ...views,
+            ...extensions
         ];
     }
 }

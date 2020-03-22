@@ -54,7 +54,8 @@ describe("FSState, watching", () => {
                 ],
                 triggers: [],
                 tables: [],
-                views: []
+                views: [],
+                extensions: []
             }
         );
 
@@ -106,7 +107,8 @@ describe("FSState, watching", () => {
                 ],
                 triggers: [],
                 tables: [],
-                views: []
+                views: [],
+                extensions: []
             }
         );
 

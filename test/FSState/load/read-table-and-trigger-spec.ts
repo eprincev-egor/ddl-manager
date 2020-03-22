@@ -166,7 +166,8 @@ describe("FSState", () => {
                         parsed: null
                     }
                 ],
-                views: []
+                views: [],
+                extensions: []
             }
         });
 

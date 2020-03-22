@@ -78,7 +78,8 @@ describe("FSState", () => {
                     }
                 ],
                 tables: [],
-                views: []
+                views: [],
+                extensions: []
             }
         });
 
@@ -213,7 +214,8 @@ describe("FSState", () => {
                     }
                 ],
                 tables: [],
-                views: []
+                views: [],
+                extensions: []
             }
         });
 

@@ -49,7 +49,8 @@ describe("FSState", () => {
                 ],
                 triggers: [],
                 tables: [],
-                views: []
+                views: [],
+                extensions: []
             }
         });
 
@@ -126,7 +127,8 @@ describe("FSState", () => {
                 ],
                 triggers: [],
                 tables: [],
-                views: []
+                views: [],
+                extensions: []
             }
         });
 
