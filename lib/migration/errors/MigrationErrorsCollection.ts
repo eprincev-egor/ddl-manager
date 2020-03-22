@@ -8,9 +8,11 @@ import CannotDropTableErrorModel from "./CannotDropTableErrorModel";
 import CannotChangeColumnTypeErrorModel from "./CannotChangeColumnTypeErrorModel";
 import ReferenceToUnknownTableErrorModel from "./ReferenceToUnknownTableErrorModel";
 import ReferenceToUnknownColumnErrorModel from "./ReferenceToUnknownColumnErrorModel";
+import UnknownTableForExtensionErrorModel from "./UnknownTableForExtensionErrorModel";
 
 export default class MigrationErrorsCollection extends Collection<MigrationErrorsCollection> {
     Model(): (
+        (new (...args: any[]) => UnknownTableForExtensionErrorModel) |
         (new (...args: any[]) => ReferenceToUnknownColumnErrorModel) |
         (new (...args: any[]) => ReferenceToUnknownTableErrorModel) |
         (new (...args: any[]) => CannotChangeColumnTypeErrorModel) |
