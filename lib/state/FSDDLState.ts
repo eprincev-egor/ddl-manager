@@ -40,13 +40,40 @@ export default class FSDDLState extends DDLState<FSDDLState> {
         return this.row.extensions.findExtensionsForTable(tableIdentify);
     }
     
-    addObjects(dbObjects: TDBObject[]) {
+    getFileByPath(filePath: string): FileModel {
+        return this.row.folder.getFileByPath(filePath) as FileModel;
+    }
+
+    getFileByContent(fileContent: string): FileModel {
+        return this.row.folder.getFileByContent(fileContent) as FileModel;
+    }
+
+    setFolder(folder: FolderModel) {
+        this.set({
+            folder
+        });
+        
+        const files = folder.filterChildrenByInstance(FileModel);
+        for (const fileModel of files) {
+            const dbObjects = fileModel.get("objects");
+            this.addObjects(dbObjects);
+        }
+    }
+
+    addFile(fileModel: FileModel) {
+        this.row.folder.addFile(fileModel);
+
+        const dbObjects = fileModel.get("objects");
+        this.addObjects(dbObjects);
+    }
+
+    private addObjects(dbObjects: TDBObject[]) {
         for (const dbo of dbObjects) {
             this.addObject(dbo);
         }
     }
 
-    protected addObject(dbo: TDBObject) {
+    private addObject(dbo: TDBObject) {
         if ( dbo instanceof FunctionModel ) {
             this.row.functions.push(dbo);
         }
@@ -64,13 +91,24 @@ export default class FSDDLState extends DDLState<FSDDLState> {
         }
     }
 
-    removeObjects(dbObjects: TDBObject[]) {
+    removeFileByPath(filePath: string) {
+        const fileModel = this.getFileByPath(filePath);
+
+        if ( fileModel ) {
+            const dbObjects = fileModel.get("objects");
+            this.removeObjects( dbObjects );
+        }
+
+        this.row.folder.removeFile(filePath);
+    }
+
+    private removeObjects(dbObjects: TDBObject[]) {
         for (const dbo of dbObjects) {
             this.removeObject(dbo);
         }
     }
 
-    protected removeObject(dbo: TDBObject) {
+    private removeObject(dbo: TDBObject) {
         if ( dbo instanceof FunctionModel ) {
             this.row.functions.remove(dbo);
         }
@@ -86,14 +124,6 @@ export default class FSDDLState extends DDLState<FSDDLState> {
         else if ( dbo instanceof ExtensionModel ) {
             this.row.extensions.remove(dbo);
         }
-    }
-
-    getFileByPath(filePath: string): FileModel {
-        return this.row.folder.getFileByPath(filePath) as FileModel;
-    }
-
-    getFileByContent(fileContent: string): FileModel {
-        return this.row.folder.getFileByContent(fileContent) as FileModel;
     }
 
 }

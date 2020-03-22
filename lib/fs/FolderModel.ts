@@ -40,6 +40,10 @@ export default class FolderModel extends Model<FolderModel> {
         this.set(changes);
     }
 
+    addFile(fileModel: FileModel) {
+        this.row.files.add(fileModel);
+    }
+
     removeFile(filePath: string): void {
         const pathParts = filePath.split("/");
         

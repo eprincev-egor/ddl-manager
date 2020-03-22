@@ -39,16 +39,8 @@ export class FSController {
 
     async load(folderPath: string): Promise<void> {
 
-        this.state.row.folder.setPath(folderPath);
-        await this.readFolder(folderPath);
-        
-        const files = this.state.row.folder.filterChildrenByInstance(FileModel);
-
-        for (const fileModel of files) {
-            const dbObjects = fileModel.get("objects");
-
-            this.state.addObjects(dbObjects);
-        }
+        const folderModel = await this.readFolder(folderPath);
+        this.state.setFolder( folderModel );
     }
     
     private async onFSChangeOrRenameOrAdd(filePath: string) {
@@ -85,25 +77,61 @@ export class FSController {
     }
 
     private onFSChange(fileModel) {
-        const filePath = fileModel.get("path");
-        this.removeFile( filePath );
-
-        this.addFile(fileModel);
+        this.state.removeFileByPath( fileModel.get("path") );
+        this.state.addFile( fileModel );
     }
 
     private onFSAdd(fileModel: FileModel) {
-        this.addFile(fileModel);
+        this.state.addFile(fileModel);
     }
 
     private onFSRename(oldFileModel: FileModel, newFileModel: FileModel) {
-        this.removeFile(oldFileModel.get("path"));
-        this.addFile(newFileModel);
+        this.state.removeFileByPath( oldFileModel.get("path") );
+        this.state.addFile( newFileModel );
     }
 
     private async onFSUnlink(filePath: string) {
-        this.removeFile(filePath);
+        this.state.removeFileByPath( filePath );
     }
 
+    async readFolder(
+        folderPath: string
+    ): Promise<FolderModel> {
+        const fs = this.driver;
+        const folder = await fs.readFolder(folderPath);
+        const {files, directories} = folder;
+        
+        const filesModels: FileModel[] = [];
+        const foldersModels: FolderModel[] = [];
+
+        for (const fileName of files) {
+            if ( !/\.sql/.test(fileName) ) {
+                continue;
+            }
+
+            const filePath = joinPath(folderPath, fileName);
+            const fileModel = await this.readFile(filePath);
+            
+            filesModels.push(fileModel);
+        }
+
+        for (const folderName of directories) {
+            const subFolderPath = joinPath(folderPath, folderName);
+
+            const subFolderModel = await this.readFolder(subFolderPath);
+
+            foldersModels.push( subFolderModel );
+        }
+
+        const outputFolderModel = new FolderModel({
+            files: filesModels,
+            folders: foldersModels
+        });
+        outputFolderModel.setPath(folderPath);
+
+        return outputFolderModel;
+    }
+    
     async readFile(filePath: string): Promise<FileModel> {
         const sql = await this.driver.readFile(filePath);
         const dbObjects = this.parser.parseFile(
@@ -121,58 +149,6 @@ export class FSController {
 
         return fileModel;
     }
-
-    async readFolder(
-        folderPath: string, 
-        folderModel: FolderModel = this.state.row.folder
-    ): Promise<void> {
-        const fs = this.driver;
-        const folder = await fs.readFolder(folderPath);
-        const {files, directories} = folder;
-
-        for (const fileName of files) {
-            if ( !/\.sql/.test(fileName) ) {
-                continue;
-            }
-
-            const filePath = joinPath(folderPath, fileName);
-            const fileModel = await this.readFile(filePath);
-            
-            folderModel.row.files.push(fileModel);
-        }
-
-        for (const folderName of directories) {
-            const subFolderPath = joinPath(folderPath, folderName);
-
-            const subFolderModel = new FolderModel();
-            subFolderModel.setPath(subFolderPath);
-
-            await this.readFolder( subFolderPath, subFolderModel );
-
-            folderModel.row.folders.push( subFolderModel );
-        }
-
-    }
-    
-    async addFile(fileModel: FileModel) {
-        this.state.row.folder.row.files.add(fileModel);
-
-        const dbObjects = fileModel.get("objects");
-        this.state.addObjects(dbObjects);
-    }
-
-    removeFile(filePath: string) {
-        const fileModel = this.state.getFileByPath(filePath);
-        if ( !fileModel ) {
-            return;
-        }
-    
-        const dbObjects = fileModel.get("objects");
-        this.state.removeObjects( dbObjects );
-
-        this.state.row.folder.removeFile(filePath);
-    }
-
 }
 
 function joinPath(...paths: string[]) {

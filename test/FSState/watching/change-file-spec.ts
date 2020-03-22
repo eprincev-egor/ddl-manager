@@ -3,7 +3,7 @@ import assert from "assert";
 
 describe("FSDDLState, watching", () => {
 
-    it("create empty state, then create file with function for test watching", async() => {
+    it("create state with file, then update file", async() => {
         const test = new FSTest({
             "test.sql": [
                 {
