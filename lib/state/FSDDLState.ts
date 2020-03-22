@@ -1,8 +1,6 @@
 import DDLState from "./DDLState";
 import ExtensionsCollection from "../objects/ExtensionsCollection";
 
-import MigrationModel from "../migration/MigrationModel";
-import MainMigrationController from "../migration/MainMigrationController";
 import {IMigrationControllerParams} from "../migration/IMigrationControllerParams";
 import FunctionModel from "../objects/FunctionModel";
 import TableModel from "../objects/TableModel";
@@ -42,21 +40,6 @@ export default class FSDDLState extends DDLState<FSDDLState> {
         return this.row.extensions.findExtensionsForTable(tableIdentify);
     }
     
-    generateMigration(
-        dbState: DDLState, 
-        options: IMigrationOptions
-    ): MigrationModel {
-        const fsState = this;
-
-        const migrationController = new MainMigrationController({
-            ...options,
-            db: dbState,
-            fs: fsState
-        });
-
-        return migrationController.generateMigration();
-    }
-
     addObjects(dbObjects: TDBObject[]) {
         for (const dbo of dbObjects) {
             this.addObject(dbo);

@@ -1,6 +1,7 @@
 import DDLState from "../../lib/state/DDLState";
 import FSDDLState, {IMigrationOptions} from "../../lib/state/FSDDLState";
 import MigrationModel from "../../lib/migration/MigrationModel";
+import MainMigrationController from "../../lib/migration/MainMigrationController";
 import assert from "assert";
 
 interface IGenerateMigrationTest {
@@ -15,6 +16,12 @@ export default function testGenerateMigration(test: IGenerateMigrationTest) {
     const fsState = new FSDDLState(test.fs);
     const dbState = new DDLState(test.db);
 
-    const migration = fsState.generateMigration(dbState, test.options);
+    const controller = new MainMigrationController({
+        ...test.options,
+        fs: fsState,
+        db: dbState
+    });
+
+    const migration = controller.generateMigration();
     assert.deepStrictEqual(migration.toJSON(), test.migration);
 }
