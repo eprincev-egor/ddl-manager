@@ -17,6 +17,7 @@ export default class ExtensionsController extends BaseController {
         this.fs.row.extensions.each((fsExtensionModel) => {
             const tableIdentify = fsExtensionModel.get("forTableIdentify");
             const fsTableModel = this.fs.row.tables.getByIdentify(tableIdentify);
+            const dbTableModel = this.db.row.tables.getByIdentify(tableIdentify);
 
             if ( !fsTableModel ) {
                 const errorModel = new UnknownTableForExtensionErrorModel({
@@ -31,12 +32,17 @@ export default class ExtensionsController extends BaseController {
 
             const fsExtensionColumns = fsExtensionModel.get("columns");
             for (const fsColumnModel of fsExtensionColumns) {
-                const createColumnCommand = new ColumnCommandModel({
-                    type: "create",
-                    tableIdentify,
-                    column: fsColumnModel
-                });
-                commands.push(createColumnCommand);
+                const key = fsColumnModel.get("key");
+                const existsDbColumn = dbTableModel.getColumnByKey(key);
+
+                if ( !existsDbColumn ) {
+                    const createColumnCommand = new ColumnCommandModel({
+                        type: "create",
+                        tableIdentify,
+                        column: fsColumnModel
+                    });
+                    commands.push(createColumnCommand);
+                }
             }
         });
 
