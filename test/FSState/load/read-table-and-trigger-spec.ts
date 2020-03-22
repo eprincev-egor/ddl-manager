@@ -1,9 +1,9 @@
-import {TestState, ITestFiles} from "../TestState";
+import {TestState} from "../TestState";
 
 describe("FSDDLState", () => {
 
     it("load file with table and trigger inside one file", async() => {
-        const files: ITestFiles = {
+        const test = new TestState({
             "company.sql": [
                 {
                     type: "function",
@@ -88,87 +88,80 @@ describe("FSDDLState", () => {
                     }
                 }
             ]
-        };
+        });
 
-        await TestState.testLoading({
-            files,
-            expectedState: {
-                folder: {
-                    path: "./",
-                    name: "",
-                    files: [
+        await test.testLoading({
+            folder: {
+                path: "./",
+                name: "",
+                files: [
+                    test.getFileJSON("company.sql")
+                ],
+                folders: []
+            },
+            triggers: [
+                {
+                    filePath: "company.sql",
+                    identify: "create_role_trigger on public.companies",
+                    tableIdentify: "public.companies",
+                    functionIdentify: "public.create_role()",
+                    name: "create_role_trigger",
+                    parsed: null,
+                    createdByDDLManager: true
+                }
+            ],
+            functions: [
+                {
+                    filePath: "company.sql",
+                    identify: "public.create_role()",
+                    name: "create_role",
+                    parsed: null,
+                    createdByDDLManager: true
+                }
+            ],
+            tables: [
+                {
+                    filePath: "company.sql",
+                    identify: "public.companies",
+                    name: "companies",
+                    columns: [
                         {
-                            path: "company.sql",
-                            name: "company.sql",
-                            content: TestState.concatFilesSql( files["company.sql"] )
+                            filePath: "company.sql",
+                            identify: "id",
+                            key: "id",
+                            type: "serial",
+                            nulls: false,
+                            parsed: null
+                        },
+                        {
+                            filePath: "company.sql",
+                            identify: "name",
+                            key: "name",
+                            type: "text",
+                            nulls: false,
+                            parsed: null
+                        },
+                        {
+                            filePath: "company.sql",
+                            identify: "note",
+                            key: "note",
+                            type: "text",
+                            nulls: true,
+                            parsed: null
                         }
                     ],
-                    folders: []
-                },
-                triggers: [
-                    {
-                        filePath: "company.sql",
-                        identify: "create_role_trigger on public.companies",
-                        tableIdentify: "public.companies",
-                        functionIdentify: "public.create_role()",
-                        name: "create_role_trigger",
-                        parsed: null,
-                        createdByDDLManager: true
-                    }
-                ],
-                functions: [
-                    {
-                        filePath: "company.sql",
-                        identify: "public.create_role()",
-                        name: "create_role",
-                        parsed: null,
-                        createdByDDLManager: true
-                    }
-                ],
-                tables: [
-                    {
-                        filePath: "company.sql",
-                        identify: "public.companies",
-                        name: "companies",
-                        columns: [
-                            {
-                                filePath: "company.sql",
-                                identify: "id",
-                                key: "id",
-                                type: "serial",
-                                nulls: false,
-                                parsed: null
-                            },
-                            {
-                                filePath: "company.sql",
-                                identify: "name",
-                                key: "name",
-                                type: "text",
-                                nulls: false,
-                                parsed: null
-                            },
-                            {
-                                filePath: "company.sql",
-                                identify: "note",
-                                key: "note",
-                                type: "text",
-                                nulls: true,
-                                parsed: null
-                            }
-                        ],
-                        deprecated: false,
-                        deprecatedColumns: [],
-                        primaryKey: ["id"],
-                        checkConstraints: [],
-                        foreignKeysConstraints: [],
-                        uniqueConstraints: [],
-                        values: null,
-                        parsed: null
-                    }
-                ],
-                views: [],
-                extensions: []
-            }
+                    deprecated: false,
+                    deprecatedColumns: [],
+                    primaryKey: ["id"],
+                    checkConstraints: [],
+                    foreignKeysConstraints: [],
+                    uniqueConstraints: [],
+                    values: null,
+                    parsed: null
+                }
+            ],
+            views: [],
+            extensions: []
         });
 
     });

@@ -1,9 +1,9 @@
-import {TestState, ITestFiles} from "../TestState";
+import {TestState} from "../TestState";
 
 describe("FSDDLState", () => {
 
     it("load dir with one file with function", async() => {
-        const files: ITestFiles = {
+        const test = new TestState({
             "test.sql": [
                 {
                     type: "function",
@@ -21,43 +21,36 @@ describe("FSDDLState", () => {
                     }
                 }
             ]
-        };
+        });
 
-        await TestState.testLoading({
-            files,
-            expectedState: {
-                folder: {
-                    path: "./",
-                    name: "",
-                    files: [
-                        {
-                            path: "test.sql",
-                            name: "test.sql",
-                            content: TestState.concatFilesSql( files["test.sql"] )
-                        }
-                    ],
-                    folders: []
-                },
-                functions: [
-                    {
-                        filePath: "test.sql",
-                        identify: "public.test()",
-                        name: "test",
-                        parsed: null,
-                        createdByDDLManager: true
-                    }
+        await test.testLoading({
+            folder: {
+                path: "./",
+                name: "",
+                files: [
+                    test.getFileJSON( "test.sql" )
                 ],
-                triggers: [],
-                tables: [],
-                views: [],
-                extensions: []
-            }
+                folders: []
+            },
+            functions: [
+                {
+                    filePath: "test.sql",
+                    identify: "public.test()",
+                    name: "test",
+                    parsed: null,
+                    createdByDDLManager: true
+                }
+            ],
+            triggers: [],
+            tables: [],
+            views: [],
+            extensions: []
         });
 
     });
     
     it("load dir with one file with two functions", async() => {
-        const files: ITestFiles = {
+        const test = new TestState({
             "test.sql": [
                 {
                     type: "function",
@@ -92,44 +85,37 @@ describe("FSDDLState", () => {
                     }
                 }
             ]
-        };
+        });
 
-        await TestState.testLoading({
-            files,
-            expectedState: {
-                folder: {
-                    path: "./",
-                    name: "",
-                    files: [
-                        {
-                            path: "test.sql",
-                            name: "test.sql",
-                            content: TestState.concatFilesSql( files["test.sql"] )
-                        }
-                    ],
-                    folders: []
-                },
-                functions: [
-                    {
-                        filePath: "test.sql",
-                        identify: "test1()",
-                        name: "test1",
-                        parsed: null,
-                        createdByDDLManager: true
-                    },
-                    {
-                        filePath: "test.sql",
-                        identify: "test2()",
-                        name: "test2",
-                        parsed: null,
-                        createdByDDLManager: true
-                    }
+        await test.testLoading({
+            folder: {
+                path: "./",
+                name: "",
+                files: [
+                    test.getFileJSON( "test.sql" )
                 ],
-                triggers: [],
-                tables: [],
-                views: [],
-                extensions: []
-            }
+                folders: []
+            },
+            functions: [
+                {
+                    filePath: "test.sql",
+                    identify: "test1()",
+                    name: "test1",
+                    parsed: null,
+                    createdByDDLManager: true
+                },
+                {
+                    filePath: "test.sql",
+                    identify: "test2()",
+                    name: "test2",
+                    parsed: null,
+                    createdByDDLManager: true
+                }
+            ],
+            triggers: [],
+            tables: [],
+            views: [],
+            extensions: []
         });
 
     });

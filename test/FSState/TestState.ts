@@ -78,6 +78,15 @@ export class TestState {
         });
     }
 
+    async testLoading(expectedState: FSDDLState["TJson"]) {
+        await this.controller.load("./");
+
+        assert.deepEqual(
+            this.fsState.toJSON(),
+            expectedState
+        );
+    }
+
     setTestFile(filePath: string, testModels: TTestModel[]) {
 
         const models: BaseDBObjectModel<any>[] = [];
@@ -156,6 +165,21 @@ export class TestState {
 
     getFileSQL(filePath: string) {
         return this.driver.getFile( filePath );
+    }
+
+    getFileJSON(filePath: string) {
+        const fileName = filePath.split("/").pop();
+        const fileContent = this.driver.getFile( filePath );
+        const dbObjects = this.parser.parseFile( filePath, fileContent ).map(dbo =>
+            dbo.toJSON()
+        );
+
+        return {
+            path: filePath,
+            name: fileName,
+            content: fileContent,
+            objects: dbObjects
+        };
     }
 
     async emitFS(eventType: string, path: string) {

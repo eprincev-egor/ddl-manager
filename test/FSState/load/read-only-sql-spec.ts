@@ -1,9 +1,9 @@
-import {TestState, ITestFiles} from "../TestState";
+import {TestState} from "../TestState";
 
 describe("FSDDLState", () => {
 
     it("read only sql files", async() => {
-        const files: ITestFiles = {
+        const test = new TestState({
             "./sub/dir/test.md": [
                 {
                     type: "function",
@@ -21,37 +21,34 @@ describe("FSDDLState", () => {
                     }
                 }
             ]
-        };
+        });
 
-        await TestState.testLoading({
-            files,
-            expectedState: {
-                folder: {
-                    path: "./",
-                    name: "",
-                    files: [],
-                    folders: [
-                        {
-                            path: "sub",
-                            name: "sub",
-                            files: [],
-                            folders: [
-                                {
-                                    path: "sub/dir",
-                                    name: "dir",
-                                    files: [],
-                                    folders: []
-                                }
-                            ]
-                        }
-                    ]
-                },
-                functions: [],
-                triggers: [],
-                tables: [],
-                views: [],
-                extensions: []
-            }
+        await test.testLoading({
+            folder: {
+                path: "./",
+                name: "",
+                files: [],
+                folders: [
+                    {
+                        path: "sub",
+                        name: "sub",
+                        files: [],
+                        folders: [
+                            {
+                                path: "sub/dir",
+                                name: "dir",
+                                files: [],
+                                folders: []
+                            }
+                        ]
+                    }
+                ]
+            },
+            functions: [],
+            triggers: [],
+            tables: [],
+            views: [],
+            extensions: []
         });
 
     });

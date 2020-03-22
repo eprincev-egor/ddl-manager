@@ -36,11 +36,7 @@ describe("FSDDLState, watching", () => {
                     path: "./",
                     name: "",
                     files: [
-                        {
-                            path: "test.sql",
-                            name: "test.sql",
-                            content: testState.getFileSQL( "test.sql" )
-                        }
+                        testState.getFileJSON( "test.sql" )
                     ],
                     folders: []
                 },
@@ -89,11 +85,7 @@ describe("FSDDLState, watching", () => {
                     path: "./",
                     name: "",
                     files: [
-                        {
-                            path: "test.sql",
-                            name: "test.sql",
-                            content: testState.getFileSQL( "test.sql" )
-                        }
+                        testState.getFileJSON( "test.sql" )
                     ],
                     folders: []
                 },

@@ -1,9 +1,9 @@
-import {TestState, ITestFiles} from "../TestState";
+import {TestState} from "../TestState";
 
 describe("FSDDLState", () => {
 
     it("load sub dir", async() => {
-        const files: ITestFiles = {
+        const test = new TestState({
             "./sub/dir/test.sql": [
                 {
                     type: "function",
@@ -21,51 +21,44 @@ describe("FSDDLState", () => {
                     }
                 }
             ]
-        };
+        });
 
-        await TestState.testLoading({
-            files,
-            expectedState: {
-                folder: {
-                    path: "./",
-                    name: "",
-                    files: [],
-                    folders: [
-                        {
-                            path: "sub",
-                            name: "sub",
-                            files: [],
-                            folders: [
-                                {
-                                    path: "sub/dir",
-                                    name: "dir",
-                                    files: [
-                                        {
-                                            path: "sub/dir/test.sql",
-                                            name: "test.sql",
-                                            content: TestState.concatFilesSql( files["./sub/dir/test.sql"] )
-                                        }
-                                    ],
-                                    folders: []
-                                }
-                            ]
-                        }
-                    ]
-                },
-                functions: [
+        await test.testLoading({
+            folder: {
+                path: "./",
+                name: "",
+                files: [],
+                folders: [
                     {
-                        filePath: "./sub/dir/test.sql",
-                        identify: "public.test()",
-                        name: "test",
-                        parsed: null,
-                        createdByDDLManager: true
+                        path: "sub",
+                        name: "sub",
+                        files: [],
+                        folders: [
+                            {
+                                path: "sub/dir",
+                                name: "dir",
+                                files: [
+                                    test.getFileJSON( "sub/dir/test.sql" )
+                                ],
+                                folders: []
+                            }
+                        ]
                     }
-                ],
-                triggers: [],
-                tables: [],
-                views: [],
-                extensions: []
-            }
+                ]
+            },
+            functions: [
+                {
+                    filePath: "./sub/dir/test.sql",
+                    identify: "public.test()",
+                    name: "test",
+                    parsed: null,
+                    createdByDDLManager: true
+                }
+            ],
+            triggers: [],
+            tables: [],
+            views: [],
+            extensions: []
         });
 
     });

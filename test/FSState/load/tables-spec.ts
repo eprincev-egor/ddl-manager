@@ -1,9 +1,9 @@
-import {TestState, ITestFiles} from "../TestState";
+import {TestState} from "../TestState";
 
 describe("FSDDLState", () => {
 
     it("load dir with one file with table", async() => {
-        const files: ITestFiles = {
+        const test = new TestState({
             "company.sql": [
                 {
                     type: "table",
@@ -27,60 +27,53 @@ describe("FSDDLState", () => {
                     }
                 }
             ]
-        };
+        });
 
-        await TestState.testLoading({
-            files,
-            expectedState: {
-                folder: {
-                    path: "./",
-                    name: "",
-                    files: [
+        await test.testLoading({
+            folder: {
+                path: "./",
+                name: "",
+                files: [
+                    test.getFileJSON("company.sql")
+                ],
+                folders: []
+            },
+            tables: [
+                {
+                    filePath: "company.sql",
+                    identify: "public.company",
+                    parsed: null,
+                    name: "company",
+                    columns: [
                         {
-                            path: "company.sql",
-                            name: "company.sql",
-                            content: TestState.concatFilesSql(files["company.sql"])
+                            filePath: "company.sql",
+                            identify: "id",
+                            key: "id",
+                            type: "integer",
+                            nulls: true,
+                            parsed: null
                         }
                     ],
-                    folders: []
-                },
-                tables: [
-                    {
-                        filePath: "company.sql",
-                        identify: "public.company",
-                        parsed: null,
-                        name: "company",
-                        columns: [
-                            {
-                                filePath: "company.sql",
-                                identify: "id",
-                                key: "id",
-                                type: "integer",
-                                nulls: true,
-                                parsed: null
-                            }
-                        ],
-                        deprecated: false,
-                        deprecatedColumns: [],
-                        primaryKey: ["id"],
-                        checkConstraints: [],
-                        foreignKeysConstraints: [],
-                        uniqueConstraints: [],
-                        values: null
-                    }
-                ],
-                triggers: [],
-                functions: [],
-                views: [],
-                extensions: []
-            }
+                    deprecated: false,
+                    deprecatedColumns: [],
+                    primaryKey: ["id"],
+                    checkConstraints: [],
+                    foreignKeysConstraints: [],
+                    uniqueConstraints: [],
+                    values: null
+                }
+            ],
+            triggers: [],
+            functions: [],
+            views: [],
+            extensions: []
         });
 
     });
     
     
     it("load dir with one file with two tables", async() => {
-        const files: ITestFiles = {
+        const test = new TestState({
             "tables.sql": [
                 {
                     type: "table",
@@ -133,84 +126,77 @@ describe("FSDDLState", () => {
                     }
                 }
             ]
-        };
+        });
 
-        await TestState.testLoading({
-            files,
-            expectedState: {
-                folder: {
-                    path: "./",
-                    name: "",
-                    files: [
+        await test.testLoading({
+            folder: {
+                path: "./",
+                name: "",
+                files: [
+                    test.getFileJSON("tables.sql")
+                ],
+                folders: []
+            },
+            tables: [
+                {
+                    filePath: "tables.sql",
+                    identify: "public.company",
+                    parsed: null,
+                    name: "company",
+                    columns: [
                         {
-                            path: "tables.sql",
-                            name: "tables.sql",
-                            content: TestState.concatFilesSql(files["tables.sql"])
+                            filePath: "tables.sql",
+                            identify: "id",
+                            key: "id",
+                            type: "integer",
+                            nulls: true,
+                            parsed: null
                         }
                     ],
-                    folders: []
+                    deprecated: false,
+                    deprecatedColumns: [],
+                    primaryKey: ["id"],
+                    checkConstraints: [],
+                    foreignKeysConstraints: [],
+                    uniqueConstraints: [],
+                    values: null
                 },
-                tables: [
-                    {
-                        filePath: "tables.sql",
-                        identify: "public.company",
-                        parsed: null,
-                        name: "company",
-                        columns: [
-                            {
-                                filePath: "tables.sql",
-                                identify: "id",
-                                key: "id",
-                                type: "integer",
-                                nulls: true,
-                                parsed: null
-                            }
-                        ],
-                        deprecated: false,
-                        deprecatedColumns: [],
-                        primaryKey: ["id"],
-                        checkConstraints: [],
-                        foreignKeysConstraints: [],
-                        uniqueConstraints: [],
-                        values: null
-                    },
-                    {
-                        filePath: "tables.sql",
-                        identify: "public.orders",
-                        parsed: null,
-                        name: "orders",
-                        columns: [
-                            {
-                                filePath: "tables.sql",
-                                identify: "id",
-                                key: "id",
-                                type: "integer",
-                                nulls: true,
-                                parsed: null
-                            },
-                            {
-                                filePath: "tables.sql",
-                                identify: "id_company",
-                                key: "id_company",
-                                type: "integer",
-                                nulls: false,
-                                parsed: null
-                            }
-                        ],
-                        deprecated: false,
-                        deprecatedColumns: [],
-                        primaryKey: ["id"],
-                        checkConstraints: [],
-                        foreignKeysConstraints: [],
-                        uniqueConstraints: [],
-                        values: null
-                    }
-                ],
-                triggers: [],
-                functions: [],
-                views: [],
-                extensions: []
-            }
+                {
+                    filePath: "tables.sql",
+                    identify: "public.orders",
+                    parsed: null,
+                    name: "orders",
+                    columns: [
+                        {
+                            filePath: "tables.sql",
+                            identify: "id",
+                            key: "id",
+                            type: "integer",
+                            nulls: true,
+                            parsed: null
+                        },
+                        {
+                            filePath: "tables.sql",
+                            identify: "id_company",
+                            key: "id_company",
+                            type: "integer",
+                            nulls: false,
+                            parsed: null
+                        }
+                    ],
+                    deprecated: false,
+                    deprecatedColumns: [],
+                    primaryKey: ["id"],
+                    checkConstraints: [],
+                    foreignKeysConstraints: [],
+                    uniqueConstraints: [],
+                    values: null
+                }
+            ],
+            triggers: [],
+            functions: [],
+            views: [],
+            extensions: []
         });
 
     });

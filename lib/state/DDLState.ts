@@ -111,20 +111,4 @@ extends Model<Child> {
             this.row.extensions.remove(dbo);
         }
     }
-
-    findObjects(filter: ((dbo: TDBObject) => boolean)): TDBObject[] {
-        const funcs = this.row.functions.filter(filter);
-        const tables = this.row.tables.filter(filter);
-        const triggers = this.row.triggers.filter(filter);
-        const views = this.row.views.filter(filter);
-        const extensions = this.row.extensions.filter(filter);
-
-        return [
-            ...funcs,
-            ...tables,
-            ...triggers,
-            ...views,
-            ...extensions
-        ];
-    }
 }

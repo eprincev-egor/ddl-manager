@@ -1,11 +1,24 @@
 import {Model, Types} from "model-layer";
+import BaseDBObjectModel from "../objects/BaseDBObjectModel";
 
 export default class FileModel extends Model<FileModel> {
     structure() {
         return {
-            name: Types.String,
-            path: Types.String,
-            content: Types.String
+            name: Types.String({
+                required: true
+            }),
+            path: Types.String({
+                required: true
+            }),
+            content: Types.String({
+                required: true
+            }),
+            objects: Types.Array({
+                required: true,
+                element: BaseDBObjectModel as any as (
+                    new (...args: any) => BaseDBObjectModel<any>
+                )
+            })
         };
     }
 }

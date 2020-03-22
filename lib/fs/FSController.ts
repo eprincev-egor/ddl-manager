@@ -1,4 +1,3 @@
-import {TDBObject} from "../state/DDLState";
 import FSDDLState from "../state/FSDDLState";
 import FSDriver from "./FSDriver";
 import Parser from "../parser/Parser";
@@ -39,7 +38,6 @@ export class FSController {
     }
 
     async load(folderPath: string): Promise<void> {
-        const parser = this.parser;
 
         this.state.row.folder.setPath(folderPath);
         await this.readFolder(folderPath);
@@ -47,9 +45,7 @@ export class FSController {
         const files = this.state.row.folder.filterChildrenByInstance(FileModel);
 
         for (const fileModel of files) {
-            const filePath = fileModel.get("path");
-            const sql = fileModel.get("content");
-            const dbObjects = parser.parseFile(filePath, sql) as TDBObject[];
+            const dbObjects = fileModel.get("objects");
 
             this.state.addObjects(dbObjects);
         }
@@ -110,12 +106,17 @@ export class FSController {
 
     async readFile(filePath: string): Promise<FileModel> {
         const sql = await this.driver.readFile(filePath);
+        const dbObjects = this.parser.parseFile(
+            filePath,
+            sql
+        );
 
         const fileName = filePath.split("/").pop();
         const fileModel = new FileModel({
             name: fileName,
             path: filePath,
-            content: sql
+            content: sql,
+            objects: dbObjects
         });
 
         return fileModel;
@@ -135,15 +136,9 @@ export class FSController {
             }
 
             const filePath = joinPath(folderPath, fileName);
-            const sql = await fs.readFile(filePath);
+            const fileModel = await this.readFile(filePath);
             
-            const fileRow: FileModel["TInputData"] = {
-                name: fileName,
-                path: filePath,
-                content: sql
-            };
-
-            folderModel.row.files.push(fileRow);
+            folderModel.row.files.push(fileModel);
         }
 
         for (const folderName of directories) {
@@ -162,16 +157,8 @@ export class FSController {
     async addFile(fileModel: FileModel) {
         this.state.row.folder.row.files.add(fileModel);
 
-        const dbObjects = this.parseFile(fileModel);
+        const dbObjects = fileModel.get("objects");
         this.state.addObjects(dbObjects);
-    }
-
-    private parseFile(fileModel: FileModel): TDBObject[] {
-        const filePath = fileModel.get("path");
-        const sql = fileModel.get("content");
-        const dbObjects = this.parser.parseFile(filePath, sql) as TDBObject[];
-
-        return dbObjects;
     }
 
     removeFile(filePath: string) {
@@ -180,11 +167,7 @@ export class FSController {
             return;
         }
     
-        let dbObjects: TDBObject[];
-
-        dbObjects = this.state.findObjects((dbo) =>
-            dbo.get("filePath") === filePath
-        );
+        const dbObjects = fileModel.get("objects");
         this.state.removeObjects( dbObjects );
 
         this.state.row.folder.removeFile(filePath);

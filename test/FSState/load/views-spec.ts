@@ -1,9 +1,10 @@
-import {TestState, ITestFiles} from "../TestState";
+import {TestState} from "../TestState";
 
 describe("FSDDLState", () => {
 
     it("load dir with one file with view", async() => {
-        const files: ITestFiles = {
+        
+        const test = new TestState({
             "view.sql": [
                 {
                     type: "view",
@@ -17,43 +18,35 @@ describe("FSDDLState", () => {
                     }
                 }
             ]
-        };
-
-        await TestState.testLoading({
-            files,
-            expectedState: {
-                folder: {
-                    path: "./",
-                    name: "",
-                    files: [
-                        {
-                            path: "view.sql",
-                            name: "view.sql",
-                            content: TestState.concatFilesSql( files["view.sql"] )
-                        }
-                    ],
-                    folders: []
-                },
-                views: [
-                    {
-                        filePath: "view.sql",
-                        identify: "public.companies",
-                        name: "companies",
-                        parsed: null,
-                        createdByDDLManager: true
-                    }
-                ],
-                triggers: [],
-                tables: [],
-                functions: [],
-                extensions: []
-            }
         });
 
+        await test.testLoading({
+            folder: {
+                path: "./",
+                name: "",
+                files: [
+                    test.getFileJSON("view.sql")
+                ],
+                folders: []
+            },
+            views: [
+                {
+                    filePath: "view.sql",
+                    identify: "public.companies",
+                    name: "companies",
+                    parsed: null,
+                    createdByDDLManager: true
+                }
+            ],
+            triggers: [],
+            tables: [],
+            functions: [],
+            extensions: []
+        });
     });
     
     it("load dir with one file with two views", async() => {
-        const files: ITestFiles = {
+        const test = new TestState({
             "view.sql": [
                 {
                     type: "view",
@@ -78,44 +71,37 @@ describe("FSDDLState", () => {
                     }
                 }
             ]
-        };
+        });
 
-        await TestState.testLoading({
-            files,
-            expectedState: {
-                folder: {
-                    path: "./",
-                    name: "",
-                    files: [
-                        {
-                            path: "view.sql",
-                            name: "view.sql",
-                            content: TestState.concatFilesSql( files["view.sql"] )
-                        }
-                    ],
-                    folders: []
-                },
-                views: [
-                    {
-                        filePath: "view.sql",
-                        identify: "public.companies",
-                        name: "companies",
-                        parsed: null,
-                        createdByDDLManager: true
-                    },
-                    {
-                        filePath: "view.sql",
-                        identify: "public.orders",
-                        name: "orders",
-                        parsed: null,
-                        createdByDDLManager: true
-                    }
+        await test.testLoading({
+            folder: {
+                path: "./",
+                name: "",
+                files: [
+                    test.getFileJSON("view.sql")
                 ],
-                triggers: [],
-                tables: [],
-                functions: [],
-                extensions: []
-            }
+                folders: []
+            },
+            views: [
+                {
+                    filePath: "view.sql",
+                    identify: "public.companies",
+                    name: "companies",
+                    parsed: null,
+                    createdByDDLManager: true
+                },
+                {
+                    filePath: "view.sql",
+                    identify: "public.orders",
+                    name: "orders",
+                    parsed: null,
+                    createdByDDLManager: true
+                }
+            ],
+            triggers: [],
+            tables: [],
+            functions: [],
+            extensions: []
         });
 
     });
