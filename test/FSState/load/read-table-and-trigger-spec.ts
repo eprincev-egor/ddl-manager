@@ -83,7 +83,7 @@ describe("FSState", () => {
                         checkConstraints: [],
                         foreignKeysConstraints: [],
                         uniqueConstraints: [],
-                        rows: null,
+                        values: null,
                         parsed: null
                     }
                 }
@@ -162,7 +162,7 @@ describe("FSState", () => {
                         checkConstraints: [],
                         foreignKeysConstraints: [],
                         uniqueConstraints: [],
-                        rows: null,
+                        values: null,
                         parsed: null
                     }
                 ],

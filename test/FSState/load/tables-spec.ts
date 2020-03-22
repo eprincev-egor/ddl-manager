@@ -66,7 +66,7 @@ describe("FSState", () => {
                         checkConstraints: [],
                         foreignKeysConstraints: [],
                         uniqueConstraints: [],
-                        rows: null
+                        values: null
                     }
                 ],
                 triggers: [],
@@ -171,7 +171,7 @@ describe("FSState", () => {
                         checkConstraints: [],
                         foreignKeysConstraints: [],
                         uniqueConstraints: [],
-                        rows: null
+                        values: null
                     },
                     {
                         filePath: "tables.sql",
@@ -202,7 +202,7 @@ describe("FSState", () => {
                         checkConstraints: [],
                         foreignKeysConstraints: [],
                         uniqueConstraints: [],
-                        rows: null
+                        values: null
                     }
                 ],
                 triggers: [],

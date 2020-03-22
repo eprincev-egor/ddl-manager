@@ -24,32 +24,6 @@ describe("TableModel", () => {
         );
     });
 
-    it("validate rows, unknown row key", () => {
-        assert.throws(
-            () => {
-                const model = new TableModel({
-                    identify: "test",
-                    name: "test",
-                    columns: [
-                        {
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }
-                    ],
-                    rows: [
-                        {
-                            id: 1,
-                            name: "some"
-                        }
-                    ]
-                });
-            },
-            err =>
-                err.message === "unknown row columns: name"
-        );
-    });
-
     it("validate primaryKey, empty array", () => {
         assert.throws(
             () => {

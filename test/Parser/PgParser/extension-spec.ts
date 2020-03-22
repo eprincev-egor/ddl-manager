@@ -98,7 +98,7 @@ describe("PgParser", () => {
             checkConstraints: [],
             foreignKeysConstraints: [],
             uniqueConstraints: [],
-            rows: null,
+            values: null,
             parsed: expectedSyntaxJSON
         };
 
@@ -155,9 +155,9 @@ describe("PgParser", () => {
 
         const extensionModel = result[0] as ExtensionModel;
 
-        assert.deepStrictEqual(extensionModel.get("rows"), [
-            {id: 1, name: "FCL"},
-            {id: 2, name: "LRL"}
+        assert.deepStrictEqual(extensionModel.get("values"), [
+            ["1", "'FCL'"],
+            ["2", "'LRL'"]
         ]);
     });
 

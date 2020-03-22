@@ -95,7 +95,7 @@ describe("PgParser", () => {
             checkConstraints: [],
             foreignKeysConstraints: [],
             uniqueConstraints: [],
-            rows: null,
+            values: null,
             parsed: {
                 schema: null,
                 name: {
@@ -106,7 +106,6 @@ describe("PgParser", () => {
                 inherits: [],
                 constraints: [],
                 deprecated: false,
-                values: [],
                 valuesRows: [],
                 columns: [
                     {
@@ -191,7 +190,7 @@ describe("PgParser", () => {
         assert.deepStrictEqual(tableModel.get("deprecatedColumns"), ["note"]);
     });
 
-    it("parse table with rows", () => {
+    it("parse table with values", () => {
         const parser = new PgParser();
         
         const result = parser.parseFile("test.sql", `
@@ -207,9 +206,9 @@ describe("PgParser", () => {
 
         const tableModel = result[0] as TableModel;
 
-        assert.deepStrictEqual(tableModel.get("rows"), [
-            {id: 1, name: "FCL"},
-            {id: 2, name: "LRL"}
+        assert.deepStrictEqual(tableModel.get("values"), [
+            ["1", "'FCL'"],
+            ["2", "'LRL'"]
         ]);
     });
 

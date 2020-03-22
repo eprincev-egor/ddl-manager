@@ -46,7 +46,7 @@ describe("MigrationController", () => {
                                     nulls: true,
                                     type: "integer"
                                 }],
-                                rows: null
+                                values: null
                             }
                         }
                     ],
@@ -436,7 +436,7 @@ describe("MigrationController", () => {
                                     nulls: true,
                                     type: "integer"
                                 }],
-                                rows: null
+                                values: null
                             }
                         }
                     ],
@@ -673,8 +673,8 @@ describe("MigrationController", () => {
                                 type: "text"
                             }
                         ],
-                        rows: [
-                            {id: 1, name: "FCL"}
+                        values: [
+                            ["1", "FCL"]
                         ]
                     }]
                 },
@@ -729,8 +729,8 @@ describe("MigrationController", () => {
                                 type: "text"
                             }
                         ],
-                        rows: [
-                            {id: 1, name: "FCL"}
+                        values: [
+                            ["1", "FCL"]
                         ]
                     }]
                 },
@@ -771,8 +771,8 @@ describe("MigrationController", () => {
                             }
                         ],
                         primaryKey: ["id"],
-                        rows: [
-                            {id: 1, name: "FCL"}
+                        values: [
+                            ["1", "FCL"]
                         ]
                     }]
                 },
@@ -830,12 +830,12 @@ describe("MigrationController", () => {
                                     }
                                 ],
                                 primaryKey: ["id"],
-                                rows: [
-                                    {id: 1, name: "FCL"}
+                                values: [
+                                    ["1", "FCL"]
                                 ]
                             },
-                            rows: [
-                                {id: 1, name: "FCL"}
+                            values: [
+                                ["1", "FCL"]
                             ]
                         }
                     ],
@@ -864,8 +864,8 @@ describe("MigrationController", () => {
                             }
                         ],
                         primaryKey: ["id"],
-                        rows: [
-                            {id: 1, name: "FCL"}
+                        values: [
+                            ["1", "FCL"]
                         ]
                     }]
                 },
@@ -906,8 +906,8 @@ describe("MigrationController", () => {
                                     }
                                 ],
                                 primaryKey: ["id"],
-                                rows: [
-                                    {id: 1, name: "FCL"}
+                                values: [
+                                    ["1", "FCL"]
                                 ]
                             }
                         },
@@ -943,12 +943,12 @@ describe("MigrationController", () => {
                                     }
                                 ],
                                 primaryKey: ["id"],
-                                rows: [
-                                    {id: 1, name: "FCL"}
+                                values: [
+                                    ["1", "FCL"]
                                 ]
                             },
-                            rows: [
-                                {id: 1, name: "FCL"}
+                            values: [
+                                ["1", "FCL"]
                             ]
                         }
                     ],

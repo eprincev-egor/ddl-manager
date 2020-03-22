@@ -249,12 +249,25 @@ function prepareForeignKeys(
     return foreignKeys;
 }
 
+// table test (...) values (...)
 function prepareValues(
     parsedTable: CreateTable | Extension
 ): string[][] {
-    // table test (...) values (...)
-    const values: string[][] = null;
     const valuesRows = parsedTable.row.valuesRows;
+    if ( !valuesRows || !valuesRows.length ) {
+        return null;
+    }
+    
+    const values: string[][] = [];
+    for (const valuesRow of valuesRows) {
+        const valuesLine = [];
+        values.push( valuesLine );
+        
+        const parsedValues = valuesRow.get("values");
+        for (const paredValue of parsedValues) {
+            valuesLine.push( paredValue.toString() );
+        }
+    }
     
     return values;
 }
