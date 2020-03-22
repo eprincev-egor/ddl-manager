@@ -141,4 +141,24 @@ describe("PgParser", () => {
         assert.deepStrictEqual(extensionModel.get("deprecatedColumns"), ["note"]);
     });
  
+    it("parse extension with rows", () => {
+        const parser = new PgParser();
+        
+        const result = parser.parseFile("test.sql", `
+            extension companies_note
+            for order_type
+            values (
+                (1, 'FCL'),
+                (2, 'LRL')
+            )
+        `);
+
+        const extensionModel = result[0] as ExtensionModel;
+
+        assert.deepStrictEqual(extensionModel.get("rows"), [
+            {id: 1, name: "FCL"},
+            {id: 2, name: "LRL"}
+        ]);
+    });
+
 });

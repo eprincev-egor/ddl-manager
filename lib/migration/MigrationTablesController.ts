@@ -54,7 +54,7 @@ export default class MigrationTablesController extends BaseController {
                 return;
             }
 
-            if ( fsTableModel.get("rows") ) {
+            if ( fsTableModel.get("values") ) {
                 const primaryKey = fsTableModel.get("primaryKey");
                 if ( !primaryKey ) {
                     const errorModel = new ExpectedPrimaryKeyForRowsErrorModel({
@@ -85,11 +85,11 @@ export default class MigrationTablesController extends BaseController {
             }
 
             // (re)create table rows
-            if ( fsTableModel.get("rows") ) {
+            if ( fsTableModel.get("values") ) {
                 const createRowsCommand = new CreateRowsCommandModel({
                     type: "create",
                     table: fsTableModel,
-                    rows: fsTableModel.get("rows")
+                    values: fsTableModel.get("values")
                 });
                 commands.push(createRowsCommand);
             }

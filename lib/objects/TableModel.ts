@@ -20,7 +20,6 @@ export default class TableModel extends AbstractTableModel<TableModel> {
 
     validate(table: this["row"]) {
         this.validateDeprecatedColumns(table);
-        this.validateRows(table);
         this.validatePrimaryKey(table);
         this.validateUnique(table);
         this.validateForeignKeys(table);

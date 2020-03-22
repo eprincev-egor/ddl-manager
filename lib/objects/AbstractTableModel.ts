@@ -23,8 +23,10 @@ extends BaseObjectModel<ChildModel> {
                 unique: true,
                 default: () => []
             }),
-            rows: Types.Array({
-                element: Types.Object
+            values: Types.Array({
+                element: Types.Array({
+                    element: Types.String
+                })
             }),
             primaryKey: Types.Array({
                 element: Types.String,
@@ -67,30 +69,6 @@ extends BaseObjectModel<ChildModel> {
                 }
             })
         };
-    }
-
-    validateRows(table: this["row"]) {
-        if ( !table.rows ) {
-            return;
-        }
-
-        table.rows.forEach((row) => {
-            const unknownColumns = [];
-
-            for (const key in row) {
-                const existsColumn = table.columns.find((column) => 
-                    column.get("key") === key
-                );
-
-                if ( !existsColumn ) {
-                    unknownColumns.push(key);
-                }
-            }
-
-            if ( unknownColumns.length ) {
-                throw new Error(`unknown row columns: ${ unknownColumns }`);
-            }
-        });
     }
 
     validateDeprecatedColumns(table: this["row"]) {

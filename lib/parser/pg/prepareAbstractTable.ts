@@ -22,15 +22,6 @@ export function prepareAbstractTable(
         columnName.toString()
     );
 
-    // table test (...) values (...)
-    let rows = null;
-    if ( parsedTable instanceof CreateTable ) {
-        const parsedRows = parsedTable.row.values;
-        if ( parsedRows && parsedRows.length ) {
-            rows = parsedRows;
-        }
-    }
-
     const primaryKey = preparePrimaryKey(parsedTable);
 
     const uniqueConstraints = prepareUniqueConstraints(
@@ -51,6 +42,10 @@ export function prepareAbstractTable(
         parsedTable
     );
 
+    const values = prepareValues(
+        parsedTable
+    );
+
     return {
         columns: parsedTable.row.columns.map(parseColumn => {
             const key = parseColumn.get("name").toString();
@@ -67,7 +62,7 @@ export function prepareAbstractTable(
         primaryKey,
         deprecated: parsedTable.row.deprecated,
         deprecatedColumns,
-        rows,
+        values,
         uniqueConstraints,
         checkConstraints,
         foreignKeysConstraints: foreignKeys
@@ -252,4 +247,14 @@ function prepareForeignKeys(
     });
 
     return foreignKeys;
+}
+
+function prepareValues(
+    parsedTable: CreateTable | Extension
+): string[][] {
+    // table test (...) values (...)
+    const values: string[][] = null;
+    const valuesRows = parsedTable.row.valuesRows;
+    
+    return values;
 }

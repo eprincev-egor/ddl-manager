@@ -12,8 +12,10 @@ extends CommandModel<RowsCommandModel> {
                 Model: TableModel,
                 required: true
             }),
-            rows: Types.Array({
-                element: Types.Object,
+            values: Types.Array({
+                element: Types.Array({
+                    element: Types.String
+                }),
                 required: true
             })
         };
