@@ -1,13 +1,12 @@
-import DDLState, {IMigrationOptions} from "../../lib/state/DDLState";
-import FSDDLState from "../../lib/state/FSDDLState";
+import DDLState from "../../lib/state/DDLState";
+import FSDDLState, {IMigrationOptions} from "../../lib/state/FSDDLState";
 import MigrationModel from "../../lib/migration/MigrationModel";
 import assert from "assert";
 
-type InputState = DDLState["TInputData"];
 interface IGenerateMigrationTest {
     options?: IMigrationOptions;
-    fs: InputState;
-    db: InputState;
+    fs: FSDDLState["TInputData"];
+    db: DDLState["TInputData"];
     migration: MigrationModel["TJson"];
 };
 

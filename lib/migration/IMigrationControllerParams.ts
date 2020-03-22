@@ -1,9 +1,10 @@
 import DDLState from "../state/DDLState";
+import FSDDLState from "../state/FSDDLState";
 
 export type TMigrationMode = "dev" | "prod";
 
 export interface IMigrationControllerParams {
-    fs: DDLState; 
+    fs: FSDDLState;
     db: DDLState;
     mode: TMigrationMode;
 }

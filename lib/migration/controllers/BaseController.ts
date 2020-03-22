@@ -1,11 +1,12 @@
 import DDLState from "../../state/DDLState";
+import FSDDLState from "../../state/FSDDLState";
 import {
     IMigrationControllerParams, 
     TMigrationMode
 } from "../IMigrationControllerParams";
 
 export default abstract class BaseController implements IMigrationControllerParams {
-    fs: DDLState; 
+    fs: FSDDLState; 
     db: DDLState;
     mode: TMigrationMode;
 
