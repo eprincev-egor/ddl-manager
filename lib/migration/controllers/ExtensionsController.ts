@@ -3,6 +3,8 @@ import BaseController from "./BaseController";
 import CommandsCollection from "../commands/CommandsCollection";
 import MigrationErrorsCollection from "../errors/MigrationErrorsCollection";
 
+import ColumnCommandModel from "../commands/ColumnCommandModel";
+
 import UnknownTableForExtensionErrorModel from "../errors/UnknownTableForExtensionErrorModel";
 
 
@@ -25,6 +27,16 @@ export default class ExtensionsController extends BaseController {
 
                 errors.push(errorModel);
                 return;
+            }
+
+            const fsExtensionColumns = fsExtensionModel.get("columns");
+            for (const fsColumnModel of fsExtensionColumns) {
+                const createColumnCommand = new ColumnCommandModel({
+                    type: "create",
+                    tableIdentify,
+                    column: fsColumnModel
+                });
+                commands.push(createColumnCommand);
             }
         });
 
