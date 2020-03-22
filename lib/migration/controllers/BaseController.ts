@@ -2,7 +2,7 @@ import State from "../../state/State";
 import {
     IMigrationControllerParams, 
     TMigrationMode
-} from "./IMigrationControllerParams";
+} from "../IMigrationControllerParams";
 
 export default abstract class BaseController implements IMigrationControllerParams {
     fs: State; 
