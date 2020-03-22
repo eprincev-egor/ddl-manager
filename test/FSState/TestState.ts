@@ -8,6 +8,7 @@ import TriggerModel from "../../lib/objects/TriggerModel";
 import FSState from "../../lib/state/FSState";
 import assert from "assert";
 import {sleep} from "../utils";
+import ExtensionModel from "../../lib/objects/ExtensionModel";
 
 export type TTestModel = {
     type: "function";
@@ -16,15 +17,19 @@ export type TTestModel = {
 } | {
     type: "table";
     sql: string;
-    row: TableModel["TInputData"]
+    row: TableModel["TInputData"];
 } | {
     type: "view";
     sql: string;
-    row: ViewModel["TInputData"]
+    row: ViewModel["TInputData"];
 } | {
     type: "trigger";
     sql: string;
-    row: TriggerModel["TInputData"]
+    row: TriggerModel["TInputData"];
+} | {
+    type: "extension";
+    sql: string;
+    row: ExtensionModel["TInputData"];
 };
 
 export interface ITestFiles {
@@ -130,6 +135,13 @@ export class TestState {
 
         if ( testModel.type === "trigger" ) {
             outputDBOModel = new TriggerModel({
+                ...testModel.row,
+                filePath
+            });
+        }
+
+        if ( testModel.type === "extension" ) {
+            outputDBOModel = new ExtensionModel({
                 ...testModel.row,
                 filePath
             });
