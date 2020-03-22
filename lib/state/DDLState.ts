@@ -64,7 +64,7 @@ extends Model<Child> {
         return this.row.extensions.findExtensionsForTable(tableIdentify);
     }
     
-    protected addObjects(dbObjects: TDBObject[]) {
+    addObjects(dbObjects: TDBObject[]) {
         for (const dbo of dbObjects) {
             this.addObject(dbo);
         }
@@ -88,7 +88,7 @@ extends Model<Child> {
         }
     }
 
-    protected removeObjects(dbObjects: TDBObject[]) {
+    removeObjects(dbObjects: TDBObject[]) {
         for (const dbo of dbObjects) {
             this.removeObject(dbo);
         }
@@ -112,7 +112,7 @@ extends Model<Child> {
         }
     }
 
-    protected findObjects(filter: ((dbo: TDBObject) => boolean)): TDBObject[] {
+    findObjects(filter: ((dbo: TDBObject) => boolean)): TDBObject[] {
         const funcs = this.row.functions.filter(filter);
         const tables = this.row.tables.filter(filter);
         const triggers = this.row.triggers.filter(filter);

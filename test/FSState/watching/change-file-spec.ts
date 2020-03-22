@@ -25,7 +25,8 @@ describe("FSDDLState, watching", () => {
             ]
         });
         const fsState = testState.fsState;
-        await fsState.load("./");
+        const fsController = testState.controller;
+        await fsController.load("./");
 
         // check first state
         assert.deepStrictEqual(

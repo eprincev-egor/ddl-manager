@@ -6,8 +6,9 @@ describe("FSDDLState, watching", () => {
     it("create empty state, then create file with function for test watching", async() => {
         const testState = new TestState({});
         const fsState = testState.fsState;
-
-        await fsState.load("./");
+        const fsController = testState.controller;
+        
+        await fsController.load("./");
         
         assert.deepStrictEqual(
             fsState.toJSON(),

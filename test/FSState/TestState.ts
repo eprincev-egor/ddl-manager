@@ -5,10 +5,11 @@ import BaseDBObjectModel from "../../lib/objects/BaseDBObjectModel";
 import TableModel from "../../lib/objects/TableModel";
 import ViewModel from "../../lib/objects/ViewModel";
 import TriggerModel from "../../lib/objects/TriggerModel";
+import ExtensionModel from "../../lib/objects/ExtensionModel";
 import FSDDLState from "../../lib/state/FSDDLState";
+import {FSController} from "../../lib/fs/FSController";
 import assert from "assert";
 import {sleep} from "../utils";
-import ExtensionModel from "../../lib/objects/ExtensionModel";
 
 export type TTestModel = {
     type: "function";
@@ -45,14 +46,15 @@ export class TestState {
     driver: TestFSDriver;
     parser: TestParser;
     fsState: FSDDLState;
+    controller: FSController;
 
     static concatFilesSql(models: TTestModel[]) {
         return models.map(model => model.sql).join("\n");
     }
 
     static async testLoading(test: ITest) {
-        const {fsState} = new TestState(test.files);
-        await fsState.load("./");
+        const {fsState, controller} = new TestState(test.files);
+        await controller.load("./");
 
         const actualState = fsState.toJSON();
         assert.deepStrictEqual(actualState, test.expectedState);
@@ -68,9 +70,11 @@ export class TestState {
             this.setTestFile(filePath, objects);
         }
     
-        this.fsState = new FSDDLState({
+        this.fsState = new FSDDLState();
+        this.controller = new FSController({
             driver: this.driver,
-            parser: this.parser
+            parser: this.parser,
+            state: this.fsState
         });
     }
 
