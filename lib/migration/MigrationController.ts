@@ -5,29 +5,29 @@ import {IMigrationControllerParams, TMigrationMode} from "./IMigrationController
 import CommandsCollection from "./commands/CommandsCollection";
 import MigrationErrorsCollection from "./errors/MigrationErrorsCollection";
 
-import MigrationTriggerController from "./controllers/MigrationTriggerController";
-import MigrationViewsController from "./controllers/MigrationViewsController";
-import MigrationFunctionsController from "./controllers/MigrationFunctionsController";
-import MigrationTablesController from "./controllers/MigrationTablesController";
+import TriggerController from "./controllers/TriggerController";
+import ViewsController from "./controllers/ViewsController";
+import FunctionsController from "./controllers/FunctionsController";
+import TablesController from "./controllers/TablesController";
 
 export default class MigrationController {
     fs: State;
     db: State;
     mode: TMigrationMode;
-    triggersController: MigrationTriggerController;
-    viewsController: MigrationViewsController;
-    functionsController: MigrationFunctionsController;
-    tablesController: MigrationTablesController;
+    triggersController: TriggerController;
+    viewsController: ViewsController;
+    functionsController: FunctionsController;
+    tablesController: TablesController;
 
     constructor(params: IMigrationControllerParams) {
         this.fs = params.fs;
         this.db = params.db;
         this.mode = params.mode || "prod";
 
-        this.triggersController = new MigrationTriggerController(params);
-        this.viewsController = new MigrationViewsController(params);
-        this.functionsController = new MigrationFunctionsController(params);
-        this.tablesController = new MigrationTablesController(params);
+        this.triggersController = new TriggerController(params);
+        this.viewsController = new ViewsController(params);
+        this.functionsController = new FunctionsController(params);
+        this.tablesController = new TablesController(params);
     }
 
     generateMigration(): MigrationModel {

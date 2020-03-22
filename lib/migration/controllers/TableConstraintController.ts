@@ -11,7 +11,7 @@ import ReferenceToUnknownTableErrorModel from "../errors/ReferenceToUnknownTable
 import ReferenceToUnknownColumnErrorModel from "../errors/ReferenceToUnknownColumnErrorModel";
 import TableModel from "../../objects/TableModel";
 
-export default class MigrationTableConstraintController extends BaseController {
+export default class TableConstraintController extends BaseController {
 
     generateConstraintMigration(
         fsTableModel: TableModel,

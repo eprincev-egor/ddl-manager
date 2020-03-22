@@ -10,7 +10,7 @@ import UnknownFunctionForTriggerErrorModel from "../errors/UnknownFunctionForTri
 import MaxObjectNameSizeErrorModel from "../errors/MaxObjectNameSizeErrorModel";
 
 
-export default class MigrationTriggerController extends BaseController {
+export default class TriggerController extends BaseController {
     generate(
         commands: CommandsCollection["TInput"],
         errors: MigrationErrorsCollection["TModel"][]

@@ -1,6 +1,6 @@
 import BaseController from "./BaseController";
 import {IMigrationControllerParams} from "../IMigrationControllerParams";
-import MigrationTableConstraintController from "./MigrationTableConstraintController";
+import TableConstraintController from "./TableConstraintController";
 
 import CommandsCollection from "../commands/CommandsCollection";
 import MigrationErrorsCollection from "../errors/MigrationErrorsCollection";
@@ -18,13 +18,13 @@ import ColumnNotNullCommandModel from "../commands/ColumnNotNullCommandModel";
 import TableModel from "../../objects/TableModel";
 
 
-export default class MigrationTablesController extends BaseController {
-    constraintController: MigrationTableConstraintController;
+export default class TablesController extends BaseController {
+    constraintController: TableConstraintController;
 
     constructor(params: IMigrationControllerParams) {
         super(params);
 
-        this.constraintController = new MigrationTableConstraintController(params);
+        this.constraintController = new TableConstraintController(params);
     }
 
 

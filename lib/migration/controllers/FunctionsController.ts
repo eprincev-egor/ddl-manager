@@ -8,7 +8,7 @@ import FunctionCommandModel from "../commands/FunctionCommandModel";
 import MaxObjectNameSizeErrorModel from "../errors/MaxObjectNameSizeErrorModel";
 
 
-export default class MigrationFunctionsController extends BaseController {
+export default class FunctionsController extends BaseController {
     generate(
         commands: CommandsCollection["TInput"],
         errors: MigrationErrorsCollection["TModel"][]

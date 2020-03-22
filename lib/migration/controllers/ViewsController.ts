@@ -8,7 +8,7 @@ import ViewCommandModel from "../commands/ViewCommandModel";
 import MaxObjectNameSizeErrorModel from "../errors/MaxObjectNameSizeErrorModel";
 
 
-export default class MigrationViewsController extends BaseController {
+export default class ViewsController extends BaseController {
     generate(
         commands: CommandsCollection["TInput"],
         errors: MigrationErrorsCollection["TModel"][]
