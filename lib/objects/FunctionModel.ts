@@ -1,15 +1,6 @@
-import BaseObjectModel from "./BaseDBObjectModel";
-import { Types } from "model-layer";
+import NamedAndMovableDBOModel from "./NamedAndMovableDBOModel";
 
-export default class FunctionModel extends BaseObjectModel<FunctionModel> {
-    structure() {
-        return {
-            ...super.structure(),
-            name: Types.String,
-            createdByDDLManager: Types.Boolean({
-                default: true,
-                required: true
-            })
-        }
-    }
+export default class FunctionModel 
+extends NamedAndMovableDBOModel<FunctionModel> {
+
 }
