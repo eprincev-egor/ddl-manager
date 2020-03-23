@@ -22,40 +22,37 @@ extends BaseValidationsController {
 
         changed.forEach(({prev, next}) => {
             this.drop(prev);
-            this.create(next);
+            this.tryCreate(next);
         });
 
         created.forEach((dbo) => {
-            const errors = this.validate(dbo)
-                .filter(err => !!err);
-            
-            if ( errors.length ) {
-                this.saveErrors(errors);
-                return;
-            }
-
-            this.create(dbo);
+            this.tryCreate(dbo);
         });
     }
 
-    drop(dbo: DBOModel) {
+    private drop(dbo: DBOModel) {
         const dropCommand = this.getDropCommand(dbo);
         this.migration.addCommand(dropCommand);
     }
 
-    create(dbo: DBOModel) {
+    private tryCreate(dbo: DBOModel) {
+        try {
+            this.validate(dbo);
+            this.create(dbo);
+        } catch(err) {
+            if ( !this.isValidationError(err) ) {
+                throw err;
+            }
+        }
+    }
+
+    private create(dbo: DBOModel) {
         const createCommand = this.getCreateCommand(dbo);
         this.migration.addCommand(createCommand);
     }
 
-    saveErrors(errors: InputError[]) {
-        for (const err of errors) {
-            this.migration.addError(err);
-        }
-    }
-
-    abstract getDropCommand(dbo: DBOModel): InputCommand;
-    abstract getCreateCommand(dbo: DBOModel): InputCommand;
-    abstract validate(dbo: DBOModel): (InputError | undefined)[];
-    abstract detectChanges(): IChanges<DBOModel>;
+    protected abstract getDropCommand(dbo: DBOModel): InputCommand;
+    protected abstract getCreateCommand(dbo: DBOModel): InputCommand;
+    protected abstract validate(dbo: DBOModel): void;
+    protected abstract detectChanges(): IChanges<DBOModel>;
 }

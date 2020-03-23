@@ -6,7 +6,7 @@ import MaxObjectNameSizeErrorModel from "../../errors/MaxObjectNameSizeErrorMode
 export default 
 abstract class BaseValidationsController
 extends BaseController {
-    validateNameLength(dbo: NamedDBObjectModel<any>) {
+    protected validateNameLength(dbo: NamedDBObjectModel<any>) {
         if ( dbo.isValidNameLength() ) {
             return;
         }
@@ -16,10 +16,21 @@ extends BaseController {
                 .replace(/Model$/, "")
                 .toLowerCase()
         );
-        return new MaxObjectNameSizeErrorModel({
+        
+        const error = new MaxObjectNameSizeErrorModel({
             filePath: dbo.get("filePath"),
             objectType,
             name: dbo.get("name")
         });
+        this.throwErrorModel(error);
+    }
+
+    protected isValidationError(error: Error) {
+        return error.message === "validation_error";
+    }
+
+    protected throwErrorModel(error) {
+        this.migration.addError(error);
+        throw new Error("validation_error");
     }
 }

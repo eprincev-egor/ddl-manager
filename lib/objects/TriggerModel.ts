@@ -1,7 +1,9 @@
 import {Types} from "model-layer";
-import BaseObjectModel from "./BaseDBObjectModel";
+import NamedAndMovableDBOModel from "./NamedAndMovableDBOModel";
 
-export default class TriggerModel extends BaseObjectModel<TriggerModel> {
+export default 
+class TriggerModel 
+extends NamedAndMovableDBOModel<TriggerModel> {
     structure() {
         return {
             ...super.structure(),
@@ -10,13 +12,6 @@ export default class TriggerModel extends BaseObjectModel<TriggerModel> {
                 required: true
             }),
             functionIdentify: Types.String({
-                required: true
-            }),
-            name: Types.String({
-                required: true
-            }),
-            createdByDDLManager: Types.Boolean({
-                default: true,
                 required: true
             })
         };

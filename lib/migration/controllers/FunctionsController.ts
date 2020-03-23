@@ -6,26 +6,24 @@ export default
 class FunctionsController 
 extends BaseStrategyController<FunctionModel> {
 
-    detectChanges() {
+    protected detectChanges() {
         const dbFunctions = this.db.row.functions;
         const fsFunctions = this.fs.row.functions;
         return fsFunctions.compareWithDB(dbFunctions);
     }
 
-    validate(functionModel: FunctionModel) {
-        return [
-            this.validateNameLength(functionModel)
-        ];
+    protected validate(functionModel: FunctionModel) {
+        this.validateNameLength(functionModel);
     }
 
-    getDropCommand(functionModel: FunctionModel) {
+    protected getDropCommand(functionModel: FunctionModel) {
         return new FunctionCommandModel({
             type: "drop",
             function: functionModel
         });
     }
 
-    getCreateCommand(functionModel: FunctionModel) {
+    protected getCreateCommand(functionModel: FunctionModel) {
         return new FunctionCommandModel({
             type: "create",
             function: functionModel
