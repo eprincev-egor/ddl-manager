@@ -1,6 +1,6 @@
-import NamedAndMovableDBOModel from "./NamedAndMovableDBOModel";
+import {NamedAndMovableDBOModel} from "./NamedAndMovableDBOModel";
 
-export default class ViewModel
+export class ViewModel
 extends NamedAndMovableDBOModel<ViewModel> {
 
 }

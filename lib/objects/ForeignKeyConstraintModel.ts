@@ -1,8 +1,8 @@
 import {Types} from "model-layer";
-import BaseObjectModel from "./BaseDBObjectModel";
+import {BaseDBObjectModel} from "./BaseDBObjectModel";
 
-export default class ForeignKeyConstraintModel 
-extends BaseObjectModel<ForeignKeyConstraintModel> {
+export class ForeignKeyConstraintModel 
+extends BaseDBObjectModel<ForeignKeyConstraintModel> {
     structure() {
         return {
             ...super.structure(),

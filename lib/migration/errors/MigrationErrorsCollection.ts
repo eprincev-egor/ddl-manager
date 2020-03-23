@@ -1,16 +1,16 @@
 import { Collection } from "model-layer";
-import MigrationErrorModel from "./MigrationErrorModel";
-import UnknownTableForTriggerErrorModel from "./UnknownTableForTriggerErrorModel";
-import UnknownFunctionForTriggerErrorModel from "./UnknownFunctionForTriggerErrorModel";
-import MaxObjectNameSizeErrorModel from "./MaxObjectNameSizeErrorModel";
-import CannotDropColumnErrorModel from "./CannotDropColumnErrorModel";
-import CannotDropTableErrorModel from "./CannotDropTableErrorModel";
-import CannotChangeColumnTypeErrorModel from "./CannotChangeColumnTypeErrorModel";
-import ReferenceToUnknownTableErrorModel from "./ReferenceToUnknownTableErrorModel";
-import ReferenceToUnknownColumnErrorModel from "./ReferenceToUnknownColumnErrorModel";
-import UnknownTableForExtensionErrorModel from "./UnknownTableForExtensionErrorModel";
+import {MigrationErrorModel} from "./MigrationErrorModel";
+import {UnknownTableForTriggerErrorModel} from "./UnknownTableForTriggerErrorModel";
+import {UnknownFunctionForTriggerErrorModel} from "./UnknownFunctionForTriggerErrorModel";
+import {MaxObjectNameSizeErrorModel} from "./MaxObjectNameSizeErrorModel";
+import {CannotDropColumnErrorModel} from "./CannotDropColumnErrorModel";
+import {CannotDropTableErrorModel} from "./CannotDropTableErrorModel";
+import {CannotChangeColumnTypeErrorModel} from "./CannotChangeColumnTypeErrorModel";
+import {ReferenceToUnknownTableErrorModel} from "./ReferenceToUnknownTableErrorModel";
+import {ReferenceToUnknownColumnErrorModel} from "./ReferenceToUnknownColumnErrorModel";
+import {UnknownTableForExtensionErrorModel} from "./UnknownTableForExtensionErrorModel";
 
-export default class MigrationErrorsCollection extends Collection<MigrationErrorsCollection> {
+export class MigrationErrorsCollection extends Collection<MigrationErrorsCollection> {
     Model(): (
         (new (...args: any[]) => UnknownTableForExtensionErrorModel) |
         (new (...args: any[]) => ReferenceToUnknownColumnErrorModel) |

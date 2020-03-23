@@ -1,9 +1,9 @@
-import BaseController from "./BaseController";
+import {BaseController} from "./BaseController";
 import {InputError} from "../../MigrationModel";
-import NamedDBObjectModel from "../../../objects/NamedDBObjectModel";
-import MaxObjectNameSizeErrorModel from "../../errors/MaxObjectNameSizeErrorModel";
+import {NamedDBObjectModel} from "../../../objects/NamedDBObjectModel";
+import {MaxObjectNameSizeErrorModel} from "../../errors/MaxObjectNameSizeErrorModel";
 
-export default 
+export 
 abstract class BaseValidationsController
 extends BaseController {
     protected validateNameLength(dbo: NamedDBObjectModel<any>) {

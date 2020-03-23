@@ -1,7 +1,7 @@
 import {Types} from "model-layer";
-import BaseObjectModel from "./BaseDBObjectModel";
+import {BaseDBObjectModel} from "./BaseDBObjectModel";
 
-export default class ColumnModel extends BaseObjectModel<ColumnModel> {
+export class ColumnModel extends BaseDBObjectModel<ColumnModel> {
     structure() {
         return {
             ...super.structure(),

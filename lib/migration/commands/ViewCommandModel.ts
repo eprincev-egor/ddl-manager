@@ -1,8 +1,8 @@
 import {Types} from "model-layer";
-import CommandModel from "./CommandModel";
-import ViewModel from "../../objects/ViewModel";
+import {CommandModel} from "./CommandModel";
+import {ViewModel} from "../../objects/ViewModel";
 
-export default class ViewCommandModel extends CommandModel<ViewCommandModel> {
+export class ViewCommandModel extends CommandModel<ViewCommandModel> {
     structure() {
         return {
             ...super.structure(),

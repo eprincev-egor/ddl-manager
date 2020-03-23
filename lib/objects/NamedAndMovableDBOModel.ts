@@ -1,8 +1,8 @@
 
 import {Types} from "model-layer";
-import NamedDBObjectModel from "./NamedDBObjectModel";
+import {NamedDBObjectModel} from "./NamedDBObjectModel";
 
-export default abstract class NamedAndMovableDBOModel<
+export abstract class NamedAndMovableDBOModel<
     Child extends NamedAndMovableDBOModel<any>
 > extends NamedDBObjectModel<Child> {
     structure() {

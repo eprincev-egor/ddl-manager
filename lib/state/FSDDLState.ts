@@ -1,26 +1,26 @@
-import DDLState from "./DDLState";
-import ExtensionsCollection from "../objects/ExtensionsCollection";
+import {DDLState} from "./DDLState";
+import {ExtensionsCollection} from "../objects/ExtensionsCollection";
 
 import {IMigrationControllerParams} from "../migration/IMigrationControllerParams";
-import FunctionModel from "../objects/FunctionModel";
-import TableModel from "../objects/TableModel";
-import ViewModel from "../objects/ViewModel";
-import TriggerModel from "../objects/TriggerModel";
-import ExtensionModel from "../objects/ExtensionModel";
-import BaseDBObjectModel from "../objects/BaseDBObjectModel";
+import {FunctionModel} from "../objects/FunctionModel";
+import {TableModel} from "../objects/TableModel";
+import {ViewModel} from "../objects/ViewModel";
+import {TriggerModel} from "../objects/TriggerModel";
+import {ExtensionModel} from "../objects/ExtensionModel";
+import {BaseDBObjectModel} from "../objects/BaseDBObjectModel";
 
 // @see fs/index.ts
-import FolderModel from "../fs/FolderModel";
+import {FolderModel} from "../fs/FolderModel";
 import "../fs/FoldersCollection";
 
 import {Types} from "model-layer";
-import FileModel from "../fs/FileModel";
+import {FileModel} from "../fs/FileModel";
 
 export type IMigrationOptions = Omit<IMigrationControllerParams, "db" | "fs">;
 
 export type TDBObject = BaseDBObjectModel<any>;
 
-export default class FSDDLState extends DDLState<FSDDLState> {
+export class FSDDLState extends DDLState<FSDDLState> {
     structure() {
         return {
             ...super.structure(),

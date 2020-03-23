@@ -1,5 +1,5 @@
-import DDLState from "../state/DDLState";
-import FSDDLState from "../state/FSDDLState";
+import {DDLState} from "../state/DDLState";
+import {FSDDLState} from "../state/FSDDLState";
 
 export type TMigrationMode = "dev" | "prod";
 

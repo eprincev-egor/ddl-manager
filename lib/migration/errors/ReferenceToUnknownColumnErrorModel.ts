@@ -1,7 +1,7 @@
-import MigrationErrorModel from "./MigrationErrorModel";
+import {MigrationErrorModel} from "./MigrationErrorModel";
 import { Types } from "model-layer";
 
-export default class ReferenceToUnknownColumnErrorModel 
+export class ReferenceToUnknownColumnErrorModel 
 extends MigrationErrorModel<ReferenceToUnknownColumnErrorModel> {
     structure() {
         return {

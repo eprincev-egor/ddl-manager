@@ -1,7 +1,7 @@
 import {Model, Types} from "model-layer";
-import BaseDBObjectModel from "../objects/BaseDBObjectModel";
+import {BaseDBObjectModel} from "../objects/BaseDBObjectModel";
 
-export default class FileModel extends Model<FileModel> {
+export class FileModel extends Model<FileModel> {
     structure() {
         return {
             name: Types.String({

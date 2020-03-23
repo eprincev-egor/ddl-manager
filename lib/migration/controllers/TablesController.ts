@@ -1,22 +1,22 @@
-import BaseController from "./base-layers/BaseController";
+import {BaseController} from "./base-layers/BaseController";
 import {IMigrationControllerParams} from "../IMigrationControllerParams";
-import TableConstraintController from "./TableConstraintController";
-import TableModel from "../../objects/TableModel";
+import {TableConstraintController} from "./TableConstraintController";
+import {TableModel} from "../../objects/TableModel";
 
-import TableCommandModel from "../commands/TableCommandModel";
-import ColumnCommandModel from "../commands/ColumnCommandModel";
-import CreateRowsCommandModel from "../commands/RowsCommandModel";
-import ColumnNotNullCommandModel from "../commands/ColumnNotNullCommandModel";
+import {TableCommandModel} from "../commands/TableCommandModel";
+import {ColumnCommandModel} from "../commands/ColumnCommandModel";
+import {RowsCommandModel} from "../commands/RowsCommandModel";
+import {ColumnNotNullCommandModel} from "../commands/ColumnNotNullCommandModel";
 
-import UnknownTableForExtensionErrorModel from "../errors/UnknownTableForExtensionErrorModel";
-import MaxObjectNameSizeErrorModel from "../errors/MaxObjectNameSizeErrorModel";
-import CannotDropColumnErrorModel from "../errors/CannotDropColumnErrorModel";
-import CannotDropTableErrorModel from "../errors/CannotDropTableErrorModel";
-import CannotChangeColumnTypeErrorModel from "../errors/CannotChangeColumnTypeErrorModel";
-import ExpectedPrimaryKeyForRowsErrorModel from "../errors/ExpectedPrimaryKeyForRowsErrorModel";
+import {UnknownTableForExtensionErrorModel} from "../errors/UnknownTableForExtensionErrorModel";
+import {MaxObjectNameSizeErrorModel} from "../errors/MaxObjectNameSizeErrorModel";
+import {CannotDropColumnErrorModel} from "../errors/CannotDropColumnErrorModel";
+import {CannotDropTableErrorModel} from "../errors/CannotDropTableErrorModel";
+import {CannotChangeColumnTypeErrorModel} from "../errors/CannotChangeColumnTypeErrorModel";
+import {ExpectedPrimaryKeyForRowsErrorModel} from "../errors/ExpectedPrimaryKeyForRowsErrorModel";
 
 
-export default class TablesController extends BaseController {
+export class TablesController extends BaseController {
     constraintController: TableConstraintController;
 
     constructor(params: IMigrationControllerParams) {
@@ -94,7 +94,7 @@ export default class TablesController extends BaseController {
 
             // (re)create table rows
             if ( fsTableModel.get("values") ) {
-                const createRowsCommand = new CreateRowsCommandModel({
+                const createRowsCommand = new RowsCommandModel({
                     type: "create",
                     table: fsTableModel,
                     values: fsTableModel.get("values")

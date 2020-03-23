@@ -1,7 +1,7 @@
 import {Types} from "model-layer";
-import CommandModel from "./CommandModel";
+import {CommandModel} from "./CommandModel";
 
-export default class ColumnNotNullCommandModel 
+export class ColumnNotNullCommandModel 
 extends CommandModel<ColumnNotNullCommandModel> {
     structure() {
         return {

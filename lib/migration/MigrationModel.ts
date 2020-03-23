@@ -1,6 +1,6 @@
 import {Model, Types} from "model-layer";
-import CommandsCollection from "./commands/CommandsCollection";
-import MigrationErrorsCollection from "./errors/MigrationErrorsCollection";
+import {CommandsCollection} from "./commands/CommandsCollection";
+import {MigrationErrorsCollection} from "./errors/MigrationErrorsCollection";
 
 export type InputCommand = (
     CommandsCollection["TModel"]
@@ -8,7 +8,7 @@ export type InputCommand = (
 export type InputError = (
     MigrationErrorsCollection["TModel"]
 );
-export default class MigrationModel extends Model<MigrationModel> {
+export class MigrationModel extends Model<MigrationModel> {
     structure() {
         return {
             commands: Types.Collection({

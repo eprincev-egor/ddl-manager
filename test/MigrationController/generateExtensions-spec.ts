@@ -1,4 +1,4 @@
-import testGenerateMigration from "./testGenerateMigration";
+import {testGenerateMigration} from "./testGenerateMigration";
 
 describe("MigrationController", () => {
 

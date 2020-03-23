@@ -1,6 +1,6 @@
 import {Model, Types} from "model-layer";
 
-export default abstract class BaseDBObjectModel<
+export abstract class BaseDBObjectModel<
     Child extends BaseDBObjectModel<any>
 > extends Model<Child> {
     structure() {

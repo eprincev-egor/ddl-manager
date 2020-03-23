@@ -1,5 +1,5 @@
-import testGenerateMigration from "./testGenerateMigration";
-import DDLState from "../../lib/state/DDLState";
+import {testGenerateMigration} from "./testGenerateMigration";
+import {DDLState} from "../../lib/state/DDLState";
 import assert from "assert";
 
 describe("MigrationController", () => {

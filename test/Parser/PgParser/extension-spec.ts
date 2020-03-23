@@ -1,6 +1,6 @@
-import PgParser from "../../../lib/parser/pg/PgParser";
+import {PgParser} from "../../../lib/parser/pg/PgParser";
 import assert from "assert";
-import ExtensionModel from "../../../lib/objects/ExtensionModel";
+import {ExtensionModel} from "../../../lib/objects/ExtensionModel";
 import {
     Extension
 } from "grapeql-lang";

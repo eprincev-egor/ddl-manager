@@ -1,10 +1,10 @@
-import BaseDBObjectModel from "../../objects/BaseDBObjectModel";
-import FunctionModel from "../../objects/FunctionModel";
-import TriggerModel from "../../objects/TriggerModel";
-import ViewModel from "../../objects/ViewModel";
-import TableModel from "../../objects/TableModel";
-import ExtensionModel from "../../objects/ExtensionModel";
-import Parser from "../Parser";
+import {BaseDBObjectModel} from "../../objects/BaseDBObjectModel";
+import {FunctionModel} from "../../objects/FunctionModel";
+import {TriggerModel} from "../../objects/TriggerModel";
+import {ViewModel} from "../../objects/ViewModel";
+import {TableModel} from "../../objects/TableModel";
+import {ExtensionModel} from "../../objects/ExtensionModel";
+import {Parser} from "../Parser";
 import {prepareAbstractTable} from "./prepareAbstractTable";
 import {
     GrapeQLCoach,
@@ -15,7 +15,7 @@ import {
     Extension
 } from "grapeql-lang";
 
-export default class PgParser extends Parser {
+export class PgParser extends Parser {
     parseFile(filePath: string, fileContent: string): BaseDBObjectModel<any>[] {
         const coach = new GrapeQLCoach(fileContent);
         const objects: BaseDBObjectModel<any>[] = [];

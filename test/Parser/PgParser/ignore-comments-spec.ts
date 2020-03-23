@@ -1,9 +1,9 @@
-import PgParser from "../../../lib/parser/pg/PgParser";
+import {PgParser} from "../../../lib/parser/pg/PgParser";
 import assert from "assert";
-import ViewModel from "../../../lib/objects/ViewModel";
-import FunctionModel from "../../../lib/objects/FunctionModel";
-import TriggerModel from "../../../lib/objects/TriggerModel";
-import TableModel from "../../../lib/objects/TableModel";
+import {ViewModel} from "../../../lib/objects/ViewModel";
+import {FunctionModel} from "../../../lib/objects/FunctionModel";
+import {TriggerModel} from "../../../lib/objects/TriggerModel";
+import {TableModel} from "../../../lib/objects/TableModel";
 
 describe("PgParser", () => {
 

@@ -1,8 +1,8 @@
 import {Types} from "model-layer";
-import BaseObjectModel from "./BaseDBObjectModel";
+import {BaseDBObjectModel} from "./BaseDBObjectModel";
 
-export default class UniqueConstraintModel 
-extends BaseObjectModel<UniqueConstraintModel> {
+export class UniqueConstraintModel 
+extends BaseDBObjectModel<UniqueConstraintModel> {
     structure() {
         return {
             ...super.structure(),

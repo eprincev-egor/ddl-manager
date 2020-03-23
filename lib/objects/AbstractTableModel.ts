@@ -1,12 +1,12 @@
 import {Types} from "model-layer";
-import BaseObjectModel from "./BaseDBObjectModel";
-import ColumnModel from "./ColumnModel";
-import CheckConstraintModel from "./CheckConstraintModel";
-import UniqueConstraintModel from "./UniqueConstraintModel";
-import ForeignKeyConstraintModel from "./ForeignKeyConstraintModel";
+import {BaseDBObjectModel} from "./BaseDBObjectModel";
+import {ColumnModel} from "./ColumnModel";
+import {CheckConstraintModel} from "./CheckConstraintModel";
+import {UniqueConstraintModel} from "./UniqueConstraintModel";
+import {ForeignKeyConstraintModel} from "./ForeignKeyConstraintModel";
 
-export default abstract class AbstractTableModel<ChildModel extends AbstractTableModel<any>>
-extends BaseObjectModel<ChildModel> {
+export abstract class AbstractTableModel<ChildModel extends AbstractTableModel<any>>
+extends BaseDBObjectModel<ChildModel> {
     structure() {
         return {
             ...super.structure(),

@@ -1,6 +1,6 @@
-import NamedAndMovableDBOModel from "./NamedAndMovableDBOModel";
+import {NamedAndMovableDBOModel} from "./NamedAndMovableDBOModel";
 
-export default class FunctionModel 
+export class FunctionModel 
 extends NamedAndMovableDBOModel<FunctionModel> {
 
 }

@@ -1,8 +1,8 @@
 import {Types} from "model-layer";
-import CommandModel from "./CommandModel";
-import ForeignKeyConstraintModel from "../../objects/ForeignKeyConstraintModel";
+import {CommandModel} from "./CommandModel";
+import {ForeignKeyConstraintModel} from "../../objects/ForeignKeyConstraintModel";
 
-export default class ForeignKeyConstraintCommandModel 
+export class ForeignKeyConstraintCommandModel 
 extends CommandModel<ForeignKeyConstraintCommandModel> {
     structure() {
         return {

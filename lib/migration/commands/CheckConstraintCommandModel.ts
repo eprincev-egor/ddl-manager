@@ -1,8 +1,8 @@
 import {Types} from "model-layer";
-import CommandModel from "./CommandModel";
-import CheckConstraintModel from "../../objects/CheckConstraintModel";
+import {CommandModel} from "./CommandModel";
+import {CheckConstraintModel} from "../../objects/CheckConstraintModel";
 
-export default class CheckConstraintCommandModel 
+export class CheckConstraintCommandModel 
 extends CommandModel<CheckConstraintCommandModel> {
     structure() {
         return {

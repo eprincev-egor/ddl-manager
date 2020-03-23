@@ -1,4 +1,4 @@
-import FSDriver from "../../lib/fs/FSDriver";
+import {FSDriver} from "../../lib/fs/FSDriver";
 import assert from "assert";
 
 describe("FSDriver", () => {

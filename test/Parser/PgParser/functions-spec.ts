@@ -1,6 +1,6 @@
-import PgParser from "../../../lib/parser/pg/PgParser";
+import {PgParser} from "../../../lib/parser/pg/PgParser";
 import assert from "assert";
-import FunctionModel from "../../../lib/objects/FunctionModel";
+import {FunctionModel} from "../../../lib/objects/FunctionModel";
 import {
     CreateFunction
 } from "grapeql-lang";

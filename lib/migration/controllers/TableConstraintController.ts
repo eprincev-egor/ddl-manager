@@ -1,14 +1,14 @@
-import BaseController from "./base-layers/BaseController";
+import {BaseController} from "./base-layers/BaseController";
 
-import PrimaryKeyCommandModel from "../commands/PrimaryKeyCommandModel";
-import CheckConstraintCommandModel from "../commands/CheckConstraintCommandModel";
-import UniqueConstraintCommandModel from "../commands/UniqueConstraintCommandModel";
-import ForeignKeyConstraintCommandModel from "../commands/ForeignKeyConstraintCommandModel";
-import ReferenceToUnknownTableErrorModel from "../errors/ReferenceToUnknownTableErrorModel";
-import ReferenceToUnknownColumnErrorModel from "../errors/ReferenceToUnknownColumnErrorModel";
-import TableModel from "../../objects/TableModel";
+import {PrimaryKeyCommandModel} from "../commands/PrimaryKeyCommandModel";
+import {CheckConstraintCommandModel} from "../commands/CheckConstraintCommandModel";
+import {UniqueConstraintCommandModel} from "../commands/UniqueConstraintCommandModel";
+import {ForeignKeyConstraintCommandModel} from "../commands/ForeignKeyConstraintCommandModel";
+import {ReferenceToUnknownTableErrorModel} from "../errors/ReferenceToUnknownTableErrorModel";
+import {ReferenceToUnknownColumnErrorModel} from "../errors/ReferenceToUnknownColumnErrorModel";
+import {TableModel} from "../../objects/TableModel";
 
-export default class TableConstraintController extends BaseController {
+export class TableConstraintController extends BaseController {
 
     generateConstraintMigration(
         fsTableModel: TableModel,

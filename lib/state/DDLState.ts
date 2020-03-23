@@ -1,9 +1,9 @@
 import {Model, Types} from "model-layer";
-import FunctionsCollection from "../objects/FunctionsCollection";
-import TriggersCollection from "../objects/TriggersCollection";
-import ViewsCollection from "../objects/ViewsCollection";
-import TablesCollection from "../objects/TablesCollection";
-export default class DDLState<Child extends DDLState = DDLState<any>> 
+import {FunctionsCollection} from "../objects/FunctionsCollection";
+import {TriggersCollection} from "../objects/TriggersCollection";
+import {ViewsCollection} from "../objects/ViewsCollection";
+import {TablesCollection} from "../objects/TablesCollection";
+export class DDLState<Child extends DDLState = DDLState<any>> 
 extends Model<Child> {
     structure() {
         return {

@@ -1,8 +1,8 @@
-import BaseStrategyController from "./base-layers/BaseStrategyController";
-import FunctionCommandModel from "../commands/FunctionCommandModel";
-import FunctionModel from "../../objects/FunctionModel";
+import {BaseStrategyController} from "./base-layers/BaseStrategyController";
+import {FunctionCommandModel} from "../commands/FunctionCommandModel";
+import {FunctionModel} from "../../objects/FunctionModel";
 
-export default 
+export 
 class FunctionsController 
 extends BaseStrategyController<FunctionModel> {
 

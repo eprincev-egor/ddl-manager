@@ -1,7 +1,7 @@
-import DDLState from "../../lib/state/DDLState";
-import FSDDLState, {IMigrationOptions} from "../../lib/state/FSDDLState";
-import MigrationModel from "../../lib/migration/MigrationModel";
-import MainMigrationController from "../../lib/migration/MainMigrationController";
+import {DDLState} from "../../lib/state/DDLState";
+import {FSDDLState, IMigrationOptions} from "../../lib/state/FSDDLState";
+import {MigrationModel} from "../../lib/migration/MigrationModel";
+import {MainMigrationController} from "../../lib/migration/MainMigrationController";
 import assert from "assert";
 
 interface IGenerateMigrationTest {
@@ -11,7 +11,7 @@ interface IGenerateMigrationTest {
     migration: MigrationModel["TJson"];
 };
 
-export default function testGenerateMigration(test: IGenerateMigrationTest) {
+export function testGenerateMigration(test: IGenerateMigrationTest) {
     
     const fsState = new FSDDLState(test.fs);
     const dbState = new DDLState(test.db);

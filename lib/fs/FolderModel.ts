@@ -1,9 +1,9 @@
 import {Model, Types} from "model-layer";
-import FilesCollection from "./FilesCollection";
-import FileModel from "./FileModel";
+import {FilesCollection} from "./FilesCollection";
+import {FileModel} from "./FileModel";
 import index from "./index";
 
-export default class FolderModel extends Model<FolderModel> {
+export class FolderModel extends Model<FolderModel> {
     structure() {
         return {
             path: Types.String,

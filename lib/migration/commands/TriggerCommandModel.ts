@@ -1,8 +1,8 @@
 import {Types} from "model-layer";
-import CommandModel from "./CommandModel";
-import TriggerModel from "../../objects/TriggerModel";
+import {CommandModel} from "./CommandModel";
+import {TriggerModel} from "../../objects/TriggerModel";
 
-export default class TriggerCommandModel extends CommandModel<TriggerCommandModel> {
+export class TriggerCommandModel extends CommandModel<TriggerCommandModel> {
     structure() {
         return {
             ...super.structure(),

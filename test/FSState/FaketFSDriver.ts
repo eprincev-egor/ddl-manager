@@ -1,11 +1,11 @@
-import FSDriver, {IDirectory} from "../../lib/fs/FSDriver";
+import {FSDriver, IDirectory} from "../../lib/fs/FSDriver";
 import {TestFSDirectory} from "./FakeFSDirectory";
 
 export interface IFiles {
     [key: string]: string;
 }
 
-export default class TestFSDriver extends FSDriver {
+export class TestFSDriver extends FSDriver {
     private files: IFiles;
     private dirContentByPath: {[filePath: string]: TestFSDirectory};
 

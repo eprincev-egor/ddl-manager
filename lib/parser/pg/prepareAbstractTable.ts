@@ -1,7 +1,7 @@
-import AbstractTableModel from "../../objects/AbstractTableModel";
-import UniqueConstraintModel from "../../objects/UniqueConstraintModel";
-import CheckConstraintModel from "../../objects/CheckConstraintModel";
-import ForeignKeyConstraintModel from "../../objects/ForeignKeyConstraintModel";
+import {AbstractTableModel} from "../../objects/AbstractTableModel";
+import {UniqueConstraintModel} from "../../objects/UniqueConstraintModel";
+import {CheckConstraintModel} from "../../objects/CheckConstraintModel";
+import {ForeignKeyConstraintModel} from "../../objects/ForeignKeyConstraintModel";
 import {
     CreateTable,
     Extension,

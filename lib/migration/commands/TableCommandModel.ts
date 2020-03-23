@@ -1,8 +1,8 @@
 import {Types} from "model-layer";
-import CommandModel from "./CommandModel";
-import TableModel from "../../objects/TableModel";
+import {CommandModel} from "./CommandModel";
+import {TableModel} from "../../objects/TableModel";
 
-export default class TableCommandModel extends CommandModel<TableCommandModel> {
+export class TableCommandModel extends CommandModel<TableCommandModel> {
     structure() {
         return {
             ...super.structure(),

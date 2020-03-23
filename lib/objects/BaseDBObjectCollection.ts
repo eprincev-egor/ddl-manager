@@ -1,5 +1,5 @@
 import {Collection} from "model-layer";
-import BaseDBObjectModel from "./BaseDBObjectModel";
+import {BaseDBObjectModel} from "./BaseDBObjectModel";
 
 interface IChildCollection {
     Model(): (new (...args: any[]) => BaseDBObjectModel<any>);
@@ -14,7 +14,7 @@ export interface IChanges<TModel> {
     }[];
 }
 
-export default abstract class BaseDBObjectCollection<
+export abstract class BaseDBObjectCollection<
     ChildCollection extends BaseDBObjectCollection<any> & IChildCollection
 > extends Collection<ChildCollection> {
     

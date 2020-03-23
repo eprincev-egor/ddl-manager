@@ -1,6 +1,6 @@
 import { Model, Types } from "model-layer";
 
-export default abstract class MigrationErrorModel<ChildError extends MigrationErrorModel<any>> 
+export abstract class MigrationErrorModel<ChildError extends MigrationErrorModel<any>> 
 extends Model<ChildError> {
     structure() {
         return {

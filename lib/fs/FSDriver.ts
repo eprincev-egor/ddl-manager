@@ -48,7 +48,7 @@ export interface IDirectory {
     directories: string[];
 }
 
-export default class FSDriver extends EventEmitter {
+export class FSDriver extends EventEmitter {
     async existsFile(filePath: string): Promise<boolean> {
         const exists = await existsFile(filePath);
         return exists;

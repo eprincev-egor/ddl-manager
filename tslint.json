@@ -12,6 +12,7 @@
         "ordered-imports": false,
         "one-line": false,
         "member-access": false,
-        "max-classes-per-file": false
+        "max-classes-per-file": false,
+        "no-default-export": true
     }
 }

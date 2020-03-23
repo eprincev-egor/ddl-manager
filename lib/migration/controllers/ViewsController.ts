@@ -1,8 +1,8 @@
-import BaseStrategyController from "./base-layers/BaseStrategyController";
-import ViewCommandModel from "../commands/ViewCommandModel";
-import ViewModel from "../../objects/ViewModel";
+import {BaseStrategyController} from "./base-layers/BaseStrategyController";
+import {ViewCommandModel} from "../commands/ViewCommandModel";
+import {ViewModel} from "../../objects/ViewModel";
 
-export default 
+export 
 class ViewsController 
 extends BaseStrategyController<ViewModel> {
     

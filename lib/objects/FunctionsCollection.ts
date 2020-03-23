@@ -1,7 +1,7 @@
-import BaseDBObjectCollection from "./BaseDBObjectCollection";
-import FunctionModel from "./FunctionModel";
+import {BaseDBObjectCollection} from "./BaseDBObjectCollection";
+import {FunctionModel} from "./FunctionModel";
 
-export default class FunctionsCollection extends BaseDBObjectCollection<FunctionsCollection> {
+export class FunctionsCollection extends BaseDBObjectCollection<FunctionsCollection> {
     Model() {
         return FunctionModel;
     }

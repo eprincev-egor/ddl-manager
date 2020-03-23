@@ -1,9 +1,9 @@
 import {Types} from "model-layer";
-import BaseDBObjectModel from "./BaseDBObjectModel";
+import {BaseDBObjectModel} from "./BaseDBObjectModel";
 
 const MAX_NAME_LENGTH = 64;
 
-export default abstract class NamedDBObjectModel<
+export abstract class NamedDBObjectModel<
     Child extends NamedDBObjectModel<any>
 > extends BaseDBObjectModel<Child> {
     structure() {

@@ -1,11 +1,11 @@
-import FSDDLState from "../state/FSDDLState";
-import FSDriver from "./FSDriver";
-import Parser from "../parser/Parser";
-import FileModel from "./FileModel";
+import {FSDDLState} from "../state/FSDDLState";
+import {FSDriver} from "./FSDriver";
+import {Parser} from "../parser/Parser";
+import {FileModel} from "./FileModel";
 import * as Path from "path";
 
 // @see fs/index.ts
-import FolderModel from "../fs/FolderModel";
+import {FolderModel} from "../fs/FolderModel";
 import "../fs/FoldersCollection";
 
 interface IFSControllerParams {

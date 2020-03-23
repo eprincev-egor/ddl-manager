@@ -1,13 +1,13 @@
-import DDLState from "../state/DDLState";
-import MigrationModel from "./MigrationModel";
+import {DDLState} from "../state/DDLState";
+import {MigrationModel} from "./MigrationModel";
 import {IMigrationControllerParams, TMigrationMode} from "./IMigrationControllerParams";
 
-import TriggerController from "./controllers/TriggerController";
-import ViewsController from "./controllers/ViewsController";
-import FunctionsController from "./controllers/FunctionsController";
-import TablesController from "./controllers/TablesController";
+import {TriggerController} from "./controllers/TriggerController";
+import {ViewsController} from "./controllers/ViewsController";
+import {FunctionsController} from "./controllers/FunctionsController";
+import {TablesController} from "./controllers/TablesController";
 
-export default class MainMigrationController {
+export class MainMigrationController {
     fs: DDLState;
     db: DDLState;
     mode: TMigrationMode;

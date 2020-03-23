@@ -1,7 +1,7 @@
-import PgParser from "../../../lib/parser/pg/PgParser";
+import {PgParser} from "../../../lib/parser/pg/PgParser";
 import assert from "assert";
-import FunctionModel from "../../../lib/objects/FunctionModel";
-import TriggerModel from "../../../lib/objects/TriggerModel";
+import {FunctionModel} from "../../../lib/objects/FunctionModel";
+import {TriggerModel} from "../../../lib/objects/TriggerModel";
 import {
     CreateFunction,
     CreateTrigger

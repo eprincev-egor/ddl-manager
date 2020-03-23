@@ -1,7 +1,7 @@
 import {Types} from "model-layer";
-import AbstractTableModel from "./AbstractTableModel";
+import {AbstractTableModel} from "./AbstractTableModel";
 
-export default class ExtensionModel extends AbstractTableModel<ExtensionModel> {
+export class ExtensionModel extends AbstractTableModel<ExtensionModel> {
     structure() {
         return {
             ...super.structure(),

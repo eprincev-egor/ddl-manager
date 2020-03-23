@@ -1,13 +1,13 @@
-import BaseStrategyController from "./base-layers/BaseStrategyController";
-import TriggerModel from "../../objects/TriggerModel";
+import {BaseStrategyController} from "./base-layers/BaseStrategyController";
+import {TriggerModel} from "../../objects/TriggerModel";
 
-import TriggerCommandModel from "../commands/TriggerCommandModel";
+import {TriggerCommandModel} from "../commands/TriggerCommandModel";
 
-import UnknownTableForTriggerErrorModel from "../errors/UnknownTableForTriggerErrorModel";
-import UnknownFunctionForTriggerErrorModel from "../errors/UnknownFunctionForTriggerErrorModel";
+import {UnknownTableForTriggerErrorModel} from "../errors/UnknownTableForTriggerErrorModel";
+import {UnknownFunctionForTriggerErrorModel} from "../errors/UnknownFunctionForTriggerErrorModel";
 
 
-export default 
+export 
 class TriggerController 
 extends BaseStrategyController<TriggerModel> {
     

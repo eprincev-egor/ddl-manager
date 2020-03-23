@@ -1,4 +1,4 @@
-import TableModel from "../lib/objects/TableModel";
+import {TableModel} from "../lib/objects/TableModel";
 import assert from "assert";
 
 describe("TableModel", () => {
