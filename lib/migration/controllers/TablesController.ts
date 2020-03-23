@@ -1,4 +1,4 @@
-import BaseController from "./BaseController";
+import BaseController from "./base-layers/BaseController";
 import {IMigrationControllerParams} from "../IMigrationControllerParams";
 import TableConstraintController from "./TableConstraintController";
 import TableModel from "../../objects/TableModel";

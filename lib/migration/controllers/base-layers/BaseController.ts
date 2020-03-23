@@ -1,12 +1,14 @@
-import DDLState from "../../state/DDLState";
-import FSDDLState from "../../state/FSDDLState";
+import DDLState from "../../../state/DDLState";
+import FSDDLState from "../../../state/FSDDLState";
 import {
     IMigrationControllerParams, 
     TMigrationMode
-} from "../IMigrationControllerParams";
-import MigrationModel from "../MigrationModel";
+} from "../../IMigrationControllerParams";
+import MigrationModel from "../../MigrationModel";
 
-export default abstract class BaseController implements IMigrationControllerParams {
+export default 
+abstract class BaseController 
+implements IMigrationControllerParams {
     fs: FSDDLState; 
     db: DDLState;
     mode: TMigrationMode;
@@ -21,4 +23,5 @@ export default abstract class BaseController implements IMigrationControllerPara
     setMigration(migration: MigrationModel) {
         this.migration = migration
     }
+
 }

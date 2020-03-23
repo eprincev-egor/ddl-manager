@@ -1,4 +1,4 @@
-import BaseController from "./BaseController";
+import BaseController from "./base-layers/BaseController";
 
 import TriggerCommandModel from "../commands/TriggerCommandModel";
 

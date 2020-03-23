@@ -8,14 +8,7 @@ extends MigrationErrorModel<MaxObjectNameSizeErrorModel> {
             ...super.structure(),
             
             objectType: Types.String({
-                required: true,
-                enum: [
-                    "function",
-                    "trigger",
-                    "table",
-                    "view",
-                    "column"
-                ]
+                required: true
             }),
             name: Types.String({
                 required: true

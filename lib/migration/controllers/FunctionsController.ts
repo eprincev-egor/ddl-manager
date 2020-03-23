@@ -1,61 +1,35 @@
-import BaseController from "./BaseController";
+import DefaultStrategyController from "./base-layers/DefaultStrategyController";
 import FunctionCommandModel from "../commands/FunctionCommandModel";
-import MaxObjectNameSizeErrorModel from "../errors/MaxObjectNameSizeErrorModel";
 import FunctionModel from "../../objects/FunctionModel";
 
-export default class FunctionsController extends BaseController {
+export default 
+class FunctionsController 
+extends DefaultStrategyController {
 
-    generate() {
-        const {
-            created,
-            removed,
-            changed
-        } = this.fs.row.functions.compareWithDB(this.db.row.functions);
-        
-        removed.forEach((functionModel) => {
-            if ( functionModel.allowedToDrop() ) {
-                this.dropFunction(functionModel);
-            }
-        });
-
-        changed.forEach(({prev, next}) => {
-            this.dropFunction(prev);
-            this.createFunction(next);
-        });
-
-        created.forEach((functionModel) => {
-            if ( !functionModel.isValidNameLength() ) {
-                this.saveMaxObjectNameSizeError(functionModel);
-                return;
-            }
-
-            this.createFunction(functionModel);
-        });
+    detectChanges() {
+        const dbFunctions = this.db.row.functions;
+        const fsFunctions = this.fs.row.functions;
+        return fsFunctions.compareWithDB(dbFunctions);
     }
 
-    dropFunction(functionModel: FunctionModel) {
-        const dropCommand = new FunctionCommandModel({
+    validate(functionModel: FunctionModel) {
+        return [
+            this.validateNameLength(functionModel)
+        ];
+    }
+
+    getDropCommand(functionModel: FunctionModel) {
+        return new FunctionCommandModel({
             type: "drop",
             function: functionModel
         });
-        this.migration.addCommand( dropCommand );
     }
 
-    createFunction(functionModel: FunctionModel) {
-        const createCommand = new FunctionCommandModel({
+    getCreateCommand(functionModel: FunctionModel) {
+        return new FunctionCommandModel({
             type: "create",
             function: functionModel
         });
-        this.migration.addCommand( createCommand );
     }
 
-    saveMaxObjectNameSizeError(functionModel: FunctionModel) {
-        const errorModel = new MaxObjectNameSizeErrorModel({
-            filePath: functionModel.get("filePath"),
-            objectType: "function",
-            name: functionModel.get("name")
-        });
-
-        this.migration.addError(errorModel);
-    }
 }

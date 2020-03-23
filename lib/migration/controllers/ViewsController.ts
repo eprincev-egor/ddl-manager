@@ -1,4 +1,4 @@
-import BaseController from "./BaseController";
+import BaseController from "./base-layers/BaseController";
 import ViewCommandModel from "../commands/ViewCommandModel";
 import MaxObjectNameSizeErrorModel from "../errors/MaxObjectNameSizeErrorModel";
 

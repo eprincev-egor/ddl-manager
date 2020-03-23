@@ -1,4 +1,4 @@
-import BaseController from "./BaseController";
+import BaseController from "./base-layers/BaseController";
 
 import PrimaryKeyCommandModel from "../commands/PrimaryKeyCommandModel";
 import CheckConstraintCommandModel from "../commands/CheckConstraintCommandModel";
