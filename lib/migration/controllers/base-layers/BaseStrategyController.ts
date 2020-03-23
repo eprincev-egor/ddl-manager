@@ -4,7 +4,7 @@ import { IChanges } from "../../../objects/BaseDBObjectCollection";
 import NamedAndMovableDBOModel from "../../../objects/NamedAndMovableDBOModel";
 
 export default 
-abstract class DefaultStrategyController<DBOModel extends NamedAndMovableDBOModel<any>>
+abstract class BaseStrategyController<DBOModel extends NamedAndMovableDBOModel<any>>
 extends BaseValidationsController {
     
     generate() {

@@ -1,10 +1,10 @@
-import DefaultStrategyController from "./base-layers/DefaultStrategyController";
+import BaseStrategyController from "./base-layers/BaseStrategyController";
 import FunctionCommandModel from "../commands/FunctionCommandModel";
 import FunctionModel from "../../objects/FunctionModel";
 
 export default 
 class FunctionsController 
-extends DefaultStrategyController<FunctionModel> {
+extends BaseStrategyController<FunctionModel> {
 
     detectChanges() {
         const dbFunctions = this.db.row.functions;

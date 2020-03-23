@@ -1,10 +1,10 @@
-import DefaultStrategyController from "./base-layers/DefaultStrategyController";
+import BaseStrategyController from "./base-layers/BaseStrategyController";
 import ViewCommandModel from "../commands/ViewCommandModel";
 import ViewModel from "../../objects/ViewModel";
 
 export default 
 class ViewsController 
-extends DefaultStrategyController<ViewModel> {
+extends BaseStrategyController<ViewModel> {
     
     detectChanges() {
         const dbViews = this.db.row.views;
