@@ -1,15 +1,6 @@
-import {Types} from "model-layer";
-import BaseObjectModel from "./BaseDBObjectModel";
+import NamedAndMovableDBOModel from "./NamedAndMovableDBOModel";
 
-export default class ViewModel extends BaseObjectModel<ViewModel> {
-    structure() {
-        return {
-            ...super.structure(),
-            name: Types.String,
-            createdByDDLManager: Types.Boolean({
-                default: true,
-                required: true
-            })
-        };
-    }
+export default class ViewModel
+extends NamedAndMovableDBOModel<ViewModel> {
+
 }

@@ -4,7 +4,7 @@ import NamedDBObjectModel from "../../../objects/NamedDBObjectModel";
 import MaxObjectNameSizeErrorModel from "../../errors/MaxObjectNameSizeErrorModel";
 
 export default 
-abstract class ValidationsController
+abstract class BaseValidationsController
 extends BaseController {
     validateNameLength(dbo: NamedDBObjectModel<any>) {
         if ( dbo.isValidNameLength() ) {

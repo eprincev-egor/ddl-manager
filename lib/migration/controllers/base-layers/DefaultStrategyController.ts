@@ -1,11 +1,11 @@
-import ValidationsController from "./ValidationsController";
+import BaseValidationsController from "./BaseValidationsController";
 import {InputCommand, InputError} from "../../MigrationModel";
 import { IChanges } from "../../../objects/BaseDBObjectCollection";
 import NamedAndMovableDBOModel from "../../../objects/NamedAndMovableDBOModel";
 
 export default 
-abstract class DefaultStrategyController
-extends ValidationsController {
+abstract class DefaultStrategyController<DBOModel extends NamedAndMovableDBOModel<any>>
+extends BaseValidationsController {
     
     generate() {
         const {
@@ -38,12 +38,12 @@ extends ValidationsController {
         });
     }
 
-    drop(dbo: NamedAndMovableDBOModel<any>) {
+    drop(dbo: DBOModel) {
         const dropCommand = this.getDropCommand(dbo);
         this.migration.addCommand(dropCommand);
     }
 
-    create(dbo: NamedAndMovableDBOModel<any>) {
+    create(dbo: DBOModel) {
         const createCommand = this.getCreateCommand(dbo);
         this.migration.addCommand(createCommand);
     }
@@ -54,8 +54,8 @@ extends ValidationsController {
         }
     }
 
-    abstract getDropCommand(dbo: NamedAndMovableDBOModel<any>): InputCommand;
-    abstract getCreateCommand(dbo: NamedAndMovableDBOModel<any>): InputCommand;
-    abstract validate(dbo: NamedAndMovableDBOModel<any>): (InputError | undefined)[];
-    abstract detectChanges(): IChanges<NamedAndMovableDBOModel<any>>;
+    abstract getDropCommand(dbo: DBOModel): InputCommand;
+    abstract getCreateCommand(dbo: DBOModel): InputCommand;
+    abstract validate(dbo: DBOModel): (InputError | undefined)[];
+    abstract detectChanges(): IChanges<DBOModel>;
 }

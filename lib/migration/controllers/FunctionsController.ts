@@ -4,7 +4,7 @@ import FunctionModel from "../../objects/FunctionModel";
 
 export default 
 class FunctionsController 
-extends DefaultStrategyController {
+extends DefaultStrategyController<FunctionModel> {
 
     detectChanges() {
         const dbFunctions = this.db.row.functions;
