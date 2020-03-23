@@ -11,15 +11,9 @@ extends BaseController {
             return;
         }
 
-        const objectType = (
-            dbo.constructor.name
-                .replace(/Model$/, "")
-                .toLowerCase()
-        );
-        
         const error = new MaxObjectNameSizeErrorModel({
             filePath: dbo.get("filePath"),
-            objectType,
+            objectType: getObjectTypeFromConstructorName(dbo),
             name: dbo.get("name")
         });
         this.throwErrorModel(error);
@@ -33,4 +27,10 @@ extends BaseController {
         this.migration.addError(error);
         throw new Error("validation_error");
     }
+}
+
+function getObjectTypeFromConstructorName(dbo: NamedDBObjectModel<any>): string {
+    return dbo.constructor.name
+        .replace(/Model$/, "")
+        .toLowerCase()
 }
