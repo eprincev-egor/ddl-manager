@@ -1,5 +1,5 @@
 import BaseController from "./BaseController";
-
+import {InputError} from "../../MigrationModel";
 import NamedDBObjectModel from "../../../objects/NamedDBObjectModel";
 import MaxObjectNameSizeErrorModel from "../../errors/MaxObjectNameSizeErrorModel";
 
@@ -29,7 +29,7 @@ extends BaseController {
         return error.message === "validation_error";
     }
 
-    protected throwErrorModel(error) {
+    protected throwErrorModel(error: InputError) {
         this.migration.addError(error);
         throw new Error("validation_error");
     }
