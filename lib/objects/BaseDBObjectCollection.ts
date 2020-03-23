@@ -26,38 +26,38 @@ export default abstract class BaseDBObjectCollection<
         return existsModel;
     }
 
-    compareWithDB(otherCollection: this): IChanges<this["TModel"]> {
+    compareWithDB(dbCollection: this): IChanges<this["TModel"]> {
         const changes: IChanges<this["TModel"]> = {
             removed: [],
             created: [],
             changed: []
         };
 
-        otherCollection.each((otherDBO) => {
-            const identify = otherDBO.getIdentify();
-            const thisDBO = this.getByIdentify(identify);
+        dbCollection.each((dbObject) => {
+            const identify = dbObject.getIdentify();
+            const fsObject = this.getByIdentify(identify);
 
-            if ( thisDBO ) {
-                const hasChanges = !thisDBO.equal(otherDBO);
+            if ( fsObject ) {
+                const hasChanges = !fsObject.equal(dbObject);
                 if ( hasChanges ) {
                     changes.changed.push({
-                        prev: otherDBO,
-                        next: thisDBO
+                        prev: dbObject,
+                        next: fsObject
                     });
                 }
 
                 return;
             }
 
-            changes.removed.push(otherDBO);
+            changes.removed.push(dbObject);
         });
 
-        this.each((thisDBO) => {
-            const identify = thisDBO.getIdentify();
-            const existsDBOinOtherCollection = !!otherCollection.getByIdentify(identify);
+        this.each((fsObject) => {
+            const identify = fsObject.getIdentify();
+            const existsDBOinOtherCollection = !!dbCollection.getByIdentify(identify);
 
             if ( !existsDBOinOtherCollection ) {
-                changes.created.push(thisDBO);
+                changes.created.push(fsObject);
             }
         });
 
