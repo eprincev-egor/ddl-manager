@@ -1,18 +1,10 @@
 import BaseController from "./BaseController";
-
-import CommandsCollection from "../commands/CommandsCollection";
-import MigrationErrorsCollection from "../errors/MigrationErrorsCollection";
-
 import ViewCommandModel from "../commands/ViewCommandModel";
-
 import MaxObjectNameSizeErrorModel from "../errors/MaxObjectNameSizeErrorModel";
 
 
 export default class ViewsController extends BaseController {
-    generate(
-        commands: CommandsCollection["TInput"],
-        errors: MigrationErrorsCollection["TModel"][]
-    ) {
+    generate() {
 
         // drop views
         this.db.row.views.each((dbViewModel) => {
@@ -26,13 +18,13 @@ export default class ViewsController extends BaseController {
                         type: "drop",
                         view: dbViewModel
                     });
-                    commands.push( dropCommand );
+                    this.migration.addCommand( dropCommand );
 
                     const createCommand = new ViewCommandModel({
                         type: "create",
                         view: fsViewModel
                     });
-                    commands.push( createCommand );
+                    this.migration.addCommand( createCommand );
                 }
 
                 return;
@@ -46,7 +38,7 @@ export default class ViewsController extends BaseController {
                 type: "drop",
                 view: dbViewModel
             });
-            commands.push( command );
+            this.migration.addCommand( command );
         });
 
         // create views
@@ -66,7 +58,7 @@ export default class ViewsController extends BaseController {
                     name: viewName
                 });
 
-                errors.push(errorModel);
+                this.migration.addError(errorModel);
                 return;
             }
 
@@ -74,7 +66,7 @@ export default class ViewsController extends BaseController {
                 type: "create",
                 view: fsViewModel
             });
-            commands.push(command);
+            this.migration.addCommand(command);
         });
 
     }

@@ -1,18 +1,10 @@
 import BaseController from "./BaseController";
-
-import CommandsCollection from "../commands/CommandsCollection";
-import MigrationErrorsCollection from "../errors/MigrationErrorsCollection";
-
 import FunctionCommandModel from "../commands/FunctionCommandModel";
-
 import MaxObjectNameSizeErrorModel from "../errors/MaxObjectNameSizeErrorModel";
 
 
 export default class FunctionsController extends BaseController {
-    generate(
-        commands: CommandsCollection["TInput"],
-        errors: MigrationErrorsCollection["TModel"][]
-    ) {
+    generate() {
 
         // drop functions
         this.db.row.functions.each((dbFunctionModel) => {
@@ -27,13 +19,13 @@ export default class FunctionsController extends BaseController {
                         type: "drop",
                         function: dbFunctionModel
                     });
-                    commands.push( dropCommand );
+                    this.migration.addCommand( dropCommand );
 
                     const createCommand = new FunctionCommandModel({
                         type: "create",
                         function: fsFunctionModel
                     });
-                    commands.push( createCommand );
+                    this.migration.addCommand( createCommand );
                 }
 
                 return;
@@ -47,7 +39,7 @@ export default class FunctionsController extends BaseController {
                 type: "drop",
                 function: dbFunctionModel
             });
-            commands.push( command );
+            this.migration.addCommand( command );
         });
 
         // create functions
@@ -67,7 +59,7 @@ export default class FunctionsController extends BaseController {
                     name: functionName
                 });
 
-                errors.push(errorModel);
+                this.migration.addError(errorModel);
                 return;
             }
 
@@ -75,7 +67,7 @@ export default class FunctionsController extends BaseController {
                 type: "create",
                 function: fsFunctionModel
             });
-            commands.push( command );
+            this.migration.addCommand( command );
         });
     }
 }

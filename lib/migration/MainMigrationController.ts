@@ -2,9 +2,6 @@ import DDLState from "../state/DDLState";
 import MigrationModel from "./MigrationModel";
 import {IMigrationControllerParams, TMigrationMode} from "./IMigrationControllerParams";
 
-import CommandsCollection from "./commands/CommandsCollection";
-import MigrationErrorsCollection from "./errors/MigrationErrorsCollection";
-
 import TriggerController from "./controllers/TriggerController";
 import ViewsController from "./controllers/ViewsController";
 import FunctionsController from "./controllers/FunctionsController";
@@ -14,10 +11,10 @@ export default class MainMigrationController {
     fs: DDLState;
     db: DDLState;
     mode: TMigrationMode;
-    triggersController: TriggerController;
-    viewsController: ViewsController;
-    functionsController: FunctionsController;
-    tablesController: TablesController;
+    private triggersController: TriggerController;
+    private viewsController: ViewsController;
+    private functionsController: FunctionsController;
+    private tablesController: TablesController;
 
     constructor(params: IMigrationControllerParams) {
         this.fs = params.fs;
@@ -31,33 +28,18 @@ export default class MainMigrationController {
     }
 
     generateMigration(): MigrationModel {
-        const commands: CommandsCollection["TInput"] = [];
-        const errors: MigrationErrorsCollection["TModel"][] = [];
+        const migration = new MigrationModel();
 
-        this.functionsController.generate(
-            commands,
-            errors
-        );
+        this.functionsController.setMigration(migration);
+        this.viewsController.setMigration(migration);
+        this.tablesController.setMigration(migration);
+        this.triggersController.setMigration(migration);
 
-        this.viewsController.generate(
-            commands,
-            errors
-        );
+        this.functionsController.generate();
+        this.viewsController.generate();
+        this.tablesController.generate();
+        this.triggersController.generate();
 
-        this.tablesController.generate(
-            commands,
-            errors
-        );
-
-        this.triggersController.generate(
-            commands,
-            errors
-        );
-
-        // output migration
-        return new MigrationModel({
-            commands,
-            errors
-        });
+        return migration;
     }
 }

@@ -1,8 +1,5 @@
 import BaseController from "./BaseController";
 
-import CommandsCollection from "../commands/CommandsCollection";
-import MigrationErrorsCollection from "../errors/MigrationErrorsCollection";
-
 import TriggerCommandModel from "../commands/TriggerCommandModel";
 
 import UnknownTableForTriggerErrorModel from "../errors/UnknownTableForTriggerErrorModel";
@@ -11,10 +8,7 @@ import MaxObjectNameSizeErrorModel from "../errors/MaxObjectNameSizeErrorModel";
 
 
 export default class TriggerController extends BaseController {
-    generate(
-        commands: CommandsCollection["TInput"],
-        errors: MigrationErrorsCollection["TModel"][]
-    ) {
+    generate() {
 
         // drop trigger
         this.db.row.triggers.each((dbTriggerModel) => {
@@ -28,13 +22,13 @@ export default class TriggerController extends BaseController {
                         type: "drop",
                         trigger: dbTriggerModel
                     });
-                    commands.push( dropCommand );
+                    this.migration.addCommand( dropCommand );
 
                     const createCommand = new TriggerCommandModel({
                         type: "create",
                         trigger: fsTriggerModel
                     });
-                    commands.push( createCommand );
+                    this.migration.addCommand( createCommand );
                 }
 
                 return;
@@ -48,7 +42,7 @@ export default class TriggerController extends BaseController {
                 type: "drop",
                 trigger: dbTriggerModel
             });
-            commands.push( command );
+            this.migration.addCommand( command );
         });
 
         // create trigger
@@ -68,7 +62,7 @@ export default class TriggerController extends BaseController {
                     name: triggerName
                 });
 
-                errors.push(errorModel);
+                this.migration.addError(errorModel);
                 return;
             }
 
@@ -81,7 +75,7 @@ export default class TriggerController extends BaseController {
                     triggerName: fsTriggerModel.get("name")
                 });
 
-                errors.push(errorModel);
+                this.migration.addError(errorModel);
                 return;
             }
 
@@ -95,7 +89,7 @@ export default class TriggerController extends BaseController {
                     triggerName: fsTriggerModel.get("name")
                 });
 
-                errors.push(errorModel);
+                this.migration.addError(errorModel);
                 return;
             }
 
@@ -103,7 +97,7 @@ export default class TriggerController extends BaseController {
                 type: "create",
                 trigger: fsTriggerModel
             });
-            commands.push(command);
+            this.migration.addCommand(command);
         });
 
     }

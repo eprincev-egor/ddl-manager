@@ -1,22 +1,19 @@
 import BaseController from "./BaseController";
 import {IMigrationControllerParams} from "../IMigrationControllerParams";
 import TableConstraintController from "./TableConstraintController";
-
-import CommandsCollection from "../commands/CommandsCollection";
-import MigrationErrorsCollection from "../errors/MigrationErrorsCollection";
-import UnknownTableForExtensionErrorModel from "../errors/UnknownTableForExtensionErrorModel";
+import TableModel from "../../objects/TableModel";
 
 import TableCommandModel from "../commands/TableCommandModel";
 import ColumnCommandModel from "../commands/ColumnCommandModel";
+import CreateRowsCommandModel from "../commands/RowsCommandModel";
+import ColumnNotNullCommandModel from "../commands/ColumnNotNullCommandModel";
 
+import UnknownTableForExtensionErrorModel from "../errors/UnknownTableForExtensionErrorModel";
 import MaxObjectNameSizeErrorModel from "../errors/MaxObjectNameSizeErrorModel";
 import CannotDropColumnErrorModel from "../errors/CannotDropColumnErrorModel";
 import CannotDropTableErrorModel from "../errors/CannotDropTableErrorModel";
 import CannotChangeColumnTypeErrorModel from "../errors/CannotChangeColumnTypeErrorModel";
 import ExpectedPrimaryKeyForRowsErrorModel from "../errors/ExpectedPrimaryKeyForRowsErrorModel";
-import CreateRowsCommandModel from "../commands/RowsCommandModel";
-import ColumnNotNullCommandModel from "../commands/ColumnNotNullCommandModel";
-import TableModel from "../../objects/TableModel";
 
 
 export default class TablesController extends BaseController {
@@ -28,11 +25,7 @@ export default class TablesController extends BaseController {
         this.constraintController = new TableConstraintController(params);
     }
 
-
-    generate(
-        commands: CommandsCollection["TInput"],
-        errors: MigrationErrorsCollection["TModel"][]
-    ) {
+    generate() {
 
         this.fs.row.extensions.each((fsExtensionModel) => {
             const tableIdentify = fsExtensionModel.get("forTableIdentify");
@@ -45,7 +38,7 @@ export default class TablesController extends BaseController {
                     extensionName: fsExtensionModel.get("name")
                 });
 
-                errors.push(errorModel);
+                this.migration.addError(errorModel);
                 return;
             }
         });
@@ -67,7 +60,7 @@ export default class TablesController extends BaseController {
                     name: tableName
                 });
 
-                errors.push(errorModel);
+                this.migration.addError(errorModel);
                 return;
             }
 
@@ -79,7 +72,7 @@ export default class TablesController extends BaseController {
                         tableIdentify: fsTableIdentify
                     });
     
-                    errors.push(errorModel);
+                    this.migration.addError(errorModel);
                     return;
                 }
             }
@@ -87,9 +80,7 @@ export default class TablesController extends BaseController {
             if ( dbTableModel ) {
                 this.generateTableMigration(
                     fsTableModel,
-                    dbTableModel,
-                    commands,
-                    errors
+                    dbTableModel
                 );
             }
             else {
@@ -97,7 +88,7 @@ export default class TablesController extends BaseController {
                     type: "create",
                     table: fsTableModel
                 });
-                commands.push(createTableCommand);
+                this.migration.addCommand(createTableCommand);
     
             }
 
@@ -108,7 +99,7 @@ export default class TablesController extends BaseController {
                     table: fsTableModel,
                     values: fsTableModel.get("values")
                 });
-                commands.push(createRowsCommand);
+                this.migration.addCommand(createRowsCommand);
             }
         });
 
@@ -126,17 +117,14 @@ export default class TablesController extends BaseController {
                     filePath: "(database)",
                     tableIdentify: dbTableIdentify
                 });
-                errors.push(errorModel);
+                this.migration.addError(errorModel);
             }
         });
     }
 
     generateTableMigration(
         fsTableModel: TableModel,
-        dbTableModel: TableModel,
-
-        commands: CommandsCollection["TInput"],
-        errors: MigrationErrorsCollection["TModel"][]
+        dbTableModel: TableModel
     ) {
         const fsTableIdentify = fsTableModel.get("identify");
 
@@ -167,7 +155,7 @@ export default class TablesController extends BaseController {
                         oldType,
                         newType
                     });
-                    errors.push(errorModel);
+                    this.migration.addError(errorModel);
                 }
 
                 const fsNulls = fsColumnModel.get("nulls");
@@ -183,7 +171,7 @@ export default class TablesController extends BaseController {
                         tableIdentify: fsTableIdentify,
                         columnIdentify: fsColumnModel.get("identify")
                     });
-                    commands.push(notNullCommand);
+                    this.migration.addCommand(notNullCommand);
                 }
 
                 return;
@@ -194,7 +182,7 @@ export default class TablesController extends BaseController {
                 tableIdentify: dbTableModel.get("identify"),
                 column: fsColumnModel
             });
-            commands.push(createColumnCommand);
+            this.migration.addCommand(createColumnCommand);
         });
 
         // dropped columns
@@ -219,16 +207,14 @@ export default class TablesController extends BaseController {
                     tableIdentify: fsTableIdentify,
                     columnKey: key
                 });
-                errors.push(errorModel);
+                this.migration.addError(errorModel);
             });
         }
 
-        
+        this.constraintController.setMigration(this.migration);
         this.constraintController.generateConstraintMigration(
             fsTableModel,
-            dbTableModel,
-            commands,
-            errors
+            dbTableModel
         );
 
     }

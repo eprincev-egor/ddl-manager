@@ -1,8 +1,5 @@
 import BaseController from "./BaseController";
 
-import CommandsCollection from "../commands/CommandsCollection";
-import MigrationErrorsCollection from "../errors/MigrationErrorsCollection";
-
 import PrimaryKeyCommandModel from "../commands/PrimaryKeyCommandModel";
 import CheckConstraintCommandModel from "../commands/CheckConstraintCommandModel";
 import UniqueConstraintCommandModel from "../commands/UniqueConstraintCommandModel";
@@ -15,10 +12,7 @@ export default class TableConstraintController extends BaseController {
 
     generateConstraintMigration(
         fsTableModel: TableModel,
-        dbTableModel: TableModel,
-
-        commands: CommandsCollection["TInput"],
-        errors: MigrationErrorsCollection["TModel"][]
+        dbTableModel: TableModel
     ) {
         const fsTableIdentify = fsTableModel.get("identify");
 
@@ -32,7 +26,7 @@ export default class TableConstraintController extends BaseController {
                 tableIdentify: fsTableIdentify,
                 primaryKey: fsPrimaryKey
             });
-            commands.push(primaryKeyCommand);
+            this.migration.addCommand(primaryKeyCommand);
         }
 
         if ( !fsPrimaryKey && dbPrimaryKey ) {
@@ -41,7 +35,7 @@ export default class TableConstraintController extends BaseController {
                 tableIdentify: fsTableIdentify,
                 primaryKey: dbPrimaryKey
             });
-            commands.push(primaryKeyCommand);
+            this.migration.addCommand(primaryKeyCommand);
         }
 
         if ( fsPrimaryKey && dbPrimaryKey ) {
@@ -56,14 +50,14 @@ export default class TableConstraintController extends BaseController {
                     tableIdentify: fsTableIdentify,
                     primaryKey: dbPrimaryKey
                 });
-                commands.push(dropPrimaryKeyCommand);
+                this.migration.addCommand(dropPrimaryKeyCommand);
 
                 const createPrimaryKeyCommand = new PrimaryKeyCommandModel({
                     type: "create",
                     tableIdentify: fsTableIdentify,
                     primaryKey: fsPrimaryKey
                 });
-                commands.push(createPrimaryKeyCommand);
+                this.migration.addCommand(createPrimaryKeyCommand);
             }
         }
 
@@ -86,14 +80,14 @@ export default class TableConstraintController extends BaseController {
                         tableIdentify: fsTableIdentify,
                         constraint: existsDbConstraint
                     });
-                    commands.push(dropConstraintCommand);
+                    this.migration.addCommand(dropConstraintCommand);
 
                     const createConstraintCommand = new CheckConstraintCommandModel({
                         type: "create",
                         tableIdentify: fsTableIdentify,
                         constraint: fsConstraint
                     });
-                    commands.push(createConstraintCommand);
+                    this.migration.addCommand(createConstraintCommand);
                 }
             }
             else {
@@ -102,7 +96,7 @@ export default class TableConstraintController extends BaseController {
                     tableIdentify: fsTableIdentify,
                     constraint: fsConstraint
                 });
-                commands.push(constraintCommand);
+                this.migration.addCommand(constraintCommand);
             }
         }
 
@@ -118,7 +112,7 @@ export default class TableConstraintController extends BaseController {
                     tableIdentify: fsTableIdentify,
                     constraint: dbConstraint
                 });
-                commands.push(constraintCommand);
+                this.migration.addCommand(constraintCommand);
             }
         }
 
@@ -142,14 +136,14 @@ export default class TableConstraintController extends BaseController {
                         tableIdentify: fsTableIdentify,
                         unique: existsDbConstraint
                     });
-                    commands.push(dropConstraintCommand);
+                    this.migration.addCommand(dropConstraintCommand);
 
                     const createConstraintCommand = new UniqueConstraintCommandModel({
                         type: "create",
                         tableIdentify: fsTableIdentify,
                         unique: fsConstraint
                     });
-                    commands.push(createConstraintCommand);
+                    this.migration.addCommand(createConstraintCommand);
                 }
             }
             else {
@@ -158,7 +152,7 @@ export default class TableConstraintController extends BaseController {
                     tableIdentify: fsTableIdentify,
                     unique: fsConstraint
                 });
-                commands.push(constraintCommand);
+                this.migration.addCommand(constraintCommand);
             }
         }
 
@@ -174,7 +168,7 @@ export default class TableConstraintController extends BaseController {
                     tableIdentify: fsTableIdentify,
                     unique: dbConstraint
                 });
-                commands.push(constraintCommand);
+                this.migration.addCommand(constraintCommand);
             }
         }
 
@@ -197,7 +191,7 @@ export default class TableConstraintController extends BaseController {
                     tableIdentify: fsTableIdentify,
                     referenceTableIdentify
                 });
-                errors.push(errorModel);
+                this.migration.addError(errorModel);
                 continue;
             }
 
@@ -220,7 +214,7 @@ export default class TableConstraintController extends BaseController {
                     referenceTableIdentify,
                     referenceColumns: unknownColumns
                 });
-                errors.push(errorModel);
+                this.migration.addError(errorModel);
                 continue;
             }
 
@@ -238,14 +232,14 @@ export default class TableConstraintController extends BaseController {
                         tableIdentify: fsTableIdentify,
                         foreignKey: existsDbConstraint
                     });
-                    commands.push(dropConstraintCommand);
+                    this.migration.addCommand(dropConstraintCommand);
 
                     const createConstraintCommand = new ForeignKeyConstraintCommandModel({
                         type: "create",
                         tableIdentify: fsTableIdentify,
                         foreignKey: fsConstraint
                     });
-                    commands.push(createConstraintCommand);
+                    this.migration.addCommand(createConstraintCommand);
                 }
             }
             else {
@@ -254,7 +248,7 @@ export default class TableConstraintController extends BaseController {
                     tableIdentify: fsTableIdentify,
                     foreignKey: fsConstraint
                 });
-                commands.push(constraintCommand);
+                this.migration.addCommand(constraintCommand);
             }
         }
 
@@ -270,7 +264,7 @@ export default class TableConstraintController extends BaseController {
                     tableIdentify: fsTableIdentify,
                     foreignKey: dbConstraint
                 });
-                commands.push(constraintCommand);
+                this.migration.addCommand(constraintCommand);
             }
         }
     }
