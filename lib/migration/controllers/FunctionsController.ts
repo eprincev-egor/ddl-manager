@@ -1,11 +1,12 @@
 import BaseController from "./BaseController";
 import FunctionCommandModel from "../commands/FunctionCommandModel";
 import MaxObjectNameSizeErrorModel from "../errors/MaxObjectNameSizeErrorModel";
+import FunctionModel from "../../objects/FunctionModel";
 
 
 export default class FunctionsController extends BaseController {
+    
     generate() {
-
         // drop functions
         this.db.row.functions.each((dbFunctionModel) => {
             const dbFuncIdentify = dbFunctionModel.getIdentify();
@@ -14,18 +15,8 @@ export default class FunctionsController extends BaseController {
             if ( fsFunctionModel ) {
                 const isEqual = fsFunctionModel.equal(dbFunctionModel);
                 if ( !isEqual ) {
-                    
-                    const dropCommand = new FunctionCommandModel({
-                        type: "drop",
-                        function: dbFunctionModel
-                    });
-                    this.migration.addCommand( dropCommand );
-
-                    const createCommand = new FunctionCommandModel({
-                        type: "create",
-                        function: fsFunctionModel
-                    });
-                    this.migration.addCommand( createCommand );
+                    this.dropFunction( dbFunctionModel );
+                    this.createFunction( fsFunctionModel );
                 }
 
                 return;
@@ -35,11 +26,7 @@ export default class FunctionsController extends BaseController {
                 return;
             }
 
-            const command = new FunctionCommandModel({
-                type: "drop",
-                function: dbFunctionModel
-            });
-            this.migration.addCommand( command );
+            this.dropFunction(dbFunctionModel);
         });
 
         // create functions
@@ -63,11 +50,23 @@ export default class FunctionsController extends BaseController {
                 return;
             }
 
-            const command = new FunctionCommandModel({
-                type: "create",
-                function: fsFunctionModel
-            });
-            this.migration.addCommand( command );
+            this.createFunction(fsFunctionModel);
         });
+    }
+
+    dropFunction(functionModel: FunctionModel) {
+        const dropCommand = new FunctionCommandModel({
+            type: "drop",
+            function: functionModel
+        });
+        this.migration.addCommand( dropCommand );
+    }
+
+    createFunction(functionModel: FunctionModel) {
+        const createCommand = new FunctionCommandModel({
+            type: "create",
+            function: functionModel
+        });
+        this.migration.addCommand( createCommand );
     }
 }
