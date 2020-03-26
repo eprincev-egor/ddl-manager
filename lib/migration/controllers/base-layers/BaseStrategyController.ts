@@ -1,6 +1,6 @@
 import {BaseValidationsController} from "./BaseValidationsController";
 import {InputCommand} from "../../MigrationModel";
-import { IChanges } from "../../../objects/BaseDBObjectCollection";
+import { IChanges } from "../../../objects/base-layers/BaseDBObjectCollection";
 import {NamedAndMovableDBOModel} from "../../../objects/base-layers/NamedAndMovableDBOModel";
 
 export 

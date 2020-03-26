@@ -1,4 +1,4 @@
-import {BaseDBObjectCollection} from "./BaseDBObjectCollection";
+import {BaseDBObjectCollection} from "./base-layers/BaseDBObjectCollection";
 import {ExtensionModel} from "./ExtensionModel";
 
 export class ExtensionsCollection extends BaseDBObjectCollection<ExtensionsCollection> {

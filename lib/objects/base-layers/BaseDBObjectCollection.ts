@@ -1,5 +1,5 @@
 import {Collection} from "model-layer";
-import {BaseDBObjectModel} from "./base-layers/BaseDBObjectModel";
+import {BaseDBObjectModel} from "./BaseDBObjectModel";
 
 interface IChildCollection {
     Model(): (new (...args: any[]) => BaseDBObjectModel<any>);
