@@ -11,12 +11,17 @@ extends BaseController {
             return;
         }
 
+        const error = this.createInvalidNameError(dbo);
+        this.throwErrorModel(error);
+    }
+
+    protected createInvalidNameError(dbo: NamedDBObjectModel<any>) {
         const error = new MaxObjectNameSizeErrorModel({
             filePath: dbo.get("filePath"),
             objectType: getObjectTypeFromConstructorName(dbo),
             name: dbo.get("name")
         });
-        this.throwErrorModel(error);
+        return error;
     }
 
     protected isValidationError(error: Error) {

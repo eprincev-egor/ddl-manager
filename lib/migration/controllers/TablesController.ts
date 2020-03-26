@@ -1,4 +1,4 @@
-import {BaseController} from "./base-layers/BaseController";
+import {BaseValidationsController} from "./base-layers/BaseValidationsController";
 import {IMigrationControllerParams} from "../IMigrationControllerParams";
 import {TableConstraintController} from "./TableConstraintController";
 import {TableModel} from "../../objects/TableModel";
@@ -16,7 +16,8 @@ import {CannotChangeColumnTypeErrorModel} from "../errors/CannotChangeColumnType
 import {ExpectedPrimaryKeyForRowsErrorModel} from "../errors/ExpectedPrimaryKeyForRowsErrorModel";
 
 
-export class TablesController extends BaseController {
+export class TablesController 
+extends BaseValidationsController {
     constraintController: TableConstraintController;
 
     constructor(params: IMigrationControllerParams) {
@@ -52,14 +53,8 @@ export class TablesController extends BaseController {
             const fsTableIdentify = fsTableModel.getIdentify();
             const dbTableModel = this.db.row.tables.getByIdentify(fsTableIdentify);
 
-            const tableName = fsTableModel.get("name");
-            if ( tableName.length > 64 ) {
-                const errorModel = new MaxObjectNameSizeErrorModel({
-                    filePath: fsTableModel.get("filePath"),
-                    objectType: "table",
-                    name: tableName
-                });
-
+            if ( !fsTableModel.isValidNameLength() ) {
+                const errorModel = this.createInvalidNameError(fsTableModel);
                 this.migration.addError(errorModel);
                 return;
             }
