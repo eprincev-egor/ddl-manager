@@ -1,10 +1,10 @@
-import {BaseStrategyController} from "./base-layers/BaseStrategyController";
+import {DBOWithoutDataStrategyController} from "./base-layers/DBOWithoutDataStrategyController";
 import {ViewCommandModel} from "../commands/ViewCommandModel";
 import {ViewModel} from "../../objects/ViewModel";
 
 export 
 class ViewsController 
-extends BaseStrategyController<ViewModel> {
+extends DBOWithoutDataStrategyController<ViewModel> {
     
     protected detectChanges() {
         const dbViews = this.db.row.views;

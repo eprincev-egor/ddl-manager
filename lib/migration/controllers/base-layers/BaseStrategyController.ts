@@ -1,10 +1,10 @@
 import {BaseValidationsController} from "./BaseValidationsController";
 import {InputCommand} from "../../MigrationModel";
 import { IChanges } from "../../../objects/base-layers/BaseDBObjectCollection";
-import {NamedAndMovableDBOModel} from "../../../objects/base-layers/NamedAndMovableDBOModel";
+import {BaseDBObjectModel} from "../../../objects/base-layers/BaseDBObjectModel";
 
 export 
-abstract class BaseStrategyController<DBOModel extends NamedAndMovableDBOModel<any>>
+abstract class BaseStrategyController<DBOModel extends BaseDBObjectModel<any>>
 extends BaseValidationsController {
     
     generate() {
@@ -15,27 +15,37 @@ extends BaseValidationsController {
         } = this.detectChanges();
         
         removed.forEach((dbo) => {
-            if ( dbo.allowedToDrop() ) {
-                this.drop(dbo);
-            }
+            this.onRemove(dbo);
         });
 
         changed.forEach(({prev, next}) => {
-            this.drop(prev);
-            this.tryCreate(next);
+            this.onChange(prev, next);
         });
 
         created.forEach((dbo) => {
-            this.tryCreate(dbo);
+            this.onCreate(dbo);
         });
     }
 
-    private drop(dbo: DBOModel) {
+    protected onRemove(dbo: DBOModel) {
+        this.drop(dbo);
+    }
+
+    protected onChange(oldDBO: DBOModel, newDBO: DBOModel) {
+        this.drop(oldDBO);
+        this.tryCreate(newDBO);
+    }
+
+    protected onCreate(dbo: DBOModel) {
+        this.tryCreate(dbo);
+    }
+
+    protected drop(dbo: DBOModel) {
         const dropCommand = this.getDropCommand(dbo);
         this.migration.addCommand(dropCommand);
     }
 
-    private tryCreate(dbo: DBOModel) {
+    protected tryCreate(dbo: DBOModel) {
         try {
             this.validate(dbo);
             this.create(dbo);
@@ -46,7 +56,7 @@ extends BaseValidationsController {
         }
     }
 
-    private create(dbo: DBOModel) {
+    protected create(dbo: DBOModel) {
         const createCommand = this.getCreateCommand(dbo);
         this.migration.addCommand(createCommand);
     }

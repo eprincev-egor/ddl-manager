@@ -1,4 +1,4 @@
-import {BaseStrategyController} from "./base-layers/BaseStrategyController";
+import {DBOWithoutDataStrategyController} from "./base-layers/DBOWithoutDataStrategyController";
 import {TriggerModel} from "../../objects/TriggerModel";
 
 import {TriggerCommandModel} from "../commands/TriggerCommandModel";
@@ -9,7 +9,7 @@ import {UnknownFunctionForTriggerErrorModel} from "../errors/UnknownFunctionForT
 
 export 
 class TriggerController 
-extends BaseStrategyController<TriggerModel> {
+extends DBOWithoutDataStrategyController<TriggerModel> {
     
     protected detectChanges() {
         const dbTriggers = this.db.row.triggers;

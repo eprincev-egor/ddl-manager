@@ -1,10 +1,10 @@
-import {BaseStrategyController} from "./base-layers/BaseStrategyController";
+import {DBOWithoutDataStrategyController} from "./base-layers/DBOWithoutDataStrategyController";
 import {FunctionCommandModel} from "../commands/FunctionCommandModel";
 import {FunctionModel} from "../../objects/FunctionModel";
 
 export 
 class FunctionsController 
-extends BaseStrategyController<FunctionModel> {
+extends DBOWithoutDataStrategyController<FunctionModel> {
 
     protected detectChanges() {
         const dbFunctions = this.db.row.functions;
