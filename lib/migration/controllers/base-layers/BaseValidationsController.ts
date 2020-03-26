@@ -1,6 +1,6 @@
 import {BaseController} from "./BaseController";
 import {InputError} from "../../MigrationModel";
-import {NamedDBObjectModel} from "../../../objects/NamedDBObjectModel";
+import {NamedDBObjectModel} from "../../../objects/base-layers/NamedDBObjectModel";
 import {MaxObjectNameSizeErrorModel} from "../../errors/MaxObjectNameSizeErrorModel";
 
 export 

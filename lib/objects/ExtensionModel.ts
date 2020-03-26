@@ -6,9 +6,6 @@ export class ExtensionModel extends AbstractTableModel<ExtensionModel> {
         return {
             ...super.structure(),
             
-            name: Types.String({
-                required: true
-            }),
             forTableIdentify: Types.String({
                 required: true
             })

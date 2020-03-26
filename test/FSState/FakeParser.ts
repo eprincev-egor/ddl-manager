@@ -1,5 +1,5 @@
 import {Parser} from "../../lib/parser/Parser"
-import {BaseDBObjectModel} from "../../lib/objects/BaseDBObjectModel";
+import {BaseDBObjectModel} from "../../lib/objects/base-layers/BaseDBObjectModel";
 
 export interface IState {
     [key: string]: BaseDBObjectModel<any>[];

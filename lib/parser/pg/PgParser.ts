@@ -1,4 +1,4 @@
-import {BaseDBObjectModel} from "../../objects/BaseDBObjectModel";
+import {BaseDBObjectModel} from "../../objects/base-layers/BaseDBObjectModel";
 import {FunctionModel} from "../../objects/FunctionModel";
 import {TriggerModel} from "../../objects/TriggerModel";
 import {ViewModel} from "../../objects/ViewModel";

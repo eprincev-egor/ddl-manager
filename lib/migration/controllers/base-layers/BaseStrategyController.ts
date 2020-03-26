@@ -1,7 +1,7 @@
 import {BaseValidationsController} from "./BaseValidationsController";
 import {InputCommand} from "../../MigrationModel";
 import { IChanges } from "../../../objects/BaseDBObjectCollection";
-import {NamedAndMovableDBOModel} from "../../../objects/NamedAndMovableDBOModel";
+import {NamedAndMovableDBOModel} from "../../../objects/base-layers/NamedAndMovableDBOModel";
 
 export 
 abstract class BaseStrategyController<DBOModel extends NamedAndMovableDBOModel<any>>

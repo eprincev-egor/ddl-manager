@@ -7,7 +7,7 @@ import {TableModel} from "../objects/TableModel";
 import {ViewModel} from "../objects/ViewModel";
 import {TriggerModel} from "../objects/TriggerModel";
 import {ExtensionModel} from "../objects/ExtensionModel";
-import {BaseDBObjectModel} from "../objects/BaseDBObjectModel";
+import {BaseDBObjectModel} from "../objects/base-layers/BaseDBObjectModel";
 
 // @see fs/index.ts
 import {FolderModel} from "../fs/FolderModel";

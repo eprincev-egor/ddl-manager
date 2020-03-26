@@ -1,5 +1,5 @@
 import {Types} from "model-layer";
-import {BaseDBObjectModel} from "./BaseDBObjectModel";
+import {BaseDBObjectModel} from "./base-layers/BaseDBObjectModel";
 
 export class ForeignKeyConstraintModel 
 extends BaseDBObjectModel<ForeignKeyConstraintModel> {

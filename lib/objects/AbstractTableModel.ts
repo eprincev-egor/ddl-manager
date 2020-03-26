@@ -1,12 +1,12 @@
 import {Types} from "model-layer";
-import {BaseDBObjectModel} from "./BaseDBObjectModel";
+import {NamedDBObjectModel} from "./base-layers/NamedDBObjectModel";
 import {ColumnModel} from "./ColumnModel";
 import {CheckConstraintModel} from "./CheckConstraintModel";
 import {UniqueConstraintModel} from "./UniqueConstraintModel";
 import {ForeignKeyConstraintModel} from "./ForeignKeyConstraintModel";
 
 export abstract class AbstractTableModel<ChildModel extends AbstractTableModel<any>>
-extends BaseDBObjectModel<ChildModel> {
+extends NamedDBObjectModel<ChildModel> {
     structure() {
         return {
             ...super.structure(),

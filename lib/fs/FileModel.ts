@@ -1,5 +1,5 @@
 import {Model, Types} from "model-layer";
-import {BaseDBObjectModel} from "../objects/BaseDBObjectModel";
+import {BaseDBObjectModel} from "../objects/base-layers/BaseDBObjectModel";
 
 export class FileModel extends Model<FileModel> {
     structure() {

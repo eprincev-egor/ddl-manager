@@ -7,10 +7,6 @@ export class TableModel extends AbstractTableModel<TableModel> {
         return {
             ...super.structure(),
             
-            name: Types.String({
-                required: true
-            }),
-
             columns: Types.Array({
                 element: ColumnModel,
                 required: true

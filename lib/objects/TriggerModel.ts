@@ -1,5 +1,5 @@
 import {Types} from "model-layer";
-import {NamedAndMovableDBOModel} from "./NamedAndMovableDBOModel";
+import {NamedAndMovableDBOModel} from "./base-layers/NamedAndMovableDBOModel";
 
 export 
 class TriggerModel 
