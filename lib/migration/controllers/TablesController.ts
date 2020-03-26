@@ -47,14 +47,11 @@ extends BaseValidationsController {
         const dbTables = this.db.row.tables;
         const fsTables = this.fs.row.tables;
         const changes = fsTables.compareWithDB(dbTables);
-        
-        this.fs.row.tables.each((fsTableModel) => {
+
+        changes.created.forEach((fsTableModel) => {
             if ( fsTableModel.get("deprecated") ) {
                 return;
             }
-
-            const fsTableIdentify = fsTableModel.getIdentify();
-            const dbTableModel = this.db.row.tables.getByIdentify(fsTableIdentify);
 
             if ( !fsTableModel.isValidNameLength() ) {
                 const errorModel = this.createInvalidNameError(fsTableModel);
@@ -62,35 +59,17 @@ extends BaseValidationsController {
                 return;
             }
 
-            if ( fsTableModel.get("values") ) {
-                const primaryKey = fsTableModel.get("primaryKey");
-                if ( !primaryKey ) {
-                    const errorModel = new ExpectedPrimaryKeyForRowsErrorModel({
-                        filePath: fsTableModel.get("filePath"),
-                        tableIdentify: fsTableIdentify
-                    });
-    
-                    this.migration.addError(errorModel);
-                    return;
-                }
+            const isValidTableValues = this.validateTableValues(fsTableModel);
+            if ( !isValidTableValues ) {
+                return;
             }
 
-            if ( dbTableModel ) {
-                this.generateTableMigration(
-                    fsTableModel,
-                    dbTableModel
-                );
-            }
-            else {
-                const createTableCommand = new TableCommandModel({
-                    type: "create",
-                    table: fsTableModel
-                });
-                this.migration.addCommand(createTableCommand);
-    
-            }
+            const createTableCommand = new TableCommandModel({
+                type: "create",
+                table: fsTableModel
+            });
+            this.migration.addCommand(createTableCommand);
 
-            // (re)create table rows
             if ( fsTableModel.get("values") ) {
                 const createRowsCommand = new RowsCommandModel({
                     type: "create",
@@ -100,6 +79,33 @@ extends BaseValidationsController {
                 this.migration.addCommand(createRowsCommand);
             }
         });
+
+        
+        changes.changed.forEach(({prev, next}) => {
+            const fsTableModel = next;
+            const dbTableModel = prev;
+
+            if ( fsTableModel.get("deprecated") ) {
+                return;
+            }
+
+            if ( !fsTableModel.isValidNameLength() ) {
+                const errorModel = this.createInvalidNameError(fsTableModel);
+                this.migration.addError(errorModel);
+                return;
+            }
+
+            const isValidTableValues = this.validateTableValues(fsTableModel);
+            if ( !isValidTableValues ) {
+                return;
+            }
+
+            this.generateTableMigration(
+                fsTableModel,
+                dbTableModel
+            );
+        });
+        
 
         // error on drop table
         if ( this.mode === "dev" ) {
@@ -111,6 +117,24 @@ extends BaseValidationsController {
                 this.migration.addError(errorModel);
             });
         }
+    }
+
+    validateTableValues(tableModel: TableModel): boolean {
+        const hasValues = !!tableModel.get("values");
+        const hasPrimaryKey = !!tableModel.get("primaryKey");
+
+        if ( hasValues && !hasPrimaryKey ) {
+            const errorModel = new ExpectedPrimaryKeyForRowsErrorModel({
+                filePath: tableModel.get("filePath"),
+                tableIdentify: tableModel.getIdentify()
+            });
+
+            this.migration.addError(errorModel);
+
+            return false;
+        }
+
+        return true;
     }
 
     generateTableMigration(
@@ -208,5 +232,15 @@ extends BaseValidationsController {
             dbTableModel
         );
 
+        
+        // recreate table rows
+        if ( fsTableModel.get("values") ) {
+            const createRowsCommand = new RowsCommandModel({
+                type: "create",
+                table: fsTableModel,
+                values: fsTableModel.get("values")
+            });
+            this.migration.addCommand(createRowsCommand);
+        }
     }
 }
