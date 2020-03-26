@@ -9,7 +9,6 @@ import {RowsCommandModel} from "../commands/RowsCommandModel";
 import {ColumnNotNullCommandModel} from "../commands/ColumnNotNullCommandModel";
 
 import {UnknownTableForExtensionErrorModel} from "../errors/UnknownTableForExtensionErrorModel";
-import {MaxObjectNameSizeErrorModel} from "../errors/MaxObjectNameSizeErrorModel";
 import {CannotDropColumnErrorModel} from "../errors/CannotDropColumnErrorModel";
 import {CannotDropTableErrorModel} from "../errors/CannotDropTableErrorModel";
 import {CannotChangeColumnTypeErrorModel} from "../errors/CannotChangeColumnTypeErrorModel";
@@ -45,6 +44,10 @@ extends BaseValidationsController {
         });
 
         // create tables
+        const dbTables = this.db.row.tables;
+        const fsTables = this.fs.row.tables;
+        const changes = fsTables.compareWithDB(dbTables);
+        
         this.fs.row.tables.each((fsTableModel) => {
             if ( fsTableModel.get("deprecated") ) {
                 return;
@@ -99,22 +102,15 @@ extends BaseValidationsController {
         });
 
         // error on drop table
-        this.db.row.tables.each((dbTableModel) => {
-            const dbTableIdentify = dbTableModel.getIdentify();
-            const fsTableModel = this.fs.row.tables.getByIdentify(dbTableIdentify);
-
-            if ( fsTableModel ) {
-                return;
-            }
-
-            if ( this.mode === "dev" ) {
+        if ( this.mode === "dev" ) {
+            changes.removed.forEach((dbTableModel) => {
                 const errorModel = new CannotDropTableErrorModel({
                     filePath: "(database)",
-                    tableIdentify: dbTableIdentify
+                    tableIdentify: dbTableModel.getIdentify()
                 });
                 this.migration.addError(errorModel);
-            }
-        });
+            });
+        }
     }
 
     generateTableMigration(
