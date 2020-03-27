@@ -3,29 +3,29 @@ import { BaseMigrator, IBaseMigratorParams } from "./base-layers/BaseMigrator";
 import { TableConstraintsMigrator } from "./TableConstraintsMigrator";
 
 import {TableCommandModel} from "../commands/TableCommandModel";
-import {ColumnCommandModel} from "../commands/ColumnCommandModel";
 import {RowsCommandModel} from "../commands/RowsCommandModel";
-import {ColumnNotNullCommandModel} from "../commands/ColumnNotNullCommandModel";
 
 import {UnknownTableForExtensionErrorModel} from "../errors/UnknownTableForExtensionErrorModel";
-import {CannotDropColumnErrorModel} from "../errors/CannotDropColumnErrorModel";
 import {CannotDropTableErrorModel} from "../errors/CannotDropTableErrorModel";
-import {CannotChangeColumnTypeErrorModel} from "../errors/CannotChangeColumnTypeErrorModel";
 
 import { MigrationModel } from "../MigrationModel";
 import { NameValidator } from "./validators/NameValidator";
 import { TableValuesValidator } from "./validators/TableValuesValidator";
+import { ColumnsMigrator } from "./ColumnsMigrator";
 
 export class TablesMigrator
 extends BaseMigrator<TableModel> {
     private nameValidator: NameValidator;
     private tableValuesValidator: TableValuesValidator;
+
     private constraintsMigrator: TableConstraintsMigrator;
+    private columnsMigrator: ColumnsMigrator;
 
     constructor(params: IBaseMigratorParams) {
         super(params);
 
         this.constraintsMigrator = new TableConstraintsMigrator(params);
+        this.columnsMigrator = new ColumnsMigrator(params);
 
         this.nameValidator = new NameValidator(params);
         this.tableValuesValidator = new TableValuesValidator(params);
@@ -81,7 +81,7 @@ extends BaseMigrator<TableModel> {
         const isValidTable = this.validateTable(fsTableModel);
 
         if ( isValidTable ) {
-            this.generateTableMigration(
+            this.migrateTable(
                 fsTableModel,
                 dbTableModel
             );
@@ -98,101 +98,26 @@ extends BaseMigrator<TableModel> {
         }
     }
 
-    generateTableMigration(
+    migrateTable(
         fsTableModel: TableModel,
         dbTableModel: TableModel
     ) {
         const fsTableIdentify = fsTableModel.get("identify");
-
-        // create columns
-        const dbColumns = dbTableModel.get("columns");
-
-        const fsColumns = fsTableModel.get("columns").slice();
         const extensions = this.fs.findExtensionsForTable( fsTableIdentify );
-        extensions.forEach(extension => {
-            extension.get("columns").forEach(column => {
-                fsColumns.push(column);
-            });
-        });
-
-        fsColumns.forEach((fsColumnModel) => {
-            const key = fsColumnModel.get("key");
-            const existsDbColumn = dbTableModel.getColumnByKey(key);
-
-            if ( existsDbColumn ) {
-                const newType = fsColumnModel.get("type");
-                const oldType = existsDbColumn.get("type");
-
-                if ( newType !== oldType ) {
-                    const errorModel = new CannotChangeColumnTypeErrorModel({
-                        filePath: fsTableModel.get("filePath"),
-                        tableIdentify: fsTableIdentify,
-                        columnKey: key,
-                        oldType,
-                        newType
-                    });
-                    this.migration.addError(errorModel);
-                }
-
-                const fsNulls = fsColumnModel.get("nulls");
-                const dbNulls = existsDbColumn.get("nulls")
-                if ( fsNulls !== dbNulls ) {
-                    const isDrop = (
-                        fsNulls === true && 
-                        dbNulls === false
-                    );
-
-                    const notNullCommand = new ColumnNotNullCommandModel({
-                        type: isDrop ? "drop" : "create",
-                        tableIdentify: fsTableIdentify,
-                        columnIdentify: fsColumnModel.get("identify")
-                    });
-                    this.migration.addCommand(notNullCommand);
-                }
-
-                return;
-            }
-            
-            const createColumnCommand = new ColumnCommandModel({
-                type: "create",
-                tableIdentify: dbTableModel.get("identify"),
-                column: fsColumnModel
-            });
-            this.migration.addCommand(createColumnCommand);
-        });
-
-        // dropped columns
-        if ( this.mode === "dev" ) {
-            dbColumns.forEach((dbColumnModel) => {
-                const key = dbColumnModel.get("key");
-                const existsFsColumn = fsColumns.find((fsColumn) =>
-                    fsColumn.get("key") === key
-                );
-
-                if ( existsFsColumn ) {
-                    return;
-                }
-
-                const isDeprecatedColumn = fsTableModel.row.deprecatedColumns.includes(key);
-                if ( isDeprecatedColumn ) {
-                    return;
-                }
-
-                const errorModel = new CannotDropColumnErrorModel({
-                    filePath: fsTableModel.get("filePath"),
-                    tableIdentify: fsTableIdentify,
-                    columnKey: key
-                });
-                this.migration.addError(errorModel);
-            });
-        }
-
-        this.constraintsMigrator.migrate(this.migration,
-            fsTableModel,
+        const fullFSTableModel = fsTableModel.concatWithExtensions(extensions);
+        
+        this.columnsMigrator.migrate(
+            this.migration,
+            fullFSTableModel,
             dbTableModel
         );
 
-        this.createTableValues(fsTableModel);
+        this.constraintsMigrator.migrate(this.migration,
+            fullFSTableModel,
+            dbTableModel
+        );
+
+        this.createTableValues(fullFSTableModel);
     }
 
     validateTable(tableModel: TableModel): boolean {
