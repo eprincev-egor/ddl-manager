@@ -14,7 +14,7 @@ export class TriggerValidator extends BaseValidator {
         return errorModel;
     }
 
-    private validateExistsFunction(triggerModel: TriggerModel) {
+    private validateExistsFunction(triggerModel: TriggerModel): UnknownFunctionForTriggerErrorModel {
         const functionIdentify = triggerModel.get("functionIdentify");
         const fsFunctionModel = this.fs.row.functions.getByIdentify(functionIdentify);
 
@@ -29,7 +29,7 @@ export class TriggerValidator extends BaseValidator {
         }
     }
 
-    private validateExistsTable(triggerModel: TriggerModel) {
+    private validateExistsTable(triggerModel: TriggerModel): UnknownTableForTriggerErrorModel {
         const tableIdentify = triggerModel.get("tableIdentify");
         const fsTableModel = this.fs.row.tables.getByIdentify(tableIdentify);
 

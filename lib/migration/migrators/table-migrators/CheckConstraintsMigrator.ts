@@ -5,10 +5,6 @@ import { CheckConstraintModel } from "../../../objects/CheckConstraintModel";
 export class CheckConstraintsMigrator
 extends ConstraintMigrator<CheckConstraintModel> {
     
-    protected getValidators() {
-        return [];
-    }
-
     protected calcChanges() {
         const changes = this.fsTableModel.compareConstraintsWithDBTable<CheckConstraintModel>(
             "checkConstraints", 

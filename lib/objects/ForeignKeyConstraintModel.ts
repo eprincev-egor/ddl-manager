@@ -25,4 +25,8 @@ extends BaseDBObjectModel<ForeignKeyConstraintModel> {
             })
         };
     }
+
+    allowedToDrop() {
+        return true;
+    }
 }

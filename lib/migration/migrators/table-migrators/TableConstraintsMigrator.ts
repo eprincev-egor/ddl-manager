@@ -46,7 +46,7 @@ export class TableConstraintsMigrator {
         );
 
         // create/drop foreign key constraints
-        this.foreignKeysConstraints.migrate(
+        this.foreignKeysConstraints.migrateTable(
             migration,
             fsTableModel,
             dbTableModel

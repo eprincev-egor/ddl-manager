@@ -13,20 +13,24 @@ abstract class SimpleMigrator<
 >
 extends BaseMigrator<DBOModel> {
     
-    private validators: BaseValidator[];
+    protected validators: BaseValidator[];
 
     constructor(params: IBaseMigratorParams) {
         super(params);
         this.validators = this.createValidators(params);
     }
 
-    private createValidators(params: IBaseMigratorParams): BaseValidator[] {
+    protected createValidators(params: IBaseMigratorParams): BaseValidator[] {
         const Validators = this.getValidators();
 
         return Validators.map((Validator) => {
             const validator = new Validator(params);
             return validator;
         })
+    }
+
+    protected getValidators(): (new (...args: any) => BaseValidator)[] {
+        return [];
     }
 
     protected onRemove(dbo: DBOModel) {
@@ -61,7 +65,7 @@ extends BaseMigrator<DBOModel> {
         this.migration.addCommand(createCommand);
     }
 
-    private validate(dbo: DBOModel): boolean {
+    protected validate(dbo: DBOModel): boolean {
         for (const validator of this.validators) {
             const errorModel = validator.validate(dbo);
 
@@ -76,5 +80,4 @@ extends BaseMigrator<DBOModel> {
 
     protected abstract createDropCommand(dbo: DBOModel): InputCommand;
     protected abstract createCreateCommand(dbo: DBOModel): InputCommand;
-    protected abstract getValidators(): (new (...args: any) => BaseValidator)[];
 }
