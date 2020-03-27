@@ -72,20 +72,7 @@ extends BaseMigrator<TableModel> {
             return;
         }
 
-        const createTableCommand = new TableCommandModel({
-            type: "create",
-            table: fsTableModel
-        });
-        this.migration.addCommand(createTableCommand);
-
-        if ( fsTableModel.get("values") ) {
-            const createRowsCommand = new RowsCommandModel({
-                type: "create",
-                table: fsTableModel,
-                values: fsTableModel.get("values")
-            });
-            this.migration.addCommand(createRowsCommand);
-        }
+        this.createTable(fsTableModel);
     }
 
     protected onChange(prev: TableModel, next: TableModel) {
@@ -236,15 +223,30 @@ extends BaseMigrator<TableModel> {
             dbTableModel
         );
 
-        
+        this.createTableValues(fsTableModel);
+    }
+
+    createTable(fsTableModel: TableModel) {
+        const createTableCommand = new TableCommandModel({
+            type: "create",
+            table: fsTableModel
+        });
+        this.migration.addCommand(createTableCommand);
+
+        this.createTableValues(fsTableModel);
+    }
+
+    createTableValues(fsTableModel: TableModel) {
         // recreate table rows
-        if ( fsTableModel.get("values") ) {
-            const createRowsCommand = new RowsCommandModel({
-                type: "create",
-                table: fsTableModel,
-                values: fsTableModel.get("values")
-            });
-            this.migration.addCommand(createRowsCommand);
+        if ( !fsTableModel.get("values") ) {
+            return;
         }
+
+        const createRowsCommand = new RowsCommandModel({
+            type: "create",
+            table: fsTableModel,
+            values: fsTableModel.get("values")
+        });
+        this.migration.addCommand(createRowsCommand);
     }
 }
