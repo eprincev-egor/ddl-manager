@@ -35,6 +35,13 @@ export class TableModel extends AbstractTableModel<TableModel> {
             extension.get("columns").forEach(column => {
                 cloneTable.addColumn(column);
             });
+
+            const extensionValues = extension.get("values");
+            if ( extensionValues ) {
+                cloneTable.set({
+                    values: extensionValues
+                });
+            }
         }
 
         return cloneTable;
