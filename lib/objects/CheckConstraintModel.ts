@@ -1,15 +1,8 @@
-import {Types} from "model-layer";
-import {BaseDBObjectModel} from "./base-layers/BaseDBObjectModel";
+import { NamedDBObjectModel } from "./base-layers/NamedDBObjectModel";
 
 export class CheckConstraintModel 
-extends BaseDBObjectModel<CheckConstraintModel> {
-    structure() {
-        return {
-            ...super.structure(),
-
-            name: Types.String({
-                required: true
-            })
-        };
+extends NamedDBObjectModel<CheckConstraintModel> {
+    allowedToDrop() {
+        return true;
     }
 }

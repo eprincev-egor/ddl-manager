@@ -32,14 +32,14 @@ export class TableConstraintsMigrator {
         );
 
         // create/drop check constraints
-        this.checkConstraints.migrate(
+        this.checkConstraints.migrateTable(
             migration,
             fsTableModel,
             dbTableModel
         );
         
         // create/drop unique constraints
-        this.uniqueConstraints.migrate(
+        this.uniqueConstraints.migrateTable(
             migration,
             fsTableModel,
             dbTableModel

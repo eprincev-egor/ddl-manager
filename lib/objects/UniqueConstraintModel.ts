@@ -1,20 +1,21 @@
-import {Types} from "model-layer";
-import {BaseDBObjectModel} from "./base-layers/BaseDBObjectModel";
+import { Types } from "model-layer";
+import { NamedDBObjectModel } from "./base-layers/NamedDBObjectModel";
 
 export class UniqueConstraintModel 
-extends BaseDBObjectModel<UniqueConstraintModel> {
+extends NamedDBObjectModel<UniqueConstraintModel> {
     structure() {
         return {
             ...super.structure(),
 
-            name: Types.String({
-                required: true
-            }),
             unique: Types.Array({
                 element: Types.String,
                 required: true,
                 unique: true
             })
         };
+    }
+
+    allowedToDrop() {
+        return true;
     }
 }

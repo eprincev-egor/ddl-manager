@@ -5,6 +5,10 @@ import { UniqueConstraintModel } from "../../../objects/UniqueConstraintModel";
 export class UniqueConstraintsMigrator
 extends ConstraintMigrator<UniqueConstraintModel> {
     
+    protected getValidators() {
+        return [];
+    }
+
     protected calcChanges() {
         const changes = this.fsTableModel.compareConstraintsWithDBTable<UniqueConstraintModel>(
             "uniqueConstraints", 

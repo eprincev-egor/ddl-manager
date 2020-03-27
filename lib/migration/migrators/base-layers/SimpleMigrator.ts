@@ -1,11 +1,15 @@
 import { BaseMigrator, IBaseMigratorParams } from "./BaseMigrator";
-import { NamedAndMovableDBOModel } from "../../../objects/base-layers/NamedAndMovableDBOModel";
 import { InputCommand } from "../../MigrationModel";
 import { BaseValidator } from "../validators/BaseValidator";
+import { BaseDBObjectModel } from "../../../objects/base-layers/BaseDBObjectModel";
+
+export interface IAllowedToDrop {
+    allowedToDrop(): boolean;
+}
 
 export 
 abstract class SimpleMigrator<
-    DBOModel extends NamedAndMovableDBOModel<any>
+    DBOModel extends BaseDBObjectModel<any> & IAllowedToDrop
 >
 extends BaseMigrator<DBOModel> {
     
