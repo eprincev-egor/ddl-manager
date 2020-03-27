@@ -5,12 +5,12 @@ import { UniqueConstraintModel } from "../../../objects/UniqueConstraintModel";
 export class UniqueConstraintsMigrator
 extends ConstraintMigrator<UniqueConstraintModel> {
     
-    protected getFSConstraints(): UniqueConstraintModel[] {
-        return this.fsTableModel.get("uniqueConstraints");
-    }
-
-    protected getDBConstraints(): UniqueConstraintModel[] {
-        return this.dbTableModel.get("uniqueConstraints");
+    protected calcChanges() {
+        const changes = this.fsTableModel.compareConstraintsWithDBTable<UniqueConstraintModel>(
+            "uniqueConstraints", 
+            this.dbTableModel
+        );
+        return changes;
     }
 
     protected createDropCommand(constraint: UniqueConstraintModel) {

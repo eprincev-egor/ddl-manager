@@ -4,6 +4,7 @@ import { MigrationModel, InputCommand } from "../../MigrationModel";
 import { FSDDLState } from "../../../state/FSDDLState";
 import { DDLState } from "../../../state/DDLState";
 import { BaseDBObjectModel } from "../../../objects/base-layers/BaseDBObjectModel";
+import { IChanges } from "../../../state/Changes";
 
 export abstract class ConstraintMigrator<ConstraintModel extends BaseDBObjectModel<any>> {
     protected migration: MigrationModel;
@@ -26,38 +27,21 @@ export abstract class ConstraintMigrator<ConstraintModel extends BaseDBObjectMod
         this.fsTableModel = fsTableModel;
         this.dbTableModel = dbTableModel;
         
-        const fsConstraints = this.getFSConstraints();
-        const dbConstraints = this.getDBConstraints();
+        const changes = this.calcChanges();
 
-        for (const fsConstraint of fsConstraints) {
-            const name = fsConstraint.get("name");
-            const existsDbConstraint = dbConstraints.find(dbConstraint =>
-                dbConstraint.get("name") === name
-            );
-
-            if ( existsDbConstraint ) {
-                const isEqual = existsDbConstraint.equal(fsConstraint);
-                
-                if ( !isEqual ) {
-                    this.drop(existsDbConstraint);
-                    this.create(fsConstraint);
-                }
-            }
-            else {
-                this.create(fsConstraint);
-            }
-        }
-
-        for (const dbConstraint of dbConstraints) {
-            const name = dbConstraint.get("name");
-            const existsFsConstraint = fsConstraints.find(fsConstraint =>
-                fsConstraint.get("name") === name
-            );
-
-            if ( !existsFsConstraint ) {
-                this.drop(dbConstraint);
-            }
-        }
+        changes.removed.forEach((constraint) => {
+            this.drop(constraint);
+        });
+        changes.changed.forEach(({prev, next}) => {
+            const dbConstraint = prev;
+            const fsConstraint = next;
+            this.drop(dbConstraint);
+            this.create(fsConstraint);
+        });
+        changes.created.forEach((constraint) => {
+            this.create(constraint);
+        });
+        
     }
 
     private drop(constraint: ConstraintModel) {
@@ -71,9 +55,7 @@ export abstract class ConstraintMigrator<ConstraintModel extends BaseDBObjectMod
         this.migration.addCommand(createConstraintCommand);
     }
 
-    protected abstract getFSConstraints(): ConstraintModel[];
-    protected abstract getDBConstraints(): ConstraintModel[];
-
+    protected abstract calcChanges(): IChanges<ConstraintModel>;
     protected abstract createDropCommand(constraint: ConstraintModel): InputCommand;
     protected abstract createCreateCommand(constraint: ConstraintModel): InputCommand;
 }

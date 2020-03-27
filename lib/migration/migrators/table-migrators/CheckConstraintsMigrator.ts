@@ -5,12 +5,12 @@ import { CheckConstraintModel } from "../../../objects/CheckConstraintModel";
 export class CheckConstraintsMigrator
 extends ConstraintMigrator<CheckConstraintModel> {
     
-    protected getFSConstraints(): CheckConstraintModel[] {
-        return this.fsTableModel.get("checkConstraints");
-    }
-
-    protected getDBConstraints(): CheckConstraintModel[] {
-        return this.dbTableModel.get("checkConstraints");
+    protected calcChanges() {
+        const changes = this.fsTableModel.compareConstraintsWithDBTable<CheckConstraintModel>(
+            "checkConstraints", 
+            this.dbTableModel
+        );
+        return changes;
     }
 
     protected createDropCommand(constraint: CheckConstraintModel) {
