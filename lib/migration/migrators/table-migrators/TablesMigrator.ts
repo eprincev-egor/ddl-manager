@@ -32,10 +32,7 @@ extends BaseMigrator<TableModel> {
     }
 
     protected calcChanges() {
-        const fsTables = this.fs.row.tables;
-        const dbTables = this.db.row.tables;
-        const changes = fsTables.compareWithDB(dbTables);
-        return changes;
+        return this.fs.compareTablesWithDB(this.db);
     }
 
     migrate(migration: MigrationModel) {

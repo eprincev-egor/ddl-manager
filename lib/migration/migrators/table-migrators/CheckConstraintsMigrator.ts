@@ -1,9 +1,9 @@
-import { BaseConstraintMigrator } from "./BaseConstraintMigrator";
+import { ConstraintMigrator } from "../base-layers/ConstraintMigrator";
 import { CheckConstraintCommandModel } from "../../commands/CheckConstraintCommandModel";
 import { CheckConstraintModel } from "../../../objects/CheckConstraintModel";
 
 export class CheckConstraintsMigrator
-extends BaseConstraintMigrator<CheckConstraintModel> {
+extends ConstraintMigrator<CheckConstraintModel> {
     
     protected getFSConstraints(): CheckConstraintModel[] {
         return this.fsTableModel.get("checkConstraints");

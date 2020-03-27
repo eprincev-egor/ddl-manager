@@ -2,7 +2,7 @@ import { MigrationModel } from "../../MigrationModel";
 import { DDLState } from "../../../state/DDLState";
 import { FSDDLState } from "../../../state/FSDDLState";
 import { BaseDBObjectModel } from "../../../objects/base-layers/BaseDBObjectModel";
-import { IChanges } from "../../../objects/base-layers/BaseDBObjectCollection";
+import { IChanges } from "../../../state/Changes";
 
 export interface IBaseMigratorParams {
     mode: "dev" | "prod";

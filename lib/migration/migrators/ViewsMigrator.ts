@@ -7,10 +7,7 @@ export class ViewsMigrator
 extends SimpleMigrator<ViewModel> {
 
     protected calcChanges() {
-        const fsViews = this.fs.row.views;
-        const dbViews = this.db.row.views;
-        const changes = fsViews.compareWithDB(dbViews);
-        return changes;
+        return this.fs.compareViewsWithDB(this.db);
     }
 
     protected getValidators() {

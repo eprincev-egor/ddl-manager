@@ -7,10 +7,7 @@ export class FunctionsMigrator
 extends SimpleMigrator<FunctionModel> {
 
     protected calcChanges() {
-        const fsFunctions = this.fs.row.functions;
-        const dbFunctions = this.db.row.functions;
-        const changes = fsFunctions.compareWithDB(dbFunctions);
-        return changes;
+        return this.fs.compareFunctionsWithDB(this.db);
     }
 
     protected getValidators() {

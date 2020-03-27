@@ -8,6 +8,7 @@ import {ViewModel} from "../objects/ViewModel";
 import {TriggerModel} from "../objects/TriggerModel";
 import {ExtensionModel} from "../objects/ExtensionModel";
 import {BaseDBObjectModel} from "../objects/base-layers/BaseDBObjectModel";
+import { Changes, IChanges } from "./Changes";
 
 // @see fs/index.ts
 import {FolderModel} from "../fs/FolderModel";
@@ -126,4 +127,31 @@ export class FSDDLState extends DDLState<FSDDLState> {
         }
     }
 
+    compareFunctionsWithDB(db: DDLState): IChanges<FunctionModel> {
+        return this.compareWithDB<FunctionModel>("functions", db);
+    }
+
+    compareViewsWithDB(db: DDLState): IChanges<ViewModel> {
+        return this.compareWithDB<ViewModel>("views", db);
+    }
+
+    compareTriggersWithDB(db: DDLState): IChanges<TriggerModel> {
+        return this.compareWithDB<TriggerModel>("triggers", db);
+    }
+
+    compareTablesWithDB(db: DDLState): IChanges<TableModel> {
+        return this.compareWithDB<TableModel>("tables", db);
+    }
+
+    private compareWithDB<TModel extends BaseDBObjectModel<any>>(
+        key: keyof this["row"],
+        db: DDLState
+    ): IChanges<TModel> {
+        const fs = this;
+        const fsModels = (fs.row as any)[key].models;
+        const dbModels = (db.row as any)[key].models;
+        const changes = new Changes<TModel>();
+        changes.detect(fsModels, dbModels);
+        return changes;
+    }
 }

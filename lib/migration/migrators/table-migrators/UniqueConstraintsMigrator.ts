@@ -1,9 +1,9 @@
-import { BaseConstraintMigrator } from "./BaseConstraintMigrator";
+import { ConstraintMigrator } from "../base-layers/ConstraintMigrator";
 import { UniqueConstraintCommandModel } from "../../commands/UniqueConstraintCommandModel";
 import { UniqueConstraintModel } from "../../../objects/UniqueConstraintModel";
 
 export class UniqueConstraintsMigrator
-extends BaseConstraintMigrator<UniqueConstraintModel> {
+extends ConstraintMigrator<UniqueConstraintModel> {
     
     protected getFSConstraints(): UniqueConstraintModel[] {
         return this.fsTableModel.get("uniqueConstraints");

@@ -8,10 +8,7 @@ export class TriggersMigrator
 extends SimpleMigrator<TriggerModel> {
 
     protected calcChanges() {
-        const fsTriggers = this.fs.row.triggers;
-        const dbTriggers = this.db.row.triggers;
-        const changes = fsTriggers.compareWithDB(dbTriggers);
-        return changes;
+        return this.fs.compareTriggersWithDB(this.db);
     }
 
     protected getValidators() {

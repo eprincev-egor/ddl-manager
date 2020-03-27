@@ -1,11 +1,11 @@
 import {TableModel} from "../../../objects/TableModel";
-import { IBaseMigratorParams } from "../base-layers/BaseMigrator";
+import { IBaseMigratorParams } from "./BaseMigrator";
 import { MigrationModel, InputCommand } from "../../MigrationModel";
 import { FSDDLState } from "../../../state/FSDDLState";
 import { DDLState } from "../../../state/DDLState";
 import { BaseDBObjectModel } from "../../../objects/base-layers/BaseDBObjectModel";
 
-export abstract class BaseConstraintMigrator<ConstraintModel extends BaseDBObjectModel<any>> {
+export abstract class ConstraintMigrator<ConstraintModel extends BaseDBObjectModel<any>> {
     protected migration: MigrationModel;
     protected fs: FSDDLState;
     protected db: DDLState;

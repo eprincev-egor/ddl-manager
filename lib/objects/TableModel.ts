@@ -1,8 +1,9 @@
 import {Types} from "model-layer";
 import {AbstractTableModel} from "./AbstractTableModel";
 import {ColumnModel} from "./ColumnModel";
-import { IChanges } from "./base-layers/BaseDBObjectCollection";
 import { ExtensionModel } from "./ExtensionModel";
+import { IChanges, Changes } from "../state/Changes";
+import { BaseDBObjectModel } from "./base-layers/BaseDBObjectModel";
 
 export class TableModel extends AbstractTableModel<TableModel> {
     structure() {
@@ -48,42 +49,26 @@ export class TableModel extends AbstractTableModel<TableModel> {
     }
 
     compareColumnsWithDBTable(dbTable: TableModel): IChanges<ColumnModel> {
-        const fsTable = this;
-        const changes: IChanges<ColumnModel> = {
-            removed: [],
-            created: [],
-            changed: []
-        };
+        const fsColumns = this.get("columns");
+        const dbColumns = dbTable.get("columns");
 
-        dbTable.row.columns.forEach((dbColumn) => {
-            const key = dbColumn.get("key");
-            const fsColumn = fsTable.getColumnByKey(key);
+        const changes = new Changes<ColumnModel>();
+        changes.detect(fsColumns, dbColumns);
+        
+        return changes;
+    }
 
-            if ( fsColumn ) {
-                const hasChanges = !fsColumn.equal(dbColumn);
-                if ( hasChanges ) {
-                    changes.changed.push({
-                        prev: dbColumn,
-                        next: fsColumn
-                    });
-                }
+    compareConstraintsWithDBTable<TConstraintModel extends BaseDBObjectModel<any>>(
+        key: keyof this["row"],
+        dbTable: this
+    ): IChanges<TConstraintModel> {
+        
+        const fsConstraints = this.get(key) as any;
+        const dbConstraints = dbTable.get(key) as any;
 
-                return;
-            }
-
-            changes.removed.push(dbColumn);
-        });
-
-        fsTable.row.columns.forEach((fsColumn) => {
-            const key = fsColumn.get("key");
-            const existsColumnInDB = !!dbTable.getColumnByKey(key);
-
-            if ( !existsColumnInDB ) {
-                changes.created.push(fsColumn);
-            }
-        });
-
-
+        const changes = new Changes<TConstraintModel>();
+        changes.detect(fsConstraints, dbConstraints);
+        
         return changes;
     }
 }
