@@ -1,7 +1,7 @@
 import {DDLState} from "./DDLState";
 import {ExtensionsCollection} from "../objects/ExtensionsCollection";
 
-import {IMigrationControllerParams} from "../migration/IMigrationControllerParams";
+import {IBaseMigratorParams} from "../migration/migrators/base-layers/BaseMigrator";
 import {FunctionModel} from "../objects/FunctionModel";
 import {TableModel} from "../objects/TableModel";
 import {ViewModel} from "../objects/ViewModel";
@@ -16,7 +16,7 @@ import "../fs/FoldersCollection";
 import {Types} from "model-layer";
 import {FileModel} from "../fs/FileModel";
 
-export type IMigrationOptions = Omit<IMigrationControllerParams, "db" | "fs">;
+export type IMigrationOptions = Omit<IBaseMigratorParams, "db" | "fs">;
 
 export type TDBObject = BaseDBObjectModel<any>;
 

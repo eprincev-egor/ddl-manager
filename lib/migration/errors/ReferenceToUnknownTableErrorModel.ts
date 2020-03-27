@@ -1,4 +1,4 @@
-import {MigrationErrorModel} from "./MigrationErrorModel";
+import {MigrationErrorModel} from "./base-layers/MigrationErrorModel";
 import { Types } from "model-layer";
 
 export class ReferenceToUnknownTableErrorModel 

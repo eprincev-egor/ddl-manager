@@ -1,5 +1,3 @@
-import {BaseController} from "./base-layers/BaseController";
-
 import {PrimaryKeyCommandModel} from "../commands/PrimaryKeyCommandModel";
 import {CheckConstraintCommandModel} from "../commands/CheckConstraintCommandModel";
 import {UniqueConstraintCommandModel} from "../commands/UniqueConstraintCommandModel";
@@ -7,13 +5,30 @@ import {ForeignKeyConstraintCommandModel} from "../commands/ForeignKeyConstraint
 import {ReferenceToUnknownTableErrorModel} from "../errors/ReferenceToUnknownTableErrorModel";
 import {ReferenceToUnknownColumnErrorModel} from "../errors/ReferenceToUnknownColumnErrorModel";
 import {TableModel} from "../../objects/TableModel";
+import { IBaseMigratorParams } from "./base-layers/BaseMigrator";
+import { MigrationModel } from "../MigrationModel";
+import { FSDDLState } from "../../state/FSDDLState";
+import { DDLState } from "../../state/DDLState";
 
-export class TableConstraintController extends BaseController {
+export class TableConstraintsMigrator {
+    protected migration: MigrationModel;
+    protected mode: IBaseMigratorParams["mode"];
+    protected fs: FSDDLState;
+    protected db: DDLState;
 
-    generateConstraintMigration(
+    constructor(params: IBaseMigratorParams) {
+        this.mode = params.mode;
+        this.fs = params.fs;
+        this.db = params.db;
+    }
+
+    migrate(
+        migration: MigrationModel,
         fsTableModel: TableModel,
         dbTableModel: TableModel
     ) {
+        this.migration = migration;
+        
         const fsTableIdentify = fsTableModel.get("identify");
 
         // create/drop primary key

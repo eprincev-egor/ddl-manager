@@ -16,4 +16,11 @@ export abstract class BaseDBObjectModel<
     getIdentify() {
         return this.row.identify;
     }
+
+    getTypeName() {
+        const className = this.constructor.name;
+        const typeName = className.replace(/Model$/, "")
+            .toLowerCase();
+        return typeName;
+    }
 }
