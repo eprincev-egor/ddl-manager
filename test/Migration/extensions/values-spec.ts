@@ -1,8 +1,8 @@
 import {testGenerateMigration} from "../testGenerateMigration";
 
-describe("MigrationController", () => {
+describe("Migration: extensions", () => {
 
-    describe("generateExtensions", () => {
+    describe("values (rows)", () => {
         
         it("create values from extension", () => {
             testGenerateMigration({

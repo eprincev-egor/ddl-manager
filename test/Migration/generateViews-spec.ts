@@ -1,8 +1,8 @@
 import {testGenerateMigration} from "./testGenerateMigration";
 
-describe("MigrationController", () => {
+describe("Migration: views", () => {
 
-    describe("generateViews", () => {
+    describe("create/drop views", () => {
         
         it("create view for empty db", () => {
             testGenerateMigration({

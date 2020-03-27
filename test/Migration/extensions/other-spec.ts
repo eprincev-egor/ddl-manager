@@ -1,8 +1,8 @@
 import {testGenerateMigration} from "../testGenerateMigration";
 
-describe("MigrationController", () => {
+describe("Migration: extensions", () => {
 
-    describe("generateExtensions", () => {
+    describe("other", () => {
         
         it("error on unknown table", () => {
             testGenerateMigration({

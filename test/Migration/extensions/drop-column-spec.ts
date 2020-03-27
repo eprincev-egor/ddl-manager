@@ -1,8 +1,8 @@
 import {testGenerateMigration} from "../testGenerateMigration";
 
-describe("MigrationController", () => {
+describe("Migration: extensions", () => {
 
-    describe("generateExtensions", () => {
+    describe("drop column", () => {
         
         it("error on drop column, dev database", () => {
             testGenerateMigration({

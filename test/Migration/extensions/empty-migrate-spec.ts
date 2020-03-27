@@ -1,8 +1,8 @@
 import {testGenerateMigration} from "../testGenerateMigration";
 
-describe("MigrationController", () => {
+describe("Migration: extensions", () => {
 
-    describe("generateExtensions", () => {
+    describe("empty migration", () => {
         
         it("empty migration for same db and fs state (extension with column)", () => {
             testGenerateMigration({
