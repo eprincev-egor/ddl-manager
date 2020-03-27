@@ -32,51 +32,61 @@ export class PrimaryKeyMigrator {
     }
 
     private migratePrimaryKey() {
-        const tableIdentify = this.fsTableModel.getIdentify();
-
         const fsPrimaryKey = this.fsTableModel.get("primaryKey");
         const dbPrimaryKey = this.dbTableModel.get("primaryKey");
 
-        if ( fsPrimaryKey && !dbPrimaryKey ) {
-            const primaryKeyCommand = new PrimaryKeyCommandModel({
-                type: "create",
-                tableIdentify,
-                primaryKey: fsPrimaryKey
-            });
-            this.migration.addCommand(primaryKeyCommand);
+        const isCreate = (
+            fsPrimaryKey && 
+            !dbPrimaryKey
+        );
+        const isDrop = (
+            !fsPrimaryKey && 
+            dbPrimaryKey
+        );
+        const isChange = (
+            fsPrimaryKey && 
+            dbPrimaryKey &&
+            !equalArrays(fsPrimaryKey, dbPrimaryKey)
+        );
+
+        if ( isCreate ) {
+            this.create(fsPrimaryKey);
         }
 
-        if ( !fsPrimaryKey && dbPrimaryKey ) {
-            const primaryKeyCommand = new PrimaryKeyCommandModel({
-                type: "drop",
-                tableIdentify,
-                primaryKey: dbPrimaryKey
-            });
-            this.migration.addCommand(primaryKeyCommand);
+        if ( isDrop ) {
+            this.drop(dbPrimaryKey);
         }
 
-        if ( fsPrimaryKey && dbPrimaryKey ) {
-            const isEqual = (
-                fsPrimaryKey.length === dbPrimaryKey.length &&
-                fsPrimaryKey.every(key => dbPrimaryKey.includes(key))
-            );
-
-            if ( !isEqual ) {
-                const dropPrimaryKeyCommand = new PrimaryKeyCommandModel({
-                    type: "drop",
-                    tableIdentify,
-                    primaryKey: dbPrimaryKey
-                });
-                this.migration.addCommand(dropPrimaryKeyCommand);
-
-                const createPrimaryKeyCommand = new PrimaryKeyCommandModel({
-                    type: "create",
-                    tableIdentify,
-                    primaryKey: fsPrimaryKey
-                });
-                this.migration.addCommand(createPrimaryKeyCommand);
-            }
+        if ( isChange ) {
+            this.drop(dbPrimaryKey);
+            this.create(fsPrimaryKey);
         }
-
     }
+
+    private drop(primaryKey: string[]) {
+        const tableIdentify = this.fsTableModel.getIdentify();
+        const primaryKeyCommand = new PrimaryKeyCommandModel({
+            type: "drop",
+            tableIdentify,
+            primaryKey
+        });
+        this.migration.addCommand(primaryKeyCommand);
+    }
+
+    private create(primaryKey: string[]) {
+        const tableIdentify = this.fsTableModel.getIdentify();
+        const createPrimaryKeyCommand = new PrimaryKeyCommandModel({
+            type: "create",
+            tableIdentify,
+            primaryKey
+        });
+        this.migration.addCommand(createPrimaryKeyCommand);
+    }
+}
+
+function equalArrays(arr1: string[], arr2: string[]): boolean {
+    return (
+        arr1.length === arr2.length &&
+        arr1.every(key => arr2.includes(key))
+    );
 }
