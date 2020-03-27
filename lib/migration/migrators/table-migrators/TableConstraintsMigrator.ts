@@ -13,7 +13,7 @@ export class TableConstraintsMigrator {
     private foreignKeysConstraints: ForeignKeyConstraintsMigrator;
 
     constructor(params: IBaseMigratorParams) {
-        this.primaryKey = new PrimaryKeyMigrator(params);
+        this.primaryKey = new PrimaryKeyMigrator();
         this.checkConstraints = new CheckConstraintsMigrator(params);
         this.uniqueConstraints = new UniqueConstraintsMigrator(params);
         this.foreignKeysConstraints = new ForeignKeyConstraintsMigrator(params);

@@ -1,21 +1,11 @@
-import {PrimaryKeyCommandModel} from "../../commands/PrimaryKeyCommandModel";
-import {TableModel} from "../../../objects/TableModel";
-import { IBaseMigratorParams } from "../base-layers/BaseMigrator";
+import { PrimaryKeyCommandModel } from "../../commands/PrimaryKeyCommandModel";
+import { TableModel} from "../../../objects/TableModel";
 import { MigrationModel } from "../../MigrationModel";
-import { FSDDLState } from "../../../state/FSDDLState";
-import { DDLState } from "../../../state/DDLState";
 
 export class PrimaryKeyMigrator {
     protected migration: MigrationModel;
-    protected fs: FSDDLState;
-    protected db: DDLState;
     private fsTableModel: TableModel;
     private dbTableModel: TableModel;
-
-    constructor(params: IBaseMigratorParams) {
-        this.fs = params.fs;
-        this.db = params.db;
-    }
 
     migrate(
         migration: MigrationModel,
