@@ -44,40 +44,52 @@ export class ColumnsMigrator {
     }
 
     onRemove(column: ColumnModel) {
-        if ( this.mode === "dev" ) {
-            const key = column.get("key");
-            const isDeprecatedColumn = this.fsTableModel.isDeprecatedColumn(key);
-            if ( isDeprecatedColumn ) {
-                return;
-            }
-
-            const errorModel = new CannotDropColumnErrorModel({
-                filePath: this.fsTableModel.get("filePath"),
-                tableIdentify: this.fsTableModel.getIdentify(),
-                columnKey: key
-            });
-            this.migration.addError(errorModel);
+        if ( this.mode !== "dev" ) {
+            return;
         }
+        const key = column.get("key");
+        const isDeprecatedColumn = this.fsTableModel.isDeprecatedColumn(key);
+        if ( isDeprecatedColumn ) {
+            return;
+        }
+
+        const errorModel = new CannotDropColumnErrorModel({
+            filePath: this.fsTableModel.get("filePath"),
+            tableIdentify: this.fsTableModel.getIdentify(),
+            columnKey: key
+        });
+        this.migration.addError(errorModel);
     }
 
     onChange(dbColumn: ColumnModel, fsColumn: ColumnModel) {
+        this.errorOnChangedType(dbColumn, fsColumn);
+        this.migrateNulls(dbColumn, fsColumn);
+    }
+
+    errorOnChangedType(dbColumn: ColumnModel, fsColumn: ColumnModel) {
         const tableIdentify = this.fsTableModel.getIdentify();
         const newType = fsColumn.get("type");
         const oldType = dbColumn.get("type");
-
-        if ( newType !== oldType ) {
-            const errorModel = new CannotChangeColumnTypeErrorModel({
-                filePath: this.fsTableModel.get("filePath"),
-                tableIdentify,
-                columnKey: fsColumn.get("key"),
-                oldType,
-                newType
-            });
-            this.migration.addError(errorModel);
+        
+        if ( newType === oldType ) {
+            return;
         }
 
+        const errorModel = new CannotChangeColumnTypeErrorModel({
+            filePath: this.fsTableModel.get("filePath"),
+            tableIdentify,
+            columnKey: fsColumn.get("key"),
+            oldType,
+            newType
+        });
+        this.migration.addError(errorModel);
+    }
+
+    migrateNulls(dbColumn: ColumnModel, fsColumn: ColumnModel) {
+        const tableIdentify = this.fsTableModel.getIdentify();
         const fsNulls = fsColumn.get("nulls");
-        const dbNulls = dbColumn.get("nulls")
+        const dbNulls = dbColumn.get("nulls");
+
         if ( fsNulls !== dbNulls ) {
             const isDrop = (
                 fsNulls === true && 
@@ -91,7 +103,6 @@ export class ColumnsMigrator {
             });
             this.migration.addCommand(notNullCommand);
         }
-
     }
 
     onCreate(column: ColumnModel) {
