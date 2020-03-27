@@ -11,14 +11,15 @@ import {UnknownTableForExtensionErrorModel} from "../errors/UnknownTableForExten
 import {CannotDropColumnErrorModel} from "../errors/CannotDropColumnErrorModel";
 import {CannotDropTableErrorModel} from "../errors/CannotDropTableErrorModel";
 import {CannotChangeColumnTypeErrorModel} from "../errors/CannotChangeColumnTypeErrorModel";
-import {ExpectedPrimaryKeyForRowsErrorModel} from "../errors/ExpectedPrimaryKeyForRowsErrorModel";
 
 import { MigrationModel } from "../MigrationModel";
 import { NameValidator } from "./validators/NameValidator";
+import { TableValuesValidator } from "./validators/TableValuesValidator";
 
 export class TablesMigrator
 extends BaseMigrator<TableModel> {
     private nameValidator: NameValidator;
+    private tableValuesValidator: TableValuesValidator;
     private constraintsMigrator: TableConstraintsMigrator;
 
     constructor(params: IBaseMigratorParams) {
@@ -27,6 +28,7 @@ extends BaseMigrator<TableModel> {
         this.constraintsMigrator = new TableConstraintsMigrator(params);
 
         this.nameValidator = new NameValidator(params);
+        this.tableValuesValidator = new TableValuesValidator(params);
     }
 
     protected calcChanges() {
@@ -61,18 +63,11 @@ extends BaseMigrator<TableModel> {
             return;
         }
 
-        const invalidName = this.nameValidator.validate(fsTableModel);
-        if ( invalidName ) {
-            this.migration.addError(invalidName);
-            return;
-        }
+        const isValidTable = this.validateTable(fsTableModel);
 
-        const isValidTableValues = this.validateTableValues(fsTableModel);
-        if ( !isValidTableValues ) {
-            return;
+        if ( isValidTable ) {
+            this.createTable(fsTableModel);
         }
-
-        this.createTable(fsTableModel);
     }
 
     protected onChange(prev: TableModel, next: TableModel) {
@@ -83,21 +78,14 @@ extends BaseMigrator<TableModel> {
             return;
         }
 
-        const invalidName = this.nameValidator.validate(fsTableModel);
-        if ( invalidName ) {
-            this.migration.addError(invalidName);
-            return;
-        }
+        const isValidTable = this.validateTable(fsTableModel);
 
-        const isValidTableValues = this.validateTableValues(fsTableModel);
-        if ( !isValidTableValues ) {
-            return;
+        if ( isValidTable ) {
+            this.generateTableMigration(
+                fsTableModel,
+                dbTableModel
+            );
         }
-
-        this.generateTableMigration(
-            fsTableModel,
-            dbTableModel
-        );
     }
 
     protected onRemove(dbTableModel: TableModel) {
@@ -108,25 +96,6 @@ extends BaseMigrator<TableModel> {
             });
             this.migration.addError(errorModel);
         }
-    }
-
-
-    private validateTableValues(tableModel: TableModel): boolean {
-        const hasValues = !!tableModel.get("values");
-        const hasPrimaryKey = !!tableModel.get("primaryKey");
-
-        if ( hasValues && !hasPrimaryKey ) {
-            const errorModel = new ExpectedPrimaryKeyForRowsErrorModel({
-                filePath: tableModel.get("filePath"),
-                tableIdentify: tableModel.getIdentify()
-            });
-
-            this.migration.addError(errorModel);
-
-            return false;
-        }
-
-        return true;
     }
 
     generateTableMigration(
@@ -224,6 +193,22 @@ extends BaseMigrator<TableModel> {
         );
 
         this.createTableValues(fsTableModel);
+    }
+
+    validateTable(tableModel: TableModel): boolean {
+        const invalidName = this.nameValidator.validate(tableModel);
+        if ( invalidName ) {
+            this.migration.addError(invalidName);
+            return false;
+        }
+        
+        const invalidValues = this.tableValuesValidator.validate(tableModel);
+        if ( invalidValues ) {
+            this.migration.addError(invalidValues);
+            return false;
+        }
+
+        return true;
     }
 
     createTable(fsTableModel: TableModel) {
