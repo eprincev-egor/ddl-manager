@@ -1,11 +1,11 @@
-import { TableModel } from "../../objects/TableModel";
-import { IBaseMigratorParams } from "./base-layers/BaseMigrator";
-import { MigrationModel } from "../MigrationModel";
-import { ColumnModel } from "../../objects/ColumnModel";
-import { CannotChangeColumnTypeErrorModel } from "../errors/CannotChangeColumnTypeErrorModel";
-import { ColumnNotNullCommandModel } from "../commands/ColumnNotNullCommandModel";
-import { CannotDropColumnErrorModel } from "../errors/CannotDropColumnErrorModel";
-import { ColumnCommandModel } from "../commands/ColumnCommandModel";
+import { TableModel } from "../../../objects/TableModel";
+import { IBaseMigratorParams } from "../base-layers/BaseMigrator";
+import { MigrationModel } from "../../MigrationModel";
+import { ColumnModel } from "../../../objects/ColumnModel";
+import { CannotChangeColumnTypeErrorModel } from "../../errors/CannotChangeColumnTypeErrorModel";
+import { ColumnNotNullCommandModel } from "../../commands/ColumnNotNullCommandModel";
+import { CannotDropColumnErrorModel } from "../../errors/CannotDropColumnErrorModel";
+import { ColumnCommandModel } from "../../commands/ColumnCommandModel";
 
 export class ColumnsMigrator {
     protected migration: MigrationModel;

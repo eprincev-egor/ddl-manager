@@ -1,23 +1,23 @@
-import {PrimaryKeyCommandModel} from "../commands/PrimaryKeyCommandModel";
-import {CheckConstraintCommandModel} from "../commands/CheckConstraintCommandModel";
-import {UniqueConstraintCommandModel} from "../commands/UniqueConstraintCommandModel";
-import {ForeignKeyConstraintCommandModel} from "../commands/ForeignKeyConstraintCommandModel";
-import {ReferenceToUnknownTableErrorModel} from "../errors/ReferenceToUnknownTableErrorModel";
-import {ReferenceToUnknownColumnErrorModel} from "../errors/ReferenceToUnknownColumnErrorModel";
-import {TableModel} from "../../objects/TableModel";
-import { IBaseMigratorParams } from "./base-layers/BaseMigrator";
-import { MigrationModel } from "../MigrationModel";
-import { FSDDLState } from "../../state/FSDDLState";
-import { DDLState } from "../../state/DDLState";
+import {PrimaryKeyCommandModel} from "../../commands/PrimaryKeyCommandModel";
+import {CheckConstraintCommandModel} from "../../commands/CheckConstraintCommandModel";
+import {UniqueConstraintCommandModel} from "../../commands/UniqueConstraintCommandModel";
+import {ForeignKeyConstraintCommandModel} from "../../commands/ForeignKeyConstraintCommandModel";
+import {ReferenceToUnknownTableErrorModel} from "../../errors/ReferenceToUnknownTableErrorModel";
+import {ReferenceToUnknownColumnErrorModel} from "../../errors/ReferenceToUnknownColumnErrorModel";
+import {TableModel} from "../../../objects/TableModel";
+import { IBaseMigratorParams } from "../base-layers/BaseMigrator";
+import { MigrationModel } from "../../MigrationModel";
+import { FSDDLState } from "../../../state/FSDDLState";
+import { DDLState } from "../../../state/DDLState";
 
 export class TableConstraintsMigrator {
     protected migration: MigrationModel;
-    protected mode: IBaseMigratorParams["mode"];
     protected fs: FSDDLState;
     protected db: DDLState;
+    private fsTableModel: TableModel;
+    private dbTableModel: TableModel;
 
     constructor(params: IBaseMigratorParams) {
-        this.mode = params.mode;
         this.fs = params.fs;
         this.db = params.db;
     }
@@ -28,17 +28,32 @@ export class TableConstraintsMigrator {
         dbTableModel: TableModel
     ) {
         this.migration = migration;
+        this.fsTableModel = fsTableModel;
+        this.dbTableModel = dbTableModel;
         
-        const fsTableIdentify = fsTableModel.get("identify");
-
         // create/drop primary key
-        const fsPrimaryKey = fsTableModel.get("primaryKey");
-        const dbPrimaryKey = dbTableModel.get("primaryKey");
+        this.migratePrimaryKey();
+
+        // create/drop check constraints
+        this.migrateCheckConstraints();
+
+        // create/drop unique constraints
+        this.migrateUniqueConstraints();
+
+        // create/drop foreign key constraints
+        this.migrateForeignKeyConstraints();
+    }
+
+    private migratePrimaryKey() {
+        const tableIdentify = this.fsTableModel.getIdentify();
+
+        const fsPrimaryKey = this.fsTableModel.get("primaryKey");
+        const dbPrimaryKey = this.dbTableModel.get("primaryKey");
 
         if ( fsPrimaryKey && !dbPrimaryKey ) {
             const primaryKeyCommand = new PrimaryKeyCommandModel({
                 type: "create",
-                tableIdentify: fsTableIdentify,
+                tableIdentify,
                 primaryKey: fsPrimaryKey
             });
             this.migration.addCommand(primaryKeyCommand);
@@ -47,7 +62,7 @@ export class TableConstraintsMigrator {
         if ( !fsPrimaryKey && dbPrimaryKey ) {
             const primaryKeyCommand = new PrimaryKeyCommandModel({
                 type: "drop",
-                tableIdentify: fsTableIdentify,
+                tableIdentify,
                 primaryKey: dbPrimaryKey
             });
             this.migration.addCommand(primaryKeyCommand);
@@ -62,23 +77,27 @@ export class TableConstraintsMigrator {
             if ( !isEqual ) {
                 const dropPrimaryKeyCommand = new PrimaryKeyCommandModel({
                     type: "drop",
-                    tableIdentify: fsTableIdentify,
+                    tableIdentify,
                     primaryKey: dbPrimaryKey
                 });
                 this.migration.addCommand(dropPrimaryKeyCommand);
 
                 const createPrimaryKeyCommand = new PrimaryKeyCommandModel({
                     type: "create",
-                    tableIdentify: fsTableIdentify,
+                    tableIdentify,
                     primaryKey: fsPrimaryKey
                 });
                 this.migration.addCommand(createPrimaryKeyCommand);
             }
         }
 
-        // create/drop check constraints
-        const fsCheckConstraints = fsTableModel.get("checkConstraints");
-        const dbCheckConstraints = dbTableModel.get("checkConstraints");
+    }
+
+    private migrateCheckConstraints() {
+        const tableIdentify = this.fsTableModel.getIdentify();
+
+        const fsCheckConstraints = this.fsTableModel.get("checkConstraints");
+        const dbCheckConstraints = this.dbTableModel.get("checkConstraints");
 
         for (const fsConstraint of fsCheckConstraints) {
             const name = fsConstraint.get("name");
@@ -92,14 +111,14 @@ export class TableConstraintsMigrator {
                 if ( !isEqual ) {
                     const dropConstraintCommand = new CheckConstraintCommandModel({
                         type: "drop",
-                        tableIdentify: fsTableIdentify,
+                        tableIdentify,
                         constraint: existsDbConstraint
                     });
                     this.migration.addCommand(dropConstraintCommand);
 
                     const createConstraintCommand = new CheckConstraintCommandModel({
                         type: "create",
-                        tableIdentify: fsTableIdentify,
+                        tableIdentify,
                         constraint: fsConstraint
                     });
                     this.migration.addCommand(createConstraintCommand);
@@ -108,7 +127,7 @@ export class TableConstraintsMigrator {
             else {
                 const constraintCommand = new CheckConstraintCommandModel({
                     type: "create",
-                    tableIdentify: fsTableIdentify,
+                    tableIdentify,
                     constraint: fsConstraint
                 });
                 this.migration.addCommand(constraintCommand);
@@ -124,17 +143,19 @@ export class TableConstraintsMigrator {
             if ( !existsFsConstraint ) {
                 const constraintCommand = new CheckConstraintCommandModel({
                     type: "drop",
-                    tableIdentify: fsTableIdentify,
+                    tableIdentify,
                     constraint: dbConstraint
                 });
                 this.migration.addCommand(constraintCommand);
             }
         }
+    }
 
+    private migrateUniqueConstraints() {
+        const tableIdentify = this.fsTableModel.getIdentify();
 
-        // create/drop unique constraints
-        const fsUniqueConstraints = fsTableModel.get("uniqueConstraints");
-        const dbUniqueConstraints = dbTableModel.get("uniqueConstraints");
+        const fsUniqueConstraints = this.fsTableModel.get("uniqueConstraints");
+        const dbUniqueConstraints = this.dbTableModel.get("uniqueConstraints");
 
         for (const fsConstraint of fsUniqueConstraints) {
             const name = fsConstraint.get("name");
@@ -148,14 +169,14 @@ export class TableConstraintsMigrator {
                 if ( !isEqual ) {
                     const dropConstraintCommand = new UniqueConstraintCommandModel({
                         type: "drop",
-                        tableIdentify: fsTableIdentify,
+                        tableIdentify,
                         unique: existsDbConstraint
                     });
                     this.migration.addCommand(dropConstraintCommand);
 
                     const createConstraintCommand = new UniqueConstraintCommandModel({
                         type: "create",
-                        tableIdentify: fsTableIdentify,
+                        tableIdentify,
                         unique: fsConstraint
                     });
                     this.migration.addCommand(createConstraintCommand);
@@ -164,7 +185,7 @@ export class TableConstraintsMigrator {
             else {
                 const constraintCommand = new UniqueConstraintCommandModel({
                     type: "create",
-                    tableIdentify: fsTableIdentify,
+                    tableIdentify,
                     unique: fsConstraint
                 });
                 this.migration.addCommand(constraintCommand);
@@ -180,17 +201,19 @@ export class TableConstraintsMigrator {
             if ( !existsFsConstraint ) {
                 const constraintCommand = new UniqueConstraintCommandModel({
                     type: "drop",
-                    tableIdentify: fsTableIdentify,
+                    tableIdentify,
                     unique: dbConstraint
                 });
                 this.migration.addCommand(constraintCommand);
             }
         }
+    }
 
+    private migrateForeignKeyConstraints() {
+        const tableIdentify = this.fsTableModel.getIdentify();
 
-        // create/drop foreign key constraints
-        const fsForeignKeyConstraints = fsTableModel.get("foreignKeysConstraints");
-        const dbForeignKeyConstraints = dbTableModel.get("foreignKeysConstraints");
+        const fsForeignKeyConstraints = this.fsTableModel.get("foreignKeysConstraints");
+        const dbForeignKeyConstraints = this.dbTableModel.get("foreignKeysConstraints");
 
         for (const fsConstraint of fsForeignKeyConstraints) {
             const name = fsConstraint.get("name");
@@ -201,9 +224,9 @@ export class TableConstraintsMigrator {
 
             if ( !referenceTableModel ) {
                 const errorModel = new ReferenceToUnknownTableErrorModel({
-                    filePath: fsTableModel.get("filePath"),
+                    filePath: this.fsTableModel.get("filePath"),
                     foreignKeyName: name,
-                    tableIdentify: fsTableIdentify,
+                    tableIdentify,
                     referenceTableIdentify
                 });
                 this.migration.addError(errorModel);
@@ -223,9 +246,9 @@ export class TableConstraintsMigrator {
             });
             if ( unknownColumns.length ) {
                 const errorModel = new ReferenceToUnknownColumnErrorModel({
-                    filePath: fsTableModel.get("filePath"),
+                    filePath: this.fsTableModel.get("filePath"),
                     foreignKeyName: name,
-                    tableIdentify: fsTableIdentify,
+                    tableIdentify,
                     referenceTableIdentify,
                     referenceColumns: unknownColumns
                 });
@@ -244,14 +267,14 @@ export class TableConstraintsMigrator {
                 if ( !isEqual ) {
                     const dropConstraintCommand = new ForeignKeyConstraintCommandModel({
                         type: "drop",
-                        tableIdentify: fsTableIdentify,
+                        tableIdentify,
                         foreignKey: existsDbConstraint
                     });
                     this.migration.addCommand(dropConstraintCommand);
 
                     const createConstraintCommand = new ForeignKeyConstraintCommandModel({
                         type: "create",
-                        tableIdentify: fsTableIdentify,
+                        tableIdentify,
                         foreignKey: fsConstraint
                     });
                     this.migration.addCommand(createConstraintCommand);
@@ -260,7 +283,7 @@ export class TableConstraintsMigrator {
             else {
                 const constraintCommand = new ForeignKeyConstraintCommandModel({
                     type: "create",
-                    tableIdentify: fsTableIdentify,
+                    tableIdentify,
                     foreignKey: fsConstraint
                 });
                 this.migration.addCommand(constraintCommand);
@@ -276,7 +299,7 @@ export class TableConstraintsMigrator {
             if ( !existsFsConstraint ) {
                 const constraintCommand = new ForeignKeyConstraintCommandModel({
                     type: "drop",
-                    tableIdentify: fsTableIdentify,
+                    tableIdentify,
                     foreignKey: dbConstraint
                 });
                 this.migration.addCommand(constraintCommand);

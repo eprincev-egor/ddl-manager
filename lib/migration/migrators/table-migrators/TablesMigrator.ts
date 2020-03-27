@@ -1,16 +1,16 @@
-import { TableModel } from "../../objects/TableModel";
-import { BaseMigrator, IBaseMigratorParams } from "./base-layers/BaseMigrator";
+import { TableModel } from "../../../objects/TableModel";
+import { BaseMigrator, IBaseMigratorParams } from "../base-layers/BaseMigrator";
 import { TableConstraintsMigrator } from "./TableConstraintsMigrator";
 
-import {TableCommandModel} from "../commands/TableCommandModel";
-import {RowsCommandModel} from "../commands/RowsCommandModel";
+import {TableCommandModel} from "../../commands/TableCommandModel";
+import {RowsCommandModel} from "../../commands/RowsCommandModel";
 
-import {UnknownTableForExtensionErrorModel} from "../errors/UnknownTableForExtensionErrorModel";
-import {CannotDropTableErrorModel} from "../errors/CannotDropTableErrorModel";
+import {UnknownTableForExtensionErrorModel} from "../../errors/UnknownTableForExtensionErrorModel";
+import {CannotDropTableErrorModel} from "../../errors/CannotDropTableErrorModel";
 
-import { MigrationModel } from "../MigrationModel";
-import { NameValidator } from "./validators/NameValidator";
-import { TableValuesValidator } from "./validators/TableValuesValidator";
+import { MigrationModel } from "../../MigrationModel";
+import { NameValidator } from "../validators/NameValidator";
+import { TableValuesValidator } from "../validators/TableValuesValidator";
 import { ColumnsMigrator } from "./ColumnsMigrator";
 
 export class TablesMigrator

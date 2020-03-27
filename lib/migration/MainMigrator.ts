@@ -3,7 +3,7 @@ import { FunctionsMigrator } from "./migrators/FunctionsMigrator";
 import { IBaseMigratorParams } from "./migrators/base-layers/BaseMigrator";
 import { ViewsMigrator } from "./migrators/ViewsMigrator";
 import { TriggersMigrator } from "./migrators/TriggersMigrator";
-import { TablesMigrator } from "./migrators/TablesMigrator";
+import { TablesMigrator } from "./migrators/table-migrators/TablesMigrator";
 
 export class MainMigrator {
     private functions: FunctionsMigrator;
