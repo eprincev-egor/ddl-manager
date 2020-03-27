@@ -43,7 +43,7 @@ export class ColumnsMigrator {
         });
     }
 
-    onRemove(column: ColumnModel) {
+    private onRemove(column: ColumnModel) {
         if ( this.mode !== "dev" ) {
             return;
         }
@@ -61,12 +61,24 @@ export class ColumnsMigrator {
         this.migration.addError(errorModel);
     }
 
-    onChange(dbColumn: ColumnModel, fsColumn: ColumnModel) {
+    private onChange(dbColumn: ColumnModel, fsColumn: ColumnModel) {
         this.errorOnChangedType(dbColumn, fsColumn);
         this.migrateNulls(dbColumn, fsColumn);
     }
 
-    errorOnChangedType(dbColumn: ColumnModel, fsColumn: ColumnModel) {
+    private onCreate(column: ColumnModel) {
+        const tableIdentify = this.fsTableModel.getIdentify();
+
+        const createColumnCommand = new ColumnCommandModel({
+            type: "create",
+            tableIdentify,
+            column
+        });
+        this.migration.addCommand(createColumnCommand);
+    }
+
+    
+    private errorOnChangedType(dbColumn: ColumnModel, fsColumn: ColumnModel) {
         const tableIdentify = this.fsTableModel.getIdentify();
         const newType = fsColumn.get("type");
         const oldType = dbColumn.get("type");
@@ -85,7 +97,7 @@ export class ColumnsMigrator {
         this.migration.addError(errorModel);
     }
 
-    migrateNulls(dbColumn: ColumnModel, fsColumn: ColumnModel) {
+    private migrateNulls(dbColumn: ColumnModel, fsColumn: ColumnModel) {
         const tableIdentify = this.fsTableModel.getIdentify();
         const fsNulls = fsColumn.get("nulls");
         const dbNulls = dbColumn.get("nulls");
@@ -105,14 +117,4 @@ export class ColumnsMigrator {
         }
     }
 
-    onCreate(column: ColumnModel) {
-        const tableIdentify = this.fsTableModel.getIdentify();
-
-        const createColumnCommand = new ColumnCommandModel({
-            type: "create",
-            tableIdentify,
-            column
-        });
-        this.migration.addCommand(createColumnCommand);
-    }
 }
