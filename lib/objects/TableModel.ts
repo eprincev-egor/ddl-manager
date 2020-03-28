@@ -42,6 +42,17 @@ export class TableModel extends AbstractTableModel<TableModel> {
                     values: extensionValues
                 });
             }
+
+            const extensionUniqueConstraints = extension.get("uniqueConstraints");
+            if ( extensionUniqueConstraints ) {
+                const tableUniqueConstraints = cloneTable.get("uniqueConstraints");
+                cloneTable.set({
+                    uniqueConstraints: [
+                        ...tableUniqueConstraints,
+                        ...extensionUniqueConstraints
+                    ]
+                });
+            }
         }
 
         return cloneTable;
