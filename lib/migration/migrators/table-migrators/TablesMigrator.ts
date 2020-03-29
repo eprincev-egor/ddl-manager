@@ -12,11 +12,13 @@ import { MigrationModel } from "../../MigrationModel";
 import { NameValidator } from "../validators/NameValidator";
 import { TableValuesValidator } from "../validators/TableValuesValidator";
 import { ColumnsMigrator } from "./ColumnsMigrator";
+import { Changes } from "../../../state/Changes";
 
 export class TablesMigrator
 extends BaseMigrator<TableModel> {
     private nameValidator: NameValidator;
     private tableValuesValidator: TableValuesValidator;
+    private tablesMergedWithExtensions: TableModel[];
 
     private constraintsMigrator: TableConstraintsMigrator;
     private columnsMigrator: ColumnsMigrator;
@@ -31,13 +33,23 @@ extends BaseMigrator<TableModel> {
         this.tableValuesValidator = new TableValuesValidator(params);
     }
 
-    protected calcChanges() {
-        return this.fs.compareTablesWithDB(this.db);
+    migrate(migration: MigrationModel) {
+        this.migration = migration;
+        this.mergeTablesWithExtensions();
+        super.migrate(migration);
     }
 
-    migrate(migration: MigrationModel) {
-        super.migrate(migration);
-        
+    private mergeTablesWithExtensions() {
+        this.tablesMergedWithExtensions = [];
+
+        this.fs.row.tables.each((fsTableModel) => {
+            const fsTableIdentify = fsTableModel.get("identify");
+            const extensions = this.fs.findExtensionsForTable( fsTableIdentify );
+            const fullFSTableModel = fsTableModel.concatWithExtensions(extensions);
+
+            this.tablesMergedWithExtensions.push(fullFSTableModel);
+        });
+
         this.fs.row.extensions.each((fsExtensionModel) => {
             const tableIdentify = fsExtensionModel.get("forTableIdentify");
             const fsTableModel = this.fs.row.tables.getByIdentify(tableIdentify);
@@ -53,6 +65,15 @@ extends BaseMigrator<TableModel> {
                 return;
             }
         });
+
+    }
+
+    protected calcChanges() {
+        const fsModels = this.tablesMergedWithExtensions;
+        const dbModels = this.db.row.tables.models;
+        const changes = new Changes<TableModel>();
+        changes.detect(fsModels, dbModels);
+        return changes;
     }
 
     protected onCreate(fsTableModel: TableModel) {
@@ -98,23 +119,19 @@ extends BaseMigrator<TableModel> {
     migrateTable(
         fsTableModel: TableModel,
         dbTableModel: TableModel
-    ) {
-        const fsTableIdentify = fsTableModel.get("identify");
-        const extensions = this.fs.findExtensionsForTable( fsTableIdentify );
-        const fullFSTableModel = fsTableModel.concatWithExtensions(extensions);
-        
+    ) { 
         this.columnsMigrator.migrate(
             this.migration,
-            fullFSTableModel,
+            fsTableModel,
             dbTableModel
         );
 
         this.constraintsMigrator.migrate(this.migration,
-            fullFSTableModel,
+            fsTableModel,
             dbTableModel
         );
 
-        this.createTableValues(fullFSTableModel);
+        this.createTableValues(fsTableModel);
     }
 
     validateTable(tableModel: TableModel): boolean {
