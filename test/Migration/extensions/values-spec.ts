@@ -1,4 +1,5 @@
 import {testGenerateMigration} from "../testGenerateMigration";
+import { extension, table, columnNAME, columnID } from "../fixtures/tables";
 
 describe("Migration: extensions", () => {
 
@@ -11,50 +12,20 @@ describe("Migration: extensions", () => {
                 },
                 fs: {
                     extensions: [{
-                        filePath: "values_for_order_type.sql",
-                        name: "values",
-                        identify: "extension values for public.order_type",
-                        forTableIdentify: "public.order_type",
+                        ...extension("values", "order_type"),
                         columns: [],
                         values: [
                             ["1", "FCL"]
                         ]
                     }],
                     tables: [{
-                        filePath: "order_type.sql",
-                        identify: "public.order_type",
-                        name: "order_type",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            },
-                            {
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }
-                        ],
+                        ...table("order_type", columnID, columnNAME),
                         primaryKey: ["id"]
                     }]
                 },
                 db: {
                     tables: [{
-                        identify: "public.order_type",
-                        name: "order_type",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            },
-                            {
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }
-                        ],
+                        ...table("order_type", columnID, columnNAME),
                         primaryKey: ["id"]
                     }]
                 },
@@ -113,31 +84,14 @@ describe("Migration: extensions", () => {
                 },
                 fs: {
                     extensions: [{
-                        filePath: "values_for_order_type.sql",
-                        name: "values",
-                        identify: "extension values for public.order_type",
-                        forTableIdentify: "public.order_type",
+                        ...extension("values", "order_type"),
                         columns: [],
                         values: [
                             ["1", "LTL"]
                         ]
                     }],
                     tables: [{
-                        filePath: "order_type.sql",
-                        identify: "public.order_type",
-                        name: "order_type",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            },
-                            {
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }
-                        ],
+                        ...table("order_type", columnID, columnNAME),
                         primaryKey: ["id"],
                         values: [
                             ["1", "FCL"]
@@ -146,20 +100,7 @@ describe("Migration: extensions", () => {
                 },
                 db: {
                     tables: [{
-                        identify: "public.order_type",
-                        name: "order_type",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            },
-                            {
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }
-                        ],
+                        ...table("order_type", columnID, columnNAME),
                         primaryKey: ["id"]
                     }]
                 },

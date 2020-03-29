@@ -1,4 +1,5 @@
 import {testGenerateMigration} from "../testGenerateMigration";
+import { columnID, columnNAME, columnINN, extension, table } from "../fixtures/tables";
 
 describe("Migration: extensions", () => {
 
@@ -8,37 +9,19 @@ describe("Migration: extensions", () => {
             testGenerateMigration({
                 fs: {
                     extensions: [{
-                        filePath: "test_for_companies.sql",
-                        name: "test",
-                        identify: "extension test for public.companies",
-                        forTableIdentify: "public.companies",
-                        columns: [{
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }]
+                        ...extension("test", "companies"),
+                        columns: [
+                            columnNAME
+                        ]
                     }],
-                    tables: [{
-                        filePath: "companies.sql",
-                        identify: "public.companies",
-                        name: "companies",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }]
-                    }]
+                    tables: [
+                        table("companies", columnID)
+                    ]
                 },
                 db: {
-                    tables: [{
-                        identify: "public.companies",
-                        name: "companies",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }]
-                    }]
+                    tables: [
+                        table("companies", columnID)
+                    ]
                 },
                 migration: {
                     commands: [
@@ -66,49 +49,26 @@ describe("Migration: extensions", () => {
                 fs: {
                     extensions: [
                         {
-                            filePath: "name_for_companies.sql",
-                            name: "test",
-                            identify: "extension name for public.companies",
-                            forTableIdentify: "public.companies",
-                            columns: [{
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }]
+                            ...extension("name", "companies"),
+                            columns: [
+                                columnNAME
+                            ]
                         },
                         {
-                            filePath: "inn_for_companies.sql",
-                            name: "test",
-                            identify: "extension inn for public.companies",
-                            forTableIdentify: "public.companies",
-                            columns: [{
-                                identify: "inn",
-                                key: "inn",
-                                type: "text"
-                            }]
+                            ...extension("inn", "companies"),
+                            columns: [
+                                columnINN
+                            ]
                         }
                     ],
-                    tables: [{
-                        filePath: "companies.sql",
-                        identify: "public.companies",
-                        name: "companies",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }]
-                    }]
+                    tables: [
+                        table("companies", columnID)
+                    ]
                 },
                 db: {
-                    tables: [{
-                        identify: "public.companies",
-                        name: "companies",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }]
-                    }]
+                    tables: [
+                        table("companies", columnID)
+                    ]
                 },
                 migration: {
                     commands: [

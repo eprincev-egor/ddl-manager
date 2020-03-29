@@ -1,5 +1,5 @@
 import {testGenerateMigration} from "../testGenerateMigration";
-import { companiesWithId, companiesWithIdAndName, columnNAME } from "./fixtures/tables";
+import { columnNAME, extension, table, columnID } from "../fixtures/tables";
 
 describe("Migration: extensions", () => {
 
@@ -9,10 +9,7 @@ describe("Migration: extensions", () => {
             testGenerateMigration({
                 fs: {
                     extensions: [{
-                        filePath: "test_for_companies.sql",
-                        name: "test",
-                        identify: "extension test for public.companies",
-                        forTableIdentify: "public.companies",
+                        ...extension("test", "companies"),
                         columns: [
                             columnNAME
                         ],
@@ -25,12 +22,12 @@ describe("Migration: extensions", () => {
                         ]
                     }],
                     tables: [
-                        companiesWithId
+                        table("companies", columnID)
                     ]
                 },
                 db: {
                     tables: [
-                        companiesWithIdAndName
+                        table("companies", columnID, columnNAME)
                     ]
                 },
                 migration: {
@@ -57,21 +54,18 @@ describe("Migration: extensions", () => {
             testGenerateMigration({
                 fs: {
                     extensions: [{
-                        filePath: "test_for_companies.sql",
-                        name: "test",
-                        identify: "extension test for public.companies",
-                        forTableIdentify: "public.companies",
+                        ...extension("test", "companies"),
                         columns: [
                             columnNAME
                         ]
                     }],
                     tables: [
-                        companiesWithId
+                        table("companies", columnID)
                     ]
                 },
                 db: {
                     tables: [{
-                        ...companiesWithIdAndName,
+                        ...table("companies", columnID, columnNAME),
                         uniqueConstraints: [
                             {
                                 identify: "name",

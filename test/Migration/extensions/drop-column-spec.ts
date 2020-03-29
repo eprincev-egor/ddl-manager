@@ -1,4 +1,5 @@
 import {testGenerateMigration} from "../testGenerateMigration";
+import { table, columnID, columnNAME, extension } from "../fixtures/tables";
 
 describe("Migration: extensions", () => {
 
@@ -11,40 +12,17 @@ describe("Migration: extensions", () => {
                 },
                 fs: {
                     extensions: [{
-                        filePath: "test_for_companies.sql",
-                        name: "test",
-                        identify: "extension test for public.companies",
-                        forTableIdentify: "public.companies",
+                        ...extension("test", "companies"),
                         columns: []
                     }],
-                    tables: [{
-                        filePath: "companies.sql",
-                        identify: "public.companies",
-                        name: "companies",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }]
-                    }]
+                    tables: [
+                        table("companies", columnID)
+                    ]
                 },
                 db: {
-                    tables: [{
-                        identify: "public.companies",
-                        name: "companies",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            },
-                            {
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }
-                        ]
-                    }]
+                    tables: [
+                        table("companies", columnID, columnNAME)
+                    ]
                 },
                 migration: {
                     commands: [],
