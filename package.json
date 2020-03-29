@@ -53,8 +53,10 @@
   },
   "homepage": "https://github.com/eprincev-egor/ddl-manager#readme",
   "dependencies": {
+    "@types/pg": "^7.14.3",
     "grapeql-lang": "^2.4.3",
-    "model-layer": "^2.7.13"
+    "model-layer": "^2.7.13",
+    "pg": "^7.18.2"
   },
   "devDependencies": {
     "@types/mocha": "^7.0.1",
