@@ -1,4 +1,5 @@
 import {testGenerateMigration} from "../testGenerateMigration";
+import { companiesWithId, companiesWithIdAndName, columnNAME } from "./fixtures/tables";
 
 describe("Migration: extensions", () => {
 
@@ -12,11 +13,9 @@ describe("Migration: extensions", () => {
                         name: "test",
                         identify: "extension test for public.companies",
                         forTableIdentify: "public.companies",
-                        columns: [{
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
+                        columns: [
+                            columnNAME
+                        ],
                         uniqueConstraints: [
                             {
                                 identify: "name",
@@ -25,31 +24,14 @@ describe("Migration: extensions", () => {
                             }
                         ]
                     }],
-                    tables: [{
-                        filePath: "companies.sql",
-                        identify: "public.companies",
-                        name: "companies",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }]
-                    }]
+                    tables: [
+                        companiesWithId
+                    ]
                 },
                 db: {
-                    tables: [{
-                        identify: "public.companies",
-                        name: "companies",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }]
-                    }]
+                    tables: [
+                        companiesWithIdAndName
+                    ]
                 },
                 migration: {
                     commands: [
@@ -79,36 +61,17 @@ describe("Migration: extensions", () => {
                         name: "test",
                         identify: "extension test for public.companies",
                         forTableIdentify: "public.companies",
-                        columns: [{
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }]
+                        columns: [
+                            columnNAME
+                        ]
                     }],
-                    tables: [{
-                        filePath: "companies.sql",
-                        identify: "public.companies",
-                        name: "companies",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }]
-                    }]
+                    tables: [
+                        companiesWithId
+                    ]
                 },
                 db: {
                     tables: [{
-                        identify: "public.companies",
-                        name: "companies",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
+                        ...companiesWithIdAndName,
                         uniqueConstraints: [
                             {
                                 identify: "name",
