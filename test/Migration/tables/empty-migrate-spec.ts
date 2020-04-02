@@ -1,4 +1,5 @@
 import {testGenerateMigration} from "../testGenerateMigration";
+import { table, columnID, columnNAME } from "../fixtures/tables";
 
 describe("Migration: tables", () => {
 
@@ -7,34 +8,14 @@ describe("Migration: tables", () => {
         it("db and fs has only one same table, empty migration", () => {
             testGenerateMigration({
                 fs: {
-                    tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }]
-                    }]
+                    tables: [
+                        table("company", columnID, columnNAME)
+                    ]
                 },
                 db: {
-                    tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }]
-                    }]
+                    tables: [
+                        table("company", columnID, columnNAME)
+                    ]
                 },
                 migration: {
                     commands: [],

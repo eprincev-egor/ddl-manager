@@ -1,4 +1,5 @@
 import {testGenerateMigration} from "../testGenerateMigration";
+import { table, columnID, columnNAME } from "../fixtures/tables";
 
 describe("Migration: tables", () => {
 
@@ -12,17 +13,9 @@ describe("Migration: tables", () => {
                 fs: {
                 },
                 db: {
-                    tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }
-                        ]
-                    }]
+                    tables: [
+                        table("company", columnID)
+                    ]
                 },
                 migration: {
                     commands: [],
@@ -47,23 +40,9 @@ describe("Migration: tables", () => {
                 fs: {
                 },
                 db: {
-                    tables: [{
-                        filePath: "my_table.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            },
-                            {
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }
-                        ]
-                    }]
+                    tables: [
+                        table("company", columnID, columnNAME)
+                    ]
                 },
                 migration: {
                     commands: [],
@@ -80,23 +59,9 @@ describe("Migration: tables", () => {
                 fs: {
                 },
                 db: {
-                    tables: [{
-                        filePath: "my_table.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            },
-                            {
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }
-                        ]
-                    }]
+                    tables: [
+                        table("company", columnID, columnNAME)
+                    ]
                 },
                 migration: {
                     commands: [],

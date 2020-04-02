@@ -1,6 +1,7 @@
 import {testGenerateMigration} from "../testGenerateMigration";
 import {DDLState} from "../../../lib/state/DDLState";
 import assert from "assert";
+import { table, columnID, columnNAME } from "../fixtures/tables";
 
 describe("Migration: tables", () => {
 
@@ -13,11 +14,7 @@ describe("Migration: tables", () => {
                         filePath: "my_table.sql",
                         identify: "public.abcd012345678901234567890123456789012345678901234567890123456789_tail",
                         name: "abcd012345678901234567890123456789012345678901234567890123456789_tail",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }]
+                        columns: [columnID]
                     }]
                 },
                 db: {
@@ -42,21 +39,7 @@ describe("Migration: tables", () => {
                 () => {
                     const state = new DDLState({
                         tables: [{
-                            filePath: "my_table.sql",
-                            identify: "public.company",
-                            name: "company",
-                            columns: [
-                                {
-                                    identify: "id",
-                                    key: "id",
-                                    type: "integer"
-                                },
-                                {
-                                    identify: "name",
-                                    key: "name",
-                                    type: "text"
-                                }
-                            ],
+                            ...table("company", columnID, columnNAME),
                             deprecatedColumns: ["id", "name"]
                         }]
                     });

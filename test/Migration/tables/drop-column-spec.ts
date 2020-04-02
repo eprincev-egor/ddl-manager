@@ -1,4 +1,5 @@
 import {testGenerateMigration} from "../testGenerateMigration";
+import { table, columnID, columnNAME } from "../fixtures/tables";
 
 describe("Migration: tables", () => {
 
@@ -10,43 +11,20 @@ describe("Migration: tables", () => {
                     mode: "dev"
                 },
                 fs: {
-                    tables: [{
-                        filePath: "my_table.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }
-                        ]
-                    }]
+                    tables: [
+                        table("company", columnID)
+                    ]
                 },
                 db: {
-                    tables: [{
-                        filePath: "my_table.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            },
-                            {
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }
-                        ]
-                    }]
+                    tables: [
+                        table("company", columnID, columnNAME)
+                    ]
                 },
                 migration: {
                     commands: [],
                     errors: [
                         {
-                            filePath: "my_table.sql",
+                            filePath: "company.sql",
                             code: "CannotDropColumnError",
                             message: "cannot drop column public.company.name, please use deprecated section",
                             tableIdentify: "public.company",
@@ -64,37 +42,14 @@ describe("Migration: tables", () => {
                 },
                 fs: {
                     tables: [{
-                        filePath: "my_table.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }
-                        ],
+                        ...table("company", columnID),
                         deprecatedColumns: ["name"]
                     }]
                 },
                 db: {
-                    tables: [{
-                        filePath: "my_table.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            },
-                            {
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }
-                        ]
-                    }]
+                    tables: [
+                        table("company", columnID, columnNAME)
+                    ]
                 },
                 migration: {
                     commands: [],
@@ -109,37 +64,14 @@ describe("Migration: tables", () => {
                     mode: "prod"
                 },
                 fs: {
-                    tables: [{
-                        filePath: "my_table.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }
-                        ]
-                    }]
+                    tables: [
+                        table("company", columnID)
+                    ]
                 },
                 db: {
-                    tables: [{
-                        filePath: "my_table.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            },
-                            {
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }
-                        ]
-                    }]
+                    tables: [
+                        table("company", columnID, columnNAME)
+                    ]
                 },
                 migration: {
                     commands: [],
@@ -151,37 +83,14 @@ describe("Migration: tables", () => {
         it("no error on drop column, prod database (default behavior)", () => {
             testGenerateMigration({
                 fs: {
-                    tables: [{
-                        filePath: "my_table.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }
-                        ]
-                    }]
+                    tables: [
+                        table("company", columnID)
+                    ]
                 },
                 db: {
-                    tables: [{
-                        filePath: "my_table.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            },
-                            {
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }
-                        ]
-                    }]
+                    tables: [
+                        table("company", columnID, columnNAME)
+                    ]
                 },
                 migration: {
                     commands: [],
@@ -194,30 +103,14 @@ describe("Migration: tables", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }],
+                        ...table("company", columnID),
                         deprecatedColumns: ["name"]
                     }]
                 },
                 db: {
-                    tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }]
-                    }]
+                    tables: [
+                        table("company", columnID, columnNAME)
+                    ]
                 },
                 migration: {
                     commands: [],
