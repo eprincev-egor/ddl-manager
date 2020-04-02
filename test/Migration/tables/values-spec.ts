@@ -1,50 +1,26 @@
 import {testGenerateMigration} from "../testGenerateMigration";
+import { table, columnID, columnNAME } from "../fixtures/tables";
 
 describe("Migration: tables", () => {
 
     describe("values (rows)", () => {
         
+        const orderType = table("order_type", columnID, columnNAME);
+        
         it("create rows, expected primary key error", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        filePath: "order_type.sql",
-                        identify: "order_type",
-                        name: "order_type",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            },
-                            {
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }
-                        ],
+                        ...orderType,
                         values: [
                             ["1", "FCL"]
                         ]
                     }]
                 },
                 db: {
-                    tables: [{
-                        identify: "order_type",
-                        name: "order_type",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            },
-                            {
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }
-                        ]
-                    }]
+                    tables: [
+                        orderType
+                    ]
                 },
                 migration: {
                     commands: [],
@@ -52,8 +28,8 @@ describe("Migration: tables", () => {
                         {
                             filePath: "order_type.sql",
                             code: "ExpectedPrimaryKeyForRowsError",
-                            message: "table order_type should have primary key for creating rows",
-                            tableIdentify: "order_type"
+                            message: "table public.order_type should have primary key for creating rows",
+                            tableIdentify: "public.order_type"
                         }                        
                     ]
                 }
@@ -64,21 +40,7 @@ describe("Migration: tables", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        filePath: "order_type.sql",
-                        identify: "order_type",
-                        name: "order_type",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            },
-                            {
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }
-                        ],
+                        ...orderType,
                         values: [
                             ["1", "FCL"]
                         ]
@@ -93,8 +55,8 @@ describe("Migration: tables", () => {
                         {
                             filePath: "order_type.sql",
                             code: "ExpectedPrimaryKeyForRowsError",
-                            message: "table order_type should have primary key for creating rows",
-                            tableIdentify: "order_type"
+                            message: "table public.order_type should have primary key for creating rows",
+                            tableIdentify: "public.order_type"
                         }                        
                     ]
                 }
@@ -105,21 +67,7 @@ describe("Migration: tables", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        filePath: "order_type.sql",
-                        identify: "order_type",
-                        name: "order_type",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            },
-                            {
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }
-                        ],
+                        ...orderType,
                         primaryKey: ["id"],
                         values: [
                             ["1", "FCL"]
@@ -127,23 +75,12 @@ describe("Migration: tables", () => {
                     }]
                 },
                 db: {
-                    tables: [{
-                        identify: "order_type",
-                        name: "order_type",
-                        primaryKey: ["id"],
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            },
-                            {
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }
-                        ]
-                    }]
+                    tables: [
+                        {
+                            ...orderType,
+                            primaryKey: ["id"]
+                        }
+                    ]
                 },
                 migration: {
                     commands: [
@@ -153,7 +90,7 @@ describe("Migration: tables", () => {
                             command: "Rows",
                             table: {
                                 filePath: "order_type.sql",
-                                identify: "order_type",
+                                identify: "public.order_type",
                                 name: "order_type",
                                 parsed: null,
                                 deprecatedColumns: [],
@@ -198,21 +135,7 @@ describe("Migration: tables", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        filePath: "order_type.sql",
-                        identify: "order_type",
-                        name: "order_type",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            },
-                            {
-                                identify: "name",
-                                key: "name",
-                                type: "text"
-                            }
-                        ],
+                        ...orderType,
                         primaryKey: ["id"],
                         values: [
                             ["1", "FCL"]
@@ -229,7 +152,7 @@ describe("Migration: tables", () => {
                             command: "Table",
                             table: {
                                 filePath: "order_type.sql",
-                                identify: "order_type",
+                                identify: "public.order_type",
                                 name: "order_type",
                                 parsed: null,
                                 deprecatedColumns: [],
@@ -266,7 +189,7 @@ describe("Migration: tables", () => {
                             command: "Rows",
                             table: {
                                 filePath: "order_type.sql",
-                                identify: "order_type",
+                                identify: "public.order_type",
                                 name: "order_type",
                                 parsed: null,
                                 deprecatedColumns: [],

@@ -1,4 +1,5 @@
 import {testGenerateMigration} from "../testGenerateMigration";
+import { table, columnID, columnNAME } from "../fixtures/tables";
 
 describe("Migration: tables", () => {
 
@@ -8,27 +9,14 @@ describe("Migration: tables", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        filePath: "company.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }],
+                        ...table("company", columnID),
                         primaryKey: ["id"]
                     }]
                 },
                 db: {
-                    tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }]
-                    }]
+                    tables: [
+                        table("company", columnID)
+                    ]
                 },
                 migration: {
                     commands: [
@@ -47,26 +35,13 @@ describe("Migration: tables", () => {
         it("drop primary key", () => {
             testGenerateMigration({
                 fs: {
-                    tables: [{
-                        filePath: "company.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }]
-                    }]
+                    tables: [
+                        table("company", columnID)
+                    ]
                 },
                 db: {
                     tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }],
+                        ...table("company", columnID),
                         primaryKey: ["id"]
                     }]
                 },
@@ -88,34 +63,13 @@ describe("Migration: tables", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        filePath: "company.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
+                        ...table("company", columnID, columnNAME),
                         primaryKey: ["id"]
                     }]
                 },
                 db: {
                     tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
+                        ...table("company", columnID, columnNAME),
                         primaryKey: ["id", "name"]
                     }]
                 },
@@ -143,34 +97,13 @@ describe("Migration: tables", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        filePath: "company.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
+                        ...table("company", columnID, columnNAME),
                         primaryKey: ["name", "id"]
                     }]
                 },
                 db: {
                     tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
+                        ...table("company", columnID, columnNAME),
                         primaryKey: ["id", "name"]
                     }]
                 },

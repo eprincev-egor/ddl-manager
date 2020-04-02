@@ -1,25 +1,17 @@
 import {testGenerateMigration} from "../testGenerateMigration";
+import { table, columnID, columnNAME } from "../fixtures/tables";
 
 describe("Migration: tables", () => {
 
     describe("unique constraint", () => {
+
+        const company = table("company", columnID, columnNAME);
         
         it("create unique constraint", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        filePath: "company.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
+                        ...company,
                         uniqueConstraints: [
                             {
                                 identify: "name",
@@ -30,19 +22,9 @@ describe("Migration: tables", () => {
                     }]
                 },
                 db: {
-                    tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }]
-                    }]
+                    tables: [
+                        company
+                    ]
                 },
                 migration: {
                     commands: [
@@ -68,34 +50,13 @@ describe("Migration: tables", () => {
         it("drop unique constraint", () => {
             testGenerateMigration({
                 fs: {
-                    tables: [{
-                        filePath: "company.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }]
-                    }]
+                    tables: [
+                        company
+                    ]
                 },
                 db: {
                     tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
+                        ...company,
                         uniqueConstraints: [
                             {
                                 identify: "name",
@@ -130,18 +91,7 @@ describe("Migration: tables", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        filePath: "company.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
+                        ...company,
                         uniqueConstraints: [
                             {
                                 identify: "name",
@@ -153,17 +103,7 @@ describe("Migration: tables", () => {
                 },
                 db: {
                     tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
+                        ...company,
                         uniqueConstraints: [
                             {
                                 identify: "name",
@@ -209,18 +149,7 @@ describe("Migration: tables", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        filePath: "company.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
+                        ...company,
                         uniqueConstraints: [
                             {
                                 identify: "name",
@@ -232,17 +161,7 @@ describe("Migration: tables", () => {
                 },
                 db: {
                     tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
+                        ...company,
                         uniqueConstraints: [
                             {
                                 identify: "name",
