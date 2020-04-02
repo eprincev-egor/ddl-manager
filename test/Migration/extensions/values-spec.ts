@@ -11,13 +11,14 @@ describe("Migration: extensions", () => {
                     mode: "dev"
                 },
                 fs: {
-                    extensions: [{
-                        ...extension("values", "order_type"),
-                        columns: [],
-                        values: [
-                            ["1", "FCL"]
-                        ]
-                    }],
+                    extensions: [
+                        extension("values", "order_type", {
+                            columns: [],
+                            values: [
+                                ["1", "FCL"]
+                            ]
+                        })
+                    ],
                     tables: [{
                         ...table("order_type", columnID, columnNAME),
                         primaryKey: ["id"]
@@ -83,13 +84,14 @@ describe("Migration: extensions", () => {
                     mode: "dev"
                 },
                 fs: {
-                    extensions: [{
-                        ...extension("values", "order_type"),
-                        columns: [],
-                        values: [
-                            ["1", "LTL"]
-                        ]
-                    }],
+                    extensions: [
+                        extension("values", "order_type", {
+                            columns: [],
+                            values: [
+                                ["1", "LTL"]
+                            ]
+                        })
+                    ],
                     tables: [{
                         ...table("order_type", columnID, columnNAME),
                         primaryKey: ["id"],

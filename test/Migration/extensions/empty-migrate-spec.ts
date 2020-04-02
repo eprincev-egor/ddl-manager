@@ -8,12 +8,13 @@ describe("Migration: extensions", () => {
         it("empty migration for same db and fs state (extension with column)", () => {
             testGenerateMigration({
                 fs: {
-                    extensions: [{
-                        ...extension("test", "companies"),
-                        columns: [
-                            columnNAME
-                        ]
-                    }],
+                    extensions: [
+                        extension("test", "companies", {
+                            columns: [
+                                columnNAME
+                            ]
+                        })
+                    ],
                     tables: [
                         table("companies", columnID)
                     ]

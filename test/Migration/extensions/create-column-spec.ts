@@ -8,12 +8,13 @@ describe("Migration: extensions", () => {
         it("create column for existent table by extension", () => {
             testGenerateMigration({
                 fs: {
-                    extensions: [{
-                        ...extension("test", "companies"),
-                        columns: [
-                            columnNAME
-                        ]
-                    }],
+                    extensions: [
+                        extension("test", "companies", {
+                            columns: [
+                                columnNAME
+                            ]
+                        })
+                    ],
                     tables: [
                         table("companies", columnID)
                     ]
@@ -48,18 +49,16 @@ describe("Migration: extensions", () => {
             testGenerateMigration({
                 fs: {
                     extensions: [
-                        {
-                            ...extension("name", "companies"),
+                        extension("name", "companies", {
                             columns: [
                                 columnNAME
                             ]
-                        },
-                        {
-                            ...extension("inn", "companies"),
+                        }),
+                        extension("inn", "companies", {
                             columns: [
                                 column("inn", "text")
                             ]
-                        }
+                        })
                     ],
                     tables: [
                         table("companies", columnID)

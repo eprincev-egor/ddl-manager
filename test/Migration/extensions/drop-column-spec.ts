@@ -11,10 +11,11 @@ describe("Migration: extensions", () => {
                     mode: "dev"
                 },
                 fs: {
-                    extensions: [{
-                        ...extension("test", "companies"),
-                        columns: []
-                    }],
+                    extensions: [
+                        extension("test", "companies", {
+                            columns: []
+                        })
+                    ],
                     tables: [
                         table("companies", columnID)
                     ]

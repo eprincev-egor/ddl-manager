@@ -27,12 +27,11 @@ describe("Migration: extensions", () => {
             testGenerateMigration({
                 fs: {
                     extensions: [
-                        {
-                            ...extension("test", "company"),
+                        extension("test", "company", {
                             foreignKeysConstraints: [
                                 countryForeignKey
                             ]
-                        }
+                        })
                     ],
                     tables: [
                         tables.company,
@@ -72,15 +71,14 @@ describe("Migration: extensions", () => {
             testGenerateMigration({
                 fs: {
                     extensions: [
-                        {
-                            ...extension("test", "company"),
+                        extension("test", "company", {
                             foreignKeysConstraints: [
                                 {
                                     ...countryForeignKey,
                                     parsed: "xxx"
                                 }
                             ]
-                        }
+                        })
                     ],
                     tables: [
                         tables.company,
@@ -142,12 +140,11 @@ describe("Migration: extensions", () => {
             testGenerateMigration({
                 fs: {
                     extensions: [
-                        {
-                            ...extension("test", "company"),
+                        extension("test", "company", {
                             foreignKeysConstraints: [
                                 countryForeignKey
                             ]
-                        }
+                        })
                     ],
                     tables: [
                         tables.company,
@@ -175,16 +172,18 @@ describe("Migration: extensions", () => {
         it("foreign key reference to unknown table", () => {
             testGenerateMigration({
                 fs: {
-                    tables: [
-                        {
-                            ...tables.company,
+                    extensions: [
+                        extension("test", "company", {
                             foreignKeysConstraints: [
                                 {
                                     ...countryForeignKey,
                                     referenceTableIdentify: "public.country2"
                                 }
                             ]
-                        },
+                        })
+                    ],
+                    tables: [
+                        tables.company,
                         tables.country
                     ]
                 },
@@ -214,16 +213,18 @@ describe("Migration: extensions", () => {
         it("foreign key reference to unknown column", () => {
             testGenerateMigration({
                 fs: {
-                    tables: [
-                        {
-                            ...tables.company,
+                    extensions: [
+                        extension("test", "company", {
                             foreignKeysConstraints: [
                                 {
                                     ...countryForeignKey,
                                     referenceColumns: ["id2"]
                                 }
                             ]
-                        },
+                        })
+                    ],
+                    tables: [
+                        tables.company,
                         tables.country
                     ]
                 },

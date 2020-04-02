@@ -8,19 +8,20 @@ describe("Migration: extensions", () => {
         it("create unique constraint from extension", () => {
             testGenerateMigration({
                 fs: {
-                    extensions: [{
-                        ...extension("test", "companies"),
-                        columns: [
-                            columnNAME
-                        ],
-                        uniqueConstraints: [
-                            {
-                                identify: "name",
-                                name: "name",
-                                unique: ["name"]
-                            }
-                        ]
-                    }],
+                    extensions: [
+                        extension("test", "companies", {
+                            columns: [
+                                columnNAME
+                            ],
+                            uniqueConstraints: [
+                                {
+                                    identify: "name",
+                                    name: "name",
+                                    unique: ["name"]
+                                }
+                            ]
+                        })
+                    ],
                     tables: [
                         table("companies", columnID)
                     ]
@@ -53,12 +54,13 @@ describe("Migration: extensions", () => {
         it("drop unique constraint from extension", () => {
             testGenerateMigration({
                 fs: {
-                    extensions: [{
-                        ...extension("test", "companies"),
-                        columns: [
-                            columnNAME
-                        ]
-                    }],
+                    extensions: [
+                        extension("test", "companies", {
+                            columns: [
+                                columnNAME
+                            ]
+                        })
+                    ],
                     tables: [
                         table("companies", columnID)
                     ]
