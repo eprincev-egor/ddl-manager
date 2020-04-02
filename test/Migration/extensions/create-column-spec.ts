@@ -1,5 +1,5 @@
 import {testGenerateMigration} from "../testGenerateMigration";
-import { columnID, columnNAME, columnINN, extension, table } from "../fixtures/tables";
+import { columnID, columnNAME, column, extension, table } from "../fixtures/tables";
 
 describe("Migration: extensions", () => {
 
@@ -57,7 +57,7 @@ describe("Migration: extensions", () => {
                         {
                             ...extension("inn", "companies"),
                             columns: [
-                                columnINN
+                                column("inn", "text")
                             ]
                         }
                     ],

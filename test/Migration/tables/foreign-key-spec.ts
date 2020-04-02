@@ -1,6 +1,17 @@
 import {testGenerateMigration} from "../testGenerateMigration";
+import { table, column, columnID } from "../fixtures/tables";
 
 describe("Migration: tables", () => {
+    const tables = {
+        company: table("company", 
+            columnID,
+            column("id_country", "integer")
+        ),
+        country: table("country", 
+            columnID,
+            column("code", "text")
+        )
+    };
 
     describe("create foreign key", () => {
         
@@ -9,18 +20,7 @@ describe("Migration: tables", () => {
                 fs: {
                     tables: [
                         {
-                            filePath: "company.sql",
-                            identify: "public.company",
-                            name: "company",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "id_country",
-                                key: "id_country",
-                                type: "integer"
-                            }],
+                            ...tables.company,
                             foreignKeysConstraints: [
                                 {
                                     identify: "country_fk",
@@ -31,52 +31,16 @@ describe("Migration: tables", () => {
                                 }
                             ]
                         },
-                        {
-                            filePath: "country.sql",
-                            identify: "public.country",
-                            name: "country",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "code",
-                                key: "code",
-                                type: "text"
-                            }]
-                        }
+                        table("country", 
+                            columnID,
+                            column("code", "text")
+                        )
                     ]
                 },
                 db: {
                     tables: [
-                        {
-                            filePath: "company.sql",
-                            identify: "public.company",
-                            name: "company",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "id_country",
-                                key: "id_country",
-                                type: "integer"
-                            }]
-                        },
-                        {
-                            filePath: "country.sql",
-                            identify: "public.country",
-                            name: "country",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "code",
-                                key: "code",
-                                type: "text"
-                            }]
-                        }
+                        tables.company,
+                        tables.country
                     ]
                 },
                 migration: {
@@ -106,51 +70,14 @@ describe("Migration: tables", () => {
             testGenerateMigration({
                 fs: {
                     tables: [
-                        {
-                            filePath: "company.sql",
-                            identify: "public.company",
-                            name: "company",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "id_country",
-                                key: "id_country",
-                                type: "integer"
-                            }]
-                        },
-                        {
-                            filePath: "country.sql",
-                            identify: "public.country",
-                            name: "country",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "code",
-                                key: "code",
-                                type: "text"
-                            }]
-                        }
+                        tables.company,
+                        tables.country
                     ]
                 },
                 db: {
                     tables: [
                         {
-                            filePath: "company.sql",
-                            identify: "public.company",
-                            name: "company",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "id_country",
-                                key: "id_country",
-                                type: "integer"
-                            }],
+                            ...tables.company,
                             foreignKeysConstraints: [
                                 {
                                     identify: "country_fk",
@@ -161,20 +88,7 @@ describe("Migration: tables", () => {
                                 }
                             ]
                         },
-                        {
-                            filePath: "country.sql",
-                            identify: "public.country",
-                            name: "country",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "code",
-                                key: "code",
-                                type: "text"
-                            }]
-                        }
+                        tables.country
                     ]
                 },
                 migration: {
@@ -205,18 +119,7 @@ describe("Migration: tables", () => {
                 fs: {
                     tables: [
                         {
-                            filePath: "company.sql",
-                            identify: "public.company",
-                            name: "company",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "id_country",
-                                key: "id_country",
-                                type: "integer"
-                            }],
+                            ...tables.company,
                             foreignKeysConstraints: [
                                 {
                                     identify: "country_fk",
@@ -228,37 +131,13 @@ describe("Migration: tables", () => {
                                 }
                             ]
                         },
-                        {
-                            filePath: "country.sql",
-                            identify: "public.country",
-                            name: "country",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "code",
-                                key: "code",
-                                type: "text"
-                            }]
-                        }
+                        tables.country
                     ]
                 },
                 db: {
                     tables: [
                         {
-                            filePath: "company.sql",
-                            identify: "public.company",
-                            name: "company",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "id_country",
-                                key: "id_country",
-                                type: "integer"
-                            }],
+                            ...tables.company,
                             foreignKeysConstraints: [
                                 {
                                     identify: "country_fk",
@@ -270,20 +149,7 @@ describe("Migration: tables", () => {
                                 }
                             ]
                         },
-                        {
-                            filePath: "country.sql",
-                            identify: "public.country",
-                            name: "country",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "code",
-                                key: "code",
-                                type: "text"
-                            }]
-                        }
+                        tables.country
                     ]
                 },
                 migration: {
@@ -328,18 +194,7 @@ describe("Migration: tables", () => {
                 fs: {
                     tables: [
                         {
-                            filePath: "company.sql",
-                            identify: "public.company",
-                            name: "company",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "id_country",
-                                key: "id_country",
-                                type: "integer"
-                            }],
+                            ...tables.company,
                             foreignKeysConstraints: [
                                 {
                                     identify: "country_fk",
@@ -350,37 +205,13 @@ describe("Migration: tables", () => {
                                 }
                             ]
                         },
-                        {
-                            filePath: "country.sql",
-                            identify: "public.country",
-                            name: "country",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "code",
-                                key: "code",
-                                type: "text"
-                            }]
-                        }
+                        tables.country
                     ]
                 },
                 db: {
                     tables: [
                         {
-                            filePath: "company.sql",
-                            identify: "public.company",
-                            name: "company",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "id_country",
-                                key: "id_country",
-                                type: "integer"
-                            }],
+                            ...tables.company,
                             foreignKeysConstraints: [
                                 {
                                     identify: "country_fk",
@@ -391,20 +222,7 @@ describe("Migration: tables", () => {
                                 }
                             ]
                         },
-                        {
-                            filePath: "country.sql",
-                            identify: "public.country",
-                            name: "country",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "code",
-                                key: "code",
-                                type: "text"
-                            }]
-                        }
+                        tables.country
                     ]
                 },
                 migration: {
@@ -419,18 +237,7 @@ describe("Migration: tables", () => {
                 fs: {
                     tables: [
                         {
-                            filePath: "company.sql",
-                            identify: "public.company",
-                            name: "company",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "id_country",
-                                key: "id_country",
-                                type: "integer"
-                            }],
+                            ...tables.company,
                             foreignKeysConstraints: [
                                 {
                                     identify: "country_fk",
@@ -441,52 +248,13 @@ describe("Migration: tables", () => {
                                 }
                             ]
                         },
-                        {
-                            filePath: "country.sql",
-                            identify: "public.country",
-                            name: "country",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "code",
-                                key: "code",
-                                type: "text"
-                            }]
-                        }
+                        tables.country
                     ]
                 },
                 db: {
                     tables: [
-                        {
-                            filePath: "company.sql",
-                            identify: "public.company",
-                            name: "company",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "id_country",
-                                key: "id_country",
-                                type: "integer"
-                            }]
-                        },
-                        {
-                            filePath: "country.sql",
-                            identify: "public.country",
-                            name: "country",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "code",
-                                key: "code",
-                                type: "text"
-                            }]
-                        }
+                        tables.company,
+                        tables.country
                     ]
                 },
                 migration: {
@@ -511,18 +279,7 @@ describe("Migration: tables", () => {
                 fs: {
                     tables: [
                         {
-                            filePath: "company.sql",
-                            identify: "public.company",
-                            name: "company",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "id_country",
-                                key: "id_country",
-                                type: "integer"
-                            }],
+                            ...tables.company,
                             foreignKeysConstraints: [
                                 {
                                     identify: "country_fk",
@@ -533,52 +290,13 @@ describe("Migration: tables", () => {
                                 }
                             ]
                         },
-                        {
-                            filePath: "country.sql",
-                            identify: "public.country",
-                            name: "country",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "code",
-                                key: "code",
-                                type: "text"
-                            }]
-                        }
+                        tables.country
                     ]
                 },
                 db: {
                     tables: [
-                        {
-                            filePath: "company.sql",
-                            identify: "public.company",
-                            name: "company",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "id_country",
-                                key: "id_country",
-                                type: "integer"
-                            }]
-                        },
-                        {
-                            filePath: "country.sql",
-                            identify: "public.country",
-                            name: "country",
-                            columns: [{
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }, {
-                                identify: "code",
-                                key: "code",
-                                type: "text"
-                            }]
-                        }
+                        tables.company,
+                        tables.country
                     ]
                 },
                 migration: {

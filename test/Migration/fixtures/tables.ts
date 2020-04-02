@@ -2,23 +2,19 @@ import { TableModel } from "../../../lib/objects/TableModel";
 import { ColumnModel } from "../../../lib/objects/ColumnModel";
 import { ExtensionModel } from "../../../lib/objects/ExtensionModel";
 
-export const columnID: ColumnModel["TInputData"] = {
-    identify: "id",
-    key: "id",
-    type: "integer"
-};
+export function column(
+    key: string, 
+    type: string
+): ColumnModel["TInputData"] {
+    return {
+        identify: key,
+        key,
+        type
+    };
+}
 
-export const columnNAME: ColumnModel["TInputData"] = {
-    identify: "name",
-    key: "name",
-    type: "text"
-};
-
-export const columnINN: ColumnModel["TInputData"] = {
-    identify: "inn",
-    key: "inn",
-    type: "text"
-};
+export const columnID = column("id", "integer");
+export const columnNAME = column("name", "text");
 
 export function table(
     tableName: string,
