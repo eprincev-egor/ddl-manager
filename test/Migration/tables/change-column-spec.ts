@@ -1,4 +1,5 @@
 import {testGenerateMigration} from "../testGenerateMigration";
+import { table, column } from "../fixtures/tables";
 
 describe("Migration: tables", () => {
 
@@ -7,37 +8,20 @@ describe("Migration: tables", () => {
         it("error on change column type", () => {
             testGenerateMigration({
                 fs: {
-                    tables: [{
-                        filePath: "my_table.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "date"
-                            }
-                        ]
-                    }]
+                    tables: [
+                        table("company", column("id", "date"))
+                    ]
                 },
                 db: {
-                    tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [
-                            {
-                                identify: "id",
-                                key: "id",
-                                type: "integer"
-                            }
-                        ]
-                    }]
+                    tables: [
+                        table("company", column("id", "integer"))
+                    ]
                 },
                 migration: {
                     commands: [],
                     errors: [
                         {
-                            filePath: "my_table.sql",
+                            filePath: "company.sql",
                             code: "CannotChangeColumnTypeError",
                             message: `cannot change column type public.company.id from integer to date`,
                             tableIdentify: "public.company",
@@ -54,24 +38,18 @@ describe("Migration: tables", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        identify: "public.company",
-                        name: "company",
+                        ...table("company"),
                         columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer",
+                            ...column("id", "integer"),
                             nulls: true
                         }]
                     }]
                 },
                 db: {
                     tables: [{
-                        identify: "public.company",
-                        name: "company",
+                        ...table("company"),
                         columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer",
+                            ...column("id", "integer"),
                             nulls: false
                         }]
                     }]
