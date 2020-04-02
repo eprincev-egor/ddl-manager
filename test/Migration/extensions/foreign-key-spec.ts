@@ -1,7 +1,7 @@
 import {testGenerateMigration} from "../testGenerateMigration";
-import { table, column, columnID } from "../fixtures/tables";
+import { table, column, columnID, extension } from "../fixtures/tables";
 
-describe("Migration: tables", () => {
+describe("Migration: extensions", () => {
     const tables = {
         company: table("company", 
             columnID,
@@ -26,13 +26,16 @@ describe("Migration: tables", () => {
         it("create foreign key", () => {
             testGenerateMigration({
                 fs: {
-                    tables: [
+                    extensions: [
                         {
-                            ...tables.company,
+                            ...extension("test", "company"),
                             foreignKeysConstraints: [
                                 countryForeignKey
                             ]
-                        },
+                        }
+                    ],
+                    tables: [
+                        tables.company,
                         tables.country
                     ]
                 },
@@ -65,61 +68,22 @@ describe("Migration: tables", () => {
         });
 
         
-        it("drop foreign key", () => {
-            testGenerateMigration({
-                fs: {
-                    tables: [
-                        tables.company,
-                        tables.country
-                    ]
-                },
-                db: {
-                    tables: [
-                        {
-                            ...tables.company,
-                            foreignKeysConstraints: [
-                                countryForeignKey
-                            ]
-                        },
-                        tables.country
-                    ]
-                },
-                migration: {
-                    commands: [
-                        {
-                            type: "drop",
-                            command: "ForeignKeyConstraint",
-                            tableIdentify: "public.company",
-                            foreignKey: {
-                                filePath: null,
-                                parsed: null,
-                                identify: "country_fk",
-                                name: "country_fk",
-                                columns: ["id_country"],
-                                referenceTableIdentify: "public.country",
-                                referenceColumns: ["id"]
-                            }
-                        }
-                    ],
-                    errors: []
-                }
-            });
-        });
-
-        
         it("change foreign key (drop/create)", () => {
             testGenerateMigration({
                 fs: {
-                    tables: [
+                    extensions: [
                         {
-                            ...tables.company,
+                            ...extension("test", "company"),
                             foreignKeysConstraints: [
                                 {
                                     ...countryForeignKey,
                                     parsed: "xxx"
                                 }
                             ]
-                        },
+                        }
+                    ],
+                    tables: [
+                        tables.company,
                         tables.country
                     ]
                 },
@@ -177,13 +141,16 @@ describe("Migration: tables", () => {
         it("same foreign key, nothing to do", () => {
             testGenerateMigration({
                 fs: {
-                    tables: [
+                    extensions: [
                         {
-                            ...tables.company,
+                            ...extension("test", "company"),
                             foreignKeysConstraints: [
                                 countryForeignKey
                             ]
-                        },
+                        }
+                    ],
+                    tables: [
+                        tables.company,
                         tables.country
                     ]
                 },

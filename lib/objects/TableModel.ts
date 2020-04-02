@@ -32,9 +32,12 @@ export class TableModel extends AbstractTableModel<TableModel> {
         const cloneTable = this.clone();
 
         for (const extension of extensions) {
-            extension.get("columns").forEach(column => {
-                cloneTable.addColumn(column);
-            });
+            const extensionColumns = extension.get("columns");
+            if ( extensionColumns ) {
+                extensionColumns.forEach(column => {
+                    cloneTable.addColumn(column);
+                });
+            }
 
             const extensionValues = extension.get("values");
             if ( extensionValues ) {
@@ -50,6 +53,17 @@ export class TableModel extends AbstractTableModel<TableModel> {
                     uniqueConstraints: [
                         ...tableUniqueConstraints,
                         ...extensionUniqueConstraints
+                    ]
+                });
+            }
+
+            const extensionForeignKeys = extension.get("foreignKeysConstraints");
+            if ( extensionForeignKeys ) {
+                const tableForeignKeys = cloneTable.get("foreignKeysConstraints");
+                cloneTable.set({
+                    foreignKeysConstraints: [
+                        ...tableForeignKeys,
+                        ...extensionForeignKeys
                     ]
                 });
             }
