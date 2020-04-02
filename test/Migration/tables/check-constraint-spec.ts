@@ -1,27 +1,19 @@
 import {testGenerateMigration} from "../testGenerateMigration";
+import { table, columnID, columnNAME } from "../fixtures/tables";
 
 describe("Migration: tables", () => {
 
     describe("check constraints", () => {
+        const company = table("company", 
+            columnID,
+            columnNAME
+        );
         
         it("create check constraint", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        filePath: "company.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
-                        uniqueConstraints: [],
-                        foreignKeysConstraints: [],
+                        ...company,
                         checkConstraints: [
                             {
                                 identify: "name",
@@ -32,19 +24,9 @@ describe("Migration: tables", () => {
                     }]
                 },
                 db: {
-                    tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }]
-                    }]
+                    tables: [
+                        company
+                    ]
                 },
                 migration: {
                     commands: [
@@ -68,39 +50,13 @@ describe("Migration: tables", () => {
         it("drop check constraint", () => {
             testGenerateMigration({
                 fs: {
-                    tables: [{
-                        filePath: "company.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
-                        uniqueConstraints: [],
-                        foreignKeysConstraints: [],
-                        checkConstraints: []
-                    }]
+                    tables: [
+                        company
+                    ]
                 },
                 db: {
                     tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
-                        uniqueConstraints: [],
-                        foreignKeysConstraints: [],
+                        ...company,
                         checkConstraints: [
                             {
                                 identify: "name",
@@ -133,20 +89,7 @@ describe("Migration: tables", () => {
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        filePath: "company.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
-                        uniqueConstraints: [],
-                        foreignKeysConstraints: [],
+                        ...company,
                         checkConstraints: [
                             {
                                 identify: "name",
@@ -158,19 +101,7 @@ describe("Migration: tables", () => {
                 },
                 db: {
                     tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
-                        uniqueConstraints: [],
-                        foreignKeysConstraints: [],
+                        ...company,
                         checkConstraints: [
                             {
                                 identify: "name",
@@ -211,53 +142,26 @@ describe("Migration: tables", () => {
         });
 
         it("same check constraint, nothing to do", () => {
+            const checkConstraint = {
+                identify: "name",
+                name: "name",
+                parsed: "xxx"
+            };
+
             testGenerateMigration({
                 fs: {
                     tables: [{
-                        filePath: "company.sql",
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
-                        uniqueConstraints: [],
-                        foreignKeysConstraints: [],
+                        ...company,
                         checkConstraints: [
-                            {
-                                identify: "name",
-                                name: "name",
-                                parsed: "xxx"
-                            }
+                            checkConstraint
                         ]
                     }]
                 },
                 db: {
                     tables: [{
-                        identify: "public.company",
-                        name: "company",
-                        columns: [{
-                            identify: "id",
-                            key: "id",
-                            type: "integer"
-                        }, {
-                            identify: "name",
-                            key: "name",
-                            type: "text"
-                        }],
-                        uniqueConstraints: [],
-                        foreignKeysConstraints: [],
+                        ...company,
                         checkConstraints: [
-                            {
-                                identify: "name",
-                                name: "name",
-                                parsed: "xxx"
-                            }
+                            checkConstraint
                         ]
                     }]
                 },
