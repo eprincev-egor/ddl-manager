@@ -35,7 +35,8 @@ export class TableModel extends AbstractTableModel<TableModel> {
             const extensionColumns = extension.get("columns");
             if ( extensionColumns ) {
                 extensionColumns.forEach(column => {
-                    cloneTable.addColumn(column);
+                    const key = column.get("key");
+                    cloneTable.setColumn(key, column);
                 });
             }
 
@@ -72,9 +73,19 @@ export class TableModel extends AbstractTableModel<TableModel> {
         return cloneTable;
     }
 
-    addColumn(newColumn: ColumnModel) {
+    setColumn(key: string, newColumn: ColumnModel) {
         const thisColumns = this.row.columns;
-        const newColumns = [...thisColumns, newColumn];
+        const newColumns = [...thisColumns];
+
+        const oldColumnIndex = newColumns.findIndex((column) => 
+            column.get("key") === key
+        );
+        if ( oldColumnIndex !== -1 ) {
+            newColumns.splice(oldColumnIndex, 1);
+        }
+
+        newColumns.push(newColumn);
+        
         this.set({
             columns: newColumns
         });

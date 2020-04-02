@@ -37,22 +37,22 @@ describe("Migration: tables", () => {
         it("drop not null for column", () => {
             testGenerateMigration({
                 fs: {
-                    tables: [{
-                        ...table("company"),
-                        columns: [{
-                            ...column("id", "integer"),
-                            nulls: true
-                        }]
-                    }]
+                    tables: [
+                        table("company", 
+                            column("id", "integer", {
+                                nulls: true
+                            })
+                        )
+                    ]
                 },
                 db: {
-                    tables: [{
-                        ...table("company"),
-                        columns: [{
-                            ...column("id", "integer"),
-                            nulls: false
-                        }]
-                    }]
+                    tables: [
+                        table("company", 
+                            column("id", "integer", {
+                                nulls: false
+                            })
+                        )
+                    ]
                 },
                 migration: {
                     commands: [

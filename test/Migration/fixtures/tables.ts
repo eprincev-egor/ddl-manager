@@ -4,12 +4,14 @@ import { ExtensionModel } from "../../../lib/objects/ExtensionModel";
 
 export function column(
     key: string, 
-    type: string
+    type: string,
+    additionalProperties: ColumnModel["TInputData"] = {}
 ): ColumnModel["TInputData"] {
     return {
         identify: key,
         key,
-        type
+        type,
+        ...additionalProperties
     };
 }
 
@@ -30,12 +32,14 @@ export function table(
 
 export function extension(
     extensionName: string, 
-    forTableName: string
+    forTableName: string,
+    additionalProperties: ExtensionModel["TInputData"] = {}
 ): ExtensionModel["TInputData"] {
     return {
         filePath: `${extensionName}_for_${forTableName}.sql`,
         name: extensionName,
         identify: `extension ${extensionName} for public.${forTableName}`,
-        forTableIdentify: `public.${forTableName}`
+        forTableIdentify: `public.${forTableName}`,
+        ...additionalProperties
     };
 }
