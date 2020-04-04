@@ -4,6 +4,7 @@ import {ColumnModel} from "./ColumnModel";
 import { ExtensionModel } from "./ExtensionModel";
 import { IChanges, Changes } from "../state/Changes";
 import { BaseDBObjectModel } from "./base-layers/BaseDBObjectModel";
+import { UniqueConstraintModel } from "./UniqueConstraintModel";
 
 export class TableModel extends AbstractTableModel<TableModel> {
     structure() {
@@ -83,6 +84,17 @@ export class TableModel extends AbstractTableModel<TableModel> {
         }
 
         return cloneTable;
+    }
+
+    addUniqueConstraint(newUniqueConstraint: UniqueConstraintModel) {
+        const thisUniqueConstraints = this.row.uniqueConstraints;
+        
+        this.set({
+            uniqueConstraints: [
+                ...thisUniqueConstraints,
+                newUniqueConstraint
+            ]
+        });
     }
 
     setColumn(key: string, newColumn: ColumnModel) {

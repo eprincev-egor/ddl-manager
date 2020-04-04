@@ -5,6 +5,7 @@ import { PgParser } from "../parser/pg/PgParser";
 import { TriggerModel } from "../objects/TriggerModel";
 import { TableModel } from "../objects/TableModel";
 import { ColumnModel } from "../objects/ColumnModel";
+import { UniqueConstraintModel } from "../objects/UniqueConstraintModel";
 
 export class PgDBDriver 
 extends DBDriver {
@@ -229,6 +230,7 @@ extends DBDriver {
         for (const constraintRow of constraintsResult.rows) {
             const {
                 constraint_type: constraintType,
+                constraint_name: constraintName,
                 table_schema: schemaName,
                 table_name: tableName,
                 columns: constraintColumns
@@ -241,6 +243,15 @@ extends DBDriver {
                 tableModel.set({
                     primaryKey: constraintColumns
                 });
+            }
+
+            if ( constraintType === "UNIQUE" ) {
+                const uniqueConstraintModel = new UniqueConstraintModel({
+                    identify: constraintName,
+                    name: constraintName,
+                    unique: constraintColumns
+                });
+                tableModel.addUniqueConstraint(uniqueConstraintModel);
             }
         }
 
