@@ -38,7 +38,7 @@ describe("PgParser", () => {
                     key: "id",
                     type: "integer",
                     nulls: false,
-                    default: "nextval('public.companies_id_seq'::regclass)",
+                    default: "nextval('companies_id_seq'::regclass)",
                     parsed: {
                         check: null,
                         default: null,
@@ -439,6 +439,87 @@ describe("PgParser", () => {
                 }
             }
         ]);
+    });
+
+    it("parse table with default on column", () => {
+        const parser = new PgParser();
+        
+        const result = parser.parseFile("test.sql", `
+            create table order_type (
+                id integer default 1
+            )
+        `);
+
+        const tableModel = result[0] as TableModel;
+        const idColumn = tableModel.row.columns[0];
+
+        assert.strictEqual(idColumn.get("default"), "1");
+    });
+
+    it("parse table, smallserial column", () => {
+        const parser = new PgParser();
+        
+        const result = parser.parseFile("test.sql", `
+            create table order_type (
+                id smallserial
+            )
+        `);
+
+        const tableModel = result[0] as TableModel;
+        const idColumn = tableModel.row.columns[0];
+
+        assert.strictEqual(idColumn.get("type"), "smallint");
+        assert.strictEqual(idColumn.get("nulls"), false);
+        assert.strictEqual(idColumn.get("default"), "nextval('order_type_id_seq'::regclass)");
+    });
+
+    it("parse table, serial column", () => {
+        const parser = new PgParser();
+        
+        const result = parser.parseFile("test.sql", `
+            create table order_type (
+                id serial
+            )
+        `);
+
+        const tableModel = result[0] as TableModel;
+        const idColumn = tableModel.row.columns[0];
+
+        assert.strictEqual(idColumn.get("type"), "integer");
+        assert.strictEqual(idColumn.get("nulls"), false);
+        assert.strictEqual(idColumn.get("default"), "nextval('order_type_id_seq'::regclass)");
+    });
+
+    it("parse table, bigserial column", () => {
+        const parser = new PgParser();
+        
+        const result = parser.parseFile("test.sql", `
+            create table order_type (
+                id bigserial
+            )
+        `);
+
+        const tableModel = result[0] as TableModel;
+        const idColumn = tableModel.row.columns[0];
+
+        assert.strictEqual(idColumn.get("type"), "bigint");
+        assert.strictEqual(idColumn.get("nulls"), false);
+        assert.strictEqual(idColumn.get("default"), "nextval('order_type_id_seq'::regclass)");
+    });
+
+    it("parse table with not public schema and serial column", () => {
+        const parser = new PgParser();
+        
+        const result = parser.parseFile("test.sql", `
+            create table operation.rates (
+                id serial
+            )
+        `);
+
+        const tableModel = result[0] as TableModel;
+        const idColumn = tableModel.row.columns[0];
+
+        assert.strictEqual(idColumn.get("default"), "nextval('operation.rates_id_seq'::regclass)");
     });
 
 });

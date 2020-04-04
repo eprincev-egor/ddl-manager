@@ -15,12 +15,12 @@
 - timeline
 - table inherits
 - smallserial, serial, bigserial => smallint, integer, bigint (do not migrate)
-    - columnModel: add default
+    + columnModel: add default
     - test migration with columns default
-    - test dbDriver with columns default
-    - test parser with columns default
-    - test fs with columns default
+    + test dbDriver with columns default
+    + test parser with columns default
 + field: check for check constraints (need for migrate another condition)
     information_schema.check_constraints.check_clause
 - triggerModel: add events, 'when condition'
 - foreignKeyModel: add other parameters
+- refactor all =)

@@ -50,6 +50,7 @@ export function prepareAbstractTable(
     return {
         columns: parsedTable.row.columns.map(parseColumn => {
             const key = parseColumn.get("name").toString();
+            let nulls = parseColumn.get("nulls");
             const columnDefaultExpression = parseColumn.get("default");
             let columnDefault: string | null;
 
@@ -58,11 +59,19 @@ export function prepareAbstractTable(
             }
 
             let type = parseColumn.get("type").toString();
-            if ( type === "serial" ) {
-                type = "integer";
+            const serial2realType = {
+                smallserial: "smallint",
+                serial: "integer",
+                bigserial: "bigint"
+            };
+            const isSerialType = type in serial2realType;
+            if ( isSerialType ) {
+                type = serial2realType[ type ];
+                nulls = false;
                 
                 if ( !columnDefault ) {
-                    columnDefault = `nextval('${tableIdentify}_${key}_seq'::regclass)`;
+                    const tablePrefix = tableIdentify.replace(/^public\./i, "");
+                    columnDefault = `nextval('${tablePrefix}_${key}_seq'::regclass)`;
                 }
             }
 
@@ -73,7 +82,7 @@ export function prepareAbstractTable(
                 type,
                 default: columnDefault,
                 parsed: parseColumn,
-                nulls: parseColumn.get("nulls")
+                nulls
             };
         }),
         primaryKey,

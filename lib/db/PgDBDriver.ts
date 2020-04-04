@@ -143,7 +143,7 @@ extends DBDriver {
                 table_schema: schemaName,
                 table_name: tableName,
                 column_name: columnKey,
-                // column_default: columnDefault,
+                column_default: columnDefault,
                 data_type: columnType,
                 is_nullable
             } = columnRow;
@@ -175,6 +175,7 @@ extends DBDriver {
                 identify: columnKey,
                 key: columnKey,
                 type: columnType,
+                default: columnDefault,
                 nulls: (
                     is_nullable === "YES" ? 
                         true : 
