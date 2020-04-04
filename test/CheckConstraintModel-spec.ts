@@ -8,7 +8,8 @@ describe("CheckConstraintModel", () => {
             () => {
                 const constraint = new CheckConstraintModel({
                     identify: "test",
-                    name: "test_not_null"
+                    name: "test_not_null",
+                    check: "a + b > 3"
                 });
             },
             err =>

@@ -288,6 +288,7 @@ describe("PgParser", () => {
                 filePath: "test.sql",
                 identify: "order_type_name_check", 
                 name: "order_type_name_check",
+                check: "name is not null",
                 parsed: {
                     name: null,
                     column: {
@@ -328,6 +329,7 @@ describe("PgParser", () => {
                 filePath: "test.sql",
                 identify: "hello_name", 
                 name: "hello_name",
+                check: "name is not null",
                 parsed: {
                     name: {
                         content: null,

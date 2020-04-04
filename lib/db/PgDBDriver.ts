@@ -7,6 +7,7 @@ import { TableModel } from "../objects/TableModel";
 import { ColumnModel } from "../objects/ColumnModel";
 import { UniqueConstraintModel } from "../objects/UniqueConstraintModel";
 import { CheckConstraintModel } from "../objects/CheckConstraintModel";
+import { GrapeQLCoach, Expression } from "grapeql-lang";
 
 export class PgDBDriver 
 extends DBDriver {
@@ -244,6 +245,7 @@ extends DBDriver {
             columns: string[];
             reference_columns: string[];
             reference_table: string;
+            check_clause: string;
         }>(constraintsSQL);
 
         for (const constraintRow of constraintsResult.rows) {
@@ -274,9 +276,11 @@ extends DBDriver {
             }
 
             if ( constraintType === "CHECK" ) {
+                const checkString = extrudeBracketsFromCheckClause(constraintRow.check_clause);
                 const checkConstraintModel = new CheckConstraintModel({
                     identify: constraintName,
-                    name: constraintName
+                    name: constraintName,
+                    check: checkString.trim()
                 });
                 tableModel.addCheckConstraint(checkConstraintModel);
             }
@@ -284,4 +288,11 @@ extends DBDriver {
 
         return outputTables;
     }
+}
+
+function extrudeBracketsFromCheckClause(checkClause: string): string {
+    const coach = new GrapeQLCoach(checkClause);
+    const expression = coach.parse(Expression);
+    const checkString = expression.toString();
+    return checkString;
 }

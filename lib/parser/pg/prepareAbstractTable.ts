@@ -181,6 +181,7 @@ function prepareCheckConstraints(
             filePath,
             identify: name,
             name,
+            check: checkConstraint.get("check").toString().trim(),
             parsed: checkConstraint
         };
     });

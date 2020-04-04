@@ -18,7 +18,7 @@ describe("Migration: extensions", () => {
                                 {
                                     identify: "name",
                                     name: "name",
-                                    parsed: "xxx"
+                                    check: "true"
                                 }
                             ]
                         })
@@ -42,7 +42,8 @@ describe("Migration: extensions", () => {
                                 identify: "name",
                                 filePath: null,
                                 name: "name",
-                                parsed: "xxx"
+                                parsed: null,
+                                check: "true"
                             }
                         }
                     ],
@@ -70,7 +71,7 @@ describe("Migration: extensions", () => {
                             {
                                 identify: "name",
                                 name: "name",
-                                parsed: "xxx"
+                                check: "true"
                             }
                         ]
                     }]
@@ -85,7 +86,8 @@ describe("Migration: extensions", () => {
                                 identify: "name",
                                 filePath: null,
                                 name: "name",
-                                parsed: "xxx"
+                                parsed: null,
+                                check: "true"
                             }
                         }
                     ],
@@ -103,7 +105,7 @@ describe("Migration: extensions", () => {
                                 {
                                     identify: "name",
                                     name: "name",
-                                    parsed: "yyy"
+                                    check: "true"
                                 }
                             ]
                         })
@@ -119,7 +121,7 @@ describe("Migration: extensions", () => {
                             {
                                 identify: "name",
                                 name: "name",
-                                parsed: "xxx"
+                                check: "false"
                             }
                         ]
                     }]
@@ -134,7 +136,8 @@ describe("Migration: extensions", () => {
                                 identify: "name",
                                 filePath: null,
                                 name: "name",
-                                parsed: "xxx"
+                                check: "false",
+                                parsed: null
                             }
                         },
                         {
@@ -145,7 +148,8 @@ describe("Migration: extensions", () => {
                                 identify: "name",
                                 filePath: null,
                                 name: "name",
-                                parsed: "yyy"
+                                parsed: null,
+                                check: "true"
                             }
                         }
                     ],
@@ -158,7 +162,7 @@ describe("Migration: extensions", () => {
             const checkConstraint = {
                 identify: "name",
                 name: "name",
-                parsed: "xxx"
+                check: "true"
             };
 
             testGenerateMigration({

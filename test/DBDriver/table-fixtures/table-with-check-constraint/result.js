@@ -31,8 +31,8 @@ module.exports = [
         checkConstraints: [
             {
                 filePath: null,
-                identify: "orders_profit_check",
-                name: "orders_profit_check",
+                identify: "orders_profit_validate",
+                name: "orders_profit_validate",
                 check: "profit > 100",
                 parsed: null
             }

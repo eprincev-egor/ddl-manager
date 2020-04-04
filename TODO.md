@@ -15,5 +15,5 @@
 - timeline
 - table inherits
 - serial => integer (do not migrate)
-- field: check for check constraints (need for migrate another condition)
++ field: check for check constraints (need for migrate another condition)
     information_schema.check_constraints.check_clause

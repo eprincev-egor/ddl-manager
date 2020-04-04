@@ -18,7 +18,7 @@ describe("Migration: tables", () => {
                             {
                                 identify: "name",
                                 name: "name",
-                                parsed: "xxx"
+                                check: "true"
                             }
                         ]
                     }]
@@ -38,7 +38,8 @@ describe("Migration: tables", () => {
                                 identify: "name",
                                 filePath: null,
                                 name: "name",
-                                parsed: "xxx"
+                                check: "true",
+                                parsed: null
                             }
                         }
                     ],
@@ -61,7 +62,7 @@ describe("Migration: tables", () => {
                             {
                                 identify: "name",
                                 name: "name",
-                                parsed: "xxx"
+                                check: "true"
                             }
                         ]
                     }]
@@ -76,7 +77,8 @@ describe("Migration: tables", () => {
                                 identify: "name",
                                 filePath: null,
                                 name: "name",
-                                parsed: "xxx"
+                                check: "true",
+                                parsed: null
                             }
                         }
                     ],
@@ -94,7 +96,7 @@ describe("Migration: tables", () => {
                             {
                                 identify: "name",
                                 name: "name",
-                                parsed: "yyy"
+                                check: "true"
                             }
                         ]
                     }]
@@ -106,7 +108,7 @@ describe("Migration: tables", () => {
                             {
                                 identify: "name",
                                 name: "name",
-                                parsed: "xxx"
+                                check: "false"
                             }
                         ]
                     }]
@@ -121,7 +123,8 @@ describe("Migration: tables", () => {
                                 identify: "name",
                                 filePath: null,
                                 name: "name",
-                                parsed: "xxx"
+                                parsed: null,
+                                check: "false"
                             }
                         },
                         {
@@ -132,7 +135,8 @@ describe("Migration: tables", () => {
                                 identify: "name",
                                 filePath: null,
                                 name: "name",
-                                parsed: "yyy"
+                                parsed: null,
+                                check: "true"
                             }
                         }
                     ],
@@ -145,7 +149,7 @@ describe("Migration: tables", () => {
             const checkConstraint = {
                 identify: "name",
                 name: "name",
-                parsed: "xxx"
+                check: "true"
             };
 
             testGenerateMigration({
