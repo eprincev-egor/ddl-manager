@@ -69,7 +69,114 @@ describe("Migration: tables", () => {
         });
         
         
+        it("change default expression", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [
+                        table("company", 
+                            column("id", "integer", {
+                                default: "2"
+                            })
+                        )
+                    ]
+                },
+                db: {
+                    tables: [
+                        table("company", 
+                            column("id", "integer", {
+                                default: "1"
+                            })
+                        )
+                    ]
+                },
+                migration: {
+                    commands: [
+                        {
+                            type: "drop",
+                            command: "ColumnDefault",
+                            tableIdentify: "public.company",
+                            columnIdentify: "id",
+                            default: "1"
+                        },
+                        {
+                            type: "create",
+                            command: "ColumnDefault",
+                            tableIdentify: "public.company",
+                            columnIdentify: "id",
+                            default: "2"
+                        }
+                    ],
+                    errors: []
+                }
+            });
+        });
         
+        it("only create default expression", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [
+                        table("company", 
+                            column("id", "integer", {
+                                default: "2"
+                            })
+                        )
+                    ]
+                },
+                db: {
+                    tables: [
+                        table("company", 
+                            column("id", "integer")
+                        )
+                    ]
+                },
+                migration: {
+                    commands: [
+                        {
+                            type: "create",
+                            command: "ColumnDefault",
+                            tableIdentify: "public.company",
+                            columnIdentify: "id",
+                            default: "2"
+                        }
+                    ],
+                    errors: []
+                }
+            });
+        });
+
+        
+        it("only drop default expression", () => {
+            testGenerateMigration({
+                fs: {
+                    tables: [
+                        table("company", 
+                            column("id", "integer")
+                        )
+                    ]
+                },
+                db: {
+                    tables: [
+                        table("company", 
+                            column("id", "integer", {
+                                default: "1"
+                            })
+                        )
+                    ]
+                },
+                migration: {
+                    commands: [
+                        {
+                            type: "drop",
+                            command: "ColumnDefault",
+                            tableIdentify: "public.company",
+                            columnIdentify: "id",
+                            default: "1"
+                        }
+                    ],
+                    errors: []
+                }
+            });
+        });
     });
 
 });

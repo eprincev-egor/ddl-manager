@@ -121,6 +121,132 @@ describe("Migration: extensions", () => {
         });
         
         
+        it("change default expression", () => {
+            testGenerateMigration({
+                fs: {
+                    extensions: [
+                        extension("test", "company", {
+                            columns: [
+                                column("name", "text", {
+                                    default: "fs"
+                                })
+                            ]
+                        })
+                    ],
+                    tables: [
+                        table("company", columnID)
+                    ]
+                },
+                db: {
+                    tables: [
+                        table("company", 
+                            columnID,
+                            column("name", "text", {
+                                default: "db"
+                            })
+                        )
+                    ]
+                },
+                migration: {
+                    commands: [
+                        {
+                            type: "drop",
+                            command: "ColumnDefault",
+                            tableIdentify: "public.company",
+                            columnIdentify: "name",
+                            default: "db"
+                        },
+                        {
+                            type: "create",
+                            command: "ColumnDefault",
+                            tableIdentify: "public.company",
+                            columnIdentify: "name",
+                            default: "fs"
+                        }
+                    ],
+                    errors: []
+                }
+            });
+        });
+        
+        it("only create default expression", () => {
+            testGenerateMigration({
+                fs: {
+                    extensions: [
+                        extension("test", "company", {
+                            columns: [
+                                column("name", "text", {
+                                    default: "fs"
+                                })
+                            ]
+                        })
+                    ],
+                    tables: [
+                        table("company", columnID)
+                    ]
+                },
+                db: {
+                    tables: [
+                        table("company", 
+                            columnID,
+                            columnNAME
+                        )
+                    ]
+                },
+                migration: {
+                    commands: [
+                        {
+                            type: "create",
+                            command: "ColumnDefault",
+                            tableIdentify: "public.company",
+                            columnIdentify: "name",
+                            default: "fs"
+                        }
+                    ],
+                    errors: []
+                }
+            });
+        });
+
+        
+        it("only drop default expression", () => {
+            testGenerateMigration({
+                fs: {
+                    extensions: [
+                        extension("test", "company", {
+                            columns: [
+                                columnNAME
+                            ]
+                        })
+                    ],
+                    tables: [
+                        table("company", columnID)
+                    ]
+                },
+                db: {
+                    tables: [
+                        table("company", 
+                            columnID,
+                            column("name", "text", {
+                                default: "db"
+                            })
+                        )
+                    ]
+                },
+                migration: {
+                    commands: [
+                        {
+                            type: "drop",
+                            command: "ColumnDefault",
+                            tableIdentify: "public.company",
+                            columnIdentify: "name",
+                            default: "db"
+                        }
+                    ],
+                    errors: []
+                }
+            });
+        });
     });
 
 });

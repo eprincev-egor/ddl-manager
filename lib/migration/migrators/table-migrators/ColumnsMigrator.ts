@@ -6,6 +6,7 @@ import { CannotChangeColumnTypeErrorModel } from "../../errors/CannotChangeColum
 import { ColumnNotNullCommandModel } from "../../commands/ColumnNotNullCommandModel";
 import { CannotDropColumnErrorModel } from "../../errors/CannotDropColumnErrorModel";
 import { ColumnCommandModel } from "../../commands/ColumnCommandModel";
+import { ColumnDefaultCommandModel } from "../../commands/ColumnDefaultCommandModel";
 
 export class ColumnsMigrator {
     protected migration: MigrationModel;
@@ -64,6 +65,7 @@ export class ColumnsMigrator {
     private onChange(dbColumn: ColumnModel, fsColumn: ColumnModel) {
         this.errorOnChangedType(dbColumn, fsColumn);
         this.migrateNulls(dbColumn, fsColumn);
+        this.migrateDefaults(dbColumn, fsColumn);
     }
 
     private onCreate(column: ColumnModel) {
@@ -117,4 +119,31 @@ export class ColumnsMigrator {
         }
     }
 
+    private migrateDefaults(dbColumn: ColumnModel, fsColumn: ColumnModel) {
+        const tableIdentify = this.fsTableModel.getIdentify();
+        const fsDefault = fsColumn.get("default");
+        const dbDefault = dbColumn.get("default");
+
+        if ( fsDefault !== dbDefault ) {
+            if ( dbDefault ) {
+                const dropDefaultCommand = new ColumnDefaultCommandModel({
+                    type: "drop",
+                    tableIdentify,
+                    columnIdentify: fsColumn.get("identify"),
+                    default: dbDefault
+                });
+                this.migration.addCommand(dropDefaultCommand);
+            }
+            
+            if ( fsDefault ) {
+                const createDefaultCommand = new ColumnDefaultCommandModel({
+                    type: "create",
+                    tableIdentify,
+                    columnIdentify: fsColumn.get("identify"),
+                    default: fsDefault
+                });
+                this.migration.addCommand(createDefaultCommand);
+            }
+        }
+    }
 }

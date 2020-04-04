@@ -11,9 +11,11 @@ import {PrimaryKeyCommandModel} from "./PrimaryKeyCommandModel";
 import {CheckConstraintCommandModel} from "./CheckConstraintCommandModel";
 import {UniqueConstraintCommandModel} from "./UniqueConstraintCommandModel";
 import {ForeignKeyConstraintCommandModel} from "./ForeignKeyConstraintCommandModel";
+import {ColumnDefaultCommandModel} from "./ColumnDefaultCommandModel";
 
 export class CommandsCollection extends Collection<CommandsCollection> {
     Model(): (
+        (new (...args: any[]) => ColumnDefaultCommandModel) |
         (new (...args: any[]) => ForeignKeyConstraintCommandModel) |
         (new (...args: any[]) => UniqueConstraintCommandModel) |
         (new (...args: any[]) => CheckConstraintCommandModel) |

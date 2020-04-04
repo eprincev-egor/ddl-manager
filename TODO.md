@@ -14,9 +14,9 @@
 - tests
 - timeline
 - table inherits
-- smallserial, serial, bigserial => smallint, integer, bigint (do not migrate)
++ smallserial, serial, bigserial => smallint, integer, bigint (do not migrate)
     + columnModel: add default
-    - test migration with columns default
+    + test migration with columns default
     + test dbDriver with columns default
     + test parser with columns default
 + field: check for check constraints (need for migrate another condition)
