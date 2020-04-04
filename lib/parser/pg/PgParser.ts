@@ -28,7 +28,11 @@ export class PgParser extends Parser {
             if ( coach.is(CreateFunction) ) {
                 const parsedFunction = coach.parse(CreateFunction);
                 const {schema, name, args} = parsedFunction.row;
-                const functionIdentify = `${schema}.${name}(${args.join(",")})`;
+                
+                const argsTypes = args.map(arg => 
+                    arg.get("type")
+                );
+                const functionIdentify = `${schema}.${name}(${argsTypes})`;
 
                 const funcModel = new FunctionModel({
                     filePath,

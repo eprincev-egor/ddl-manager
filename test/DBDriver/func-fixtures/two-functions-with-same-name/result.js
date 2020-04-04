@@ -15,7 +15,7 @@ module.exports = [
     {
         createdByDDLManager: false,
         filePath: "(database)",
-        identify: "public.func_1(arg_1 bigint)",
+        identify: "public.func_1(bigint)",
         name: "func_1",
         parsed: {
             schema: "public",
@@ -50,7 +50,7 @@ module.exports = [
     {
         createdByDDLManager: false,
         filePath: "(database)",
-        identify: "public.func_1(arg_1 text)",
+        identify: "public.func_1(text)",
         name: "func_1",
         parsed: {
             schema: "public",

@@ -10,7 +10,7 @@ module.exports = [
     {
         createdByDDLManager: false,
         filePath: "(database)",
-        identify: "public.test_func(id bigint default 1)",
+        identify: "public.test_func(bigint)",
         name: "test_func",
         parsed: {
             schema: "public",
