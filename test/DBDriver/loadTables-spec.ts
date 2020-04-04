@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 import assert from "assert";
 
-describe("PgDBDriver: load triggers", () => {
+describe("PgDBDriver: load tables", () => {
     const dbConfig = readDatabaseOptions();
     let db: pg.Client;
     let pgDriver: PgDBDriver;
@@ -28,7 +28,7 @@ describe("PgDBDriver: load triggers", () => {
     });
 
     
-    const fixturesPath = path.join(__dirname, "trigger-fixtures");
+    const fixturesPath = path.join(__dirname, "table-fixtures");
     const fixtures = fs.readdirSync(fixturesPath);
 
     for (const dirName of fixtures) {
@@ -38,18 +38,18 @@ describe("PgDBDriver: load triggers", () => {
         const ddl = fs.readFileSync(ddlPath).toString();
 
         const resultPath = path.join(dirPath, "result");
-        const expectedTriggersJSON = require(resultPath);
+        const expectedTablesJSON = require(resultPath);
 
         it(dirName, async() => {
 
             await db.query(ddl);
             
-            const triggers = await pgDriver.loadTriggers();
-            const actualTriggersJSON = triggers.map(func => func.toJSON());
+            const tables = await pgDriver.loadTables();
+            const actualTablesJSON = tables.map(func => func.toJSON());
 
             assert.deepStrictEqual(
-                actualTriggersJSON,
-                expectedTriggersJSON
+                actualTablesJSON,
+                expectedTablesJSON
             );
         });
     }

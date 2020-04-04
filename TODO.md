@@ -13,3 +13,4 @@
 - watch
 - tests
 - timeline
+- table inherits
