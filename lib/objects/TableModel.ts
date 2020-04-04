@@ -68,6 +68,18 @@ export class TableModel extends AbstractTableModel<TableModel> {
                     ]
                 });
             }
+
+            const extensionCheckConstraints = extension.get("checkConstraints");
+            if ( extensionCheckConstraints ) {
+                const tableCheckConstraints = cloneTable.get("checkConstraints");
+                cloneTable.set({
+                    checkConstraints: [
+                        ...tableCheckConstraints,
+                        ...extensionCheckConstraints
+                    ]
+                });
+            }
+
         }
 
         return cloneTable;
