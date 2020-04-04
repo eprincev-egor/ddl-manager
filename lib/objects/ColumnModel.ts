@@ -15,7 +15,8 @@ export class ColumnModel extends BaseDBObjectModel<ColumnModel> {
             nulls: Types.Boolean({
                 required: true,
                 default: true
-            })
+            }),
+            default: Types.String
         };
     }
 }

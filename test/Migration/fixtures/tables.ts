@@ -11,6 +11,7 @@ export function column(
         identify: key,
         key,
         type,
+        default: null,
         ...additionalProperties
     };
 }

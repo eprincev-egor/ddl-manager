@@ -36,8 +36,9 @@ describe("PgParser", () => {
                     filePath: "test.sql",
                     identify: "id",
                     key: "id",
-                    type: "serial",
+                    type: "integer",
                     nulls: false,
+                    default: "nextval('public.companies_id_seq'::regclass)",
                     parsed: {
                         check: null,
                         default: null,
@@ -72,6 +73,7 @@ describe("PgParser", () => {
                     key: "name",
                     type: "text",
                     nulls: false,
+                    default: null,
                     parsed: {
                         check: null,
                         default: null,

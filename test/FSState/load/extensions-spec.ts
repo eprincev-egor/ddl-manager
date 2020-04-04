@@ -21,7 +21,8 @@ describe("FSDDLState", () => {
                             filePath: "test.sql",
                             identify: "inn",
                             key: "inn",
-                            type: "text"
+                            type: "text",
+                            default: null
                         }]
                     }
                 }
@@ -55,7 +56,8 @@ describe("FSDDLState", () => {
                             key: "inn",
                             type: "text",
                             nulls: true,
-                            parsed: null
+                            parsed: null,
+                            default: null
                         }
                     ],
                     deprecated: false,
@@ -90,7 +92,8 @@ describe("FSDDLState", () => {
                             filePath: "test.sql",
                             identify: "inn",
                             key: "inn",
-                            type: "text"
+                            type: "text",
+                            default: null
                         }]
                     }
                 },
@@ -110,7 +113,8 @@ describe("FSDDLState", () => {
                             filePath: "test.sql",
                             identify: "note",
                             key: "note",
-                            type: "text"
+                            type: "text",
+                            default: null
                         }]
                     }
                 }
@@ -144,7 +148,8 @@ describe("FSDDLState", () => {
                             key: "inn",
                             type: "text",
                             nulls: true,
-                            parsed: null
+                            parsed: null,
+                            default: null
                         }
                     ],
                     deprecated: false,
@@ -168,7 +173,8 @@ describe("FSDDLState", () => {
                             key: "note",
                             type: "text",
                             nulls: true,
-                            parsed: null
+                            parsed: null,
+                            default: null
                         }
                     ],
                     deprecated: false,

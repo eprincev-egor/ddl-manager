@@ -12,7 +12,8 @@ module.exports = [
                 key: "id",
                 type: "integer",
                 nulls: true,
-                parsed: null
+                parsed: null,
+                default: null
             }
         ],
         primaryKey: null,

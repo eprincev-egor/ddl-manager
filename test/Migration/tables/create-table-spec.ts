@@ -13,6 +13,7 @@ describe("Migration: tables", () => {
                         columns: [{
                             identify: "id",
                             key: "id",
+                            default: null,
                             type: "integer"
                         }]
                     }]
@@ -40,6 +41,7 @@ describe("Migration: tables", () => {
                                     filePath: null,
                                     identify: "id",
                                     key: "id",
+                                    default: null,
                                     parsed: null,
                                     nulls: true,
                                     type: "integer"
@@ -62,6 +64,7 @@ describe("Migration: tables", () => {
                         columns: [{
                             identify: "id",
                             key: "id",
+                            default: null,
                             type: "integer"
                         }],
                         deprecatedColumns: ["name"]
@@ -90,6 +93,7 @@ describe("Migration: tables", () => {
                                     filePath: null,
                                     identify: "id",
                                     key: "id",
+                                    default: null,
                                     parsed: null,
                                     nulls: true,
                                     type: "integer"
@@ -113,6 +117,7 @@ describe("Migration: tables", () => {
                         columns: [{
                             identify: "id",
                             key: "id",
+                            default: null,
                             type: "integer"
                         }]
                     }]

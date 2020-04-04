@@ -12,7 +12,8 @@ module.exports = [
                 key: "id",
                 type: "integer",
                 nulls: false,
-                parsed: null
+                parsed: null,
+                default: null
             },
             {
                 filePath: null,
@@ -20,7 +21,8 @@ module.exports = [
                 key: "code",
                 type: "text",
                 nulls: false,
-                parsed: null
+                parsed: null,
+                default: null
             }
         ],
         primaryKey: ["id"],
@@ -45,7 +47,8 @@ module.exports = [
                 key: "id",
                 type: "integer",
                 nulls: false,
-                parsed: null
+                parsed: null,
+                default: null
             },
             {
                 filePath: null,
@@ -53,7 +56,8 @@ module.exports = [
                 key: "id_country",
                 type: "integer",
                 nulls: false,
-                parsed: null
+                parsed: null,
+                default: null
             }
         ],
         primaryKey: ["id"],

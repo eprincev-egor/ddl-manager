@@ -12,7 +12,8 @@ module.exports = [
                 key: "id",
                 type: "integer",
                 nulls: true,
-                parsed: null
+                parsed: null,
+                default: null
             },
             {
                 filePath: null,
@@ -20,7 +21,8 @@ module.exports = [
                 key: "profit",
                 type: "integer",
                 nulls: true,
-                parsed: null
+                parsed: null,
+                default: null
             }
         ],
         primaryKey: null,

@@ -75,6 +75,7 @@ describe("PgParser", () => {
                     key: "note",
                     type: "text",
                     nulls: true,
+                    default: null,
                     parsed: {
                         check: null,
                         default: null,

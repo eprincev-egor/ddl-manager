@@ -88,6 +88,7 @@ export class PgParser extends Parser {
                 const tableIdentify = (schema || "public").toString() + "." + tableName.toString();
                 const tableBody = prepareAbstractTable(
                     filePath,
+                    tableIdentify,
                     tableName.toString(),
                     parsedTable
                 );
@@ -114,6 +115,7 @@ export class PgParser extends Parser {
                 );
                 const tableBody = prepareAbstractTable(
                     filePath,
+                    forTableIdentify,
                     forTable.toString(),
                     parsedExtension
                 );

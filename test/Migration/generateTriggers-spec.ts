@@ -13,6 +13,7 @@ describe("Migration: triggers", () => {
                         columns: [{
                             identify: "id",
                             key: "id",
+                            default: null,
                             type: "integer"
                         }]
                     }],
@@ -34,6 +35,7 @@ describe("Migration: triggers", () => {
                         columns: [{
                             identify: "id",
                             key: "id",
+                            default: null,
                             type: "integer"
                         }]
                     }],
@@ -72,6 +74,7 @@ describe("Migration: triggers", () => {
                         columns: [{
                             identify: "id",
                             key: "id",
+                            default: null,
                             type: "integer"
                         }]
                     }],
@@ -87,6 +90,7 @@ describe("Migration: triggers", () => {
                         columns: [{
                             identify: "id",
                             key: "id",
+                            default: null,
                             type: "integer"
                         }]
                     }],
@@ -226,6 +230,7 @@ describe("Migration: triggers", () => {
                         columns: [{
                             identify: "id",
                             key: "id",
+                            default: null,
                             type: "integer"
                         }]
                     }],
@@ -247,6 +252,7 @@ describe("Migration: triggers", () => {
                         columns: [{
                             identify: "id",
                             key: "id",
+                            default: null,
                             type: "integer"
                         }]
                     }],
@@ -278,6 +284,7 @@ describe("Migration: triggers", () => {
                         columns: [{
                             identify: "id",
                             key: "id",
+                            default: null,
                             type: "integer"
                         }]
                     }],
@@ -300,6 +307,7 @@ describe("Migration: triggers", () => {
                         columns: [{
                             identify: "id",
                             key: "id",
+                            default: null,
                             type: "integer"
                         }]
                     }],
@@ -358,6 +366,7 @@ describe("Migration: triggers", () => {
                         columns: [{
                             identify: "id",
                             key: "id",
+                            default: null,
                             type: "integer"
                         }]
                     }],
@@ -373,6 +382,7 @@ describe("Migration: triggers", () => {
                         columns: [{
                             identify: "id",
                             key: "id",
+                            default: null,
                             type: "integer"
                         }]
                     }],
@@ -407,6 +417,7 @@ describe("Migration: triggers", () => {
                         columns: [{
                             identify: "id",
                             key: "id",
+                            default: null,
                             type: "integer"
                         }]
                     }],
@@ -429,6 +440,7 @@ describe("Migration: triggers", () => {
                         columns: [{
                             identify: "id",
                             key: "id",
+                            default: null,
                             type: "integer"
                         }]
                     }],

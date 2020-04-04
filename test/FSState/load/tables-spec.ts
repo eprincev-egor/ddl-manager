@@ -20,7 +20,8 @@ describe("FSDDLState", () => {
                                 filePath: "company.sql",
                                 identify: "id",
                                 key: "id",
-                                type: "integer"
+                                type: "integer",
+                                default: null
                             }
                         ],
                         primaryKey: ["id"]
@@ -51,7 +52,8 @@ describe("FSDDLState", () => {
                             key: "id",
                             type: "integer",
                             nulls: true,
-                            parsed: null
+                            parsed: null,
+                            default: null
                         }
                     ],
                     deprecated: false,
@@ -90,7 +92,8 @@ describe("FSDDLState", () => {
                                 filePath: "tables.sql",
                                 identify: "id",
                                 key: "id",
-                                type: "integer"
+                                type: "integer",
+                                default: null
                             }
                         ],
                         primaryKey: ["id"]
@@ -112,14 +115,16 @@ describe("FSDDLState", () => {
                                 filePath: "tables.sql",
                                 identify: "id",
                                 key: "id",
-                                type: "integer"
+                                type: "integer",
+                                default: null
                             },
                             {
                                 filePath: "tables.sql",
                                 identify: "id_company",
                                 key: "id_company",
                                 type: "integer",
-                                nulls: false
+                                nulls: false,
+                                default: null
                             }
                         ],
                         primaryKey: ["id"]
@@ -150,7 +155,8 @@ describe("FSDDLState", () => {
                             key: "id",
                             type: "integer",
                             nulls: true,
-                            parsed: null
+                            parsed: null,
+                            default: null
                         }
                     ],
                     deprecated: false,
@@ -173,7 +179,8 @@ describe("FSDDLState", () => {
                             key: "id",
                             type: "integer",
                             nulls: true,
-                            parsed: null
+                            parsed: null,
+                            default: null
                         },
                         {
                             filePath: "tables.sql",
@@ -181,7 +188,8 @@ describe("FSDDLState", () => {
                             key: "id_company",
                             type: "integer",
                             nulls: false,
-                            parsed: null
+                            parsed: null,
+                            default: null
                         }
                     ],
                     deprecated: false,

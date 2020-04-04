@@ -13,6 +13,7 @@ import {
 
 export function prepareAbstractTable(
     filePath: string,
+    tableIdentify: string,
     tableName: string,
     parsedTable: CreateTable | Extension
 ): AbstractTableModel<any>["TInputData"] {
@@ -49,12 +50,28 @@ export function prepareAbstractTable(
     return {
         columns: parsedTable.row.columns.map(parseColumn => {
             const key = parseColumn.get("name").toString();
+            const columnDefaultExpression = parseColumn.get("default");
+            let columnDefault: string | null;
+
+            if ( columnDefaultExpression ) {
+                columnDefault = columnDefaultExpression.toString();
+            }
+
+            let type = parseColumn.get("type").toString();
+            if ( type === "serial" ) {
+                type = "integer";
+                
+                if ( !columnDefault ) {
+                    columnDefault = `nextval('${tableIdentify}_${key}_seq'::regclass)`;
+                }
+            }
 
             return {
                 filePath,
                 identify: key,
                 key,
-                type: parseColumn.get("type").toString(),
+                type,
+                default: columnDefault,
                 parsed: parseColumn,
                 nulls: parseColumn.get("nulls")
             };

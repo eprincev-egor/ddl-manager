@@ -27,6 +27,7 @@ describe("Migration: tables", () => {
                                 filePath: null,
                                 identify: "name",
                                 key: "name",
+                                default: null,
                                 parsed: null,
                                 nulls: true,
                                 type: "text"

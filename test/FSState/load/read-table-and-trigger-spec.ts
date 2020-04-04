@@ -58,7 +58,8 @@ describe("FSDDLState", () => {
                                 key: "id",
                                 type: "serial",
                                 nulls: false,
-                                parsed: null
+                                parsed: null,
+                                default: null
                             },
                             {
                                 filePath: "company.sql",
@@ -66,7 +67,8 @@ describe("FSDDLState", () => {
                                 key: "name",
                                 type: "text",
                                 nulls: false,
-                                parsed: null
+                                parsed: null,
+                                default: null
                             },
                             {
                                 filePath: "company.sql",
@@ -74,7 +76,8 @@ describe("FSDDLState", () => {
                                 key: "note",
                                 type: "text",
                                 nulls: true,
-                                parsed: null
+                                parsed: null,
+                                default: null
                             }
                         ],
                         deprecated: false,
@@ -131,7 +134,8 @@ describe("FSDDLState", () => {
                             key: "id",
                             type: "serial",
                             nulls: false,
-                            parsed: null
+                            parsed: null,
+                            default: null
                         },
                         {
                             filePath: "company.sql",
@@ -139,7 +143,8 @@ describe("FSDDLState", () => {
                             key: "name",
                             type: "text",
                             nulls: false,
-                            parsed: null
+                            parsed: null,
+                            default: null
                         },
                         {
                             filePath: "company.sql",
@@ -147,7 +152,8 @@ describe("FSDDLState", () => {
                             key: "note",
                             type: "text",
                             nulls: true,
-                            parsed: null
+                            parsed: null,
+                            default: null
                         }
                     ],
                     deprecated: false,

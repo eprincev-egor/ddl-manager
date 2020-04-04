@@ -34,6 +34,7 @@ describe("Migration: extensions", () => {
                                 filePath: null,
                                 identify: "name",
                                 key: "name",
+                                default: null,
                                 parsed: null,
                                 nulls: true,
                                 type: "text"
@@ -79,6 +80,7 @@ describe("Migration: extensions", () => {
                                 filePath: null,
                                 identify: "name",
                                 key: "name",
+                                default: null,
                                 parsed: null,
                                 nulls: true,
                                 type: "text"
@@ -92,6 +94,7 @@ describe("Migration: extensions", () => {
                                 filePath: null,
                                 identify: "inn",
                                 key: "inn",
+                                default: null,
                                 parsed: null,
                                 nulls: true,
                                 type: "text"
