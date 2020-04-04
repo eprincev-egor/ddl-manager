@@ -58,37 +58,74 @@ implements ITestFixturesParams {
         const fixtures = fs.readdirSync(this.fixturesPath);
 
         for (const dirName of fixtures) {
-            const dirPath = path.join(this.fixturesPath, dirName);
-
-            const ddlPath = path.join(dirPath, "ddl.sql");
-            let ddl = fs.readFileSync(ddlPath).toString();
-            if ( this.prepareDDL ) {
-                ddl = this.prepareDDL(ddl);
-            }
-
-            const resultPath = path.join(dirPath, "result");
-            const expectedJSON = require(resultPath);
-
-            it(dirName, async() => {
-
-                await this.db.query(`
-                    drop schema public cascade;
-                    create schema public;
-                    ${ddl}
-                `);
-                
-                const objects = await this.load(this.pgDriver);
-
-                const actualJSON = objects.map(dboModel => dboModel.toJSON());
-                if ( this.prepareDBO ) {
-                    actualJSON.forEach(this.prepareDBO);
-                }
-
-                assert.deepStrictEqual(
-                    actualJSON,
-                    expectedJSON
-                );
-            });
+            this.testFixture(dirName);
         }
+    }
+
+    private testFixture(dirName: string) {
+        const {ddl, expectedJSON} = this.readFixture(dirName);
+
+        it(dirName, async() => {
+
+            await this.prepareDB(ddl);
+            
+            const actualJSON = await this.loadActualJSON();
+
+            assert.deepStrictEqual(
+                actualJSON,
+                expectedJSON
+            );
+        });
+    }
+
+    private async prepareDB(ddl: string) {
+        await this.db.query(`
+            drop schema public cascade;
+            create schema public;
+            ${ddl}
+        `);
+    }
+
+    private async loadActualJSON() {
+        const objects = await this.load(this.pgDriver);
+
+        const actualJSON = objects.map(dboModel => dboModel.toJSON());
+        if ( this.prepareDBO ) {
+            actualJSON.forEach(this.prepareDBO);
+        }
+
+        return actualJSON;
+    }
+
+    private readFixture(dirName: string) {
+        const dirPath = path.join(this.fixturesPath, dirName);
+
+        const ddl = this.readFixtureDDL(dirPath);
+        const expectedJSON = this.readFixtureExpectedJSON(dirPath);
+
+        return {
+            ddl,
+            expectedJSON
+        };
+    }
+
+    private readFixtureDDL(dirPath: string) {
+
+        const ddlPath = path.join(dirPath, "ddl.sql");
+        let ddl = fs.readFileSync(ddlPath).toString();
+        
+        if ( this.prepareDDL ) {
+            ddl = this.prepareDDL(ddl);
+        }
+
+        return ddl;
+    }
+
+    private readFixtureExpectedJSON(dirPath: string) {
+        
+        const resultPath = path.join(dirPath, "result");
+        const expectedJSON = require(resultPath);
+
+        return expectedJSON;
     }
 }
