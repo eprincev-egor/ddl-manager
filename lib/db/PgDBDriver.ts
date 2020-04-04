@@ -176,6 +176,74 @@ extends DBDriver {
             tableModel.setColumn(columnKey, columnModel);
         }
 
+        const constraintsSQL = `
+            select
+                tc.constraint_type,
+                tc.constraint_name,
+                tc.table_schema,
+                tc.table_name,
+                rc.update_rule,
+                rc.delete_rule,
+                (
+                    select
+                        array_agg(kc.column_name::text)
+                    from information_schema.key_column_usage as kc
+                    where
+                        kc.table_name = tc.table_name and
+                        kc.table_schema = tc.table_schema and
+                        kc.constraint_name = tc.constraint_name
+                ) as columns,
+                fk_info.columns as reference_columns,
+                fk_info.table_name as reference_table
+            from information_schema.table_constraints as tc
+
+            left join information_schema.referential_constraints as rc on
+                rc.constraint_schema = tc.constraint_schema and
+                rc.constraint_name = tc.constraint_name
+            
+            left join lateral (
+                select
+                    ( array_agg( distinct ccu.table_name::text ) )[1] as table_name,
+                    array_agg( ccu.column_name::text ) as columns
+                from information_schema.constraint_column_usage as ccu
+                where
+                    ccu.constraint_name = rc.constraint_name and
+                    ccu.constraint_schema = rc.constraint_schema
+            ) as fk_info on true
+
+            where
+                tc.constraint_type in ('FOREIGN KEY', 'UNIQUE', 'PRIMARY KEY')
+        `;
+        const constraintsResult = await this.db.query<{
+            constraint_type: "FOREIGN KEY" | "UNIQUE" | "PRIMARY KEY";
+            constraint_name: string;
+            table_schema: string;
+            table_name: string;
+            update_rule: string;
+            delete_rule: string;
+            columns: string[];
+            reference_columns: string[];
+            reference_table: string;
+        }>(constraintsSQL);
+
+        for (const constraintRow of constraintsResult.rows) {
+            const {
+                constraint_type: constraintType,
+                table_schema: schemaName,
+                table_name: tableName,
+                columns: constraintColumns
+            } = constraintRow;
+
+            const schema = schemas[ schemaName ];
+            const tableModel: TableModel = schema.tables[ tableName ];
+
+            if ( constraintType === "PRIMARY KEY" ) {
+                tableModel.set({
+                    primaryKey: constraintColumns
+                });
+            }
+        }
+
         return outputTables;
     }
 }
