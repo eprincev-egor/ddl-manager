@@ -6,6 +6,7 @@ import { IChanges, Changes } from "../state/Changes";
 import { BaseDBObjectModel } from "./base-layers/BaseDBObjectModel";
 import { UniqueConstraintModel } from "./UniqueConstraintModel";
 import { CheckConstraintModel } from "./CheckConstraintModel";
+import { ForeignKeyConstraintModel } from "./ForeignKeyConstraintModel";
 
 export class TableModel extends AbstractTableModel<TableModel> {
     structure() {
@@ -105,6 +106,17 @@ export class TableModel extends AbstractTableModel<TableModel> {
             checkConstraints: [
                 ...thisCheckConstraints,
                 newCheckConstraint
+            ]
+        });
+    }
+
+    addForeignKeyConstraint(newForeignKey: ForeignKeyConstraintModel) {
+        const thisForeignKeys = this.row.foreignKeysConstraints;
+        
+        this.set({
+            foreignKeysConstraints: [
+                ...thisForeignKeys,
+                newForeignKey
             ]
         });
     }

@@ -17,3 +17,5 @@
 - serial => integer (do not migrate)
 + field: check for check constraints (need for migrate another condition)
     information_schema.check_constraints.check_clause
+- columnModel: add default
+- triggerModel: add events

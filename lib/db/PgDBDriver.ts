@@ -8,6 +8,7 @@ import { ColumnModel } from "../objects/ColumnModel";
 import { UniqueConstraintModel } from "../objects/UniqueConstraintModel";
 import { CheckConstraintModel } from "../objects/CheckConstraintModel";
 import { GrapeQLCoach, Expression } from "grapeql-lang";
+import { ForeignKeyConstraintModel } from "../objects/ForeignKeyConstraintModel";
 
 export class PgDBDriver 
 extends DBDriver {
@@ -212,7 +213,12 @@ extends DBDriver {
             
             left join lateral (
                 select
-                    ( array_agg( distinct ccu.table_name::text ) )[1] as table_name,
+                    ( 
+                        array_agg( distinct 
+                            ccu.table_schema::text || '.' ||
+                            ccu.table_name::text 
+                        ) 
+                    )[1] as table_name,
                     array_agg( ccu.column_name::text ) as columns
                 from information_schema.constraint_column_usage as ccu
                 where
@@ -283,6 +289,17 @@ extends DBDriver {
                     check: checkString.trim()
                 });
                 tableModel.addCheckConstraint(checkConstraintModel);
+            }
+
+            if ( constraintType === "FOREIGN KEY" ) {
+                const foreignKeyModel = new ForeignKeyConstraintModel({
+                    identify: constraintName,
+                    name: constraintName,
+                    columns: constraintColumns,
+                    referenceColumns: constraintRow.reference_columns,
+                    referenceTableIdentify: constraintRow.reference_table
+                });
+                tableModel.addForeignKeyConstraint(foreignKeyModel);
             }
         }
 
