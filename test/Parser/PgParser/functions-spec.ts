@@ -128,4 +128,22 @@ describe("PgParser", () => {
         });
     });
     
+    it("parseFile: function with in/out arguments", async() => {
+        const parser = new PgParser();
+
+        const result = parser.parseFile("test.sql", `
+            create function public.test(in x integer, out y bigint)
+            returns void as $body$
+                begin
+                end
+            $body$
+            language plpgsql;
+        `);
+
+        assert.ok(result.length === 1, "result.length === 1");
+
+        const func = result[0];
+        assert.strictEqual(func.getIdentify(), "public.test(integer)");
+    });
+    
 });

@@ -29,10 +29,13 @@ export class PgParser extends Parser {
                 const parsedFunction = coach.parse(CreateFunction);
                 const {schema, name, args} = parsedFunction.row;
                 
-                const argsTypes = args.map(arg => 
+                const inputArgs = args.filter(arg =>
+                    !arg.get("out")
+                );
+                const inputArgsTypes = inputArgs.map(arg => 
                     arg.get("type")
                 );
-                const functionIdentify = `${schema}.${name}(${argsTypes})`;
+                const functionIdentify = `${schema}.${name}(${inputArgsTypes})`;
 
                 const funcModel = new FunctionModel({
                     filePath,
