@@ -2,6 +2,7 @@ import pg from "pg";
 import {DBDriver} from "./DBDriver";
 import { FunctionModel } from "../objects/FunctionModel";
 import { PgParser } from "../parser/pg/PgParser";
+import { TriggerModel } from "../objects/TriggerModel";
 
 export class PgDBDriver 
 extends DBDriver {
@@ -67,5 +68,36 @@ extends DBDriver {
         });
 
         return outputFunctions;
+    }
+
+    async loadTriggers(): Promise<TriggerModel[]> {
+        const sql = `
+            select
+                pg_get_triggerdef( pg_trigger.oid ) as ddl,
+                pg_catalog.obj_description( pg_trigger.oid ) as comment
+            from pg_trigger
+            where
+                pg_trigger.tgisinternal = false
+        `;
+        
+        const result = await this.db.query<{
+            ddl: string;
+            comment: string;
+        }>(sql);
+
+        const outputTriggers: TriggerModel[] = [];
+        result.rows.forEach(row => {
+            const triggerDDL = row.ddl;
+            const models = this.parser.parseFile("(database)", triggerDDL);
+            const triggerModel = models[0] as TriggerModel;
+
+            triggerModel.set({
+                createdByDDLManager: false
+            });
+
+            outputTriggers.push(triggerModel);
+        });
+
+        return outputTriggers;
     }
 }
