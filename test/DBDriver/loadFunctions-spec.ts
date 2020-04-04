@@ -28,7 +28,7 @@ describe("PgDBDriver: load functions", () => {
     });
 
     
-    const fixturesPath = path.join(__dirname, "fixtures");
+    const fixturesPath = path.join(__dirname, "func-fixtures");
     const fixtures = fs.readdirSync(fixturesPath);
 
     for (const dirName of fixtures) {
