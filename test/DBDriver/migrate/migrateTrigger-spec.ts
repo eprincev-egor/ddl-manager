@@ -2,10 +2,10 @@ import pg from "pg";
 import {readDatabaseOptions} from "../../utils";
 import {PgDBDriver} from "../../../lib/db/PgDBDriver";
 import { PgParser } from "../../../lib/parser/pg/PgParser";
-import { FunctionModel } from "../../../lib/objects/FunctionModel";
+import { TriggerModel } from "../../../lib/objects/TriggerModel";
 import assert from "assert";
 
-describe("PgDBDriver: drop/create function", () => {
+describe("PgDBDriver: drop/create trigger", () => {
 
     const dbConfig = readDatabaseOptions();
     let db: pg.Client;
@@ -30,31 +30,41 @@ describe("PgDBDriver: drop/create function", () => {
         await db.end();
     });
     
-    it("drop function", async() => {
+    it("drop trigger", async() => {
         const sql = `
+            create table test_table (
+                id integer
+            );
+
             create or replace function test_func()
-            returns void as $body$
+            returns trigger as $body$
             begin
                 
             end
             $body$
             language plpgsql;
+
+            create trigger test_trigger
+            after insert
+            on test_table
+            for each row
+            execute procedure test_func()
         `;
         await db.query(sql);
 
 
         const parser = new PgParser();
         const models = parser.parseFile("test.sql", sql)
-        const functionModel = models[0] as FunctionModel;
+        const triggerModel = models[2] as TriggerModel;
         
 
-        await pgDriver.dropFunction(functionModel);
+        await pgDriver.dropTrigger(triggerModel);
 
         const result = await db.query(`
             select count(*)::integer as count
-            from information_schema.routines as routines
+            from pg_trigger
             where
-                routines.routine_name = 'test_func'
+                pg_trigger.tgname = 'test_trigger'
         `);
         const row = result.rows[0];
         assert.strictEqual(row.count, 0);
@@ -62,28 +72,41 @@ describe("PgDBDriver: drop/create function", () => {
     });
 
     it("create function", async() => {
-        const sql = `
+        const initialStateSQL = `
+            create table test_table (
+                id integer
+            );
+
             create or replace function test_func()
-            returns void as $body$
+            returns trigger as $body$
             begin
                 
             end
             $body$
             language plpgsql;
         `;
+        await db.query(initialStateSQL);
+
+        const sql = `
+            create trigger test_trigger
+            after insert
+            on test_table
+            for each row
+            execute procedure test_func()
+        `;
 
 
         const parser = new PgParser();
         const models = parser.parseFile("test.sql", sql)
-        const functionModel = models[0] as FunctionModel;
+        const triggerModel = models[0] as TriggerModel;
         
-        await pgDriver.createFunction(functionModel);
+        await pgDriver.createTrigger(triggerModel);
 
         const result = await db.query(`
             select count(*)::integer as count
-            from information_schema.routines as routines
+            from pg_trigger
             where
-                routines.routine_name = 'test_func'
+                pg_trigger.tgname = 'test_trigger'
         `);
         const row = result.rows[0];
         assert.strictEqual(row.count, 1);

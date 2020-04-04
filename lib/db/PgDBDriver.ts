@@ -306,6 +306,30 @@ extends DBDriver {
 
         return outputTables;
     }
+
+    async dropFunction(functionModel: FunctionModel) {
+        const functionIdentify = functionModel.getIdentify();
+        await this.db.query(`
+            drop function if exists ${functionIdentify};
+        `);
+    }
+
+    async createFunction(functionModel: FunctionModel) {
+        const parsedFunction = functionModel.get("parsed");
+        await this.db.query( parsedFunction.toString() );
+    }
+
+    async dropTrigger(triggerModel: TriggerModel) {
+        const triggerIdentify = triggerModel.getIdentify();
+        await this.db.query(`
+            drop trigger if exists ${triggerIdentify};
+        `);
+    }
+
+    async createTrigger(triggerModel: TriggerModel) {
+        const parsedTrigger = triggerModel.get("parsed");
+        await this.db.query( parsedTrigger.toString() );
+    }
 }
 
 function extrudeBracketsFromCheckClause(checkClause: string): string {
