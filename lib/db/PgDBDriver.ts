@@ -6,6 +6,7 @@ import { TriggerModel } from "../objects/TriggerModel";
 import { TableModel } from "../objects/TableModel";
 import { ColumnModel } from "../objects/ColumnModel";
 import { UniqueConstraintModel } from "../objects/UniqueConstraintModel";
+import { CheckConstraintModel } from "../objects/CheckConstraintModel";
 
 export class PgDBDriver 
 extends DBDriver {
@@ -195,7 +196,9 @@ extends DBDriver {
                         kc.constraint_name = tc.constraint_name
                 ) as columns,
                 fk_info.columns as reference_columns,
-                fk_info.table_name as reference_table
+                fk_info.table_name as reference_table,
+                check_info.check_clause
+
             from information_schema.table_constraints as tc
 
             left join information_schema.referential_constraints as rc on
@@ -212,11 +215,23 @@ extends DBDriver {
                     ccu.constraint_schema = rc.constraint_schema
             ) as fk_info on true
 
+            left join information_schema.check_constraints as check_info on
+                check_info.constraint_schema = tc.table_schema and
+                check_info.constraint_name = tc.constraint_name
+            
+
             where
-                tc.constraint_type in ('FOREIGN KEY', 'UNIQUE', 'PRIMARY KEY')
+                tc.table_schema != 'pg_catalog' and
+                tc.table_schema != 'information_schema' and
+                (
+                    tc.constraint_type != 'CHECK'
+                    or
+                    tc.constraint_name not ilike '%_not_null' and
+                    check_info.check_clause not ilike '% IS NOT NULL'
+                )
         `;
         const constraintsResult = await this.db.query<{
-            constraint_type: "FOREIGN KEY" | "UNIQUE" | "PRIMARY KEY";
+            constraint_type: "FOREIGN KEY" | "UNIQUE" | "PRIMARY KEY" | "CHECK";
             constraint_name: string;
             table_schema: string;
             table_name: string;
@@ -252,6 +267,14 @@ extends DBDriver {
                     unique: constraintColumns
                 });
                 tableModel.addUniqueConstraint(uniqueConstraintModel);
+            }
+
+            if ( constraintType === "CHECK" ) {
+                const checkConstraintModel = new CheckConstraintModel({
+                    identify: constraintName,
+                    name: constraintName
+                });
+                tableModel.addCheckConstraint(checkConstraintModel);
             }
         }
 

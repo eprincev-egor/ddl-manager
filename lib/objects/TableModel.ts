@@ -5,6 +5,7 @@ import { ExtensionModel } from "./ExtensionModel";
 import { IChanges, Changes } from "../state/Changes";
 import { BaseDBObjectModel } from "./base-layers/BaseDBObjectModel";
 import { UniqueConstraintModel } from "./UniqueConstraintModel";
+import { CheckConstraintModel } from "./CheckConstraintModel";
 
 export class TableModel extends AbstractTableModel<TableModel> {
     structure() {
@@ -93,6 +94,17 @@ export class TableModel extends AbstractTableModel<TableModel> {
             uniqueConstraints: [
                 ...thisUniqueConstraints,
                 newUniqueConstraint
+            ]
+        });
+    }
+
+    addCheckConstraint(newCheckConstraint: CheckConstraintModel) {
+        const thisCheckConstraints = this.row.checkConstraints;
+        
+        this.set({
+            checkConstraints: [
+                ...thisCheckConstraints,
+                newCheckConstraint
             ]
         });
     }
