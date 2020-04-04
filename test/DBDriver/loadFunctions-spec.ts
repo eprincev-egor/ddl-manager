@@ -1,12 +1,20 @@
 import path from "path";
 import {TestFixtures} from "./TestFixtures";
+import { FunctionModel } from "../../lib/objects/FunctionModel";
 
 describe("PgDBDriver: load functions", () => {
 
-    const test = new TestFixtures(
-        path.join(__dirname, "func-fixtures"),
-        (driver) => driver.loadFunctions()
-    );
+    const test = new TestFixtures({
+        fixturesPath: path.join(__dirname, "func-fixtures"),
+        load: async(driver) => 
+            driver.loadFunctions(),
+        prepareDDL(ddl: string) {
+            return fixLineBreaks(ddl);
+        },
+        prepareDBO(dbo: FunctionModel["TJson"]) {
+            fixLineBreaksInFunc(dbo);
+        }
+    });
 
     before(async() => {
         await test.before();
@@ -26,4 +34,20 @@ describe("PgDBDriver: load functions", () => {
 
     test.testFixtures();
 
+    function fixLineBreaks(str) {
+        return str.replace(/[\r\n]+/g, "\n");
+    }
+
+    function fixLineBreaksInFunc(func: FunctionModel["TJson"]) {
+        if ( !func.parsed ) {
+            return;
+        }
+        
+        const body = func.parsed.body;
+        if ( !body || !body.content ) {
+            return;
+        }
+
+        body.content = fixLineBreaks(body.content);
+    }
 });

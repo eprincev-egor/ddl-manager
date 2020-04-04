@@ -7,21 +7,32 @@ import path from "path";
 import assert from "assert";
 import { BaseDBObjectModel } from "../../lib/objects/base-layers/BaseDBObjectModel";
 
-export class TestFixtures {
+export interface ITestFixturesParams {
+    fixturesPath: string;
+    load: (pgDriver: PgDBDriver) => 
+            Promise<BaseDBObjectModel<any>[]>;
+    prepareDDL?: (ddl: string) => string;
+    prepareDBO?: (dbo: BaseDBObjectModel<any>["TJson"]) => void;
+}
+
+export class TestFixtures
+implements ITestFixturesParams {
     private dbConfig: DBDriver["options"];
     private db: pg.Client;
+
     protected pgDriver: PgDBDriver;
-    private fixturesPath: string;
-    private load: (pgDriver: PgDBDriver) => 
+
+    fixturesPath: string;
+    load: (pgDriver: PgDBDriver) => 
         Promise<BaseDBObjectModel<any>[]>;
+    prepareDDL?: (ddl: string) => string;
+    prepareDBO?: (dbo: BaseDBObjectModel<any>) => void;
     
-    constructor(
-        fixturesPath: string, 
-        load: (pgDriver: PgDBDriver) => 
-            Promise<BaseDBObjectModel<any>[]>
-    ) {
-        this.fixturesPath = fixturesPath;
-        this.load = load;
+    constructor(params: ITestFixturesParams) {
+        this.fixturesPath = params.fixturesPath;
+        this.load = params.load;
+        this.prepareDDL = params.prepareDDL;
+        this.prepareDBO = params.prepareDBO;
         this.dbConfig = readDatabaseOptions();
     }
 
@@ -50,7 +61,10 @@ export class TestFixtures {
             const dirPath = path.join(this.fixturesPath, dirName);
 
             const ddlPath = path.join(dirPath, "ddl.sql");
-            const ddl = fs.readFileSync(ddlPath).toString();
+            let ddl = fs.readFileSync(ddlPath).toString();
+            if ( this.prepareDDL ) {
+                ddl = this.prepareDDL(ddl);
+            }
 
             const resultPath = path.join(dirPath, "result");
             const expectedJSON = require(resultPath);
@@ -64,7 +78,11 @@ export class TestFixtures {
                 `);
                 
                 const objects = await this.load(this.pgDriver);
+
                 const actualJSON = objects.map(dboModel => dboModel.toJSON());
+                if ( this.prepareDBO ) {
+                    actualJSON.forEach(this.prepareDBO);
+                }
 
                 assert.deepStrictEqual(
                     actualJSON,

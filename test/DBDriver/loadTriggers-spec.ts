@@ -3,10 +3,10 @@ import {TestFixtures} from "./TestFixtures";
 
 describe("PgDBDriver: load triggers", () => {
 
-    const test = new TestFixtures(
-        path.join(__dirname, "trigger-fixtures"),
-        (driver) => driver.loadTriggers()
-    );
+    const test = new TestFixtures({
+        fixturesPath: path.join(__dirname, "trigger-fixtures"),
+        load: (driver) => driver.loadTriggers()
+    });
 
     before(async() => {
         await test.before();
