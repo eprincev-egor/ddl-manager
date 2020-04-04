@@ -1,6 +1,6 @@
 import path from "path";
 import {TestFixtures} from "./TestFixtures";
-import { FunctionModel } from "../../lib/objects/FunctionModel";
+import { FunctionModel } from "../../../lib/objects/FunctionModel";
 
 describe("PgDBDriver: load functions", () => {
 

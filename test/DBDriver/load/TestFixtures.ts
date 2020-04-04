@@ -1,11 +1,11 @@
-import {readDatabaseOptions} from "../utils";
-import { DBDriver } from "../../lib/db/DBDriver";
+import {readDatabaseOptions} from "../../utils";
+import { DBDriver } from "../../../lib/db/DBDriver";
 import pg from "pg";
-import {PgDBDriver} from "../../lib/db/PgDBDriver";
+import {PgDBDriver} from "../../../lib/db/PgDBDriver";
 import fs from "fs";
 import path from "path";
 import assert from "assert";
-import { BaseDBObjectModel } from "../../lib/objects/base-layers/BaseDBObjectModel";
+import { BaseDBObjectModel } from "../../../lib/objects/base-layers/BaseDBObjectModel";
 
 export interface ITestFixturesParams {
     fixturesPath: string;
