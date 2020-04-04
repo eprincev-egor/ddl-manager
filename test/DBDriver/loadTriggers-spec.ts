@@ -1,57 +1,29 @@
-import {readDatabaseOptions} from "../utils";
-import pg from "pg";
-import {PgDBDriver} from "../../lib/db/PgDBDriver";
-import fs from "fs";
 import path from "path";
-import assert from "assert";
+import {TestFixtures} from "./TestFixtures";
 
 describe("PgDBDriver: load triggers", () => {
-    const dbConfig = readDatabaseOptions();
-    let db: pg.Client;
-    let pgDriver: PgDBDriver;
+
+    const test = new TestFixtures(
+        path.join(__dirname, "trigger-fixtures"),
+        (driver) => driver.loadTriggers()
+    );
+
+    before(async() => {
+        await test.before();
+    });
 
     beforeEach(async() => {
-        db = new pg.Client(dbConfig);
-        await db.connect();
-
-        await db.query(`
-            drop schema public cascade;
-            create schema public;
-        `);
-
-        pgDriver = new PgDBDriver(dbConfig);
-        await pgDriver.connect();
+        await test.beforeEach();
     });
 
     afterEach(async() => {
-        db.end();
+        await test.afterEach();
     });
 
-    
-    const fixturesPath = path.join(__dirname, "trigger-fixtures");
-    const fixtures = fs.readdirSync(fixturesPath);
+    after(async() => {
+        await test.after();
+    });
 
-    for (const dirName of fixtures) {
-        const dirPath = path.join(fixturesPath, dirName);
-
-        const ddlPath = path.join(dirPath, "ddl.sql");
-        const ddl = fs.readFileSync(ddlPath).toString();
-
-        const resultPath = path.join(dirPath, "result");
-        const expectedTriggersJSON = require(resultPath);
-
-        it(dirName, async() => {
-
-            await db.query(ddl);
-            
-            const triggers = await pgDriver.loadTriggers();
-            const actualTriggersJSON = triggers.map(func => func.toJSON());
-
-            assert.deepStrictEqual(
-                actualTriggersJSON,
-                expectedTriggersJSON
-            );
-        });
-    }
+    test.testFixtures();
 
 });

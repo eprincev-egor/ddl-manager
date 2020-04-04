@@ -23,6 +23,10 @@ extends DBDriver {
         await this.db.connect();
     }
 
+    async end() {
+        await this.db.end();
+    }
+
     async loadFunctions(): Promise<FunctionModel[]> {
         const sql = `
         select
