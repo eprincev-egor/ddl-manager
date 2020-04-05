@@ -9,6 +9,7 @@ import { UniqueConstraintModel } from "../objects/UniqueConstraintModel";
 import { CheckConstraintModel } from "../objects/CheckConstraintModel";
 import { GrapeQLCoach, Expression } from "grapeql-lang";
 import { ForeignKeyConstraintModel } from "../objects/ForeignKeyConstraintModel";
+import { ViewModel } from "../objects/ViewModel";
 
 export class PgDBDriver 
 extends DBDriver {
@@ -329,6 +330,18 @@ extends DBDriver {
     async createTrigger(triggerModel: TriggerModel) {
         const parsedTrigger = triggerModel.get("parsed");
         await this.db.query( parsedTrigger.toString() );
+    }
+
+    async dropView(viewModel: ViewModel) {
+        const viewIdentify = viewModel.getIdentify();
+        await this.db.query(`
+            drop view if exists ${viewIdentify};
+        `);
+    }
+
+    async createView(viewModel: ViewModel) {
+        const parsedView = viewModel.get("parsed");
+        await this.db.query( "create " + parsedView.toString() );
     }
 }
 

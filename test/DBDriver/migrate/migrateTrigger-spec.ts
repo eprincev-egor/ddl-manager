@@ -71,7 +71,7 @@ describe("PgDBDriver: drop/create trigger", () => {
 
     });
 
-    it("create function", async() => {
+    it("create trigger", async() => {
         const initialStateSQL = `
             create table test_table (
                 id integer
