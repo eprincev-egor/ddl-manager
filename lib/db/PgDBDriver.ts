@@ -343,6 +343,29 @@ extends DBDriver {
         const parsedView = viewModel.get("parsed");
         await this.db.query( "create " + parsedView.toString() );
     }
+
+    async dropColumnDefault(tableModel: TableModel, columnModel: ColumnModel) {
+        const tableIdentify = tableModel.getIdentify();
+        const columnKey = columnModel.get("key");
+
+        await this.db.query(`
+            alter table ${tableIdentify}
+            alter column ${columnKey}
+            set default null
+        `);
+    }
+
+    async createColumnDefault(tableModel: TableModel, columnModel: ColumnModel) {
+        const tableIdentify = tableModel.getIdentify();
+        const columnKey = columnModel.get("key");
+        const defaultSQL = columnModel.get("default");
+
+        await this.db.query(`
+            alter table ${tableIdentify}
+            alter column ${columnKey}
+            set default ${defaultSQL}
+        `);
+    }
 }
 
 function extrudeBracketsFromCheckClause(checkClause: string): string {
