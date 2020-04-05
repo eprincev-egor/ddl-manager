@@ -459,6 +459,45 @@ extends DBDriver {
             add constraint ${tableName}_pk primary key (${primaryKeyColumns})
         `);
     }
+
+    async dropUniqueConstraint(
+        tableModel: TableModel, 
+        uniqueConstraint: UniqueConstraintModel
+    ) {
+        const tableIdentify = tableModel.getIdentify();
+        const constraintName = uniqueConstraint.get("name");
+
+        await this.db.query(`
+            alter table ${tableIdentify}
+            drop constraint ${constraintName}
+        `);
+    }
+
+    async createUniqueConstraint(
+        tableModel: TableModel, 
+        uniqueConstraint: UniqueConstraintModel
+    ) {
+        const tableIdentify = tableModel.getIdentify();
+        const constraintSQL = uniqueConstraint.get("parsed").toString();
+        
+        let createSQL: string;
+        if ( /^constraint\s+/.test(constraintSQL) ) {
+            createSQL = `
+                alter table ${tableIdentify}
+                add ${constraintSQL}
+            `;
+        }
+        else {
+            const constraintName = uniqueConstraint.get("name");
+            const uniqueColumns = uniqueConstraint.get("unique");
+            createSQL = `
+                alter table ${tableIdentify}
+                add constraint ${constraintName} unique (${uniqueColumns})
+            `;
+        }
+
+        await this.db.query(createSQL);
+    }
 }
 
 function extrudeBracketsFromCheckClause(checkClause: string): string {
