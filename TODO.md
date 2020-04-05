@@ -23,4 +23,6 @@
     information_schema.check_constraints.check_clause
 - triggerModel: add events, 'when condition'
 - foreignKeyModel: add other parameters
+- dbdriver: test order of tables
+- dbdriver: load views
 - refactor all =)
