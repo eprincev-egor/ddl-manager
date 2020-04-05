@@ -426,6 +426,39 @@ extends DBDriver {
 
         await this.db.query(createSQL);
     }
+
+    async dropPrimaryKey(tableModel: TableModel) {
+        const tableIdentify = tableModel.getIdentify();
+
+        const result = await this.db.query(`
+            select
+                tc.constraint_name
+
+            from information_schema.table_constraints as tc
+
+            where
+                tc.table_schema = 'public' and
+                tc.table_name = 'test_table' and
+                tc.constraint_type = 'PRIMARY KEY'
+        `);
+        const row = result.rows[0];
+        const constraintName = row.constraint_name;
+
+        await this.db.query(`
+            alter table ${tableIdentify}
+            drop constraint ${constraintName}
+        `);
+    }
+
+    async createPrimaryKey(tableModel: TableModel, primaryKeyColumns: string[]) {
+        const tableIdentify = tableModel.getIdentify();
+        const tableName = tableModel.get("name");
+        
+        await this.db.query(`
+            alter table ${tableIdentify}
+            add constraint ${tableName}_pk primary key (${primaryKeyColumns})
+        `);
+    }
 }
 
 function extrudeBracketsFromCheckClause(checkClause: string): string {
