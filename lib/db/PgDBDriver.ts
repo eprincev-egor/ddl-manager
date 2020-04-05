@@ -366,6 +366,28 @@ extends DBDriver {
             set default ${defaultSQL}
         `);
     }
+
+    async dropColumnNotNull(tableModel: TableModel, columnModel: ColumnModel) {
+        const tableIdentify = tableModel.getIdentify();
+        const columnKey = columnModel.get("key");
+
+        await this.db.query(`
+            alter table ${tableIdentify}
+            alter column ${columnKey}
+            drop not null
+        `);
+    }
+
+    async createColumnNotNull(tableModel: TableModel, columnModel: ColumnModel) {
+        const tableIdentify = tableModel.getIdentify();
+        const columnKey = columnModel.get("key");
+
+        await this.db.query(`
+            alter table ${tableIdentify}
+            alter column ${columnKey}
+            set not null
+        `);
+    }
 }
 
 function extrudeBracketsFromCheckClause(checkClause: string): string {
