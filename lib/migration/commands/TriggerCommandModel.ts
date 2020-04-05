@@ -1,5 +1,5 @@
 import {Types} from "model-layer";
-import {CommandModel} from "./CommandModel";
+import {CommandModel} from "./base-layers/CommandModel";
 import {TriggerModel} from "../../objects/TriggerModel";
 
 export class TriggerCommandModel extends CommandModel<TriggerCommandModel> {

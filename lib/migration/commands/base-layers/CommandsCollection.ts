@@ -1,17 +1,17 @@
 import {Collection} from "model-layer";
 import {CommandModel} from "./CommandModel";
-import {FunctionCommandModel} from "./FunctionCommandModel";
-import {ViewCommandModel} from "./ViewCommandModel";
-import {TableCommandModel} from "./TableCommandModel";
-import {ColumnCommandModel} from "./ColumnCommandModel";
-import {TriggerCommandModel} from "./TriggerCommandModel";
-import {RowsCommandModel} from "./RowsCommandModel";
-import {ColumnNotNullCommandModel} from "./ColumnNotNullCommandModel";
-import {PrimaryKeyCommandModel} from "./PrimaryKeyCommandModel";
-import {CheckConstraintCommandModel} from "./CheckConstraintCommandModel";
-import {UniqueConstraintCommandModel} from "./UniqueConstraintCommandModel";
-import {ForeignKeyConstraintCommandModel} from "./ForeignKeyConstraintCommandModel";
-import {ColumnDefaultCommandModel} from "./ColumnDefaultCommandModel";
+import {FunctionCommandModel} from "../FunctionCommandModel";
+import {ViewCommandModel} from "../ViewCommandModel";
+import {TableCommandModel} from "../TableCommandModel";
+import {ColumnCommandModel} from "../ColumnCommandModel";
+import {TriggerCommandModel} from "../TriggerCommandModel";
+import {RowsCommandModel} from "../RowsCommandModel";
+import {ColumnNotNullCommandModel} from "../ColumnNotNullCommandModel";
+import {PrimaryKeyCommandModel} from "../PrimaryKeyCommandModel";
+import {CheckConstraintCommandModel} from "../CheckConstraintCommandModel";
+import {UniqueConstraintCommandModel} from "../UniqueConstraintCommandModel";
+import {ForeignKeyConstraintCommandModel} from "../ForeignKeyConstraintCommandModel";
+import {ColumnDefaultCommandModel} from "../ColumnDefaultCommandModel";
 
 export class CommandsCollection extends Collection<CommandsCollection> {
     Model(): (

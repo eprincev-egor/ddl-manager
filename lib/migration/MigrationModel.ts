@@ -1,5 +1,5 @@
 import {Model, Types} from "model-layer";
-import {CommandsCollection} from "./commands/CommandsCollection";
+import {CommandsCollection} from "./commands/base-layers/CommandsCollection";
 import {MigrationErrorsCollection} from "./errors/base-layers/MigrationErrorsCollection";
 
 export type InputCommand = (
