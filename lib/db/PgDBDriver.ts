@@ -388,6 +388,44 @@ extends DBDriver {
             set not null
         `);
     }
+
+    async dropCheckConstraint(
+        tableModel: TableModel, 
+        checkConstraint: CheckConstraintModel
+    ) {
+        const tableIdentify = tableModel.getIdentify();
+        const constraintName = checkConstraint.get("name");
+
+        await this.db.query(`
+            alter table ${tableIdentify}
+            drop constraint ${constraintName}
+        `);
+    }
+
+    async createCheckConstraint(
+        tableModel: TableModel, 
+        checkConstraint: CheckConstraintModel
+    ) {
+        const tableIdentify = tableModel.getIdentify();
+        const constraintSQL = checkConstraint.get("parsed").toString();
+        
+        let createSQL: string;
+        if ( /^constraint\s+/.test(constraintSQL) ) {
+            createSQL = `
+                alter table ${tableIdentify}
+                add ${constraintSQL}
+            `;
+        }
+        else {
+            const constraintName = checkConstraint.get("name");
+            createSQL = `
+                alter table ${tableIdentify}
+                add constraint ${constraintName} ${constraintSQL}
+            `;
+        }
+
+        await this.db.query(createSQL);
+    }
 }
 
 function extrudeBracketsFromCheckClause(checkClause: string): string {
