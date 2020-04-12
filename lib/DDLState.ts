@@ -1,10 +1,15 @@
 import { ITableDBO, IDBO } from "./common";
 
-export class DDLState {
-    private tables: ITableDBO[];
-    private views: IDBO[];
-    private triggers: IDBO[];
-    private functions: IDBO[];
+export abstract class AbstractDDLState<DBOTypes extends {
+    table: ITableDBO;
+    view: IDBO;
+    trigger: IDBO;
+    function: IDBO;
+}> {
+    private tables: DBOTypes["table"][];
+    private views: DBOTypes["view"][];
+    private triggers: DBOTypes["trigger"][];
+    private functions: DBOTypes["function"][];
 
     constructor() {
         this.tables = [];
@@ -13,19 +18,19 @@ export class DDLState {
         this.functions = [];
     }
 
-    addViews(views: IDBO[]) {
+    addViews(views: DBOTypes["view"][]) {
         this.views.push( ...views );
     }
 
-    addTables(tables: ITableDBO[]) {
+    addTables(tables: DBOTypes["table"][]) {
         this.tables.push( ...tables );
     }
 
-    addFunctions(functions: IDBO[]) {
+    addFunctions(functions: DBOTypes["function"][]) {
         this.functions.push( ...functions );
     }
 
-    addTriggers(triggers: IDBO[]) {
+    addTriggers(triggers: DBOTypes["trigger"][]) {
         this.triggers.push( ...triggers );
     }
 }

@@ -1,19 +1,20 @@
 import { IDBO, IDBOSource, IDBODestination, IDBDriver } from "../common";
-import { DDLState } from "../DDLState";
+import { AbstractDDLState } from "../DDLState";
 
-export abstract class AbstractDatabase
+export abstract class AbstractDatabase<TDDLState extends AbstractDDLState<any>>
 implements 
     IDBOSource, 
     IDBODestination
 {
-    state: DDLState;
+    state: TDDLState;
     protected driver: IDBDriver;
 
     constructor(driver: IDBDriver) {
-        this.state = new DDLState();
         this.driver = driver;
+        this.state = this.createState();
     }
 
+    abstract createState(): TDDLState;
     abstract load(): Promise<void>;
 
     async drop(dbo: IDBO): Promise<void> {

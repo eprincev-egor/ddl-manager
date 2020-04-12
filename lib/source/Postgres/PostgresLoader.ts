@@ -5,7 +5,7 @@ import { FunctionsLoader } from "./loaders/FunctionsLoader";
 import { TriggersLoader } from "./loaders/TriggersLoader";
 import { ViewsLoader } from "./loaders/ViewsLoader";
 import { TablesLoader } from "./loaders/TablesLoader";
-import { DDLState } from "../../DDLState";
+import { PostgresState } from "./PostgresState";
 
 export class PostgresLoader {
     private driver: IDBDriver;
@@ -30,7 +30,7 @@ export class PostgresLoader {
         this.tablesLoader = new TablesLoader(driver);
     }
 
-    async load(state: DDLState) {
+    async load(state: PostgresState) {
         await this.driver.connect();
 
         const functions = await this.functionsLoader.load();
