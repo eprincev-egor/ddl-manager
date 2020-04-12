@@ -1,5 +1,5 @@
 import { IDBO, IDBOSource, IDBODestination, IDBDriver } from "../common";
-import { DDLState } from "../state/DDLState";
+import { DDLState } from "../DDLState";
 
 export abstract class AbstractDatabase
 implements 

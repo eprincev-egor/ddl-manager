@@ -1,24 +1,19 @@
 import { AbstractDatabase } from "../AbstractDatabase";
 import { IDBDriver } from "../../common";
-import { FunctionsLoader } from "./loaders/FunctionsLoader";
-import { PostgresParser } from "./parser/PostgresParser";
+import { PostgresLoader } from "./PostgresLoader";
 
-export class Postgres extends AbstractDatabase {
-    private functionsLoader: FunctionsLoader;
+export class Postgres 
+extends AbstractDatabase {
+    private loader: PostgresLoader;
 
     constructor(driver: IDBDriver) {
         super(driver);
         
-        const parser = new PostgresParser();
-        this.functionsLoader = new FunctionsLoader({
-            driver,
-            parser
-        });
+        this.loader = new PostgresLoader(driver);
     }
 
     async load() {
         await this.driver.connect();
-
-        const functions = await this.functionsLoader.load();
+        await this.loader.load(this.state);
     }
 }

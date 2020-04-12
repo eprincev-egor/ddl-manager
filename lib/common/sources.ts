@@ -1,5 +1,5 @@
 import { IDBO } from "./objects";
-import { DDLState } from "../state/DDLState";
+import { DDLState } from "../DDLState";
 
 export interface IDBOSource {
     state: DDLState;

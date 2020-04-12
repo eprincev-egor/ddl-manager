@@ -10,7 +10,7 @@ interface TRow {
     ddl: string;
 }
 
-export abstract class AbstractLoader<TDBO extends IDBO>
+export abstract class SimpleLoader<TDBO extends IDBO>
 implements ILoader {
     protected driver: IDBDriver;
     protected parser: IDBOParser;
