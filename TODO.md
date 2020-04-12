@@ -25,4 +25,5 @@
 - foreignKeyModel: add other parameters
 - dbdriver: test order of tables
 - dbdriver: load views
+- foreign key reference to not public schema
 - refactor all =)

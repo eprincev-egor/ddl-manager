@@ -1,31 +1,28 @@
 
 // error handling
 
-interface IChanges {
-    removed: any[];
-    created: any[];
-    changed: any[];
-}
-
-export interface IDDLSource {
-    load(): Promise<void>;
-    applyChanges(changes): Promise<void>;
-    compare(anotherSource: IDDLSource): IChanges;
-    watch(handler: (changes) => void): void;
-}
+import { IDBOSource, IDBODestination, IDBOWatcher } from "./common";
+import { parallel } from "./utils/parallel";
+import { Migrator } from "./migrator/Migrator";
 
 export interface IDDLManagerParams {
-    source: IDDLSource;
-    destination: IDDLSource;
+    source: IDBOSource & IDBODestination & IDBOWatcher;
+    destination: IDBOSource & IDBODestination;
 }
 
 export class DDLManager {
-    private source: IDDLSource;
-    private destination: IDDLSource;
+    private source: IDBOSource & IDBODestination & IDBOWatcher;
+    private destination: IDBOSource & IDBODestination;
+    private migrator: Migrator;
 
     constructor(params: IDDLManagerParams) {
         this.source = params.source;
         this.destination = params.destination;
+
+        this.migrator = new Migrator({
+            source: this.source, 
+            destination: this.destination
+        });
     }
 
     async build(): Promise<void> {
@@ -39,31 +36,27 @@ export class DDLManager {
     async watch(): Promise<void> {
         await this.build();
 
-        // const queue = new Queue();
+        // debounce + queue
+        let timer;
+        this.source.watch(() => {
+            clearTimeout(timer);
 
-        this.source.watch(async(changes) => {
-            // queue.push(changes);
+            timer = setTimeout(() => {
+                this.onChange();
+            }, 100);
         });
+    }
 
-        // queue.execute(async (changes) => {
-        //     await this.destination.applyChanges(changes);
-        // });
-
-        // queue.catch((err) => {
-        //     // this.source
-        // });
+    private async onChange() {
+        await this.build();
     }
 }
 
-async function build(source: IDDLSource, destination: IDDLSource) {
+async function build(source: IDBOSource, destination: IDBOSource & IDBODestination) {
     await parallel([
         source.load(),
         destination.load()
     ]);
     const changes = destination.compare(source);
     destination.applyChanges(changes);
-}
-
-async function parallel(promises: Promise<any>[]) {
-    await Promise.all(promises);
 }
