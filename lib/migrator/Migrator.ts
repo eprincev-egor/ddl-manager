@@ -15,6 +15,6 @@ export class Migrator {
     }
 
     async migrate() {
-        
+        const changes = this.source.state.compare(this.destination.state);
     }
 }

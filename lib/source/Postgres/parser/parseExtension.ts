@@ -8,7 +8,7 @@ import { parseColumns } from "./table/parseColumns";
 import { parseConstraints } from "./table/parseConstraints";
 import { parseValues } from "./table/parseValues";
 
-export function parseExtension(coach: GrapeQLCoach) {
+export function parseExtension(coach: GrapeQLCoach): PGExtension {
     const gqlExtension = coach.parse(GQLExtension);
     const forTableIdentify = gqlExtension.get("forTable").toString();
 

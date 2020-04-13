@@ -38,6 +38,10 @@ implements ITableDBO {
         };
     }
 
+    getIdentify() {
+        return `${this.row.schema}.${this.row.name}`;
+    }
+
     getColumns() {
         return this.row.columns;
     }

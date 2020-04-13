@@ -4,7 +4,7 @@ import {
 } from "grapeql-lang";
 import { TriggerDBO } from "../objects/TriggerDBO";
 
-export function parseTrigger(coach: GrapeQLCoach) {
+export function parseTrigger(coach: GrapeQLCoach): TriggerDBO {
     const gqlTrigger = coach.parse(CreateTrigger);
 
     const triggerDBO = new TriggerDBO({

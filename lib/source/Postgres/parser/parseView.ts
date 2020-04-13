@@ -4,7 +4,7 @@ import {
 } from "grapeql-lang";
 import { ViewDBO } from "../objects/ViewDBO";
 
-export function parseView(coach: GrapeQLCoach) {
+export function parseView(coach: GrapeQLCoach): ViewDBO {
     const gqlView = coach.parse(CreateView);
 
     const viewDBO = new ViewDBO({

@@ -1,5 +1,6 @@
 
 export interface IDBO {
+    getIdentify(): string;
     toDropSQL(): string;
     toCreateSQL(): string;
 }

@@ -23,6 +23,10 @@ implements IDBO {
         };
     }
 
+    getIdentify() {
+        return `${this.row.schema}.${this.row.name}(${this.row.args})`;
+    }
+
     toCreateSQL() {
         const func = this.row;
         let additionalParams = "";

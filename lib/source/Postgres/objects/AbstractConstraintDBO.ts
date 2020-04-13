@@ -16,6 +16,11 @@ implements IDBO {
     }
 
     abstract toCreateSQL(): string;
+    
+    getIdentify() {
+        return `constraint ${this.row.name} on ${this.row.table}`;
+    }
+
 
     toDropSQL() {
         const row = this.row;

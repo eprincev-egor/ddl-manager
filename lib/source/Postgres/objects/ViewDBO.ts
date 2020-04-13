@@ -12,6 +12,10 @@ implements IDBO {
         };
     }
 
+    getIdentify() {
+        return `${this.row.schema}.${this.row.name}`;
+    }
+
     toCreateSQL() {
         const row = this.row;
         let out = "view ";

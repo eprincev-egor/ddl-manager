@@ -16,6 +16,10 @@ implements IColumnDBO {
         };
     }
 
+    getIdentify() {
+        return `${this.row.table}.${this.row.name}`;
+    }
+
     getDefaultSQL() {
         return this.row.default;
     }

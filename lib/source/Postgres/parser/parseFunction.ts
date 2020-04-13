@@ -4,7 +4,7 @@ import {
 } from "grapeql-lang";
 import { FunctionDBO } from "../objects/FunctionDBO";
 
-export function parseFunction(coach: GrapeQLCoach) {
+export function parseFunction(coach: GrapeQLCoach): FunctionDBO {
     const gqlFunction = coach.parse(CreateFunction);
     const functionDBO = new FunctionDBO({
         schema: gqlFunction.get("schema"),

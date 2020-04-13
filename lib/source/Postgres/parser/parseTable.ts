@@ -8,7 +8,7 @@ import { parseColumns } from "./table/parseColumns";
 import { parseConstraints } from "./table/parseConstraints";
 import { parseValues } from "./table/parseValues";
 
-export function parseTable(coach: GrapeQLCoach) {
+export function parseTable(coach: GrapeQLCoach): TableDBO {
     const gqlTable = coach.parse(CreateTable);
     const tableIdentify = parseTableIdentify(gqlTable);
 
