@@ -1,4 +1,5 @@
 import { ITableDBO, IDBO } from "./common";
+import { compareMapWithDestination } from "./utils/compare";
 
 interface IByIdentify<T> {
     [identify: string]: T;
@@ -36,5 +37,30 @@ export abstract class AbstractDDLState<DBOTypes extends {
             const identify = obj.getIdentify();
             map[ identify ] = obj;
         }
+    }
+
+    compareWithDestination(destinationState: this) {
+        const sourceState = this;
+
+        const totalChanges = {
+            tables: compareMapWithDestination(
+                sourceState.tables,
+                destinationState.tables
+            ),
+            views: compareMapWithDestination(
+                sourceState.views,
+                destinationState.views
+            ),
+            functions: compareMapWithDestination(
+                sourceState.functions,
+                destinationState.functions
+            ),
+            triggers: compareMapWithDestination(
+                sourceState.triggers,
+                destinationState.triggers
+            )
+        };
+
+        return totalChanges;
     }
 }

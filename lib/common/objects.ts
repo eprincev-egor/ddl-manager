@@ -3,6 +3,7 @@ export interface IDBO {
     getIdentify(): string;
     toDropSQL(): string;
     toCreateSQL(): string;
+    equal(other: this): boolean;
 }
 
 export interface IColumnDBO extends IDBO {
