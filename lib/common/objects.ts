@@ -17,3 +17,8 @@ export interface ITableDBO extends IDBO {
 export interface IExtension {
     getColumns(): IColumnDBO[];
 }
+
+export type TDBO = (
+    IDBO |
+    IExtension
+);

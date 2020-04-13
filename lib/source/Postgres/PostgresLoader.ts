@@ -1,5 +1,5 @@
 import { IDBDriver } from "../../common";
-import { PostgresParser } from "./parser/PostgresParser";
+import { PostgresParser } from "./PostgresParser";
 
 import { FunctionsLoader } from "./loaders/FunctionsLoader";
 import { TriggersLoader } from "./loaders/TriggersLoader";

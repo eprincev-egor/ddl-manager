@@ -1,4 +1,4 @@
-import {IDBOParser, IDBO} from "../../../common";
+import {IDBOParser, IDBO} from "../../common";
 import {
     GrapeQLCoach,
     CreateFunction,
@@ -7,12 +7,12 @@ import {
     CreateTable,
     Extension as GQLExtension
 } from "grapeql-lang";
-import { parseFunction } from "./parseFunction";
-import { parseTrigger } from "./parseTrigger";
-import { parseView } from "./parseView";
-import { parseTable } from "./parseTable";
-import { parseExtension } from "./parseExtension";
-import { Extension as PGExtension } from "../objects/Extension";
+import { parseFunction } from "./parser/parseFunction";
+import { parseTrigger } from "./parser/parseTrigger";
+import { parseView } from "./parser/parseView";
+import { parseTable } from "./parser/parseTable";
+import { parseExtension } from "./parser/parseExtension";
+import { Extension as PGExtension } from "./objects/Extension";
 
 export class PostgresParser 
 implements IDBOParser {
