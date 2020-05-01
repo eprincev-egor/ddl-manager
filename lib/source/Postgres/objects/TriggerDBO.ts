@@ -22,6 +22,10 @@ implements IDBO {
     getIdentify() {
         return `trigger ${this.row.name} on ${this.row.table}`;
     }
+    
+    equal(other: this) {
+        return super.equal(other);
+    }
 
     toCreateSQL() {
         const trigger = this.row;

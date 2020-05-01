@@ -42,6 +42,10 @@ implements ITableDBO {
         return `${this.row.schema}.${this.row.name}`;
     }
 
+    equal(other: this) {
+        return super.equal(other);
+    }
+
     getColumns() {
         return this.row.columns;
     }

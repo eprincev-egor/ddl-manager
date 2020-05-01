@@ -26,6 +26,10 @@ implements IDBO {
     getIdentify() {
         return `${this.row.schema}.${this.row.name}(${this.row.args})`;
     }
+    
+    equal(other: this) {
+        return super.equal(other);
+    }
 
     toCreateSQL() {
         const func = this.row;

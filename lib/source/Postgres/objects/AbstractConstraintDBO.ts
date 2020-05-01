@@ -21,7 +21,10 @@ implements IDBO {
         return `constraint ${this.row.name} on ${this.row.table}`;
     }
 
-
+    equal(other: this) {
+        return super.equal(other);
+    }
+    
     toDropSQL() {
         const row = this.row;
         return `

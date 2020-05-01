@@ -16,6 +16,10 @@ implements IDBO {
         return `${this.row.schema}.${this.row.name}`;
     }
 
+    equal(other: this) {
+        return super.equal(other);
+    }
+
     toCreateSQL() {
         const row = this.row;
         let out = "view ";

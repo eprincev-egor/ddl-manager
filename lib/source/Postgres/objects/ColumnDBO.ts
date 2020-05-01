@@ -20,6 +20,10 @@ implements IColumnDBO {
         return `${this.row.table}.${this.row.name}`;
     }
 
+    equal(other: this) {
+        return super.equal(other);
+    }
+
     getDefaultSQL() {
         return this.row.default;
     }

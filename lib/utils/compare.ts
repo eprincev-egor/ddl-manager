@@ -7,7 +7,7 @@ interface IMap<TModel> {
     [id: string]: TModel;
 }
 
-interface IChanges<TModel> {
+export interface IChanges<TModel> {
     created: TModel[];
     removed: TModel[];
     changed: {prev: TModel, next: TModel}[];
