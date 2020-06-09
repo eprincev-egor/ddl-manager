@@ -1053,4 +1053,64 @@ language plpgsql;
         });
     });
 
+    it("ignore errors like are 'cannot drop ... because other objects depend on it' on drop functon", async() => {
+        await db.query(`
+            create or replace function my_func()
+            returns text as $body$
+            begin
+                return 'test';
+            end
+            $body$
+            language plpgsql;
+
+            create view my_view as
+                select my_func() as my_func;
+        `);
+
+        let folderPath = ROOT_TMP_PATH + "/ignore-cascades";
+        fs.mkdirSync(folderPath);
+
+        await DdlManager.dump({
+            db,
+            folder: folderPath,
+            unfreeze: true
+        });
+
+        let result = await db.query(`
+            select *
+            from my_view
+        `);
+        let row = result.rows[0];
+
+        assert.deepEqual(row, {
+            my_func: "test"
+        });
+
+        fs.writeFileSync(folderPath + "/public/my_func.sql", `
+            create or replace function my_func()
+            returns text as $body$
+            begin
+                return 'nice';
+            end
+            $body$
+            language plpgsql;
+        `);
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+
+        result = await db.query(`
+            select *
+            from my_view
+        `);
+        row = result.rows[0];
+
+        assert.deepEqual(row, {
+            my_func: "nice"
+        });
+    });
+
 });
