@@ -1113,4 +1113,55 @@ language plpgsql;
         });
     });
 
+    it("don't drop freezed functions and triggers", async() => {
+        await db.query(`
+            create or replace function my_func()
+            returns text as $body$
+            begin
+                return 'test';
+            end
+            $body$
+            language plpgsql;
+
+            create view my_view as
+                select my_func() as my_func;
+        `);
+
+        let folderPath = ROOT_TMP_PATH + "/some-freeze-func";
+        fs.mkdirSync(folderPath);
+
+        await DdlManager.dump({
+            db,
+            folder: folderPath
+        });
+
+        let result = await db.query(`
+            select *
+            from my_view
+        `);
+        let row = result.rows[0];
+
+        assert.deepEqual(row, {
+            my_func: "test"
+        });
+
+        fs.unlinkSync(folderPath + "/public/my_func.sql");
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+
+        result = await db.query(`
+            select *
+            from my_view
+        `);
+        row = result.rows[0];
+
+        assert.deepEqual(row, {
+            my_func: "test"
+        });
+    });
+
 });
