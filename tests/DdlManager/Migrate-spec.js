@@ -263,7 +263,7 @@ describe("DlManager.migrate", () => {
                 }
             }});
         } catch(err) {
-            assert.equal(err.message, "cannot drop freeze function public.test()");
+            assert.equal(err.message, "public.test()\ncannot drop freeze function public.test()");
         }
     });
 
@@ -414,7 +414,7 @@ describe("DlManager.migrate", () => {
                 }
             }});
         } catch(err) {
-            assert.equal(err.message, "cannot replace freeze trigger x on public.company");
+            assert.equal(err.message, "x on public.company\ncannot replace freeze trigger x on public.company");
         }
     });
 
@@ -479,7 +479,7 @@ describe("DlManager.migrate", () => {
                 }
             }});
         } catch(err) {
-            assert.equal(err.message, "cannot drop freeze trigger x on public.company");
+            assert.equal(err.message, "x on public.company\ncannot drop freeze trigger x on public.company");
         }
     });
 
