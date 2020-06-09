@@ -177,8 +177,9 @@ describe("FilesState watch create and remove folders", () => {
 
 
         fs.mkdirSync(dirPath);
-        fs.writeFileSync(filePath, test_func1_sql);
+        await sleep(50);
 
+        fs.writeFileSync(filePath, test_func1_sql);
         await sleep(50);
 
         assert.equal(counter, 1);
