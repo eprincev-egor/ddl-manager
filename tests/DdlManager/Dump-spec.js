@@ -338,7 +338,7 @@ describe("DdlManager.dump", () => {
         });
     });
 
-    it("dump simple function and build, build should not replace freezed object", async() => {
+    it("dump simple function and build, build can replace freezed object", async() => {
         await db.query(`
             create or replace function simple_func()
             returns integer as $$select 1$$
@@ -372,17 +372,16 @@ describe("DdlManager.dump", () => {
             language sql;
         `);
 
-        try {
-            await DdlManager.build({
-                db,
-                folder: ROOT_TMP_PATH,
-                throwError: true
-            });
-            throw new Error("expected error");
-        } catch(err) {
-            assert.equal(err.message, "cannot replace freeze function public.simple_func()");
-        }
+        await DdlManager.build({
+            db,
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
         
+        const result = await db.query("select simple_func() as simple_func");
+        assert.deepEqual(result.rows[0], {
+            simple_func: 2
+        });
     });
 
     it("dump with unfreeze function", async() => {

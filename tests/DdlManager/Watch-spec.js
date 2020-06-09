@@ -186,7 +186,7 @@ describe("DdlManager.watch", () => {
 
 
     
-    it("don't drop freeze function", async() => {
+    it("drop freeze function, if she was replaced by ddl-manager", async() => {
         let result;
         let row;
 
@@ -222,7 +222,7 @@ describe("DdlManager.watch", () => {
         row = result.rows[0];
 
         assert.deepEqual(row, {
-            test: 1
+            test: 2
         });
 
         // change function name
@@ -245,13 +245,13 @@ describe("DdlManager.watch", () => {
             test2: 2
         });
 
-        // freeze function should not be dropped
-        result = await db.query("select test() as test");
-        row = result.rows[0];
-
-        assert.deepEqual(row, {
-            test: 1
-        });
+        // freeze function should be dropped
+        try {
+            await db.query("select test() as test");
+            assert.ok(false, "function test() was not dropped");
+        } catch(err) {
+            assert.ok(true);
+        }
     });
 
     it("watch folder '/../some' ", async() => {

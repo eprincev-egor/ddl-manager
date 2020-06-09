@@ -448,7 +448,7 @@ describe("DdlManager.build", () => {
     });
 
 
-    it("build two functions, one freeze error, one success", async() => {
+    it("build two functions, one freezed", async() => {
         // create freeze function
         await db.query(`
             create or replace function func1(a integer)
@@ -498,7 +498,7 @@ describe("DdlManager.build", () => {
         result = await db.query("select func1(1) as func1");
 
         assert.deepEqual(result.rows[0], {
-            func1: 0
+            func1: 1
         });
     });
 

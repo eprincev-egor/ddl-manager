@@ -200,37 +200,39 @@ describe("DlManager.migrate", () => {
         
     });
 
-    it("error on replace freeze function", async() => {
+    it("no error on replace freeze function", async() => {
         await db.query(`
             create function test()
             returns integer as $$select 1$$
             language sql;
         `);
 
-        try {
-            await DdlManager.migrate({db, diff: {
-                drop: {
-                    functions: [],
-                    triggers: []
-                },
-                create: {
-                    functions: [
-                        {
-                            language: "sql",
-                            schema: "public",
-                            name: "test",
-                            args: [],
-                            returns: {type: "integer"},
-                            body: "select 2"
-                        }
-                    ],
-                    triggers: []
-                }
-            }});
-        } catch(err) {
-            assert.equal(err.message, "cannot replace freeze function public.test()");
-        }
+        await DdlManager.migrate({db, diff: {
+            drop: {
+                functions: [],
+                triggers: []
+            },
+            create: {
+                functions: [
+                    {
+                        language: "sql",
+                        schema: "public",
+                        name: "test",
+                        args: [],
+                        returns: {type: "integer"},
+                        body: "select 2"
+                    }
+                ],
+                triggers: []
+            }
+        }});
         
+        let result = await db.query("select test()");
+        let row = result && result.rows[0];
+        
+        result = row.test;
+
+        assert.equal(result, 2);
     });
 
     it("error on drop freeze function", async() => {
