@@ -28,7 +28,7 @@ describe("DdlManager.build", () => {
     afterEach(async() => {
         db.end();
     });
-
+    /*
     it("build nonexistent folder", async() => {
         try {
             await DdlManager.build({
@@ -1161,6 +1161,51 @@ language plpgsql;
 
         assert.deepEqual(row, {
             my_func: "test"
+        });
+    });
+*/
+    it("recreate freezed function with another argument name", async() => {
+        await db.query(`
+            create or replace function my_int_func(x integer)
+            returns text as $body$
+            begin
+                return 'test ' || x;
+            end
+            $body$
+            language plpgsql;
+        `);
+
+        let folderPath = ROOT_TMP_PATH + "/test-inf8";
+        fs.mkdirSync(folderPath);
+
+        let result = await db.query(`
+            select my_int_func(101) as my_int_func
+        `);
+        assert.deepEqual(result.rows[0], {
+            my_int_func: "test 101"
+        });
+
+        fs.writeFileSync(folderPath + "/my_int_func.sql", `
+            create or replace function my_int_func(y integer)
+            returns text as $body$
+            begin
+                return 'nice ' || y;
+            end
+            $body$
+            language plpgsql;
+        `);
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath
+        });
+
+
+        result = await db.query(`
+            select my_int_func(101) as my_int_func
+        `);
+        assert.deepEqual(result.rows[0], {
+            my_int_func: "nice 101"
         });
     });
 
