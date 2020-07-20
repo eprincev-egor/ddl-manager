@@ -28,7 +28,7 @@ describe("DdlManager.build", () => {
     afterEach(async() => {
         db.end();
     });
-    /*
+    
     it("build nonexistent folder", async() => {
         try {
             await DdlManager.build({
@@ -1163,7 +1163,7 @@ language plpgsql;
             my_func: "test"
         });
     });
-*/
+
     it("recreate freezed function with another argument name", async() => {
         await db.query(`
             create or replace function my_int_func(x integer)
