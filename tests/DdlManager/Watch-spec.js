@@ -328,4 +328,82 @@ describe("DdlManager.watch", () => {
         });
     });
 
+    it("build from many folders", async() => {
+
+        let folderPath1 = ROOT_TMP_PATH + "/many-folder-1";
+        fs.mkdirSync(folderPath1);
+
+        let folderPath2 = ROOT_TMP_PATH + "/many-folder-2";
+        fs.mkdirSync(folderPath2);
+
+        fs.writeFileSync(folderPath1 + "/func1.sql", `
+            create or replace function func1()
+            returns text as $body$
+            begin
+                return 'func1';
+            end
+            $body$
+            language plpgsql;
+        `);
+        fs.writeFileSync(folderPath2 + "/func2.sql", `
+            create or replace function func2()
+            returns text as $body$
+            begin
+                return 'func2';
+            end
+            $body$
+            language plpgsql;
+        `);
+
+        await DdlManager.watch({
+            db, 
+            folder: [
+                folderPath1, 
+                folderPath2
+            ]
+        });
+
+
+        let result = await db.query(`
+            select 
+                func1() as func1,
+                func2() as func2
+        `);
+        assert.deepEqual(result.rows[0], {
+            func1: "func1",
+            func2: "func2"
+        });
+
+
+        fs.writeFileSync(folderPath1 + "/func1.sql", `
+            create or replace function func1()
+            returns text as $body$
+            begin
+                return 'changed func1';
+            end
+            $body$
+            language plpgsql;
+        `);
+        fs.writeFileSync(folderPath2 + "/func2.sql", `
+            create or replace function func2()
+            returns text as $body$
+            begin
+                return 'changed func2';
+            end
+            $body$
+            language plpgsql;
+        `);
+        await sleep(100);
+
+        result = await db.query(`
+            select 
+                func1() as func1,
+                func2() as func2
+        `);
+        assert.deepEqual(result.rows[0], {
+            func1: "changed func1",
+            func2: "changed func2"
+        });
+    });
+
 });
