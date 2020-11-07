@@ -67,7 +67,7 @@ const test_func2 = {
     name: "some_func2",
     args: [],
     returns: {type: "trigger"},
-    body: "select 2"
+    body: {content: "select 2"}
 };
 const test_trigger2 = {
     table: {

@@ -224,7 +224,7 @@ describe("DlManager.migrate", () => {
                         name: "test",
                         args: [],
                         returns: {type: "integer"},
-                        body: "select 2"
+                        body: {content: "select 2"}
                     }
                 ],
                 triggers: []
@@ -256,7 +256,7 @@ describe("DlManager.migrate", () => {
                             name: "test",
                             args: [],
                             returns: {type: "integer"},
-                            body: "select 2"
+                            body: {content: "select 2"}
                         }
                     ],
                     triggers: []
@@ -300,7 +300,7 @@ describe("DlManager.migrate", () => {
                             }
                         ],
                         returns: {type: "integer"},
-                        body: "select 2"
+                        body: {content: "select 2"}
                     }
                 ],
                 triggers: []
@@ -342,7 +342,7 @@ describe("DlManager.migrate", () => {
                             }
                         ],
                         returns: {type: "integer"},
-                        body: "select 2"
+                        body: {content: "select 2"}
                     }
                 ],
                 triggers: []

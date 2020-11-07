@@ -34,7 +34,7 @@ const test_func1 = {
     name: "some_func1",
     args: [],
     returns: {type: "trigger"},
-    body: "select 1"
+    body: {content: "select 1"}
 };
 const test_trigger1 = {
     table: {
@@ -68,7 +68,7 @@ const test_func2 = {
     name: "some_func2",
     args: [],
     returns: {type: "trigger"},
-    body: "select 2"
+    body: {content: "select 2"}
 };
 const test_trigger2 = {
     table: {

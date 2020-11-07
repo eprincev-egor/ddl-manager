@@ -83,7 +83,7 @@ describe("FilesState parse functions", () => {
                     }
                 ],
                 returns: {type: "bigint"},
-                body
+                body: {content: body}
             }
         ];
 
@@ -114,7 +114,7 @@ describe("FilesState parse functions", () => {
                 args: [],
                 returns: {type: "integer"},
                 language: "sql",
-                body: "select 1"
+                body: {content: "select 1"}
             }
         ];
         
@@ -165,7 +165,7 @@ describe("FilesState parse functions", () => {
                         }
                     ]
                 },
-                body
+                body: {content: body}
             }
         ];
         
@@ -220,7 +220,7 @@ describe("FilesState parse functions", () => {
             args: [],
             returns: {type: "bigint"},
             language: "sql",
-            body: "select 1"
+            body: {content: "select 1"}
         };
         let sql2 = `
             create or replace function func1(a text)
@@ -238,7 +238,7 @@ describe("FilesState parse functions", () => {
             ],
             returns: {type: "integer"},
             language: "sql",
-            body: "select 2"
+            body: {content: "select 2"}
         };
         
         
@@ -298,7 +298,7 @@ describe("FilesState parse functions", () => {
                     }
                 ],
                 returns: {type: "bigint"},
-                body
+                body: {content: body}
             }
         ];
 
@@ -335,7 +335,7 @@ describe("FilesState parse functions", () => {
                 name: "func_with_comment",
                 args: [],
                 returns: {type: "bigint"},
-                body
+                body: {content: body}
             }
         ];
 
@@ -372,7 +372,7 @@ describe("FilesState parse functions", () => {
                 name: "test",
                 args: [],
                 returns: {type: "integer"},
-                body: "select 1"
+                body: {content: "select 1"}
             }
         ]);
 

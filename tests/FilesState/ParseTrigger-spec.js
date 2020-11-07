@@ -54,7 +54,7 @@ describe("FilesState parse functions and triggers", () => {
                 name: "some_action_on_diu_company",
                 args: [],
                 returns: {type: "trigger"},
-                body
+                body: {content: body}
             }
         ];
 

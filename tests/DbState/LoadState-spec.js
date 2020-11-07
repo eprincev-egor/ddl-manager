@@ -73,7 +73,7 @@ describe("DbState.load", () => {
                         }
                     ],
                     returns: {type: "void"},
-                    body
+                    body: {content: body}
                 }
             ],
             triggers: []
@@ -224,7 +224,7 @@ describe("DbState.load", () => {
                     name: "test_func",
                     args: [],
                     returns: {type: "void"},
-                    body
+                    body: {content: body}
                 }
             ],
             triggers: []
@@ -265,7 +265,7 @@ describe("DbState.load", () => {
                             type: "integer"
                         }
                     ]},
-                    body
+                    body: {content: body}
                 }
             ],
             triggers: []
@@ -310,7 +310,7 @@ describe("DbState.load", () => {
                             type: "integer"
                         }
                     ]},
-                    body
+                    body: {content: body}
                 }
             ],
             triggers: []
@@ -347,7 +347,7 @@ describe("DbState.load", () => {
                         }
                     ],
                     returns: {type: "void"},
-                    body
+                    body: {content: body}
                 }
             ],
             triggers: []
@@ -384,7 +384,7 @@ describe("DbState.load", () => {
                         }
                     ],
                     returns: {type: "void"},
-                    body
+                    body: {content: body}
                 }
             ],
             triggers: []
@@ -429,7 +429,7 @@ describe("DbState.load", () => {
                     name: "test_func",
                     args: [],
                     returns: {type: "trigger"},
-                    body
+                    body: {content: body}
                 }
             ],
             triggers: [
@@ -492,7 +492,7 @@ describe("DbState.load", () => {
                     name: "test_func",
                     args: [],
                     returns: {type: "trigger"},
-                    body
+                    body: {content: body}
                 }
             ],
             triggers: [
@@ -558,7 +558,7 @@ describe("DbState.load", () => {
                         }
                     ],
                     returns: {type: "void"},
-                    body
+                    body: {content: body}
                 }
             ],
             triggers: []
@@ -612,7 +612,7 @@ describe("DbState.load", () => {
                     name: "test_func",
                     args: [],
                     returns: {type: "trigger"},
-                    body
+                    body: {content: body}
                 }
             ],
             triggers: [
@@ -705,7 +705,7 @@ describe("DbState.load", () => {
                     name: "test_func_sql",
                     args: [],
                     returns: {type: "integer"},
-                    body: "select 1"
+                    body: {content: "select 1"}
                 }
             ],
             triggers: []
@@ -736,7 +736,7 @@ describe("DbState.load", () => {
                     name: "some_func",
                     args: [],
                     returns: {type: "public.company"},
-                    body: "begin\nend"
+                    body: {content: "begin\nend"}
                 }
             ],
             triggers: []
@@ -770,7 +770,7 @@ describe("DbState.load", () => {
                         setof: true,
                         type: "public.company"
                     },
-                    body: "begin\nend"
+                    body: {content: "begin\nend"}
                 }
             ],
             triggers: []
@@ -806,7 +806,7 @@ describe("DbState.load", () => {
                         }
                     ],
                     returns: {type: "void"},
-                    body: "begin\nend"
+                    body: {content: "begin\nend"}
                 }
             ],
             triggers: []
@@ -838,7 +838,7 @@ describe("DbState.load", () => {
                         }
                     ],
                     returns: {type: "void"},
-                    body: "begin\nend"
+                    body: {content: "begin\nend"}
                 }
             ],
             triggers: []
@@ -875,7 +875,7 @@ describe("DbState.load", () => {
                         }
                     ],
                     returns: {type: "text"},
-                    body: "begin\nend"
+                    body: {content: "begin\nend"}
                 }
             ],
             triggers: []

@@ -28,7 +28,7 @@ const test_func1 = {
     name: "some_func1",
     args: [],
     returns: {type: "void"},
-    body: "select 1"
+    body: {content: "select 1"}
 };
 
 const test_func2_sql = `
@@ -42,7 +42,7 @@ const test_func2 = {
     name: "some_func2",
     args: [],
     returns: {type: "void"},
-    body: "select 2"
+    body: {content: "select 2"}
 };
 
 describe("FilesState watch remove functions", () => {
@@ -342,7 +342,7 @@ describe("FilesState watch remove functions", () => {
                 default: "null"
             }],
             returns: {type: "void"},
-            body: "begin\n\nend"
+            body: {content: "begin\n\nend"}
         };
 
         let filePath = ROOT_TMP_PATH + "/test-file.sql";

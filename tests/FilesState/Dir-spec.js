@@ -28,7 +28,7 @@ const test_func1 = {
     name: "some_func1",
     args: [],
     returns: {type: "void"},
-    body: "select 1"
+    body: {content: "select 1"}
 };
 
 describe("FilesState watch create and remove folders", () => {
