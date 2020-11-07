@@ -1,8 +1,3 @@
-import {
-    GrapeQLCoach,
-    CreateFunction,
-    CreateTrigger
-} from "grapeql-lang";
 import _ from "lodash";
 import {
     findCommentByFunction,
@@ -14,7 +9,9 @@ import {
     trigger2identifySql
 } from "./utils";
 import assert from "assert";
-import {Client} from "pg";
+import { Client } from "pg";
+import { FunctionParser } from "./parser/FunctionParser";
+import { TriggerParser } from "./parser/TriggerParser";
 
 export class DbState {
     private db: Client;
@@ -23,11 +20,17 @@ export class DbState {
     functions: any[];
     comments!: any[];
 
+    private functionParser: FunctionParser;
+    private triggerParser: TriggerParser;
+
     constructor(db: Client) {
         this.db = db;
 
         this.triggers = [];
         this.functions = [];
+
+        this.functionParser = new FunctionParser();
+        this.triggerParser = new TriggerParser();
     }
 
     async load() {
@@ -82,8 +85,7 @@ export class DbState {
         result.rows.forEach(row => {
             const {ddl} = row;
 
-            const coach = new GrapeQLCoach(ddl);
-            const func = coach.parse(CreateFunction);
+            const func = this.functionParser.parse(ddl);
             const json: ReturnType<typeof func.toJSON> & {freeze?: boolean} = func.toJSON();
 
             // function was created by ddl manager
@@ -129,8 +131,7 @@ export class DbState {
         result.rows.forEach(row => {
             const {ddl} = row;
 
-            const coach = new GrapeQLCoach(ddl);
-            const trigger = coach.parse(CreateTrigger);
+            const trigger = this.triggerParser.parse(ddl);
             const json: ReturnType<typeof trigger.toJSON> & {
                 freeze?: boolean;
                 table: {
