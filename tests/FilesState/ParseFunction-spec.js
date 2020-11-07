@@ -383,7 +383,7 @@ describe("FilesState parse functions", () => {
                     name: "test",
                     args: []
                 },
-                comment: "yes"
+                comment: {content: "yes"}
             }
         ]);
     });

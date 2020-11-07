@@ -471,7 +471,7 @@ describe("DbState.getDiff", () => {
                 name: "some_test_func",
                 args: []
             },
-            comment: "test"
+            comment: {content: "test"}
         };
 
         let diff = diffState({

@@ -292,7 +292,7 @@ describe("FilesState watch create functions", () => {
                             name: "some_func1",
                             args: []
                         },
-                        comment: "sweet"
+                        comment: {content: "sweet"}
                     }
                 ]
             }
@@ -309,7 +309,7 @@ describe("FilesState watch create functions", () => {
                     name: "some_func1",
                     args: []
                 },
-                comment: "sweet"
+                comment: {content: "sweet"}
             }
         ]);
     });

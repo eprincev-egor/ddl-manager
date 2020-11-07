@@ -558,7 +558,7 @@ describe("DdlManager.dump", () => {
                         name: "simple_func",
                         args: []
                     },
-                    comment: "test"
+                    comment: {content: "test"}
                 }
             ]
         });
@@ -628,7 +628,7 @@ describe("DdlManager.dump", () => {
                         name: "some_func",
                         args: []
                     },
-                    comment: "func"
+                    comment: {content: "func"}
                 },
                 {
                     trigger: {
@@ -636,7 +636,7 @@ describe("DdlManager.dump", () => {
                         table: "company",
                         name: "some_trigger"
                     },
-                    comment: "trigger"
+                    comment: {content: "trigger"}
                 }
             ]
         });
@@ -782,7 +782,7 @@ describe("DdlManager.dump", () => {
                     name: "simple_func",
                     args: []
                 },
-                comment: "'$$nice\ncomment"
+                comment: {content: "'$$nice\ncomment"}
             }]
         });
 
@@ -800,7 +800,7 @@ describe("DdlManager.dump", () => {
         `);
 
         expect(result.rows[0]).to.be.shallowDeepEqual({
-            comment: "'$$nice\ncomment\nddl-manager-sync"
+            comment: {content: "'$$nice\ncomment\nddl-manager-sync"}
         });
     });
 
@@ -871,7 +871,7 @@ describe("DdlManager.dump", () => {
                     table: "company",
                     name: "some_trigger"
                 },
-                comment: "'$$nice\ncomment"
+                comment: {content: "'$$nice\ncomment"}
             }]
         });
 
@@ -884,7 +884,7 @@ describe("DdlManager.dump", () => {
         `);
 
         expect(result.rows[0]).to.be.shallowDeepEqual({
-            comment: "'$$nice\ncomment\nddl-manager-sync"
+            comment: {content: "'$$nice\ncomment\nddl-manager-sync"}
         });
     });
 
@@ -1037,7 +1037,7 @@ describe("DdlManager.dump", () => {
                         name: "simple_func",
                         args: ["integer"]
                     },
-                    comment: "x"
+                    comment: {content: "x"}
                 },
                 {
                     function: {
@@ -1045,7 +1045,7 @@ describe("DdlManager.dump", () => {
                         name: "simple_func",
                         args: ["boolean"]
                     },
-                    comment: "y"
+                    comment: {content: "y"}
                 }
             ]
         });

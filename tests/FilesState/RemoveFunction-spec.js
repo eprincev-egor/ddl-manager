@@ -282,7 +282,7 @@ describe("FilesState watch remove functions", () => {
                     name: "some_func1",
                     args: []
                 },
-                comment: "awesome"
+                comment: {content: "awesome"}
             }]
         );
 
@@ -311,7 +311,7 @@ describe("FilesState watch remove functions", () => {
                             name: "some_func1",
                             args: []
                         },
-                        comment: "awesome"
+                        comment: {content: "awesome"}
                     }
                 ]
             },

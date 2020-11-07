@@ -112,7 +112,7 @@ describe("DlManager.migrate", () => {
                             },
                             after: true,
                             insert: true,
-                            update: ["name", "note"],
+                            updateOf: ["name", "note"],
                             delete: true,
                             name: "some_action_on_diu_test_trigger",
                             procedure: {
@@ -173,7 +173,7 @@ describe("DlManager.migrate", () => {
                         },
                         after: true,
                         insert: true,
-                        update: ["name", "note"],
+                        updateOf: ["name", "note"],
                         delete: true,
                         name: "some_action_on_diu_test_trigger",
                         procedure: {
@@ -720,7 +720,7 @@ describe("DlManager.migrate", () => {
                                 name: "some_func",
                                 args: []
                             },
-                            comment: "nice"
+                            comment: {content: "nice"}
                         }
                     ],
                     triggers: []
@@ -742,7 +742,7 @@ describe("DlManager.migrate", () => {
         `);
 
         expect(result.rows[0]).to.be.shallowDeepEqual({
-            comment: "nice\nddl-manager-sync"
+            comment: {content: "nice\nddl-manager-sync"}
         });
 
     });
@@ -784,7 +784,7 @@ describe("DlManager.migrate", () => {
                             },
                             after: true,
                             insert: true,
-                            update: ["name", "note"],
+                            updateOf: ["name", "note"],
                             delete: true,
                             name: "some_action_on_diu_test_trigger",
                             procedure: {
@@ -800,7 +800,7 @@ describe("DlManager.migrate", () => {
                                 table: "ddl_manager_test",
                                 name: "some_action_on_diu_test_trigger"
                             },
-                            comment: "super"
+                            comment: {content: "super"}
                         }
                     ]
                 }
@@ -816,7 +816,7 @@ describe("DlManager.migrate", () => {
         `);
 
         expect(result.rows[0]).to.be.shallowDeepEqual({
-            comment: "super\nddl-manager-sync"
+            comment: {content: "super\nddl-manager-sync"}
         });
 
     });
@@ -845,7 +845,7 @@ describe("DlManager.migrate", () => {
                                 name: "test",
                                 args: ["numeric"]
                             },
-                            comment: "xx"
+                            comment: {content: "xx"}
                         }
                     ]
                 },
@@ -874,7 +874,7 @@ describe("DlManager.migrate", () => {
         `);
 
         expect(result.rows[0]).to.be.shallowDeepEqual({
-            comment: "dropped"
+            comment: {content: "dropped"}
         });
 
     });
@@ -916,7 +916,7 @@ describe("DlManager.migrate", () => {
                                 table: "company",
                                 name: "x"
                             },
-                            comment: "xx"
+                            comment: {content: "xx"}
                         }
                     ]
                 },
@@ -940,7 +940,7 @@ describe("DlManager.migrate", () => {
         `);
 
         expect(result.rows[0]).to.be.shallowDeepEqual({
-            comment: "dropped"
+            comment: {content: "dropped"}
         });
 
     });

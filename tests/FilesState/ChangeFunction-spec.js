@@ -283,7 +283,7 @@ describe("FilesState watch change functions", () => {
                     name: "some_func1",
                     args: []
                 },
-                comment: "nice"
+                comment: {content: "nice"}
             }
         ]);
         
@@ -317,7 +317,7 @@ describe("FilesState watch change functions", () => {
                             name: "some_func1",
                             args: []
                         },
-                        comment: "nice"
+                        comment: {content: "nice"}
                     }
                 ]
             },
@@ -333,7 +333,7 @@ describe("FilesState watch change functions", () => {
                             name: "some_func1",
                             args: []
                         },
-                        comment: "good"
+                        comment: {content: "good"}
                     }
                 ]
             }
@@ -351,7 +351,7 @@ describe("FilesState watch change functions", () => {
                     name: "some_func1",
                     args: []
                 },
-                comment: "good"
+                comment: {content: "good"}
             }
         ]);
     });

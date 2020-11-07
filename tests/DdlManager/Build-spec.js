@@ -542,7 +542,7 @@ describe("DdlManager.build", () => {
         `);
 
         expect(result.rows[0]).to.be.shallowDeepEqual({
-            comment: "good\nddl-manager-sync"
+            comment: {content: "good\nddl-manager-sync"}
         });
     });
 
@@ -712,7 +712,7 @@ describe("DdlManager.build", () => {
         `);
 
         expect(result.rows[0]).to.be.shallowDeepEqual({
-            comment: "test\nddl-manager-sync"
+            comment: {content: "test\nddl-manager-sync"}
         });
     });
 
@@ -779,7 +779,7 @@ describe("DdlManager.build", () => {
         `);
 
         expect(result.rows[0]).to.be.shallowDeepEqual({
-            comment: "test\nddl-manager-sync"
+            comment: {content: "test\nddl-manager-sync"}
         });
     });
 

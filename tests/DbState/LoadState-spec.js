@@ -442,7 +442,7 @@ describe("DbState.load", () => {
                     name: "test_trigger",
                     after: true,
                     insert: true,
-                    update: ["name", "note"],
+                    updateOf: ["name", "note"],
                     delete: true,
                     procedure: {
                         schema: "public",
@@ -505,7 +505,7 @@ describe("DbState.load", () => {
                     name: "test_trigger",
                     after: true,
                     insert: true,
-                    update: ["name", "note"],
+                    updateOf: ["name", "note"],
                     delete: true,
                     when: "pg_trigger_depth() = 0",
                     procedure: {
@@ -625,7 +625,7 @@ describe("DbState.load", () => {
                     after: true,
                     insert: true,
                     name: "test_trigger",
-                    update: ["name", "note"],
+                    updateOf: ["name", "note"],
                     delete: true,
                     procedure: {
                         schema: "public",
