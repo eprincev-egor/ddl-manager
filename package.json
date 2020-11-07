@@ -35,7 +35,7 @@
   "homepage": "https://github.com/eprincev-egor/ddl-manager#readme",
   "dependencies": {
     "glob": "^7.1.3",
-    "grapeql-lang": "^2.9.4",
+    "grapeql-lang": "^2.9.6",
     "lodash": "^4.17.11",
     "minimist": "^1.2.0",
     "node-watch": "^0.6.0",
