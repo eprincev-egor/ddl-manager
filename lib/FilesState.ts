@@ -3,12 +3,11 @@ import glob from "glob";
 import { EventEmitter } from "events";
 import watch from "node-watch";
 import path from "path";
-import { SqlFile } from "./SqlFile";
 import {
     trigger2identifySql,
-    function2identifySql,
-    replaceComments
+    function2identifySql
 } from "./utils";
+import { FileParser } from "./parser/FileParser";
 
 interface IFile {
     name: string;
@@ -55,9 +54,13 @@ export class FilesState extends EventEmitter {
     folders: string[];
     files: IFile[];
     fsWatcher?: ReturnType<typeof watch>;
+
+    private fileParser: FileParser;
     
     constructor(params: {folder: string | string[]}) {
         super();
+
+        this.fileParser = new FileParser();
 
         if ( typeof params.folder === "string" ) {
             this.folders = [params.folder];
@@ -175,14 +178,12 @@ export class FilesState extends EventEmitter {
     parseFile(rootFolderPath: string, filePath: string): IFile | undefined {
         const sql = fs.readFileSync(filePath).toString();
         
-        const coach = replaceComments(sql);
+        const sqlFile = this.fileParser.parse(sql);
         
-        if ( coach.str.trim() === "" ) {
+        if ( !sqlFile ) {
             return;
         }
 
-        const sqlFile = coach.parse(SqlFile as any) as SqlFile;
-        
         const subPath = getSubPath(rootFolderPath, filePath);
 
         const fileName = filePath.split(/[/\\]/).pop() as string;

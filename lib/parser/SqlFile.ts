@@ -10,7 +10,7 @@ import {
     function2identifySql,
     trigger2identifySql,
     function2identifyJson
-} from "./utils";
+} from "../utils";
 
 // TODO: any => type
 export class SqlFile extends (Syntax as any) {
