@@ -11,8 +11,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "nyc --reporter=html --reporter=text-summary mocha",
-    "lint": "eslint ./**/*.js"
+    "test": "nyc --reporter=html --reporter=text-summary mocha"
   },
   "repository": {
     "type": "git",
@@ -52,7 +51,6 @@
     "@types/pg": "^7.14.6",
     "chai": "^4.2.0",
     "chai-shallow-deep-equal": "^1.4.6",
-    "eslint": "^4.19.1",
     "fs-extra": "^9.0.1",
     "mocha": "^5.2.0",
     "nyc": "^15.1.0",
