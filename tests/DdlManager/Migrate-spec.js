@@ -742,7 +742,7 @@ describe("DlManager.migrate", () => {
         `);
 
         expect(result.rows[0]).to.be.shallowDeepEqual({
-            comment: {content: "nice\nddl-manager-sync"}
+            comment: "nice\nddl-manager-sync"
         });
 
     });
@@ -816,7 +816,7 @@ describe("DlManager.migrate", () => {
         `);
 
         expect(result.rows[0]).to.be.shallowDeepEqual({
-            comment: {content: "super\nddl-manager-sync"}
+            comment: "super\nddl-manager-sync"
         });
 
     });
@@ -874,7 +874,7 @@ describe("DlManager.migrate", () => {
         `);
 
         expect(result.rows[0]).to.be.shallowDeepEqual({
-            comment: {content: "dropped"}
+            comment: "dropped"
         });
 
     });
@@ -940,7 +940,7 @@ describe("DlManager.migrate", () => {
         `);
 
         expect(result.rows[0]).to.be.shallowDeepEqual({
-            comment: {content: "dropped"}
+            comment: "dropped"
         });
 
     });
