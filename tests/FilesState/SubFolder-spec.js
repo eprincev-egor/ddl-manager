@@ -1,16 +1,21 @@
 "use strict";
 
-const assert = require("assert");
 const fs = require("fs");
 const FilesState = require("../../lib/FilesState");
 const del = require("del");
+const {expect, use} = require("chai");
+const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
 
-const VOID_BODY = `begin
-end`;
+use(chaiShallowDeepEqualPlugin);
+
+const VOID_BODY = {
+    content: `begin
+end`
+};
 function generateEmptyFunction(name) {
     return `
         create or replace function ${name}()
-        returns void as $body$${VOID_BODY}$body$
+        returns void as $body$${VOID_BODY.content}$body$
         language plpgsql;
     `.trim();
 }
@@ -55,7 +60,7 @@ describe("FilesState parse files in sub dirs", () => {
             body: VOID_BODY
         };
 
-        assert.deepEqual(filesState.getFiles(), [
+        expect(filesState.getFiles()).to.be.shallowDeepEqual([
             {
                 name: "some.sql",
                 folder: filesState.folders[0],
@@ -66,7 +71,7 @@ describe("FilesState parse files in sub dirs", () => {
             }
         ]);
 
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             func
         ]);
     });
@@ -108,7 +113,7 @@ describe("FilesState parse files in sub dirs", () => {
         };
 
         // check
-        assert.deepEqual(filesState.getFiles(), [
+        expect(filesState.getFiles()).to.be.shallowDeepEqual([
             {
                 name: "some1.sql",
                 path: "some1.sql",
@@ -127,7 +132,7 @@ describe("FilesState parse files in sub dirs", () => {
             }
         ]);
 
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             func1,
             func2
         ]);
@@ -184,7 +189,7 @@ describe("FilesState parse files in sub dirs", () => {
         );
 
         // check
-        assert.deepEqual(files, [
+        expect(files).to.be.shallowDeepEqual([
             {
                 name: "test1.sql",
                 path: "first/test1.sql",

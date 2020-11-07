@@ -4,6 +4,10 @@ const assert = require("assert");
 const fs = require("fs");
 const FilesState = require("../../lib/FilesState");
 const del = require("del");
+const {expect, use} = require("chai");
+const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+
+use(chaiShallowDeepEqualPlugin);
 
 describe("FilesState parse functions", () => {
     const ROOT_TMP_PATH = __dirname + "/tmp";
@@ -40,7 +44,7 @@ describe("FilesState parse functions", () => {
 
         let functions = filesState.getFunctions();
 
-        assert.deepEqual(functions, []);
+        expect(functions).to.be.shallowDeepEqual([]);
     });
 
     
@@ -89,7 +93,7 @@ describe("FilesState parse functions", () => {
 
         let actualResult = filesState.getFunctions();
 
-        assert.deepEqual(actualResult, expectedResult);
+        expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
 
     
@@ -120,7 +124,7 @@ describe("FilesState parse functions", () => {
 
         let actualResult = filesState.getFunctions();
 
-        assert.deepEqual(actualResult, expectedResult);
+        expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
 
     
@@ -171,7 +175,7 @@ describe("FilesState parse functions", () => {
 
         let actualResult = filesState.getFunctions();
 
-        assert.deepEqual(actualResult, expectedResult);
+        expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
 
 
@@ -247,7 +251,7 @@ describe("FilesState parse functions", () => {
             folder: ROOT_TMP_PATH
         });
         
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             func1,
             func2
         ]);
@@ -304,7 +308,7 @@ describe("FilesState parse functions", () => {
 
         let actualResult = filesState.getFunctions();
 
-        assert.deepEqual(actualResult, expectedResult);
+        expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
 
     it("do not replace comments inside function", () => {
@@ -341,7 +345,7 @@ describe("FilesState parse functions", () => {
 
         let actualResult = filesState.getFunctions();
 
-        assert.deepEqual(actualResult, expectedResult);
+        expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
 
     it("parse file with comment on function", () => {
@@ -361,7 +365,7 @@ describe("FilesState parse functions", () => {
             folder: ROOT_TMP_PATH
         });
 
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             {
                 language: "sql",
                 schema: "public",
@@ -372,7 +376,7 @@ describe("FilesState parse functions", () => {
             }
         ]);
 
-        assert.deepEqual(filesState.getComments(), [
+        expect(filesState.getComments()).to.be.shallowDeepEqual([
             {
                 function: {
                     schema: "public",

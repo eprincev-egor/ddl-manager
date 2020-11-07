@@ -3,6 +3,10 @@
 const assert = require("assert");
 const getDbClient = require("../utils/getDbClient");
 const DdlManager = require("../../lib/DdlManager");
+const {expect, use} = require("chai");
+const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+
+use(chaiShallowDeepEqualPlugin);
 
 describe("DlManager.migrate", () => {
     let db;
@@ -569,7 +573,7 @@ describe("DlManager.migrate", () => {
         // expected execute without errors
         let result = await db.query("select * from test_func()");
 
-        assert.deepEqual(result.rows, [
+        expect(result.rows).to.be.shallowDeepEqual([
             {id: 1},
             {id: 2}
         ]);
@@ -682,7 +686,7 @@ describe("DlManager.migrate", () => {
 
         let result = await db.query("select test_func(1) as test");
 
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             test: "nice1"
         });
     });
@@ -737,7 +741,7 @@ describe("DlManager.migrate", () => {
                 routines.routine_name = 'some_func'
         `);
 
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             comment: "nice\nddl-manager-sync"
         });
 
@@ -811,7 +815,7 @@ describe("DlManager.migrate", () => {
                 pg_trigger.tgname = 'some_action_on_diu_test_trigger'
         `);
 
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             comment: "super\nddl-manager-sync"
         });
 
@@ -869,7 +873,7 @@ describe("DlManager.migrate", () => {
                 routines.routine_name = 'test'
         `);
 
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             comment: "dropped"
         });
 
@@ -935,7 +939,7 @@ describe("DlManager.migrate", () => {
                 pg_trigger.tgname = 'x'
         `);
 
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             comment: "dropped"
         });
 
@@ -976,7 +980,7 @@ describe("DlManager.migrate", () => {
 
         let result = await db.query("select test_func() as test");
 
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             test: "nice2"
         });
 
@@ -1063,12 +1067,12 @@ describe("DlManager.migrate", () => {
         let result;
 
         result = await db.query("select test_func(1) as test1");
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             test1: 1
         });
 
         result = await db.query("select test_func(true) as test2");
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             test2: 2
         });
 

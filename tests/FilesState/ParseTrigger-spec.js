@@ -4,6 +4,10 @@ const assert = require("assert");
 const fs = require("fs");
 const FilesState = require("../../lib/FilesState");
 const del = require("del");
+const {expect, use} = require("chai");
+const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+
+use(chaiShallowDeepEqualPlugin);
 
 describe("FilesState parse functions and triggers", () => {
     const ROOT_TMP_PATH = __dirname + "/tmp";
@@ -79,8 +83,8 @@ describe("FilesState parse functions and triggers", () => {
         let actualFunctions = filesState.getFunctions();
         let actualTriggers = filesState.getTriggers();
 
-        assert.deepEqual(actualFunctions, expectedFunctions);
-        assert.deepEqual(actualTriggers, expectedTriggers);
+        expect(actualFunctions).to.be.shallowDeepEqual(expectedFunctions);
+        expect(actualTriggers).to.be.shallowDeepEqual(expectedTriggers);
 
     });
 
@@ -222,7 +226,7 @@ describe("FilesState parse functions and triggers", () => {
             folder: ROOT_TMP_PATH
         });
 
-        assert.deepEqual(filesState.getComments(), [
+        expect(filesState.getComments()).to.be.shallowDeepEqual([
             {
                 trigger: {
                     schema: "public",

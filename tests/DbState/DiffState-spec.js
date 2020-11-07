@@ -1,8 +1,11 @@
 "use strict";
 
-const assert = require("assert");
 const _ = require("lodash");
 const DbState = require("../../lib/DbState");
+const {expect, use} = require("chai");
+const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+
+use(chaiShallowDeepEqualPlugin);
 
 function diffState({filesState, dbState}) {
     let state = new DbState();
@@ -31,7 +34,7 @@ describe("DbState.getDiff", () => {
             }
         });
 
-        assert.deepEqual(diff, {
+        expect(diff).to.be.shallowDeepEqual({
             drop: {
                 triggers: [],
                 functions: []
@@ -76,7 +79,7 @@ describe("DbState.getDiff", () => {
             }
         });
 
-        assert.deepEqual(diff, {
+        expect(diff).to.be.shallowDeepEqual({
             drop: {
                 triggers: [],
                 functions: []
@@ -122,7 +125,7 @@ describe("DbState.getDiff", () => {
             }
         });
 
-        assert.deepEqual(diff, {
+        expect(diff).to.be.shallowDeepEqual({
             drop: {
                 triggers: [],
                 functions: [
@@ -191,7 +194,7 @@ describe("DbState.getDiff", () => {
         });
         
 
-        assert.deepEqual(diff, {
+        expect(diff).to.be.shallowDeepEqual({
             drop: {
                 triggers: [],
                 functions: [
@@ -266,7 +269,7 @@ describe("DbState.getDiff", () => {
             }
         });
         
-        assert.deepEqual(diff, {
+        expect(diff).to.be.shallowDeepEqual({
             drop: {
                 triggers: [],
                 functions: [
@@ -308,7 +311,7 @@ describe("DbState.getDiff", () => {
             }
         });
 
-        assert.deepEqual(diff, {
+        expect(diff).to.be.shallowDeepEqual({
             drop: {
                 triggers: [],
                 functions: []
@@ -377,7 +380,7 @@ describe("DbState.getDiff", () => {
         });
 
 
-        assert.deepEqual(diff, {
+        expect(diff).to.be.shallowDeepEqual({
             drop: {
                 triggers: [
                     dbTrigger
@@ -440,7 +443,7 @@ describe("DbState.getDiff", () => {
         });
 
 
-        assert.deepEqual(diff, {
+        expect(diff).to.be.shallowDeepEqual({
             drop: {
                 triggers: [],
                 functions: []
@@ -487,7 +490,7 @@ describe("DbState.getDiff", () => {
             }
         });
 
-        assert.deepEqual(diff, {
+        expect(diff).to.be.shallowDeepEqual({
             drop: {
                 triggers: [],
                 functions: []
@@ -529,7 +532,7 @@ describe("DbState.getDiff", () => {
             }
         });
 
-        assert.deepEqual(diff, {
+        expect(diff).to.be.shallowDeepEqual({
             drop: {
                 triggers: [],
                 functions: []
@@ -582,7 +585,7 @@ describe("DbState.getDiff", () => {
             }
         });
 
-        assert.deepEqual(diff, {
+        expect(diff).to.be.shallowDeepEqual({
             drop: {
                 triggers: [],
                 functions: []
@@ -663,7 +666,7 @@ describe("DbState.getDiff", () => {
             }
         });
 
-        assert.deepEqual(diff, {
+        expect(diff).to.be.shallowDeepEqual({
             drop: {
                 triggers: [
                     trigger1
@@ -704,7 +707,7 @@ describe("DbState.getDiff", () => {
             }
         });
 
-        assert.deepEqual(diff, {
+        expect(diff).to.be.shallowDeepEqual({
             drop: {
                 triggers: [
                     trigger1

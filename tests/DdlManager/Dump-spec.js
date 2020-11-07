@@ -5,7 +5,12 @@ const fs = require("fs");
 const del = require("del");
 const getDbClient = require("../utils/getDbClient");
 const DdlManager = require("../../lib/DdlManager");
-const DDLCoach = require("../../lib/parser/DDLCoach");
+const { GrapeQLCoach } = require("grapeql-lang");
+const { SqlFile } = require("../../lib/SqlFile");
+const {expect, use} = require("chai");
+const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+
+use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
@@ -75,9 +80,9 @@ describe("DdlManager.dump", () => {
         });
 
         let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
-        let content = DDLCoach.parseSqlFile(sql);
+        let content = new GrapeQLCoach(sql).parse(SqlFile);
 
-        assert.deepEqual(content, {
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "simple_func",
@@ -117,9 +122,9 @@ describe("DdlManager.dump", () => {
         let content;
 
         sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
-        content = DDLCoach.parseSqlFile(sql);
+        content = new GrapeQLCoach(sql).parse(SqlFile);
 
-        assert.deepEqual(content, {
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "simple_func",
@@ -131,9 +136,9 @@ describe("DdlManager.dump", () => {
         });
 
         sql = fs.readFileSync(ROOT_TMP_PATH + "/test/simple_func.sql").toString();
-        content = DDLCoach.parseSqlFile(sql);
+        content = new GrapeQLCoach(sql).parse(SqlFile);
 
-        assert.deepEqual(content, {
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "test",
                 name: "simple_func",
@@ -173,9 +178,9 @@ describe("DdlManager.dump", () => {
         });
 
         let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/company/some_func.sql").toString();
-        let content = DDLCoach.parseSqlFile(sql);
+        let content = new GrapeQLCoach(sql).parse(SqlFile);
 
-        assert.deepEqual(content, {
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "some_func",
@@ -237,9 +242,9 @@ describe("DdlManager.dump", () => {
         });
 
         let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/company/some_func.sql").toString();
-        let content = DDLCoach.parseSqlFile(sql);
+        let content = new GrapeQLCoach(sql).parse(SqlFile);
 
-        assert.deepEqual(content, {
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "some_func",
@@ -309,9 +314,9 @@ describe("DdlManager.dump", () => {
         });
 
         let sql = fs.readFileSync(ROOT_TMP_PATH + "/test/company/some_func.sql").toString();
-        let content = DDLCoach.parseSqlFile(sql);
+        let content = new GrapeQLCoach(sql).parse(SqlFile);
 
-        assert.deepEqual(content, {
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "some_func",
@@ -353,9 +358,9 @@ describe("DdlManager.dump", () => {
         let filePath = ROOT_TMP_PATH + "/public/simple_func.sql";
 
         let sql = fs.readFileSync(filePath).toString();
-        let content = DDLCoach.parseSqlFile(sql);
+        let content = new GrapeQLCoach(sql).parse(SqlFile);
 
-        assert.deepEqual(content, {
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "simple_func",
@@ -379,7 +384,7 @@ describe("DdlManager.dump", () => {
         });
         
         const result = await db.query("select simple_func() as simple_func");
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             simple_func: 2
         });
     });
@@ -400,9 +405,9 @@ describe("DdlManager.dump", () => {
         let filePath = ROOT_TMP_PATH + "/public/simple_func.sql";
 
         let sql = fs.readFileSync(filePath).toString();
-        let content = DDLCoach.parseSqlFile(sql);
+        let content = new GrapeQLCoach(sql).parse(SqlFile);
 
-        assert.deepEqual(content, {
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "simple_func",
@@ -426,7 +431,7 @@ describe("DdlManager.dump", () => {
         });
         
         let result = await db.query("select simple_func() as test");
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             test: 2
         });
     });
@@ -463,9 +468,9 @@ describe("DdlManager.dump", () => {
         let filePath = ROOT_TMP_PATH + "/public/company/some_func.sql";
 
         let sql = fs.readFileSync(filePath).toString();
-        let content = DDLCoach.parseSqlFile(sql);
+        let content = new GrapeQLCoach(sql).parse(SqlFile);
 
-        assert.deepEqual(content, {
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "some_func",
@@ -515,7 +520,7 @@ describe("DdlManager.dump", () => {
         });
         
         let result = await db.query("insert into company default values returning name");
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             name: "nice"
         });
     });
@@ -535,9 +540,9 @@ describe("DdlManager.dump", () => {
         });
 
         let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
-        let content = DDLCoach.parseSqlFile(sql);
+        let content = new GrapeQLCoach(sql).parse(SqlFile);
 
-        assert.deepEqual(content, {
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "simple_func",
@@ -590,9 +595,9 @@ describe("DdlManager.dump", () => {
         });
 
         let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/company/some_func.sql").toString();
-        let content = DDLCoach.parseSqlFile(sql);
+        let content = new GrapeQLCoach(sql).parse(SqlFile);
 
-        assert.deepEqual(content, {
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "some_func",
@@ -657,9 +662,9 @@ describe("DdlManager.dump", () => {
         });
 
         let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
-        let content = DDLCoach.parseSqlFile(sql);
+        let content = new GrapeQLCoach(sql).parse(SqlFile);
 
-        assert.deepEqual(content, {
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "simple_func",
@@ -704,9 +709,9 @@ describe("DdlManager.dump", () => {
         });
 
         let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
-        let content = DDLCoach.parseSqlFile(sql);
+        let content = new GrapeQLCoach(sql).parse(SqlFile);
 
-        assert.deepEqual(content, {
+        expect(content).to.be.shallowDeepEqual({
             functions: [
                 {
                     schema: "public",
@@ -760,9 +765,9 @@ describe("DdlManager.dump", () => {
         let filePath = ROOT_TMP_PATH + "/public/simple_func.sql";
 
         let sql = fs.readFileSync(filePath).toString();
-        let content = DDLCoach.parseSqlFile(sql);
+        let content = new GrapeQLCoach(sql).parse(SqlFile);
 
-        assert.deepEqual(content, {
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "simple_func",
@@ -794,7 +799,7 @@ describe("DdlManager.dump", () => {
                 routines.routine_name = 'simple_func'
         `);
 
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             comment: "'$$nice\ncomment\nddl-manager-sync"
         });
     });
@@ -834,9 +839,9 @@ describe("DdlManager.dump", () => {
         let filePath = ROOT_TMP_PATH + "/public/company/some_func.sql";
 
         let sql = fs.readFileSync(filePath).toString();
-        let content = DDLCoach.parseSqlFile(sql);
+        let content = new GrapeQLCoach(sql).parse(SqlFile);
 
-        assert.deepEqual(content, {
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "some_func",
@@ -878,7 +883,7 @@ describe("DdlManager.dump", () => {
                 pg_trigger.tgname = 'some_trigger'
         `);
 
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             comment: "'$$nice\ncomment\nddl-manager-sync"
         });
     });
@@ -923,9 +928,9 @@ describe("DdlManager.dump", () => {
         });
 
         let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/company/some_func.sql").toString();
-        let content = DDLCoach.parseSqlFile(sql);
+        let content = new GrapeQLCoach(sql).parse(SqlFile);
 
-        assert.deepEqual(content, {
+        expect(content).to.be.shallowDeepEqual({
             functions: [
                 {
                     schema: "public",
@@ -990,9 +995,9 @@ describe("DdlManager.dump", () => {
         });
 
         let sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
-        let content = DDLCoach.parseSqlFile(sql);
+        let content = new GrapeQLCoach(sql).parse(SqlFile);
 
-        assert.deepEqual(content, {
+        expect(content).to.be.shallowDeepEqual({
             functions: [
                 {
                     schema: "public",

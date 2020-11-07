@@ -4,6 +4,10 @@ const assert = require("assert");
 const fs = require("fs");
 const FilesState = require("../../lib/FilesState");
 const del = require("del");
+const {expect, use} = require("chai");
+const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+
+use(chaiShallowDeepEqualPlugin);
 
 async function sleep(ms) {
     return new Promise((resolve) => {
@@ -56,7 +60,7 @@ describe("FilesState watch create and remove folders", () => {
             folder: ROOT_TMP_PATH
         });
 
-        assert.deepEqual(filesState.getFunctions(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
 
         let counter = 0;
         filesState.on("change", () => {
@@ -71,7 +75,7 @@ describe("FilesState watch create and remove folders", () => {
         await sleep(50);
 
         assert.equal(counter, 0);
-        assert.deepEqual(filesState.getFunctions(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
     });
 
     it("create empty dir", async() => {
@@ -82,7 +86,7 @@ describe("FilesState watch create and remove folders", () => {
             folder: ROOT_TMP_PATH
         });
 
-        assert.deepEqual(filesState.getFunctions(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
 
         let counter = 0;
         filesState.on("change", () => {
@@ -97,7 +101,7 @@ describe("FilesState watch create and remove folders", () => {
         await sleep(50);
 
         assert.equal(counter, 0);
-        assert.deepEqual(filesState.getFunctions(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
     });
 
     it("create dir.sql", async() => {
@@ -108,7 +112,7 @@ describe("FilesState watch create and remove folders", () => {
             folder: ROOT_TMP_PATH
         });
 
-        assert.deepEqual(filesState.getFunctions(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
 
         let counter = 0;
         filesState.on("change", () => {
@@ -123,7 +127,7 @@ describe("FilesState watch create and remove folders", () => {
         await sleep(50);
 
         assert.equal(counter, 0);
-        assert.deepEqual(filesState.getFunctions(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
     });
 
     it("remove dir.sql", async() => {
@@ -136,7 +140,7 @@ describe("FilesState watch create and remove folders", () => {
             folder: ROOT_TMP_PATH
         });
 
-        assert.deepEqual(filesState.getFunctions(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
 
         let counter = 0;
         filesState.on("change", () => {
@@ -150,7 +154,7 @@ describe("FilesState watch create and remove folders", () => {
         await sleep(50);
 
         assert.equal(counter, 0);
-        assert.deepEqual(filesState.getFunctions(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
     });
 
 
@@ -163,7 +167,7 @@ describe("FilesState watch create and remove folders", () => {
             folder: ROOT_TMP_PATH
         });
 
-        assert.deepEqual(filesState.getFunctions(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
 
         let counter = 0;
         let changes;
@@ -183,11 +187,11 @@ describe("FilesState watch create and remove folders", () => {
         await sleep(50);
 
         assert.equal(counter, 1);
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func1
         ]);
 
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [],
                 triggers: []
@@ -214,7 +218,7 @@ describe("FilesState watch create and remove folders", () => {
             folder: ROOT_TMP_PATH
         });
 
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func1
         ]);
 
@@ -233,9 +237,9 @@ describe("FilesState watch create and remove folders", () => {
         await sleep(50);
 
         assert.equal(counter, 1);
-        assert.deepEqual(filesState.getFunctions(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
 
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
                     test_func1

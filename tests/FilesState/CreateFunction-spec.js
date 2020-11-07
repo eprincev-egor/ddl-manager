@@ -4,6 +4,10 @@ const assert = require("assert");
 const fs = require("fs");
 const FilesState = require("../../lib/FilesState");
 const del = require("del");
+const {expect, use} = require("chai");
+const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+
+use(chaiShallowDeepEqualPlugin);
 
 async function sleep(ms) {
     return new Promise((resolve) => {
@@ -68,8 +72,7 @@ describe("FilesState watch create functions", () => {
             folder: ROOT_TMP_PATH
         });
         
-        assert.deepEqual(
-            filesState.getFunctions(), 
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
             []
         );
         
@@ -89,7 +92,7 @@ describe("FilesState watch create functions", () => {
         
         assert.equal(counter, 1);
         
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [],
                 triggers: []
@@ -102,7 +105,7 @@ describe("FilesState watch create functions", () => {
             }
         });
         
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func1
         ]);
     });
@@ -116,8 +119,7 @@ describe("FilesState watch create functions", () => {
         });
         watchers_to_stop.push(filesState);
         
-        assert.deepEqual(
-            filesState.getFunctions(), 
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
             []
         );
 
@@ -137,7 +139,7 @@ describe("FilesState watch create functions", () => {
         
         assert.equal(error && error.message, "duplicate function public.some_func1()");
 
-        assert.deepEqual( filesState.getFunctions(), [
+        expect( filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func1
         ]);
     });
@@ -150,8 +152,7 @@ describe("FilesState watch create functions", () => {
             folder: ROOT_TMP_PATH
         });
         
-        assert.deepEqual(
-            filesState.getFunctions(), 
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
             []
         );
         
@@ -169,7 +170,7 @@ describe("FilesState watch create functions", () => {
         
         assert.strictEqual(hasChanges, false);
         
-        assert.deepEqual(filesState.getFunctions(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
     });
 
 
@@ -182,8 +183,7 @@ describe("FilesState watch create functions", () => {
             folder: ROOT_TMP_PATH
         });
         
-        assert.deepEqual(
-            filesState.getFunctions(), 
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
             []
         );
         
@@ -200,7 +200,7 @@ describe("FilesState watch create functions", () => {
         fs.writeFileSync(filePath1, test_func1_sql);
         await sleep(50);
         
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [],
                 triggers: []
@@ -213,7 +213,7 @@ describe("FilesState watch create functions", () => {
             }
         });
         
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func1
         ]);
 
@@ -221,7 +221,7 @@ describe("FilesState watch create functions", () => {
         fs.writeFileSync(filePath2, test_func2_sql);
         await sleep(50);
         
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [],
                 triggers: []
@@ -234,7 +234,7 @@ describe("FilesState watch create functions", () => {
             }
         });
         
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func1,
             test_func2
         ]);
@@ -248,13 +248,11 @@ describe("FilesState watch create functions", () => {
             folder: ROOT_TMP_PATH
         });
         
-        assert.deepEqual(
-            filesState.getFunctions(), 
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
             []
         );
         
-        assert.deepEqual(
-            filesState.getComments(), 
+        expect(filesState.getComments()).to.be.shallowDeepEqual(
             []
         );
 
@@ -277,7 +275,7 @@ describe("FilesState watch create functions", () => {
         
         assert.equal(counter, 1);
         
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [],
                 triggers: []
@@ -300,11 +298,11 @@ describe("FilesState watch create functions", () => {
             }
         });
         
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func1
         ]);
 
-        assert.deepEqual(filesState.getComments(), [
+        expect(filesState.getComments()).to.be.shallowDeepEqual([
             {
                 function: {
                     schema: "public",

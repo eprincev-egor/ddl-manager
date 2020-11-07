@@ -4,6 +4,10 @@ const assert = require("assert");
 const fs = require("fs");
 const FilesState = require("../../lib/FilesState");
 const del = require("del");
+const {expect, use} = require("chai");
+const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+
+use(chaiShallowDeepEqualPlugin);
 
 async function sleep(ms) {
     return new Promise((resolve) => {
@@ -70,8 +74,7 @@ describe("FilesState watch remove functions", () => {
             folder: ROOT_TMP_PATH
         });
 
-        assert.deepEqual(
-            filesState.getFunctions(), 
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
             [test_func1]
         );
 
@@ -87,7 +90,7 @@ describe("FilesState watch remove functions", () => {
         
         await sleep(50);
 
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
                     test_func1
@@ -100,7 +103,7 @@ describe("FilesState watch remove functions", () => {
             }
         });
 
-        assert.deepEqual(filesState.getFunctions(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
     });
 
 
@@ -116,8 +119,7 @@ describe("FilesState watch remove functions", () => {
         });
 
         // content from test.sql
-        assert.deepEqual(
-            filesState.getFunctions(), 
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
             [test_func1]
         );
 
@@ -136,7 +138,7 @@ describe("FilesState watch remove functions", () => {
 
         assert.strictEqual(hasChanges, false);
 
-        assert.deepEqual(filesState.getFunctions(), [test_func1]);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([test_func1]);
     });
 
     it("remove file from sub dir", async() => {
@@ -150,8 +152,7 @@ describe("FilesState watch remove functions", () => {
         });
 
         // content from test.sql
-        assert.deepEqual(
-            filesState.getFunctions(), 
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
             [test_func1]
         );
 
@@ -169,7 +170,7 @@ describe("FilesState watch remove functions", () => {
 
         await sleep(50);
 
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
                     test_func1
@@ -182,7 +183,7 @@ describe("FilesState watch remove functions", () => {
             }
         });
 
-        assert.deepEqual(filesState.getFunctions(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
     });
 
     it("twice remove", async() => {
@@ -198,8 +199,7 @@ describe("FilesState watch remove functions", () => {
         });
 
         // content from test.sql
-        assert.deepEqual(
-            filesState.getFunctions(), 
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
             [
                 test_func1,
                 test_func2
@@ -220,7 +220,7 @@ describe("FilesState watch remove functions", () => {
 
         await sleep(50);
 
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
                     test_func1
@@ -234,7 +234,7 @@ describe("FilesState watch remove functions", () => {
         });
 
 
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func2
         ]);
 
@@ -242,7 +242,7 @@ describe("FilesState watch remove functions", () => {
 
         await sleep(50);
 
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
                     test_func2
@@ -256,7 +256,7 @@ describe("FilesState watch remove functions", () => {
         });
 
 
-        assert.deepEqual(filesState.getFunctions(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
     });
 
     it("remove function with comments", async() => {
@@ -271,13 +271,11 @@ describe("FilesState watch remove functions", () => {
             folder: ROOT_TMP_PATH
         });
 
-        assert.deepEqual(
-            filesState.getFunctions(), 
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
             [test_func1]
         );
 
-        assert.deepEqual(
-            filesState.getComments(),
+        expect(filesState.getComments()).to.be.shallowDeepEqual(
             [{
                 function: {
                     schema: "public",
@@ -300,7 +298,7 @@ describe("FilesState watch remove functions", () => {
         
         await sleep(50);
 
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
                     test_func1
@@ -323,8 +321,8 @@ describe("FilesState watch remove functions", () => {
             }
         });
 
-        assert.deepEqual(filesState.getFunctions(), []);
-        assert.deepEqual(filesState.getComments(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
+        expect(filesState.getComments()).to.be.shallowDeepEqual([]);
     });
 
 
@@ -355,8 +353,7 @@ describe("FilesState watch remove functions", () => {
             folder: ROOT_TMP_PATH
         });
 
-        assert.deepEqual(
-            filesState.getFunctions(), 
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
             [func]
         );
 
@@ -372,7 +369,7 @@ describe("FilesState watch remove functions", () => {
         
         await sleep(50);
 
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
                     func
@@ -385,7 +382,7 @@ describe("FilesState watch remove functions", () => {
             }
         });
 
-        assert.deepEqual(filesState.getFunctions(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
     });
 
 });

@@ -5,6 +5,10 @@ const fs = require("fs");
 const del = require("del");
 const getDbClient = require("../utils/getDbClient");
 const DdlManager = require("../../lib/DdlManager");
+const {expect, use} = require("chai");
+const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+
+use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
@@ -79,7 +83,7 @@ describe("DdlManager.build", () => {
         let result = await db.query("select nice(2) as nice");
         let row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             nice: 2 * rnd
         });
     });
@@ -113,7 +117,7 @@ describe("DdlManager.build", () => {
         let result = await db.query("select nice() as nice");
         let row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             nice: 1
         });
     });
@@ -145,7 +149,7 @@ describe("DdlManager.build", () => {
         result = await db.query("select nice(2) as nice");
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             nice: 2 * rnd
         });
 
@@ -167,7 +171,7 @@ describe("DdlManager.build", () => {
         result = await db.query("select nice() as nice");
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             nice: 100
         });
 
@@ -217,7 +221,7 @@ describe("DdlManager.build", () => {
         let result = await db.query("insert into company (name) values ('super') returning note");
         let row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             note: "name: super"
         });
     });
@@ -263,7 +267,7 @@ describe("DdlManager.build", () => {
         result = await db.query("insert into company (name) values ('super') returning note");
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             note: "name: super"
         });
 
@@ -296,7 +300,7 @@ describe("DdlManager.build", () => {
         result = await db.query("insert into company (name) values ('test') returning note");
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             note: "nice: test"
         });
     });
@@ -325,7 +329,7 @@ describe("DdlManager.build", () => {
         let result = await db.query("select nice() as nice");
         let row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             nice: 1
         });
 
@@ -435,7 +439,7 @@ describe("DdlManager.build", () => {
         let result = await db.query("select func2(1) as func2");
         let row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             func2: 2
         });
 
@@ -491,13 +495,13 @@ describe("DdlManager.build", () => {
 
         result = await db.query("select func2(1) as func2");
 
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             func2: 2
         });
 
         result = await db.query("select func1(1) as func1");
 
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             func1: 1
         });
     });
@@ -537,7 +541,7 @@ describe("DdlManager.build", () => {
                 routines.routine_name = 'nice'
         `);
 
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             comment: "good\nddl-manager-sync"
         });
     });
@@ -564,7 +568,7 @@ describe("DdlManager.build", () => {
         result = await db.query("select test() as test");
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             test: 1
         });
 
@@ -626,7 +630,7 @@ describe("DdlManager.build", () => {
         result = await db.query("insert into company (name) values ('super') returning note");
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             note: "name: super"
         });
 
@@ -648,7 +652,7 @@ describe("DdlManager.build", () => {
         result = await db.query("insert into company (name) values ('super 2') returning note");
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             note: null
         });
     });
@@ -675,7 +679,7 @@ describe("DdlManager.build", () => {
         result = await db.query("select test() as test");
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             test: 1
         });
 
@@ -707,7 +711,7 @@ describe("DdlManager.build", () => {
                 routines.routine_name = 'test'
         `);
 
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             comment: "test\nddl-manager-sync"
         });
     });
@@ -747,7 +751,7 @@ describe("DdlManager.build", () => {
         result = await db.query("insert into company (name) values ('super') returning note");
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             note: "name: super"
         });
 
@@ -774,7 +778,7 @@ describe("DdlManager.build", () => {
                 pg_trigger.tgname = 'set_note_before_insert_or_update_name_trigger'
         `);
 
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             comment: "test\nddl-manager-sync"
         });
     });
@@ -819,7 +823,7 @@ describe("DdlManager.build", () => {
         result = await db.query("insert into company (name) values ('super') returning note");
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             note: "name: super"
         });
 
@@ -849,7 +853,7 @@ describe("DdlManager.build", () => {
         result = await db.query("insert into company (name) values ('super 2') returning note");
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             note: "changed: super 2"
         });
     });
@@ -907,7 +911,7 @@ language plpgsql;
         `);
         let row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             total: 40
         });
     });
@@ -954,7 +958,7 @@ language plpgsql;
         `);
         let row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             total: 31
         });
     });
@@ -1000,7 +1004,7 @@ language plpgsql;
         `);
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             id: 1,
             name: "test"
         });
@@ -1015,7 +1019,7 @@ language plpgsql;
         `);
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             zip: "1,test"
         });
 
@@ -1048,7 +1052,7 @@ language plpgsql;
         `);
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             zip: "1:test"
         });
     });
@@ -1082,7 +1086,7 @@ language plpgsql;
         `);
         let row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             my_func: "test"
         });
 
@@ -1108,7 +1112,7 @@ language plpgsql;
         `);
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             my_func: "nice"
         });
     });
@@ -1141,7 +1145,7 @@ language plpgsql;
         `);
         let row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             my_func: "test"
         });
 
@@ -1159,7 +1163,7 @@ language plpgsql;
         `);
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             my_func: "test"
         });
     });
@@ -1181,7 +1185,7 @@ language plpgsql;
         let result = await db.query(`
             select my_int_func(101) as my_int_func
         `);
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             my_int_func: "test 101"
         });
 
@@ -1204,7 +1208,7 @@ language plpgsql;
         result = await db.query(`
             select my_int_func(101) as my_int_func
         `);
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             my_int_func: "nice 101"
         });
     });
@@ -1250,7 +1254,7 @@ language plpgsql;
                 func1() as func1,
                 func2() as func2
         `);
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             func1: "func1",
             func2: "func2"
         });

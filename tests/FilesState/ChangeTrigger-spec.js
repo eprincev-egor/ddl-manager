@@ -4,6 +4,10 @@ const assert = require("assert");
 const fs = require("fs");
 const FilesState = require("../../lib/FilesState");
 const del = require("del");
+const {expect, use} = require("chai");
+const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+
+use(chaiShallowDeepEqualPlugin);
 
 async function sleep(ms) {
     return new Promise((resolve) => {
@@ -124,10 +128,10 @@ describe("FilesState watch change triggers", () => {
             folder: ROOT_TMP_PATH
         });
         
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func1
         ]);
-        assert.deepEqual(filesState.getTriggers(), [
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
             test_trigger1
         ]);
         
@@ -146,7 +150,7 @@ describe("FilesState watch change triggers", () => {
         fs.writeFileSync(filePath, test_func2_sql);
         await sleep(50);
         
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
                     test_func1
@@ -166,10 +170,10 @@ describe("FilesState watch change triggers", () => {
         });
         assert.equal(counter, 1);
         
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func2
         ]);
-        assert.deepEqual(filesState.getTriggers(), [
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
             test_trigger2
         ]);
     });
@@ -185,10 +189,10 @@ describe("FilesState watch change triggers", () => {
             folder: ROOT_TMP_PATH
         });
         
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func1
         ]);
-        assert.deepEqual(filesState.getTriggers(), [
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
             test_trigger1
         ]);
         
@@ -207,10 +211,10 @@ describe("FilesState watch change triggers", () => {
         
         assert.equal(counter, 0);
         
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func1
         ]);
-        assert.deepEqual(filesState.getTriggers(), [
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
             test_trigger1
         ]);
     });
@@ -226,11 +230,11 @@ describe("FilesState watch change triggers", () => {
             folder: ROOT_TMP_PATH
         });
         
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func1,
             test_func2
         ]);
-        assert.deepEqual(filesState.getTriggers(), [
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
             test_trigger1,
             test_trigger2
         ]);
@@ -260,10 +264,10 @@ describe("FilesState watch change triggers", () => {
         
         assert.equal(error && error.message, "duplicate trigger some_trigger on operation.company");
 
-        assert.deepEqual( filesState.getFunctions(), [
+        expect( filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func1
         ]);
-        assert.deepEqual(filesState.getTriggers(), [
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
             test_trigger1
         ]);
     });
@@ -279,10 +283,10 @@ describe("FilesState watch change triggers", () => {
             folder: ROOT_TMP_PATH
         });
         
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func1
         ]);
-        assert.deepEqual(filesState.getTriggers(), [
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
             test_trigger1
         ]);
         
@@ -301,7 +305,7 @@ describe("FilesState watch change triggers", () => {
         fs.writeFileSync(filePath, test_func2_sql);
         await sleep(50);
         
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
                     test_func1
@@ -321,10 +325,10 @@ describe("FilesState watch change triggers", () => {
         });
         assert.equal(counter, 1);
         
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func2
         ]);
-        assert.deepEqual(filesState.getTriggers(), [
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
             test_trigger2
         ]);
 
@@ -333,7 +337,7 @@ describe("FilesState watch change triggers", () => {
         fs.writeFileSync(filePath, test_func1_sql);
         await sleep(50);
         
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
                     test_func2
@@ -353,10 +357,10 @@ describe("FilesState watch change triggers", () => {
         });
         assert.equal(counter, 2);
         
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func1
         ]);
-        assert.deepEqual(filesState.getTriggers(), [
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
             test_trigger1
         ]);
     });
@@ -371,10 +375,10 @@ describe("FilesState watch change triggers", () => {
             folder: ROOT_TMP_PATH
         });
         
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func1
         ]);
-        assert.deepEqual(filesState.getTriggers(), [
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
             test_trigger1
         ]);
         
@@ -393,7 +397,7 @@ describe("FilesState watch change triggers", () => {
         fs.writeFileSync(filePath, only_function_sql);
         await sleep(50);
         
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
                     test_func1
@@ -411,10 +415,10 @@ describe("FilesState watch change triggers", () => {
         });
         assert.equal(counter, 1);
         
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             only_function
         ]);
-        assert.deepEqual(filesState.getTriggers(), []);
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([]);
     });
     
     it("change function on trigger", async() => {
@@ -427,10 +431,10 @@ describe("FilesState watch change triggers", () => {
             folder: ROOT_TMP_PATH
         });
         
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             only_function
         ]);
-        assert.deepEqual(filesState.getTriggers(), []);
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([]);
         
 
         let changes;
@@ -447,7 +451,7 @@ describe("FilesState watch change triggers", () => {
         fs.writeFileSync(filePath, test_func1_sql);
         await sleep(50);
         
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
                     only_function
@@ -465,10 +469,10 @@ describe("FilesState watch change triggers", () => {
         });
         assert.equal(counter, 1);
         
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func1
         ]);
-        assert.deepEqual(filesState.getTriggers(), [
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
             test_trigger1
         ]);
     });

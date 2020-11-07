@@ -1,11 +1,14 @@
 "use strict";
 
-const assert = require("assert");
 const fs = require("fs");
 const del = require("del");
 const getDbClient = require("../utils/getDbClient");
 const DdlManager = require("../../lib/DdlManager");
 const DbState = require("../../lib/DbState");
+const {expect, use} = require("chai");
+const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+
+use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
@@ -34,7 +37,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [],
             triggers: []
         });
@@ -56,7 +59,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -102,7 +105,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -161,7 +164,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -212,7 +215,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -244,7 +247,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -284,7 +287,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -329,7 +332,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -366,7 +369,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -417,7 +420,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -480,7 +483,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -541,7 +544,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -600,7 +603,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -651,7 +654,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [],
             triggers: []
         });
@@ -676,7 +679,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [],
             triggers: []
         });
@@ -693,7 +696,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "sql",
@@ -724,7 +727,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -755,7 +758,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -789,7 +792,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -821,7 +824,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -853,7 +856,7 @@ describe("DbState.load", () => {
         let state = new DbState(db);
         await state.load();
 
-        assert.deepEqual(state.toJSON(), {
+        expect(state.toJSON()).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",

@@ -5,6 +5,10 @@ const fs = require("fs");
 const del = require("del");
 const getDbClient = require("../utils/getDbClient");
 const DdlManager = require("../../lib/DdlManager");
+const {expect, use} = require("chai");
+const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+
+use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
@@ -89,7 +93,7 @@ describe("DdlManager.watch", () => {
         result = await db.query("select some_func() as some_func");
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             some_func: 1
         });
 
@@ -110,7 +114,7 @@ describe("DdlManager.watch", () => {
         row = result.rows[0];
 
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             some_func: 2
         });
     });
@@ -145,7 +149,7 @@ describe("DdlManager.watch", () => {
         let result = await db.query("select nice() as nice");
         let row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             nice: 1
         });
     });
@@ -179,7 +183,7 @@ describe("DdlManager.watch", () => {
         let result = await db.query("select test() as nice");
         let row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             nice: 1
         });
     });
@@ -221,7 +225,7 @@ describe("DdlManager.watch", () => {
         result = await db.query("select test() as test");
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             test: 2
         });
 
@@ -241,7 +245,7 @@ describe("DdlManager.watch", () => {
         result = await db.query("select test2() as test2");
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             test2: 2
         });
 
@@ -280,7 +284,7 @@ describe("DdlManager.watch", () => {
         result = await db.query("select some_func() as some_func");
         row = result.rows[0];
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             some_func: 1
         });
 
@@ -301,7 +305,7 @@ describe("DdlManager.watch", () => {
         row = result.rows[0];
 
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             some_func: 2
         });
 
@@ -323,7 +327,7 @@ describe("DdlManager.watch", () => {
         row = result.rows[0];
 
 
-        assert.deepEqual(row, {
+        expect(row).to.be.shallowDeepEqual({
             some_func: 3
         });
     });
@@ -369,7 +373,7 @@ describe("DdlManager.watch", () => {
                 func1() as func1,
                 func2() as func2
         `);
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             func1: "func1",
             func2: "func2"
         });
@@ -400,7 +404,7 @@ describe("DdlManager.watch", () => {
                 func1() as func1,
                 func2() as func2
         `);
-        assert.deepEqual(result.rows[0], {
+        expect(result.rows[0]).to.be.shallowDeepEqual({
             func1: "changed func1",
             func2: "changed func2"
         });

@@ -1,9 +1,12 @@
 "use strict";
 
-const assert = require("assert");
 const fs = require("fs");
 const FilesState = require("../../lib/FilesState");
 const del = require("del");
+const {expect, use} = require("chai");
+const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+
+use(chaiShallowDeepEqualPlugin);
 
 async function sleep(ms) {
     return new Promise((resolve) => {
@@ -30,7 +33,7 @@ const test_func1 = {
     name: "some_func1",
     args: [],
     returns: {type: "trigger"},
-    body: "select 1"
+    body: {content: "select 1"}
 };
 const test_trigger1 = {
     table: {
@@ -109,13 +112,11 @@ describe("FilesState watch remove triggers", () => {
             folder: ROOT_TMP_PATH
         });
 
-        assert.deepEqual(
-            filesState.getFunctions(), 
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
             [test_func1]
         );
 
-        assert.deepEqual(
-            filesState.getTriggers(), 
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual(
             [test_trigger1]
         );
 
@@ -131,7 +132,7 @@ describe("FilesState watch remove triggers", () => {
         
         await sleep(50);
 
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
                     test_func1
@@ -146,8 +147,8 @@ describe("FilesState watch remove triggers", () => {
             }
         });
 
-        assert.deepEqual(filesState.getFunctions(), []);
-        assert.deepEqual(filesState.getTriggers(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([]);
     });
 
 
@@ -163,15 +164,13 @@ describe("FilesState watch remove triggers", () => {
             folder: ROOT_TMP_PATH
         });
 
-        assert.deepEqual(
-            filesState.getFunctions(), 
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
             [
                 test_func1,
                 test_func2
             ]
         );
-        assert.deepEqual(
-            filesState.getTriggers(), 
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual(
             [
                 test_trigger1,
                 test_trigger2
@@ -192,7 +191,7 @@ describe("FilesState watch remove triggers", () => {
 
         await sleep(50);
 
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
                     test_func1
@@ -208,10 +207,10 @@ describe("FilesState watch remove triggers", () => {
         });
 
 
-        assert.deepEqual(filesState.getFunctions(), [
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
             test_func2
         ]);
-        assert.deepEqual(filesState.getTriggers(), [
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
             test_trigger2
         ]);
 
@@ -219,7 +218,7 @@ describe("FilesState watch remove triggers", () => {
 
         await sleep(50);
 
-        assert.deepEqual(changes, {
+        expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
                     test_func2
@@ -235,7 +234,7 @@ describe("FilesState watch remove triggers", () => {
         });
 
 
-        assert.deepEqual(filesState.getFunctions(), []);
-        assert.deepEqual(filesState.getTriggers(), []);
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([]);
     });
 });
