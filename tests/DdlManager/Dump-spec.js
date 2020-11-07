@@ -800,7 +800,7 @@ describe("DdlManager.dump", () => {
         `);
 
         expect(result.rows[0]).to.be.shallowDeepEqual({
-            comment: {content: "'$$nice\ncomment\nddl-manager-sync"}
+            comment: "'$$nice\ncomment\nddl-manager-sync"
         });
     });
 
@@ -884,7 +884,7 @@ describe("DdlManager.dump", () => {
         `);
 
         expect(result.rows[0]).to.be.shallowDeepEqual({
-            comment: {content: "'$$nice\ncomment\nddl-manager-sync"}
+            comment: "'$$nice\ncomment\nddl-manager-sync"
         });
     });
 

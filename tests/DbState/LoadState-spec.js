@@ -119,7 +119,7 @@ describe("DbState.load", () => {
                         }
                     ],
                     returns: {type: "integer"},
-                    body: body1
+                    body: {content: body1}
                 },
                 {
                     language: "plpgsql",
@@ -133,7 +133,7 @@ describe("DbState.load", () => {
                         }
                     ],
                     returns: {type: "text"},
-                    body: body2
+                    body: {content: body2}
                 }
             ],
             triggers: []
@@ -178,7 +178,7 @@ describe("DbState.load", () => {
                         }
                     ],
                     returns: {type: "integer"},
-                    body: body1
+                    body: {content: body1}
                 },
                 {
                     language: "plpgsql",
@@ -192,7 +192,7 @@ describe("DbState.load", () => {
                         }
                     ],
                     returns: {type: "integer"},
-                    body: body2
+                    body: {content: body2}
                 }
             ],
             triggers: []
@@ -380,7 +380,7 @@ describe("DbState.load", () => {
                         {
                             name: "id",
                             type: "bigint",
-                            default: "null ::bigint"
+                            default: "null :: bigint"
                         }
                     ],
                     returns: {type: "void"},
@@ -833,7 +833,7 @@ describe("DbState.load", () => {
                     name: "some_func",
                     args: [
                         {
-                            name: false,
+                            name: null,
                             type: "text"
                         }
                     ],
