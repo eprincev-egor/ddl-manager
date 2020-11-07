@@ -1,11 +1,9 @@
-"use strict";
-
-const assert = require("assert");
-const fs = require("fs");
-const FilesState = require("../../lib/FilesState");
-const del = require("del");
-const {expect, use} = require("chai");
-const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+import assert from "assert";
+import fs from "fs";
+import fse from "fs-extra";
+import { FilesState } from "../../lib/FilesState";
+import {expect, use} from "chai";
+import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 
 use(chaiShallowDeepEqualPlugin);
 
@@ -14,13 +12,13 @@ describe("FilesState parse functions", () => {
     
     beforeEach(() => {
         if ( fs.existsSync(ROOT_TMP_PATH) ) {
-            del.sync(ROOT_TMP_PATH);
+            fse.removeSync(ROOT_TMP_PATH);
         }
         fs.mkdirSync(ROOT_TMP_PATH);
     });
     
     afterEach(() => {
-        del.sync(ROOT_TMP_PATH);
+        fse.removeSync(ROOT_TMP_PATH);
     });
 
     it("parse nonexistent file", () => {
@@ -38,24 +36,24 @@ describe("FilesState parse functions", () => {
 
     it("parse empty folder", () => {
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 
-        let functions = filesState.getFunctions();
+        const functions = filesState.getFunctions();
 
         expect(functions).to.be.shallowDeepEqual([]);
     });
 
     
     it("parse file with simple function", () => {
-        let body = `
+        const body = `
         begin
             return a + b;
         end
         `;
 
-        let sql = `
+        const sql = `
             create or replace function public.test_a_plus_b(
                 a bigint,
                 b bigint
@@ -64,10 +62,10 @@ describe("FilesState parse functions", () => {
             language plpgsql;
         `.trim();
         
-        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
         fs.writeFileSync(filePath, sql);
 
-        let expectedResult = [
+        const expectedResult = [
             {
                 language: "plpgsql",
                 schema: "public",
@@ -87,27 +85,27 @@ describe("FilesState parse functions", () => {
             }
         ];
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 
-        let actualResult = filesState.getFunctions();
+        const actualResult = filesState.getFunctions();
 
         expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
 
     
     it("parse file with simple sql function", () => {
-        let sql = `
+        const sql = `
             create or replace function nice_sql()
             returns integer as $body$select 1$body$
             language sql;
         `;
         
-        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
         fs.writeFileSync(filePath, sql);
 
-        let expectedResult = [
+        const expectedResult = [
             {
                 schema: "public",
                 name: "nice_sql",
@@ -118,24 +116,24 @@ describe("FilesState parse functions", () => {
             }
         ];
         
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 
-        let actualResult = filesState.getFunctions();
+        const actualResult = filesState.getFunctions();
 
         expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
 
     
     it("parse file with simple function and returns table", () => {
-        let body = `
+        const body = `
         begin
             return next;
         end
         `;
 
-        let sql = `
+        const sql = `
             create or replace function public.test_a_plus_b()
             returns table(
                 name text,
@@ -144,10 +142,10 @@ describe("FilesState parse functions", () => {
             language plpgsql;
         `;
         
-        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
         fs.writeFileSync(filePath, sql);
 
-        let expectedResult = [
+        const expectedResult = [
             {
                 language: "plpgsql",
                 schema: "public",
@@ -169,11 +167,11 @@ describe("FilesState parse functions", () => {
             }
         ];
         
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 
-        let actualResult = filesState.getFunctions();
+        const actualResult = filesState.getFunctions();
 
         expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
@@ -181,26 +179,26 @@ describe("FilesState parse functions", () => {
 
 
     it("expected error on duplicate functions", () => {
-        let sql1 = `
+        const sql1 = `
             create or replace function func1()
             returns bigint as $body$select 1$body$
             language sql;
         `;
-        let sql2 = `
+        const sql2 = `
             create or replace function func1()
             returns integer as $body$select 2$body$
             language sql;
         `;
         
-        let filePath1 = ROOT_TMP_PATH + "/func1.sql";
-        let filePath2 = ROOT_TMP_PATH + "/func2.sql";
+        const filePath1 = ROOT_TMP_PATH + "/func1.sql";
+        const filePath2 = ROOT_TMP_PATH + "/func2.sql";
         fs.writeFileSync(filePath1, sql1);
         fs.writeFileSync(filePath2, sql2);
 
         let err = {message: "expected error"};
         FilesState.create({
             folder: ROOT_TMP_PATH,
-            onError(_err) {
+            onError(_err: Error) {
                 err = _err;
             }
         });
@@ -209,12 +207,12 @@ describe("FilesState parse functions", () => {
     });
 
     it("same functions, but another args", () => {
-        let sql1 = `
+        const sql1 = `
             create or replace function func1()
             returns bigint as $body$select 1$body$
             language sql;
         `;
-        let func1 = {
+        const func1 = {
             schema: "public",
             name: "func1",
             args: [],
@@ -222,12 +220,12 @@ describe("FilesState parse functions", () => {
             language: "sql",
             body: {content: "select 1"}
         };
-        let sql2 = `
+        const sql2 = `
             create or replace function func1(a text)
             returns integer as $body$select 2$body$
             language sql;
         `;
-        let func2 = {
+        const func2 = {
             schema: "public",
             name: "func1",
             args: [
@@ -242,12 +240,12 @@ describe("FilesState parse functions", () => {
         };
         
         
-        let filePath1 = ROOT_TMP_PATH + "/func1.sql";
-        let filePath2 = ROOT_TMP_PATH + "/func2.sql";
+        const filePath1 = ROOT_TMP_PATH + "/func1.sql";
+        const filePath2 = ROOT_TMP_PATH + "/func2.sql";
         fs.writeFileSync(filePath1, sql1);
         fs.writeFileSync(filePath2, sql2);
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
         
@@ -259,13 +257,13 @@ describe("FilesState parse functions", () => {
 
     
     it("parse file with comments", () => {
-        let body = `
+        const body = `
         begin
             return a + b;
         end
         `;
 
-        let sql = `
+        const sql = `
             -- some comment here
             /*
                 and here
@@ -279,10 +277,10 @@ describe("FilesState parse functions", () => {
             language plpgsql;
         `.trim();
         
-        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
         fs.writeFileSync(filePath, sql);
 
-        let expectedResult = [
+        const expectedResult = [
             {
                 language: "plpgsql",
                 schema: "public",
@@ -302,33 +300,33 @@ describe("FilesState parse functions", () => {
             }
         ];
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 
-        let actualResult = filesState.getFunctions();
+        const actualResult = filesState.getFunctions();
 
         expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
 
     it("do not replace comments inside function", () => {
-        let body = `
+        const body = `
         begin
             -- some comment
             return 1;
         end
         `;
 
-        let sql = `
+        const sql = `
             create or replace function public.func_with_comment()
             returns bigint as $body$${body}$body$
             language plpgsql;
         `.trim();
         
-        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
         fs.writeFileSync(filePath, sql);
 
-        let expectedResult = [
+        const expectedResult = [
             {
                 language: "plpgsql",
                 schema: "public",
@@ -339,17 +337,17 @@ describe("FilesState parse functions", () => {
             }
         ];
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 
-        let actualResult = filesState.getFunctions();
+        const actualResult = filesState.getFunctions();
 
         expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
 
     it("parse file with comment on function", () => {
-        let sql = `
+        const sql = `
             create or replace function public.test()
             returns integer as $body$select 1$body$
             language sql;
@@ -357,11 +355,11 @@ describe("FilesState parse functions", () => {
             comment on function test() is $$yes$$;
         `.trim();
         
-        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
         fs.writeFileSync(filePath, sql);
 
         
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 

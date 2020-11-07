@@ -1,37 +1,24 @@
-"use strict";
-
-const fs = require("fs");
-const FilesState = require("../../lib/FilesState");
-const del = require("del");
-const {expect, use} = require("chai");
-const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+import fs from "fs";
+import fse from "fs-extra";
+import { FilesState } from "../../lib/FilesState";
+import {expect, use} from "chai";
+import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import { generateEmptyFunction, VOID_BODY } from "../utils/generateEmptyFunction";
 
 use(chaiShallowDeepEqualPlugin);
-
-const VOID_BODY = {
-    content: `begin
-end`
-};
-function generateEmptyFunction(name) {
-    return `
-        create or replace function ${name}()
-        returns void as $body$${VOID_BODY.content}$body$
-        language plpgsql;
-    `.trim();
-}
 
 describe("FilesState parse files in sub dirs", () => {
     const ROOT_TMP_PATH = __dirname + "/tmp";
         
     beforeEach(() => {
         if ( fs.existsSync(ROOT_TMP_PATH) ) {
-            del.sync(ROOT_TMP_PATH);
+            fse.removeSync(ROOT_TMP_PATH);
         }
         fs.mkdirSync(ROOT_TMP_PATH);
     });
     
     afterEach(() => {
-        del.sync(ROOT_TMP_PATH);
+        fse.removeSync(ROOT_TMP_PATH);
     });
 
     
@@ -39,19 +26,19 @@ describe("FilesState parse files in sub dirs", () => {
     // we want parsing only *.sql files
     it("parse folder with one sql file and one md file", () => {
         // create sql file
-        let sql = generateEmptyFunction("some_func");
+        const sql = generateEmptyFunction("some_func");
         fs.writeFileSync(ROOT_TMP_PATH + "/some.sql", sql);
 
         // create md file,
         fs.writeFileSync(ROOT_TMP_PATH + "/some.md", sql);
 
         // parse folder
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 
         // check
-        let func = {
+        const func = {
             language: "plpgsql",
             schema: "public",
             name: "some_func",
@@ -80,21 +67,21 @@ describe("FilesState parse files in sub dirs", () => {
     it("parse folder with two sql files", () => {
 
         // create first sql file
-        let sql1 = generateEmptyFunction("some_func_1");
+        const sql1 = generateEmptyFunction("some_func_1");
         fs.writeFileSync(ROOT_TMP_PATH + "/some1.sql", sql1);
 
         // create second sql file
-        let sql2 = generateEmptyFunction("some_func_2");
+        const sql2 = generateEmptyFunction("some_func_2");
         fs.writeFileSync(ROOT_TMP_PATH + "/some2.sql", sql2);
 
 
 
         // parse folder
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 
-        let func1 = {
+        const func1 = {
             language: "plpgsql",
             schema: "public",
             name: "some_func_1",
@@ -103,7 +90,7 @@ describe("FilesState parse files in sub dirs", () => {
             body: VOID_BODY
         };
 
-        let func2 = {
+        const func2 = {
             language: "plpgsql",
             schema: "public",
             name: "some_func_2",
@@ -176,7 +163,7 @@ describe("FilesState parse files in sub dirs", () => {
 
 
         // parse folder
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 

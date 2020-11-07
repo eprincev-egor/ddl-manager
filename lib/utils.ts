@@ -1,16 +1,12 @@
-"use strict";
-
-const pg = require("pg");
-const _ = require("lodash");
-const fs = require("fs");
-const {
+import pg from "pg";
+import _ from "lodash";
+import fs from "fs";
+import {
     GrapeQLCoach,
     CreateFunction,
     CreateTrigger,
-    Comment,
-    DataType,
-    ObjectLink
-} = require("grapeql-lang");
+    Comment
+} from "grapeql-lang";
 
 const defaultConfig = {
     config: "ddl-manager-config",
@@ -23,10 +19,11 @@ const defaultConfig = {
     unfreeze: false
 };
 
-function parseConfigFromArgs(args) {
-    let config = _.clone(defaultConfig);
+// TODO: any => type
+export function parseConfigFromArgs(args: any) {
+    const config = _.clone(defaultConfig) as any;
 
-    let configPath = process.cwd() + "/" + config.config;
+    const configPath = process.cwd() + "/" + config.config;
     let fileConfig;
     try {
         fileConfig = require(configPath);
@@ -36,7 +33,7 @@ function parseConfigFromArgs(args) {
         }
     }
     
-    for (let key in fileConfig) {
+    for (const key in fileConfig) {
         config[ key ] = fileConfig[ key ];
     }
     
@@ -44,8 +41,8 @@ function parseConfigFromArgs(args) {
     
 
 
-    let dbConfig = parseDbConfig(config);
-    for (let key in dbConfig) {
+    const dbConfig = parseDbConfig(config);
+    for (const key in dbConfig) {
         config[ key ] = dbConfig[ key ];
     }
 
@@ -55,24 +52,21 @@ function parseConfigFromArgs(args) {
 
 
     if ( "unfreeze" in args ) {
-        let unfreeze = args.unfreeze + "";
-        unfreeze = unfreeze.toLowerCase();
+        const unfreezeStr = (args.unfreeze + "").toLowerCase();
 
-        if ( unfreeze == "true" || unfreeze == "1" ) {
-            unfreeze = true;
+        if ( unfreezeStr === "true" || unfreezeStr === "1" ) {
+            config.unfreeze = true;
         }
-        else if ( unfreeze == "false" || unfreeze == "0" ) {
-            unfreeze = false;
+        else if ( unfreezeStr === "false" || unfreezeStr === "0" ) {
+            config.unfreeze = false;
         }
         else {
-            throw new Error("invalid unfreeze option value: " + unfreeze);
+            throw new Error("invalid unfreeze option value: " + unfreezeStr);
         }
-
-        config.unfreeze = unfreeze;
     }
 
 
-    let folderPath = process.cwd() + "/" + config.folder;
+    const folderPath = process.cwd() + "/" + config.folder;
     if ( !fs.existsSync(folderPath) ) {
         throw new Error(`folder "${ folderPath }" not found`);
     }
@@ -80,8 +74,9 @@ function parseConfigFromArgs(args) {
     return config;
 }
 
-function parseDbConfig(args) {
-    let config = _.clone(defaultConfig);
+// TODO: any => type
+function parseDbConfig(args: any) {
+    const config = _.clone(defaultConfig) as any;
 
     if ( "database" in args ) {
         config.database = args.database;
@@ -102,109 +97,120 @@ function parseDbConfig(args) {
     return config;
 }
 
-async function getDbClient(dbConfig) {
-    let config = parseDbConfig(dbConfig);
+// TODO: any => type
+export async function getDbClient(dbConfig: any) {
+    const config = parseDbConfig(dbConfig);
 
-    let dbClient = new pg.Client(config);
+    const dbClient = new pg.Client(config);
     await dbClient.connect();
 
     return dbClient;
 }
 
-function isDbClient(dbOrConfig) {
+// TODO: any => type
+export function isDbClient(dbOrConfig: any) {
     return (
         dbOrConfig && 
         _.isFunction(dbOrConfig.query)
     );
 }
 
-function logDiff(diff) {
-    diff.drop.triggers.forEach(trigger => {
-        let triggerIdentifySql = trigger2identifySql( trigger );
+// TODO: any => type
+export function logDiff(diff: any) {
+    diff.drop.triggers.forEach((trigger: any) => {
+        const triggerIdentifySql = trigger2identifySql( trigger );
+        // tslint:disable-next-line: no-console
         console.log("drop trigger " + triggerIdentifySql);
     });
 
-    diff.drop.functions.forEach(func => {
-        let funcIdentifySql = function2identifySql( func );
+    diff.drop.functions.forEach((func: any) => {
+        const funcIdentifySql = function2identifySql( func );
+        // tslint:disable-next-line: no-console
         console.log("drop function " + funcIdentifySql);
     });
     
-    diff.create.functions.forEach(func => {
-        let funcIdentifySql = function2identifySql( func );
+    diff.create.functions.forEach((func: any) => {
+        const funcIdentifySql = function2identifySql( func );
+        // tslint:disable-next-line: no-console
         console.log("create function " + funcIdentifySql);
     });
 
-    diff.create.triggers.forEach(trigger => {
-        let triggerIdentifySql = trigger2identifySql( trigger );
+    diff.create.triggers.forEach((trigger: any) => {
+        const triggerIdentifySql = trigger2identifySql( trigger );
+        // tslint:disable-next-line: no-console
         console.log("create trigger " + triggerIdentifySql);
     });
 }
 
-function findCommentByFunction(comments, func) {
+// TODO: any => type
+export function findCommentByFunction(comments: any[], func: any) {
     return comments.find(comment => {
         if ( !comment.function ) {
             return;
         }
 
-        let {schema, name, args} = comment.function;
-        let identify = `${schema}.${name}(${ args.join(", ") })`;
+        const {schema, name, args} = comment.function;
+        const identify = `${schema}.${name}(${ args.join(", ") })`;
 
-        let funcIdentifySql = function2identifySql(func);
+        const funcIdentifySql = function2identifySql(func);
     
-        return identify == funcIdentifySql;
+        return identify === funcIdentifySql;
     });
 }
 
-function findFunctionByComment(functions, comment) {
+// TODO: any => type
+export function findFunctionByComment(functions: any[], comment: any) {
     if ( !comment.function ) {
         return;
     }
 
     return functions.find(func => {
-        let {schema, name, args} = comment.function;
-        let identify = `${schema}.${name}(${ args.join(", ") })`;
+        const {schema, name, args} = comment.function;
+        const identify = `${schema}.${name}(${ args.join(", ") })`;
 
-        let funcIdentifySql = function2identifySql(func);
+        const funcIdentifySql = function2identifySql(func);
     
-        return identify == funcIdentifySql;
+        return identify === funcIdentifySql;
     });
 }
 
-function findCommentByTrigger(comments, trigger) {
+// TODO: any => type
+export function findCommentByTrigger(comments: any[], trigger: any) {
     return comments.find(comment => {
         if ( !comment.trigger ) {
             return;
         }
 
-        let {schema, table, name} = comment.trigger;
-        let identify = `${name} on ${schema}.${table}`;
+        const {schema, table, name} = comment.trigger;
+        const identify = `${name} on ${schema}.${table}`;
         
-        let triggerIdentifySql = trigger2identifySql(trigger);
+        const triggerIdentifySql = trigger2identifySql(trigger);
 
         return identify == triggerIdentifySql;
     });
 }
 
-function findTriggerByComment(triggers, comment) {
+// TODO: any => type
+export function findTriggerByComment(triggers: any[], comment: any) {
     if ( !comment.trigger ) {
         return;
     }
 
     return triggers.find(trigger => {
-        let {schema, table, name} = comment.trigger;
-        let identify = `${name} on ${schema}.${table}`;
+        const {schema, table, name} = comment.trigger;
+        const identify = `${name} on ${schema}.${table}`;
         
-        let triggerIdentifySql = trigger2identifySql(trigger);
+        const triggerIdentifySql = trigger2identifySql(trigger);
 
-        return identify == triggerIdentifySql;
+        return identify === triggerIdentifySql;
     });
 }
 
-function wrapText(text) {
+export function wrapText(text: string) {
     text += "";
     let tag = "tag";
     let index = 1;
-    while ( text.indexOf("$tag" + index + "$") != -1 ) {
+    while ( text.indexOf("$tag" + index + "$") !== -1 ) {
         index++;
     }
     tag += index;
@@ -213,28 +219,30 @@ function wrapText(text) {
 }
 
 
+// TODO: any => type
 // public.some_func(bigint, text)
-function function2identifySql(func) {
+export function function2identifySql(func: any) {
     if ( typeof func.toJSON === "function" ) {
         func = func.toJSON();
     }
 
-    let identify = function2identifyJson( func );
+    const identify = function2identifyJson( func );
 
-    let argsSql = identify.args.join(", ");
+    const argsSql = identify.args.join(", ");
     return `${ identify.schema }.${ identify.name }(${ argsSql })`;
 }
 
-function function2identifyJson(func) {
+// TODO: any => type
+export function function2identifyJson(func: any) {
     if ( typeof func.toJSON === "function" ) {
         func = func.toJSON();
     }
 
-    let args = func.args.filter(arg => 
+    let args = func.args.filter((arg: any) => 
         !arg.out
     );
 
-    args = args.map(arg => 
+    args = args.map((arg: any) => 
         arg.type
     );
     
@@ -245,58 +253,16 @@ function function2identifyJson(func) {
     };
 }
 
-function function2dropSql(func) {
+// TODO: any => type
+export function function2dropSql(func: any) {
     // public.some_func(bigint, text)
-    let identifySql = function2identifySql(func);
+    const identifySql = function2identifySql(func);
 
     return `drop function if exists ${ identifySql }`;
 }
 
-function parseFunctionIdentify(coach) {
-    let {schema, name} = parseSchemaName(coach);
-
-    coach.skipSpace();
-    coach.expect("(");
-    coach.skipSpace();
-
-    let args = coach.parseComma(DataType);
-    args = args.map(arg =>
-        arg.type
-    );
-
-    coach.skipSpace();
-    coach.expect(")");
-
-    return {
-        schema,
-        name,
-        args
-    };
-}
-
-function parseSchemaName(coach) {
-    // name
-    let i = coach.i;
-    let objectLink = coach.parse(ObjectLink);
-    if ( 
-        objectLink.row.link.length != 2 &&
-        objectLink.row.link.length != 1
-    ) {
-        coach.i = i;
-        coach.throwError("invalid name " + objectLink.toString());
-    }
-
-    let schema = "public";
-    let name = objectLink.row.link[0].toLowerCase();
-    if ( objectLink.row.link.length == 2 ) {
-        schema = name;
-        name = objectLink.row.link[1].toLowerCase();
-    }
-    
-    return {schema, name};
-}
-
-function trigger2sql(trigger) {
+// TODO: any => type
+export function trigger2sql(trigger: any) {
     if ( typeof trigger.toJSON === "function" ) {
         trigger = trigger.toJSON();
     }
@@ -319,7 +285,7 @@ function trigger2sql(trigger) {
     out += " ";
 
     // insert or update of x or delete
-    let events = [];
+    const events = [];
     if ( trigger.insert ) {
         events.push("insert");
     }
@@ -370,13 +336,15 @@ function trigger2sql(trigger) {
     return out;
 }
 
-function trigger2dropSql(trigger) {
-    let identifySql = trigger2identifySql(trigger);
+// TODO: any => type
+export function trigger2dropSql(trigger: any) {
+    const identifySql = trigger2identifySql(trigger);
     return `drop trigger if exists ${ identifySql }`;
 }
 
+// TODO: any => type
 // some_trigger on public.test
-function trigger2identifySql(trigger) {
+export function trigger2identifySql(trigger: any) {
     if ( typeof trigger.toJSON === "function" ) {
         trigger = trigger.toJSON();
     }
@@ -389,7 +357,8 @@ function trigger2identifySql(trigger) {
     return `${trigger.name} on ${ triggerTable.schema }.${ triggerTable.name }`;
 }
 
-function comment2sql(comment) {
+// TODO: any => type
+export function comment2sql(comment: any) {
     if ( comment.row ) {
         comment = comment.row;
     }
@@ -401,38 +370,39 @@ function comment2sql(comment) {
     }
 
     if ( comment.function ) {
-        let {schema, name, args} = comment.function;
+        const {schema, name, args} = comment.function;
         return `comment on function ${schema}.${name}(${ args.join(", ") }) is ${ wrapText(commentContent) }`;
     }
     else {
-        let {name, schema, table} = comment.trigger;
+        const {name, schema, table} = comment.trigger;
         return `comment on trigger ${name} on ${schema}.${table} is ${ wrapText(commentContent) }`;
     }
 }
 
-function comment2dropSql(comment) {
+// TODO: any => type
+export function comment2dropSql(comment: any) {
     if ( comment.row ) {
         comment = comment.row;
     }
 
     if ( comment.function ) {
-        let {schema, name, args} = comment.function;
+        const {schema, name, args} = comment.function;
         return `comment on function ${schema}.${name}(${ args.join(", ") }) is null`;
     }
     else {
-        let {name, schema, table} = comment.trigger;
+        const {name, schema, table} = comment.trigger;
         return `comment on trigger ${name} on ${schema}.${table} is null`;
     }
 }
 
-function replaceComments(sql) {
+export function replaceComments(sql: string) {
     const coach = new GrapeQLCoach(sql);
 
-    let startIndex = coach.i;
-    let newStr = coach.str.split("");
+    const startIndex = coach.i;
+    const newStr = coach.str.split("");
 
     for (; coach.i < coach.n; coach.i++) {
-        let i = coach.i;
+        const i = coach.i;
 
         // ignore comments inside function
         if ( coach.is(CreateFunction) ) {
@@ -450,11 +420,11 @@ function replaceComments(sql) {
         if ( coach.is(Comment) ) {
             coach.parse(Comment);
 
-            let length = coach.i - i;
+            const length = coach.i - i;
             // safe \n\r
-            let spaceStr = coach.str.slice(i, i + length).replace(/[^\n\r]/g, " ");
+            const spaceStr = coach.str.slice(i, i + length).replace(/[^\n\r]/g, " ");
 
-            newStr.splice.apply(newStr, [i, length].concat( spaceStr.split("") ));
+            newStr.splice(i, length, ...spaceStr.split("") );
             
             coach.i--;
             continue;
@@ -467,7 +437,8 @@ function replaceComments(sql) {
     return coach;
 }
 
-function function2sql(func) {
+// TODO: any => type
+export function function2sql(func: any) {
     let additionalParams = "";
 
     additionalParams += " language ";
@@ -498,11 +469,9 @@ function function2sql(func) {
     }
 
     
-    let returnsSql = returns2sql(func.returns, {
-        lineBreak: true
-    });
+    const returnsSql = returns2sql(func.returns);
 
-    let argsSql = func.args.map(arg => 
+    let argsSql = func.args.map((arg: any) => 
         "    " + arg2sql(arg)
     ).join(",\n");
 
@@ -532,7 +501,8 @@ as ${ body }
     `.trim();
 }
 
-function returns2sql(returns) {
+// TODO: any => type
+function returns2sql(returns: any) {
     let out = "";
 
     if ( returns.setof ) {
@@ -541,7 +511,7 @@ function returns2sql(returns) {
 
     if ( returns.table ) {
         out += `table(${ 
-            returns.table.map(arg => 
+            returns.table.map((arg: any) => 
                 arg2sql(arg)
             ).join(", ") 
         })`;
@@ -552,7 +522,8 @@ function returns2sql(returns) {
     return out;
 }
 
-function arg2sql(arg) {
+// TODO: any => type
+function arg2sql(arg: any) {
     let out = "";
 
     if ( arg.out ) {
@@ -576,28 +547,3 @@ function arg2sql(arg) {
 
     return out;
 }
-
-module.exports = {
-    getDbClient,
-    isDbClient,
-    logDiff,
-    parseConfigFromArgs,
-    findCommentByFunction,
-    findCommentByTrigger,
-    findTriggerByComment,
-    findFunctionByComment,
-    wrapText,
-
-    parseFunctionIdentify,
-    function2dropSql,
-    function2identifyJson,
-    function2identifySql,
-    trigger2sql,
-    trigger2dropSql,
-    trigger2identifySql,
-    comment2sql,
-    comment2dropSql,
-    function2sql,
-
-    replaceComments
-};

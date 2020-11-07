@@ -1,37 +1,25 @@
-"use strict";
-
-const fs = require("fs");
-const FilesState = require("../../lib/FilesState");
-const del = require("del");
-const {expect, use} = require("chai");
-const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+import fs from "fs";
+import fse from "fs-extra";
+import { FilesState } from "../../lib/FilesState";
+import {expect, use} from "chai";
+import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import { sleep } from "../utils/sleep";
+import { generateEmptyFunction, VOID_BODY } from "../utils/generateEmptyFunction";
 
 use(chaiShallowDeepEqualPlugin);
-
-const VOID_BODY = {
-    content: `begin
-end`
-};
-function generateEmptyFunction(name) {
-    return `
-        create or replace function ${name}()
-        returns void as $body$${VOID_BODY.content}$body$
-        language plpgsql;
-    `.trim();
-}
 
 describe("FilesState watch for many directories", () => {
     const ROOT_TMP_PATH = __dirname + "/tmp";
         
     beforeEach(() => {
         if ( fs.existsSync(ROOT_TMP_PATH) ) {
-            del.sync(ROOT_TMP_PATH);
+            fse.removeSync(ROOT_TMP_PATH);
         }
         fs.mkdirSync(ROOT_TMP_PATH);
     });
     
     afterEach(() => {
-        del.sync(ROOT_TMP_PATH);
+        fse.removeSync(ROOT_TMP_PATH);
     });
 
     
@@ -41,15 +29,15 @@ describe("FilesState watch for many directories", () => {
         fs.mkdirSync(ROOT_TMP_PATH + "/root_2");
 
         // create sql files
-        let sql1 = generateEmptyFunction("root_1");
+        const sql1 = generateEmptyFunction("root_1");
         fs.writeFileSync(ROOT_TMP_PATH + "/root_1/some.sql", sql1);
 
-        let sql2 = generateEmptyFunction("root_2");
+        const sql2 = generateEmptyFunction("root_2");
         fs.writeFileSync(ROOT_TMP_PATH + "/root_2/some.sql", sql2);
 
 
         // parse folder
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: [
                 ROOT_TMP_PATH + "/root_1",
                 ROOT_TMP_PATH + "/root_2"
@@ -57,7 +45,7 @@ describe("FilesState watch for many directories", () => {
         });
 
         // check
-        let func1 = {
+        const func1 = {
             language: "plpgsql",
             schema: "public",
             name: "root_1",
@@ -65,7 +53,7 @@ describe("FilesState watch for many directories", () => {
             returns: {type: "void"},
             body: VOID_BODY
         };
-        let func2 = {
+        const func2 = {
             language: "plpgsql",
             schema: "public",
             name: "root_2",
@@ -107,7 +95,7 @@ describe("FilesState watch for many directories", () => {
 
 
         // parse folder
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: [
                 ROOT_TMP_PATH + "/root_1",
                 ROOT_TMP_PATH + "/root_2"
@@ -118,16 +106,16 @@ describe("FilesState watch for many directories", () => {
         
 
         // create sql files
-        let sql1 = generateEmptyFunction("root_1");
+        const sql1 = generateEmptyFunction("root_1");
         fs.writeFileSync(ROOT_TMP_PATH + "/root_1/some.sql", sql1);
 
-        let sql2 = generateEmptyFunction("root_2");
+        const sql2 = generateEmptyFunction("root_2");
         fs.writeFileSync(ROOT_TMP_PATH + "/root_2/some.sql", sql2);
 
         await sleep(50);
 
         // check
-        let func1 = {
+        const func1 = {
             language: "plpgsql",
             schema: "public",
             name: "root_1",
@@ -135,7 +123,7 @@ describe("FilesState watch for many directories", () => {
             returns: {type: "void"},
             body: VOID_BODY
         };
-        let func2 = {
+        const func2 = {
             language: "plpgsql",
             schema: "public",
             name: "root_2",
@@ -176,15 +164,15 @@ describe("FilesState watch for many directories", () => {
         fs.mkdirSync(ROOT_TMP_PATH + "/root_2");
 
         // create sql files
-        let sql1 = generateEmptyFunction("root_1");
+        const sql1 = generateEmptyFunction("root_1");
         fs.writeFileSync(ROOT_TMP_PATH + "/root_1/some.sql", sql1);
 
-        let sql2 = generateEmptyFunction("root_2");
+        const sql2 = generateEmptyFunction("root_2");
         fs.writeFileSync(ROOT_TMP_PATH + "/root_2/some.sql", sql2);
 
 
         // parse folder
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: [
                 ROOT_TMP_PATH + "/root_1",
                 ROOT_TMP_PATH + "/root_2"
@@ -198,7 +186,7 @@ describe("FilesState watch for many directories", () => {
         await sleep(50);
 
         // check
-        let func1 = {
+        const func1 = {
             language: "plpgsql",
             schema: "public",
             name: "root_1",
@@ -230,15 +218,15 @@ describe("FilesState watch for many directories", () => {
         fs.mkdirSync(ROOT_TMP_PATH + "/root_2");
 
         // create sql files
-        let sql1 = generateEmptyFunction("root_1");
+        const sql1 = generateEmptyFunction("root_1");
         fs.writeFileSync(ROOT_TMP_PATH + "/root_1/some.sql", sql1);
 
-        let sql2 = generateEmptyFunction("root_2");
+        const sql2 = generateEmptyFunction("root_2");
         fs.writeFileSync(ROOT_TMP_PATH + "/root_2/some.sql", sql2);
 
 
         // parse folder
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: [
                 ROOT_TMP_PATH + "/root_1",
                 ROOT_TMP_PATH + "/root_2"
@@ -248,13 +236,13 @@ describe("FilesState watch for many directories", () => {
         await filesState.watch();
         
 
-        let sql3 = generateEmptyFunction("changed_func");
+        const sql3 = generateEmptyFunction("changed_func");
         fs.writeFileSync(ROOT_TMP_PATH + "/root_2/some.sql", sql3);
 
         await sleep(50);
 
         // check
-        let func1 = {
+        const func1 = {
             language: "plpgsql",
             schema: "public",
             name: "root_1",
@@ -262,7 +250,7 @@ describe("FilesState watch for many directories", () => {
             returns: {type: "void"},
             body: VOID_BODY
         };
-        let func2 = {
+        const func2 = {
             language: "plpgsql",
             schema: "public",
             name: "changed_func",
@@ -296,10 +284,3 @@ describe("FilesState watch for many directories", () => {
         ]);
     });
 });
-
-
-async function sleep(ms) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
-}

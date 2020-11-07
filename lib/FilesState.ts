@@ -1,25 +1,50 @@
-"use strict";
-
-const fs = require("fs");
-const glob = require("glob");
-const EventEmitter = require("events");
-const watch = require("node-watch");
-const path = require("path");
-const { SqlFile } = require("./SqlFile");
-const {
+import fs from "fs";
+import glob from "glob";
+import { EventEmitter } from "events";
+import watch from "node-watch";
+import path from "path";
+import { SqlFile } from "./SqlFile";
+import {
     trigger2identifySql,
     function2identifySql,
     replaceComments
-} = require("./utils");
+} from "./utils";
 
-class FilesState extends EventEmitter {
-    static create({folder, onError}) {
-        let filesState = new FilesState({
-            folder
+interface IFile {
+    name: string;
+    folder: string;
+    path: string;
+    // TODO: any => type
+    content: {
+        functions: any[];
+        triggers: any[];
+        comments: any[];
+    }
+}
+
+// TODO: any => type
+interface IChanges {
+    drop: {
+        functions: any[];
+        triggers: any[];
+        comments?: any[];
+    };
+    create: {
+        functions: any[];
+        triggers: any[];
+        comments?: any[];
+    }
+}
+
+export class FilesState extends EventEmitter {
+    static create(params: {folder: string | string[], onError?: any}) {
+
+        const filesState = new FilesState({
+            folder: params.folder
         });
 
-        if ( onError ) {
-            filesState.on("error", onError);
+        if ( params.onError ) {
+            filesState.on("error", params.onError);
         }
 
         filesState.parse();
@@ -27,15 +52,20 @@ class FilesState extends EventEmitter {
         return filesState;
     }
 
-    constructor({folder}) {
+    folders: string[];
+    files: IFile[];
+    fsWatcher?: ReturnType<typeof watch>;
+    
+    constructor(params: {folder: string | string[]}) {
         super();
 
-        let folders = folder;
-        if ( typeof folder === "string" ) {
-            folders = [folder];
+        if ( typeof params.folder === "string" ) {
+            this.folders = [params.folder];
+        }
+        else {
+            this.folders = params.folder;
         }
 
-        this.folders = folders;
         this.files = [];
     }
 
@@ -45,7 +75,7 @@ class FilesState extends EventEmitter {
         }
     }
 
-    parseFolder(folderPath) {
+    parseFolder(folderPath: string) {
 
         if ( !fs.existsSync(folderPath) ) {
             throw new Error(`folder "${ folderPath }" not found`);
@@ -62,11 +92,11 @@ class FilesState extends EventEmitter {
         //   }
         // }
 
-        let files = glob.sync(folderPath + "/**/*.sql");
+        const files = glob.sync(folderPath + "/**/*.sql");
         files.forEach(filePath => {
             // ignore dirs with *.sql name
             //   ./dir.sql/file
-            let stat = fs.lstatSync(filePath);
+            const stat = fs.lstatSync(filePath);
             if ( !stat.isFile() ) {
                 return;
             }
@@ -80,7 +110,6 @@ class FilesState extends EventEmitter {
                 }
             } catch(err) {
                 this.emitError({
-                    rootFolderPath: folderPath,
                     subPath: filePath.slice( folderPath.length + 1 ),
                     err
                 });
@@ -92,8 +121,8 @@ class FilesState extends EventEmitter {
         });
     }
 
-    checkDuplicate(file) {
-        let content = file.content;
+    checkDuplicate(file: IFile) {
+        const content = file.content;
 
         content.functions.forEach(func => 
             this.checkDuplicateFunction( func )
@@ -106,14 +135,14 @@ class FilesState extends EventEmitter {
         }
     }
 
-    checkDuplicateFunction(func) {
-        let identify = function2identifySql(func);
+    checkDuplicateFunction(func: IFile) {
+        const identify = function2identifySql(func);
 
-        let hasDuplicate = this.files.some(someFile => {
+        const hasDuplicate = this.files.some(someFile => {
             return someFile.content.functions.some(someFunc => {
-                let someIdentify = function2identifySql(someFunc);
+                const someIdentify = function2identifySql(someFunc);
                 
-                return identify == someIdentify;
+                return identify === someIdentify;
             });
         });
 
@@ -122,17 +151,18 @@ class FilesState extends EventEmitter {
         }
     }
 
-    checkDuplicateTrigger(trigger) {
-        let identify = trigger2identifySql( trigger );
+    // TODO: any => type
+    checkDuplicateTrigger(trigger: any) {
+        const identify = trigger2identifySql( trigger );
 
-        let hasDuplicate = this.files.some(someFile => {
-            let someTriggers = someFile.content.triggers;
+        const hasDuplicate = this.files.some(someFile => {
+            const someTriggers = someFile.content.triggers;
 
             if ( someTriggers ) {
                 return someTriggers.some(someTrigger => {
-                    let someIdentify = trigger2identifySql( someTrigger );
+                    const someIdentify = trigger2identifySql( someTrigger );
 
-                    return identify == someIdentify;
+                    return identify === someIdentify;
                 });
             }
         });
@@ -142,8 +172,8 @@ class FilesState extends EventEmitter {
         }
     }
 
-    parseFile(rootFolderPath, filePath) {
-        let sql = fs.readFileSync(filePath).toString();
+    parseFile(rootFolderPath: string, filePath: string): IFile | undefined {
+        const sql = fs.readFileSync(filePath).toString();
         
         const coach = replaceComments(sql);
         
@@ -151,25 +181,26 @@ class FilesState extends EventEmitter {
             return;
         }
 
-        let sqlFile = coach.parse(SqlFile);
+        const sqlFile = coach.parse(SqlFile as any) as SqlFile;
         
-        let subPath = getSubPath(rootFolderPath, filePath);
+        const subPath = getSubPath(rootFolderPath, filePath);
 
-        let fileName = filePath.split(/[/\\]/).pop();
+        const fileName = filePath.split(/[/\\]/).pop() as string;
 
         return {
             name: fileName,
             folder: rootFolderPath,
             path: formatPath(subPath),
-            content: sqlFile.toJSON()
+            content: sqlFile.toJSON() as any
         };
     }
 
     getFunctions() {
-        let outFunctions = [];
+        // TODO: any => type
+        const outFunctions: any[] = [];
 
-        this.files.forEach(file => {
-            file.content.functions.forEach(func => {
+        this.files.forEach((file: any) => {
+            file.content.functions.forEach((func: any) => {
                 outFunctions.push( func );
             });
         });
@@ -178,10 +209,11 @@ class FilesState extends EventEmitter {
     }
 
     getTriggers() {
-        let outTriggers = [];
+        // TODO: any => type
+        let outTriggers: any[] = [];
 
         this.files.forEach(file => {
-            let {triggers} = file.content;
+            const {triggers} = file.content;
             
             if ( triggers ) {
                 outTriggers = outTriggers.concat(triggers);
@@ -192,10 +224,11 @@ class FilesState extends EventEmitter {
     }
 
     getComments() {
-        let outComments = [];
+        // TODO: any => type
+        let outComments: any[] = [];
 
         this.files.forEach(file => {
-            let {comments} = file.content;
+            const {comments} = file.content;
 
             if ( comments ) {
                 outComments = outComments.concat( comments );
@@ -210,12 +243,11 @@ class FilesState extends EventEmitter {
     }
 
     async watch() {
-        let handler = (eventType, rootFolder, subPath) => {
+        const handler = (eventType: string, rootFolder: string, subPath: string) => {
             try {
                 this.onChangeWatcher(eventType, rootFolder, subPath);
             } catch(err) {
                 this.emitError({
-                    rootFolderPath: rootFolder,
                     subPath,
                     err
                 });
@@ -228,7 +260,7 @@ class FilesState extends EventEmitter {
                     recursive: true,
                     delay: 5
                 }, (eventType, fullPath) => {
-                    let subPath = path.relative(rootFolder, fullPath);
+                    const subPath = path.relative(rootFolder, fullPath);
     
                     handler(eventType, rootFolder, subPath);
                 });
@@ -242,14 +274,14 @@ class FilesState extends EventEmitter {
         return promise;
     }
 
-    onChangeWatcher(eventType, rootFolderPath, subPath) {
+    onChangeWatcher(eventType: string, rootFolderPath: string, subPath: string) {
         // subPath path to file from rootFolderPath
         subPath = formatPath(subPath);
         // full path to file or dir with rootFolderPath
-        let fullPath = rootFolderPath + "/" + subPath;
+        const fullPath = rootFolderPath + "/" + subPath;
 
 
-        if ( eventType == "remove" ) {
+        if ( eventType === "remove" ) {
             this.onRemoveDirOrFile(rootFolderPath, subPath);
         }
         else {
@@ -259,9 +291,9 @@ class FilesState extends EventEmitter {
             }
 
             // if file was parsed early
-            let parsedFile = this.files.find(file =>
-                file.path == subPath &&
-                file.folder == rootFolderPath
+            const parsedFile = this.files.find(file =>
+                file.path === subPath &&
+                file.folder === rootFolderPath
             );
 
 
@@ -274,9 +306,9 @@ class FilesState extends EventEmitter {
         }
     }
 
-    onRemoveDirOrFile(rootFolderPath, subPath) {
+    onRemoveDirOrFile(rootFolderPath: string, subPath: string) {
         let hasChange = false;
-        let changes = {
+        const changes: IChanges = {
             drop: {
                 functions: [],
                 triggers: []
@@ -289,15 +321,15 @@ class FilesState extends EventEmitter {
 
 
         for (let i = 0, n = this.files.length; i < n; i++) {
-            let file = this.files[ i ];
+            const file = this.files[ i ];
 
-            if ( file.folder != rootFolderPath ) {
+            if ( file.folder !== rootFolderPath ) {
                 continue;
             }
 
-            let isRemoved = (
+            const isRemoved = (
                 // removed this file
-                file.path == subPath ||
+                file.path === subPath ||
                 // removed dir, who contain this file
                 file.path.startsWith( subPath + "/" )
             );
@@ -337,16 +369,16 @@ class FilesState extends EventEmitter {
         }
     }
 
-    emitError({subPath, err}) {
-        let outError = new Error(err.message);
+    emitError(params: {subPath: string, err: Error}) {
+        const outError = new Error(params.err.message) as any;
         
-        outError.subPath = subPath;
-        outError.originalError = err;
+        outError.subPath = params.subPath;
+        outError.originalError = params.err;
 
         this.emit("error", outError);
     }
 
-    onChangeFile(rootFolderPath, subPath, oldFile) {
+    onChangeFile(rootFolderPath: string, subPath: string, oldFile: IFile) {
         let newFile = null;
 
         try {
@@ -361,9 +393,9 @@ class FilesState extends EventEmitter {
             });
         }
         
-        let hasChange = (
+        const hasChange = (
             JSON.stringify(newFile) 
-            !=
+            !==
             JSON.stringify(oldFile)
         );
 
@@ -371,10 +403,11 @@ class FilesState extends EventEmitter {
             return;
         }
 
-        let fileIndex = this.files.indexOf( oldFile );
+        const fileIndex = this.files.indexOf( oldFile );
         this.files.splice(fileIndex, 1);
 
-        let changes = {
+        // TODO: any => type
+        const changes: IChanges = {
             drop: {
                 functions: oldFile.content.functions,
                 triggers: []
@@ -411,7 +444,6 @@ class FilesState extends EventEmitter {
             }
         } catch(err) {
             this.emitError({
-                rootFolderPath,
                 subPath,
                 err
             });
@@ -420,8 +452,8 @@ class FilesState extends EventEmitter {
         this.emit("change", changes);
     }
 
-    onCreateFile(rootFolderPath, subPath) {
-        let file = this.parseFile(
+    onCreateFile(rootFolderPath: string, subPath: string) {
+        const file = this.parseFile(
             rootFolderPath,
             rootFolderPath + "/" + subPath
         );
@@ -434,7 +466,7 @@ class FilesState extends EventEmitter {
 
         this.files.push( file );
         
-        let changes = {
+        const changes: IChanges = {
             drop: {
                 functions: [],
                 triggers: []
@@ -467,14 +499,14 @@ class FilesState extends EventEmitter {
 
 }
 
-function formatPath(filePath) {
-    filePath = filePath.split(/[/\\]/);
-    filePath = filePath.join("/");
+function formatPath(inputFilePath: string) {
+    const filePaths = inputFilePath.split(/[/\\]/);
+    const outputFilePath = filePaths.join("/");
 
-    return filePath;
+    return outputFilePath;
 }
 
-function isSqlFile(filePath) {
+function isSqlFile(filePath: string) {
     if ( !/\.sql$/.test(filePath) ) {
         return false;
     }
@@ -489,9 +521,7 @@ function isSqlFile(filePath) {
     return stat.isFile();
 }
 
-function getSubPath(rootFolderPath, fullFilePath) {
-    let subPath = fullFilePath.slice( rootFolderPath.length + 1 );
+function getSubPath(rootFolderPath: string, fullFilePath: string) {
+    const subPath = fullFilePath.slice( rootFolderPath.length + 1 );
     return subPath;
 }
-
-module.exports = FilesState;

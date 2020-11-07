@@ -1,18 +1,16 @@
-"use strict";
-
-const assert = require("assert");
-const getDbClient = require("../utils/getDbClient");
-const DdlManager = require("../../lib/DdlManager");
-const {expect, use} = require("chai");
-const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+import assert from "assert";
+import { getDBClient } from "../utils/getDbClient";
+import { DdlManager } from "../../lib/DdlManager";
+import {expect, use} from "chai";
+import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 
 use(chaiShallowDeepEqualPlugin);
 
 describe("DlManager.migrate", () => {
-    let db;
+    let db: any;
     
     beforeEach(async() => {
-        db = await getDbClient();
+        db = await getDBClient();
 
         await db.query(`
             drop schema public cascade;
@@ -40,7 +38,7 @@ describe("DlManager.migrate", () => {
 
     it("migrate simple function", async() => {
 
-        let rnd = Math.round( 10000 * Math.random() );
+        const rnd = Math.round( 10000 * Math.random() );
         
         await DdlManager.migrate({
             db, 
@@ -68,7 +66,7 @@ describe("DlManager.migrate", () => {
         });
 
         let result = await db.query("select test_migrate_function()");
-        let row = result && result.rows[0];
+        const row = result && result.rows[0];
         
         result = row.test_migrate_function;
 
@@ -147,7 +145,7 @@ describe("DlManager.migrate", () => {
             );
         `);
 
-        let diff = {
+        const diff = {
             drop: {
                 functions: [],
                 triggers: []
@@ -232,7 +230,7 @@ describe("DlManager.migrate", () => {
         }});
         
         let result = await db.query("select test()");
-        let row = result && result.rows[0];
+        const row = result && result.rows[0];
         
         result = row.test;
 
@@ -308,7 +306,7 @@ describe("DlManager.migrate", () => {
         }});
 
         let result = await db.query("select test(1, 2)");
-        let row = result && result.rows[0];
+        const row = result && result.rows[0];
         
         result = row.test;
 
@@ -350,7 +348,7 @@ describe("DlManager.migrate", () => {
         }});
 
         let result = await db.query("select test(1::bigint)");
-        let row = result && result.rows[0];
+        const row = result && result.rows[0];
         
         result = row.test;
 
@@ -571,7 +569,7 @@ describe("DlManager.migrate", () => {
         }});
 
         // expected execute without errors
-        let result = await db.query("select * from test_func()");
+        const result = await db.query("select * from test_func()");
 
         expect(result.rows).to.be.shallowDeepEqual([
             {id: 1},
@@ -684,7 +682,7 @@ describe("DlManager.migrate", () => {
             }
         }});
 
-        let result = await db.query("select test_func(1) as test");
+        const result = await db.query("select test_func(1) as test");
 
         expect(result.rows[0]).to.be.shallowDeepEqual({
             test: "nice1"
@@ -728,7 +726,7 @@ describe("DlManager.migrate", () => {
             }
         });
 
-        let result = await db.query(`
+        const result = await db.query(`
             select
                 pg_catalog.obj_description( pg_proc.oid ) as comment
             from information_schema.routines as routines
@@ -807,7 +805,7 @@ describe("DlManager.migrate", () => {
             }
         });
 
-        let result = await db.query(`
+        const result = await db.query(`
             select
                 pg_catalog.obj_description( pg_trigger.oid ) as comment
             from pg_trigger
@@ -857,7 +855,7 @@ describe("DlManager.migrate", () => {
             }
         });
 
-        let result = await db.query(`
+        const result = await db.query(`
             select
                 coalesce(
                     pg_catalog.obj_description( pg_proc.oid ),
@@ -928,7 +926,7 @@ describe("DlManager.migrate", () => {
             }
         });
 
-        let result = await db.query(`
+        const result = await db.query(`
             select
                 coalesce(
                     pg_catalog.obj_description( pg_trigger.oid ),
@@ -947,7 +945,7 @@ describe("DlManager.migrate", () => {
 
 
     it("migrate function, arg default null", async() => {
-        let func = {
+        const func = {
             language: "plpgsql",
             schema: "public",
             name: "test_func",
@@ -978,7 +976,7 @@ describe("DlManager.migrate", () => {
             }
         }});
 
-        let result = await db.query("select test_func() as test");
+        const result = await db.query("select test_func() as test");
 
         expect(result.rows[0]).to.be.shallowDeepEqual({
             test: "nice2"
@@ -1015,7 +1013,7 @@ describe("DlManager.migrate", () => {
     });
 
     it("migrate two functions, same name, diff args", async() => {
-        let func1 = {
+        const func1 = {
             language: "plpgsql",
             schema: "public",
             name: "test_func",
@@ -1032,7 +1030,7 @@ describe("DlManager.migrate", () => {
                 return 1;
             end`
         };
-        let func2 = {
+        const func2 = {
             language: "plpgsql",
             schema: "public",
             name: "test_func",

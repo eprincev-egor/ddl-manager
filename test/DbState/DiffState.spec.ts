@@ -1,14 +1,14 @@
-"use strict";
-
-const _ = require("lodash");
-const DbState = require("../../lib/DbState");
-const {expect, use} = require("chai");
-const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+import _ from "lodash";
+import { DbState } from "../../lib/DbState";
+import {expect, use} from "chai";
+import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 
 use(chaiShallowDeepEqualPlugin);
 
-function diffState({filesState, dbState}) {
-    let state = new DbState();
+function diffState(params: {filesState: any, dbState: any}) {
+    const {dbState, filesState} = params;
+
+    const state = new (DbState as any)();
 
     state.functions = dbState.functions;
     state.triggers = dbState.triggers;
@@ -23,7 +23,7 @@ function diffState({filesState, dbState}) {
 describe("DbState.getDiff", () => {
 
     it("sync empty state", () => {
-        let diff = diffState({
+        const diff = diffState({
             filesState: {
                 functions: [],
                 triggers: []
@@ -47,7 +47,7 @@ describe("DbState.getDiff", () => {
     });
 
     it("create simple function", () => {
-        let func = {
+        const func = {
             schema: "public",
             name: "some_test_func",
             args: [
@@ -66,7 +66,7 @@ describe("DbState.getDiff", () => {
             end`
         };
 
-        let diff = diffState({
+        const diff = diffState({
             filesState: {
                 functions: [
                     func
@@ -94,7 +94,7 @@ describe("DbState.getDiff", () => {
     });
 
     it("drop function", () => {
-        let func = {
+        const func = {
             schema: "public",
             name: "some_test_func1",
             args: [
@@ -112,7 +112,7 @@ describe("DbState.getDiff", () => {
                 return x + y;
             end`
         };
-        let diff = diffState({
+        const diff = diffState({
             filesState: {
                 functions: [],
                 triggers: []
@@ -140,7 +140,7 @@ describe("DbState.getDiff", () => {
     });
 
     it("replace function", () => {
-        let fileFunc = {
+        const fileFunc = {
             schema: "public",
             name: "some_test_func2",
             args: [
@@ -159,7 +159,7 @@ describe("DbState.getDiff", () => {
             end`
         };
 
-        let dbFunc = {
+        const dbFunc = {
             schema: "public",
             name: "some_test_func2",
             args: [
@@ -178,7 +178,7 @@ describe("DbState.getDiff", () => {
             end`
         };
 
-        let diff = diffState({
+        const diff = diffState({
             filesState: {
                 functions: [
                     fileFunc
@@ -211,7 +211,7 @@ describe("DbState.getDiff", () => {
     });
 
     it("replace function, change arguments length", () => {
-        let fileFunc = {
+        const fileFunc = {
             schema: "public",
             name: "some_test_func3",
             args: [
@@ -234,7 +234,7 @@ describe("DbState.getDiff", () => {
             end`
         };
 
-        let dbFunc = {
+        const dbFunc = {
             schema: "public",
             name: "some_test_func3",
             args: [
@@ -254,7 +254,7 @@ describe("DbState.getDiff", () => {
             end`
         };
 
-        let diff = diffState({
+        const diff = diffState({
             filesState: {
                 functions: [
                     fileFunc
@@ -286,7 +286,7 @@ describe("DbState.getDiff", () => {
     });
 
     it("no changes, same states, empty diff", () => {
-        let func = {
+        const func = {
             schema: "public",
             name: "some_test_func3",
             args: [],
@@ -296,7 +296,7 @@ describe("DbState.getDiff", () => {
             end`
         };
 
-        let diff = diffState({
+        const diff = diffState({
             filesState: {
                 functions: [
                     func
@@ -324,7 +324,7 @@ describe("DbState.getDiff", () => {
     });
 
     it("change trigger event type", () => {
-        let func = {
+        const func = {
             schema: "public",
             name: "some_action_on_some_event",
             args: [],
@@ -333,7 +333,7 @@ describe("DbState.getDiff", () => {
                 return new;
             end`
         };
-        let fileTrigger = {
+        const fileTrigger = {
             table: {
                 schema: "public",
                 name: "company"
@@ -346,7 +346,7 @@ describe("DbState.getDiff", () => {
                 name: "some_action_on_some_event"
             }
         };
-        let dbTrigger = {
+        const dbTrigger = {
             table: {
                 schema: "public",
                 name: "company"
@@ -360,7 +360,7 @@ describe("DbState.getDiff", () => {
             }
         };
 
-        let diff = diffState({
+        const diff = diffState({
             filesState: {
                 functions: [
                     func
@@ -397,7 +397,7 @@ describe("DbState.getDiff", () => {
     });
 
     it("no changes, same states, empty diff (triggers)", () => {
-        let func = {
+        const func = {
             schema: "public",
             name: "some_action_on_some_event",
             args: [],
@@ -406,9 +406,9 @@ describe("DbState.getDiff", () => {
                 return new;
             end`
         };
-        let dbFunc = _.cloneDeep(func);
+        const dbFunc = _.cloneDeep(func);
 
-        let trigger = {
+        const trigger = {
             table: {
                 schema: "public",
                 name: "company"
@@ -421,9 +421,9 @@ describe("DbState.getDiff", () => {
                 name: "some_action_on_some_event"
             }
         };
-        let dbTrigger = _.cloneDeep(trigger);
+        const dbTrigger = _.cloneDeep(trigger);
 
-        let diff = diffState({
+        const diff = diffState({
             filesState: {
                 functions: [
                     func
@@ -456,7 +456,7 @@ describe("DbState.getDiff", () => {
     });
 
     it("create function with comment", () => {
-        let func = {
+        const func = {
             schema: "public",
             name: "some_test_func",
             args: [],
@@ -465,7 +465,7 @@ describe("DbState.getDiff", () => {
                 return x + y;
             end`
         };
-        let comment = {
+        const comment = {
             function: {
                 schema: "public",
                 name: "some_test_func",
@@ -474,7 +474,7 @@ describe("DbState.getDiff", () => {
             comment: {content: "test"}
         };
 
-        let diff = diffState({
+        const diff = diffState({
             filesState: {
                 functions: [
                     func
@@ -508,7 +508,7 @@ describe("DbState.getDiff", () => {
     });
 
     it("empty diff on new freeze function", () => {
-        let func = {
+        const func = {
             schema: "public",
             name: "some_func",
             args: [],
@@ -519,7 +519,7 @@ describe("DbState.getDiff", () => {
             freeze: true
         };
 
-        let diff = diffState({
+        const diff = diffState({
             filesState: {
                 functions: [],
                 triggers: []
@@ -545,7 +545,7 @@ describe("DbState.getDiff", () => {
     });
 
     it("empty diff on new freeze trigger", () => {
-        let func = {
+        const func = {
             schema: "public",
             name: "some_action_on_some_event",
             args: [],
@@ -555,7 +555,7 @@ describe("DbState.getDiff", () => {
             end`,
             freeze: true
         };
-        let trigger = {
+        const trigger = {
             table: {
                 schema: "public",
                 name: "company"
@@ -570,7 +570,7 @@ describe("DbState.getDiff", () => {
             freeze: true
         };
 
-        let diff = diffState({
+        const diff = diffState({
             filesState: {
                 functions: [],
                 triggers: []
@@ -598,7 +598,7 @@ describe("DbState.getDiff", () => {
     });
 
     it("drop trigger, if function has change, but trigger not", () => {
-        let func1 = {
+        const func1 = {
             schema: "public",
             name: "some_action_on_some_event",
             args: [],
@@ -607,7 +607,7 @@ describe("DbState.getDiff", () => {
                 return new;
             end`
         };
-        let func2 = {
+        const func2 = {
             schema: "public",
             name: "some_action_on_some_event",
             args: [],
@@ -617,7 +617,7 @@ describe("DbState.getDiff", () => {
                 return new;
             end`
         };
-        let trigger1 = {
+        const trigger1 = {
             table: {
                 schema: "public",
                 name: "company"
@@ -630,7 +630,7 @@ describe("DbState.getDiff", () => {
                 name: "some_action_on_some_event"
             }
         };
-        let trigger2 = {
+        const trigger2 = {
             table: {
                 schema: "public",
                 name: "company"

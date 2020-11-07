@@ -1,28 +1,21 @@
-"use strict";
-
-const assert = require("assert");
-const fs = require("fs");
-const FilesState = require("../../lib/FilesState");
-const del = require("del");
-const {expect, use} = require("chai");
-const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+import assert from "assert";
+import fs from "fs";
+import fse from "fs-extra";
+import { FilesState } from "../../lib/FilesState";
+import {expect, use} from "chai";
+import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import { sleep } from "../utils/sleep";
 
 use(chaiShallowDeepEqualPlugin);
 
-async function sleep(ms) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
-}
+const WATCHERS_TO_STOP: any[] = [];
 
-const watchers_to_stop = [];
-
-const test_func1_sql = `
+const TEST_FUNC1_SQL = `
     create or replace function some_func1()
     returns void as $body$select 1$body$
     language sql;
 `;
-const test_func1 = {
+const TEST_FUNC1 = {
     language: "sql",
     schema: "public",
     name: "some_func1",
@@ -30,12 +23,12 @@ const test_func1 = {
     returns: {type: "void"},
     body: {content: "select 1"}
 };
-const test_func2_sql = `
+const TEST_FUNC2_SQL = `
     create or replace function some_func2()
     returns void as $body$select 2$body$
     language sql;
 `;
-const test_func2 = {
+const TEST_FUNC2 = {
     language: "sql",
     schema: "public",
     name: "some_func2",
@@ -49,15 +42,15 @@ describe("FilesState watch change functions", () => {
     
     beforeEach(() => {
         if ( fs.existsSync(ROOT_TMP_PATH) ) {
-            del.sync(ROOT_TMP_PATH);
+            fse.removeSync(ROOT_TMP_PATH);
         }
         fs.mkdirSync(ROOT_TMP_PATH);
     });
     
     afterEach(() => {
-        del.sync(ROOT_TMP_PATH);
+        fse.removeSync(ROOT_TMP_PATH);
 
-        watchers_to_stop.forEach(filesState => 
+        WATCHERS_TO_STOP.forEach(filesState => 
             filesState.stopWatch()
         );
     });
@@ -65,16 +58,16 @@ describe("FilesState watch change functions", () => {
     
     it("change function", async() => {
         
-        let filePath = ROOT_TMP_PATH + "/change-func.sql";
-        fs.writeFileSync(filePath, test_func1_sql);
+        const filePath = ROOT_TMP_PATH + "/change-func.sql";
+        fs.writeFileSync(filePath, TEST_FUNC1_SQL);
         
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
         
         expect(filesState.getFunctions()).to.be.shallowDeepEqual([
-            test_func1
+            TEST_FUNC1
         ]);
         
 
@@ -84,24 +77,24 @@ describe("FilesState watch change functions", () => {
             changes = _changes;
             counter++;
         });
-        watchers_to_stop.push(filesState);
+        WATCHERS_TO_STOP.push(filesState);
         
         await filesState.watch();
         
         
-        fs.writeFileSync(filePath, test_func2_sql);
+        fs.writeFileSync(filePath, TEST_FUNC2_SQL);
         await sleep(50);
         
         expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
-                    test_func1
+                    TEST_FUNC1
                 ],
                 triggers: []
             },
             create: {
                 functions: [
-                    test_func2
+                    TEST_FUNC2
                 ],
                 triggers: []
             }
@@ -109,23 +102,23 @@ describe("FilesState watch change functions", () => {
         assert.equal(counter, 1);
         
         expect(filesState.getFunctions()).to.be.shallowDeepEqual([
-            test_func2
+            TEST_FUNC2
         ]);
     });
 
 
     it("write file same function, no changes", async() => {
         
-        let filePath = ROOT_TMP_PATH + "/change-func.sql";
-        fs.writeFileSync(filePath, test_func1_sql);
+        const filePath = ROOT_TMP_PATH + "/change-func.sql";
+        fs.writeFileSync(filePath, TEST_FUNC1_SQL);
         
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
         
         expect(filesState.getFunctions()).to.be.shallowDeepEqual([
-            test_func1
+            TEST_FUNC1
         ]);
         
 
@@ -133,70 +126,70 @@ describe("FilesState watch change functions", () => {
         filesState.on("change", () => {
             counter++;
         });
-        watchers_to_stop.push(filesState);
+        WATCHERS_TO_STOP.push(filesState);
         
         await filesState.watch();
         
         
-        fs.writeFileSync(filePath, test_func1_sql);
+        fs.writeFileSync(filePath, TEST_FUNC1_SQL);
         await sleep(50);
         
         assert.equal(counter, 0);
         
         expect(filesState.getFunctions()).to.be.shallowDeepEqual([
-            test_func1
+            TEST_FUNC1
         ]);
     });
 
     it("expected error on duplicate functions", async() => {
-        let filePath1 = ROOT_TMP_PATH + "/change-func1.sql";
-        let filePath2 = ROOT_TMP_PATH + "/change-func2.sql";
-        fs.writeFileSync(filePath1, test_func1_sql);
-        fs.writeFileSync(filePath2, test_func2_sql);
+        const filePath1 = ROOT_TMP_PATH + "/change-func1.sql";
+        const filePath2 = ROOT_TMP_PATH + "/change-func2.sql";
+        fs.writeFileSync(filePath1, TEST_FUNC1_SQL);
+        fs.writeFileSync(filePath2, TEST_FUNC2_SQL);
         
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
         
         expect(filesState.getFunctions()).to.be.shallowDeepEqual([
-            test_func1,
-            test_func2
+            TEST_FUNC1,
+            TEST_FUNC2
         ]);
         
 
-        let error;
+        let error: Error | undefined;
         filesState.on("error", (err) => {
             error = err;
         });
-        watchers_to_stop.push(filesState);
+        WATCHERS_TO_STOP.push(filesState);
         
         await filesState.watch();
         
         
-        fs.writeFileSync(filePath2, test_func1_sql);
+        fs.writeFileSync(filePath2, TEST_FUNC1_SQL);
         await sleep(50);
         
         assert.equal(error && error.message, "duplicate function public.some_func1()");
 
         expect( filesState.getFunctions()).to.be.shallowDeepEqual([
-            test_func1
+            TEST_FUNC1
         ]);
     });
 
 
     it("twice change function", async() => {
 
-        let filePath = ROOT_TMP_PATH + "/change-func.sql";
-        fs.writeFileSync(filePath, test_func1_sql);
+        const filePath = ROOT_TMP_PATH + "/change-func.sql";
+        fs.writeFileSync(filePath, TEST_FUNC1_SQL);
         
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
         
         expect(filesState.getFunctions()).to.be.shallowDeepEqual([
-            test_func1
+            TEST_FUNC1
         ]);
         
 
@@ -206,24 +199,24 @@ describe("FilesState watch change functions", () => {
             changes = _changes;
             counter++;
         });
-        watchers_to_stop.push(filesState);
+        WATCHERS_TO_STOP.push(filesState);
         
         await filesState.watch();
         
         
-        fs.writeFileSync(filePath, test_func2_sql);
+        fs.writeFileSync(filePath, TEST_FUNC2_SQL);
         await sleep(50);
         
         expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
-                    test_func1
+                    TEST_FUNC1
                 ],
                 triggers: []
             },
             create: {
                 functions: [
-                    test_func2
+                    TEST_FUNC2
                 ],
                 triggers: []
             }
@@ -231,24 +224,24 @@ describe("FilesState watch change functions", () => {
         assert.equal(counter, 1);
         
         expect(filesState.getFunctions()).to.be.shallowDeepEqual([
-            test_func2
+            TEST_FUNC2
         ]);
 
 
 
-        fs.writeFileSync(filePath, test_func1_sql);
+        fs.writeFileSync(filePath, TEST_FUNC1_SQL);
         await sleep(50);
         
         expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
-                    test_func2
+                    TEST_FUNC2
                 ],
                 triggers: []
             },
             create: {
                 functions: [
-                    test_func1
+                    TEST_FUNC1
                 ],
                 triggers: []
             }
@@ -256,24 +249,24 @@ describe("FilesState watch change functions", () => {
         assert.equal(counter, 2);
         
         expect(filesState.getFunctions()).to.be.shallowDeepEqual([
-            test_func1
+            TEST_FUNC1
         ]);
     });
 
     it("change comment on function", async() => {
         
-        let filePath = ROOT_TMP_PATH + "/change-func.sql";
-        fs.writeFileSync(filePath, test_func1_sql + `
+        const filePath = ROOT_TMP_PATH + "/change-func.sql";
+        fs.writeFileSync(filePath, TEST_FUNC1_SQL + `
             comment on function some_func1() is 'nice'
         `);
         
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
         
         expect(filesState.getFunctions()).to.be.shallowDeepEqual([
-            test_func1
+            TEST_FUNC1
         ]);
 
         expect(filesState.getComments()).to.be.shallowDeepEqual([
@@ -294,12 +287,12 @@ describe("FilesState watch change functions", () => {
             changes = _changes;
             counter++;
         });
-        watchers_to_stop.push(filesState);
+        WATCHERS_TO_STOP.push(filesState);
         
         await filesState.watch();
         
         
-        fs.writeFileSync(filePath, test_func1_sql + `
+        fs.writeFileSync(filePath, TEST_FUNC1_SQL + `
             comment on function some_func1() is 'good'
         `);
         await sleep(50);
@@ -307,7 +300,7 @@ describe("FilesState watch change functions", () => {
         expect(changes).to.be.shallowDeepEqual({
             drop: {
                 functions: [
-                    test_func1
+                    TEST_FUNC1
                 ],
                 triggers: [],
                 comments: [
@@ -323,7 +316,7 @@ describe("FilesState watch change functions", () => {
             },
             create: {
                 functions: [
-                    test_func1
+                    TEST_FUNC1
                 ],
                 triggers: [],
                 comments: [
@@ -341,7 +334,7 @@ describe("FilesState watch change functions", () => {
         assert.equal(counter, 1);
         
         expect(filesState.getFunctions()).to.be.shallowDeepEqual([
-            test_func1
+            TEST_FUNC1
         ]);
 
         expect(filesState.getComments()).to.be.shallowDeepEqual([

@@ -1,21 +1,14 @@
-"use strict";
-
-const assert = require("assert");
-const fs = require("fs");
-const FilesState = require("../../lib/FilesState");
-const del = require("del");
-const {expect, use} = require("chai");
-const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+import assert from "assert";
+import fs from "fs";
+import fse from "fs-extra";
+import { FilesState } from "../../lib/FilesState";
+import {expect, use} from "chai";
+import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import { sleep } from "../utils/sleep";
 
 use(chaiShallowDeepEqualPlugin);
 
-async function sleep(ms) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
-}
-
-const watchers_to_stop = [];
+const watchers_to_stop: any[] = [];
 
 const test_func1_sql = `
     create or replace function some_func1()
@@ -50,13 +43,13 @@ describe("FilesState watch create functions", () => {
     
     beforeEach(() => {
         if ( fs.existsSync(ROOT_TMP_PATH) ) {
-            del.sync(ROOT_TMP_PATH);
+            fse.removeSync(ROOT_TMP_PATH);
         }
         fs.mkdirSync(ROOT_TMP_PATH);
     });
     
     afterEach(() => {
-        del.sync(ROOT_TMP_PATH);
+        fse.removeSync(ROOT_TMP_PATH);
 
         watchers_to_stop.forEach(filesState => 
             filesState.stopWatch()
@@ -66,9 +59,9 @@ describe("FilesState watch create functions", () => {
     
     it("create function", async() => {
         
-        let filePath = ROOT_TMP_PATH + "/create-func.sql";
+        const filePath = ROOT_TMP_PATH + "/create-func.sql";
         
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
         
@@ -111,10 +104,10 @@ describe("FilesState watch create functions", () => {
     });
         
     it("expected error on duplicate functions", async() => {
-        let filePath1 = ROOT_TMP_PATH + "/create-func1.sql";
-        let filePath2 = ROOT_TMP_PATH + "/create-func2.sql";
+        const filePath1 = ROOT_TMP_PATH + "/create-func1.sql";
+        const filePath2 = ROOT_TMP_PATH + "/create-func2.sql";
         
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
         watchers_to_stop.push(filesState);
@@ -123,7 +116,7 @@ describe("FilesState watch create functions", () => {
             []
         );
 
-        let error;
+        let error: Error | undefined;
         filesState.on("error", (err) => {
             error = err;
         });
@@ -146,9 +139,9 @@ describe("FilesState watch create functions", () => {
 
     it("create md file", async() => {
         
-        let filePath = ROOT_TMP_PATH + "/create-func.md";
+        const filePath = ROOT_TMP_PATH + "/create-func.md";
         
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
         
@@ -176,10 +169,10 @@ describe("FilesState watch create functions", () => {
 
     it("twice create function", async() => {
         
-        let filePath1 = ROOT_TMP_PATH + "/func1.sql";
-        let filePath2 = ROOT_TMP_PATH + "/func2.sql";
+        const filePath1 = ROOT_TMP_PATH + "/func1.sql";
+        const filePath2 = ROOT_TMP_PATH + "/func2.sql";
         
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
         
@@ -242,9 +235,9 @@ describe("FilesState watch create functions", () => {
 
     it("create function with comment", async() => {
         
-        let filePath = ROOT_TMP_PATH + "/create-func.sql";
+        const filePath = ROOT_TMP_PATH + "/create-func.sql";
         
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
         

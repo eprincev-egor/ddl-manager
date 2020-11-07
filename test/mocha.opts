@@ -1,0 +1,6 @@
+# https://istanbul.js.org/docs/tutorials/typescript/
+--require source-map-support/register
+--require ts-node/register
+--recursive
+ --exit
+test/**/*.spec.ts

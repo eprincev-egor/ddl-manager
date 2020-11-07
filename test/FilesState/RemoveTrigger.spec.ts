@@ -1,21 +1,13 @@
-"use strict";
-
-const assert = require("assert");
-const fs = require("fs");
-const FilesState = require("../../lib/FilesState");
-const del = require("del");
-const {expect, use} = require("chai");
-const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+import fs from "fs";
+import fse from "fs-extra";
+import { FilesState } from "../../lib/FilesState";
+import {expect, use} from "chai";
+import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import { sleep } from "../utils/sleep";
 
 use(chaiShallowDeepEqualPlugin);
 
-async function sleep(ms) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
-}
-
-const watchers_to_stop = [];
+const watchers_to_stop: any[] = [];
 
 const test_func1_sql = `
     create or replace function some_func1()
@@ -84,19 +76,18 @@ const test_trigger2 = {
     }
 };
 
-
-describe("FilesState watch create functions", () => {
+describe("FilesState watch remove triggers", () => {
     const ROOT_TMP_PATH = __dirname + "/tmp";
     
     beforeEach(() => {
         if ( fs.existsSync(ROOT_TMP_PATH) ) {
-            del.sync(ROOT_TMP_PATH);
+            fse.removeSync(ROOT_TMP_PATH);
         }
         fs.mkdirSync(ROOT_TMP_PATH);
     });
     
     afterEach(() => {
-        del.sync(ROOT_TMP_PATH);
+        fse.removeSync(ROOT_TMP_PATH);
 
         watchers_to_stop.forEach(filesState => 
             filesState.stopWatch()
@@ -104,189 +95,139 @@ describe("FilesState watch create functions", () => {
     });
 
     
-    it("create trigger", async() => {
+    it("remove trigger", async() => {
         
-        let filePath = ROOT_TMP_PATH + "/some_trigger.sql";
-        
-        let filesState = FilesState.create({
-            folder: ROOT_TMP_PATH
-        });
-        
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
-            []
-        );
-        expect(filesState.getTriggers()).to.be.shallowDeepEqual(
-            []
-        );
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
 
-
-        
-        let changes;
-        filesState.on("change", (_changes) => {
-            changes = _changes;
-        });
-        watchers_to_stop.push(filesState);
-        
-        await filesState.watch();
-        
         fs.writeFileSync(filePath, test_func1_sql);
-        await sleep(50);
-        
-        expect(changes).to.be.shallowDeepEqual({
-            drop: {
-                functions: [],
-                triggers: []
-            },
-            create: {
-                functions: [
-                    test_func1
-                ],
-                triggers: [
-                    test_trigger1
-                ]
-            }
-        });
-        
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
-            test_func1
-        ]);
-        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
-            test_trigger1
-        ]);
-    });
 
-    it("expected error on duplicate triggers", async() => {
-        let filePath1 = ROOT_TMP_PATH + "/create-trigger1.sql";
-        let filePath2 = ROOT_TMP_PATH + "/create-trigger2.sql";
-        
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
-        watchers_to_stop.push(filesState);
-        
+
         expect(filesState.getFunctions()).to.be.shallowDeepEqual(
-            []
+            [test_func1]
         );
+
         expect(filesState.getTriggers()).to.be.shallowDeepEqual(
-            []
+            [test_trigger1]
         );
 
-
-        let error;
-        filesState.on("error", (err) => {
-            error = err;
-        });
-
-        await filesState.watch();
-        
-        fs.writeFileSync(filePath1, test_func1_sql);
-        await sleep(50);
-
-        fs.writeFileSync(filePath2, `
-            create or replace function another_func()
-            returns trigger as $body$select 1$body$
-            language sql;
-        
-            create trigger some_trigger
-            before delete
-            on operation.company
-            for each row
-            execute procedure another_func()
-        `);
-        await sleep(50);
-
-        
-        assert.equal(error && error.message, "duplicate trigger some_trigger on operation.company");
-
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
-            test_func1
-        ]);
-        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
-            test_trigger1
-        ]);
-    });
-
-    
-    it("twice create trigger", async() => {
-        
-        let filePath1 = ROOT_TMP_PATH + "/trigger1.sql";
-        let filePath2 = ROOT_TMP_PATH + "/trigger2.sql";
-        
-        let filesState = FilesState.create({
-            folder: ROOT_TMP_PATH
-        });
-        watchers_to_stop.push(filesState);
-        
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
-            []
-        );
-        expect(filesState.getTriggers()).to.be.shallowDeepEqual(
-            []
-        );
-
-
-        
         let changes;
         filesState.on("change", (_changes) => {
             changes = _changes;
         });
-        
+        watchers_to_stop.push(filesState);
+
         await filesState.watch();
+
+        fs.unlinkSync(filePath);
         
-
-
-        fs.writeFileSync(filePath1, test_func1_sql);
         await sleep(50);
-        
+
         expect(changes).to.be.shallowDeepEqual({
             drop: {
-                functions: [],
-                triggers: []
-            },
-            create: {
                 functions: [
                     test_func1
                 ],
                 triggers: [
                     test_trigger1
                 ]
-            }
-        });
-        
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
-            test_func1
-        ]);
-        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
-            test_trigger1
-        ]);
-
-
-        fs.writeFileSync(filePath2, test_func2_sql);
-        await sleep(50);
-        
-        expect(changes).to.be.shallowDeepEqual({
-            drop: {
-                functions: [],
-                triggers: []
             },
             create: {
+                functions: [],
+                triggers: []
+            }
+        });
+
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([]);
+    });
+
+
+    it("twice remove", async() => {
+        const filePath1 = ROOT_TMP_PATH + "/file1.sql";
+        const filePath2 = ROOT_TMP_PATH + "/file2.sql";
+
+        fs.writeFileSync(filePath1, test_func1_sql);
+        fs.writeFileSync(filePath2, test_func2_sql);
+        
+        
+        const filesState = FilesState.create({
+            folder: ROOT_TMP_PATH
+        });
+
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
+            [
+                test_func1,
+                test_func2
+            ]
+        );
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual(
+            [
+                test_trigger1,
+                test_trigger2
+            ]
+        );
+
+
+        let changes;
+        filesState.on("change", (_changes) => {
+            changes = _changes;
+        });
+        watchers_to_stop.push(filesState);
+
+
+        await filesState.watch();
+
+        fs.unlinkSync(filePath1);
+
+        await sleep(50);
+
+        expect(changes).to.be.shallowDeepEqual({
+            drop: {
+                functions: [
+                    test_func1
+                ],
+                triggers: [
+                    test_trigger1
+                ]
+            },
+            create: {
+                functions: [],
+                triggers: []
+            }
+        });
+
+
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+            test_func2
+        ]);
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
+            test_trigger2
+        ]);
+
+        fs.unlinkSync(filePath2);
+
+        await sleep(50);
+
+        expect(changes).to.be.shallowDeepEqual({
+            drop: {
                 functions: [
                     test_func2
                 ],
                 triggers: [
                     test_trigger2
                 ]
+            },
+            create: {
+                functions: [],
+                triggers: []
             }
         });
-        
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
-            test_func1,
-            test_func2
-        ]);
-        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
-            test_trigger1,
-            test_trigger2
-        ]);
+
+
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([]);
     });
-    
 });

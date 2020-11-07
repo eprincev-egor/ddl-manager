@@ -1,12 +1,10 @@
-"use strict";
-
-const {
+import {
     GrapeQLCoach,
     CreateFunction,
     CreateTrigger
-} = require("grapeql-lang");
-const _ = require("lodash");
-const {
+} from "grapeql-lang";
+import _ from "lodash";
+import {
     findCommentByFunction,
     findCommentByTrigger,
     wrapText,
@@ -14,11 +12,18 @@ const {
     function2identifySql,
     function2identifyJson,
     trigger2identifySql
-} = require("./utils");
-const assert = require("assert");
+} from "./utils";
+import assert from "assert";
+import {Client} from "pg";
 
-class DbState {
-    constructor(db) {
+export class DbState {
+    private db: Client;
+    // TODO: any => type
+    triggers: any[];
+    functions: any[];
+    comments!: any[];
+
+    constructor(db: Client) {
         this.db = db;
 
         this.triggers = [];
@@ -26,13 +31,14 @@ class DbState {
     }
 
     async load() {
-        let db = this.db;
+        const db = this.db;
         let sql;
 
         let result;
         this.triggers = [];
         this.functions = [];
-        let comments = [];
+        // TODO: any => type
+        const comments: any[] = [];
         
         sql = `
             select
@@ -67,21 +73,21 @@ class DbState {
             result = await db.query(sql);
         } catch(err) {
             // redefine callstack
-            let newErr = new Error(err.message);
-            newErr.originalError = err;
+            const newErr = new Error(err.message);
+            (newErr as any).originalError = err;
             throw newErr;
         }
         
 
         result.rows.forEach(row => {
-            let {ddl} = row;
+            const {ddl} = row;
 
-            let coach = new GrapeQLCoach(ddl);
-            let func = coach.parse(CreateFunction);
-            let json = func.toJSON();
+            const coach = new GrapeQLCoach(ddl);
+            const func = coach.parse(CreateFunction);
+            const json: ReturnType<typeof func.toJSON> & {freeze?: boolean} = func.toJSON();
 
             // function was created by ddl manager
-            let canSyncFunction = (
+            const canSyncFunction = (
                 row.comment &&
                 /ddl-manager-sync$/i.test(row.comment)
             );
@@ -114,21 +120,27 @@ class DbState {
             result = await db.query(sql);
         } catch(err) {
             // redefine callstack
-            let newErr = new Error(err.message);
-            newErr.originalError = err;
+            const newErr = new Error(err.message);
+            (newErr as any).originalError = err;
             throw newErr;
         }
         
 
         result.rows.forEach(row => {
-            let {ddl} = row;
+            const {ddl} = row;
 
-            let coach = new GrapeQLCoach(ddl);
-            let trigger = coach.parse(CreateTrigger);
-            let json = trigger.toJSON();
+            const coach = new GrapeQLCoach(ddl);
+            const trigger = coach.parse(CreateTrigger);
+            const json: ReturnType<typeof trigger.toJSON> & {
+                freeze?: boolean;
+                table: {
+                    schema: string;
+                    name: string;
+                }
+            } = trigger.toJSON() as any;
 
             // trigger was created by ddl manager
-            let canSyncTrigger = (
+            const canSyncTrigger = (
                 row.comment &&
                 /ddl-manager-sync/i.test(row.comment)
             );
@@ -159,7 +171,12 @@ class DbState {
     }
 
     // compare filesState and dbState
-    getDiff(filesState) {
+    getDiff(filesState: {
+        // TODO: any => type
+        functions: any[];
+        triggers: any[];
+        comments: any[];
+    }) {
         if ( !_.isObject(filesState) ) {
             throw new Error("undefined filesState");
         }
@@ -170,26 +187,34 @@ class DbState {
             throw new Error("undefined filesState.triggers");
         }
 
-        
-        let drop = {
+        // TODO: any => type
+        const drop: {
+            functions: any[];
+            triggers: any[];
+            comments?: any[];
+        } = {
             functions: [],
             triggers: []
         };
-        let create = {
+        const create: {
+            functions: any[];
+            triggers: any[];
+            comments?: any[];
+        } = {
             functions: [],
             triggers: []
         };
 
         
         for (let i = 0, n = this.functions.length; i < n; i++) {
-            let func = this.functions[ i ];
+            const func = this.functions[ i ];
             
             // ddl-manager cannot drop freeze function
             if ( func.freeze ) {
                 continue;
             }
 
-            let existsSameFuncFromFile = filesState.functions.some(fileFunc =>
+            const existsSameFuncFromFile = filesState.functions.some(fileFunc =>
                 equalFunction(fileFunc, func)
             );
 
@@ -198,18 +223,18 @@ class DbState {
             }
 
             // for drop function, need drop trigger, who call it function
-            if ( func.returns.type == "trigger" ) {
-                let depsTriggers = this.triggers.filter(dbTrigger => {
-                    let isDepsTrigger = (
-                        dbTrigger.procedure.schema == func.schema &&
-                        dbTrigger.procedure.name == func.name
+            if ( func.returns.type === "trigger" ) {
+                const depsTriggers = this.triggers.filter(dbTrigger => {
+                    const isDepsTrigger = (
+                        dbTrigger.procedure.schema === func.schema &&
+                        dbTrigger.procedure.name === func.name
                     );
 
                     if ( !isDepsTrigger ) {
                         return false;
                     }
                     
-                    let existsSameTriggerFromFile = filesState.triggers.some(fileTrigger =>
+                    const existsSameTriggerFromFile = filesState.triggers.some(fileTrigger =>
                         equalTrigger(fileTrigger, dbTrigger)
                     );
 
@@ -236,14 +261,14 @@ class DbState {
         }
 
         for (let i = 0, n = this.triggers.length; i < n; i++) {
-            let trigger = this.triggers[ i ];
+            const trigger = this.triggers[ i ];
 
             // ddl-manager cannot drop freeze function
             if ( trigger.freeze ) {
                 continue;
             }
 
-            let existsSameTriggerFromFile = filesState.triggers.some(fileTrigger =>
+            const existsSameTriggerFromFile = filesState.triggers.some(fileTrigger =>
                 equalTrigger(fileTrigger, trigger)
             );
 
@@ -254,12 +279,11 @@ class DbState {
             drop.triggers.push( trigger );
         }
 
-        let dbComments = this.comments || [];
+        const dbComments = this.comments || [];
         for (let i = 0, n = dbComments.length; i < n; i++) {
-            let comment = dbComments[ i ];
-            let fileComments = filesState.comments || [];
+            const comment = dbComments[ i ];
 
-            let existsSameCommentFromFile = fileComments.some(fileComment =>
+            const existsSameCommentFromFile = (filesState.comments || []).some(fileComment =>
                 equalComment(fileComment, comment)
             );
 
@@ -276,9 +300,9 @@ class DbState {
 
 
         for (let i = 0, n = filesState.functions.length; i < n; i++) {
-            let func = filesState.functions[ i ];
+            const func = filesState.functions[ i ];
 
-            let existsSameFuncFromDb = this.functions.find(dbFunc =>
+            const existsSameFuncFromDb = this.functions.find(dbFunc =>
                 equalFunction(dbFunc, func)
             );
 
@@ -289,9 +313,9 @@ class DbState {
             create.functions.push(func);
         }
         for (let i = 0, n = filesState.triggers.length; i < n; i++) {
-            let trigger = filesState.triggers[ i ];
+            const trigger = filesState.triggers[ i ];
             
-            let existsSameTriggerFromDb = this.triggers.some(dbTrigger =>
+            const existsSameTriggerFromDb = this.triggers.some(dbTrigger =>
                 equalTrigger(dbTrigger, trigger)
             );
 
@@ -302,11 +326,11 @@ class DbState {
             create.triggers.push( trigger );
         }
 
-        let fileComments = filesState.comments || [];
+        const fileComments = filesState.comments || [];
         for (let i = 0, n = fileComments.length; i < n; i++) {
-            let comment = fileComments[ i ];
+            const comment = fileComments[ i ];
             
-            let existsSameCommentFromDb = dbComments.some(dbComment =>
+            const existsSameCommentFromDb = dbComments.some(dbComment =>
                 equalComment(dbComment, comment)
             );
 
@@ -331,17 +355,17 @@ class DbState {
     async unfreezeAll() {
         let ddlSql = "";
 
-        let dbComments = this.comments || [];
+        const dbComments = this.comments || [];
 
         this.functions.forEach(func => {
-            let comment = findCommentByFunction(dbComments, func);
+            const comment = findCommentByFunction(dbComments, func);
 
             ddlSql += DbState.getUnfreezeFunctionSql( func, comment );
             ddlSql += ";";
         });
 
         this.triggers.forEach(trigger => {
-            let comment = findCommentByTrigger(dbComments, trigger);
+            const comment = findCommentByTrigger(dbComments, trigger);
 
             ddlSql += DbState.getUnfreezeTriggerSql( trigger, comment );
             ddlSql += ";";
@@ -351,8 +375,8 @@ class DbState {
             await this.db.query(ddlSql);
         } catch(err) {
             // redefine callstack
-            let newErr = new Error(err.message);
-            newErr.originalError = err;
+            const newErr = new Error(err.message);
+            (newErr as any).originalError = err;
             
             throw newErr;
         }
@@ -365,15 +389,16 @@ class DbState {
         };
     }
 
+    // TODO: any => type
     // sql code, which raise error on freeze function
-    static getCheckFreezeFunctionSql(func, errorText, actionOnFreeze = "error") {
-        let funcIdentifySql = function2identifySql( func );
+    static getCheckFreezeFunctionSql(func: any, errorText: any, actionOnFreeze = "error") {
+        const funcIdentifySql = function2identifySql( func );
         let sqlOnFreeze;
 
         if ( actionOnFreeze === "error" ) {
             sqlOnFreeze = `raise exception ${wrapText(errorText)};`;
         }
-        else if ( actionOnFreeze == "drop" ) {
+        else if ( actionOnFreeze === "drop" ) {
             sqlOnFreeze = `drop function ${function2identifySql(func)};`;
         }
         else {
@@ -433,7 +458,8 @@ class DbState {
         `;
     }
 
-    static getCheckFreezeTriggerSql(trigger, errorText) {
+    // TODO: any => type
+    static getCheckFreezeTriggerSql(trigger: any, errorText: string) {
         return `
         do $$
             begin
@@ -464,7 +490,8 @@ class DbState {
         `;
     }
 
-    static getUnfreezeFunctionSql(func, comment) {
+    // TODO: any => type
+    static getUnfreezeFunctionSql(func: any, comment: any) {
         let prefix = "";
         if ( comment ) {
             if ( typeof comment.comment === "string" ) {
@@ -475,13 +502,14 @@ class DbState {
             }
         }
 
-        let funcIdentifySql = function2identifySql( func );
+        const funcIdentifySql = function2identifySql( func );
         return `
             comment on function ${ funcIdentifySql } is ${wrapText( prefix + "ddl-manager-sync" )}
         `;
     }
 
-    static getUnfreezeTriggerSql(trigger, comment) {
+    // TODO: any => type
+    static getUnfreezeTriggerSql(trigger: any, comment: any) {
         let prefix = "";
         if ( comment ) {
             if ( typeof comment.comment === "string" ) {
@@ -492,26 +520,26 @@ class DbState {
             }
         }
 
-        let triggerIdentifySql = trigger2identifySql( trigger );
+        const triggerIdentifySql = trigger2identifySql( trigger );
         return `
             comment on trigger ${ triggerIdentifySql } is ${wrapText( prefix + "ddl-manager-sync" )}
         `;
     }
 }
 
-function equalFunction(func1, func2) {
+function equalFunction(func1: any, func2: any) {
     return deepEqual(func1, func2);
 }
 
-function equalTrigger(trigger1, trigger2) {
+function equalTrigger(trigger1: any, trigger2: any) {
     return deepEqual(trigger1, trigger2);
 }
 
-function equalComment(comment1, comment2) {
+function equalComment(comment1: any, comment2: any) {
     return deepEqual(comment1, comment2);
 }
 
-function deepEqual(obj1, obj2) {
+function deepEqual(obj1: any, obj2: any) {
     try {
         assert.deepStrictEqual(obj1, obj2);
         return true;
@@ -519,5 +547,3 @@ function deepEqual(obj1, obj2) {
         return false;
     }
 }
-
-module.exports = DbState;

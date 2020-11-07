@@ -1,27 +1,26 @@
-"use strict";
-
-const fs = require("fs");
-const del = require("del");
-const getDbClient = require("../utils/getDbClient");
-const DdlManager = require("../../lib/DdlManager");
-const DbState = require("../../lib/DbState");
-const {expect, use} = require("chai");
-const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+import fs from "fs";
+import fse from "fs-extra";
+import { getDBClient } from "../utils/getDbClient";
+import { DdlManager } from "../../lib/DdlManager";
+import { DbState } from "../../lib/DbState";
+import {expect, use} from "chai";
+import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 
 use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
 describe("DbState.load", () => {
-    let db;
+    // TODO: any => type
+    let db: any;
 
     beforeEach(async() => {
         if ( fs.existsSync(ROOT_TMP_PATH) ) {
-            del.sync(ROOT_TMP_PATH);
+            fse.removeSync(ROOT_TMP_PATH);
         }
         fs.mkdirSync(ROOT_TMP_PATH);
 
-        db = await getDbClient();
+        db = await getDBClient();
 
         await db.query(`
             drop schema public cascade;
@@ -34,7 +33,7 @@ describe("DbState.load", () => {
     });
     
     it("load empty state", async() => {
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -45,7 +44,7 @@ describe("DbState.load", () => {
 
     it("load simple function", async() => {
 
-        let body = `
+        const body = `
             begin
                 raise notice 'test';
             end
@@ -56,7 +55,7 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -82,12 +81,12 @@ describe("DbState.load", () => {
 
     it("load two functions", async() => {
 
-        let body1 = `
+        const body1 = `
             begin
                 raise notice 'test 1';
             end
         `;
-        let body2 = `
+        const body2 = `
             begin
                 raise notice 'test 2';
             end
@@ -102,7 +101,7 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -141,12 +140,12 @@ describe("DbState.load", () => {
     });
 
     it("load two functions with same name", async() => {
-        let body1 = `
+        const body1 = `
             begin
                 raise notice 'test 1';
             end
         `;
-        let body2 = `
+        const body2 = `
             begin
                 raise notice 'test 2';
             end
@@ -161,7 +160,7 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -201,7 +200,7 @@ describe("DbState.load", () => {
 
     it("load two function without arguments", async() => {
 
-        let body = `
+        const body = `
             begin
                 raise notice 'test';
             end
@@ -212,7 +211,7 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -233,7 +232,7 @@ describe("DbState.load", () => {
 
     
     it("load two function with returns table", async() => {
-        let body = `
+        const body = `
             begin
                 raise notice 'test';
             end
@@ -244,7 +243,7 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -273,7 +272,7 @@ describe("DbState.load", () => {
     });
 
     it("load two function with returns table and arguments", async() => {
-        let body = `
+        const body = `
             begin
                 raise notice 'test';
             end
@@ -284,7 +283,7 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -318,7 +317,7 @@ describe("DbState.load", () => {
     });
 
     it("load simple function with arg default", async() => {
-        let body = `
+        const body = `
             begin
                 raise notice 'test';
             end
@@ -329,7 +328,7 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -355,7 +354,7 @@ describe("DbState.load", () => {
     });
 
     it("load simple function with arg default null", async() => {
-        let body = `
+        const body = `
             begin
                 raise notice 'test';
             end
@@ -366,7 +365,7 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -392,7 +391,7 @@ describe("DbState.load", () => {
     });
 
     it("load trigger", async() => {
-        let body = `
+        const body = `
             begin
                 return new;
             end
@@ -417,7 +416,7 @@ describe("DbState.load", () => {
             execute procedure test_func();
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -454,7 +453,7 @@ describe("DbState.load", () => {
     });
 
     it("load trigger with when condition", async() => {
-        let body = `
+        const body = `
             begin
                 return new;
             end
@@ -480,7 +479,7 @@ describe("DbState.load", () => {
             execute procedure test_func();
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -520,11 +519,11 @@ describe("DbState.load", () => {
 
     it("load simple function, created by DdlManager.build", async() => {
 
-        let folderPath = ROOT_TMP_PATH + "/simple-func";
+        const folderPath = ROOT_TMP_PATH + "/simple-func";
         fs.mkdirSync(folderPath);
 
 
-        let body = `
+        const body = `
             begin
                 raise notice 'test';
             end
@@ -541,7 +540,7 @@ describe("DbState.load", () => {
             folder: folderPath
         });
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -568,10 +567,10 @@ describe("DbState.load", () => {
     
     it("load trigger, created by DdlManager.build", async() => {
 
-        let folderPath = ROOT_TMP_PATH + "/simple-func";
+        const folderPath = ROOT_TMP_PATH + "/simple-func";
         fs.mkdirSync(folderPath);
 
-        let body = `
+        const body = `
             begin
                 return new;
             end
@@ -600,7 +599,7 @@ describe("DbState.load", () => {
             folder: folderPath
         });
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -651,7 +650,7 @@ describe("DbState.load", () => {
             );
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -676,7 +675,7 @@ describe("DbState.load", () => {
             );
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -693,7 +692,7 @@ describe("DbState.load", () => {
             language sql;
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -724,7 +723,7 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -755,7 +754,7 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -789,7 +788,7 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -821,7 +820,7 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({
@@ -853,7 +852,7 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        let state = new DbState(db);
+        const state = new DbState(db);
         await state.load();
 
         expect(state.toJSON()).to.be.shallowDeepEqual({

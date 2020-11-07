@@ -1,10 +1,8 @@
-"use strict";
-
-const DbState = require("./DbState");
-const FilesState = require("./FilesState");
-const fs = require("fs");
-const path = require("path");
-const {
+import { DbState } from "./DbState";
+import { FilesState } from "./FilesState";
+import fs from "fs";
+import path from "path";
+import {
     getDbClient, 
     logDiff, 
     isDbClient,
@@ -21,30 +19,35 @@ const {
     trigger2sql,
     comment2sql,
     function2sql
-} = require("./utils");
+} from "./utils";
 
-const watchers = [];
+const watchers: FilesState[] = [];
 
-class DdlManager {
-    static async migrate({db, diff, throwError}) {
+export class DdlManager {
+    // TODO: any => type
+    static async migrate(params: {db: any, diff: any, throwError?: boolean}) {
+        const {db, diff, throwError} = params;
+
         if ( diff == null ) {
             throw new Error("invalid diff");
         }
-        let out = {
+        const out: {
+            errors: Error[]
+        } = {
             errors: []
         };
 
         // drop old objects
-        let dropComments = diff.drop.comments || [];
+        const dropComments = diff.drop.comments || [];
         for (let i = 0, n = dropComments.length; i < n; i++) {
             let ddlSql = "";
-            let comment = dropComments[i];
+            const comment = dropComments[i];
 
-            let dropTrigger = findTriggerByComment(diff.drop.triggers, comment);
+            const dropTrigger = findTriggerByComment(diff.drop.triggers, comment);
             if ( dropTrigger ) {
                 continue;
             }
-            let dropFunc = findFunctionByComment(diff.drop.functions, comment);
+            const dropFunc = findFunctionByComment(diff.drop.functions, comment);
             if ( dropFunc ) {
                 continue;
             }
@@ -55,8 +58,8 @@ class DdlManager {
                 await db.query(ddlSql);
             } catch(err) {
                 // redefine callstack
-                let newErr = new Error(err.message);
-                newErr.originalError = err;
+                const newErr = new Error(err.message);
+                (newErr as any).originalError = err;
                 
                 out.errors.push(newErr);
             }
@@ -65,11 +68,11 @@ class DdlManager {
 
         for (let i = 0, n = diff.drop.triggers.length; i < n; i++) {
             let ddlSql = "";
-            let trigger = diff.drop.triggers[i];
-            let triggerIdentifySql = trigger2identifySql( trigger );
+            const trigger = diff.drop.triggers[i];
+            const triggerIdentifySql = trigger2identifySql( trigger );
             
             // check freeze object
-            let checkFreezeSql = DbState.getCheckFreezeTriggerSql( 
+            const checkFreezeSql = DbState.getCheckFreezeTriggerSql( 
                 trigger,
                 `cannot drop freeze trigger ${ triggerIdentifySql }`
             );
@@ -82,8 +85,8 @@ class DdlManager {
                 await db.query(ddlSql);
             } catch(err) {
                 // redefine callstack
-                let newErr = new Error(triggerIdentifySql + "\n" + err.message);
-                newErr.originalError = err;
+                const newErr = new Error(triggerIdentifySql + "\n" + err.message);
+                (newErr as any).originalError = err;
 
                 out.errors.push(newErr);
             }
@@ -91,11 +94,11 @@ class DdlManager {
         
         for (let i = 0, n = diff.drop.functions.length; i < n; i++) {
             let ddlSql = "";
-            let func = diff.drop.functions[i];
-            let funcIdentifySql = function2identifySql( func );
+            const func = diff.drop.functions[i];
+            const funcIdentifySql = function2identifySql( func );
 
             // check freeze object
-            let checkFreezeSql = DbState.getCheckFreezeFunctionSql( 
+            const checkFreezeSql = DbState.getCheckFreezeFunctionSql( 
                 func,
                 `cannot drop freeze function ${ funcIdentifySql }`
             );
@@ -113,8 +116,8 @@ class DdlManager {
                 const isCascadeError = err.code === "2BP01";
                 if ( !isCascadeError ) {
                     // redefine callstack
-                    let newErr = new Error(funcIdentifySql + "\n" + err.message);
-                    newErr.originalError = err;
+                    const newErr = new Error(funcIdentifySql + "\n" + err.message);
+                    (newErr as any).originalError = err;
 
                     out.errors.push(newErr);
                 }
@@ -124,15 +127,15 @@ class DdlManager {
 
 
         // create new objects
-        let createComments = diff.create.comments || [];
+        const createComments = diff.create.comments || [];
 
         for (let i = 0, n = diff.create.functions.length; i < n; i++) {
             let ddlSql = "";
-            let func = diff.create.functions[i];
-            let funcIdentifySql = function2identifySql( func );
+            const func = diff.create.functions[i];
+            const funcIdentifySql = function2identifySql( func );
 
             // check freeze object
-            let checkFreezeSql = DbState.getCheckFreezeFunctionSql( 
+            const checkFreezeSql = DbState.getCheckFreezeFunctionSql( 
                 func,
                 "",
                 "drop"
@@ -145,7 +148,7 @@ class DdlManager {
             
             ddlSql += ";";
             // comment on function ddl-manager-sync
-            let comment = findCommentByFunction(
+            const comment = findCommentByFunction(
                 createComments,
                 func
             );
@@ -156,8 +159,8 @@ class DdlManager {
                 await db.query(ddlSql);
             } catch(err) {
                 // redefine callstack
-                let newErr = new Error(funcIdentifySql + "\n" + err.message);
-                newErr.originalError = err;
+                const newErr = new Error(funcIdentifySql + "\n" + err.message);
+                (newErr as any).originalError = err;
                 
                 out.errors.push(newErr);
             }
@@ -165,11 +168,11 @@ class DdlManager {
 
         for (let i = 0, n = diff.create.triggers.length; i < n; i++) {
             let ddlSql = "";
-            let trigger = diff.create.triggers[i];
-            let triggerIdentifySql = trigger2identifySql( trigger );
+            const trigger = diff.create.triggers[i];
+            const triggerIdentifySql = trigger2identifySql( trigger );
             
             // check freeze object
-            let checkFreezeSql = DbState.getCheckFreezeTriggerSql( 
+            const checkFreezeSql = DbState.getCheckFreezeTriggerSql( 
                 trigger,
                 `cannot replace freeze trigger ${ triggerIdentifySql }`
             );
@@ -184,7 +187,7 @@ class DdlManager {
 
             ddlSql += ";";
             // comment on trigger ddl-manager-sync
-            let comment = findCommentByTrigger(
+            const comment = findCommentByTrigger(
                 createComments,
                 trigger
             );
@@ -194,8 +197,8 @@ class DdlManager {
                 await db.query(ddlSql);
             } catch(err) {
                 // redefine callstack
-                let newErr = new Error(triggerIdentifySql + "\n" + err.message);
-                newErr.originalError = err;
+                const newErr = new Error(triggerIdentifySql + "\n" + err.message);
+                (newErr as any).originalError = err;
                 
                 out.errors.push(newErr);
             }
@@ -203,7 +206,7 @@ class DdlManager {
 
         if ( throwError !== false ) {
             if ( out.errors.length ) {
-                let err = out.errors[0];
+                const err = out.errors[0];
                 throw new Error(err.message);
             }
         }
@@ -211,9 +214,19 @@ class DdlManager {
         return out;
     }
 
-    static async build({db, folder, throwError = true}) {
-        if ( typeof folder === "string" ) {
-            folder = [folder];
+    static async build(params: {
+        db: any;
+        folder: string | string[];
+        throwError?: boolean;
+    }) {
+        let db = params.db;
+
+        let folder!: string[];
+        if ( typeof params.folder === "string" ) {
+            folder = [params.folder];
+        }
+        else {
+            folder = params.folder;
         }
         folder = folder.map(folderPath =>
             path.normalize(folderPath)
@@ -228,25 +241,26 @@ class DdlManager {
             needCloseConnect = true;
         }
         
-        let filesStateInstance = FilesState.create({
+        const filesStateInstance = FilesState.create({
             folder,
-            onError(err) {
-                console.error(err.subPath + ": " + err.message);
+            onError(err: Error) {
+                // tslint:disable-next-line: no-console
+                console.error((err as any).subPath + ": " + err.message);
             }
         });
-        let filesState = {
+        const filesState = {
             functions: filesStateInstance.getFunctions(),
             triggers: filesStateInstance.getTriggers(),
             comments: filesStateInstance.getComments()
         };
         
-        let dbState = new DbState(db);
+        const dbState = new DbState(db);
         await dbState.load();
 
-        let diff = dbState.getDiff(filesState);
+        const diff = dbState.getDiff(filesState);
 
 
-        let migrateResult = await DdlManager.migrate({
+        const migrateResult = await DdlManager.migrate({
             db, diff,
             throwError: false
         });
@@ -258,22 +272,27 @@ class DdlManager {
         logDiff(diff);
         
         if ( !migrateResult.errors.length ) {
+            // tslint:disable-next-line: no-console
             console.log("ddl-manager build success");
         }
-        else if ( throwError ) {
+        else if ( params.throwError ) {
             throw migrateResult.errors[0];
         }
         
         return filesStateInstance;
     }
 
-    static async watch({db, folder}) {
+    // TODO: any => type
+    static async watch(params: {db: any, folder: string | string[]}) {
+        const {folder} = params;
+        let {db} = params;
+    
         // if db is config
         if ( !isDbClient(db) ) {
             db = await getDbClient(db);
         }
 
-        let filesState = await DdlManager.build({
+        const filesState = await DdlManager.build({
             db, 
             folder,
             throwError: false
@@ -295,10 +314,10 @@ class DdlManager {
                 // а потом в файле поменяли имя функции на другое (не freeze)
                 // о новая функция должна быть создана, а freeze не должна быть сброшена
                 // 
-                let isFreezeDropError = (
+                const isFreezeDropError = (
                     /cannot drop freeze (trigger|function)/i.test(err.message)
                 );
-                let hasCreateFuncOrTrigger = (
+                const hasCreateFuncOrTrigger = (
                     diff.create.functions.length ||
                     diff.create.triggers.length
                 );
@@ -307,7 +326,7 @@ class DdlManager {
                     // запустим одтельно создание новой функции
                     // т.к. сборсить freeze нельзя, а новая функция может быть валидной
 
-                    let createDiff = {
+                    const createDiff = {
                         drop: {
                             functions: [],
                             triggers: []
@@ -324,10 +343,12 @@ class DdlManager {
         
                         logDiff(diff);
                     } catch(err) {
+                        // tslint:disable-next-line: no-console
                         console.error(err);
                     }
                 }
                 else {
+                    // tslint:disable-next-line: no-console
                     console.error(err);
                 }
             }
@@ -336,7 +357,11 @@ class DdlManager {
         watchers.push(filesState);
     }
 
-    static async dump({db, folder, unfreeze = false}) {
+    // TODO: any => type
+    static async dump(params: {db: any, folder: string, unfreeze?: boolean}) {
+        let {db} = params;
+        const {folder, unfreeze} = params;
+
         let needCloseConnect = false;
 
         // if db is config
@@ -350,28 +375,30 @@ class DdlManager {
             throw new Error(`folder "${ folder }" not found`);
         }
 
-        let dbState = new DbState(db);
+        const dbState = new DbState(db);
         await dbState.load();
 
-        let dbComments = dbState.comments || [];
+        const dbComments = dbState.comments || [];
 
-        let existsFolders = {};
+        const existsFolders: {
+            [dirPath: string]: boolean
+        } = {};
 
         // functions from database
-        let functions = dbState.functions.slice();
+        const functions = dbState.functions.slice();
 
         for (let i = 0, n = functions.length; i < n; i++) {
-            let func = functions[i];
-            let sameFuncs = [func];
+            const func = functions[i];
+            const sameFuncs = [func];
             let comment;
 
             // find functions with same name
             // expected sorted array by schema/name
             for (let j = i + 1; j < n; j++) {
-                let nextFunc = functions[ j ];
-                let isSame = (
-                    nextFunc.schema == func.schema &&
-                    nextFunc.name == func.name
+                const nextFunc = functions[ j ];
+                const isSame = (
+                    nextFunc.schema === func.schema &&
+                    nextFunc.name === func.name
                 );
 
                 if ( isSame ) {
@@ -392,10 +419,11 @@ class DdlManager {
 
             // generate sql
             let sql = "";
-            let firstTrigger = false;
+            // TODO: any => type
+            let firstTrigger: any = false;
 
-            sameFuncs.forEach((sameFunc, i) => {
-                if ( i > 0 ) {
+            sameFuncs.forEach((sameFunc, j: number) => {
+                if ( j > 0 ) {
                     sql += ";\n";
                     sql += "\n";
                 }
@@ -420,13 +448,13 @@ class DdlManager {
             // file can contain triggers
             // find triggers, who call this func
             
-            let isTrigger = sameFuncs.some(func =>
-                func.returns.type == "trigger"
+            const isTrigger = sameFuncs.some(sameFunc =>
+                sameFunc.returns.type === "trigger"
             );
             if ( isTrigger ) {
-                let triggers = dbState.triggers.filter(trigger =>
-                    trigger.procedure.schema == func.schema &&
-                    trigger.procedure.name == func.name
+                const triggers = dbState.triggers.filter(trigger =>
+                    trigger.procedure.schema === func.schema &&
+                    trigger.procedure.name === func.name
                 );
     
                 if ( triggers.length ) {
@@ -458,29 +486,29 @@ class DdlManager {
             
 
             // create dirs and file
-            let fileName = func.name + ".sql";
+            const fileName = func.name + ".sql";
 
             // create folder public or some schema
             let subFolder = func.schema;
             if ( firstTrigger ) {
                 subFolder = firstTrigger.table.schema;
             }
-            let path = folder + "/" + subFolder;
+            let dirPath = folder + "/" + subFolder;
 
             if ( !existsFolders[ subFolder ] ) {
-                if ( !fs.existsSync(path) ) {
-                    fs.mkdirSync(path);
+                if ( !fs.existsSync(dirPath) ) {
+                    fs.mkdirSync(dirPath);
                 }
                 existsFolders[ subFolder ] = true;
             }
 
             if ( firstTrigger ) {
                 subFolder = firstTrigger.table.schema + "/" + firstTrigger.table.name;
-                path = folder + "/" + subFolder;
+                dirPath = folder + "/" + subFolder;
 
                 if ( !existsFolders[ subFolder ] ) {
-                    if ( !fs.existsSync(path) ) {
-                        fs.mkdirSync(path);
+                    if ( !fs.existsSync(dirPath) ) {
+                        fs.mkdirSync(dirPath);
                     }
                     existsFolders[ subFolder ] = true;
                 }
@@ -488,7 +516,7 @@ class DdlManager {
 
 
             // save sql
-            fs.writeFileSync(path + "/" + fileName, sql + ";");
+            fs.writeFileSync(dirPath + "/" + fileName, sql + ";");
         }
         
         if ( unfreeze ) {
@@ -507,5 +535,3 @@ class DdlManager {
         watchers.splice(0, watchers.length);
     }
 }
-
-module.exports = DdlManager;

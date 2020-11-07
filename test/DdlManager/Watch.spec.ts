@@ -1,28 +1,21 @@
-"use strict";
-
-const assert = require("assert");
-const fs = require("fs");
-const del = require("del");
-const getDbClient = require("../utils/getDbClient");
-const DdlManager = require("../../lib/DdlManager");
-const {expect, use} = require("chai");
-const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+import assert from "assert";
+import fs from "fs";
+import fse from "fs-extra";
+import { getDBClient } from "../utils/getDbClient";
+import { DdlManager } from "../../lib/DdlManager";
+import {expect, use} from "chai";
+import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import { sleep } from "../utils/sleep";
 
 use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
-async function sleep(ms) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
-}
-
 describe("DdlManager.watch", () => {
-    let db;
+    let db: any;
     
     beforeEach(async() => {
-        db = await getDbClient();
+        db = await getDBClient();
 
         await db.query(`
             drop schema public cascade;
@@ -30,7 +23,7 @@ describe("DdlManager.watch", () => {
         `);
 
         if ( fs.existsSync(ROOT_TMP_PATH) ) {
-            del.sync(ROOT_TMP_PATH);
+            fse.removeSync(ROOT_TMP_PATH);
         }
         fs.mkdirSync(ROOT_TMP_PATH);
     });
@@ -54,7 +47,7 @@ describe("DdlManager.watch", () => {
     });
 
     it("watch empty folder", async() => {
-        let folderPath = ROOT_TMP_PATH + "/empty";
+        const folderPath = ROOT_TMP_PATH + "/empty";
         fs.mkdirSync(folderPath);
 
         await DdlManager.watch({
@@ -68,7 +61,7 @@ describe("DdlManager.watch", () => {
 
 
     it("watch simple function", async() => {
-        let folderPath = ROOT_TMP_PATH + "/watch-func";
+        const folderPath = ROOT_TMP_PATH + "/watch-func";
         let result;
         let row;
     
@@ -120,7 +113,7 @@ describe("DdlManager.watch", () => {
     });
 
     it("watch with dbConfig", async() => {
-        let folderPath = ROOT_TMP_PATH + "/simple-func";
+        const folderPath = ROOT_TMP_PATH + "/simple-func";
         fs.mkdirSync(folderPath);
 
         await DdlManager.watch({
@@ -146,8 +139,8 @@ describe("DdlManager.watch", () => {
 
         await sleep(150);
 
-        let result = await db.query("select nice() as nice");
-        let row = result.rows[0];
+        const result = await db.query("select nice() as nice");
+        const row = result.rows[0];
 
         expect(row).to.be.shallowDeepEqual({
             nice: 1
@@ -180,8 +173,8 @@ describe("DdlManager.watch", () => {
         `);
         await sleep(50);
 
-        let result = await db.query("select test() as nice");
-        let row = result.rows[0];
+        const result = await db.query("select test() as nice");
+        const row = result.rows[0];
 
         expect(row).to.be.shallowDeepEqual({
             nice: 1
@@ -259,7 +252,7 @@ describe("DdlManager.watch", () => {
     });
 
     it("watch folder '/../some' ", async() => {
-        let folderPath = ROOT_TMP_PATH + "/watch";
+        const folderPath = ROOT_TMP_PATH + "/watch";
         let result;
         let row;
     
@@ -334,10 +327,10 @@ describe("DdlManager.watch", () => {
 
     it("build from many folders", async() => {
 
-        let folderPath1 = ROOT_TMP_PATH + "/many-folder-1";
+        const folderPath1 = ROOT_TMP_PATH + "/many-folder-1";
         fs.mkdirSync(folderPath1);
 
-        let folderPath2 = ROOT_TMP_PATH + "/many-folder-2";
+        const folderPath2 = ROOT_TMP_PATH + "/many-folder-2";
         fs.mkdirSync(folderPath2);
 
         fs.writeFileSync(folderPath1 + "/func1.sql", `

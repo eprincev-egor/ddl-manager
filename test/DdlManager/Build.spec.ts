@@ -1,22 +1,20 @@
-"use strict";
-
-const assert = require("assert");
-const fs = require("fs");
-const del = require("del");
-const getDbClient = require("../utils/getDbClient");
-const DdlManager = require("../../lib/DdlManager");
-const {expect, use} = require("chai");
-const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+import assert from "assert";
+import fs from "fs";
+import fse from "fs-extra";
+import { getDBClient } from "../utils/getDbClient";
+import { DdlManager } from "../../lib/DdlManager";
+import {expect, use} from "chai";
+import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 
 use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
 describe("DdlManager.build", () => {
-    let db;
+    let db: any;
     
     beforeEach(async() => {
-        db = await getDbClient();
+        db = await getDBClient();
 
         await db.query(`
             drop schema public cascade;
@@ -24,7 +22,7 @@ describe("DdlManager.build", () => {
         `);
 
         if ( fs.existsSync(ROOT_TMP_PATH) ) {
-            del.sync(ROOT_TMP_PATH);
+            fse.removeSync(ROOT_TMP_PATH);
         }
         fs.mkdirSync(ROOT_TMP_PATH);
     });
@@ -47,7 +45,7 @@ describe("DdlManager.build", () => {
     });
 
     it("build empty folder", async() => {
-        let folderPath = ROOT_TMP_PATH + "/empty";
+        const folderPath = ROOT_TMP_PATH + "/empty";
         fs.mkdirSync(folderPath);
 
         await DdlManager.build({
@@ -60,10 +58,10 @@ describe("DdlManager.build", () => {
     });
 
     it("build simple function", async() => {
-        let folderPath = ROOT_TMP_PATH + "/simple-func";
+        const folderPath = ROOT_TMP_PATH + "/simple-func";
         fs.mkdirSync(folderPath);
 
-        let rnd = Math.round( 1000 * Math.random() );
+        const rnd = Math.round( 1000 * Math.random() );
         fs.writeFileSync(folderPath + "/nice.sql", `
             create or replace function nice(a integer)
             returns integer as $body$
@@ -80,8 +78,8 @@ describe("DdlManager.build", () => {
             folder: folderPath
         });
 
-        let result = await db.query("select nice(2) as nice");
-        let row = result.rows[0];
+        const result = await db.query("select nice(2) as nice");
+        const row = result.rows[0];
 
         expect(row).to.be.shallowDeepEqual({
             nice: 2 * rnd
@@ -89,7 +87,7 @@ describe("DdlManager.build", () => {
     });
 
     it("build with dbConfig", async() => {
-        let folderPath = ROOT_TMP_PATH + "/simple-func";
+        const folderPath = ROOT_TMP_PATH + "/simple-func";
         fs.mkdirSync(folderPath);
 
         fs.writeFileSync(folderPath + "/nice.sql", `
@@ -114,8 +112,8 @@ describe("DdlManager.build", () => {
             folder: folderPath
         });
 
-        let result = await db.query("select nice() as nice");
-        let row = result.rows[0];
+        const result = await db.query("select nice() as nice");
+        const row = result.rows[0];
 
         expect(row).to.be.shallowDeepEqual({
             nice: 1
@@ -123,13 +121,13 @@ describe("DdlManager.build", () => {
     });
 
     it("replace function", async() => {
-        let folderPath = ROOT_TMP_PATH + "/simple-func";
+        const folderPath = ROOT_TMP_PATH + "/simple-func";
         let result;
         let row;
     
         fs.mkdirSync(folderPath);
 
-        let rnd = Math.round( 1000 * Math.random() );
+        const rnd = Math.round( 1000 * Math.random() );
         fs.writeFileSync(folderPath + "/nice.sql", `
             create or replace function nice(a integer)
             returns integer as $body$
@@ -185,7 +183,7 @@ describe("DdlManager.build", () => {
     });
 
     it("build simple trigger", async() => {
-        let folderPath = ROOT_TMP_PATH + "/simple-trigger";
+        const folderPath = ROOT_TMP_PATH + "/simple-trigger";
         fs.mkdirSync(folderPath);
 
         await db.query(`
@@ -218,8 +216,8 @@ describe("DdlManager.build", () => {
             folder: folderPath
         });
 
-        let result = await db.query("insert into company (name) values ('super') returning note");
-        let row = result.rows[0];
+        const result = await db.query("insert into company (name) values ('super') returning note");
+        const row = result.rows[0];
 
         expect(row).to.be.shallowDeepEqual({
             note: "name: super"
@@ -227,7 +225,7 @@ describe("DdlManager.build", () => {
     });
 
     it("replace trigger", async() => {
-        let folderPath = ROOT_TMP_PATH + "/simple-trigger";
+        const folderPath = ROOT_TMP_PATH + "/simple-trigger";
         let result;
         let row;
     
@@ -307,7 +305,7 @@ describe("DdlManager.build", () => {
 
     
     it("remove function", async() => {
-        let folderPath = ROOT_TMP_PATH + "/simple-func";
+        const folderPath = ROOT_TMP_PATH + "/simple-func";
         fs.mkdirSync(folderPath);
 
         fs.writeFileSync(folderPath + "/nice.sql", `
@@ -326,8 +324,8 @@ describe("DdlManager.build", () => {
             folder: folderPath
         });
 
-        let result = await db.query("select nice() as nice");
-        let row = result.rows[0];
+        const result = await db.query("select nice() as nice");
+        const row = result.rows[0];
 
         expect(row).to.be.shallowDeepEqual({
             nice: 1
@@ -352,7 +350,7 @@ describe("DdlManager.build", () => {
 
 
     it("remove trigger", async() => {
-        let folderPath = ROOT_TMP_PATH + "/simple-func";
+        const folderPath = ROOT_TMP_PATH + "/simple-func";
         fs.mkdirSync(folderPath);
 
         await db.query(`
@@ -436,8 +434,8 @@ describe("DdlManager.build", () => {
             folder: ROOT_TMP_PATH
         });
 
-        let result = await db.query("select func2(1) as func2");
-        let row = result.rows[0];
+        const result = await db.query("select func2(1) as func2");
+        const row = result.rows[0];
 
         expect(row).to.be.shallowDeepEqual({
             func2: 2
@@ -507,7 +505,7 @@ describe("DdlManager.build", () => {
     });
 
     it("build simple function with comment", async() => {
-        let folderPath = ROOT_TMP_PATH + "/simple-func";
+        const folderPath = ROOT_TMP_PATH + "/simple-func";
         fs.mkdirSync(folderPath);
 
         fs.writeFileSync(folderPath + "/nice.sql", `
@@ -528,7 +526,7 @@ describe("DdlManager.build", () => {
             folder: folderPath
         });
 
-        let result = await db.query(`
+        const result = await db.query(`
             select
                 pg_catalog.obj_description( pg_proc.oid ) as comment
             from information_schema.routines as routines
@@ -547,7 +545,7 @@ describe("DdlManager.build", () => {
     });
 
     it("drop function with comment, after dump", async() => {
-        let folderPath = ROOT_TMP_PATH + "/simple-trigger";
+        const folderPath = ROOT_TMP_PATH + "/simple-trigger";
         fs.mkdirSync(folderPath);
 
         await db.query(`
@@ -596,7 +594,7 @@ describe("DdlManager.build", () => {
     });
 
     it("drop trigger with comment, after dump", async() => {
-        let folderPath = ROOT_TMP_PATH + "/simple-trigger";
+        const folderPath = ROOT_TMP_PATH + "/simple-trigger";
         fs.mkdirSync(folderPath);
 
         await db.query(`
@@ -658,7 +656,7 @@ describe("DdlManager.build", () => {
     });
 
     it("build function with comment, after dump, comment must be exists", async() => {
-        let folderPath = ROOT_TMP_PATH + "/simple-trigger";
+        const folderPath = ROOT_TMP_PATH + "/simple-trigger";
         fs.mkdirSync(folderPath);
 
         await db.query(`
@@ -717,7 +715,7 @@ describe("DdlManager.build", () => {
     });
 
     it("build trigger with comment, after dump, comment must be exists", async() => {
-        let folderPath = ROOT_TMP_PATH + "/simple-trigger";
+        const folderPath = ROOT_TMP_PATH + "/simple-trigger";
         fs.mkdirSync(folderPath);
 
         await db.query(`
@@ -787,7 +785,7 @@ describe("DdlManager.build", () => {
         let result;
         let row;
 
-        let folderPath = ROOT_TMP_PATH + "/simple-trigger";
+        const folderPath = ROOT_TMP_PATH + "/simple-trigger";
         fs.mkdirSync(folderPath);
 
         await db.query(`
@@ -861,15 +859,15 @@ describe("DdlManager.build", () => {
 
     
     it("build function(returns record), after dump", async() => {
-        let folderPath = ROOT_TMP_PATH + "/simple-func";
+        const folderPath = ROOT_TMP_PATH + "/simple-func";
         fs.mkdirSync(folderPath);
 
-        let body1 = `
+        const body1 = `
             begin
                 x = 10;
             end
         `;
-        let body2 = `
+        const body2 = `
             begin
                 z = a;
             end
@@ -904,12 +902,12 @@ language plpgsql;
             folder: folderPath
         });
 
-        let result = await db.query(`
+        const result = await db.query(`
             select
                 f1.x + f2.z as total
             from test() as f1, test(30) as f2
         `);
-        let row = result.rows[0];
+        const row = result.rows[0];
 
         expect(row).to.be.shallowDeepEqual({
             total: 40
@@ -917,15 +915,15 @@ language plpgsql;
     });
 
     it("build two functions from one file, using two separators ';'", async() => {
-        let folderPath = ROOT_TMP_PATH + "/simple-func";
+        const folderPath = ROOT_TMP_PATH + "/simple-func";
         fs.mkdirSync(folderPath);
 
-        let body1 = `
+        const body1 = `
             begin
                 return 1;
             end
         `;
-        let body2 = `
+        const body2 = `
             begin
                 return x;
             end
@@ -951,12 +949,12 @@ language plpgsql;
             folder: folderPath
         });
 
-        let result = await db.query(`
+        const result = await db.query(`
             select
                 f1 + f2 as total
             from test() as f1, test(30) as f2
         `);
-        let row = result.rows[0];
+        const row = result.rows[0];
 
         expect(row).to.be.shallowDeepEqual({
             total: 31
@@ -964,7 +962,7 @@ language plpgsql;
     });
 
     it("build function with type public.\"order\" inside arguments", async() => {
-        let folderPath = ROOT_TMP_PATH + "/quotes-arg-func";
+        const folderPath = ROOT_TMP_PATH + "/quotes-arg-func";
         fs.mkdirSync(folderPath);
 
         await db.query(`
@@ -1071,7 +1069,7 @@ language plpgsql;
                 select my_func() as my_func;
         `);
 
-        let folderPath = ROOT_TMP_PATH + "/ignore-cascades";
+        const folderPath = ROOT_TMP_PATH + "/ignore-cascades";
         fs.mkdirSync(folderPath);
 
         await DdlManager.dump({
@@ -1131,7 +1129,7 @@ language plpgsql;
                 select my_func() as my_func;
         `);
 
-        let folderPath = ROOT_TMP_PATH + "/some-freeze-func";
+        const folderPath = ROOT_TMP_PATH + "/some-freeze-func";
         fs.mkdirSync(folderPath);
 
         await DdlManager.dump({
@@ -1179,7 +1177,7 @@ language plpgsql;
             language plpgsql;
         `);
 
-        let folderPath = ROOT_TMP_PATH + "/test-inf8";
+        const folderPath = ROOT_TMP_PATH + "/test-inf8";
         fs.mkdirSync(folderPath);
 
         let result = await db.query(`
@@ -1215,10 +1213,10 @@ language plpgsql;
 
     it("build from many folders", async() => {
 
-        let folderPath1 = ROOT_TMP_PATH + "/many-folder-1";
+        const folderPath1 = ROOT_TMP_PATH + "/many-folder-1";
         fs.mkdirSync(folderPath1);
 
-        let folderPath2 = ROOT_TMP_PATH + "/many-folder-2";
+        const folderPath2 = ROOT_TMP_PATH + "/many-folder-2";
         fs.mkdirSync(folderPath2);
 
         fs.writeFileSync(folderPath1 + "/func1.sql", `

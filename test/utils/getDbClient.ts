@@ -1,8 +1,6 @@
-"use strict";
+import pg from "pg";
 
-const pg = require("pg");
-
-async function getDBClient() {
+export async function getDBClient() {
     let dbConfig = {
         database: false,
         user: false,
@@ -40,7 +38,7 @@ async function getDBClient() {
 
     let dbClient;
     try {
-        dbClient = new pg.Client(dbConfig);
+        dbClient = new pg.Client(dbConfig as any);
         await dbClient.connect();
     } catch(err) {
         throw new Error(
@@ -55,4 +53,3 @@ async function getDBClient() {
     return dbClient;
 }
 
-module.exports = getDBClient;

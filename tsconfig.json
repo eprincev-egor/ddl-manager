@@ -7,6 +7,7 @@
         "module": "commonjs",
         "esModuleInterop": true,
         "strict": true,
+        "allowJs": true,
         "skipLibCheck": true
     },
     "include": ["./lib/**/*.ts"]

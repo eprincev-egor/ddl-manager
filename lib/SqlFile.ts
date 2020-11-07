@@ -1,18 +1,19 @@
-"use strict";
-
-const {Syntax, Types} = require("lang-coach");
-const {
+import { Syntax, Types } from "lang-coach";
+import {
     CreateFunction,
     CreateTrigger,
-    CommentOn
-} = require("grapeql-lang");
-const {
+    CommentOnFunction,
+    CommentOnTrigger,
+    GrapeQLCoach
+} from "grapeql-lang";
+import {
     function2identifySql,
     trigger2identifySql,
     function2identifyJson
-} = require("./utils");
+} from "./utils";
 
-class SqlFile extends Syntax {
+// TODO: any => type
+export class SqlFile extends (Syntax as any) {
     structure() {
         return {
             functions: Types.Array({
@@ -22,12 +23,17 @@ class SqlFile extends Syntax {
                 element: CreateTrigger
             }),
             comments: Types.Array({
-                element: CommentOn
+                element: Types.Or({
+                    or: [
+                        CommentOnFunction,
+                        CommentOnTrigger
+                    ]
+                })
             })
         };
     }
 
-    parse(coach, data) {
+    parse(coach: GrapeQLCoach, data: SqlFile["TInputData"]) {
         coach.skipSpace();
 
         data.functions = [];
@@ -39,13 +45,14 @@ class SqlFile extends Syntax {
         this.parseTriggers( coach, data );
     }
 
-    parseFunctions(coach, data) {
-        let func = coach.parse(CreateFunction);
+    parseFunctions(coach: GrapeQLCoach, data: SqlFile["TInputData"]) {
+        const func = coach.parse(CreateFunction);
         
+        // TODO: any => type
         // check duplicate
-        let isDuplicate = data.functions.some(prevFunc =>
+        const isDuplicate = data.functions.some((prevFunc: any) =>
             function2identifySql( prevFunc )
-            == 
+            ===
             function2identifySql( func )
         );
 
@@ -54,9 +61,10 @@ class SqlFile extends Syntax {
         }
 
         // two function inside file, can be with only same name and schema
-        let isWrongName = data.functions.some(prevFunc =>
-            prevFunc.row.name != func.row.name ||
-            prevFunc.row.schema != func.row.schema
+        // TODO: any => type
+        const isWrongName = data.functions.some((prevFunc: any) =>
+            prevFunc.row.name !== func.row.name ||
+            prevFunc.row.schema !== func.row.schema
         );
 
         if ( isWrongName ) {
@@ -70,7 +78,7 @@ class SqlFile extends Syntax {
 
         
         // comment on function
-        let comment = func.row.comment;
+        const comment = func.row.comment;
         if ( comment ) {
             data.comments.push(comment);
 
@@ -78,11 +86,11 @@ class SqlFile extends Syntax {
                 coach.throwError("comment after function, must be: comment on function");
             }
 
-            let {schema, name, args} = comment.row.function.row;
-            let identify = `${schema}.${name}(${ (args || []).join(", ") })`;
-            let shouldBeIdentify = function2identifySql( func );
+            const {schema, name, args} = comment.row.function.row;
+            const identify = `${schema}.${name}(${ (args || []).join(", ") })`;
+            const shouldBeIdentify = function2identifySql( func );
 
-            if ( identify != shouldBeIdentify ) {
+            if ( identify !== shouldBeIdentify ) {
                 coach.throwError("comment after function has wrong identify: " + identify);
             }
         }
@@ -95,7 +103,7 @@ class SqlFile extends Syntax {
         }
     }
 
-    parseTriggers(coach, data) {
+    parseTriggers(coach: GrapeQLCoach, data: SqlFile["TInputData"]) {
         coach.skipSpace();
 
         // skip spaces and some ;
@@ -105,17 +113,18 @@ class SqlFile extends Syntax {
             return;
         }
 
-        let firstFunc = data.functions[0];
+        const firstFunc = data.functions[0];
         if ( !firstFunc ) {
             coach.throwError("trigger inside file can be only with function");
         }
 
-        let trigger = coach.parse(CreateTrigger);
+        // TODO: any => type
+        const trigger = coach.parse(CreateTrigger) as any;
 
         // validate function name and trigger procedure
         if ( 
-            firstFunc.row.schema != trigger.row.procedure.row.schema ||
-            firstFunc.row.name != trigger.row.procedure.row.name
+            firstFunc.row.schema !== trigger.row.procedure.row.schema ||
+            firstFunc.row.name !== trigger.row.procedure.row.name
         ) {
             throw new Error(`wrong procedure name ${
                 trigger.row.procedure.row.schema
@@ -124,18 +133,20 @@ class SqlFile extends Syntax {
             }`);
         }
 
+        // TODO: any => type
         // validate function returns type
-        let hasTriggerFunc = data.functions.some(func =>
-            func.row.returns.row.type == "trigger"
+        const hasTriggerFunc = data.functions.some((func: any) =>
+            func.row.returns.row.type === "trigger"
         );
         if ( !hasTriggerFunc ) {
             throw new Error("file must contain function with returns type trigger");
         }
         
+        // TODO: any => type
         // check duplicate
-        let isDuplicate = data.triggers.some(prevTrigger =>
+        const isDuplicate = data.triggers.some((prevTrigger: any) =>
             trigger2identifySql( prevTrigger )
-            == 
+            ===
             trigger2identifySql( trigger )
         );
 
@@ -146,7 +157,7 @@ class SqlFile extends Syntax {
         data.triggers.push(trigger);
 
         // comment on trigger
-        let comment = trigger.row.comment;
+        const comment = trigger.row.comment;
         if ( comment ) {
             data.comments.push(comment);
 
@@ -154,11 +165,11 @@ class SqlFile extends Syntax {
                 coach.throwError("comment after trigger, must be: comment on trigger");
             }
 
-            let {schema, table, name} = comment.row.trigger.row;
-            let identify = `${name} on ${schema}.${table}`;
-            let shouldBeIdentify = trigger2identifySql( trigger );
+            const {schema, table, name} = comment.row.trigger.row;
+            const identify = `${name} on ${schema}.${table}`;
+            const shouldBeIdentify = trigger2identifySql( trigger );
 
-            if ( identify != shouldBeIdentify ) {
+            if ( identify !== shouldBeIdentify ) {
                 coach.throwError("comment after trigger has wrong identify: " + identify);
             }
         }
@@ -166,11 +177,11 @@ class SqlFile extends Syntax {
         this.parseTriggers( coach, data );
     }
     
-    is(coach) {
-        let i = coach.i;
+    is(coach: GrapeQLCoach) {
+        const i = coach.i;
 
         coach.skipSpace();
-        let isSqlFile = coach.is(CreateFunction);
+        const isSqlFile = coach.is(CreateFunction);
 
         coach.i = i;
 
@@ -180,7 +191,8 @@ class SqlFile extends Syntax {
     toString() {
         let out = "";
 
-        this.row.functions.forEach((func, i) => {
+        // TODO: any => type
+        this.row.functions.forEach((func: any, i: number) => {
             if ( i > 0 ) {
                 out += ";\n";
             }
@@ -188,12 +200,12 @@ class SqlFile extends Syntax {
             out += func.toString();
 
             if ( this.row.comments ) {
-                let identifyJson = function2identifyJson( func );
-                identifyJson = JSON.stringify( identifyJson );
+                const identifyJson = function2identifyJson( func );
 
-                let funcComment = this.row.comments.find(comment =>
+                // TODO: any => type
+                const funcComment = this.row.comments.find((comment: any) =>
                     comment.row.function &&
-                    JSON.stringify(comment.row.function) == identifyJson
+                    JSON.stringify(comment.row.function) === JSON.stringify( identifyJson )
                 );
     
                 if ( funcComment ) {
@@ -204,16 +216,18 @@ class SqlFile extends Syntax {
         });
 
         if ( this.row.triggers ) {
-            this.row.triggers.forEach(trigger => {
+            // TODO: any => type
+            this.row.triggers.forEach((trigger: any) => {
                 out += ";";
                 out += trigger.toString();
 
                 if ( this.row.comments ) {
-                    let triggerComment = this.row.comments.find(comment =>
+                    // TODO: any => type
+                    const triggerComment = this.row.comments.find((comment: any) =>
                         comment.row.trigger &&
-                        comment.row.trigger.row.schema == trigger.row.table.row.schema &&
-                        comment.row.trigger.row.table == trigger.row.table.row.name &&
-                        comment.row.trigger.row.name == trigger.row.name
+                        comment.row.trigger.row.schema === trigger.row.table.row.schema &&
+                        comment.row.trigger.row.table === trigger.row.table.row.name &&
+                        comment.row.trigger.row.name === trigger.row.name
                     );
 
                     if ( triggerComment ) {
@@ -228,5 +242,3 @@ class SqlFile extends Syntax {
     }
 
 }
-
-module.exports = {SqlFile};

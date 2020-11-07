@@ -1,21 +1,14 @@
-"use strict";
-
-const assert = require("assert");
-const fs = require("fs");
-const FilesState = require("../../lib/FilesState");
-const del = require("del");
-const {expect, use} = require("chai");
-const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+import assert from "assert";
+import fs from "fs";
+import fse from "fs-extra";
+import { FilesState } from "../../lib/FilesState";
+import {expect, use} from "chai";
+import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import { sleep } from "../utils/sleep";
 
 use(chaiShallowDeepEqualPlugin);
 
-async function sleep(ms) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
-}
-
-const watchers_to_stop = [];
+const watchers_to_stop: any[] = [];
 
 const test_func1_sql = `
     create or replace function some_func1()
@@ -104,13 +97,13 @@ describe("FilesState watch change triggers", () => {
     
     beforeEach(() => {
         if ( fs.existsSync(ROOT_TMP_PATH) ) {
-            del.sync(ROOT_TMP_PATH);
+            fse.removeSync(ROOT_TMP_PATH);
         }
         fs.mkdirSync(ROOT_TMP_PATH);
     });
     
     afterEach(() => {
-        del.sync(ROOT_TMP_PATH);
+        fse.removeSync(ROOT_TMP_PATH);
 
         watchers_to_stop.forEach(filesState => 
             filesState.stopWatch()
@@ -120,11 +113,11 @@ describe("FilesState watch change triggers", () => {
     
     it("change trigger", async() => {
         
-        let filePath = ROOT_TMP_PATH + "/change-trigger.sql";
+        const filePath = ROOT_TMP_PATH + "/change-trigger.sql";
         fs.writeFileSync(filePath, test_func1_sql);
         
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
         
@@ -181,11 +174,11 @@ describe("FilesState watch change triggers", () => {
 
     it("write file same trigger, no changes", async() => {
         
-        let filePath = ROOT_TMP_PATH + "/change-trigger.sql";
+        const filePath = ROOT_TMP_PATH + "/change-trigger.sql";
         fs.writeFileSync(filePath, test_func1_sql);
         
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
         
@@ -220,13 +213,13 @@ describe("FilesState watch change triggers", () => {
     });
 
     it("expected error on duplicate triggers", async() => {
-        let filePath1 = ROOT_TMP_PATH + "/change-trigger1.sql";
-        let filePath2 = ROOT_TMP_PATH + "/change-trigger2.sql";
+        const filePath1 = ROOT_TMP_PATH + "/change-trigger1.sql";
+        const filePath2 = ROOT_TMP_PATH + "/change-trigger2.sql";
         fs.writeFileSync(filePath1, test_func1_sql);
         fs.writeFileSync(filePath2, test_func2_sql);
         
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
         
@@ -240,7 +233,7 @@ describe("FilesState watch change triggers", () => {
         ]);
         
 
-        let error;
+        let error: Error | undefined;
         filesState.on("error", (err) => {
             error = err;
         });
@@ -275,11 +268,11 @@ describe("FilesState watch change triggers", () => {
     
     it("twice change function", async() => {
 
-        let filePath = ROOT_TMP_PATH + "/change-trigger.sql";
+        const filePath = ROOT_TMP_PATH + "/change-trigger.sql";
         fs.writeFileSync(filePath, test_func1_sql);
         
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
         
@@ -367,11 +360,11 @@ describe("FilesState watch change triggers", () => {
 
     it("change trigger on function", async() => {
         
-        let filePath = ROOT_TMP_PATH + "/change-trigger.sql";
+        const filePath = ROOT_TMP_PATH + "/change-trigger.sql";
         fs.writeFileSync(filePath, test_func1_sql);
         
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
         
@@ -423,11 +416,11 @@ describe("FilesState watch change triggers", () => {
     
     it("change function on trigger", async() => {
         
-        let filePath = ROOT_TMP_PATH + "/change-trigger.sql";
+        const filePath = ROOT_TMP_PATH + "/change-trigger.sql";
         fs.writeFileSync(filePath, only_function_sql);
         
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
         

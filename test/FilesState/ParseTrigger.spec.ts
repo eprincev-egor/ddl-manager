@@ -1,11 +1,9 @@
-"use strict";
-
-const assert = require("assert");
-const fs = require("fs");
-const FilesState = require("../../lib/FilesState");
-const del = require("del");
-const {expect, use} = require("chai");
-const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+import assert from "assert";
+import fs from "fs";
+import fse from "fs-extra";
+import { FilesState } from "../../lib/FilesState";
+import {expect, use} from "chai";
+import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 
 use(chaiShallowDeepEqualPlugin);
 
@@ -14,25 +12,25 @@ describe("FilesState parse functions and triggers", () => {
         
     beforeEach(() => {
         if ( fs.existsSync(ROOT_TMP_PATH) ) {
-            del.sync(ROOT_TMP_PATH);
+            fse.removeSync(ROOT_TMP_PATH);
         }
         fs.mkdirSync(ROOT_TMP_PATH);
     });
     
     afterEach(() => {
-        del.sync(ROOT_TMP_PATH);
+        fse.removeSync(ROOT_TMP_PATH);
     });
 
     
 
     it("parse file with function and trigger", () => {
-        let body = `
+        const body = `
         begin
             return new;
         end
         `;
 
-        let sql = `
+        const sql = `
             create or replace function some_action_on_diu_company()
             returns trigger as $body$${body}$body$
             language plpgsql;
@@ -44,10 +42,10 @@ describe("FilesState parse functions and triggers", () => {
             execute procedure some_action_on_diu_company();
         `;
         
-        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
         fs.writeFileSync(filePath, sql);
 
-        let expectedFunctions = [
+        const expectedFunctions = [
             {
                 language: "plpgsql",
                 schema: "public",
@@ -58,7 +56,7 @@ describe("FilesState parse functions and triggers", () => {
             }
         ];
 
-        let expectedTriggers = [
+        const expectedTriggers = [
             {
                 table: {
                     schema: "public",
@@ -76,12 +74,12 @@ describe("FilesState parse functions and triggers", () => {
             }
         ];
         
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 
-        let actualFunctions = filesState.getFunctions();
-        let actualTriggers = filesState.getTriggers();
+        const actualFunctions = filesState.getFunctions();
+        const actualTriggers = filesState.getTriggers();
 
         expect(actualFunctions).to.be.shallowDeepEqual(expectedFunctions);
         expect(actualTriggers).to.be.shallowDeepEqual(expectedTriggers);
@@ -90,13 +88,13 @@ describe("FilesState parse functions and triggers", () => {
 
     
     it("expected error on wrong procedure name", () => {
-        let body = `
+        const body = `
         begin
             return new;
         end
         `;
 
-        let sql = `
+        const sql = `
             create or replace function some_action_on_diu_company1()
             returns trigger as $body$${body}$body$
             language plpgsql;
@@ -108,13 +106,13 @@ describe("FilesState parse functions and triggers", () => {
             execute procedure some_action_on_diu_company2();
         `;
         
-        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
         fs.writeFileSync(filePath, sql);
 
         let err = {message: "expected error"};
         FilesState.create({
             folder: ROOT_TMP_PATH,
-            onError(_err) {
+            onError(_err: Error) {
                 err = _err;
             }
         });
@@ -124,13 +122,13 @@ describe("FilesState parse functions and triggers", () => {
 
     
     it("expected error on wrong returns type", () => {
-        let body = `
+        const body = `
         begin
             return new;
         end
         `;
 
-        let sql = `
+        const sql = `
             create or replace function some_action_on_diu_company()
             returns bigint as $body$${body}$body$
             language plpgsql;
@@ -142,13 +140,13 @@ describe("FilesState parse functions and triggers", () => {
             execute procedure some_action_on_diu_company();
         `;
         
-        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
         fs.writeFileSync(filePath, sql);
 
         let err = {message: "expected error"};
         FilesState.create({
             folder: ROOT_TMP_PATH,
-            onError(_err) {
+            onError(_err: Error) {
                 err = _err;
             }
         });
@@ -157,7 +155,7 @@ describe("FilesState parse functions and triggers", () => {
     });
 
     it("expected error on duplicate trigger", () => {
-        let sql1 = `
+        const sql1 = `
             create or replace function func1()
             returns trigger as $body$select 1$body$
             language sql;
@@ -168,7 +166,7 @@ describe("FilesState parse functions and triggers", () => {
             for each row
             execute procedure func1();
         `;
-        let sql2 = `
+        const sql2 = `
             create or replace function func2()
             returns trigger as $body$select 2$body$
             language sql;
@@ -180,8 +178,8 @@ describe("FilesState parse functions and triggers", () => {
             execute procedure func2();
         `;
         
-        let filePath1 = ROOT_TMP_PATH + "/func1.sql";
-        let filePath2 = ROOT_TMP_PATH + "/func2.sql";
+        const filePath1 = ROOT_TMP_PATH + "/func1.sql";
+        const filePath2 = ROOT_TMP_PATH + "/func2.sql";
         fs.writeFileSync(filePath1, sql1);
         fs.writeFileSync(filePath2, sql2);
 
@@ -189,7 +187,7 @@ describe("FilesState parse functions and triggers", () => {
         let err = {message: "expected error"};
         FilesState.create({
             folder: ROOT_TMP_PATH,
-            onError(_err) {
+            onError(_err: Error) {
                 err = _err;
             }
         });
@@ -199,13 +197,13 @@ describe("FilesState parse functions and triggers", () => {
     });
 
     it("parse trigger with comment", () => {
-        let body = `
+        const body = `
         begin
             return new;
         end
         `;
 
-        let sql = `
+        const sql = `
             create or replace function some_action_on_diu_company()
             returns trigger as $body$${body}$body$
             language plpgsql;
@@ -219,10 +217,10 @@ describe("FilesState parse functions and triggers", () => {
             comment on trigger some_action_on_diu_company_trigger on company is $$test$$;
         `;
         
-        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
         fs.writeFileSync(filePath, sql);
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 

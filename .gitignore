@@ -2,3 +2,5 @@ node_modules
 package-lock.json
 ddl-manager-config.js
 .vscode
+coverage
+.nyc_output

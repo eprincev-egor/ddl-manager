@@ -1,21 +1,14 @@
-"use strict";
-
-const assert = require("assert");
-const fs = require("fs");
-const FilesState = require("../../lib/FilesState");
-const del = require("del");
-const {expect, use} = require("chai");
-const chaiShallowDeepEqualPlugin = require("chai-shallow-deep-equal");
+import assert from "assert";
+import fs from "fs";
+import fse from "fs-extra";
+import { FilesState } from "../../lib/FilesState";
+import {expect, use} from "chai";
+import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import { sleep } from "../utils/sleep";
 
 use(chaiShallowDeepEqualPlugin);
 
-async function sleep(ms) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
-}
-
-const watchers_to_stop = [];
+const watchers_to_stop: any[] = [];
 
 const test_func1_sql = `
     create or replace function some_func1()
@@ -50,7 +43,7 @@ describe("FilesState watch remove functions", () => {
     
     beforeEach(() => {
         if ( fs.existsSync(ROOT_TMP_PATH) ) {
-            del.sync(ROOT_TMP_PATH);
+            fse.removeSync(ROOT_TMP_PATH);
         }
         fs.mkdirSync(ROOT_TMP_PATH);
     });
@@ -60,17 +53,17 @@ describe("FilesState watch remove functions", () => {
             filesState.stopWatch()
         );
 
-        del.sync(ROOT_TMP_PATH);
+        fse.removeSync(ROOT_TMP_PATH);
     });
 
     
     it("remove function", async() => {
         
-        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
 
         fs.writeFileSync(filePath, test_func1_sql);
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 
@@ -111,10 +104,10 @@ describe("FilesState watch remove functions", () => {
         
         fs.writeFileSync(ROOT_TMP_PATH + "/test.sql", test_func1_sql);
         
-        let mdFilePath = ROOT_TMP_PATH + "/test.md";
+        const mdFilePath = ROOT_TMP_PATH + "/test.md";
         fs.writeFileSync(mdFilePath, test_func1_sql);
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 
@@ -142,12 +135,12 @@ describe("FilesState watch remove functions", () => {
     });
 
     it("remove file from sub dir", async() => {
-        let filePath = ROOT_TMP_PATH + "/child/xxx.sql";
+        const filePath = ROOT_TMP_PATH + "/child/xxx.sql";
         
         fs.mkdirSync(ROOT_TMP_PATH + "/child");
         fs.writeFileSync(filePath, test_func1_sql);
         
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 
@@ -187,14 +180,14 @@ describe("FilesState watch remove functions", () => {
     });
 
     it("twice remove", async() => {
-        let filePath1 = ROOT_TMP_PATH + "/file1.sql";
-        let filePath2 = ROOT_TMP_PATH + "/file2.sql";
+        const filePath1 = ROOT_TMP_PATH + "/file1.sql";
+        const filePath2 = ROOT_TMP_PATH + "/file2.sql";
 
         fs.writeFileSync(filePath1, test_func1_sql);
         fs.writeFileSync(filePath2, test_func2_sql);
         
         
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 
@@ -261,13 +254,13 @@ describe("FilesState watch remove functions", () => {
 
     it("remove function with comments", async() => {
         
-        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
 
         fs.writeFileSync(filePath, test_func1_sql +  `
             comment on function some_func1() is 'awesome'
         `);
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 
@@ -345,11 +338,11 @@ describe("FilesState watch remove functions", () => {
             body: {content: "begin\n\nend"}
         };
 
-        let filePath = ROOT_TMP_PATH + "/test-file.sql";
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
 
         fs.writeFileSync(filePath, func_sql);
 
-        let filesState = FilesState.create({
+        const filesState = FilesState.create({
             folder: ROOT_TMP_PATH
         });
 
