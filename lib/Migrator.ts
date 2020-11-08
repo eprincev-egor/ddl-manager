@@ -24,7 +24,7 @@ export class Migrator {
         this.pgClient = pgClient;
     }
 
-    async migrate(diff: IDiff, throwError?: boolean) {
+    async migrate(diff: IDiff) {
         assert.ok(diff);
 
         const outputErrors: Error[] = [];
@@ -35,13 +35,6 @@ export class Migrator {
 
         await this.createFunctions(diff, outputErrors);
         await this.createTriggers(diff, outputErrors);
-
-        if ( throwError !== false ) {
-            if ( outputErrors.length ) {
-                const err = outputErrors[0];
-                throw new Error(err.message);
-            }
-        }
 
         return outputErrors;
     }

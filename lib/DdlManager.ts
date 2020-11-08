@@ -23,8 +23,16 @@ export class DdlManager {
         const {db, diff, throwError} = params;
 
         const migrator = new Migrator(db);
-        const output = migrator.migrate(diff, throwError);
-        return output;
+        const outputErrors = await migrator.migrate(diff);
+
+        if ( throwError !== false ) {
+            if ( outputErrors.length ) {
+                const err = outputErrors[0];
+                throw new Error(err.message);
+            }
+        }
+
+        return outputErrors;
     }
 
     static async build(params: {
