@@ -1,4 +1,3 @@
-import { DbState } from "./DbState";
 import { FilesState } from "./FilesState";
 import fs from "fs";
 import path from "path";
@@ -14,6 +13,7 @@ import {
 } from "./utils";
 import { Comparator } from "./Comparator";
 import { Migrator } from "./Migrator";
+import { PostgresDriver } from "./database/PostgresDriver";
 
 const watchers: FilesState[] = [];
 
@@ -75,8 +75,8 @@ export class DdlManager {
             comments: filesStateInstance.getComments()
         };
         
-        const dbState = new DbState(db);
-        await dbState.load();
+        const postgres = new PostgresDriver(db);
+        const dbState = await postgres.loadState();
 
         const comparator = new Comparator();
         const diff = comparator.compare(dbState, filesState);
@@ -197,8 +197,8 @@ export class DdlManager {
             throw new Error(`folder "${ folder }" not found`);
         }
 
-        const dbState = new DbState(db);
-        await dbState.load();
+        const postgres = new PostgresDriver(db);
+        const dbState = await postgres.loadState();
 
         const dbComments = dbState.comments || [];
 
@@ -342,7 +342,7 @@ export class DdlManager {
         }
         
         if ( unfreeze ) {
-            await dbState.unfreezeAll();
+            await postgres.unfreezeAll(dbState);
         }
 
         if ( needCloseConnect ) {

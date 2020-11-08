@@ -2,6 +2,8 @@ import { CreateFunction, CreateTrigger } from "grapeql-lang";
 
 // TODO: use DatabaseFunction class
 export type DatabaseFunctionType = CreateFunction["TJson"] & {
+    schema: string;
+    name: string;
     returns: {
         type?: string;
         setof?: boolean;
@@ -24,7 +26,18 @@ export type DatabaseTriggerType = CreateTrigger["TJson"] & {
     };
 };
 
+// TODO: any => type
+export interface IState {
+    functions: DatabaseFunctionType[];
+    triggers: DatabaseTriggerType[];
+    comments: any[];
+}
+
+export interface IDiff {
+    drop: IState;
+    create: IState;
+}
+
 export interface IDatabaseDriver {
-    loadFunctions(): Promise<DatabaseFunctionType[]>;
-    loadTriggers(): Promise<DatabaseTriggerType[]>;
+    loadState(): Promise<IState>;
 }

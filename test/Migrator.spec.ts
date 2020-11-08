@@ -1,9 +1,9 @@
 import assert from "assert";
 import { getDBClient } from "./utils/getDbClient";
 import { Migrator } from "../lib/Migrator";
+import { IDiff } from "../lib/interface";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
-import { IDiff } from "../lib/Comparator";
 
 use(chaiShallowDeepEqualPlugin);
 

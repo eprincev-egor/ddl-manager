@@ -1,18 +1,6 @@
 import assert from "assert";
 import _ from "lodash";
-import { DatabaseFunctionType, DatabaseTriggerType } from "./database/interface";
-
-// TODO: any => type
-interface IState {
-    functions: DatabaseFunctionType[];
-    triggers: DatabaseTriggerType[];
-    comments: any[];
-}
-
-export interface IDiff {
-    drop: IState;
-    create: IState;
-}
+import { IState, IDiff } from "./interface";
 
 export class Comparator {
 

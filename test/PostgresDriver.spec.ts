@@ -1,8 +1,8 @@
 import fs from "fs";
 import fse from "fs-extra";
-import { getDBClient } from "../utils/getDbClient";
-import { DdlManager } from "../../lib/DdlManager";
-import { DbState } from "../../lib/DbState";
+import { getDBClient } from "./utils/getDbClient";
+import { DdlManager } from "../lib/DdlManager";
+import { PostgresDriver } from "../lib/database/PostgresDriver";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 
@@ -10,7 +10,7 @@ use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
-describe("DbState.load", () => {
+describe("PostgresDriver.loadState", () => {
     // TODO: any => type
     let db: any;
 
@@ -31,12 +31,17 @@ describe("DbState.load", () => {
     afterEach(async() => {
         db.end();
     });
-    
-    it("load empty state", async() => {
-        const state = new DbState(db);
-        await state.load();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+    async function loadState() {
+        const driver = new PostgresDriver(db);
+        const state = await driver.loadState();
+        return state;
+    }
+
+    it("load empty state", async() => {
+        const state = await loadState();
+
+        expect(state).to.be.shallowDeepEqual({
             functions: [],
             triggers: []
         });
@@ -55,10 +60,9 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -101,10 +105,9 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -160,10 +163,9 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -211,10 +213,9 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -243,10 +244,9 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -283,10 +283,9 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -328,10 +327,9 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -365,10 +363,9 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -416,10 +413,9 @@ describe("DbState.load", () => {
             execute procedure test_func();
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -479,10 +475,9 @@ describe("DbState.load", () => {
             execute procedure test_func();
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -540,10 +535,9 @@ describe("DbState.load", () => {
             folder: folderPath
         });
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -599,10 +593,9 @@ describe("DbState.load", () => {
             folder: folderPath
         });
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -650,10 +643,9 @@ describe("DbState.load", () => {
             );
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [],
             triggers: []
         });
@@ -675,10 +667,9 @@ describe("DbState.load", () => {
             );
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [],
             triggers: []
         });
@@ -692,10 +683,9 @@ describe("DbState.load", () => {
             language sql;
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "sql",
@@ -723,10 +713,9 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -754,10 +743,9 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -788,10 +776,9 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -820,10 +807,9 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",
@@ -852,10 +838,9 @@ describe("DbState.load", () => {
             language plpgsql;
         `);
 
-        const state = new DbState(db);
-        await state.load();
+        const state = await loadState();
 
-        expect(state.toJSON()).to.be.shallowDeepEqual({
+        expect(state).to.be.shallowDeepEqual({
             functions: [
                 {
                     language: "plpgsql",

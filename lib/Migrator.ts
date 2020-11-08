@@ -1,4 +1,5 @@
-import { DbState } from "./DbState";
+import { Client } from "pg";
+import assert from "assert";
 import {
     findCommentByFunction,
     findCommentByTrigger,
@@ -13,9 +14,11 @@ import {
     trigger2sql,
     function2sql
 } from "./utils";
-import { Client } from "pg";
-import { IDiff } from "./Comparator";
-import assert from "assert";
+import { IDiff } from "./interface";
+import { getCheckFreezeFunctionSql } from "./database/postgres/getCheckFreezeFunctionSql";
+import { getCheckFreezeTriggerSql } from "./database/postgres/getCheckFreezeTriggerSql";
+import { getUnfreezeFunctionSql } from "./database/postgres/getUnfreezeFunctionSql";
+import { getUnfreezeTriggerSql } from "./database/postgres/getUnfreezeTriggerSql";
 
 export class Migrator {
     private pgClient: Client;
@@ -75,7 +78,7 @@ export class Migrator {
             let ddlSql = "";
             
             // check freeze object
-            const checkFreezeSql = DbState.getCheckFreezeTriggerSql( 
+            const checkFreezeSql = getCheckFreezeTriggerSql( 
                 trigger,
                 `cannot drop freeze trigger ${ triggerIdentifySql }`
             );
@@ -103,7 +106,7 @@ export class Migrator {
             let ddlSql = "";
 
             // check freeze object
-            const checkFreezeSql = DbState.getCheckFreezeFunctionSql( 
+            const checkFreezeSql = getCheckFreezeFunctionSql( 
                 func,
                 `cannot drop freeze function ${ funcIdentifySql }`
             );
@@ -137,7 +140,7 @@ export class Migrator {
             const funcIdentifySql = function2identifySql( func );
 
             // check freeze object
-            const checkFreezeSql = DbState.getCheckFreezeFunctionSql( 
+            const checkFreezeSql = getCheckFreezeFunctionSql( 
                 func,
                 "",
                 "drop"
@@ -155,7 +158,7 @@ export class Migrator {
                 func
             );
 
-            ddlSql += DbState.getUnfreezeFunctionSql(func, comment);
+            ddlSql += getUnfreezeFunctionSql(func, comment);
 
             try {
                 await this.pgClient.query(ddlSql);
@@ -176,7 +179,7 @@ export class Migrator {
             let ddlSql = "";
             
             // check freeze object
-            const checkFreezeSql = DbState.getCheckFreezeTriggerSql( 
+            const checkFreezeSql = getCheckFreezeTriggerSql( 
                 trigger,
                 `cannot replace freeze trigger ${ triggerIdentifySql }`
             );
@@ -195,7 +198,7 @@ export class Migrator {
                 diff.create.comments || [],
                 trigger
             );
-            ddlSql += DbState.getUnfreezeTriggerSql(trigger, comment);
+            ddlSql += getUnfreezeTriggerSql(trigger, comment);
 
             try {
                 await this.pgClient.query(ddlSql);
