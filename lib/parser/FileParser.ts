@@ -5,6 +5,7 @@ import {
     Comment
 } from "grapeql-lang";
 import { SqlFile } from "./SqlFile";
+import { IState } from "../interface";
 
 export class FileParser {
 
@@ -13,7 +14,7 @@ export class FileParser {
         return parser.parse(sql);
     }
 
-    parse(sql: string) {
+    parse(sql: string): IState | undefined {
         const coach = replaceComments(sql);
         
         if ( coach.str.trim() === "" ) {

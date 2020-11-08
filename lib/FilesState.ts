@@ -8,29 +8,7 @@ import {
     function2identifySql
 } from "./utils";
 import { FileParser } from "./parser/FileParser";
-
-interface IFile {
-    name: string;
-    folder: string;
-    path: string;
-    // TODO: any => type
-    content: {
-        functions: any[];
-        triggers: any[];
-    }
-}
-
-// TODO: any => type
-interface IChanges {
-    drop: {
-        functions: any[];
-        triggers: any[];
-    };
-    create: {
-        functions: any[];
-        triggers: any[];
-    }
-}
+import { DatabaseFunctionType, IDiff, IFile } from "./interface";
 
 export class FilesState extends EventEmitter {
     static create(params: {folder: string | string[], onError?: any}) {
@@ -134,7 +112,7 @@ export class FilesState extends EventEmitter {
         }
     }
 
-    checkDuplicateFunction(func: IFile) {
+    checkDuplicateFunction(func: DatabaseFunctionType) {
         const identify = function2identifySql(func);
 
         const hasDuplicate = this.files.some(someFile => {
@@ -290,7 +268,7 @@ export class FilesState extends EventEmitter {
 
     onRemoveDirOrFile(rootFolderPath: string, subPath: string) {
         let hasChange = false;
-        const changes: IChanges = {
+        const changes: IDiff = {
             drop: {
                 functions: [],
                 triggers: []
@@ -384,7 +362,7 @@ export class FilesState extends EventEmitter {
         this.files.splice(fileIndex, 1);
 
         // TODO: any => type
-        const changes: IChanges = {
+        const changes: IDiff = {
             drop: {
                 functions: oldFile.content.functions,
                 triggers: []
@@ -435,7 +413,7 @@ export class FilesState extends EventEmitter {
 
         this.files.push( file );
         
-        const changes: IChanges = {
+        const changes: IDiff = {
             drop: {
                 functions: [],
                 triggers: []

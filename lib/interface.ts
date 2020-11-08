@@ -40,3 +40,10 @@ export interface IDiff {
 export interface IDatabaseDriver {
     loadState(): Promise<IState>;
 }
+
+export interface IFile {
+    name: string;
+    folder: string;
+    path: string;
+    content: IState;
+}
