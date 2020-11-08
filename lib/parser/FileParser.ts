@@ -21,7 +21,7 @@ export class FileParser {
         }
 
         const sqlFile = coach.parse(SqlFile as any) as SqlFile;
-        return sqlFile;
+        return sqlFile.toJSON();
     }
 }
 

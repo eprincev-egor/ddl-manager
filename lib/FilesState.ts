@@ -192,7 +192,7 @@ export class FilesState extends EventEmitter {
             name: fileName,
             folder: rootFolderPath,
             path: formatPath(subPath),
-            content: sqlFile.toJSON() as any
+            content: sqlFile as any
         };
     }
 

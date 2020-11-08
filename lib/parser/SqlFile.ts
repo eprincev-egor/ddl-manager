@@ -78,9 +78,8 @@ export class SqlFile extends (Syntax as any) {
 
         
         // comment on function
-        const comment = func.row.comment;
-        if ( comment ) {
-            data.comments.push(comment);
+        if ( func.row.comment ) {
+            data.comments.push(func.row.comment);
         }
 
         coach.skipSpace();
@@ -145,9 +144,8 @@ export class SqlFile extends (Syntax as any) {
         data.triggers.push(trigger);
 
         // comment on trigger
-        const comment = trigger.row.comment;
-        if ( comment ) {
-            data.comments.push(comment);
+        if ( trigger.row.comment ) {
+            data.comments.push(trigger.row.comment);
         }
 
         this.parseTriggers( coach, data );

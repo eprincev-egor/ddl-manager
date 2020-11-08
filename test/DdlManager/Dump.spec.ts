@@ -80,7 +80,7 @@ describe("DdlManager.dump", () => {
         const sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
         const content = FileParser.parse(sql) as any;
 
-        expect(content.toJSON()).to.be.shallowDeepEqual({
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "simple_func",
@@ -122,7 +122,7 @@ describe("DdlManager.dump", () => {
         sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
         content = FileParser.parse(sql) as any;
 
-        expect(content.toJSON()).to.be.shallowDeepEqual({
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "simple_func",
@@ -136,7 +136,7 @@ describe("DdlManager.dump", () => {
         sql = fs.readFileSync(ROOT_TMP_PATH + "/test/simple_func.sql").toString();
         content = FileParser.parse(sql) as any;
 
-        expect(content.toJSON()).to.be.shallowDeepEqual({
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "test",
                 name: "simple_func",
@@ -178,7 +178,7 @@ describe("DdlManager.dump", () => {
         const sql = fs.readFileSync(ROOT_TMP_PATH + "/public/company/some_func.sql").toString();
         const content = FileParser.parse(sql) as any;
 
-        expect(content.toJSON()).to.be.shallowDeepEqual({
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "some_func",
@@ -242,7 +242,7 @@ describe("DdlManager.dump", () => {
         const sql = fs.readFileSync(ROOT_TMP_PATH + "/public/company/some_func.sql").toString();
         const content = FileParser.parse(sql) as any;
 
-        expect(content.toJSON()).to.be.shallowDeepEqual({
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "some_func",
@@ -314,7 +314,7 @@ describe("DdlManager.dump", () => {
         const sql = fs.readFileSync(ROOT_TMP_PATH + "/test/company/some_func.sql").toString();
         const content = FileParser.parse(sql) as any;
 
-        expect(content.toJSON()).to.be.shallowDeepEqual({
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "some_func",
@@ -358,7 +358,7 @@ describe("DdlManager.dump", () => {
         const sql = fs.readFileSync(filePath).toString();
         const content = FileParser.parse(sql) as any;
 
-        expect(content.toJSON()).to.be.shallowDeepEqual({
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "simple_func",
@@ -405,7 +405,7 @@ describe("DdlManager.dump", () => {
         const sql = fs.readFileSync(filePath).toString();
         const content = FileParser.parse(sql) as any;
 
-        expect(content.toJSON()).to.be.shallowDeepEqual({
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "simple_func",
@@ -468,7 +468,7 @@ describe("DdlManager.dump", () => {
         const sql = fs.readFileSync(filePath).toString();
         const content = FileParser.parse(sql) as any;
 
-        expect(content.toJSON()).to.be.shallowDeepEqual({
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "some_func",
@@ -540,7 +540,7 @@ describe("DdlManager.dump", () => {
         const sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
         const content = FileParser.parse(sql) as any;
 
-        expect(content.toJSON()).to.be.shallowDeepEqual({
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "simple_func",
@@ -595,7 +595,7 @@ describe("DdlManager.dump", () => {
         const sql = fs.readFileSync(ROOT_TMP_PATH + "/public/company/some_func.sql").toString();
         const content = FileParser.parse(sql) as any;
 
-        expect(content.toJSON()).to.be.shallowDeepEqual({
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "some_func",
@@ -662,7 +662,7 @@ describe("DdlManager.dump", () => {
         const sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
         const content = FileParser.parse(sql) as any;
 
-        expect(content.toJSON()).to.be.shallowDeepEqual({
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "simple_func",
@@ -709,7 +709,7 @@ describe("DdlManager.dump", () => {
         const sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
         const content = FileParser.parse(sql) as any;
 
-        expect(content.toJSON()).to.be.shallowDeepEqual({
+        expect(content).to.be.shallowDeepEqual({
             functions: [
                 {
                     schema: "public",
@@ -765,7 +765,7 @@ describe("DdlManager.dump", () => {
         const sql = fs.readFileSync(filePath).toString();
         const content = FileParser.parse(sql) as any;
 
-        expect(content.toJSON()).to.be.shallowDeepEqual({
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "simple_func",
@@ -839,7 +839,7 @@ describe("DdlManager.dump", () => {
         const sql = fs.readFileSync(filePath).toString();
         const content = FileParser.parse(sql) as any;
 
-        expect(content.toJSON()).to.be.shallowDeepEqual({
+        expect(content).to.be.shallowDeepEqual({
             functions: [{
                 schema: "public",
                 name: "some_func",
@@ -928,7 +928,7 @@ describe("DdlManager.dump", () => {
         const sql = fs.readFileSync(ROOT_TMP_PATH + "/public/company/some_func.sql").toString();
         const content = FileParser.parse(sql) as any;
 
-        expect(content.toJSON()).to.be.shallowDeepEqual({
+        expect(content).to.be.shallowDeepEqual({
             functions: [
                 {
                     schema: "public",
@@ -995,7 +995,7 @@ describe("DdlManager.dump", () => {
         const sql = fs.readFileSync(ROOT_TMP_PATH + "/public/simple_func.sql").toString();
         const content = FileParser.parse(sql) as any;
 
-        expect(content.toJSON()).to.be.shallowDeepEqual({
+        expect(content).to.be.shallowDeepEqual({
             functions: [
                 {
                     schema: "public",
