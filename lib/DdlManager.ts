@@ -20,6 +20,7 @@ import {
     comment2sql,
     function2sql
 } from "./utils";
+import { Comparator } from "./Comparator";
 
 const watchers: FilesState[] = [];
 
@@ -257,7 +258,8 @@ export class DdlManager {
         const dbState = new DbState(db);
         await dbState.load();
 
-        const diff = dbState.getDiff(filesState);
+        const comparator = new Comparator();
+        const diff = comparator.compare(dbState, filesState);
 
 
         const migrateResult = await DdlManager.migrate({

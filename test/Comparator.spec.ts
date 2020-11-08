@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { DbState } from "../../lib/DbState";
+import { Comparator } from "../lib/Comparator";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 
@@ -8,19 +8,12 @@ use(chaiShallowDeepEqualPlugin);
 function diffState(params: {filesState: any, dbState: any}) {
     const {dbState, filesState} = params;
 
-    const state = new (DbState as any)();
-
-    state.functions = dbState.functions;
-    state.triggers = dbState.triggers;
-
-    if ( dbState.comments ) {
-        state.comments = dbState.comments;
-    }
-
-    return state.getDiff( filesState );
+    const comparator = new Comparator();
+    const diff = comparator.compare(dbState, filesState);
+    return diff;
 }
 
-describe("DbState.getDiff", () => {
+describe("Comparator.compare", () => {
 
     it("sync empty state", () => {
         const diff = diffState({

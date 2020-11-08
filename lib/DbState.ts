@@ -9,7 +9,6 @@ import {
 } from "./utils";
 import { Client } from "pg";
 import { PostgresDriver } from "./database/PostgresDriver";
-import { Comparator } from "./Comparator";
 
 export class DbState {
     private db: Client;
@@ -19,7 +18,6 @@ export class DbState {
     comments!: any[];
 
     private postgres: PostgresDriver;
-    private comparator: Comparator;
 
     constructor(db: Client) {
         this.db = db;
@@ -28,7 +26,6 @@ export class DbState {
         this.functions = [];
 
         this.postgres = new PostgresDriver(db);
-        this.comparator = new Comparator();
     }
 
     async load() {
@@ -71,17 +68,6 @@ export class DbState {
         if ( comments.length ) {
             this.comments = comments;
         }
-    }
-
-    // compare filesState and dbState
-    getDiff(filesState: {
-        // TODO: any => type
-        functions: any[];
-        triggers: any[];
-        comments: any[];
-    }) {
-        const diff = this.comparator.compare(this, filesState);
-        return diff;
     }
 
     async unfreezeAll() {
