@@ -136,38 +136,6 @@ export function logDiff(diff: any) {
     });
 }
 
-// TODO: any => type
-export function findFunctionByComment(functions: any[], comment: any) {
-    if ( !comment.function ) {
-        return;
-    }
-
-    return functions.find(func => {
-        const {schema, name, args} = comment.function;
-        const identify = `${schema}.${name}(${ args.join(", ") })`;
-
-        const funcIdentifySql = function2identifySql(func);
-    
-        return identify === funcIdentifySql;
-    });
-}
-
-// TODO: any => type
-export function findTriggerByComment(triggers: any[], comment: any) {
-    if ( !comment.trigger ) {
-        return;
-    }
-
-    return triggers.find(trigger => {
-        const {schema, table, name} = comment.trigger;
-        const identify = `${name} on ${schema}.${table}`;
-        
-        const triggerIdentifySql = trigger2identifySql(trigger);
-
-        return identify === triggerIdentifySql;
-    });
-}
-
 export function wrapText(text: string) {
     text += "";
     let tag = "tag";

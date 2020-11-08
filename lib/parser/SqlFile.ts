@@ -81,18 +81,6 @@ export class SqlFile extends (Syntax as any) {
         const comment = func.row.comment;
         if ( comment ) {
             data.comments.push(comment);
-
-            if ( !comment.row.function ) {
-                coach.throwError("comment after function, must be: comment on function");
-            }
-
-            const {schema, name, args} = comment.row.function.row;
-            const identify = `${schema}.${name}(${ (args || []).join(", ") })`;
-            const shouldBeIdentify = function2identifySql( func );
-
-            if ( identify !== shouldBeIdentify ) {
-                coach.throwError("comment after function has wrong identify: " + identify);
-            }
         }
 
         coach.skipSpace();
@@ -160,18 +148,6 @@ export class SqlFile extends (Syntax as any) {
         const comment = trigger.row.comment;
         if ( comment ) {
             data.comments.push(comment);
-
-            if ( !comment.row.trigger ) {
-                coach.throwError("comment after trigger, must be: comment on trigger");
-            }
-
-            const {schema, table, name} = comment.row.trigger.row;
-            const identify = `${name} on ${schema}.${table}`;
-            const shouldBeIdentify = trigger2identifySql( trigger );
-
-            if ( identify !== shouldBeIdentify ) {
-                coach.throwError("comment after trigger has wrong identify: " + identify);
-            }
         }
 
         this.parseTriggers( coach, data );
