@@ -8,19 +8,12 @@ import {
     isDbClient,
     findCommentByFunction,
     findCommentByTrigger,
-    findTriggerByComment,
-    findFunctionByComment,
-
-    comment2dropSql,
-    trigger2identifySql,
-    trigger2dropSql,
-    function2identifySql,
-    function2dropSql,
     trigger2sql,
     comment2sql,
     function2sql
 } from "./utils";
 import { Comparator } from "./Comparator";
+import { Migrator } from "./Migrator";
 
 const watchers: FilesState[] = [];
 
@@ -29,190 +22,9 @@ export class DdlManager {
     static async migrate(params: {db: any, diff: any, throwError?: boolean}) {
         const {db, diff, throwError} = params;
 
-        if ( diff == null ) {
-            throw new Error("invalid diff");
-        }
-        const out: {
-            errors: Error[]
-        } = {
-            errors: []
-        };
-
-        // drop old objects
-        const dropComments = diff.drop.comments || [];
-        for (let i = 0, n = dropComments.length; i < n; i++) {
-            let ddlSql = "";
-            const comment = dropComments[i];
-
-            const dropTrigger = findTriggerByComment(diff.drop.triggers, comment);
-            if ( dropTrigger ) {
-                continue;
-            }
-            const dropFunc = findFunctionByComment(diff.drop.functions, comment);
-            if ( dropFunc ) {
-                continue;
-            }
-
-            ddlSql += comment2dropSql(comment);
-
-            try {
-                await db.query(ddlSql);
-            } catch(err) {
-                // redefine callstack
-                const newErr = new Error(err.message);
-                (newErr as any).originalError = err;
-                
-                out.errors.push(newErr);
-            }
-        }
-
-
-        for (let i = 0, n = diff.drop.triggers.length; i < n; i++) {
-            let ddlSql = "";
-            const trigger = diff.drop.triggers[i];
-            const triggerIdentifySql = trigger2identifySql( trigger );
-            
-            // check freeze object
-            const checkFreezeSql = DbState.getCheckFreezeTriggerSql( 
-                trigger,
-                `cannot drop freeze trigger ${ triggerIdentifySql }`
-            );
-            ddlSql = checkFreezeSql;
-
-            ddlSql += ";";
-            ddlSql += trigger2dropSql(trigger);
-
-            try {
-                await db.query(ddlSql);
-            } catch(err) {
-                // redefine callstack
-                const newErr = new Error(triggerIdentifySql + "\n" + err.message);
-                (newErr as any).originalError = err;
-
-                out.errors.push(newErr);
-            }
-        }
-        
-        for (let i = 0, n = diff.drop.functions.length; i < n; i++) {
-            let ddlSql = "";
-            const func = diff.drop.functions[i];
-            const funcIdentifySql = function2identifySql( func );
-
-            // check freeze object
-            const checkFreezeSql = DbState.getCheckFreezeFunctionSql( 
-                func,
-                `cannot drop freeze function ${ funcIdentifySql }`
-            );
-            
-            ddlSql = checkFreezeSql;
-
-            ddlSql += ";";
-            ddlSql += function2dropSql(func);
-            // 2BP01
-            try {
-                await db.query(ddlSql);
-            } catch(err) {
-                // https://www.postgresql.org/docs/12/errcodes-appendix.html
-                // cannot drop function my_func() because other objects depend on it
-                const isCascadeError = err.code === "2BP01";
-                if ( !isCascadeError ) {
-                    // redefine callstack
-                    const newErr = new Error(funcIdentifySql + "\n" + err.message);
-                    (newErr as any).originalError = err;
-
-                    out.errors.push(newErr);
-                }
-            }
-        }
-
-
-
-        // create new objects
-        const createComments = diff.create.comments || [];
-
-        for (let i = 0, n = diff.create.functions.length; i < n; i++) {
-            let ddlSql = "";
-            const func = diff.create.functions[i];
-            const funcIdentifySql = function2identifySql( func );
-
-            // check freeze object
-            const checkFreezeSql = DbState.getCheckFreezeFunctionSql( 
-                func,
-                "",
-                "drop"
-            );
-            
-            ddlSql += checkFreezeSql;
-
-            ddlSql += ";";
-            ddlSql += function2sql( func );
-            
-            ddlSql += ";";
-            // comment on function ddl-manager-sync
-            const comment = findCommentByFunction(
-                createComments,
-                func
-            );
-
-            ddlSql += DbState.getUnfreezeFunctionSql(func, comment);
-
-            try {
-                await db.query(ddlSql);
-            } catch(err) {
-                // redefine callstack
-                const newErr = new Error(funcIdentifySql + "\n" + err.message);
-                (newErr as any).originalError = err;
-                
-                out.errors.push(newErr);
-            }
-        }
-
-        for (let i = 0, n = diff.create.triggers.length; i < n; i++) {
-            let ddlSql = "";
-            const trigger = diff.create.triggers[i];
-            const triggerIdentifySql = trigger2identifySql( trigger );
-            
-            // check freeze object
-            const checkFreezeSql = DbState.getCheckFreezeTriggerSql( 
-                trigger,
-                `cannot replace freeze trigger ${ triggerIdentifySql }`
-            );
-            ddlSql = checkFreezeSql;
-
-
-            ddlSql += ";";
-            ddlSql += trigger2dropSql( trigger );
-            
-            ddlSql += ";";
-            ddlSql += trigger2sql( trigger );
-
-            ddlSql += ";";
-            // comment on trigger ddl-manager-sync
-            const comment = findCommentByTrigger(
-                createComments,
-                trigger
-            );
-            ddlSql += DbState.getUnfreezeTriggerSql(trigger, comment);
-
-            try {
-                await db.query(ddlSql);
-            } catch(err) {
-                // redefine callstack
-                const newErr = new Error(triggerIdentifySql + "\n" + err.message);
-                (newErr as any).originalError = err;
-                
-                out.errors.push(newErr);
-            }
-        }
-
-        if ( throwError !== false ) {
-            if ( out.errors.length ) {
-                const err = out.errors[0];
-                throw new Error(err.message);
-            }
-        }
-
-        return out;
+        const migrator = new Migrator(db);
+        const output = migrator.migrate(diff, throwError);
+        return output;
     }
 
     static async build(params: {
@@ -262,7 +74,7 @@ export class DdlManager {
         const diff = comparator.compare(dbState, filesState);
 
 
-        const migrateResult = await DdlManager.migrate({
+        const migrateErrors = await DdlManager.migrate({
             db, diff,
             throwError: false
         });
@@ -273,12 +85,12 @@ export class DdlManager {
 
         logDiff(diff);
         
-        if ( !migrateResult.errors.length ) {
+        if ( !migrateErrors.length ) {
             // tslint:disable-next-line: no-console
             console.log("ddl-manager build success");
         }
         else if ( params.throwError ) {
-            throw migrateResult.errors[0];
+            throw migrateErrors[0];
         }
         
         return filesStateInstance;

@@ -2,16 +2,16 @@ import assert from "assert";
 import _ from "lodash";
 import { DatabaseFunctionType, DatabaseTriggerType } from "./database/interface";
 
+// TODO: any => type
 interface IState {
     functions: DatabaseFunctionType[];
     triggers: DatabaseTriggerType[];
     comments: any[];
 }
 
-interface IDiff {
-    functions: any[];
-    triggers: any[];
-    comments?: any[];
+export interface IDiff {
+    drop: IState;
+    create: IState;
 }
 
 export class Comparator {
@@ -22,63 +22,56 @@ export class Comparator {
         assert.ok(_.isArray(filesState.functions), "undefined filesState.functions");
         assert.ok(_.isArray(filesState.triggers), "undefined filesState.triggers");
 
-        // TODO: any => type
-        const drop: IDiff = {
-            functions: [],
-            triggers: []
-        };
-        const create: IDiff = {
-            functions: [],
-            triggers: []
+        const diff: IDiff = {
+            drop: {
+                functions: [],
+                triggers: [],
+                comments: []
+            },
+            create: {
+                functions: [],
+                triggers: [],
+                comments: []
+            }
         };
 
         this.dropFunctions(
-            drop,
-            create,
+            diff,
             dbState,
             filesState
         );
         this.dropTriggers(
-            drop,
-            create,
+            diff,
             dbState,
             filesState
         );
         this.dropComments(
-            drop,
-            create,
+            diff,
             dbState,
             filesState
         );
         
         this.createFunctions(
-            drop,
-            create,
+            diff,
             dbState,
             filesState
         );
         this.createTriggers(
-            drop,
-            create,
+            diff,
             dbState,
             filesState
         );
         this.createComments(
-            drop,
-            create,
+            diff,
             dbState,
             filesState
         );
 
-        return {
-            drop,
-            create
-        };
+        return diff;
     }
 
     private dropFunctions(
-        drop: IDiff,
-        create: IDiff,
+        diff: IDiff,
         dbState: IState,
         filesState: IState
     ) {
@@ -125,20 +118,19 @@ export class Comparator {
 
                 depsTriggers.forEach(fileTrigger => {
                     // drop
-                    drop.triggers.push( fileTrigger );
+                    diff.drop.triggers.push( fileTrigger );
                     // and create again
-                    create.triggers.push( fileTrigger );
+                    diff.create.triggers.push( fileTrigger );
                 });
             }
             
             
-            drop.functions.push(func);
+            diff.drop.functions.push(func);
         }
     }
 
     private dropTriggers(
-        drop: IDiff,
-        create: IDiff,
+        diff: IDiff,
         dbState: IState,
         filesState: IState
     ) {
@@ -153,12 +145,11 @@ export class Comparator {
             return !existsSameTriggerFromFile;
         });
 
-        drop.triggers.push( ...triggersToDrop );
+        diff.drop.triggers.push( ...triggersToDrop );
     }
 
     private dropComments(
-        drop: IDiff,
-        create: IDiff,
+        diff: IDiff,
         dbState: IState,
         filesState: IState
     ) {
@@ -171,16 +162,12 @@ export class Comparator {
                 continue;
             }
 
-            if ( !drop.comments ) {
-                drop.comments = [];
-            }
-            drop.comments.push( comment );
+            diff.drop.comments.push( comment );
         }
     }
 
     private createFunctions(
-        drop: IDiff,
-        create: IDiff,
+        diff: IDiff,
         dbState: IState,
         filesState: IState
     ) {
@@ -194,13 +181,12 @@ export class Comparator {
                 continue;
             }
 
-            create.functions.push(func);
+            diff.create.functions.push(func);
         }
     }
 
     private createTriggers(
-        drop: IDiff,
-        create: IDiff,
+        diff: IDiff,
         dbState: IState,
         filesState: IState
     ) {
@@ -214,13 +200,12 @@ export class Comparator {
                 continue;
             }
 
-            create.triggers.push( trigger );
+            diff.create.triggers.push( trigger );
         }
     }
 
     private createComments(
-        drop: IDiff,
-        create: IDiff,
+        diff: IDiff,
         dbState: IState,
         filesState: IState
     ) {
@@ -234,10 +219,7 @@ export class Comparator {
                 continue;
             }
 
-            if ( !create.comments ) {
-                create.comments = [];
-            }
-            create.comments.push( comment );
+            diff.create.comments.push( comment );
         }
     }
 }
