@@ -1,12 +1,6 @@
 import pg from "pg";
 import _ from "lodash";
 import fs from "fs";
-import {
-    GrapeQLCoach,
-    CreateFunction,
-    CreateTrigger,
-    Comment
-} from "grapeql-lang";
 
 const defaultConfig = {
     config: "ddl-manager-config",

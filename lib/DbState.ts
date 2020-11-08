@@ -10,8 +10,7 @@ import {
 } from "./utils";
 import assert from "assert";
 import { Client } from "pg";
-import { FunctionParser } from "./parser/FunctionParser";
-import { TriggerParser } from "./parser/TriggerParser";
+import { PostgresDriver } from "./database/PostgresDriver";
 
 export class DbState {
     private db: Client;
@@ -20,8 +19,7 @@ export class DbState {
     functions: any[];
     comments!: any[];
 
-    private functionParser: FunctionParser;
-    private triggerParser: TriggerParser;
+    private postgres: PostgresDriver;
 
     constructor(db: Client) {
         this.db = db;
@@ -29,142 +27,45 @@ export class DbState {
         this.triggers = [];
         this.functions = [];
 
-        this.functionParser = new FunctionParser();
-        this.triggerParser = new TriggerParser();
+        this.postgres = new PostgresDriver(db);
     }
 
     async load() {
-        const db = this.db;
-        let sql;
-
-        let result;
         this.triggers = [];
         this.functions = [];
+
         // TODO: any => type
         const comments: any[] = [];
         
-        sql = `
-            select
-                pg_get_functiondef( pg_proc.oid ) as ddl,
-                pg_catalog.obj_description( pg_proc.oid ) as comment
-            from information_schema.routines as routines
+        const functions = await this.postgres.loadFunctions();
+        for (const func of functions) {
 
-            left join pg_catalog.pg_proc as pg_proc on
-                routines.specific_name = pg_proc.proname || '_' || pg_proc.oid::text
-            
-            -- ignore language C or JS
-            inner join pg_catalog.pg_language as pg_language on
-                pg_language.oid = pg_proc.prolang and
-                lower(pg_language.lanname) in ('sql', 'plpgsql')
-            
-            where
-                routines.routine_schema <> 'pg_catalog' and
-                routines.routine_schema <> 'information_schema' and
-                routines.routine_definition is distinct from 'aggregate_dummy' and
-                not exists(
-                    select from pg_catalog.pg_aggregate as pg_aggregate
-                    where
-                        pg_aggregate.aggtransfn = pg_proc.oid or
-                        pg_aggregate.aggfinalfn = pg_proc.oid
-                )
-            
-            order by
-                routines.routine_schema, 
-                routines.routine_name
-        `;
-        try { 
-            result = await db.query(sql);
-        } catch(err) {
-            // redefine callstack
-            const newErr = new Error(err.message);
-            (newErr as any).originalError = err;
-            throw newErr;
-        }
-        
+            this.functions.push(func);
 
-        result.rows.forEach(row => {
-            const {ddl} = row;
-
-            const func = this.functionParser.parse(ddl);
-            const json: ReturnType<typeof func.toJSON> & {freeze?: boolean} = func.toJSON();
-
-            // function was created by ddl manager
-            const canSyncFunction = (
-                row.comment &&
-                /ddl-manager-sync$/i.test(row.comment)
-            );
-            json.freeze = !canSyncFunction;
-
-            if ( row.comment ) {
-                let comment = row.comment.replace(/ddl-manager-sync$/i, "");
-                comment = comment.trim();
-
-                if ( comment ) {
-                    comments.push({
-                        function: function2identifyJson(json),
-                        comment
-                    });
-                }
+            if ( func.comment ) {
+                comments.push({
+                    function: function2identifyJson(func),
+                    comment: func.comment
+                });
             }
-
-            this.functions.push(json);
-        });
-
-        sql = `
-            select
-                pg_get_triggerdef( pg_trigger.oid ) as ddl,
-                pg_catalog.obj_description( pg_trigger.oid ) as comment
-            from pg_trigger
-            where
-                pg_trigger.tgisinternal = false
-        `;
-        try { 
-            result = await db.query(sql);
-        } catch(err) {
-            // redefine callstack
-            const newErr = new Error(err.message);
-            (newErr as any).originalError = err;
-            throw newErr;
         }
-        
 
-        result.rows.forEach(row => {
-            const {ddl} = row;
+        const triggers = await this.postgres.loadTriggers();
+        for (const trigger of triggers) {
 
-            const trigger = this.triggerParser.parse(ddl);
-            const json: ReturnType<typeof trigger.toJSON> & {
-                freeze?: boolean;
-                table: {
-                    schema: string;
-                    name: string;
-                }
-            } = trigger.toJSON() as any;
+            this.triggers.push(trigger);
 
-            // trigger was created by ddl manager
-            const canSyncTrigger = (
-                row.comment &&
-                /ddl-manager-sync/i.test(row.comment)
-            );
-            json.freeze = !canSyncTrigger;
-
-            if ( row.comment ) {
-                let comment = row.comment.replace(/ddl-manager-sync$/i, "");
-                comment = comment.trim();
-
-                if ( comment ) {
-                    comments.push({
-                        trigger: {
-                            schema: json.table.schema,
-                            table: json.table.name,
-                            name: json.name
-                        },
-                        comment
-                    });
-                }
+            if ( trigger.comment ) {
+                comments.push({
+                    trigger: {
+                        schema: trigger.table.schema,
+                        table: trigger.table.name,
+                        name: trigger.name
+                    },
+                    comment: trigger.comment
+                });
             }
-
-            this.triggers.push(json);
-        });
+        }
 
         if ( comments.length ) {
             this.comments = comments;
