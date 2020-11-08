@@ -183,7 +183,7 @@ describe("DdlManager.watch", () => {
 
 
     
-    it("drop freeze function, if she was replaced by ddl-manager", async() => {
+    it("drop frozen function, if she was replaced by ddl-manager", async() => {
         let result;
         let row;
 
@@ -192,7 +192,7 @@ describe("DdlManager.watch", () => {
             folder: ROOT_TMP_PATH
         });
 
-        // create freeze function
+        // create frozen function
         await db.query(`
             create or replace function test()
             returns integer as $body$
@@ -242,7 +242,7 @@ describe("DdlManager.watch", () => {
             test2: 2
         });
 
-        // freeze function should be dropped
+        // frozen function should be dropped
         try {
             await db.query("select test() as test");
             assert.ok(false, "function test() was not dropped");

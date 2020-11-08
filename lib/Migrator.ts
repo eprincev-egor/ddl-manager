@@ -9,8 +9,8 @@ import {
     function2sql
 } from "./utils";
 import { IDiff } from "./interface";
-import { getCheckFreezeFunctionSql } from "./database/postgres/getCheckFreezeFunctionSql";
-import { getCheckFreezeTriggerSql } from "./database/postgres/getCheckFreezeTriggerSql";
+import { getCheckFrozenFunctionSql } from "./database/postgres/getCheckFrozenFunctionSql";
+import { getCheckFrozenTriggerSql } from "./database/postgres/getCheckFrozenTriggerSql";
 import { getUnfreezeFunctionSql } from "./database/postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./database/postgres/getUnfreezeTriggerSql";
 
@@ -41,12 +41,12 @@ export class Migrator {
             const triggerIdentifySql = trigger2identifySql( trigger );
             let ddlSql = "";
             
-            // check freeze object
-            const checkFreezeSql = getCheckFreezeTriggerSql( 
+            // check frozen object
+            const checkFrozenSql = getCheckFrozenTriggerSql( 
                 trigger,
-                `cannot drop freeze trigger ${ triggerIdentifySql }`
+                `cannot drop frozen trigger ${ triggerIdentifySql }`
             );
-            ddlSql = checkFreezeSql;
+            ddlSql = checkFrozenSql;
 
             ddlSql += ";";
             ddlSql += trigger2dropSql(trigger);
@@ -69,13 +69,13 @@ export class Migrator {
             const funcIdentifySql = function2identifySql( func );
             let ddlSql = "";
 
-            // check freeze object
-            const checkFreezeSql = getCheckFreezeFunctionSql( 
+            // check frozen object
+            const checkFrozenSql = getCheckFrozenFunctionSql( 
                 func,
-                `cannot drop freeze function ${ funcIdentifySql }`
+                `cannot drop frozen function ${ funcIdentifySql }`
             );
             
-            ddlSql = checkFreezeSql;
+            ddlSql = checkFrozenSql;
 
             ddlSql += ";";
             ddlSql += function2dropSql(func);
@@ -103,14 +103,14 @@ export class Migrator {
             let ddlSql = "";
             const funcIdentifySql = function2identifySql( func );
 
-            // check freeze object
-            const checkFreezeSql = getCheckFreezeFunctionSql( 
+            // check frozen object
+            const checkFrozenSql = getCheckFrozenFunctionSql( 
                 func,
                 "",
                 "drop"
             );
             
-            ddlSql += checkFreezeSql;
+            ddlSql += checkFrozenSql;
 
             ddlSql += ";";
             ddlSql += function2sql( func );
@@ -136,12 +136,12 @@ export class Migrator {
             const triggerIdentifySql = trigger2identifySql( trigger );
             let ddlSql = "";
             
-            // check freeze object
-            const checkFreezeSql = getCheckFreezeTriggerSql( 
+            // check frozen object
+            const checkFrozenSql = getCheckFrozenTriggerSql( 
                 trigger,
-                `cannot replace freeze trigger ${ triggerIdentifySql }`
+                `cannot replace frozen trigger ${ triggerIdentifySql }`
             );
-            ddlSql = checkFreezeSql;
+            ddlSql = checkFrozenSql;
 
 
             ddlSql += ";";

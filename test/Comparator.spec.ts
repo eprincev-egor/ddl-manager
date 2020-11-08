@@ -487,7 +487,7 @@ describe("Comparator.compare", () => {
         });
     });
 
-    it("empty diff on new freeze function", () => {
+    it("empty diff on new frozen function", () => {
         const func = {
             schema: "public",
             name: "some_func",
@@ -496,7 +496,7 @@ describe("Comparator.compare", () => {
             body: `begin
                 return 1;
             end`,
-            freeze: true
+            frozen: true
         };
 
         const diff = diffState({
@@ -524,7 +524,7 @@ describe("Comparator.compare", () => {
         });
     });
 
-    it("empty diff on new freeze trigger", () => {
+    it("empty diff on new frozen trigger", () => {
         const func = {
             schema: "public",
             name: "some_action_on_some_event",
@@ -533,7 +533,7 @@ describe("Comparator.compare", () => {
             body: `begin
                 return new;
             end`,
-            freeze: true
+            frozen: true
         };
         const trigger = {
             table: {
@@ -547,7 +547,7 @@ describe("Comparator.compare", () => {
                 schema: "public",
                 name: "some_action_on_some_event"
             },
-            freeze: true
+            frozen: true
         };
 
         const diff = diffState({

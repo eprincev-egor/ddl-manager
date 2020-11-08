@@ -53,8 +53,8 @@ export class Comparator {
     ) {
         for (const func of dbState.functions) {
             
-            // ddl-manager cannot drop freeze function
-            if ( func.freeze ) {
+            // ddl-manager cannot drop frozen function
+            if ( func.frozen ) {
                 continue;
             }
 
@@ -111,7 +111,7 @@ export class Comparator {
         filesState: IState
     ) {
         const triggersCreatedFromDDLManager = dbState.triggers.filter(trigger =>
-            !trigger.freeze
+            !trigger.frozen
         );
         const triggersToDrop = triggersCreatedFromDDLManager.filter(trigger => {
 

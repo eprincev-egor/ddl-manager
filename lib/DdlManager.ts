@@ -129,21 +129,21 @@ export class DdlManager {
                 logDiff(diff);
             } catch(err) {
 
-                // если в файле была freeze функция
-                // а потом в файле поменяли имя функции на другое (не freeze)
-                // о новая функция должна быть создана, а freeze не должна быть сброшена
+                // если в файле была frozen функция
+                // а потом в файле поменяли имя функции на другое (не frozen)
+                // о новая функция должна быть создана, а frozen не должна быть сброшена
                 // 
-                const isFreezeDropError = (
-                    /cannot drop freeze (trigger|function)/i.test(err.message)
+                const isFrozenDropError = (
+                    /cannot drop frozen (trigger|function)/i.test(err.message)
                 );
                 const hasCreateFuncOrTrigger = (
                     diff.create.functions.length ||
                     diff.create.triggers.length
                 );
 
-                if ( isFreezeDropError && hasCreateFuncOrTrigger ) {
+                if ( isFrozenDropError && hasCreateFuncOrTrigger ) {
                     // запустим одтельно создание новой функции
-                    // т.к. сборсить freeze нельзя, а новая функция может быть валидной
+                    // т.к. сборсить frozen нельзя, а новая функция может быть валидной
 
                     const createDiff = {
                         drop: {

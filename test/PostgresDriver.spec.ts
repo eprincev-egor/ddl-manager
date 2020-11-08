@@ -66,7 +66,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "plpgsql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "test_func",
                     args: [
@@ -111,7 +111,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "plpgsql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "func_1",
                     args: [
@@ -125,7 +125,7 @@ describe("PostgresDriver.loadState", () => {
                 },
                 {
                     language: "plpgsql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "func_2",
                     args: [
@@ -169,7 +169,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "plpgsql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "func_1",
                     args: [
@@ -183,7 +183,7 @@ describe("PostgresDriver.loadState", () => {
                 },
                 {
                     language: "plpgsql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "func_1",
                     args: [
@@ -219,7 +219,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "plpgsql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "test_func",
                     args: [],
@@ -250,7 +250,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "plpgsql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "test_func",
                     args: [],
@@ -289,7 +289,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "plpgsql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "test_func",
                     args: [
@@ -333,7 +333,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "plpgsql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "test_func",
                     args: [
@@ -369,7 +369,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "plpgsql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "test_func",
                     args: [
@@ -419,7 +419,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "plpgsql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "test_func",
                     args: [],
@@ -429,7 +429,7 @@ describe("PostgresDriver.loadState", () => {
             ],
             triggers: [
                 {
-                    freeze: true,
+                    frozen: true,
                     table: {
                         schema: "public",
                         name: "test"
@@ -481,7 +481,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "plpgsql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "test_func",
                     args: [],
@@ -491,7 +491,7 @@ describe("PostgresDriver.loadState", () => {
             ],
             triggers: [
                 {
-                    freeze: true,
+                    frozen: true,
                     table: {
                         schema: "public",
                         name: "test"
@@ -541,7 +541,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "plpgsql",
-                    freeze: false,
+                    frozen: false,
                     schema: "public",
                     name: "test_func",
                     args: [
@@ -599,7 +599,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "plpgsql",
-                    freeze: false,
+                    frozen: false,
                     schema: "public",
                     name: "test_func",
                     args: [],
@@ -609,7 +609,7 @@ describe("PostgresDriver.loadState", () => {
             ],
             triggers: [
                 {
-                    freeze: false,
+                    frozen: false,
                     table: {
                         schema: "public",
                         name: "test"
@@ -689,7 +689,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "sql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "test_func_sql",
                     args: [],
@@ -719,7 +719,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "plpgsql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "some_func",
                     args: [],
@@ -749,7 +749,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "plpgsql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "some_func",
                     args: [],
@@ -782,7 +782,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "plpgsql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "some_func",
                     args: [
@@ -813,7 +813,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "plpgsql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "some_func",
                     args: [
@@ -844,7 +844,7 @@ describe("PostgresDriver.loadState", () => {
             functions: [
                 {
                     language: "plpgsql",
-                    freeze: true,
+                    frozen: true,
                     schema: "public",
                     name: "some_func",
                     args: [

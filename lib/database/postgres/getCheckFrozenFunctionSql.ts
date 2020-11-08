@@ -3,18 +3,18 @@ import {
     function2identifySql
 } from "../../utils";
 
-export function getCheckFreezeFunctionSql(func: any, errorText: any, actionOnFreeze = "error") {
+export function getCheckFrozenFunctionSql(func: any, errorText: any, actionOnFrozen = "error") {
     const funcIdentifySql = function2identifySql( func );
-    let sqlOnFreeze;
+    let sqlOnFrozen;
 
-    if ( actionOnFreeze === "error" ) {
-        sqlOnFreeze = `raise exception ${wrapText(errorText)};`;
+    if ( actionOnFrozen === "error" ) {
+        sqlOnFrozen = `raise exception ${wrapText(errorText)};`;
     }
-    else if ( actionOnFreeze === "drop" ) {
-        sqlOnFreeze = `drop function ${function2identifySql(func)};`;
+    else if ( actionOnFrozen === "drop" ) {
+        sqlOnFrozen = `drop function ${function2identifySql(func)};`;
     }
     else {
-        sqlOnFreeze = actionOnFreeze;
+        sqlOnFrozen = actionOnFrozen;
     }
 
     return `
@@ -63,7 +63,7 @@ export function getCheckFreezeFunctionSql(func: any, errorText: any, actionOnFre
                         =
                         ${wrapText(funcIdentifySql)}
                 ) then
-                    ${sqlOnFreeze}
+                    ${sqlOnFrozen}
                 end if;
             end
         $$;

@@ -9,11 +9,11 @@ export type DatabaseFunctionType = CreateFunction["TJson"] & {
         setof?: boolean;
         table?: any[];
     };
-    freeze?: boolean;
+    frozen?: boolean;
     comment?: string;
 };
 export type DatabaseTriggerType = CreateTrigger["TJson"] & {
-    freeze?: boolean;
+    frozen?: boolean;
     comment?: string;
     procedure: {
         schema: string;

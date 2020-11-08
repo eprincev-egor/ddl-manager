@@ -196,7 +196,7 @@ describe("Migrator.migrate", () => {
         
     });
 
-    it("no error on replace freeze function", async() => {
+    it("no error on replace frozen function", async() => {
         await db.query(`
             create function test()
             returns integer as $$select 1$$
@@ -231,7 +231,7 @@ describe("Migrator.migrate", () => {
         assert.equal(result, 2);
     });
 
-    it("error on drop freeze function", async() => {
+    it("error on drop frozen function", async() => {
         await db.query(`
             create function test()
             returns integer as $$select 1$$
@@ -259,11 +259,11 @@ describe("Migrator.migrate", () => {
                 }
             }});
         } catch(err) {
-            assert.equal(err.message, "public.test()\ncannot drop freeze function public.test()");
+            assert.equal(err.message, "public.test()\ncannot drop frozen function public.test()");
         }
     });
 
-    it("freeze function with another args", async() => {
+    it("frozen function with another args", async() => {
         await db.query(`
             create function test(a integer)
             returns integer as $$select 1$$
@@ -309,7 +309,7 @@ describe("Migrator.migrate", () => {
     });
 
     
-    it("freeze function with another arg type", async() => {
+    it("frozen function with another arg type", async() => {
         await db.query(`
             create function test(a numeric)
             returns integer as $$select 1$$
@@ -350,7 +350,7 @@ describe("Migrator.migrate", () => {
 
     });
 
-    it("error on replace freeze trigger", async() => {
+    it("error on replace frozen trigger", async() => {
         await db.query(`
             create table company (
                 id serial primary key
@@ -411,11 +411,11 @@ describe("Migrator.migrate", () => {
                 }
             }});
         } catch(err) {
-            assert.equal(err.message, "x on public.company\ncannot replace freeze trigger x on public.company");
+            assert.equal(err.message, "x on public.company\ncannot replace frozen trigger x on public.company");
         }
     });
 
-    it("error on drop freeze trigger", async() => {
+    it("error on drop frozen trigger", async() => {
         await db.query(`
             create table company (
                 id serial primary key
@@ -477,7 +477,7 @@ describe("Migrator.migrate", () => {
                 }
             }});
         } catch(err) {
-            assert.equal(err.message, "x on public.company\ncannot drop freeze trigger x on public.company");
+            assert.equal(err.message, "x on public.company\ncannot drop frozen trigger x on public.company");
         }
     });
 

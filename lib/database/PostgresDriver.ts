@@ -55,7 +55,7 @@ implements IDatabaseDriver {
             const object = parser.parse(row.ddl);
             const json = object.toJSON() as any;
  
-            json.freeze = isFrozen(row);
+            json.frozen = isFrozen(row);
             json.comment = parseComment(row);
         
             objects.push(json);

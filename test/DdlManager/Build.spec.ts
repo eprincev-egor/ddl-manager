@@ -450,8 +450,8 @@ describe("DdlManager.build", () => {
     });
 
 
-    it("build two functions, one freezed", async() => {
-        // create freeze function
+    it("build two functions, one frozen", async() => {
+        // create frozen function
         await db.query(`
             create or replace function func1(a integer)
             returns integer as $body$
@@ -1115,7 +1115,7 @@ language plpgsql;
         });
     });
 
-    it("don't drop freezed functions and triggers", async() => {
+    it("don't drop frozen functions and triggers", async() => {
         await db.query(`
             create or replace function my_func()
             returns text as $body$
@@ -1129,7 +1129,7 @@ language plpgsql;
                 select my_func() as my_func;
         `);
 
-        const folderPath = ROOT_TMP_PATH + "/some-freeze-func";
+        const folderPath = ROOT_TMP_PATH + "/some-frozen-func";
         fs.mkdirSync(folderPath);
 
         await DdlManager.dump({

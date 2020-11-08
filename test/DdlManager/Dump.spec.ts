@@ -341,7 +341,7 @@ describe("DdlManager.dump", () => {
         });
     });
 
-    it("dump simple function and build, build can replace freezed object", async() => {
+    it("dump simple function and build, build can replace frozen object", async() => {
         await db.query(`
             create or replace function simple_func()
             returns integer as $$select 1$$

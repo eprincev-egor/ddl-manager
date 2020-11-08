@@ -3,7 +3,7 @@ import {
 } from "../../utils";
 
 // TODO: any => type
-export function getCheckFreezeTriggerSql(trigger: any, errorText: string) {
+export function getCheckFrozenTriggerSql(trigger: any, errorText: string) {
     return `
     do $$
         begin
