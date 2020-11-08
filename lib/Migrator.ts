@@ -1,10 +1,6 @@
 import { Client } from "pg";
 import assert from "assert";
 import {
-    findTriggerByComment,
-    findFunctionByComment,
-
-    comment2dropSql,
     trigger2identifySql,
     trigger2dropSql,
     function2identifySql,
@@ -30,7 +26,6 @@ export class Migrator {
 
         const outputErrors: Error[] = [];
 
-        await this.dropComments(diff, outputErrors);
         await this.dropTriggers(diff, outputErrors);
         await this.dropFunctions(diff, outputErrors);
 
@@ -38,35 +33,6 @@ export class Migrator {
         await this.createTriggers(diff, outputErrors);
 
         return outputErrors;
-    }
-
-    private async dropComments(diff: IDiff, outputErrors: Error[]) {
-
-        for (const comment of diff.drop.comments || []) {
-            let ddlSql = "";
-
-            const dropTrigger = findTriggerByComment(diff.drop.triggers, comment);
-            if ( dropTrigger ) {
-                continue;
-            }
-            const dropFunc = findFunctionByComment(diff.drop.functions, comment);
-            if ( dropFunc ) {
-                continue;
-            }
-
-            ddlSql += comment2dropSql(comment);
-
-            try {
-                await this.pgClient.query(ddlSql);
-            } catch(err) {
-                // redefine callstack
-                const newErr = new Error(err.message);
-                (newErr as any).originalError = err;
-                
-                outputErrors.push(newErr);
-            }
-        }
-
     }
 
     private async dropTriggers(diff: IDiff, outputErrors: Error[]) {

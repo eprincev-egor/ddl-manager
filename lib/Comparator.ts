@@ -13,13 +13,11 @@ export class Comparator {
         const diff: IDiff = {
             drop: {
                 functions: [],
-                triggers: [],
-                comments: []
+                triggers: []
             },
             create: {
                 functions: [],
-                triggers: [],
-                comments: []
+                triggers: []
             }
         };
 
@@ -33,11 +31,6 @@ export class Comparator {
             dbState,
             filesState
         );
-        this.dropComments(
-            diff,
-            dbState,
-            filesState
-        );
         
         this.createFunctions(
             diff,
@@ -45,11 +38,6 @@ export class Comparator {
             filesState
         );
         this.createTriggers(
-            diff,
-            dbState,
-            filesState
-        );
-        this.createComments(
             diff,
             dbState,
             filesState
@@ -136,24 +124,6 @@ export class Comparator {
         diff.drop.triggers.push( ...triggersToDrop );
     }
 
-    private dropComments(
-        diff: IDiff,
-        dbState: IState,
-        filesState: IState
-    ) {
-        for (const comment of dbState.comments || []) {
-            const existsSameCommentFromFile = (filesState.comments || []).some(fileComment =>
-                equalComment(fileComment, comment)
-            );
-
-            if ( existsSameCommentFromFile ) {
-                continue;
-            }
-
-            diff.drop.comments.push( comment );
-        }
-    }
-
     private createFunctions(
         diff: IDiff,
         dbState: IState,
@@ -191,25 +161,6 @@ export class Comparator {
             diff.create.triggers.push( trigger );
         }
     }
-
-    private createComments(
-        diff: IDiff,
-        dbState: IState,
-        filesState: IState
-    ) {
-        for (const comment of filesState.comments || []) {
-            
-            const existsSameCommentFromDb = (dbState.comments || []).some(dbComment =>
-                equalComment(dbComment, comment)
-            );
-
-            if ( existsSameCommentFromDb ) {
-                continue;
-            }
-
-            diff.create.comments.push( comment );
-        }
-    }
 }
 
 
@@ -219,10 +170,6 @@ function equalFunction(func1: any, func2: any) {
 
 function equalTrigger(trigger1: any, trigger2: any) {
     return deepEqual(trigger1, trigger2);
-}
-
-function equalComment(comment1: any, comment2: any) {
-    return deepEqual(comment1, comment2);
 }
 
 function deepEqual(obj1: any, obj2: any) {

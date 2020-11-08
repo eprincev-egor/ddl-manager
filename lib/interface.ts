@@ -30,7 +30,6 @@ export type DatabaseTriggerType = CreateTrigger["TJson"] & {
 export interface IState {
     functions: DatabaseFunctionType[];
     triggers: DatabaseTriggerType[];
-    comments: any[];
 }
 
 export interface IDiff {

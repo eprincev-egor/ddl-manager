@@ -37,8 +37,7 @@ describe("Migrator.migrate", () => {
             diff: {
                 drop: {
                     functions: [],
-                    triggers: [],
-                    comments: []
+                    triggers: []
                 },
                 create: {
                     functions: [
@@ -53,8 +52,7 @@ describe("Migrator.migrate", () => {
                         end`}
                         }
                     ],
-                    triggers: [],
-                    comments: []
+                    triggers: []
                 }
             }
         });
@@ -81,8 +79,7 @@ describe("Migrator.migrate", () => {
             diff: {
                 drop: {
                     functions: [],
-                    triggers: [],
-                    comments: []
+                    triggers: []
                 },
                 create: {
                     functions: [
@@ -114,8 +111,7 @@ describe("Migrator.migrate", () => {
                                 args: []
                             }
                         }
-                    ],
-                    comments: []
+                    ]
                 }
             }
         });
@@ -145,8 +141,7 @@ describe("Migrator.migrate", () => {
         const diff: IDiff = {
             drop: {
                 functions: [],
-                triggers: [],
-                comments: []
+                triggers: []
             },
             create: {
                 functions: [
@@ -178,8 +173,7 @@ describe("Migrator.migrate", () => {
                             args: []
                         }
                     }
-                ],
-                comments: []
+                ]
             }
         };
 
@@ -212,8 +206,7 @@ describe("Migrator.migrate", () => {
         await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: [],
-                comments: []
+                triggers: []
             },
             create: {
                 functions: [
@@ -226,8 +219,7 @@ describe("Migrator.migrate", () => {
                         body: {content: "select 2"}
                     }
                 ],
-                triggers: [],
-                comments: []
+                triggers: []
             }
         }});
         
@@ -259,13 +251,11 @@ describe("Migrator.migrate", () => {
                             body: {content: "select 2"}
                         }
                     ],
-                    triggers: [],
-                    comments: []
+                    triggers: []
                 },
                 create: {
                     functions: [],
-                    triggers: [],
-                    comments: []
+                    triggers: []
                 }
             }});
         } catch(err) {
@@ -283,8 +273,7 @@ describe("Migrator.migrate", () => {
         await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: [],
-                comments: []
+                triggers: []
             },
             create: {
                 functions: [
@@ -306,8 +295,7 @@ describe("Migrator.migrate", () => {
                         body: {content: "select 2"}
                     }
                 ],
-                triggers: [],
-                comments: []
+                triggers: []
             }
         }});
 
@@ -331,8 +319,7 @@ describe("Migrator.migrate", () => {
         await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: [],
-                comments: []
+                triggers: []
             },
             create: {
                 functions: [
@@ -350,8 +337,7 @@ describe("Migrator.migrate", () => {
                         body: {content: "select 2"}
                     }
                 ],
-                triggers: [],
-                comments: []
+                triggers: []
             }
         }});
 
@@ -389,8 +375,7 @@ describe("Migrator.migrate", () => {
             await migrate({db, diff: {
                 drop: {
                     functions: [],
-                    triggers: [],
-                    comments: []
+                    triggers: []
                 },
                 create: {
                     functions: [
@@ -422,8 +407,7 @@ describe("Migrator.migrate", () => {
                                 args: []
                             }
                         }
-                    ],
-                    comments: []
+                    ]
                 }
             }});
         } catch(err) {
@@ -485,13 +469,11 @@ describe("Migrator.migrate", () => {
                                 args: []
                             }
                         }
-                    ],
-                    comments: []
+                    ]
                 },
                 create: {
                     functions: [],
-                    triggers: [],
-                    comments: []
+                    triggers: []
                 }
             }});
         } catch(err) {
@@ -510,8 +492,7 @@ describe("Migrator.migrate", () => {
         await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: [],
-                comments: []
+                triggers: []
             },
             create: {
                 functions: [
@@ -534,8 +515,7 @@ describe("Migrator.migrate", () => {
                         end`}
                     }
                 ],
-                triggers: [],
-                comments: []
+                triggers: []
             }
         }});
 
@@ -559,8 +539,7 @@ describe("Migrator.migrate", () => {
         await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: [],
-                comments: []
+                triggers: []
             },
             create: {
                 functions: [
@@ -581,8 +560,7 @@ describe("Migrator.migrate", () => {
                         end`}
                     }
                 ],
-                triggers: [],
-                comments: []
+                triggers: []
             }
         }});
 
@@ -605,8 +583,7 @@ describe("Migrator.migrate", () => {
         await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: [],
-                comments: []
+                triggers: []
             },
             create: {
                 functions: [
@@ -626,8 +603,7 @@ describe("Migrator.migrate", () => {
                         end`}
                     }
                 ],
-                triggers: [],
-                comments: []
+                triggers: []
             }
         }});
 
@@ -639,8 +615,7 @@ describe("Migrator.migrate", () => {
         await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: [],
-                comments: []
+                triggers: []
             },
             create: {
                 functions: [
@@ -660,8 +635,7 @@ describe("Migrator.migrate", () => {
                         end`}
                     }
                 ],
-                triggers: [],
-                comments: []
+                triggers: []
             }
         }});
 
@@ -673,8 +647,7 @@ describe("Migrator.migrate", () => {
         await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: [],
-                comments: []
+                triggers: []
             },
             create: {
                 functions: [
@@ -701,8 +674,7 @@ describe("Migrator.migrate", () => {
                         end`}
                     }
                 ],
-                triggers: [],
-                comments: []
+                triggers: []
             }
         }});
 
@@ -720,8 +692,7 @@ describe("Migrator.migrate", () => {
             diff: {
                 drop: {
                     functions: [],
-                    triggers: [],
-                    comments: []
+                    triggers: []
                 },
                 create: {
                     functions: [
@@ -737,7 +708,6 @@ describe("Migrator.migrate", () => {
                             comment: "nice"
                         }
                     ],
-                    comments: [],
                     triggers: []
                 }
             }
@@ -776,8 +746,7 @@ describe("Migrator.migrate", () => {
             diff: {
                 drop: {
                     functions: [],
-                    triggers: [],
-                    comments: []
+                    triggers: []
                 },
                 create: {
                     functions: [
@@ -810,8 +779,7 @@ describe("Migrator.migrate", () => {
                             },
                             comment: "super"
                         }
-                    ],
-                    comments: []
+                    ]
                 }
             }
         });
@@ -829,131 +797,6 @@ describe("Migrator.migrate", () => {
         });
 
     });
-
-
-    it("migrate drop function comment", async() => {
-
-        await db.query(`
-            create function test(a numeric)
-            returns integer as $$select 1$$
-            language sql;
-
-            comment on function public.test(numeric) is $$xx$$
-        `);
-
-        await migrate({
-            db, 
-            diff: {
-                drop: {
-                    functions: [],
-                    triggers: [],
-                    comments: [
-                        {
-                            function: {
-                                schema: "public",
-                                name: "test",
-                                args: ["numeric"]
-                            },
-                            comment: {content: "xx"}
-                        }
-                    ]
-                },
-                create: {
-                    functions: [],
-                    triggers: [],
-                    comments: []
-                }
-            }
-        });
-
-        const result = await db.query(`
-            select
-                coalesce(
-                    pg_catalog.obj_description( pg_proc.oid ),
-                    'dropped'
-                ) as comment
-            from information_schema.routines as routines
-
-            left join pg_catalog.pg_proc as pg_proc on
-                routines.specific_name = pg_proc.proname || '_' || pg_proc.oid::text
-        
-            where
-                routines.routine_schema = 'public' and
-                routines.routine_name = 'test'
-        `);
-
-        expect(result.rows[0]).to.be.shallowDeepEqual({
-            comment: "dropped"
-        });
-
-    });
-
-    it("migrate drop trigger comment", async() => {
-
-        await db.query(`
-            create table company (
-                id serial primary key
-            );
-
-            create function test()
-            returns trigger as $$
-            begin
-                return new;
-            end
-            $$
-            language plpgsql;
-            
-            create trigger x
-            after insert
-            on company
-            for each row
-            execute procedure test();
-
-            comment on trigger x on company is $$xx$$
-        `);
-
-        await migrate({
-            db, 
-            diff: {
-                drop: {
-                    functions: [],
-                    triggers: [],
-                    comments: [
-                        {
-                            trigger: {
-                                schema: "public",
-                                table: "company",
-                                name: "x"
-                            },
-                            comment: {content: "xx"}
-                        }
-                    ]
-                },
-                create: {
-                    functions: [],
-                    triggers: [],
-                    comments: []
-                }
-            }
-        });
-
-        const result = await db.query(`
-            select
-                coalesce(
-                    pg_catalog.obj_description( pg_trigger.oid ),
-                    'dropped'
-                ) as comment
-            from pg_trigger
-            where
-                pg_trigger.tgname = 'x'
-        `);
-
-        expect(result.rows[0]).to.be.shallowDeepEqual({
-            comment: "dropped"
-        });
-
-    });
-
 
     it("migrate function, arg default null", async() => {
         const func = {
@@ -977,15 +820,13 @@ describe("Migrator.migrate", () => {
         await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: [],
-                comments: []
+                triggers: []
             },
             create: {
                 functions: [
                     func
                 ],
-                triggers: [],
-                comments: []
+                triggers: []
             }
         }});
 
@@ -1001,13 +842,11 @@ describe("Migrator.migrate", () => {
                 functions: [
                     func
                 ],
-                triggers: [],
-                comments: []
+                triggers: []
             },
             create: {
                 functions: [],
-                triggers: [],
-                comments: []
+                triggers: []
             }
         }});
 
@@ -1066,16 +905,14 @@ describe("Migrator.migrate", () => {
         await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: [],
-                comments: []
+                triggers: []
             },
             create: {
                 functions: [
                     func1,
                     func2
                 ],
-                triggers: [],
-                comments: []
+                triggers: []
             }
         }});
 
@@ -1098,13 +935,11 @@ describe("Migrator.migrate", () => {
                     func1,
                     func2
                 ],
-                triggers: [],
-                comments: []
+                triggers: []
             },
             create: {
                 functions: [],
-                triggers: [],
-                comments: []
+                triggers: []
             }
         }});
 

@@ -198,8 +198,6 @@ export class DdlManager {
         const postgres = new PostgresDriver(db);
         const dbState = await postgres.loadState();
 
-        const dbComments = dbState.comments || [];
-
         const existsFolders: {
             [dirPath: string]: boolean
         } = {};
@@ -210,7 +208,6 @@ export class DdlManager {
         for (let i = 0, n = functions.length; i < n; i++) {
             const func = functions[i];
             const sameFuncs = [func];
-            let comment;
 
             // find functions with same name
             // expected sorted array by schema/name

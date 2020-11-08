@@ -10,9 +10,6 @@ import { FunctionParser } from "../parser/FunctionParser";
 import { TriggerParser } from "../parser/TriggerParser";
 import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
-import {
-    function2identifyJson
-} from "../utils";
 
 const selectAllFunctionsSQL = fs.readFileSync(__dirname + "/postgres/select-all-functions.sql")
     .toString();
@@ -35,8 +32,7 @@ implements IDatabaseDriver {
     async loadState() {
         const state: IState = {
             triggers: [],
-            functions: [],
-            comments: []
+            functions: []
         };
 
         const functions = await this.loadObjects<DatabaseFunctionType>(
@@ -46,13 +42,6 @@ implements IDatabaseDriver {
         for (const func of functions) {
 
             state.functions.push(func);
-
-            if ( func.comment ) {
-                state.comments.push({
-                    function: function2identifyJson(func),
-                    comment: func.comment
-                });
-            }
         }
 
         const triggers = await this.loadObjects<DatabaseTriggerType>(
@@ -62,17 +51,6 @@ implements IDatabaseDriver {
         for (const trigger of triggers) {
 
             state.triggers.push(trigger);
-
-            if ( trigger.comment ) {
-                state.comments.push({
-                    trigger: {
-                        schema: trigger.table.schema,
-                        table: trigger.table.name,
-                        name: trigger.name
-                    },
-                    comment: trigger.comment
-                });
-            }
         }
 
         return state;

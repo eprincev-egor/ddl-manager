@@ -456,15 +456,8 @@ describe("Comparator.compare", () => {
             returns: {type: "integer"},
             body: `begin
                 return x + y;
-            end`
-        };
-        const comment = {
-            function: {
-                schema: "public",
-                name: "some_test_func",
-                args: []
-            },
-            comment: {content: "test"}
+            end`,
+            comment: "test"
         };
 
         const diff = diffState({
@@ -472,10 +465,7 @@ describe("Comparator.compare", () => {
                 functions: [
                     func
                 ],
-                triggers: [],
-                comments: [
-                    comment
-                ]
+                triggers: []
             },
             dbState: {
                 functions: [],
@@ -492,9 +482,6 @@ describe("Comparator.compare", () => {
                 triggers: [],
                 functions: [
                     func
-                ],
-                comments: [
-                    comment
                 ]
             }
         });
