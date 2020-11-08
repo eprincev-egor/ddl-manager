@@ -31,28 +31,15 @@ implements IDatabaseDriver {
 
     async loadState() {
         const state: IState = {
-            triggers: [],
-            functions: []
+            functions: await this.loadObjects<DatabaseFunctionType>(
+                selectAllFunctionsSQL,
+                this.functionParser
+            ),
+            triggers: await this.loadObjects<DatabaseTriggerType>(
+                selectAllTriggersSQL,
+                this.triggerParser
+            )
         };
-
-        const functions = await this.loadObjects<DatabaseFunctionType>(
-            selectAllFunctionsSQL,
-            this.functionParser
-        );
-        for (const func of functions) {
-
-            state.functions.push(func);
-        }
-
-        const triggers = await this.loadObjects<DatabaseTriggerType>(
-            selectAllTriggersSQL,
-            this.triggerParser
-        );
-        for (const trigger of triggers) {
-
-            state.triggers.push(trigger);
-        }
-
         return state;
     }
 
