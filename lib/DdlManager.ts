@@ -5,8 +5,6 @@ import {
     getDbClient, 
     logDiff, 
     isDbClient,
-    findCommentByFunction,
-    findCommentByTrigger,
     trigger2sql,
     comment2sql,
     function2sql
@@ -252,18 +250,11 @@ export class DdlManager {
 
                 sql += function2sql(sameFunc);
 
-                // custom comment from db, we write as 
-                // comment on ...
-                comment = findCommentByFunction(
-                    dbComments,
-                    sameFunc
-                );
-    
-                if ( comment ) {
+                if ( sameFunc.comment ) {
                     sql += ";\n";
                     sql += "\n";
     
-                    sql += comment2sql(comment);
+                    sql += comment2sql(sameFunc.comment, {function: sameFunc});
                 }
             });
             
@@ -289,17 +280,12 @@ export class DdlManager {
                         sql += "\n";
         
                         sql += trigger2sql( trigger );
-    
-                        comment = findCommentByTrigger(
-                            dbComments,
-                            trigger
-                        );
-    
-                        if ( comment ) {
+
+                        if ( trigger.comment ) {
                             sql += ";\n";
                             sql += "\n";
     
-                            sql += comment2sql(comment);
+                            sql += comment2sql(trigger.comment, {trigger});
                         }
                     });
                 }

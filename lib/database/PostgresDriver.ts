@@ -107,14 +107,14 @@ implements IDatabaseDriver {
         const dbComments = dbState.comments || [];
 
         dbState.functions.forEach(func => {
-            const comment = findCommentByFunction(dbComments, func);
+            const comment = func.comment || findCommentByFunction(dbComments, func);
 
             ddlSql += getUnfreezeFunctionSql( func, comment );
             ddlSql += ";";
         });
 
         dbState.triggers.forEach(trigger => {
-            const comment = findCommentByTrigger(dbComments, trigger);
+            const comment = trigger.comment || findCommentByTrigger(dbComments, trigger);
 
             ddlSql += getUnfreezeTriggerSql( trigger, comment );
             ddlSql += ";";

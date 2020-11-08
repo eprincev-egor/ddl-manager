@@ -352,24 +352,18 @@ export function trigger2identifySql(trigger: any) {
 }
 
 // TODO: any => type
-export function comment2sql(comment: any) {
-    if ( comment.row ) {
-        comment = comment.row;
-    }
+export function comment2sql(
+    comment: string,
+    info: {trigger?: any; function?: any} = {}
+) {
 
-    let commentContent = comment.comment;
-    // if commentContent is PgString
-    if ( commentContent.content ) {
-        commentContent = commentContent.content;
-    }
-
-    if ( comment.function ) {
-        const {schema, name, args} = comment.function;
-        return `comment on function ${schema}.${name}(${ args.join(", ") }) is ${ wrapText(commentContent) }`;
+    if ( info.function ) {
+        const identify = function2identifySql(info.function);
+        return `comment on function ${identify} is ${ wrapText(comment) }`;
     }
     else {
-        const {name, schema, table} = comment.trigger;
-        return `comment on trigger ${name} on ${schema}.${table} is ${ wrapText(commentContent) }`;
+        const identify = trigger2identifySql(info.trigger);
+        return `comment on trigger ${identify} is ${ wrapText(comment) }`;
     }
 }
 

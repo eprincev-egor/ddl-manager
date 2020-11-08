@@ -733,19 +733,11 @@ describe("Migrator.migrate", () => {
                             returns: {type: "bigint"},
                             body: {content: `begin
                                 return 1;
-                            end`}
+                            end`},
+                            comment: "nice"
                         }
                     ],
-                    comments: [
-                        {
-                            function: {
-                                schema: "public",
-                                name: "some_func",
-                                args: []
-                            },
-                            comment: {content: "nice"}
-                        }
-                    ],
+                    comments: [],
                     triggers: []
                 }
             }
@@ -815,19 +807,11 @@ describe("Migrator.migrate", () => {
                                 schema: "public",
                                 name: "some_action_on_diu_test",
                                 args: []
-                            }
+                            },
+                            comment: "super"
                         }
                     ],
-                    comments: [
-                        {
-                            trigger: {
-                                schema: "public",
-                                table: "ddl_manager_test",
-                                name: "some_action_on_diu_test_trigger"
-                            },
-                            comment: {content: "super"}
-                        }
-                    ]
+                    comments: []
                 }
             }
         });

@@ -153,7 +153,7 @@ export class Migrator {
             
             ddlSql += ";";
             // comment on function ddl-manager-sync
-            const comment = findCommentByFunction(
+            const comment = func.comment || findCommentByFunction(
                 diff.create.comments || [],
                 func
             );
@@ -194,7 +194,7 @@ export class Migrator {
 
             ddlSql += ";";
             // comment on trigger ddl-manager-sync
-            const comment = findCommentByTrigger(
+            const comment = trigger.comment || findCommentByTrigger(
                 diff.create.comments || [],
                 trigger
             );
