@@ -304,22 +304,6 @@ export function comment2sql(
 }
 
 // TODO: any => type
-export function comment2dropSql(comment: any) {
-    if ( comment.row ) {
-        comment = comment.row;
-    }
-
-    if ( comment.function ) {
-        const {schema, name, args} = comment.function;
-        return `comment on function ${schema}.${name}(${ args.join(", ") }) is null`;
-    }
-    else {
-        const {name, schema, table} = comment.trigger;
-        return `comment on trigger ${name} on ${schema}.${table} is null`;
-    }
-}
-
-// TODO: any => type
 export function function2sql(func: any) {
     let additionalParams = "";
 
