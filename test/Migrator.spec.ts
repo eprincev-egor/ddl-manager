@@ -1,12 +1,18 @@
 import assert from "assert";
-import { getDBClient } from "../utils/getDbClient";
-import { DdlManager } from "../../lib/DdlManager";
+import { getDBClient } from "./utils/getDbClient";
+import { Migrator } from "../lib/Migrator";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import { IDiff } from "../lib/Comparator";
 
 use(chaiShallowDeepEqualPlugin);
 
-describe("DlManager.migrate", () => {
+async function migrate(params: {db: any, diff: IDiff}) {
+    const migrator = new Migrator(params.db);
+    await migrator.migrate(params.diff);
+}
+
+describe("Migrator.migrate", () => {
     let db: any;
     
     beforeEach(async() => {
@@ -22,30 +28,17 @@ describe("DlManager.migrate", () => {
         db.end();
     });
 
-    it("migrate null", async() => {
-
-        try {
-            await DdlManager.migrate({
-                db: null, 
-                diff: null
-            });
-            
-            assert.ok(false, "expected error for null");
-        } catch(err) {
-            assert.equal(err.message, "invalid diff");
-        }
-    });
-
     it("migrate simple function", async() => {
 
         const rnd = Math.round( 10000 * Math.random() );
         
-        await DdlManager.migrate({
+        await migrate({
             db, 
             diff: {
                 drop: {
                     functions: [],
-                    triggers: []
+                    triggers: [],
+                    comments: []
                 },
                 create: {
                     functions: [
@@ -55,12 +48,13 @@ describe("DlManager.migrate", () => {
                             name: "test_migrate_function",
                             args: [],
                             returns: {type: "bigint"},
-                            body: `begin
+                            body: {content: `begin
                             return ${ rnd };
-                        end`
+                        end`}
                         }
                     ],
-                    triggers: []
+                    triggers: [],
+                    comments: []
                 }
             }
         });
@@ -82,12 +76,13 @@ describe("DlManager.migrate", () => {
             );
         `);
 
-        await DdlManager.migrate({
+        await migrate({
             db, 
             diff: {
                 drop: {
                     functions: [],
-                    triggers: []
+                    triggers: [],
+                    comments: []
                 },
                 create: {
                     functions: [
@@ -97,9 +92,9 @@ describe("DlManager.migrate", () => {
                             name: "some_action_on_diu_test",
                             args: [],
                             returns: {type: "trigger"},
-                            body: `begin
+                            body: {content: `begin
                             raise exception 'success';
-                        end`
+                        end`}
                         }
                     ],
                     triggers: [
@@ -115,10 +110,12 @@ describe("DlManager.migrate", () => {
                             name: "some_action_on_diu_test_trigger",
                             procedure: {
                                 schema: "public",
-                                name: "some_action_on_diu_test"
+                                name: "some_action_on_diu_test",
+                                args: []
                             }
                         }
-                    ]
+                    ],
+                    comments: []
                 }
             }
         });
@@ -145,10 +142,11 @@ describe("DlManager.migrate", () => {
             );
         `);
 
-        const diff = {
+        const diff: IDiff = {
             drop: {
                 functions: [],
-                triggers: []
+                triggers: [],
+                comments: []
             },
             create: {
                 functions: [
@@ -158,9 +156,9 @@ describe("DlManager.migrate", () => {
                         name: "some_action_on_diu_test",
                         args: [],
                         returns: {type: "trigger"},
-                        body: `begin
+                        body: {content: `begin
                             raise exception 'success';
-                        end`
+                        end`}
                     }
                 ],
                 triggers: [
@@ -176,16 +174,18 @@ describe("DlManager.migrate", () => {
                         name: "some_action_on_diu_test_trigger",
                         procedure: {
                             schema: "public",
-                            name: "some_action_on_diu_test"
+                            name: "some_action_on_diu_test",
+                            args: []
                         }
                     }
-                ]
+                ],
+                comments: []
             }
         };
 
         // do it twice without errors
-        await DdlManager.migrate({db, diff});
-        await DdlManager.migrate({db, diff});
+        await migrate({db, diff});
+        await migrate({db, diff});
         
 
         // check trigger on table
@@ -209,10 +209,11 @@ describe("DlManager.migrate", () => {
             language sql;
         `);
 
-        await DdlManager.migrate({db, diff: {
+        await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: []
+                triggers: [],
+                comments: []
             },
             create: {
                 functions: [
@@ -225,7 +226,8 @@ describe("DlManager.migrate", () => {
                         body: {content: "select 2"}
                     }
                 ],
-                triggers: []
+                triggers: [],
+                comments: []
             }
         }});
         
@@ -245,7 +247,7 @@ describe("DlManager.migrate", () => {
         `);
 
         try {
-            await DdlManager.migrate({db, diff: {
+            await migrate({db, diff: {
                 drop: {
                     functions: [
                         {
@@ -257,11 +259,13 @@ describe("DlManager.migrate", () => {
                             body: {content: "select 2"}
                         }
                     ],
-                    triggers: []
+                    triggers: [],
+                    comments: []
                 },
                 create: {
                     functions: [],
-                    triggers: []
+                    triggers: [],
+                    comments: []
                 }
             }});
         } catch(err) {
@@ -276,10 +280,11 @@ describe("DlManager.migrate", () => {
             language sql;
         `);
 
-        await DdlManager.migrate({db, diff: {
+        await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: []
+                triggers: [],
+                comments: []
             },
             create: {
                 functions: [
@@ -301,7 +306,8 @@ describe("DlManager.migrate", () => {
                         body: {content: "select 2"}
                     }
                 ],
-                triggers: []
+                triggers: [],
+                comments: []
             }
         }});
 
@@ -322,10 +328,11 @@ describe("DlManager.migrate", () => {
             language sql;
         `);
 
-        await DdlManager.migrate({db, diff: {
+        await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: []
+                triggers: [],
+                comments: []
             },
             create: {
                 functions: [
@@ -343,7 +350,8 @@ describe("DlManager.migrate", () => {
                         body: {content: "select 2"}
                     }
                 ],
-                triggers: []
+                triggers: [],
+                comments: []
             }
         }});
 
@@ -378,10 +386,11 @@ describe("DlManager.migrate", () => {
         `);
 
         try {
-            await DdlManager.migrate({db, diff: {
+            await migrate({db, diff: {
                 drop: {
                     functions: [],
-                    triggers: []
+                    triggers: [],
+                    comments: []
                 },
                 create: {
                     functions: [
@@ -391,11 +400,11 @@ describe("DlManager.migrate", () => {
                             name: "test2",
                             args: [],
                             returns: {type: "trigger"},
-                            body: `
+                            body: {content: `
                                 begin
                                     return new;
                                 end
-                            `
+                            `}
                         }
                     ],
                     triggers: [
@@ -409,10 +418,12 @@ describe("DlManager.migrate", () => {
                             delete: true,
                             procedure: {
                                 schema: "public",
-                                name: "test"
+                                name: "test",
+                                args: []
                             }
                         }
-                    ]
+                    ],
+                    comments: []
                 }
             }});
         } catch(err) {
@@ -443,7 +454,7 @@ describe("DlManager.migrate", () => {
 
         
         try {
-            await DdlManager.migrate({db, diff: {
+            await migrate({db, diff: {
                 drop: {
                     functions: [
                         {
@@ -452,11 +463,11 @@ describe("DlManager.migrate", () => {
                             name: "test2",
                             args: [],
                             returns: {type: "trigger"},
-                            body: `
+                            body: {content: `
                             begin
                                 return new;
                             end
-                        `
+                        `}
                         }
                     ],
                     triggers: [
@@ -470,14 +481,17 @@ describe("DlManager.migrate", () => {
                             delete: true,
                             procedure: {
                                 schema: "public",
-                                name: "test"
+                                name: "test",
+                                args: []
                             }
                         }
-                    ]
+                    ],
+                    comments: []
                 },
                 create: {
                     functions: [],
-                    triggers: []
+                    triggers: [],
+                    comments: []
                 }
             }});
         } catch(err) {
@@ -493,10 +507,11 @@ describe("DlManager.migrate", () => {
             );
         `);
 
-        await DdlManager.migrate({db, diff: {
+        await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: []
+                triggers: [],
+                comments: []
             },
             create: {
                 functions: [
@@ -508,7 +523,7 @@ describe("DlManager.migrate", () => {
                         returns: {
                             type: "public.some_table"
                         },
-                        body: `
+                        body: {content: `
                         declare some_table_row some_table;
                         begin
                             select *
@@ -516,10 +531,11 @@ describe("DlManager.migrate", () => {
                             into some_table_row;
 
                             return some_table_row;
-                        end`
+                        end`}
                     }
                 ],
-                triggers: []
+                triggers: [],
+                comments: []
             }
         }});
 
@@ -540,10 +556,11 @@ describe("DlManager.migrate", () => {
             default values;
         `);
 
-        await DdlManager.migrate({db, diff: {
+        await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: []
+                triggers: [],
+                comments: []
             },
             create: {
                 functions: [
@@ -556,15 +573,16 @@ describe("DlManager.migrate", () => {
                             setof: true,
                             type: "public.some_table"
                         },
-                        body: `
+                        body: {content: `
                         begin
                             return query 
                                 select *
                                 from some_table;
-                        end`
+                        end`}
                     }
                 ],
-                triggers: []
+                triggers: [],
+                comments: []
             }
         }});
 
@@ -584,10 +602,11 @@ describe("DlManager.migrate", () => {
             );
         `);
 
-        await DdlManager.migrate({db, diff: {
+        await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: []
+                triggers: [],
+                comments: []
             },
             create: {
                 functions: [
@@ -602,12 +621,13 @@ describe("DlManager.migrate", () => {
                             }
                         ],
                         returns: {type: "void"},
-                        body: `
+                        body: {content: `
                         begin
-                        end`
+                        end`}
                     }
                 ],
-                triggers: []
+                triggers: [],
+                comments: []
             }
         }});
 
@@ -616,10 +636,11 @@ describe("DlManager.migrate", () => {
     });
 
     it("migrate function, arg without name", async() => {
-        await DdlManager.migrate({db, diff: {
+        await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: []
+                triggers: [],
+                comments: []
             },
             create: {
                 functions: [
@@ -629,17 +650,18 @@ describe("DlManager.migrate", () => {
                         name: "test_func",
                         args: [
                             {
-                                name: false,
+                                name: null as any,
                                 type: "text"
                             }
                         ],
                         returns: {type: "void"},
-                        body: `
+                        body: {content: `
                         begin
-                        end`
+                        end`}
                     }
                 ],
-                triggers: []
+                triggers: [],
+                comments: []
             }
         }});
 
@@ -648,10 +670,11 @@ describe("DlManager.migrate", () => {
     });
 
     it("migrate function, in/out arg", async() => {
-        await DdlManager.migrate({db, diff: {
+        await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: []
+                triggers: [],
+                comments: []
             },
             create: {
                 functions: [
@@ -672,13 +695,14 @@ describe("DlManager.migrate", () => {
                             }
                         ],
                         returns: {type: "text"},
-                        body: `
+                        body: {content: `
                         begin
                             name = 'nice' || id::text;
-                        end`
+                        end`}
                     }
                 ],
-                triggers: []
+                triggers: [],
+                comments: []
             }
         }});
 
@@ -691,12 +715,13 @@ describe("DlManager.migrate", () => {
 
     it("migrate simple function with comment", async() => {
 
-        await DdlManager.migrate({
+        await migrate({
             db, 
             diff: {
                 drop: {
                     functions: [],
-                    triggers: []
+                    triggers: [],
+                    comments: []
                 },
                 create: {
                     functions: [
@@ -706,9 +731,9 @@ describe("DlManager.migrate", () => {
                             name: "some_func",
                             args: [],
                             returns: {type: "bigint"},
-                            body: `begin
+                            body: {content: `begin
                                 return 1;
-                            end`
+                            end`}
                         }
                     ],
                     comments: [
@@ -754,12 +779,13 @@ describe("DlManager.migrate", () => {
             );
         `);
 
-        await DdlManager.migrate({
+        await migrate({
             db, 
             diff: {
                 drop: {
                     functions: [],
-                    triggers: []
+                    triggers: [],
+                    comments: []
                 },
                 create: {
                     functions: [
@@ -769,9 +795,9 @@ describe("DlManager.migrate", () => {
                             name: "some_action_on_diu_test",
                             args: [],
                             returns: {type: "trigger"},
-                            body: `begin
+                            body: {content: `begin
                             raise exception 'success';
-                        end`
+                        end`}
                         }
                     ],
                     triggers: [
@@ -787,7 +813,8 @@ describe("DlManager.migrate", () => {
                             name: "some_action_on_diu_test_trigger",
                             procedure: {
                                 schema: "public",
-                                name: "some_action_on_diu_test"
+                                name: "some_action_on_diu_test",
+                                args: []
                             }
                         }
                     ],
@@ -830,7 +857,7 @@ describe("DlManager.migrate", () => {
             comment on function public.test(numeric) is $$xx$$
         `);
 
-        await DdlManager.migrate({
+        await migrate({
             db, 
             diff: {
                 drop: {
@@ -848,9 +875,9 @@ describe("DlManager.migrate", () => {
                     ]
                 },
                 create: {
-                    functions: [
-                    ],
-                    triggers: []
+                    functions: [],
+                    triggers: [],
+                    comments: []
                 }
             }
         });
@@ -901,7 +928,7 @@ describe("DlManager.migrate", () => {
             comment on trigger x on company is $$xx$$
         `);
 
-        await DdlManager.migrate({
+        await migrate({
             db, 
             diff: {
                 drop: {
@@ -919,9 +946,9 @@ describe("DlManager.migrate", () => {
                     ]
                 },
                 create: {
-                    functions: [
-                    ],
-                    triggers: []
+                    functions: [],
+                    triggers: [],
+                    comments: []
                 }
             }
         });
@@ -957,22 +984,24 @@ describe("DlManager.migrate", () => {
                 }
             ],
             returns: {type: "text"},
-            body: `
+            body: {content: `
             begin
                 return 'nice' || coalesce(id, 2)::text;
-            end`
+            end`}
         };
 
-        await DdlManager.migrate({db, diff: {
+        await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: []
+                triggers: [],
+                comments: []
             },
             create: {
                 functions: [
                     func
                 ],
-                triggers: []
+                triggers: [],
+                comments: []
             }
         }});
 
@@ -983,16 +1012,18 @@ describe("DlManager.migrate", () => {
         });
 
 
-        await DdlManager.migrate({db, diff: {
+        await migrate({db, diff: {
             drop: {
                 functions: [
                     func
                 ],
-                triggers: []
+                triggers: [],
+                comments: []
             },
             create: {
                 functions: [],
-                triggers: []
+                triggers: [],
+                comments: []
             }
         }});
 
@@ -1025,10 +1056,10 @@ describe("DlManager.migrate", () => {
                 }
             ],
             returns: {type: "integer"},
-            body: `
+            body: {content: `
             begin
                 return 1;
-            end`
+            end`}
         };
         const func2 = {
             language: "plpgsql",
@@ -1042,23 +1073,25 @@ describe("DlManager.migrate", () => {
                 }
             ],
             returns: {type: "integer"},
-            body: `
+            body: {content: `
             begin
                 return 2;
-            end`
+            end`}
         };
 
-        await DdlManager.migrate({db, diff: {
+        await migrate({db, diff: {
             drop: {
                 functions: [],
-                triggers: []
+                triggers: [],
+                comments: []
             },
             create: {
                 functions: [
                     func1,
                     func2
                 ],
-                triggers: []
+                triggers: [],
+                comments: []
             }
         }});
 
@@ -1075,17 +1108,19 @@ describe("DlManager.migrate", () => {
         });
 
 
-        await DdlManager.migrate({db, diff: {
+        await migrate({db, diff: {
             drop: {
                 functions: [
                     func1,
                     func2
                 ],
-                triggers: []
+                triggers: [],
+                comments: []
             },
             create: {
                 functions: [],
-                triggers: []
+                triggers: [],
+                comments: []
             }
         }});
 

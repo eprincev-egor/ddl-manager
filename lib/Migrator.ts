@@ -15,6 +15,7 @@ import {
 } from "./utils";
 import { Client } from "pg";
 import { IDiff } from "./Comparator";
+import assert from "assert";
 
 export class Migrator {
     private pgClient: Client;
@@ -24,9 +25,7 @@ export class Migrator {
     }
 
     async migrate(diff: IDiff, throwError?: boolean) {
-        if ( diff == null ) {
-            throw new Error("invalid diff");
-        }
+        assert.ok(diff);
 
         const outputErrors: Error[] = [];
 

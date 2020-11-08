@@ -19,7 +19,7 @@ const watchers: FilesState[] = [];
 
 export class DdlManager {
     // TODO: any => type
-    static async migrate(params: {db: any, diff: any, throwError?: boolean}) {
+    private static async migrate(params: {db: any, diff: any, throwError?: boolean}) {
         const {db, diff, throwError} = params;
 
         const migrator = new Migrator(db);
