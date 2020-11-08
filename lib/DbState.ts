@@ -1,4 +1,3 @@
-import _ from "lodash";
 import {
     findCommentByFunction,
     findCommentByTrigger,
@@ -8,9 +7,9 @@ import {
     function2identifyJson,
     trigger2identifySql
 } from "./utils";
-import assert from "assert";
 import { Client } from "pg";
 import { PostgresDriver } from "./database/PostgresDriver";
+import { Comparator } from "./Comparator";
 
 export class DbState {
     private db: Client;
@@ -20,6 +19,7 @@ export class DbState {
     comments!: any[];
 
     private postgres: PostgresDriver;
+    private comparator: Comparator;
 
     constructor(db: Client) {
         this.db = db;
@@ -28,6 +28,7 @@ export class DbState {
         this.functions = [];
 
         this.postgres = new PostgresDriver(db);
+        this.comparator = new Comparator();
     }
 
     async load() {
@@ -79,179 +80,8 @@ export class DbState {
         triggers: any[];
         comments: any[];
     }) {
-        if ( !_.isObject(filesState) ) {
-            throw new Error("undefined filesState");
-        }
-        if ( !_.isArray(filesState.functions) ) {
-            throw new Error("undefined filesState.functions");
-        }
-        if ( !_.isArray(filesState.triggers) ) {
-            throw new Error("undefined filesState.triggers");
-        }
-
-        // TODO: any => type
-        const drop: {
-            functions: any[];
-            triggers: any[];
-            comments?: any[];
-        } = {
-            functions: [],
-            triggers: []
-        };
-        const create: {
-            functions: any[];
-            triggers: any[];
-            comments?: any[];
-        } = {
-            functions: [],
-            triggers: []
-        };
-
-        
-        for (let i = 0, n = this.functions.length; i < n; i++) {
-            const func = this.functions[ i ];
-            
-            // ddl-manager cannot drop freeze function
-            if ( func.freeze ) {
-                continue;
-            }
-
-            const existsSameFuncFromFile = filesState.functions.some(fileFunc =>
-                equalFunction(fileFunc, func)
-            );
-
-            if ( existsSameFuncFromFile ) {
-                continue;
-            }
-
-            // for drop function, need drop trigger, who call it function
-            if ( func.returns.type === "trigger" ) {
-                const depsTriggers = this.triggers.filter(dbTrigger => {
-                    const isDepsTrigger = (
-                        dbTrigger.procedure.schema === func.schema &&
-                        dbTrigger.procedure.name === func.name
-                    );
-
-                    if ( !isDepsTrigger ) {
-                        return false;
-                    }
-                    
-                    const existsSameTriggerFromFile = filesState.triggers.some(fileTrigger =>
-                        equalTrigger(fileTrigger, dbTrigger)
-                    );
-
-                    // if trigger has change, then he will dropped
-                    // in next cycle
-                    if ( !existsSameTriggerFromFile ) {
-                        return false;
-                    }
-
-                    // we have trigger and he without changes
-                    return true;
-                });
-
-                depsTriggers.forEach(fileTrigger => {
-                    // drop
-                    drop.triggers.push( fileTrigger );
-                    // and create again
-                    create.triggers.push( fileTrigger );
-                });
-            }
-            
-            
-            drop.functions.push(func);
-        }
-
-        for (let i = 0, n = this.triggers.length; i < n; i++) {
-            const trigger = this.triggers[ i ];
-
-            // ddl-manager cannot drop freeze function
-            if ( trigger.freeze ) {
-                continue;
-            }
-
-            const existsSameTriggerFromFile = filesState.triggers.some(fileTrigger =>
-                equalTrigger(fileTrigger, trigger)
-            );
-
-            if ( existsSameTriggerFromFile ) {
-                continue;
-            }
-
-            drop.triggers.push( trigger );
-        }
-
-        const dbComments = this.comments || [];
-        for (let i = 0, n = dbComments.length; i < n; i++) {
-            const comment = dbComments[ i ];
-
-            const existsSameCommentFromFile = (filesState.comments || []).some(fileComment =>
-                equalComment(fileComment, comment)
-            );
-
-            if ( existsSameCommentFromFile ) {
-                continue;
-            }
-
-            if ( !drop.comments ) {
-                drop.comments = [];
-            }
-            drop.comments.push( comment );
-        }
-
-
-
-        for (let i = 0, n = filesState.functions.length; i < n; i++) {
-            const func = filesState.functions[ i ];
-
-            const existsSameFuncFromDb = this.functions.find(dbFunc =>
-                equalFunction(dbFunc, func)
-            );
-
-            if ( existsSameFuncFromDb ) {
-                continue;
-            }
-
-            create.functions.push(func);
-        }
-        for (let i = 0, n = filesState.triggers.length; i < n; i++) {
-            const trigger = filesState.triggers[ i ];
-            
-            const existsSameTriggerFromDb = this.triggers.some(dbTrigger =>
-                equalTrigger(dbTrigger, trigger)
-            );
-
-            if ( existsSameTriggerFromDb ) {
-                continue;
-            }
-
-            create.triggers.push( trigger );
-        }
-
-        const fileComments = filesState.comments || [];
-        for (let i = 0, n = fileComments.length; i < n; i++) {
-            const comment = fileComments[ i ];
-            
-            const existsSameCommentFromDb = dbComments.some(dbComment =>
-                equalComment(dbComment, comment)
-            );
-
-            if ( existsSameCommentFromDb ) {
-                continue;
-            }
-
-            if ( !create.comments ) {
-                create.comments = [];
-            }
-            create.comments.push( comment );
-        }
-
-
-
-        return {
-            drop,
-            create
-        };
+        const diff = this.comparator.compare(this, filesState);
+        return diff;
     }
 
     async unfreezeAll() {
@@ -426,26 +256,5 @@ export class DbState {
         return `
             comment on trigger ${ triggerIdentifySql } is ${wrapText( prefix + "ddl-manager-sync" )}
         `;
-    }
-}
-
-function equalFunction(func1: any, func2: any) {
-    return deepEqual(func1, func2);
-}
-
-function equalTrigger(trigger1: any, trigger2: any) {
-    return deepEqual(trigger1, trigger2);
-}
-
-function equalComment(comment1: any, comment2: any) {
-    return deepEqual(comment1, comment2);
-}
-
-function deepEqual(obj1: any, obj2: any) {
-    try {
-        assert.deepStrictEqual(obj1, obj2);
-        return true;
-    } catch(err) {
-        return false;
     }
 }
