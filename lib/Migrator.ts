@@ -1,8 +1,6 @@
 import { Client } from "pg";
 import assert from "assert";
 import {
-    findCommentByFunction,
-    findCommentByTrigger,
     findTriggerByComment,
     findFunctionByComment,
 
@@ -152,13 +150,7 @@ export class Migrator {
             ddlSql += function2sql( func );
             
             ddlSql += ";";
-            // comment on function ddl-manager-sync
-            const comment = func.comment || findCommentByFunction(
-                diff.create.comments || [],
-                func
-            );
-
-            ddlSql += getUnfreezeFunctionSql(func, comment);
+            ddlSql += getUnfreezeFunctionSql(func);
 
             try {
                 await this.pgClient.query(ddlSql);
@@ -193,12 +185,7 @@ export class Migrator {
             ddlSql += trigger2sql( trigger );
 
             ddlSql += ";";
-            // comment on trigger ddl-manager-sync
-            const comment = trigger.comment || findCommentByTrigger(
-                diff.create.comments || [],
-                trigger
-            );
-            ddlSql += getUnfreezeTriggerSql(trigger, comment);
+            ddlSql += getUnfreezeTriggerSql(trigger);
 
             try {
                 await this.pgClient.query(ddlSql);

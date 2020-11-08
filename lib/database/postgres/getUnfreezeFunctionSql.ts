@@ -3,9 +3,10 @@ import {
     function2identifySql
 } from "../../utils";
 
-export function getUnfreezeFunctionSql(func: any, comment: any) {
+export function getUnfreezeFunctionSql(func: any) {
     let prefix = "";
-    if ( comment ) {
+    if ( func.comment ) {
+        const comment = func.comment;
         if ( typeof comment === "string" ) {
             prefix = comment + "\n";
         }

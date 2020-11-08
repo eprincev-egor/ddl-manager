@@ -11,9 +11,7 @@ import { TriggerParser } from "../parser/TriggerParser";
 import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
 import {
-    function2identifyJson,
-    findCommentByFunction,
-    findCommentByTrigger
+    function2identifyJson
 } from "../utils";
 
 const selectAllFunctionsSQL = fs.readFileSync(__dirname + "/postgres/select-all-functions.sql")
@@ -104,19 +102,13 @@ implements IDatabaseDriver {
     async unfreezeAll(dbState: IState) {
         let ddlSql = "";
 
-        const dbComments = dbState.comments || [];
-
         dbState.functions.forEach(func => {
-            const comment = func.comment || findCommentByFunction(dbComments, func);
-
-            ddlSql += getUnfreezeFunctionSql( func, comment );
+            ddlSql += getUnfreezeFunctionSql( func );
             ddlSql += ";";
         });
 
         dbState.triggers.forEach(trigger => {
-            const comment = trigger.comment || findCommentByTrigger(dbComments, trigger);
-
-            ddlSql += getUnfreezeTriggerSql( trigger, comment );
+            ddlSql += getUnfreezeTriggerSql( trigger );
             ddlSql += ";";
         });
 

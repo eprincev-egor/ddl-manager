@@ -3,9 +3,11 @@ import {
     trigger2identifySql
 } from "../../utils";
 
-export function getUnfreezeTriggerSql(trigger: any, comment: any) {
+export function getUnfreezeTriggerSql(trigger: any) {
     let prefix = "";
-    if ( comment ) {
+    if ( trigger.comment ) {
+        const comment = trigger.comment;
+
         if ( typeof comment === "string" ) {
             prefix = comment + "\n";
         }

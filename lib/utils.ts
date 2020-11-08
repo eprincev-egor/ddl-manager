@@ -137,22 +137,6 @@ export function logDiff(diff: any) {
 }
 
 // TODO: any => type
-export function findCommentByFunction(comments: any[], func: any) {
-    return comments.find(comment => {
-        if ( !comment.function ) {
-            return;
-        }
-
-        const {schema, name, args} = comment.function;
-        const identify = `${schema}.${name}(${ args.join(", ") })`;
-
-        const funcIdentifySql = function2identifySql(func);
-    
-        return identify === funcIdentifySql;
-    });
-}
-
-// TODO: any => type
 export function findFunctionByComment(functions: any[], comment: any) {
     if ( !comment.function ) {
         return;
@@ -165,22 +149,6 @@ export function findFunctionByComment(functions: any[], comment: any) {
         const funcIdentifySql = function2identifySql(func);
     
         return identify === funcIdentifySql;
-    });
-}
-
-// TODO: any => type
-export function findCommentByTrigger(comments: any[], trigger: any) {
-    return comments.find(comment => {
-        if ( !comment.trigger ) {
-            return;
-        }
-
-        const {schema, table, name} = comment.trigger;
-        const identify = `${name} on ${schema}.${table}`;
-        
-        const triggerIdentifySql = trigger2identifySql(trigger);
-
-        return identify == triggerIdentifySql;
     });
 }
 
