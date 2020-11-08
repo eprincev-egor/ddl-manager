@@ -21,7 +21,20 @@ export class FileParser {
         }
 
         const sqlFile = coach.parse(SqlFile as any) as SqlFile;
-        return sqlFile.toJSON();
+        const json = sqlFile.toJSON();
+
+        for (const func of json.functions) {
+            if ( func.comment ) {
+                func.comment = func.comment.comment.content;
+            }
+        }
+        for (const trigger of json.triggers) {
+            if ( trigger.comment ) {
+                trigger.comment = trigger.comment.comment.content;
+            }
+        }
+
+        return json;
     }
 }
 

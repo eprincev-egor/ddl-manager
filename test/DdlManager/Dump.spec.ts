@@ -547,18 +547,9 @@ describe("DdlManager.dump", () => {
                 returns: {type: "integer"},
                 language: "sql",
                 args: [],
-                body: {content: "select 1"}
-            }],
-            comments: [
-                {
-                    function: {
-                        schema: "public",
-                        name: "simple_func",
-                        args: []
-                    },
-                    comment: {content: "test"}
-                }
-            ]
+                body: {content: "select 1"},
+                comment: "test"
+            }]
         });
     });
 
@@ -602,7 +593,8 @@ describe("DdlManager.dump", () => {
                 returns: {type: "trigger"},
                 language: "plpgsql",
                 args: [],
-                body: {content: body}
+                body: {content: body},
+                comment: "func"
             }],
             triggers: [{
                 table: {
@@ -617,26 +609,9 @@ describe("DdlManager.dump", () => {
                 procedure: {
                     schema: "public",
                     name: "some_func"
-                }
-            }],
-            comments: [
-                {
-                    function: {
-                        schema: "public",
-                        name: "some_func",
-                        args: []
-                    },
-                    comment: {content: "func"}
                 },
-                {
-                    trigger: {
-                        schema: "public",
-                        table: "company",
-                        name: "some_trigger"
-                    },
-                    comment: {content: "trigger"}
-                }
-            ]
+                comment: "trigger"
+            }]
         });
     });
 
@@ -772,15 +747,8 @@ describe("DdlManager.dump", () => {
                 returns: {type: "integer"},
                 language: "sql",
                 args: [],
-                body: {content: "select 1"}
-            }],
-            comments: [{
-                function: {
-                    schema: "public",
-                    name: "simple_func",
-                    args: []
-                },
-                comment: {content: "'$$nice\ncomment"}
+                body: {content: "select 1"},
+                comment: "'$$nice\ncomment"
             }]
         });
 
@@ -861,15 +829,8 @@ describe("DdlManager.dump", () => {
                 procedure: {
                     schema: "public",
                     name: "some_func"
-                }
-            }],
-            comments: [{
-                trigger: {
-                    schema: "public",
-                    table: "company",
-                    name: "some_trigger"
                 },
-                comment: {content: "'$$nice\ncomment"}
+                comment: "'$$nice\ncomment"
             }]
         });
 
@@ -1010,7 +971,8 @@ describe("DdlManager.dump", () => {
                             type: "integer"
                         }
                     ],
-                    body: {content: body}
+                    body: {content: body},
+                    comment: "x"
                 },
                 {
                     schema: "public",
@@ -1025,25 +987,8 @@ describe("DdlManager.dump", () => {
                             type: "boolean"
                         }
                     ],
-                    body: {content: body}
-                }
-            ],
-            comments: [
-                {
-                    function: {
-                        schema: "public",
-                        name: "simple_func",
-                        args: ["integer"]
-                    },
-                    comment: {content: "x"}
-                },
-                {
-                    function: {
-                        schema: "public",
-                        name: "simple_func",
-                        args: ["boolean"]
-                    },
-                    comment: {content: "y"}
+                    body: {content: body},
+                    comment: "y"
                 }
             ]
         });

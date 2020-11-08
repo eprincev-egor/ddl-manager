@@ -264,20 +264,9 @@ describe("FilesState watch remove functions", () => {
             folder: ROOT_TMP_PATH
         });
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
-            [test_func1]
-        );
-
-        expect(filesState.getComments()).to.be.shallowDeepEqual(
-            [{
-                function: {
-                    schema: "public",
-                    name: "some_func1",
-                    args: []
-                },
-                comment: {content: "awesome"}
-            }]
-        );
+        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+            {...test_func1, comment: "awesome"}
+        ]);
 
         let changes;
         filesState.on("change", (_changes) => {
@@ -296,17 +285,7 @@ describe("FilesState watch remove functions", () => {
                 functions: [
                     test_func1
                 ],
-                triggers: [],
-                comments: [
-                    {
-                        function: {
-                            schema: "public",
-                            name: "some_func1",
-                            args: []
-                        },
-                        comment: {content: "awesome"}
-                    }
-                ]
+                triggers: []
             },
             create: {
                 functions: [],
@@ -315,7 +294,6 @@ describe("FilesState watch remove functions", () => {
         });
 
         expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
-        expect(filesState.getComments()).to.be.shallowDeepEqual([]);
     });
 
 

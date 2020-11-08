@@ -2,14 +2,11 @@ import { Syntax, Types } from "lang-coach";
 import {
     CreateFunction,
     CreateTrigger,
-    CommentOnFunction,
-    CommentOnTrigger,
     GrapeQLCoach
 } from "grapeql-lang";
 import {
     function2identifySql,
-    trigger2identifySql,
-    function2identifyJson
+    trigger2identifySql
 } from "../utils";
 
 // TODO: any => type
@@ -21,14 +18,6 @@ export class SqlFile extends (Syntax as any) {
             }),
             triggers: Types.Array({
                 element: CreateTrigger
-            }),
-            comments: Types.Array({
-                element: Types.Or({
-                    or: [
-                        CommentOnFunction,
-                        CommentOnTrigger
-                    ]
-                })
             })
         };
     }
@@ -37,7 +26,6 @@ export class SqlFile extends (Syntax as any) {
         coach.skipSpace();
 
         data.functions = [];
-        data.comments = [];
         data.triggers = [];
     
         this.parseFunctions( coach, data );
@@ -75,12 +63,6 @@ export class SqlFile extends (Syntax as any) {
         data.functions.push(
             func
         );
-
-        
-        // comment on function
-        if ( func.row.comment ) {
-            data.comments.push(func.row.comment);
-        }
 
         coach.skipSpace();
         coach.read(/[\s;]+/);
@@ -143,11 +125,6 @@ export class SqlFile extends (Syntax as any) {
 
         data.triggers.push(trigger);
 
-        // comment on trigger
-        if ( trigger.row.comment ) {
-            data.comments.push(trigger.row.comment);
-        }
-
         this.parseTriggers( coach, data );
     }
     
@@ -172,21 +149,6 @@ export class SqlFile extends (Syntax as any) {
             }
 
             out += func.toString();
-
-            if ( this.row.comments ) {
-                const identifyJson = function2identifyJson( func );
-
-                // TODO: any => type
-                const funcComment = this.row.comments.find((comment: any) =>
-                    comment.row.function &&
-                    JSON.stringify(comment.row.function) === JSON.stringify( identifyJson )
-                );
-    
-                if ( funcComment ) {
-                    out += ";\n";
-                    out += funcComment.toString();
-                }
-            }
         });
 
         if ( this.row.triggers ) {
@@ -194,21 +156,6 @@ export class SqlFile extends (Syntax as any) {
             this.row.triggers.forEach((trigger: any) => {
                 out += ";";
                 out += trigger.toString();
-
-                if ( this.row.comments ) {
-                    // TODO: any => type
-                    const triggerComment = this.row.comments.find((comment: any) =>
-                        comment.row.trigger &&
-                        comment.row.trigger.row.schema === trigger.row.table.row.schema &&
-                        comment.row.trigger.row.table === trigger.row.table.row.name &&
-                        comment.row.trigger.row.name === trigger.row.name
-                    );
-
-                    if ( triggerComment ) {
-                        out += ";";
-                        out += triggerComment.toString();
-                    }
-                }
             });
         }
 

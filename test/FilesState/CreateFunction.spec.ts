@@ -245,11 +245,6 @@ describe("FilesState watch create functions", () => {
             []
         );
         
-        expect(filesState.getComments()).to.be.shallowDeepEqual(
-            []
-        );
-
-        
         let changes;
         let counter = 0;
         filesState.on("change", (_changes) => {
@@ -275,35 +270,14 @@ describe("FilesState watch create functions", () => {
             },
             create: {
                 functions: [
-                    test_func1
+                    {...test_func1, comment: "sweet"}
                 ],
-                triggers: [],
-                comments: [
-                    {
-                        function: {
-                            schema: "public",
-                            name: "some_func1",
-                            args: []
-                        },
-                        comment: {content: "sweet"}
-                    }
-                ]
+                triggers: []
             }
         });
         
         expect(filesState.getFunctions()).to.be.shallowDeepEqual([
-            test_func1
-        ]);
-
-        expect(filesState.getComments()).to.be.shallowDeepEqual([
-            {
-                function: {
-                    schema: "public",
-                    name: "some_func1",
-                    args: []
-                },
-                comment: {content: "sweet"}
-            }
+            {...test_func1, comment: "sweet"}
         ]);
     });
 });

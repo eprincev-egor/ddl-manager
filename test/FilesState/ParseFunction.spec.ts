@@ -370,18 +370,8 @@ describe("FilesState parse functions", () => {
                 name: "test",
                 args: [],
                 returns: {type: "integer"},
-                body: {content: "select 1"}
-            }
-        ]);
-
-        expect(filesState.getComments()).to.be.shallowDeepEqual([
-            {
-                function: {
-                    schema: "public",
-                    name: "test",
-                    args: []
-                },
-                comment: {content: "yes"}
+                body: {content: "select 1"},
+                comment: "yes"
             }
         ]);
     });

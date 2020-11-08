@@ -266,20 +266,8 @@ describe("FilesState watch change functions", () => {
         });
         
         expect(filesState.getFunctions()).to.be.shallowDeepEqual([
-            TEST_FUNC1
+            {...TEST_FUNC1, comment: "nice"}
         ]);
-
-        expect(filesState.getComments()).to.be.shallowDeepEqual([
-            {
-                function: {
-                    schema: "public",
-                    name: "some_func1",
-                    args: []
-                },
-                comment: {content: "nice"}
-            }
-        ]);
-        
 
         let changes;
         let counter = 0;
@@ -302,50 +290,19 @@ describe("FilesState watch change functions", () => {
                 functions: [
                     TEST_FUNC1
                 ],
-                triggers: [],
-                comments: [
-                    {
-                        function: {
-                            schema: "public",
-                            name: "some_func1",
-                            args: []
-                        },
-                        comment: {content: "nice"}
-                    }
-                ]
+                triggers: []
             },
             create: {
                 functions: [
-                    TEST_FUNC1
+                    {...TEST_FUNC1, comment: "good"}
                 ],
-                triggers: [],
-                comments: [
-                    {
-                        function: {
-                            schema: "public",
-                            name: "some_func1",
-                            args: []
-                        },
-                        comment: {content: "good"}
-                    }
-                ]
+                triggers: []
             }
         });
         assert.equal(counter, 1);
         
         expect(filesState.getFunctions()).to.be.shallowDeepEqual([
-            TEST_FUNC1
-        ]);
-
-        expect(filesState.getComments()).to.be.shallowDeepEqual([
-            {
-                function: {
-                    schema: "public",
-                    name: "some_func1",
-                    args: []
-                },
-                comment: {content: "good"}
-            }
+            {...TEST_FUNC1, comment: "good"}
         ]);
     });
 });

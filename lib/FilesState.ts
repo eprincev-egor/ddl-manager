@@ -17,7 +17,6 @@ interface IFile {
     content: {
         functions: any[];
         triggers: any[];
-        comments: any[];
     }
 }
 
@@ -26,12 +25,10 @@ interface IChanges {
     drop: {
         functions: any[];
         triggers: any[];
-        comments?: any[];
     };
     create: {
         functions: any[];
         triggers: any[];
-        comments?: any[];
     }
 }
 
@@ -90,8 +87,7 @@ export class FilesState extends EventEmitter {
         //   path: "/path/to/some-file-name.sql",
         //   content: {
         //        functions: [],
-        //        triggers: [],
-        //        comments: []
+        //        triggers: []
         //   }
         // }
 
@@ -224,21 +220,6 @@ export class FilesState extends EventEmitter {
         return outTriggers;
     }
 
-    getComments() {
-        // TODO: any => type
-        let outComments: any[] = [];
-
-        this.files.forEach(file => {
-            const {comments} = file.content;
-
-            if ( comments ) {
-                outComments = outComments.concat( comments );
-            }
-        });
-
-        return outComments;
-    }
-
     getFiles() {
         return this.files;
     }
@@ -357,11 +338,6 @@ export class FilesState extends EventEmitter {
             if ( file.content.triggers ) {
                 changes.drop.triggers = file.content.triggers;
             }
-    
-            // or comment for object (func/trigger)
-            if ( file.content.comments ) {
-                changes.drop.comments = file.content.comments;
-            }
         }
         
 
@@ -423,10 +399,6 @@ export class FilesState extends EventEmitter {
             changes.drop.triggers = oldFile.content.triggers;
         }
 
-        if ( oldFile.content.comments ) {
-            changes.drop.comments = oldFile.content.comments;
-        }
-
         try {
             if ( newFile ) {
                 this.checkDuplicate( newFile );
@@ -437,10 +409,6 @@ export class FilesState extends EventEmitter {
                     changes.create.triggers = newFile.content.triggers;
                 }
 
-                if ( newFile.content.comments ) {
-                    changes.create.comments = newFile.content.comments;
-                }
-    
                 this.files.splice(fileIndex, 0, newFile);
             }
         } catch(err) {
@@ -480,10 +448,6 @@ export class FilesState extends EventEmitter {
 
         if ( file.content.triggers ) {
             changes.create.triggers = file.content.triggers;
-        }
-
-        if ( file.content.comments ) {
-            changes.create.comments = file.content.comments;
         }
 
         this.emit("change", changes);

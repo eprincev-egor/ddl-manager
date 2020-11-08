@@ -224,14 +224,22 @@ describe("FilesState parse functions and triggers", () => {
             folder: ROOT_TMP_PATH
         });
 
-        expect(filesState.getComments()).to.be.shallowDeepEqual([
+        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
             {
-                trigger: {
+                table: {
                     schema: "public",
-                    table: "company",
-                    name: "some_action_on_diu_company_trigger"
+                    name: "company"
                 },
-                comment: {content: "test"}
+                name: "some_action_on_diu_company_trigger",
+                after: true,
+                insert: true,
+                updateOf: ["deleted", "name"],
+                delete: true,
+                procedure: {
+                    schema: "public",
+                    name: "some_action_on_diu_company"
+                },
+                comment: "test"
             }
         ]);
     });
