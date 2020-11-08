@@ -6,17 +6,7 @@ import {
 export function getUnfreezeTriggerSql(trigger: any) {
     let prefix = "";
     if ( trigger.comment ) {
-        const comment = trigger.comment;
-
-        if ( typeof comment === "string" ) {
-            prefix = comment + "\n";
-        }
-        else if ( typeof comment.comment === "string" ) {
-            prefix = comment.comment + "\n";
-        }
-        else if ( comment.comment.content && typeof comment.comment.content === "string" ) {
-            prefix = comment.comment.content + "\n";
-        }
+        prefix = trigger.comment + "\n";
     }
 
     const triggerIdentifySql = trigger2identifySql( trigger );
