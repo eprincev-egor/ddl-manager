@@ -152,10 +152,6 @@ export function wrapText(text: string) {
 // TODO: any => type
 // public.some_func(bigint, text)
 export function function2identifySql(func: any) {
-    if ( typeof func.toJSON === "function" ) {
-        func = func.toJSON();
-    }
-
     const identify = function2identifyJson( func );
 
     const argsSql = identify.args.join(", ");
@@ -164,10 +160,6 @@ export function function2identifySql(func: any) {
 
 // TODO: any => type
 export function function2identifyJson(func: any) {
-    if ( typeof func.toJSON === "function" ) {
-        func = func.toJSON();
-    }
-
     let args = func.args.filter((arg: any) => 
         !arg.out
     );
@@ -193,10 +185,6 @@ export function function2dropSql(func: any) {
 
 // TODO: any => type
 export function trigger2sql(trigger: any) {
-    if ( typeof trigger.toJSON === "function" ) {
-        trigger = trigger.toJSON();
-    }
-
     let out = "create ";
 
     if ( trigger.constraint ) {
@@ -275,10 +263,6 @@ export function trigger2dropSql(trigger: any) {
 // TODO: any => type
 // some_trigger on public.test
 export function trigger2identifySql(trigger: any) {
-    if ( typeof trigger.toJSON === "function" ) {
-        trigger = trigger.toJSON();
-    }
-
     let triggerTable = trigger.table;
     if ( triggerTable.row ) {
         triggerTable = triggerTable.row;
