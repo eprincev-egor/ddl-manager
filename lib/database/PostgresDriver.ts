@@ -2,11 +2,11 @@ import fs from "fs";
 import { Client } from "pg";
 import {
     IDatabaseDriver,
-    DatabaseTriggerType,
     IState
 } from "../interface";
 import { FileParser } from "../parser/FileParser";
 import { DatabaseFunction } from "../ast/DatabaseFunction";
+import { DatabaseTrigger } from "../ast/DatabaseTrigger";
 import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
 
@@ -31,7 +31,7 @@ implements IDatabaseDriver {
             functions: await this.loadObjects<DatabaseFunction>(
                 selectAllFunctionsSQL
             ),
-            triggers: await this.loadObjects<DatabaseTriggerType>(
+            triggers: await this.loadObjects<DatabaseTrigger>(
                 selectAllTriggersSQL
             )
         };

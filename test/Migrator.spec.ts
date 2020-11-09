@@ -2,7 +2,7 @@ import assert from "assert";
 import { getDBClient } from "./utils/getDbClient";
 import { Migrator } from "../lib/Migrator";
 import { DatabaseFunction, IDatabaseFunctionParams } from "../lib/ast/DatabaseFunction";
-import { DatabaseTrigger } from "../lib/ast/DatabaseTrigger";
+import { DatabaseTrigger, IDatabaseTriggerParams } from "../lib/ast/DatabaseTrigger";
 import { IDiff } from "../lib/interface";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
@@ -28,11 +28,11 @@ describe("Migrator.migrate", () => {
     interface IDiffParams {
         drop: {
             functions: IDatabaseFunctionParams[];
-            triggers: any[];
+            triggers: IDatabaseTriggerParams[];
         };
         create: {
             functions: IDatabaseFunctionParams[];
-            triggers: any[];
+            triggers: IDatabaseTriggerParams[];
         };
     }
 
@@ -52,13 +52,13 @@ describe("Migrator.migrate", () => {
         await migrator.migrate(diff);
     }
 
-    function createFunctions(functions: any[]) {
+    function createFunctions(functions: IDatabaseFunctionParams[]) {
         return functions.map(funcJson => 
             new DatabaseFunction(funcJson)
         );
     }
 
-    function createTriggers(triggers: any[]) {
+    function createTriggers(triggers: IDatabaseTriggerParams[]) {
         return triggers.map(triggerJson => 
             new DatabaseTrigger(triggerJson)
         );
@@ -661,7 +661,7 @@ describe("Migrator.migrate", () => {
                         name: "test_func",
                         args: [
                             {
-                                name: null as any,
+                                name: undefined,
                                 type: "text"
                             }
                         ],

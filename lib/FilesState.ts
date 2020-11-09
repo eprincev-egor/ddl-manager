@@ -5,6 +5,8 @@ import watch from "node-watch";
 import path from "path";
 import { FileParser } from "./parser/FileParser";
 import { IDiff, IFile } from "./interface";
+import { DatabaseTrigger } from "./ast/DatabaseTrigger";
+import { DatabaseFunction } from "./ast/DatabaseFunction";
 
 export class FilesState extends EventEmitter {
     static create(params: {folder: string | string[], onError?: any}) {
@@ -108,11 +110,11 @@ export class FilesState extends EventEmitter {
         }
     }
 
-    checkDuplicateFunction(func: any) {
+    checkDuplicateFunction(func: DatabaseFunction) {
         const identify = func.getSignature();
 
         const hasDuplicate = this.files.some(someFile => {
-            return someFile.content.functions.some((someFunc: any) => {
+            return someFile.content.functions.some((someFunc) => {
                 const someIdentify = someFunc.getSignature();
                 
                 return identify === someIdentify;
@@ -124,15 +126,14 @@ export class FilesState extends EventEmitter {
         }
     }
 
-    // TODO: any => type
-    checkDuplicateTrigger(trigger: any) {
+    checkDuplicateTrigger(trigger: DatabaseTrigger) {
         const identify = trigger.getSignature();
 
         const hasDuplicate = this.files.some(someFile => {
             const someTriggers = someFile.content.triggers;
 
             if ( someTriggers ) {
-                return someTriggers.some((someTrigger: any) => {
+                return someTriggers.some((someTrigger) => {
                     const someIdentify = someTrigger.getSignature();
 
                     return identify === someIdentify;
@@ -167,11 +168,10 @@ export class FilesState extends EventEmitter {
     }
 
     getFunctions() {
-        // TODO: any => type
-        const outFunctions: any[] = [];
+        const outFunctions: DatabaseFunction[] = [];
 
-        this.files.forEach((file: any) => {
-            file.content.functions.forEach((func: any) => {
+        this.files.forEach((file) => {
+            file.content.functions.forEach((func) => {
                 outFunctions.push( func );
             });
         });
