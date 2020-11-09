@@ -13,8 +13,6 @@ import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
 import { getCheckFrozenTriggerSql } from "./postgres/getCheckFrozenTriggerSql";
 import {
     function2sql,
-    function2dropSql,
-    trigger2dropSql,
     trigger2sql
 } from "../utils";
 
@@ -121,25 +119,24 @@ implements IDatabaseDriver {
         ddlSql = checkFrozenSql;
 
         ddlSql += ";";
-        ddlSql += function2dropSql(func);
+        ddlSql += `drop function if exists ${ func.getSignature() }`;
         
         await this.pgClient.query(ddlSql);
     }
 
     async createOrReplaceTrigger(trigger: DatabaseTrigger) {
-        const triggerIdentifySql = trigger.getSignature();
         let ddlSql = "";
         
         // check frozen object
         const checkFrozenSql = getCheckFrozenTriggerSql( 
             trigger,
-            `cannot replace frozen trigger ${ triggerIdentifySql }`
+            `cannot replace frozen trigger ${ trigger.getSignature() }`
         );
         ddlSql = checkFrozenSql;
 
 
         ddlSql += ";";
-        ddlSql += trigger2dropSql( trigger );
+        ddlSql += `drop trigger if exists ${ trigger.getSignature() }`;
         
         ddlSql += ";";
         ddlSql += trigger2sql( trigger );
@@ -161,7 +158,7 @@ implements IDatabaseDriver {
         ddlSql = checkFrozenSql;
 
         ddlSql += ";";
-        ddlSql += trigger2dropSql(trigger);
+        ddlSql += `drop trigger if exists ${ trigger.getSignature() }`;
 
         await this.pgClient.query(ddlSql);
     }

@@ -151,13 +151,6 @@ export function wrapText(text: string) {
     return `$${tag}$${ text }$${tag}$`;
 }
 
-export function function2dropSql(func: DatabaseFunction) {
-    // public.some_func(bigint, text)
-    const identifySql = func.getSignature();
-
-    return `drop function if exists ${ identifySql }`;
-}
-
 export function trigger2sql(trigger: DatabaseTrigger) {
     let out = "create ";
 
@@ -226,11 +219,6 @@ export function trigger2sql(trigger: DatabaseTrigger) {
     out += `\nexecute procedure ${trigger.procedure.schema}.${trigger.procedure.name}()`;
 
     return out;
-}
-
-export function trigger2dropSql(trigger: DatabaseTrigger) {
-    const identifySql = trigger.getSignature();
-    return `drop trigger if exists ${ identifySql }`;
 }
 
 export function triggerCommentsSQL(trigger: DatabaseTrigger) {
