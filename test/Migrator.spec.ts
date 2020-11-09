@@ -1,7 +1,7 @@
 import assert from "assert";
 import { getDBClient } from "./utils/getDbClient";
 import { Migrator } from "../lib/Migrator";
-import { DatabaseFunction } from "../lib/ast/DatabaseFunction";
+import { DatabaseFunction, IDatabaseFunctionParams } from "../lib/ast/DatabaseFunction";
 import { DatabaseTrigger } from "../lib/ast/DatabaseTrigger";
 import { IDiff } from "../lib/interface";
 import {expect, use} from "chai";
@@ -25,7 +25,18 @@ describe("Migrator.migrate", () => {
         db.end();
     });
 
-    async function migrate(params: {diff: IDiff}) {
+    interface IDiffParams {
+        drop: {
+            functions: IDatabaseFunctionParams[];
+            triggers: any[];
+        };
+        create: {
+            functions: IDatabaseFunctionParams[];
+            triggers: any[];
+        };
+    }
+
+    async function migrate(params: {diff: IDiffParams}) {
         const migrator = new Migrator(db);
 
         const diff: IDiff = {
@@ -72,9 +83,9 @@ describe("Migrator.migrate", () => {
                             name: "test_migrate_function",
                             args: [],
                             returns: {type: "bigint"},
-                            body: {content: `begin
+                            body: `begin
                             return ${ rnd };
-                        end`}
+                        end`
                         }
                     ],
                     triggers: []
@@ -114,9 +125,9 @@ describe("Migrator.migrate", () => {
                             name: "some_action_on_diu_test",
                             args: [],
                             returns: {type: "trigger"},
-                            body: {content: `begin
+                            body: `begin
                             raise exception 'success';
-                        end`}
+                        end`
                         }
                     ],
                     triggers: [
@@ -163,7 +174,7 @@ describe("Migrator.migrate", () => {
             );
         `);
 
-        const diff: IDiff = {
+        const diff: IDiffParams = {
             drop: {
                 functions: [],
                 triggers: []
@@ -176,9 +187,9 @@ describe("Migrator.migrate", () => {
                         name: "some_action_on_diu_test",
                         args: [],
                         returns: {type: "trigger"},
-                        body: {content: `begin
+                        body: `begin
                             raise exception 'success';
-                        end`}
+                        end`
                     }
                 ],
                 triggers: [
@@ -241,7 +252,7 @@ describe("Migrator.migrate", () => {
                         name: "test",
                         args: [],
                         returns: {type: "integer"},
-                        body: {content: "select 2"}
+                        body: "select 2"
                     }
                 ],
                 triggers: []
@@ -273,7 +284,7 @@ describe("Migrator.migrate", () => {
                             name: "test",
                             args: [],
                             returns: {type: "integer"},
-                            body: {content: "select 2"}
+                            body: "select 2"
                         }
                     ],
                     triggers: []
@@ -317,7 +328,7 @@ describe("Migrator.migrate", () => {
                             }
                         ],
                         returns: {type: "integer"},
-                        body: {content: "select 2"}
+                        body: "select 2"
                     }
                 ],
                 triggers: []
@@ -359,7 +370,7 @@ describe("Migrator.migrate", () => {
                             }
                         ],
                         returns: {type: "integer"},
-                        body: {content: "select 2"}
+                        body: "select 2"
                     }
                 ],
                 triggers: []
@@ -410,11 +421,11 @@ describe("Migrator.migrate", () => {
                             name: "test2",
                             args: [],
                             returns: {type: "trigger"},
-                            body: {content: `
+                            body: `
                                 begin
                                     return new;
                                 end
-                            `}
+                            `
                         }
                     ],
                     triggers: [
@@ -472,11 +483,11 @@ describe("Migrator.migrate", () => {
                             name: "test2",
                             args: [],
                             returns: {type: "trigger"},
-                            body: {content: `
+                            body: `
                             begin
                                 return new;
                             end
-                        `}
+                        `
                         }
                     ],
                     triggers: [
@@ -529,7 +540,7 @@ describe("Migrator.migrate", () => {
                         returns: {
                             type: "public.some_table"
                         },
-                        body: {content: `
+                        body: `
                         declare some_table_row some_table;
                         begin
                             select *
@@ -537,7 +548,7 @@ describe("Migrator.migrate", () => {
                             into some_table_row;
 
                             return some_table_row;
-                        end`}
+                        end`
                     }
                 ],
                 triggers: []
@@ -577,12 +588,12 @@ describe("Migrator.migrate", () => {
                             setof: true,
                             type: "public.some_table"
                         },
-                        body: {content: `
+                        body: `
                         begin
                             return query 
                                 select *
                                 from some_table;
-                        end`}
+                        end`
                     }
                 ],
                 triggers: []
@@ -623,9 +634,9 @@ describe("Migrator.migrate", () => {
                             }
                         ],
                         returns: {type: "void"},
-                        body: {content: `
+                        body: `
                         begin
-                        end`}
+                        end`
                     }
                 ],
                 triggers: []
@@ -655,9 +666,9 @@ describe("Migrator.migrate", () => {
                             }
                         ],
                         returns: {type: "void"},
-                        body: {content: `
+                        body: `
                         begin
-                        end`}
+                        end`
                     }
                 ],
                 triggers: []
@@ -693,10 +704,10 @@ describe("Migrator.migrate", () => {
                             }
                         ],
                         returns: {type: "text"},
-                        body: {content: `
+                        body: `
                         begin
                             name = 'nice' || id::text;
-                        end`}
+                        end`
                     }
                 ],
                 triggers: []
@@ -727,9 +738,9 @@ describe("Migrator.migrate", () => {
                             name: "some_func",
                             args: [],
                             returns: {type: "bigint"},
-                            body: {content: `begin
+                            body: `begin
                                 return 1;
-                            end`},
+                            end`,
                             comment: "nice"
                         }
                     ],
@@ -781,9 +792,9 @@ describe("Migrator.migrate", () => {
                             name: "some_action_on_diu_test",
                             args: [],
                             returns: {type: "trigger"},
-                            body: {content: `begin
+                            body: `begin
                             raise exception 'success';
-                        end`}
+                        end`
                         }
                     ],
                     triggers: [
@@ -824,7 +835,7 @@ describe("Migrator.migrate", () => {
     });
 
     it("migrate function, arg default null", async() => {
-        const func = {
+        const func: IDatabaseFunctionParams = {
             language: "plpgsql",
             schema: "public",
             name: "test_func",
@@ -836,10 +847,10 @@ describe("Migrator.migrate", () => {
                 }
             ],
             returns: {type: "text"},
-            body: {content: `
+            body: `
             begin
                 return 'nice' || coalesce(id, 2)::text;
-            end`}
+            end`
         };
 
         await migrate({diff: {
@@ -892,7 +903,7 @@ describe("Migrator.migrate", () => {
     });
 
     it("migrate two functions, same name, diff args", async() => {
-        const func1 = {
+        const func1: IDatabaseFunctionParams = {
             language: "plpgsql",
             schema: "public",
             name: "test_func",
@@ -904,12 +915,12 @@ describe("Migrator.migrate", () => {
                 }
             ],
             returns: {type: "integer"},
-            body: {content: `
+            body: `
             begin
                 return 1;
-            end`}
+            end`
         };
-        const func2 = {
+        const func2: IDatabaseFunctionParams = {
             language: "plpgsql",
             schema: "public",
             name: "test_func",
@@ -921,10 +932,10 @@ describe("Migrator.migrate", () => {
                 }
             ],
             returns: {type: "integer"},
-            body: {content: `
+            body: `
             begin
                 return 2;
-            end`}
+            end`
         };
 
         await migrate({diff: {

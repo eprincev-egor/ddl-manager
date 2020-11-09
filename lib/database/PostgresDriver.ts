@@ -2,11 +2,11 @@ import fs from "fs";
 import { Client } from "pg";
 import {
     IDatabaseDriver,
-    DatabaseFunctionType,
     DatabaseTriggerType,
     IState
 } from "../interface";
 import { FileParser } from "../parser/FileParser";
+import { DatabaseFunction } from "../ast/DatabaseFunction";
 import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
 
@@ -28,7 +28,7 @@ implements IDatabaseDriver {
 
     async loadState() {
         const state: IState = {
-            functions: await this.loadObjects<DatabaseFunctionType>(
+            functions: await this.loadObjects<DatabaseFunction>(
                 selectAllFunctionsSQL
             ),
             triggers: await this.loadObjects<DatabaseTriggerType>(

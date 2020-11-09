@@ -1,17 +1,6 @@
-import { CreateFunction, CreateTrigger } from "grapeql-lang";
+import { CreateTrigger } from "grapeql-lang";
+import { DatabaseFunction } from "./ast/DatabaseFunction";
 
-// TODO: use DatabaseFunction class
-export type DatabaseFunctionType = CreateFunction["TJson"] & {
-    schema: string;
-    name: string;
-    returns: {
-        type?: string;
-        setof?: boolean;
-        table?: any[];
-    };
-    frozen?: boolean;
-    comment?: string;
-};
 export type DatabaseTriggerType = CreateTrigger["TJson"] & {
     frozen?: boolean;
     comment?: string;
@@ -28,7 +17,7 @@ export type DatabaseTriggerType = CreateTrigger["TJson"] & {
 
 // TODO: any => type
 export interface IState {
-    functions: DatabaseFunctionType[];
+    functions: DatabaseFunction[];
     triggers: DatabaseTriggerType[];
 }
 
