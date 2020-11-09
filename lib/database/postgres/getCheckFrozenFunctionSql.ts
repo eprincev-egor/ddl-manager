@@ -1,4 +1,4 @@
-import { DatabaseFunction } from "../../ast/DatabaseFunction";
+import { DatabaseFunction } from "../../ast";
 import {
     wrapText
 } from "./wrapText";

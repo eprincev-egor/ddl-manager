@@ -5,8 +5,7 @@ import {
     Comment
 } from "grapeql-lang";
 import { IState } from "../interface";
-import { DatabaseFunction } from "../ast/DatabaseFunction";
-import { DatabaseTrigger } from "../ast/DatabaseTrigger";
+import { DatabaseFunction, DatabaseTrigger } from "../ast";
 
 export class FileParser {
 

@@ -3,10 +3,9 @@ import glob from "glob";
 import { EventEmitter } from "events";
 import watch from "node-watch";
 import path from "path";
-import { FileParser } from "./parser/FileParser";
+import { FileParser } from "./parser";
 import { IDiff, IFile } from "./interface";
-import { DatabaseTrigger } from "./ast/DatabaseTrigger";
-import { DatabaseFunction } from "./ast/DatabaseFunction";
+import { DatabaseTrigger, DatabaseFunction } from "./ast";
 
 export class FilesState extends EventEmitter {
     static create(params: {folder: string | string[], onError?: any}) {

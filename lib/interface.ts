@@ -1,5 +1,5 @@
-import { DatabaseFunction } from "./ast/DatabaseFunction";
-import { DatabaseTrigger } from "./ast/DatabaseTrigger";
+import { DatabaseFunction } from "./ast";
+import { DatabaseTrigger } from "./ast";
 
 export interface IState {
     functions: DatabaseFunction[];

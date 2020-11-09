@@ -4,9 +4,8 @@ import {
     IDatabaseDriver,
     IState
 } from "../interface";
-import { FileParser } from "../parser/FileParser";
-import { DatabaseFunction } from "../ast/DatabaseFunction";
-import { DatabaseTrigger } from "../ast/DatabaseTrigger";
+import { FileParser } from "../parser";
+import { DatabaseFunction, DatabaseTrigger } from "../ast";
 import { getCheckFrozenFunctionSql } from "./postgres/getCheckFrozenFunctionSql";
 import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
