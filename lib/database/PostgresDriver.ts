@@ -11,9 +11,6 @@ import { getCheckFrozenFunctionSql } from "./postgres/getCheckFrozenFunctionSql"
 import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
 import { getCheckFrozenTriggerSql } from "./postgres/getCheckFrozenTriggerSql";
-import {
-    trigger2sql
-} from "../utils";
 
 const selectAllFunctionsSQL = fs.readFileSync(__dirname + "/postgres/select-all-functions.sql")
     .toString();
@@ -138,7 +135,7 @@ implements IDatabaseDriver {
         ddlSql += `drop trigger if exists ${ trigger.getSignature() }`;
         
         ddlSql += ";";
-        ddlSql += trigger2sql( trigger );
+        ddlSql += trigger.toSQL();
 
         ddlSql += ";";
         ddlSql += getUnfreezeTriggerSql(trigger);

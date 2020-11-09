@@ -5,7 +5,6 @@ import {
     getDbClient, 
     logDiff, 
     isDbClient,
-    trigger2sql,
     triggerCommentsSQL,
     functionCommentsSQL
 } from "./utils";
@@ -276,7 +275,7 @@ export class DdlManager {
                         sql += ";\n";
                         sql += "\n";
         
-                        sql += trigger2sql( trigger );
+                        sql += trigger.toSQL();
 
                         if ( trigger.comment ) {
                             sql += ";\n";
