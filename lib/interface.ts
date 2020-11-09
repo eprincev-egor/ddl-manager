@@ -1,7 +1,6 @@
 import { DatabaseFunction } from "./ast/DatabaseFunction";
 import { DatabaseTrigger } from "./ast/DatabaseTrigger";
 
-// TODO: any => type
 export interface IState {
     functions: DatabaseFunction[];
     triggers: DatabaseTrigger[];

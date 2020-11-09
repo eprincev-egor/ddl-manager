@@ -87,7 +87,7 @@ describe("DdlManager.dump", () => {
                 returns: {type: "integer"},
                 language: "sql",
                 args: [],
-                body: {content: "select 1"}
+                body: "select 1"
             }]
         });
     });
@@ -129,7 +129,7 @@ describe("DdlManager.dump", () => {
                 returns: {type: "integer"},
                 language: "sql",
                 args: [],
-                body: {content: "select 1"}
+                body: "select 1"
             }]
         });
 
@@ -143,7 +143,7 @@ describe("DdlManager.dump", () => {
                 returns: {type: "integer"},
                 language: "sql",
                 args: [],
-                body: {content: "select 1"}
+                body: "select 1"
             }]
         });
     });
@@ -185,7 +185,7 @@ describe("DdlManager.dump", () => {
                 returns: {type: "trigger"},
                 language: "plpgsql",
                 args: [],
-                body: {content: body}
+                body
             }],
             triggers: [{
                 table: {
@@ -249,7 +249,7 @@ describe("DdlManager.dump", () => {
                 returns: {type: "trigger"},
                 language: "plpgsql",
                 args: [],
-                body: {content: body}
+                body
             }],
             triggers: [
                 {
@@ -321,7 +321,7 @@ describe("DdlManager.dump", () => {
                 returns: {type: "trigger"},
                 language: "plpgsql",
                 args: [],
-                body: {content: body}
+                body
             }],
             triggers: [{
                 table: {
@@ -365,7 +365,7 @@ describe("DdlManager.dump", () => {
                 returns: {type: "integer"},
                 language: "sql",
                 args: [],
-                body: {content: "select 1"}
+                body: "select 1"
             }]
         });
 
@@ -412,7 +412,7 @@ describe("DdlManager.dump", () => {
                 returns: {type: "integer"},
                 language: "sql",
                 args: [],
-                body: {content: "select 1"}
+                body: "select 1"
             }]
         });
 
@@ -475,7 +475,7 @@ describe("DdlManager.dump", () => {
                 returns: {type: "trigger"},
                 language: "plpgsql",
                 args: [],
-                body: {content: body}
+                body
             }],
             triggers: [{
                 table: {
@@ -547,7 +547,7 @@ describe("DdlManager.dump", () => {
                 returns: {type: "integer"},
                 language: "sql",
                 args: [],
-                body: {content: "select 1"},
+                body: "select 1",
                 comment: "test"
             }]
         });
@@ -593,7 +593,7 @@ describe("DdlManager.dump", () => {
                 returns: {type: "trigger"},
                 language: "plpgsql",
                 args: [],
-                body: {content: body},
+                body,
                 comment: "func"
             }],
             triggers: [{
@@ -655,7 +655,7 @@ describe("DdlManager.dump", () => {
                 },
                 language: "plpgsql",
                 args: [],
-                body: {content: body}
+                body
             }]
         });
     });
@@ -699,7 +699,7 @@ describe("DdlManager.dump", () => {
                             type: "integer"
                         }
                     ],
-                    body: {content: body}
+                    body
                 },
                 {
                     schema: "public",
@@ -714,7 +714,7 @@ describe("DdlManager.dump", () => {
                             type: "boolean"
                         }
                     ],
-                    body: {content: body}
+                    body
                 }
             ]
         });
@@ -747,7 +747,7 @@ describe("DdlManager.dump", () => {
                 returns: {type: "integer"},
                 language: "sql",
                 args: [],
-                body: {content: "select 1"},
+                body: "select 1",
                 comment: "'$$nice\ncomment"
             }]
         });
@@ -814,7 +814,7 @@ describe("DdlManager.dump", () => {
                 returns: {type: "trigger"},
                 language: "plpgsql",
                 args: [],
-                body: {content: body}
+                body
             }],
             triggers: [{
                 table: {
@@ -900,7 +900,7 @@ describe("DdlManager.dump", () => {
                         name: "some_id",
                         type: "integer"
                     }],
-                    body: {content: funcBody}
+                    body: funcBody
                 },
                 {
                     schema: "public",
@@ -908,7 +908,7 @@ describe("DdlManager.dump", () => {
                     returns: {type: "trigger"},
                     language: "plpgsql",
                     args: [],
-                    body: {content: triggerBody}
+                    body: triggerBody
                 }
             ],
             triggers: [{
@@ -971,7 +971,7 @@ describe("DdlManager.dump", () => {
                             type: "integer"
                         }
                     ],
-                    body: {content: body},
+                    body,
                     comment: "x"
                 },
                 {
@@ -987,7 +987,7 @@ describe("DdlManager.dump", () => {
                             type: "boolean"
                         }
                     ],
-                    body: {content: body},
+                    body,
                     comment: "y"
                 }
             ]

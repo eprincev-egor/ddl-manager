@@ -180,8 +180,7 @@ export class FilesState extends EventEmitter {
     }
 
     getTriggers() {
-        // TODO: any => type
-        let outTriggers: any[] = [];
+        let outTriggers: DatabaseTrigger[] = [];
 
         this.files.forEach(file => {
             const {triggers} = file.content;
@@ -357,7 +356,6 @@ export class FilesState extends EventEmitter {
         const fileIndex = this.files.indexOf( oldFile );
         this.files.splice(fileIndex, 1);
 
-        // TODO: any => type
         const changes: IDiff = {
             drop: {
                 functions: oldFile.content.functions,

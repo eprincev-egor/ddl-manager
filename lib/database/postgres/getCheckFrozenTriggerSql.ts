@@ -1,9 +1,9 @@
+import { DatabaseTrigger } from "../../ast/DatabaseTrigger";
 import {
     wrapText
 } from "../../utils";
 
-// TODO: any => type
-export function getCheckFrozenTriggerSql(trigger: any, errorText: string) {
+export function getCheckFrozenTriggerSql(trigger: DatabaseTrigger, errorText: string) {
     return `
     do $$
         begin

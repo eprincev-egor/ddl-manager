@@ -6,12 +6,14 @@ import {
     logDiff, 
     isDbClient,
     trigger2sql,
-    comment2sql,
+    triggerCommentsSQL,
+    functionCommentsSQL,
     function2sql
 } from "./utils";
 import { Comparator } from "./Comparator";
 import { Migrator } from "./Migrator";
 import { PostgresDriver } from "./database/PostgresDriver";
+import { DatabaseTrigger } from "./ast/DatabaseTrigger";
 
 const watchers: FilesState[] = [];
 
@@ -235,8 +237,7 @@ export class DdlManager {
 
             // generate sql
             let sql = "";
-            // TODO: any => type
-            let firstTrigger: any = false;
+            let firstTrigger: DatabaseTrigger | false = false;
 
             sameFuncs.forEach((sameFunc, j: number) => {
                 if ( j > 0 ) {
@@ -250,7 +251,7 @@ export class DdlManager {
                     sql += ";\n";
                     sql += "\n";
     
-                    sql += comment2sql(sameFunc.comment, {function: sameFunc});
+                    sql += functionCommentsSQL(sameFunc);
                 }
             });
             
@@ -281,7 +282,7 @@ export class DdlManager {
                             sql += ";\n";
                             sql += "\n";
     
-                            sql += comment2sql(trigger.comment, {trigger});
+                            sql += triggerCommentsSQL(trigger);
                         }
                     });
                 }

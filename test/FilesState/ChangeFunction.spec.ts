@@ -21,7 +21,7 @@ const TEST_FUNC1 = {
     name: "some_func1",
     args: [],
     returns: {type: "void"},
-    body: {content: "select 1"}
+    body: "select 1"
 };
 const TEST_FUNC2_SQL = `
     create or replace function some_func2()
@@ -34,7 +34,7 @@ const TEST_FUNC2 = {
     name: "some_func2",
     args: [],
     returns: {type: "void"},
-    body: {content: "select 2"}
+    body: "select 2"
 };
 
 describe("FilesState watch change functions", () => {

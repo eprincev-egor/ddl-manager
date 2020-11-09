@@ -32,12 +32,23 @@ export class DatabaseFunction  {
     schema!: string;
     name!: string;
     returns!: IDatabaseFunctionReturns;
+    args!: IDatabaseFunctionArgument[];
+    body!: string;
+    language: "plpgsql" | "sql";    
+    
+    immutable?: boolean;
+    returnsNullOnNull?: boolean;
+    stable?: boolean;
+    strict?: boolean;
+    parallel?: ("safe" | "unsafe" | "restricted")[];
+    cost?: number;
+
     frozen?: boolean;
     comment?: string;
-    args!: IDatabaseFunctionArgument[];
 
     constructor(json: IDatabaseFunctionParams) {
         Object.assign(this, json);
+        this.language = json.language || "plpgsql";
     }
 
     getSignature() {

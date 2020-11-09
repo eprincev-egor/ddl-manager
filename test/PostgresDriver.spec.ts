@@ -11,7 +11,6 @@ use(chaiShallowDeepEqualPlugin);
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
 describe("PostgresDriver.loadState", () => {
-    // TODO: any => type
     let db: any;
 
     beforeEach(async() => {
@@ -76,7 +75,7 @@ describe("PostgresDriver.loadState", () => {
                         }
                     ],
                     returns: {type: "void"},
-                    body: {content: body}
+                    body
                 }
             ],
             triggers: []
@@ -121,7 +120,7 @@ describe("PostgresDriver.loadState", () => {
                         }
                     ],
                     returns: {type: "integer"},
-                    body: {content: body1}
+                    body: body1
                 },
                 {
                     language: "plpgsql",
@@ -135,7 +134,7 @@ describe("PostgresDriver.loadState", () => {
                         }
                     ],
                     returns: {type: "text"},
-                    body: {content: body2}
+                    body: body2
                 }
             ],
             triggers: []
@@ -179,7 +178,7 @@ describe("PostgresDriver.loadState", () => {
                         }
                     ],
                     returns: {type: "integer"},
-                    body: {content: body1}
+                    body: body1
                 },
                 {
                     language: "plpgsql",
@@ -193,7 +192,7 @@ describe("PostgresDriver.loadState", () => {
                         }
                     ],
                     returns: {type: "integer"},
-                    body: {content: body2}
+                    body: body2
                 }
             ],
             triggers: []
@@ -224,7 +223,7 @@ describe("PostgresDriver.loadState", () => {
                     name: "test_func",
                     args: [],
                     returns: {type: "void"},
-                    body: {content: body}
+                    body
                 }
             ],
             triggers: []
@@ -264,7 +263,7 @@ describe("PostgresDriver.loadState", () => {
                             type: "integer"
                         }
                     ]},
-                    body: {content: body}
+                    body
                 }
             ],
             triggers: []
@@ -308,7 +307,7 @@ describe("PostgresDriver.loadState", () => {
                             type: "integer"
                         }
                     ]},
-                    body: {content: body}
+                    body
                 }
             ],
             triggers: []
@@ -344,7 +343,7 @@ describe("PostgresDriver.loadState", () => {
                         }
                     ],
                     returns: {type: "void"},
-                    body: {content: body}
+                    body
                 }
             ],
             triggers: []
@@ -380,7 +379,7 @@ describe("PostgresDriver.loadState", () => {
                         }
                     ],
                     returns: {type: "void"},
-                    body: {content: body}
+                    body
                 }
             ],
             triggers: []
@@ -424,7 +423,7 @@ describe("PostgresDriver.loadState", () => {
                     name: "test_func",
                     args: [],
                     returns: {type: "trigger"},
-                    body: {content: body}
+                    body
                 }
             ],
             triggers: [
@@ -486,7 +485,7 @@ describe("PostgresDriver.loadState", () => {
                     name: "test_func",
                     args: [],
                     returns: {type: "trigger"},
-                    body: {content: body}
+                    body
                 }
             ],
             triggers: [
@@ -551,7 +550,7 @@ describe("PostgresDriver.loadState", () => {
                         }
                     ],
                     returns: {type: "void"},
-                    body: {content: body}
+                    body
                 }
             ],
             triggers: []
@@ -604,7 +603,7 @@ describe("PostgresDriver.loadState", () => {
                     name: "test_func",
                     args: [],
                     returns: {type: "trigger"},
-                    body: {content: body}
+                    body
                 }
             ],
             triggers: [
@@ -694,7 +693,7 @@ describe("PostgresDriver.loadState", () => {
                     name: "test_func_sql",
                     args: [],
                     returns: {type: "integer"},
-                    body: {content: "select 1"}
+                    body: "select 1"
                 }
             ],
             triggers: []
@@ -724,7 +723,7 @@ describe("PostgresDriver.loadState", () => {
                     name: "some_func",
                     args: [],
                     returns: {type: "public.company"},
-                    body: {content: "begin\nend"}
+                    body: "begin\nend"
                 }
             ],
             triggers: []
@@ -757,7 +756,7 @@ describe("PostgresDriver.loadState", () => {
                         setof: true,
                         type: "public.company"
                     },
-                    body: {content: "begin\nend"}
+                    body: "begin\nend"
                 }
             ],
             triggers: []
@@ -792,7 +791,7 @@ describe("PostgresDriver.loadState", () => {
                         }
                     ],
                     returns: {type: "void"},
-                    body: {content: "begin\nend"}
+                    body: "begin\nend"
                 }
             ],
             triggers: []
@@ -823,7 +822,7 @@ describe("PostgresDriver.loadState", () => {
                         }
                     ],
                     returns: {type: "void"},
-                    body: {content: "begin\nend"}
+                    body: "begin\nend"
                 }
             ],
             triggers: []
@@ -859,7 +858,7 @@ describe("PostgresDriver.loadState", () => {
                         }
                     ],
                     returns: {type: "text"},
-                    body: {content: "begin\nend"}
+                    body: "begin\nend"
                 }
             ],
             triggers: []

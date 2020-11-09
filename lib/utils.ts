@@ -1,6 +1,10 @@
 import pg from "pg";
 import _ from "lodash";
 import fs from "fs";
+import { IDiff } from "./interface";
+import { DatabaseTrigger } from "./ast/DatabaseTrigger";
+import { DatabaseFunction } from "./ast/DatabaseFunction";
+import assert from "assert";
 
 const defaultConfig = {
     config: "ddl-manager-config",
@@ -109,8 +113,7 @@ export function isDbClient(dbOrConfig: any) {
     );
 }
 
-// TODO: any => type
-export function logDiff(diff: any) {
+export function logDiff(diff: IDiff) {
     diff.drop.triggers.forEach((trigger: any) => {
         const triggerIdentifySql = trigger.getSignature();
         // tslint:disable-next-line: no-console
@@ -149,7 +152,7 @@ export function wrapText(text: string) {
 }
 
 // TODO: any => type
-export function function2dropSql(func: any) {
+export function function2dropSql(func: DatabaseFunction) {
     // public.some_func(bigint, text)
     const identifySql = func.getSignature();
 
@@ -227,30 +230,22 @@ export function trigger2sql(trigger: any) {
     return out;
 }
 
-// TODO: any => type
-export function trigger2dropSql(trigger: any) {
+export function trigger2dropSql(trigger: DatabaseTrigger) {
     const identifySql = trigger.getSignature();
     return `drop trigger if exists ${ identifySql }`;
 }
 
-// TODO: any => type
-export function comment2sql(
-    comment: string,
-    info: {trigger?: any; function?: any} = {}
-) {
-
-    if ( info.function ) {
-        const identify = info.function.getSignature();
-        return `comment on function ${identify} is ${ wrapText(comment) }`;
-    }
-    else {
-        const identify = info.trigger.getSignature();
-        return `comment on trigger ${identify} is ${ wrapText(comment) }`;
-    }
+export function triggerCommentsSQL(trigger: DatabaseTrigger) {
+    assert.ok(trigger.comment);
+    return `comment on trigger ${trigger.getSignature()} is ${ wrapText(trigger.comment) }`;
 }
 
-// TODO: any => type
-export function function2sql(func: any) {
+export function functionCommentsSQL(func: DatabaseFunction) {
+    assert.ok(func.comment);
+    return `comment on function ${func.getSignature()} is ${ wrapText(func.comment) }`;
+}
+
+export function function2sql(func: DatabaseFunction) {
     let additionalParams = "";
 
     additionalParams += " language ";
@@ -291,25 +286,13 @@ export function function2sql(func: any) {
         argsSql = "\n" + argsSql + "\n";
     }
 
-
-    let body = func.body;
-    if ( typeof body.content === "string" ) {
-        body = `$body$${ body.content }$body$`;
-    }
-    else if ( typeof body === "string" ) {
-        body = `$body$${ body }$body$`;
-    }
-    else {
-        body = body.toString();
-    }
-
     // отступов не должно быть!
     // иначе DDLManager.dump будет писать некрасивый код
     return `
 create or replace function ${ func.schema }.${ func.name }(${argsSql}) 
 returns ${ returnsSql } 
 ${ additionalParams }
-as ${ body }
+as ${ wrapText(func.body) }
     `.trim();
 }
 

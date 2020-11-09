@@ -52,6 +52,7 @@ export class FileParser {
         if ( funcJson.comment ) {
             func.comment = funcJson.comment.comment.content;
         }
+        func.body = funcJson.body.content;
         
         // TODO: any => type
         // check duplicate
@@ -129,9 +130,8 @@ export class FileParser {
             }
         }
 
-        // TODO: any => type
         // check duplicate
-        const isDuplicate = state.triggers.some((prevTrigger: any) =>
+        const isDuplicate = state.triggers.some((prevTrigger) =>
             prevTrigger.getSignature()
             ===
             trigger.getSignature()
