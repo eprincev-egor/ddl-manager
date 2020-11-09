@@ -1,6 +1,5 @@
 import {
-    wrapText,
-    function2identifySql
+    wrapText
 } from "../../utils";
 
 export function getUnfreezeFunctionSql(func: any) {
@@ -9,7 +8,7 @@ export function getUnfreezeFunctionSql(func: any) {
         prefix = func.comment + "\n";
     }
 
-    const funcIdentifySql = function2identifySql( func );
+    const funcIdentifySql = func.getSignature();
     return `
         comment on function ${ funcIdentifySql } is ${wrapText( prefix + "ddl-manager-sync" )}
     `;

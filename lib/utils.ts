@@ -118,13 +118,13 @@ export function logDiff(diff: any) {
     });
 
     diff.drop.functions.forEach((func: any) => {
-        const funcIdentifySql = function2identifySql( func );
+        const funcIdentifySql = func.getSignature();
         // tslint:disable-next-line: no-console
         console.log("drop function " + funcIdentifySql);
     });
     
     diff.create.functions.forEach((func: any) => {
-        const funcIdentifySql = function2identifySql( func );
+        const funcIdentifySql = func.getSignature();
         // tslint:disable-next-line: no-console
         console.log("create function " + funcIdentifySql);
     });
@@ -148,37 +148,10 @@ export function wrapText(text: string) {
     return `$${tag}$${ text }$${tag}$`;
 }
 
-
-// TODO: any => type
-// public.some_func(bigint, text)
-export function function2identifySql(func: any) {
-    const identify = function2identifyJson( func );
-
-    const argsSql = identify.args.join(", ");
-    return `${ identify.schema }.${ identify.name }(${ argsSql })`;
-}
-
-// TODO: any => type
-export function function2identifyJson(func: any) {
-    let args = func.args.filter((arg: any) => 
-        !arg.out
-    );
-
-    args = args.map((arg: any) => 
-        arg.type
-    );
-    
-    return {
-        schema: func.schema,
-        name: func.name,
-        args
-    };
-}
-
 // TODO: any => type
 export function function2dropSql(func: any) {
     // public.some_func(bigint, text)
-    const identifySql = function2identifySql(func);
+    const identifySql = func.getSignature();
 
     return `drop function if exists ${ identifySql }`;
 }
@@ -278,7 +251,7 @@ export function comment2sql(
 ) {
 
     if ( info.function ) {
-        const identify = function2identifySql(info.function);
+        const identify = info.function.getSignature();
         return `comment on function ${identify} is ${ wrapText(comment) }`;
     }
     else {

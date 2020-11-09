@@ -4,11 +4,10 @@ import { EventEmitter } from "events";
 import watch from "node-watch";
 import path from "path";
 import {
-    trigger2identifySql,
-    function2identifySql
+    trigger2identifySql
 } from "./utils";
 import { FileParser } from "./parser/FileParser";
-import { DatabaseFunctionType, IDiff, IFile } from "./interface";
+import { IDiff, IFile } from "./interface";
 
 export class FilesState extends EventEmitter {
     static create(params: {folder: string | string[], onError?: any}) {
@@ -112,12 +111,12 @@ export class FilesState extends EventEmitter {
         }
     }
 
-    checkDuplicateFunction(func: DatabaseFunctionType) {
-        const identify = function2identifySql(func);
+    checkDuplicateFunction(func: any) {
+        const identify = func.getSignature();
 
         const hasDuplicate = this.files.some(someFile => {
-            return someFile.content.functions.some(someFunc => {
-                const someIdentify = function2identifySql(someFunc);
+            return someFile.content.functions.some((someFunc: any) => {
+                const someIdentify = someFunc.getSignature();
                 
                 return identify === someIdentify;
             });

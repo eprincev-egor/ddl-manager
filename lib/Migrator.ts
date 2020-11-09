@@ -3,7 +3,6 @@ import assert from "assert";
 import {
     trigger2identifySql,
     trigger2dropSql,
-    function2identifySql,
     function2dropSql,
     trigger2sql,
     function2sql
@@ -66,7 +65,7 @@ export class Migrator {
     private async dropFunctions(diff: IDiff, outputErrors: Error[]) {
 
         for (const func of diff.drop.functions) {
-            const funcIdentifySql = function2identifySql( func );
+            const funcIdentifySql = (func as any).getSignature();
             let ddlSql = "";
 
             // check frozen object
@@ -101,7 +100,7 @@ export class Migrator {
 
         for (const func of diff.create.functions) {
             let ddlSql = "";
-            const funcIdentifySql = function2identifySql( func );
+            const funcIdentifySql = (func as any).getSignature();
 
             // check frozen object
             const checkFrozenSql = getCheckFrozenFunctionSql( 

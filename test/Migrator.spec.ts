@@ -1,16 +1,12 @@
 import assert from "assert";
 import { getDBClient } from "./utils/getDbClient";
 import { Migrator } from "../lib/Migrator";
+import { DatabaseFunction } from "../lib/ast/DatabaseFunction";
 import { IDiff } from "../lib/interface";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 
 use(chaiShallowDeepEqualPlugin);
-
-async function migrate(params: {db: any, diff: IDiff}) {
-    const migrator = new Migrator(params.db);
-    await migrator.migrate(params.diff);
-}
 
 describe("Migrator.migrate", () => {
     let db: any;
@@ -28,12 +24,34 @@ describe("Migrator.migrate", () => {
         db.end();
     });
 
+    async function migrate(params: {diff: IDiff}) {
+        const migrator = new Migrator(db);
+
+        const diff: IDiff = {
+            drop: {
+                functions: createFunctions(params.diff.drop.functions),
+                triggers: params.diff.drop.triggers.slice()
+            },
+            create: {
+                functions: createFunctions(params.diff.create.functions),
+                triggers: params.diff.create.triggers.slice()
+            }
+        };
+        await migrator.migrate(diff);
+    }
+
+    function createFunctions(functions: any[]) {
+        return functions.map(funcJson => 
+            new DatabaseFunction(funcJson)
+        );
+    }
+
     it("migrate simple function", async() => {
 
         const rnd = Math.round( 10000 * Math.random() );
         
         await migrate({
-            db, 
+            
             diff: {
                 drop: {
                     functions: [],
@@ -75,7 +93,7 @@ describe("Migrator.migrate", () => {
         `);
 
         await migrate({
-            db, 
+            
             diff: {
                 drop: {
                     functions: [],
@@ -178,8 +196,8 @@ describe("Migrator.migrate", () => {
         };
 
         // do it twice without errors
-        await migrate({db, diff});
-        await migrate({db, diff});
+        await migrate({diff});
+        await migrate({diff});
         
 
         // check trigger on table
@@ -203,7 +221,7 @@ describe("Migrator.migrate", () => {
             language sql;
         `);
 
-        await migrate({db, diff: {
+        await migrate({diff: {
             drop: {
                 functions: [],
                 triggers: []
@@ -239,7 +257,7 @@ describe("Migrator.migrate", () => {
         `);
 
         try {
-            await migrate({db, diff: {
+            await migrate({diff: {
                 drop: {
                     functions: [
                         {
@@ -270,7 +288,7 @@ describe("Migrator.migrate", () => {
             language sql;
         `);
 
-        await migrate({db, diff: {
+        await migrate({diff: {
             drop: {
                 functions: [],
                 triggers: []
@@ -316,7 +334,7 @@ describe("Migrator.migrate", () => {
             language sql;
         `);
 
-        await migrate({db, diff: {
+        await migrate({diff: {
             drop: {
                 functions: [],
                 triggers: []
@@ -372,7 +390,7 @@ describe("Migrator.migrate", () => {
         `);
 
         try {
-            await migrate({db, diff: {
+            await migrate({diff: {
                 drop: {
                     functions: [],
                     triggers: []
@@ -438,7 +456,7 @@ describe("Migrator.migrate", () => {
 
         
         try {
-            await migrate({db, diff: {
+            await migrate({diff: {
                 drop: {
                     functions: [
                         {
@@ -489,7 +507,7 @@ describe("Migrator.migrate", () => {
             );
         `);
 
-        await migrate({db, diff: {
+        await migrate({diff: {
             drop: {
                 functions: [],
                 triggers: []
@@ -536,7 +554,7 @@ describe("Migrator.migrate", () => {
             default values;
         `);
 
-        await migrate({db, diff: {
+        await migrate({diff: {
             drop: {
                 functions: [],
                 triggers: []
@@ -580,7 +598,7 @@ describe("Migrator.migrate", () => {
             );
         `);
 
-        await migrate({db, diff: {
+        await migrate({diff: {
             drop: {
                 functions: [],
                 triggers: []
@@ -612,7 +630,7 @@ describe("Migrator.migrate", () => {
     });
 
     it("migrate function, arg without name", async() => {
-        await migrate({db, diff: {
+        await migrate({diff: {
             drop: {
                 functions: [],
                 triggers: []
@@ -644,7 +662,7 @@ describe("Migrator.migrate", () => {
     });
 
     it("migrate function, in/out arg", async() => {
-        await migrate({db, diff: {
+        await migrate({diff: {
             drop: {
                 functions: [],
                 triggers: []
@@ -688,7 +706,7 @@ describe("Migrator.migrate", () => {
     it("migrate simple function with comment", async() => {
 
         await migrate({
-            db, 
+            
             diff: {
                 drop: {
                     functions: [],
@@ -742,7 +760,7 @@ describe("Migrator.migrate", () => {
         `);
 
         await migrate({
-            db, 
+            
             diff: {
                 drop: {
                     functions: [],
@@ -817,7 +835,7 @@ describe("Migrator.migrate", () => {
             end`}
         };
 
-        await migrate({db, diff: {
+        await migrate({diff: {
             drop: {
                 functions: [],
                 triggers: []
@@ -837,7 +855,7 @@ describe("Migrator.migrate", () => {
         });
 
 
-        await migrate({db, diff: {
+        await migrate({diff: {
             drop: {
                 functions: [
                     func
@@ -902,7 +920,7 @@ describe("Migrator.migrate", () => {
             end`}
         };
 
-        await migrate({db, diff: {
+        await migrate({diff: {
             drop: {
                 functions: [],
                 triggers: []
@@ -929,7 +947,7 @@ describe("Migrator.migrate", () => {
         });
 
 
-        await migrate({db, diff: {
+        await migrate({diff: {
             drop: {
                 functions: [
                     func1,

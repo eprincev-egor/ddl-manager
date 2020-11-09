@@ -6,7 +6,6 @@ import {
 } from "grapeql-lang";
 import { IState } from "../interface";
 import {
-    function2identifySql,
     trigger2identifySql
 } from "../utils";
 import { DatabaseFunction } from "../ast/DatabaseFunction";
@@ -60,13 +59,13 @@ export class FileParser {
         // TODO: any => type
         // check duplicate
         const isDuplicate = state.functions.some((prevFunc: any) =>
-            function2identifySql( prevFunc )
+            prevFunc.getSignature()
             ===
-            function2identifySql( func )
+            func.getSignature()
         );
 
         if ( isDuplicate ) {
-            coach.throwError("duplicated function: " + function2identifySql( func ));
+            coach.throwError("duplicated function: " + func.getSignature() );
         }
 
         // two function inside file, can be with only same name and schema

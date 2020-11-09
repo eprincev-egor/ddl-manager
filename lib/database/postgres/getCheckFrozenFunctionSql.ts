@@ -1,17 +1,16 @@
 import {
-    wrapText,
-    function2identifySql
+    wrapText
 } from "../../utils";
 
 export function getCheckFrozenFunctionSql(func: any, errorText: any, actionOnFrozen = "error") {
-    const funcIdentifySql = function2identifySql( func );
+    const funcIdentifySql = func.getSignature();
     let sqlOnFrozen;
 
     if ( actionOnFrozen === "error" ) {
         sqlOnFrozen = `raise exception ${wrapText(errorText)};`;
     }
     else if ( actionOnFrozen === "drop" ) {
-        sqlOnFrozen = `drop function ${function2identifySql(func)};`;
+        sqlOnFrozen = `drop function ${func.getSignature()};`;
     }
     else {
         sqlOnFrozen = actionOnFrozen;
