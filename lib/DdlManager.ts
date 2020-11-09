@@ -22,7 +22,8 @@ export class DdlManager {
     private static async migrate(params: {db: any, diff: any, throwError?: boolean}) {
         const {db, diff, throwError} = params;
 
-        const migrator = new Migrator(db);
+        const postgres = new PostgresDriver(db);
+        const migrator = new Migrator(postgres);
         const outputErrors = await migrator.migrate(diff);
 
         if ( throwError !== false ) {

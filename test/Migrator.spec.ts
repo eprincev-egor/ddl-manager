@@ -6,6 +6,7 @@ import { DatabaseTrigger, IDatabaseTriggerParams } from "../lib/ast/DatabaseTrig
 import { IDiff } from "../lib/interface";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import { PostgresDriver } from "../lib/database/PostgresDriver";
 
 use(chaiShallowDeepEqualPlugin);
 
@@ -37,7 +38,8 @@ describe("Migrator.migrate", () => {
     }
 
     async function migrate(params: {diff: IDiffParams}) {
-        const migrator = new Migrator(db);
+        const postgres = new PostgresDriver(db);
+        const migrator = new Migrator(postgres);
 
         const diff: IDiff = {
             drop: {

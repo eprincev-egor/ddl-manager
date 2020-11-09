@@ -1,22 +1,12 @@
-import { Client } from "pg";
 import assert from "assert";
-import {
-    trigger2dropSql,
-    function2dropSql,
-    trigger2sql,
-    function2sql
-} from "./utils";
 import { IDiff } from "./interface";
-import { getCheckFrozenFunctionSql } from "./database/postgres/getCheckFrozenFunctionSql";
-import { getCheckFrozenTriggerSql } from "./database/postgres/getCheckFrozenTriggerSql";
-import { getUnfreezeFunctionSql } from "./database/postgres/getUnfreezeFunctionSql";
-import { getUnfreezeTriggerSql } from "./database/postgres/getUnfreezeTriggerSql";
+import { PostgresDriver } from "./database/PostgresDriver";
 
 export class Migrator {
-    private pgClient: Client;
+    private postgres: PostgresDriver;
 
-    constructor(pgClient: Client) {
-        this.pgClient = pgClient;
+    constructor(postgres: PostgresDriver) {
+        this.postgres = postgres;
     }
 
     async migrate(diff: IDiff) {
@@ -36,24 +26,11 @@ export class Migrator {
     private async dropTriggers(diff: IDiff, outputErrors: Error[]) {
 
         for (const trigger of diff.drop.triggers) {
-            const triggerIdentifySql = (trigger as any).getSignature();
-            let ddlSql = "";
-            
-            // check frozen object
-            const checkFrozenSql = getCheckFrozenTriggerSql( 
-                trigger,
-                `cannot drop frozen trigger ${ triggerIdentifySql }`
-            );
-            ddlSql = checkFrozenSql;
-
-            ddlSql += ";";
-            ddlSql += trigger2dropSql(trigger);
-
             try {
-                await this.pgClient.query(ddlSql);
+                await this.postgres.dropTrigger(trigger);
             } catch(err) {
                 // redefine callstack
-                const newErr = new Error(triggerIdentifySql + "\n" + err.message);
+                const newErr = new Error(trigger.getSignature() + "\n" + err.message);
                 (newErr as any).originalError = err;
 
                 outputErrors.push(newErr);
@@ -64,29 +41,16 @@ export class Migrator {
     private async dropFunctions(diff: IDiff, outputErrors: Error[]) {
 
         for (const func of diff.drop.functions) {
-            const funcIdentifySql = (func as any).getSignature();
-            let ddlSql = "";
-
-            // check frozen object
-            const checkFrozenSql = getCheckFrozenFunctionSql( 
-                func,
-                `cannot drop frozen function ${ funcIdentifySql }`
-            );
-            
-            ddlSql = checkFrozenSql;
-
-            ddlSql += ";";
-            ddlSql += function2dropSql(func);
             // 2BP01
             try {
-                await this.pgClient.query(ddlSql);
+                await this.postgres.dropFunction(func);
             } catch(err) {
                 // https://www.postgresql.org/docs/12/errcodes-appendix.html
                 // cannot drop function my_func() because other objects depend on it
                 const isCascadeError = err.code === "2BP01";
                 if ( !isCascadeError ) {
                     // redefine callstack
-                    const newErr = new Error(funcIdentifySql + "\n" + err.message);
+                    const newErr = new Error(func.getSignature() + "\n" + err.message);
                     (newErr as any).originalError = err;
 
                     outputErrors.push(newErr);
@@ -98,29 +62,11 @@ export class Migrator {
     private async createFunctions(diff: IDiff, outputErrors: Error[]) {
 
         for (const func of diff.create.functions) {
-            let ddlSql = "";
-            const funcIdentifySql = (func as any).getSignature();
-
-            // check frozen object
-            const checkFrozenSql = getCheckFrozenFunctionSql( 
-                func,
-                "",
-                "drop"
-            );
-            
-            ddlSql += checkFrozenSql;
-
-            ddlSql += ";";
-            ddlSql += function2sql( func );
-            
-            ddlSql += ";";
-            ddlSql += getUnfreezeFunctionSql(func);
-
             try {
-                await this.pgClient.query(ddlSql);
+                await this.postgres.createOrReplaceFunction(func);
             } catch(err) {
                 // redefine callstack
-                const newErr = new Error(funcIdentifySql + "\n" + err.message);
+                const newErr = new Error(func.getSignature() + "\n" + err.message);
                 (newErr as any).originalError = err;
                 
                 outputErrors.push(newErr);
@@ -131,31 +77,11 @@ export class Migrator {
     private async createTriggers(diff: IDiff, outputErrors: Error[]) {
 
         for (const trigger of diff.create.triggers) {
-            const triggerIdentifySql = (trigger as any).getSignature();
-            let ddlSql = "";
-            
-            // check frozen object
-            const checkFrozenSql = getCheckFrozenTriggerSql( 
-                trigger,
-                `cannot replace frozen trigger ${ triggerIdentifySql }`
-            );
-            ddlSql = checkFrozenSql;
-
-
-            ddlSql += ";";
-            ddlSql += trigger2dropSql( trigger );
-            
-            ddlSql += ";";
-            ddlSql += trigger2sql( trigger );
-
-            ddlSql += ";";
-            ddlSql += getUnfreezeTriggerSql(trigger);
-
             try {
-                await this.pgClient.query(ddlSql);
+                await this.postgres.createOrReplaceTrigger(trigger);
             } catch(err) {
                 // redefine callstack
-                const newErr = new Error(triggerIdentifySql + "\n" + err.message);
+                const newErr = new Error(trigger.getSignature() + "\n" + err.message);
                 (newErr as any).originalError = err;
                 
                 outputErrors.push(newErr);
