@@ -8,6 +8,6 @@ export class FunctionParser {
     parse(sql: string) {
         const coach = new GrapeQLCoach(sql);
         const func = coach.parse(CreateFunction);
-        return func;
+        return func.toJSON();
     }
 }

@@ -52,8 +52,7 @@ implements IDatabaseDriver {
         const {rows} = await this.pgClient.query(selectAllObjectsSQL);
         for (const row of rows) {
 
-            const object = parser.parse(row.ddl);
-            const json = object.toJSON() as any;
+            const json = parser.parse(row.ddl) as any;
  
             json.frozen = isFrozen(row);
             json.comment = parseComment(row);
