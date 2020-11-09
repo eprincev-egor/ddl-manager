@@ -10,6 +10,7 @@ import {
     trigger2identifySql
 } from "../utils";
 import { DatabaseFunction } from "../ast/DatabaseFunction";
+import { DatabaseTrigger } from "../ast/DatabaseTrigger";
 
 export class FileParser {
 
@@ -25,28 +26,24 @@ export class FileParser {
             return;
         }
 
-        const state: IState = {
-            functions: [],
-            triggers: []
-        };
-        this.parseFile(coach, state);
-
-        for (const trigger of state.triggers) {
-            if ( trigger.comment ) {
-                trigger.comment = trigger.comment.comment.content;
-            }
-        }
-
+        const state = this.parseFile(coach);
         return state;
     }
 
 
-    private parseFile(coach: GrapeQLCoach, state: IState) {
+    private parseFile(coach: GrapeQLCoach) {
         coach.skipSpace();
+
+        const state: IState = {
+            functions: [],
+            triggers: []
+        };
 
         this.parseFunctions( coach, state );
 
         this.parseTriggers( coach, state );
+
+        return state;
     }
 
     private parseFunctions(coach: GrapeQLCoach, state: IState) {
@@ -107,7 +104,11 @@ export class FileParser {
         }
 
         // TODO: any => type
-        const trigger = coach.parse(CreateTrigger).toJSON() as any;
+        const triggerJson = coach.parse(CreateTrigger).toJSON() as any;
+        const trigger = new DatabaseTrigger(triggerJson);
+        if ( triggerJson.comment ) {
+            trigger.comment = triggerJson.comment.comment.content;
+        }
 
         // validate function name and trigger procedure
         const firstFunc = state.functions[0];
