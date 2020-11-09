@@ -1,7 +1,6 @@
 import { Client } from "pg";
 import assert from "assert";
 import {
-    trigger2identifySql,
     trigger2dropSql,
     function2dropSql,
     trigger2sql,
@@ -37,7 +36,7 @@ export class Migrator {
     private async dropTriggers(diff: IDiff, outputErrors: Error[]) {
 
         for (const trigger of diff.drop.triggers) {
-            const triggerIdentifySql = trigger2identifySql( trigger );
+            const triggerIdentifySql = (trigger as any).getSignature();
             let ddlSql = "";
             
             // check frozen object
@@ -132,7 +131,7 @@ export class Migrator {
     private async createTriggers(diff: IDiff, outputErrors: Error[]) {
 
         for (const trigger of diff.create.triggers) {
-            const triggerIdentifySql = trigger2identifySql( trigger );
+            const triggerIdentifySql = (trigger as any).getSignature();
             let ddlSql = "";
             
             // check frozen object

@@ -3,9 +3,6 @@ import glob from "glob";
 import { EventEmitter } from "events";
 import watch from "node-watch";
 import path from "path";
-import {
-    trigger2identifySql
-} from "./utils";
 import { FileParser } from "./parser/FileParser";
 import { IDiff, IFile } from "./interface";
 
@@ -129,14 +126,14 @@ export class FilesState extends EventEmitter {
 
     // TODO: any => type
     checkDuplicateTrigger(trigger: any) {
-        const identify = trigger2identifySql( trigger );
+        const identify = trigger.getSignature();
 
         const hasDuplicate = this.files.some(someFile => {
             const someTriggers = someFile.content.triggers;
 
             if ( someTriggers ) {
-                return someTriggers.some(someTrigger => {
-                    const someIdentify = trigger2identifySql( someTrigger );
+                return someTriggers.some((someTrigger: any) => {
+                    const someIdentify = someTrigger.getSignature();
 
                     return identify === someIdentify;
                 });

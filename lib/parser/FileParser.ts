@@ -5,9 +5,6 @@ import {
     Comment
 } from "grapeql-lang";
 import { IState } from "../interface";
-import {
-    trigger2identifySql
-} from "../utils";
 import { DatabaseFunction } from "../ast/DatabaseFunction";
 import { DatabaseTrigger } from "../ast/DatabaseTrigger";
 
@@ -135,13 +132,13 @@ export class FileParser {
         // TODO: any => type
         // check duplicate
         const isDuplicate = state.triggers.some((prevTrigger: any) =>
-            trigger2identifySql( prevTrigger )
+            prevTrigger.getSignature()
             ===
-            trigger2identifySql( trigger )
+            trigger.getSignature()
         );
 
         if ( isDuplicate ) {
-            coach.throwError("duplicated trigger: " + trigger2identifySql( trigger ));
+            coach.throwError("duplicated trigger: " + trigger.getSignature() );
         }
 
         state.triggers.push( trigger );

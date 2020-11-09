@@ -1,6 +1,7 @@
 import { DatabaseTriggerType } from "../interface";
 
 export class DatabaseTrigger {
+    name!: string;
     frozen?: boolean;
     comment?: string;
     procedure!: {
@@ -15,5 +16,9 @@ export class DatabaseTrigger {
 
     constructor(json: DatabaseTriggerType) {
         Object.assign(this, json);
+    }
+
+    getSignature() {
+        return `${this.name} on ${ this.table.schema }.${ this.table.name }`;
     }
 }

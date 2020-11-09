@@ -1,6 +1,5 @@
 import {
-    wrapText,
-    trigger2identifySql
+    wrapText
 } from "../../utils";
 
 export function getUnfreezeTriggerSql(trigger: any) {
@@ -9,7 +8,7 @@ export function getUnfreezeTriggerSql(trigger: any) {
         prefix = trigger.comment + "\n";
     }
 
-    const triggerIdentifySql = trigger2identifySql( trigger );
+    const triggerIdentifySql = trigger.getSignature();
     return `
         comment on trigger ${ triggerIdentifySql } is ${wrapText( prefix + "ddl-manager-sync" )}
     `;

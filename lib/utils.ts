@@ -112,7 +112,7 @@ export function isDbClient(dbOrConfig: any) {
 // TODO: any => type
 export function logDiff(diff: any) {
     diff.drop.triggers.forEach((trigger: any) => {
-        const triggerIdentifySql = trigger2identifySql( trigger );
+        const triggerIdentifySql = trigger.getSignature();
         // tslint:disable-next-line: no-console
         console.log("drop trigger " + triggerIdentifySql);
     });
@@ -130,7 +130,7 @@ export function logDiff(diff: any) {
     });
 
     diff.create.triggers.forEach((trigger: any) => {
-        const triggerIdentifySql = trigger2identifySql( trigger );
+        const triggerIdentifySql = trigger.getSignature();
         // tslint:disable-next-line: no-console
         console.log("create trigger " + triggerIdentifySql);
     });
@@ -229,19 +229,8 @@ export function trigger2sql(trigger: any) {
 
 // TODO: any => type
 export function trigger2dropSql(trigger: any) {
-    const identifySql = trigger2identifySql(trigger);
+    const identifySql = trigger.getSignature();
     return `drop trigger if exists ${ identifySql }`;
-}
-
-// TODO: any => type
-// some_trigger on public.test
-export function trigger2identifySql(trigger: any) {
-    let triggerTable = trigger.table;
-    if ( triggerTable.row ) {
-        triggerTable = triggerTable.row;
-    }
-
-    return `${trigger.name} on ${ triggerTable.schema }.${ triggerTable.name }`;
 }
 
 // TODO: any => type
@@ -255,7 +244,7 @@ export function comment2sql(
         return `comment on function ${identify} is ${ wrapText(comment) }`;
     }
     else {
-        const identify = trigger2identifySql(info.trigger);
+        const identify = info.trigger.getSignature();
         return `comment on trigger ${identify} is ${ wrapText(comment) }`;
     }
 }
