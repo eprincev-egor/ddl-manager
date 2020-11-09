@@ -166,7 +166,7 @@ export class FilesState extends EventEmitter {
             name: fileName,
             folder: rootFolderPath,
             path: formatPath(subPath),
-            content: sqlFile as any
+            content: sqlFile
         };
     }
 

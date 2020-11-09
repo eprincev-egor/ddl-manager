@@ -4,8 +4,11 @@ import {
     GrapeQLCoach,
     Comment
 } from "grapeql-lang";
-import { SqlFile } from "./SqlFile";
 import { IState } from "../interface";
+import {
+    function2identifySql,
+    trigger2identifySql
+} from "../utils";
 import { DatabaseFunction } from "../ast/DatabaseFunction";
 
 export class FileParser {
@@ -22,26 +25,128 @@ export class FileParser {
             return;
         }
 
-        const sqlFile = coach.parse(SqlFile as any) as SqlFile;
-        const json = sqlFile.toJSON();
+        const state: IState = {
+            functions: [],
+            triggers: []
+        };
+        this.parseFile(coach, state);
 
-        json.functions = json.functions.map((funcJson: any) => {
-            const func = new DatabaseFunction(funcJson as any);
-
-            if ( funcJson.comment ) {
-                func.comment = funcJson.comment.comment.content;
-            }
-
-            return func;
-        });
-
-        for (const trigger of json.triggers) {
+        for (const trigger of state.triggers) {
             if ( trigger.comment ) {
                 trigger.comment = trigger.comment.comment.content;
             }
         }
 
-        return json;
+        return state;
+    }
+
+
+    private parseFile(coach: GrapeQLCoach, state: IState) {
+        coach.skipSpace();
+
+        this.parseFunctions( coach, state );
+
+        this.parseTriggers( coach, state );
+    }
+
+    private parseFunctions(coach: GrapeQLCoach, state: IState) {
+        if ( !coach.is(CreateFunction) ) {
+            return;
+        }
+
+        const funcJson = coach.parse(CreateFunction).toJSON() as any;
+        const func = new DatabaseFunction(funcJson);
+        if ( funcJson.comment ) {
+            func.comment = funcJson.comment.comment.content;
+        }
+        
+        // TODO: any => type
+        // check duplicate
+        const isDuplicate = state.functions.some((prevFunc: any) =>
+            function2identifySql( prevFunc )
+            ===
+            function2identifySql( func )
+        );
+
+        if ( isDuplicate ) {
+            coach.throwError("duplicated function: " + function2identifySql( func ));
+        }
+
+        // two function inside file, can be with only same name and schema
+        // TODO: any => type
+        const isWrongName = state.functions.some((prevFunc: any) =>
+            prevFunc.name !== func.name ||
+            prevFunc.schema !== func.schema
+        );
+
+        if ( isWrongName ) {
+            coach.throwError("two function inside file, can be with only same name and schema");
+        }
+
+        // save func
+        state.functions.push(
+            func
+        );
+
+        coach.skipSpace();
+        coach.read(/[\s;]+/);
+
+        if ( coach.is(CreateFunction) ) {
+            this.parseFunctions( coach, state );
+        }
+    }
+
+    private parseTriggers(coach: GrapeQLCoach, state: IState) {
+        coach.skipSpace();
+
+        // skip spaces and some ;
+        coach.read(/[\s;]+/);
+
+        if ( !coach.is(CreateTrigger) ) {
+            return;
+        }
+
+        // TODO: any => type
+        const trigger = coach.parse(CreateTrigger).toJSON() as any;
+
+        // validate function name and trigger procedure
+        const firstFunc = state.functions[0];
+        if ( firstFunc ) {
+            if (
+                firstFunc.schema !== trigger.procedure.schema ||
+                firstFunc.name !== trigger.procedure.name
+            ) {
+                throw new Error(`wrong procedure name ${
+                    trigger.procedure.schema
+                }.${
+                    trigger.procedure.name
+                }`);
+            }
+
+            // validate function returns type
+            const hasTriggerFunc = state.functions.some((func: any) =>
+                func.returns.type === "trigger"
+            );
+            if ( !hasTriggerFunc ) {
+                throw new Error("file must contain function with returns type trigger");
+            }
+        }
+
+        // TODO: any => type
+        // check duplicate
+        const isDuplicate = state.triggers.some((prevTrigger: any) =>
+            trigger2identifySql( prevTrigger )
+            ===
+            trigger2identifySql( trigger )
+        );
+
+        if ( isDuplicate ) {
+            coach.throwError("duplicated trigger: " + trigger2identifySql( trigger ));
+        }
+
+        state.triggers.push( trigger );
+
+        this.parseTriggers( coach, state );
     }
 }
 
