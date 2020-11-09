@@ -6,6 +6,7 @@ import {
 } from "grapeql-lang";
 import { SqlFile } from "./SqlFile";
 import { IState } from "../interface";
+import { DatabaseFunction } from "../ast/DatabaseFunction";
 
 export class FileParser {
 
@@ -24,11 +25,16 @@ export class FileParser {
         const sqlFile = coach.parse(SqlFile as any) as SqlFile;
         const json = sqlFile.toJSON();
 
-        for (const func of json.functions) {
-            if ( func.comment ) {
-                func.comment = func.comment.comment.content;
+        json.functions = json.functions.map((funcJson: any) => {
+            const func = new DatabaseFunction(funcJson as any);
+
+            if ( funcJson.comment ) {
+                func.comment = funcJson.comment.comment.content;
             }
-        }
+
+            return func;
+        });
+
         for (const trigger of json.triggers) {
             if ( trigger.comment ) {
                 trigger.comment = trigger.comment.comment.content;
