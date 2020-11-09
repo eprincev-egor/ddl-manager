@@ -7,8 +7,7 @@ import {
     isDbClient,
     trigger2sql,
     triggerCommentsSQL,
-    functionCommentsSQL,
-    function2sql
+    functionCommentsSQL
 } from "./utils";
 import { Comparator } from "./Comparator";
 import { Migrator } from "./Migrator";
@@ -246,7 +245,7 @@ export class DdlManager {
                     sql += "\n";
                 }
 
-                sql += function2sql(sameFunc);
+                sql += sameFunc.toSQL();
 
                 if ( sameFunc.comment ) {
                     sql += ";\n";

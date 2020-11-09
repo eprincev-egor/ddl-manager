@@ -1,3 +1,5 @@
+import { wrapText } from "../utils";
+
 export interface IDatabaseFunctionParams {
     schema: string;
     name: string;
@@ -62,4 +64,101 @@ export class DatabaseFunction  {
 
         return `${ this.schema }.${ this.name }(${ argsTypes.join(", ") })`;
     }
+
+    toSQL() {
+        let additionalParams = "";
+
+        additionalParams += " language ";
+        additionalParams += this.language;
+        
+        if ( this.immutable ) {
+            additionalParams += " immutable";
+        }
+        else if ( this.stable ) {
+            additionalParams += " stable";
+        }
+
+        if ( this.returnsNullOnNull ) {
+            additionalParams += " returns null on null input";
+        }
+        else if ( this.strict ) {
+            additionalParams += " strict";
+        }
+
+
+        if ( this.parallel ) {
+            additionalParams += " parallel ";
+            additionalParams += this.parallel;
+        }
+
+        if ( this.cost != null ) {
+            additionalParams += " cost " + this.cost;
+        }
+
+        
+        const returnsSql = returns2sql(this.returns);
+
+        let argsSql = this.args.map((arg: any) => 
+            "    " + arg2sql(arg)
+        ).join(",\n");
+
+        if ( this.args.length ) {
+            argsSql = "\n" + argsSql + "\n";
+        }
+
+        // отступов не должно быть!
+        // иначе DDLManager.dump будет писать некрасивый код
+        return `
+create or replace function ${ this.schema }.${ this.name }(${argsSql}) 
+returns ${ returnsSql } 
+${ additionalParams }
+as ${ wrapText(this.body) }
+    `.trim();
+    }
+}
+
+
+function returns2sql(returns: IDatabaseFunctionReturns) {
+    let out = "";
+
+    if ( returns.setof ) {
+        out += "setof ";
+    }
+
+    if ( returns.table ) {
+        out += `table(${ 
+            returns.table.map((arg: any) => 
+                arg2sql(arg)
+            ).join(", ") 
+        })`;
+    } else {
+        out += returns.type;
+    }
+
+    return out;
+}
+
+function arg2sql(arg: IDatabaseFunctionArgument) {
+    let out = "";
+
+    if ( arg.out ) {
+        out += "out ";
+    }
+    else if ( arg.in ) {
+        out += "in ";
+    }
+
+    if ( arg.name ) {
+        out += arg.name;
+        out += " ";
+    }
+
+    out += arg.type;
+
+    if ( arg.default ) {
+        out += " default ";
+        out += arg.default;
+    }
+
+    return out;
 }

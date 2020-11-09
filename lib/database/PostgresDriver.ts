@@ -12,7 +12,6 @@ import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
 import { getCheckFrozenTriggerSql } from "./postgres/getCheckFrozenTriggerSql";
 import {
-    function2sql,
     trigger2sql
 } from "../utils";
 
@@ -99,7 +98,7 @@ implements IDatabaseDriver {
         ddlSql += checkFrozenSql;
 
         ddlSql += ";";
-        ddlSql += function2sql( func );
+        ddlSql += func.toSQL();
         
         ddlSql += ";";
         ddlSql += getUnfreezeFunctionSql(func);
