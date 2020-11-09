@@ -2,9 +2,6 @@ import pg from "pg";
 import _ from "lodash";
 import fs from "fs";
 import { IDiff } from "./interface";
-import { DatabaseTrigger } from "./ast/DatabaseTrigger";
-import { DatabaseFunction } from "./ast/DatabaseFunction";
-import assert from "assert";
 
 const defaultConfig = {
     config: "ddl-manager-config",
@@ -137,26 +134,4 @@ export function logDiff(diff: IDiff) {
         // tslint:disable-next-line: no-console
         console.log("create trigger " + triggerIdentifySql);
     });
-}
-
-export function wrapText(text: string) {
-    text += "";
-    let tag = "tag";
-    let index = 1;
-    while ( text.indexOf("$tag" + index + "$") !== -1 ) {
-        index++;
-    }
-    tag += index;
-
-    return `$${tag}$${ text }$${tag}$`;
-}
-
-export function triggerCommentsSQL(trigger: DatabaseTrigger) {
-    assert.ok(trigger.comment);
-    return `comment on trigger ${trigger.getSignature()} is ${ wrapText(trigger.comment) }`;
-}
-
-export function functionCommentsSQL(func: DatabaseFunction) {
-    assert.ok(func.comment);
-    return `comment on function ${func.getSignature()} is ${ wrapText(func.comment) }`;
 }

@@ -1,8 +1,9 @@
+import { DatabaseTrigger } from "../../ast/DatabaseTrigger";
 import {
     wrapText
-} from "../../utils";
+} from "./wrapText";
 
-export function getUnfreezeTriggerSql(trigger: any) {
+export function getUnfreezeTriggerSql(trigger: DatabaseTrigger) {
     let prefix = "";
     if ( trigger.comment ) {
         prefix = trigger.comment + "\n";

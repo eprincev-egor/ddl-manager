@@ -1,4 +1,4 @@
-import { wrapText } from "../utils";
+import { wrapText } from "../database/postgres/wrapText";
 
 export interface IDatabaseFunctionParams {
     schema: string;
@@ -114,6 +114,19 @@ returns ${ returnsSql }
 ${ additionalParams }
 as ${ wrapText(this.body) }
     `.trim();
+    }
+
+    toSQLWithComment() {
+        let sql = this.toSQL();
+
+        if ( this.comment ) {
+            sql += ";\n";
+            sql += "\n";
+
+            sql += `comment on function ${this.getSignature()} is ${ wrapText(this.comment) }`;
+        }
+
+        return sql;
     }
 }
 

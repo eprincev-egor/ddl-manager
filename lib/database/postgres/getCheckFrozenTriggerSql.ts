@@ -1,7 +1,7 @@
 import { DatabaseTrigger } from "../../ast/DatabaseTrigger";
 import {
     wrapText
-} from "../../utils";
+} from "./wrapText";
 
 export function getCheckFrozenTriggerSql(trigger: DatabaseTrigger, errorText: string) {
     return `

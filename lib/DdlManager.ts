@@ -4,9 +4,7 @@ import path from "path";
 import {
     getDbClient, 
     logDiff, 
-    isDbClient,
-    triggerCommentsSQL,
-    functionCommentsSQL
+    isDbClient
 } from "./utils";
 import { Comparator } from "./Comparator";
 import { Migrator } from "./Migrator";
@@ -244,14 +242,7 @@ export class DdlManager {
                     sql += "\n";
                 }
 
-                sql += sameFunc.toSQL();
-
-                if ( sameFunc.comment ) {
-                    sql += ";\n";
-                    sql += "\n";
-    
-                    sql += functionCommentsSQL(sameFunc);
-                }
+                sql += sameFunc.toSQLWithComment();
             });
             
             // file can contain triggers
@@ -275,14 +266,7 @@ export class DdlManager {
                         sql += ";\n";
                         sql += "\n";
         
-                        sql += trigger.toSQL();
-
-                        if ( trigger.comment ) {
-                            sql += ";\n";
-                            sql += "\n";
-    
-                            sql += triggerCommentsSQL(trigger);
-                        }
+                        sql += trigger.toSQLWithComment();
                     });
                 }
             }

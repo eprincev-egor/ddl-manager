@@ -1,3 +1,4 @@
+import { wrapText } from "../database/postgres/wrapText";
 
 export interface IDatabaseTriggerParams {
     name: string;
@@ -133,5 +134,18 @@ export class DatabaseTrigger {
         out += `\nexecute procedure ${this.procedure.schema}.${this.procedure.name}()`;
 
         return out;
+    }
+
+    toSQLWithComment() {
+        let sql = this.toSQL();
+
+        if ( this.comment ) {
+            sql += ";\n";
+            sql += "\n";
+
+            sql += `comment on trigger ${this.getSignature()} is ${ wrapText(this.comment) }`;
+        }
+
+        return sql;
     }
 }

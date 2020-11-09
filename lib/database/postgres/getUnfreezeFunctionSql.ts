@@ -1,8 +1,9 @@
+import { DatabaseFunction } from "../../ast/DatabaseFunction";
 import {
     wrapText
-} from "../../utils";
+} from "./wrapText";
 
-export function getUnfreezeFunctionSql(func: any) {
+export function getUnfreezeFunctionSql(func: DatabaseFunction) {
     let prefix = "";
     if ( func.comment ) {
         prefix = func.comment + "\n";

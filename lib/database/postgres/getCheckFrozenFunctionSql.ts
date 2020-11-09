@@ -1,8 +1,9 @@
+import { DatabaseFunction } from "../../ast/DatabaseFunction";
 import {
     wrapText
-} from "../../utils";
+} from "./wrapText";
 
-export function getCheckFrozenFunctionSql(func: any, errorText: any, actionOnFrozen = "error") {
+export function getCheckFrozenFunctionSql(func: DatabaseFunction, errorText: any, actionOnFrozen = "error") {
     const funcIdentifySql = func.getSignature();
     let sqlOnFrozen;
 
