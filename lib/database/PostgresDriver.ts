@@ -6,8 +6,7 @@ import {
     DatabaseTriggerType,
     IState
 } from "../interface";
-import { FunctionParser } from "../parser/FunctionParser";
-import { TriggerParser } from "../parser/TriggerParser";
+import { FileParser } from "../parser/FileParser";
 import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
 
@@ -20,39 +19,33 @@ export class PostgresDriver
 implements IDatabaseDriver {
 
     private pgClient: Client;
-    private triggerParser: TriggerParser;
-    private functionParser: FunctionParser;
+    private fileParser: FileParser;
 
     constructor(pgClient: Client) {
         this.pgClient = pgClient;
-        this.triggerParser = new TriggerParser();
-        this.functionParser = new FunctionParser();
+        this.fileParser = new FileParser();
     }
 
     async loadState() {
         const state: IState = {
             functions: await this.loadObjects<DatabaseFunctionType>(
-                selectAllFunctionsSQL,
-                this.functionParser
+                selectAllFunctionsSQL
             ),
             triggers: await this.loadObjects<DatabaseTriggerType>(
-                selectAllTriggersSQL,
-                this.triggerParser
+                selectAllTriggersSQL
             )
         };
         return state;
     }
 
-    private async loadObjects<T>(
-        selectAllObjectsSQL: string,
-        parser: FunctionParser | TriggerParser
-    ): Promise<T[]> {
+    private async loadObjects<T>(selectAllObjectsSQL: string): Promise<T[]> {
         const objects: any[] = [];
 
         const {rows} = await this.pgClient.query(selectAllObjectsSQL);
         for (const row of rows) {
 
-            const json = parser.parse(row.ddl) as any;
+            const fileContent = this.fileParser.parse(row.ddl) as any;
+            const json = fileContent.functions[0] || fileContent.triggers[0];
  
             json.frozen = isFrozen(row);
             json.comment = parseComment(row);

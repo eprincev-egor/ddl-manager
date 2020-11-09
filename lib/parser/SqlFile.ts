@@ -34,6 +34,10 @@ export class SqlFile extends (Syntax as any) {
     }
 
     parseFunctions(coach: GrapeQLCoach, data: SqlFile["TInputData"]) {
+        if ( !coach.is(CreateFunction) ) {
+            return;
+        }
+
         const func = coach.parse(CreateFunction);
         
         // TODO: any => type
@@ -82,35 +86,32 @@ export class SqlFile extends (Syntax as any) {
             return;
         }
 
-        const firstFunc = data.functions[0];
-        if ( !firstFunc ) {
-            coach.throwError("trigger inside file can be only with function");
-        }
-
         // TODO: any => type
         const trigger = coach.parse(CreateTrigger) as any;
 
         // validate function name and trigger procedure
-        if ( 
-            firstFunc.row.schema !== trigger.row.procedure.row.schema ||
-            firstFunc.row.name !== trigger.row.procedure.row.name
-        ) {
-            throw new Error(`wrong procedure name ${
-                trigger.row.procedure.row.schema
-            }.${
-                trigger.row.procedure.row.name
-            }`);
+        const firstFunc = data.functions[0];
+        if ( firstFunc ) {
+            if (
+                firstFunc.row.schema !== trigger.row.procedure.row.schema ||
+                firstFunc.row.name !== trigger.row.procedure.row.name
+            ) {
+                throw new Error(`wrong procedure name ${
+                    trigger.row.procedure.row.schema
+                }.${
+                    trigger.row.procedure.row.name
+                }`);
+            }
+
+            // validate function returns type
+            const hasTriggerFunc = data.functions.some((func: any) =>
+                func.row.returns.row.type === "trigger"
+            );
+            if ( !hasTriggerFunc ) {
+                throw new Error("file must contain function with returns type trigger");
+            }
         }
 
-        // TODO: any => type
-        // validate function returns type
-        const hasTriggerFunc = data.functions.some((func: any) =>
-            func.row.returns.row.type === "trigger"
-        );
-        if ( !hasTriggerFunc ) {
-            throw new Error("file must contain function with returns type trigger");
-        }
-        
         // TODO: any => type
         // check duplicate
         const isDuplicate = data.triggers.some((prevTrigger: any) =>
