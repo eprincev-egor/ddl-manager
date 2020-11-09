@@ -151,7 +151,6 @@ export function wrapText(text: string) {
     return `$${tag}$${ text }$${tag}$`;
 }
 
-// TODO: any => type
 export function function2dropSql(func: DatabaseFunction) {
     // public.some_func(bigint, text)
     const identifySql = func.getSignature();
@@ -159,8 +158,7 @@ export function function2dropSql(func: DatabaseFunction) {
     return `drop function if exists ${ identifySql }`;
 }
 
-// TODO: any => type
-export function trigger2sql(trigger: any) {
+export function trigger2sql(trigger: DatabaseTrigger) {
     let out = "create ";
 
     if ( trigger.constraint ) {
@@ -179,7 +177,7 @@ export function trigger2sql(trigger: any) {
     out += " ";
 
     // insert or update of x or delete
-    const events = [];
+    const events: string[] = [];
     if ( trigger.insert ) {
         events.push("insert");
     }

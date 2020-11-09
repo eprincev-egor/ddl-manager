@@ -54,9 +54,8 @@ export class FileParser {
         }
         func.body = funcJson.body.content;
         
-        // TODO: any => type
         // check duplicate
-        const isDuplicate = state.functions.some((prevFunc: any) =>
+        const isDuplicate = state.functions.some((prevFunc) =>
             prevFunc.getSignature()
             ===
             func.getSignature()
@@ -67,8 +66,7 @@ export class FileParser {
         }
 
         // two function inside file, can be with only same name and schema
-        // TODO: any => type
-        const isWrongName = state.functions.some((prevFunc: any) =>
+        const isWrongName = state.functions.some((prevFunc) =>
             prevFunc.name !== func.name ||
             prevFunc.schema !== func.schema
         );
