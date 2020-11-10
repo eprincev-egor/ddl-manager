@@ -68,7 +68,8 @@ export class DdlManager {
         });
         const filesState = {
             functions: filesStateInstance.getFunctions(),
-            triggers: filesStateInstance.getTriggers()
+            triggers: filesStateInstance.getTriggers(),
+            cache: filesStateInstance.getCache()
         };
         
         const postgres = new PostgresDriver(db);

@@ -1,5 +1,6 @@
 import { AbstractAstElement } from "./AbstractAstElement";
 import { CreateFunction } from "./CreateFunction";
+import { DatabaseTrigger } from "./DatabaseTrigger";
 
 interface CreateTriggerRow {
     table: string;
@@ -32,5 +33,26 @@ export class CreateTrigger extends AbstractAstElement {
             "for each row",
             `execute procedure ${ this.function.name }();`
         ];
+    }
+
+    toDatabaseTrigger(): DatabaseTrigger {
+        return new DatabaseTrigger({
+            name: this.function.name,
+            insert: true,
+            delete: true,
+            after: true,
+            updateOf: this.columns,
+            update: this.columns.length === 0 ? true : undefined,
+            procedure: {
+                schema: "public",
+                name: this.function.name,
+                args: []
+            },
+            table: {
+                schema: this.table.split(".")[0],
+                name: this.table.split(".")[1]
+            },
+            comment: "cache"
+        });
     }
 }

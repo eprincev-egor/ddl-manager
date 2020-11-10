@@ -1,5 +1,6 @@
 import { AbstractAstElement } from "./AbstractAstElement";
 import { Body } from "./Body";
+import { DatabaseFunction } from "./DatabaseFunction";
 
 interface CreateFunctionRow {
     name: string;
@@ -24,5 +25,16 @@ export class CreateFunction extends AbstractAstElement {
             "$body$",
             "language plpgsql;"
         ];
+    }
+
+    toDatabaseFunction(): DatabaseFunction {
+        return new DatabaseFunction({
+            schema: "public",
+            name: this.name,
+            body: this.body.toSQL(),
+            comment: "cache",
+            args: [],
+            returns: {type: "trigger"}
+        });
     }
 }

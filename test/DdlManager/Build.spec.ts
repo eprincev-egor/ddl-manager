@@ -1258,4 +1258,56 @@ language plpgsql;
         });
     });
 
+    it("build simple cache", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                orders_profit numeric default 0
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer,
+                profit numeric
+            );
+
+            insert into companies default values;
+        `);
+        
+        fs.writeFileSync(folderPath + "/set_note_trigger.sql", `
+            cache totals for companies (
+                select
+                    sum( orders.profit ) as orders_profit
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+
+
+        await DdlManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        await db.query(`
+            insert into orders (id_client, profit)
+            values (1, 100);
+        `);
+
+        const result = await db.query(`
+            select orders_profit
+            from companies
+            where id = 1
+        `);
+        const row = result.rows[0];
+
+        expect(row).to.be.shallowDeepEqual({
+            orders_profit: 100
+        });
+    });
+
 });

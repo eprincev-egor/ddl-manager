@@ -23,12 +23,15 @@ import { buildSimpleWhere } from "./processor/buildSimpleWhere";
 
 export class TriggerFactory {
 
-    createTriggers(cacheSQL: string) {
+    createTriggers(cacheOrSQL: string | Cache) {
         const output: {
-            [tableName: string]: {toString(): string};
+            [tableName: string]: CreateTrigger;
         } = {};
 
-        const cache = CacheParser.parse(cacheSQL);
+        let cache: Cache = cacheOrSQL as Cache;
+        if ( typeof cacheOrSQL === "string" ) {
+            cache = CacheParser.parse(cacheOrSQL);
+        }
 
         const allDeps = findDependencies(cache);
 

@@ -42,6 +42,11 @@ export class Comparator {
             dbState,
             filesState
         );
+        this.createCache(
+            diff,
+            dbState,
+            filesState
+        );
 
         return diff;
     }
@@ -160,6 +165,14 @@ export class Comparator {
 
             diff.create.triggers.push( trigger );
         }
+    }
+
+    private createCache(
+        diff: IDiff,
+        dbState: IState,
+        filesState: IState
+    ) {
+        diff.create.cache = filesState.cache;
     }
 }
 

@@ -1,6 +1,7 @@
 import assert from "assert";
 import { IDiff } from "./interface";
 import { PostgresDriver } from "./database/PostgresDriver";
+import { TriggerFactory } from "./cache/TriggerFactory";
 
 export class Migrator {
     private postgres: PostgresDriver;
@@ -19,6 +20,7 @@ export class Migrator {
 
         await this.createFunctions(diff, outputErrors);
         await this.createTriggers(diff, outputErrors);
+        await this.createCache(diff, outputErrors);
 
         return outputErrors;
     }
@@ -85,6 +87,35 @@ export class Migrator {
                 (newErr as any).originalError = err;
                 
                 outputErrors.push(newErr);
+            }
+        }
+    }
+
+    private async createCache(diff: IDiff, outputErrors: Error[]) {
+
+        const cacheTriggerFactory = new TriggerFactory();
+
+        for (const cache of diff.create.cache || []) {
+            const triggersByTableName = cacheTriggerFactory.createTriggers(cache);
+
+            for (const tableName in triggersByTableName) {
+                const createTrigger = triggersByTableName[ tableName ];
+
+                const trigger = createTrigger.toDatabaseTrigger();
+                const func = createTrigger.function.toDatabaseFunction();
+
+                try {
+                    await this.postgres.createOrReplaceFunction(func);
+                    await this.postgres.createOrReplaceTrigger(trigger);
+                } catch(err) {
+                    // redefine callstack
+                    const newErr = new Error(
+                        `cache ${cache.name} for ${cache.for}\n${err.message}`
+                    );
+                    (newErr as any).originalError = err;
+                    
+                    outputErrors.push(newErr);
+                }
             }
         }
     }
