@@ -50,7 +50,7 @@ describe("FilesState parse files in sub dirs", () => {
         expect(filesState.getFiles()).to.be.shallowDeepEqual([
             {
                 name: "some.sql",
-                folder: filesState.folders[0],
+                folder: filesState.getFolders()[0],
                 path: "some.sql",
                 content: {
                     functions: [func]
@@ -104,7 +104,7 @@ describe("FilesState parse files in sub dirs", () => {
             {
                 name: "some1.sql",
                 path: "some1.sql",
-                folder: filesState.folders[0],
+                folder: filesState.getFolders()[0],
                 content: {
                     functions: [func1]
                 }
@@ -112,7 +112,7 @@ describe("FilesState parse files in sub dirs", () => {
             {
                 name: "some2.sql",
                 path: "some2.sql",
-                folder: filesState.folders[0],
+                folder: filesState.getFolders()[0],
                 content: {
                     functions: [func2]
                 }
@@ -180,7 +180,7 @@ describe("FilesState parse files in sub dirs", () => {
             {
                 name: "test1.sql",
                 path: "first/test1.sql",
-                folder: filesState.folders[0],
+                folder: filesState.getFolders()[0],
                 content: {
                     functions: [{
                         language: "plpgsql",
@@ -195,7 +195,7 @@ describe("FilesState parse files in sub dirs", () => {
             {
                 name: "test2.sql",
                 path: "first/second/test2.sql",
-                folder: filesState.folders[0],
+                folder: filesState.getFolders()[0],
                 content: {
                     functions: [{
                         language: "plpgsql",
@@ -210,7 +210,7 @@ describe("FilesState parse files in sub dirs", () => {
             {
                 name: "test3.sql",
                 path: "first/second/third/test3.sql",
-                folder: filesState.folders[0],
+                folder: filesState.getFolders()[0],
                 content: {
                     functions: [{
                         language: "plpgsql",
@@ -225,7 +225,7 @@ describe("FilesState parse files in sub dirs", () => {
             {
                 name: "x.sql",
                 path: "first/x.sql",
-                folder: filesState.folders[0],
+                folder: filesState.getFolders()[0],
                 content: {
                     functions: [{
                         language: "plpgsql",
@@ -240,7 +240,7 @@ describe("FilesState parse files in sub dirs", () => {
             {
                 name: "x.sql",
                 path: "first/second/third/x.sql",
-                folder: filesState.folders[0],
+                folder: filesState.getFolders()[0],
                 content: {
                     functions: [{
                         language: "plpgsql",

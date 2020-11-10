@@ -11,7 +11,7 @@ import { Cache, TableReference } from "../ast";
 
 export class CacheParser {
 
-    static parse(cacheSQL: string) {
+    static parse(cacheSQL: string | GrapeQLCoach) {
         const parser = new CacheParser(cacheSQL);
         return parser.parse();
     }
@@ -19,9 +19,14 @@ export class CacheParser {
     private syntax: CacheFor;
     private selectParser: SelectParser;
     private tableParser: TableReferenceParser;
-    private constructor(cacheSQL: string) {
+    private constructor(cacheSQLOrCoach: string | GrapeQLCoach) {
 
-        const coach = new GrapeQLCoach(cacheSQL);
+        let coach: GrapeQLCoach = cacheSQLOrCoach as GrapeQLCoach;
+        if ( typeof cacheSQLOrCoach === "string" ) {
+            const cacheSQL = cacheSQLOrCoach;
+            coach = new GrapeQLCoach(cacheSQL);
+        }
+
         this.syntax = coach.parse(CacheFor);
         this.selectParser = new SelectParser();
         this.tableParser = new TableReferenceParser();

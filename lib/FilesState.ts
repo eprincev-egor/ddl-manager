@@ -5,7 +5,8 @@ import watch from "node-watch";
 import path from "path";
 import { FileParser } from "./parser";
 import { IDiff, IFile } from "./interface";
-import { DatabaseTrigger, DatabaseFunction } from "./ast";
+import { DatabaseTrigger, DatabaseFunction, Cache } from "./ast";
+import { flatMap } from "./utils";
 
 export class FilesState extends EventEmitter {
     static create(params: {folder: string | string[], onError?: any}) {
@@ -23,9 +24,9 @@ export class FilesState extends EventEmitter {
         return filesState;
     }
 
-    folders: string[];
-    files: IFile[];
-    fsWatcher?: ReturnType<typeof watch>;
+    private folders: string[];
+    private files: IFile[];
+    private fsWatcher?: ReturnType<typeof watch>;
 
     private fileParser: FileParser;
     
@@ -44,13 +45,81 @@ export class FilesState extends EventEmitter {
         this.files = [];
     }
 
-    parse() {
+    getFolders() {
+        return this.folders;
+    }
+
+    getFunctions() {
+        const outFunctions = flatMap(this.files, file =>
+            file.content.functions
+        );
+        return outFunctions;
+    }
+
+    getTriggers() {
+        const outTriggers = flatMap(this.files, file =>
+            file.content.triggers
+        );
+        return outTriggers;
+    }
+
+    getCache(): Cache[] {
+        const outCache = flatMap(this.files, file =>
+            file.content.cache || []
+        );
+        return outCache;
+    }
+
+    getFiles() {
+        return this.files;
+    }
+
+    async watch() {
+        const handler = (eventType: string, rootFolder: string, subPath: string) => {
+            try {
+                this.onChangeWatcher(eventType, rootFolder, subPath);
+            } catch(err) {
+                this.emitError({
+                    subPath,
+                    err
+                });
+            }
+        };
+
+        const promise = Promise.all(this.folders.map(rootFolder =>
+            new Promise((resolve) => {
+                this.fsWatcher = watch(rootFolder, {
+                    recursive: true,
+                    delay: 5
+                }, (eventType, fullPath) => {
+                    const subPath = path.relative(rootFolder, fullPath);
+    
+                    handler(eventType, rootFolder, subPath);
+                });
+    
+                this.fsWatcher.on("ready", () => {
+                    resolve();
+                });
+            })
+        ));
+
+        return promise;
+    }
+
+    stopWatch() {
+        if ( this.fsWatcher ) {
+            this.fsWatcher.close();
+            delete this.fsWatcher;
+        }
+    }
+    
+    private parse() {
         for (const folderPath of this.folders) {
             this.parseFolder(folderPath);
         }
     }
 
-    parseFolder(folderPath: string) {
+    private parseFolder(folderPath: string) {
 
         if ( !fs.existsSync(folderPath) ) {
             throw new Error(`folder "${ folderPath }" not found`);
@@ -95,7 +164,7 @@ export class FilesState extends EventEmitter {
         });
     }
 
-    checkDuplicate(file: IFile) {
+    private checkDuplicate(file: IFile) {
         const content = file.content;
 
         content.functions.forEach(func => 
@@ -109,7 +178,7 @@ export class FilesState extends EventEmitter {
         }
     }
 
-    checkDuplicateFunction(func: DatabaseFunction) {
+    private checkDuplicateFunction(func: DatabaseFunction) {
         const identify = func.getSignature();
 
         const hasDuplicate = this.files.some(someFile => {
@@ -125,7 +194,7 @@ export class FilesState extends EventEmitter {
         }
     }
 
-    checkDuplicateTrigger(trigger: DatabaseTrigger) {
+    private checkDuplicateTrigger(trigger: DatabaseTrigger) {
         const identify = trigger.getSignature();
 
         const hasDuplicate = this.files.some(someFile => {
@@ -145,7 +214,7 @@ export class FilesState extends EventEmitter {
         }
     }
 
-    parseFile(rootFolderPath: string, filePath: string): IFile | undefined {
+    private parseFile(rootFolderPath: string, filePath: string): IFile | undefined {
         const sql = fs.readFileSync(filePath).toString();
         
         const sqlFile = this.fileParser.parse(sql);
@@ -166,69 +235,7 @@ export class FilesState extends EventEmitter {
         };
     }
 
-    getFunctions() {
-        const outFunctions: DatabaseFunction[] = [];
-
-        this.files.forEach((file) => {
-            file.content.functions.forEach((func) => {
-                outFunctions.push( func );
-            });
-        });
-
-        return outFunctions;
-    }
-
-    getTriggers() {
-        let outTriggers: DatabaseTrigger[] = [];
-
-        this.files.forEach(file => {
-            const {triggers} = file.content;
-            
-            if ( triggers ) {
-                outTriggers = outTriggers.concat(triggers);
-            }
-        });
-
-        return outTriggers;
-    }
-
-    getFiles() {
-        return this.files;
-    }
-
-    async watch() {
-        const handler = (eventType: string, rootFolder: string, subPath: string) => {
-            try {
-                this.onChangeWatcher(eventType, rootFolder, subPath);
-            } catch(err) {
-                this.emitError({
-                    subPath,
-                    err
-                });
-            }
-        };
-
-        const promise = Promise.all(this.folders.map(rootFolder =>
-            new Promise((resolve) => {
-                this.fsWatcher = watch(rootFolder, {
-                    recursive: true,
-                    delay: 5
-                }, (eventType, fullPath) => {
-                    const subPath = path.relative(rootFolder, fullPath);
-    
-                    handler(eventType, rootFolder, subPath);
-                });
-    
-                this.fsWatcher.on("ready", () => {
-                    resolve();
-                });
-            })
-        ));
-
-        return promise;
-    }
-
-    onChangeWatcher(eventType: string, rootFolderPath: string, subPath: string) {
+    private onChangeWatcher(eventType: string, rootFolderPath: string, subPath: string) {
         // subPath path to file from rootFolderPath
         subPath = formatPath(subPath);
         // full path to file or dir with rootFolderPath
@@ -260,7 +267,7 @@ export class FilesState extends EventEmitter {
         }
     }
 
-    onRemoveDirOrFile(rootFolderPath: string, subPath: string) {
+    private onRemoveDirOrFile(rootFolderPath: string, subPath: string) {
         let hasChange = false;
         const changes: IDiff = {
             drop: {
@@ -318,7 +325,7 @@ export class FilesState extends EventEmitter {
         }
     }
 
-    emitError(params: {subPath: string, err: Error}) {
+    private emitError(params: {subPath: string, err: Error}) {
         const outError = new Error(params.err.message) as any;
         
         outError.subPath = params.subPath;
@@ -327,7 +334,7 @@ export class FilesState extends EventEmitter {
         this.emit("error", outError);
     }
 
-    onChangeFile(rootFolderPath: string, subPath: string, oldFile: IFile) {
+    private onChangeFile(rootFolderPath: string, subPath: string, oldFile: IFile) {
         let newFile = null;
 
         try {
@@ -392,7 +399,7 @@ export class FilesState extends EventEmitter {
         this.emit("change", changes);
     }
 
-    onCreateFile(rootFolderPath: string, subPath: string) {
+    private onCreateFile(rootFolderPath: string, subPath: string) {
         const file = this.parseFile(
             rootFolderPath,
             rootFolderPath + "/" + subPath
@@ -424,13 +431,6 @@ export class FilesState extends EventEmitter {
         this.emit("change", changes);
     }
 
-    stopWatch() {
-        if ( this.fsWatcher ) {
-            this.fsWatcher.close();
-            delete this.fsWatcher;
-        }
-    }
-    
     
 
 }

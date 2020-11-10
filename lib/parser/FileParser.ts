@@ -2,10 +2,13 @@ import {
     CreateFunction,
     CreateTrigger,
     GrapeQLCoach,
-    Comment
+    Comment,
+    CacheFor
 } from "grapeql-lang";
 import { IState } from "../interface";
 import { DatabaseFunction, DatabaseTrigger } from "../ast";
+import assert from "assert";
+import { CacheParser } from "./CacheParser";
 
 export class FileParser {
 
@@ -31,12 +34,15 @@ export class FileParser {
 
         const state: IState = {
             functions: [],
-            triggers: []
+            triggers: [],
+            cache: []
         };
 
         this.parseFunctions( coach, state );
 
         this.parseTriggers( coach, state );
+
+        this.parseCache( coach, state );
 
         return state;
     }
@@ -141,6 +147,23 @@ export class FileParser {
         state.triggers.push( trigger );
 
         this.parseTriggers( coach, state );
+    }
+
+    private parseCache(coach: GrapeQLCoach, state: IState) {
+        assert.ok(state.cache);
+        coach.skipSpace();
+
+        // skip spaces and some ;
+        coach.read(/[\s;]+/);
+
+        if ( !coach.is(CacheFor) ) {
+            return;
+        }
+
+        const cache = CacheParser.parse(coach);
+        state.cache.push(cache);
+
+        this.parseCache(coach, state);
     }
 }
 
