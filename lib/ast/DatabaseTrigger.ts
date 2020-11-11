@@ -120,9 +120,9 @@ export class DatabaseTrigger {
 
 
         if ( this.statement ) {
-            out += "\nfor each statement ";
+            out += "\nfor each statement";
         } else {
-            out += "\nfor each row ";
+            out += "\nfor each row";
         }
 
         if ( this.when ) {
@@ -131,7 +131,11 @@ export class DatabaseTrigger {
             out += " ) ";
         }
 
-        out += `\nexecute procedure ${this.procedure.schema}.${this.procedure.name}()`;
+        out += `\nexecute procedure ${ 
+            this.procedure.schema === "public" ? 
+                "" : 
+                this.procedure.schema + "." 
+        }${ this.procedure.name }()`;
 
         return out;
     }

@@ -21,8 +21,13 @@ export function testTriggers(test: ITest) {
         const triggerFilePath = path.join(test.testDir, schemaTable + ".sql");
         const expectedTriggerDDL = fs.readFileSync(triggerFilePath).toString();
 
-        const trigger = triggers[schemaTable];
-        const actualTriggerDDL = trigger.toString();
+        const output = triggers[schemaTable];
+        const actualTriggerDDL = (
+            output.function.toSQL() + 
+            ";\n\n" + 
+            output.trigger.toSQL() +
+            ";"
+        );
 
         assert.strictEqual(
             actualTriggerDDL,

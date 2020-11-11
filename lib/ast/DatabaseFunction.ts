@@ -67,9 +67,6 @@ export class DatabaseFunction  {
 
     toSQL() {
         let additionalParams = "";
-
-        additionalParams += " language ";
-        additionalParams += this.language;
         
         if ( this.immutable ) {
             additionalParams += " immutable";
@@ -95,7 +92,10 @@ export class DatabaseFunction  {
             additionalParams += " cost " + this.cost;
         }
 
-        
+        if ( additionalParams ) {
+            additionalParams = "\n" + additionalParams + "\n";
+        }
+
         const returnsSql = returns2sql(this.returns);
 
         let argsSql = this.args.map((arg: any) => 
@@ -109,10 +109,13 @@ export class DatabaseFunction  {
         // отступов не должно быть!
         // иначе DDLManager.dump будет писать некрасивый код
         return `
-create or replace function ${ this.schema }.${ this.name }(${argsSql}) 
-returns ${ returnsSql } 
-${ additionalParams }
-as ${ wrapText(this.body) }
+create or replace function ${ 
+    this.schema === "public" ? 
+        "" : 
+        this.schema + "." 
+}${ this.name }(${argsSql})
+returns ${ returnsSql }${ additionalParams } as ${ wrapText(this.body, "body") }
+language ${this.language}
     `.trim();
     }
 

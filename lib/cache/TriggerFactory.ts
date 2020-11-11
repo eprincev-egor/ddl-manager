@@ -1,10 +1,10 @@
 import { CacheParser } from "../parser";
 import {
-    CreateTrigger,
-    CreateFunction,
     Expression,
     Table,
-    Cache
+    Cache,
+    DatabaseFunction,
+    DatabaseTrigger
 } from "../ast";
 import { buildReferenceMeta, IReferenceMeta } from "./processor/buildReferenceMeta";
 import { buildCommutativeBody } from "./processor/buildCommutativeBody";
@@ -25,7 +25,10 @@ export class TriggerFactory {
 
     createTriggers(cacheOrSQL: string | Cache) {
         const output: {
-            [tableName: string]: CreateTrigger;
+            [tableName: string]: {
+                trigger: DatabaseTrigger,
+                function: DatabaseFunction
+            };
         } = {};
 
         let cache: Cache = cacheOrSQL as Cache;
@@ -63,29 +66,55 @@ export class TriggerFactory {
         triggerTable: Table,
         triggerTableColumns: string[]
     ) {
-        return new CreateTrigger({
-            function: new CreateFunction({
-                name: [
-                    "cache",
-                    cache.name,
-                    "for",
-                    cache.for.table.name,
-                    "on",
-                    triggerTable.name
-                ].join("_"),
-                body: this.createBody(
-                    cache,
-                    triggerTable,
-                    triggerTableColumns
-                )
-            }),
-            table: triggerTable.toString(),
-            columns: triggerTableColumns
-                .filter(column => 
-                    column !== "id"
-                )
-                .sort()
+        const triggerName = [
+            "cache",
+            cache.name,
+            "for",
+            cache.for.table.name,
+            "on",
+            triggerTable.name
+        ].join("_");
+
+        const func = new DatabaseFunction({
+            schema: "public",
+            name: triggerName,
+            body: "\n" + this.createBody(
+                cache,
+                triggerTable,
+                triggerTableColumns
+            ).toSQL() + "\n",
+            comment: "cache",
+            args: [],
+            returns: {type: "trigger"}
         });
+
+        const updateOfColumns = triggerTableColumns
+            .filter(column =>  column !== "id" )
+            .sort();
+        
+        const trigger = new DatabaseTrigger({
+            name: triggerName,
+            after: true,
+            insert: true,
+            delete: true,
+            update: updateOfColumns.length > 0,
+            updateOf: updateOfColumns,
+            procedure: {
+                schema: "public",
+                name: triggerName,
+                args: []
+            },
+            table: {
+                schema: triggerTable.schema || "public",
+                name: triggerTable.name
+            },
+            comment: "cache"
+        });
+
+        return {
+            trigger,
+            function: func
+        };
     }
 
     private createBody(

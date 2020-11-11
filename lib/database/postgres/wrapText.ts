@@ -1,9 +1,13 @@
 
-export function wrapText(text: string) {
+export function wrapText(text: string, tag: string = "tag") {
     text += "";
-    let tag = "tag";
+
+    if ( !text.includes(`$${tag}$`) ) {
+        return `$${tag}$${ text }$${tag}$`;
+    }
+
     let index = 1;
-    while ( text.indexOf("$tag" + index + "$") !== -1 ) {
+    while ( text.includes("$tag" + index + "$") ) {
         index++;
     }
     tag += index;

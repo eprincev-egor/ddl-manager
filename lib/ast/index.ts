@@ -4,8 +4,6 @@ export * from "./AssignVariable";
 export * from "./BlankLine";
 export * from "./Body";
 export * from "./Cache";
-export * from "./CreateFunction";
-export * from "./CreateTrigger";
 export * from "./Declare";
 export * from "./From";
 export * from "./HardCode";

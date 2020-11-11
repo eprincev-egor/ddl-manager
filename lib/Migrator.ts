@@ -99,10 +99,7 @@ export class Migrator {
             const triggersByTableName = cacheTriggerFactory.createTriggers(cache);
 
             for (const tableName in triggersByTableName) {
-                const createTrigger = triggersByTableName[ tableName ];
-
-                const trigger = createTrigger.toDatabaseTrigger();
-                const func = createTrigger.function.toDatabaseFunction();
+                const {trigger, function: func} = triggersByTableName[ tableName ];
 
                 try {
                     await this.postgres.createOrReplaceFunction(func);
