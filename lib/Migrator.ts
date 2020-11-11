@@ -2,6 +2,8 @@ import assert from "assert";
 import { IDiff } from "./interface";
 import { PostgresDriver } from "./database/PostgresDriver";
 import { TriggerFactory } from "./cache/TriggerFactory";
+import { SelectColumn } from "./ast";
+import { AbstractAgg, AggFactory } from "./cache/aggregator";
 
 export class Migrator {
     private postgres: PostgresDriver;
@@ -96,6 +98,31 @@ export class Migrator {
         const cacheTriggerFactory = new TriggerFactory();
 
         for (const cache of diff.create.cache || []) {
+            
+            // TODO: create helpers columns
+            const columnsTypes = await this.postgres.getCacheColumnsTypes(cache);
+            for (const columnName in columnsTypes) {
+                const columnType = columnsTypes[ columnName ];
+
+                const selectColumn = cache.select.columns.find(column =>
+                    column.name === columnName
+                ) as SelectColumn;
+
+                const aggFactory = new AggFactory(selectColumn);
+                const aggregations = aggFactory.createAggregations();
+                const agg = Object.values(aggregations)[0] as AbstractAgg;
+
+                await this.postgres.createOrReplaceColumn(
+                    cache.for.table,
+                    {
+                        key: columnName,
+                        type: columnType,
+                        // TODO: detect default by expression
+                        default: agg.default()
+                    }
+                );
+            }
+
             const triggersByTableName = cacheTriggerFactory.createTriggers(cache);
 
             for (const tableName in triggersByTableName) {

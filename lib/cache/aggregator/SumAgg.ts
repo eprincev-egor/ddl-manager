@@ -40,4 +40,8 @@ export class SumAgg extends AbstractAgg {
             ])
         ]);
     }
+
+    default() {
+        return "0";
+    }
 }

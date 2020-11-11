@@ -5,7 +5,8 @@ import {
     IState
 } from "../interface";
 import { FileParser } from "../parser";
-import { DatabaseFunction, DatabaseTrigger } from "../ast";
+import { PGTypes } from "./PGTypes";
+import { DatabaseFunction, DatabaseTrigger, Cache, Table } from "../ast";
 import { getCheckFrozenFunctionSql } from "./postgres/getCheckFrozenFunctionSql";
 import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
@@ -21,10 +22,12 @@ implements IDatabaseDriver {
 
     private pgClient: Client;
     private fileParser: FileParser;
+    private types: PGTypes;
 
     constructor(pgClient: Client) {
         this.pgClient = pgClient;
         this.fileParser = new FileParser();
+        this.types = new PGTypes(pgClient);
     }
 
     async loadState() {
@@ -156,6 +159,45 @@ implements IDatabaseDriver {
         ddlSql += `drop trigger if exists ${ trigger.getSignature() }`;
 
         await this.pgClient.query(ddlSql);
+    }
+
+    async getCacheColumnsTypes(cache: Cache) {
+        await this.types.load();
+
+        const sql = `
+            select
+                ddl_manager_dmp.*
+            from ${cache.for.toString()}
+
+            left join lateral (
+                ${ cache.select.toString() }
+            ) as ddl_manager_dmp on true
+
+            limit 1
+        `;
+        const {fields} = await this.pgClient.query(sql);
+
+        const columnsTypes: {[columnName: string]: string} = {};
+        for (const field of fields) {
+            const typeId = field.dataTypeID;
+            const type = this.types.getTypeById(typeId) as string;
+
+            columnsTypes[ field.name ] = type;
+        }
+        return columnsTypes;
+    }
+
+    async createOrReplaceColumn(table: Table, column: {
+        key: string;
+        type: string;
+        default: string;
+    }) {
+        const sql = `
+            alter table ${table} drop column if exists ${column.key};
+            alter table ${table} add column ${column.key} ${column.type} default ${ column.default };
+        `;
+
+        await this.pgClient.query(sql);
     }
 }
 

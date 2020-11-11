@@ -22,6 +22,10 @@ export abstract class AbstractAgg {
     abstract plus(value: Expression): IExpressionElement;
     abstract delta(prevValue: Expression, nextValue: Expression): IExpressionElement;
 
+    default(): string {
+        return "null";
+    }
+
     protected printSelect(spaces: string) {
         const selectSQL = spaces + this.recalculateSelect.replace(/\n/g, `\n${spaces}`);
         return selectSQL;
