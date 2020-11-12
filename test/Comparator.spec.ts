@@ -7,9 +7,7 @@ use(chaiShallowDeepEqualPlugin);
 
 function diffState(params: {filesState: any, dbState: any}) {
     const {dbState, filesState} = params;
-
-    const comparator = new Comparator();
-    const diff = comparator.compare(dbState, filesState);
+    const diff = Comparator.compare(dbState, filesState);
     return diff;
 }
 

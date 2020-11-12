@@ -1,69 +1,49 @@
 import assert from "assert";
-import _ from "lodash";
-import { IState, IDiff } from "./interface";
+import { isObject, isArray } from "lodash";
+import { Diff } from "./Diff";
+import { IState } from "./interface";
 
 export class Comparator {
 
-    compare(dbState: IState, filesState: IState) {
-    
-        assert.ok(_.isObject(filesState), "undefined filesState");
-        assert.ok(_.isArray(filesState.functions), "undefined filesState.functions");
-        assert.ok(_.isArray(filesState.triggers), "undefined filesState.triggers");
+    static compare(dbState: IState, filesState: IState) {
+        assert.ok(isObject(filesState), "undefined filesState");
+        assert.ok(isArray(filesState.functions), "undefined filesState.functions");
+        assert.ok(isArray(filesState.triggers), "undefined filesState.triggers");
 
-        const diff: IDiff = {
-            drop: {
-                functions: [],
-                triggers: []
-            },
-            create: {
-                functions: [],
-                triggers: []
-            }
-        };
-
-        this.dropFunctions(
-            diff,
-            dbState,
-            filesState
-        );
-        this.dropTriggers(
-            diff,
-            dbState,
-            filesState
-        );
-        
-        this.createFunctions(
-            diff,
-            dbState,
-            filesState
-        );
-        this.createTriggers(
-            diff,
-            dbState,
-            filesState
-        );
-        this.createCache(
-            diff,
-            dbState,
-            filesState
-        );
-
-        return diff;
+        const comparator = new Comparator(dbState, filesState);
+        return comparator.compare();
     }
 
-    private dropFunctions(
-        diff: IDiff,
-        dbState: IState,
-        filesState: IState
-    ) {
-        for (const func of dbState.functions) {
+    private diff: Diff;
+    private dbState: IState;
+    private filesState: IState;
+
+    private constructor(dbState: IState, filesState: IState) {
+        this.diff = Diff.empty();
+        this.dbState = dbState;
+        this.filesState = filesState;
+    }
+
+    compare() {
+        this.dropFunctions();
+        this.dropTriggers();
+        
+        this.createFunctions();
+        this.createTriggers();
+        this.createCache();
+
+        return this.diff;
+    }
+
+    private dropFunctions() {
+        for (const func of this.dbState.functions) {
             
             // ddl-manager cannot drop frozen function
             if ( func.frozen ) {
                 continue;
             }
 
-            const existsSameFuncFromFile = filesState.functions.some(fileFunc =>
+            const existsSameFuncFromFile = this.filesState.functions.some(fileFunc =>
                 equalFunction(fileFunc, func)
             );
 
@@ -73,7 +53,7 @@ export class Comparator {
 
             // for drop function, need drop trigger, who call it function
             if ( func.returns.type === "trigger" ) {
-                const depsTriggers = dbState.triggers.filter(dbTrigger => {
+                const depsTriggers = this.dbState.triggers.filter(dbTrigger => {
                     const isDepsTrigger = (
                         dbTrigger.procedure.schema === func.schema &&
                         dbTrigger.procedure.name === func.name
@@ -83,7 +63,7 @@ export class Comparator {
                         return false;
                     }
                     
-                    const existsSameTriggerFromFile = filesState.triggers.some(fileTrigger =>
+                    const existsSameTriggerFromFile = this.filesState.triggers.some(fileTrigger =>
                         equalTrigger(fileTrigger, dbTrigger)
                     );
 
@@ -99,44 +79,38 @@ export class Comparator {
 
                 depsTriggers.forEach(fileTrigger => {
                     // drop
-                    diff.drop.triggers.push( fileTrigger );
+                    this.diff.dropTrigger( fileTrigger );
                     // and create again
-                    diff.create.triggers.push( fileTrigger );
+                    this.diff.createTrigger( fileTrigger );
                 });
             }
             
             
-            diff.drop.functions.push(func);
+            this.diff.dropFunction(func);
         }
     }
 
-    private dropTriggers(
-        diff: IDiff,
-        dbState: IState,
-        filesState: IState
-    ) {
-        const triggersCreatedFromDDLManager = dbState.triggers.filter(trigger =>
+    private dropTriggers() {
+        const triggersCreatedFromDDLManager = this.dbState.triggers.filter(trigger =>
             !trigger.frozen
         );
         const triggersToDrop = triggersCreatedFromDDLManager.filter(trigger => {
 
-            const existsSameTriggerFromFile = filesState.triggers.some(fileTrigger =>
+            const existsSameTriggerFromFile = this.filesState.triggers.some(fileTrigger =>
                 equalTrigger(fileTrigger, trigger)
             );
             return !existsSameTriggerFromFile;
         });
 
-        diff.drop.triggers.push( ...triggersToDrop );
+        triggersToDrop.forEach(trigger => 
+            this.diff.dropTrigger(trigger)
+        );
     }
 
-    private createFunctions(
-        diff: IDiff,
-        dbState: IState,
-        filesState: IState
-    ) {
-        for (const func of filesState.functions) {
+    private createFunctions() {
+        for (const func of this.filesState.functions) {
 
-            const existsSameFuncFromDb = dbState.functions.find(dbFunc =>
+            const existsSameFuncFromDb = this.dbState.functions.find(dbFunc =>
                 equalFunction(dbFunc, func)
             );
 
@@ -144,18 +118,14 @@ export class Comparator {
                 continue;
             }
 
-            diff.create.functions.push(func);
+            this.diff.createFunction(func);
         }
     }
 
-    private createTriggers(
-        diff: IDiff,
-        dbState: IState,
-        filesState: IState
-    ) {
-        for (const trigger of filesState.triggers) {
+    private createTriggers() {
+        for (const trigger of this.filesState.triggers) {
             
-            const existsSameTriggerFromDb = dbState.triggers.some(dbTrigger =>
+            const existsSameTriggerFromDb = this.dbState.triggers.some(dbTrigger =>
                 equalTrigger(dbTrigger, trigger)
             );
 
@@ -163,16 +133,16 @@ export class Comparator {
                 continue;
             }
 
-            diff.create.triggers.push( trigger );
+            this.diff.createTrigger(trigger);
         }
     }
 
-    private createCache(
-        diff: IDiff,
-        dbState: IState,
-        filesState: IState
-    ) {
-        diff.create.cache = filesState.cache;
+    private createCache() {
+        if ( this.filesState.cache ) {
+            this.filesState.cache.forEach(cache => 
+                this.diff.createCache(cache)
+            );
+        }
     }
 }
 

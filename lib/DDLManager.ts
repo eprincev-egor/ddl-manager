@@ -103,8 +103,7 @@ export class DDLManager {
         const postgres = await this.postgres();
         const dbState = await postgres.loadState();
 
-        const comparator = new Comparator();
-        const diff = comparator.compare(dbState, filesState);
+        const diff = Comparator.compare(dbState, filesState);
 
 
         const migrateErrors = await this.migrate(diff, false);
