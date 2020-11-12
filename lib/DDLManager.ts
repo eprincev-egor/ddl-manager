@@ -4,6 +4,7 @@ import pg from "pg";
 import path from "path";
 import { Comparator } from "./Comparator";
 import { Migrator } from "./Migrator";
+import { IDatabaseDriver } from "./database/interface";
 import { PostgresDriver } from "./database/PostgresDriver";
 import { getDbClient, IDBConfig } from "./database/getDbClient";
 import { DatabaseTrigger } from "./ast/DatabaseTrigger";
@@ -322,7 +323,7 @@ export class DDLManager {
         return outputErrors;
     }
 
-    private async postgres() {
+    private async postgres(): Promise<IDatabaseDriver> {
         const db = await getDbClient(this.dbConfig);
         const postgres = new PostgresDriver(db);
         return postgres;

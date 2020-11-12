@@ -52,6 +52,12 @@ export class Diff {
             );
         }
 
+        if ( state.cache ) {
+            state.cache.forEach(cache => 
+                this.createCache(cache)
+            );
+        }
+
         return this;
     }
 

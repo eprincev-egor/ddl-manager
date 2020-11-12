@@ -1,9 +1,9 @@
 import fs from "fs";
 import { Client } from "pg";
 import {
-    IDatabaseDriver,
     IState
 } from "../interface";
+import { IDatabaseDriver, ITableColumn } from "./interface";
 import { FileParser } from "../parser";
 import { PGTypes } from "./PGTypes";
 import { DatabaseFunction, DatabaseTrigger, Table, Select, TableReference } from "../ast";
@@ -187,11 +187,7 @@ implements IDatabaseDriver {
         return columnsTypes;
     }
 
-    async createOrReplaceColumn(table: Table, column: {
-        key: string;
-        type: string;
-        default: string;
-    }) {
+    async createOrReplaceColumn(table: Table, column: ITableColumn) {
         const sql = `
             alter table ${table} drop column if exists ${column.key};
             alter table ${table} add column ${column.key} ${column.type} default ${ column.default };
@@ -218,6 +214,9 @@ implements IDatabaseDriver {
                 )
         `;
         await this.pgClient.query(sql);
+
+        // TODO: test it
+        return 0;
     }
 
     end() {

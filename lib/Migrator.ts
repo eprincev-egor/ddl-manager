@@ -1,23 +1,23 @@
 import assert from "assert";
-import { PostgresDriver } from "./database/PostgresDriver";
 import { CacheTriggerFactory } from "./cache/CacheTriggerFactory";
 import { Expression, Cache, SelectColumn } from "./ast";
 import { AbstractAgg, AggFactory } from "./cache/aggregator";
 import { Diff } from "./Diff";
+import { IDatabaseDriver } from "./database/interface";
 
 export class Migrator {
-    private postgres: PostgresDriver;
+    private postgres: IDatabaseDriver;
     private cacheTriggerFactory: CacheTriggerFactory;
     private outputErrors: Error[];
     private diff: Diff;
 
-    static async migrate(postgres: PostgresDriver, diff: Diff) {
+    static async migrate(postgres: IDatabaseDriver, diff: Diff) {
         assert.ok(diff);
         const migrator = new Migrator(postgres, diff);
         return await migrator.migrate();
     }
     
-    private constructor(postgres: PostgresDriver, diff: Diff) {
+    private constructor(postgres: IDatabaseDriver, diff: Diff) {
         this.postgres = postgres;
         this.diff = diff;
         this.cacheTriggerFactory = new CacheTriggerFactory();
@@ -128,27 +128,34 @@ export class Migrator {
 
     private async updateCachePackage(cache: Cache) {
         // TODO: update helpers columns
-        await this.postgres.updateCachePackage(
-            cache.select.cloneWith({
-                columns: cache.select.columns.map(selectColumn => {
-                    const aggFactory = new AggFactory(selectColumn);
-                    const aggregations = aggFactory.createAggregations();
-                    const agg = Object.values(aggregations)[0] as AbstractAgg;
+        const selectToUpdate = cache.select.cloneWith({
+            columns: cache.select.columns.map(selectColumn => {
+                const aggFactory = new AggFactory(selectColumn);
+                const aggregations = aggFactory.createAggregations();
+                const agg = Object.values(aggregations)[0] as AbstractAgg;
 
-                    if ( agg.call.name !== "sum" ) {
-                        return selectColumn;
-                    }
+                if ( agg.call.name !== "sum" ) {
+                    return selectColumn;
+                }
 
-                    const newExpression = Expression.funcCall("coalesce", [
-                        selectColumn.expression,
-                        Expression.unknown( agg.default() )
-                    ]);
-                    return selectColumn.replaceExpression(newExpression);
-                })
-            }),
-            cache.for,
-            500
-        );
+                const newExpression = Expression.funcCall("coalesce", [
+                    selectColumn.expression,
+                    Expression.unknown( agg.default() )
+                ]);
+                return selectColumn.replaceExpression(newExpression);
+            })
+        });
+
+        const limit = 500;
+        let updatedCount = 0;
+
+        do {
+            updatedCount = await this.postgres.updateCachePackage(
+                selectToUpdate,
+                cache.for,
+                limit
+            );
+        } while( updatedCount >= limit );
     }
 
     private async createCacheTriggers(cache: Cache) {
