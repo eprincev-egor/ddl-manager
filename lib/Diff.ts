@@ -35,6 +35,8 @@ export class Diff {
                 this.dropTrigger(trigger)
             );
         }
+
+        return this;
     }
 
     createState(state: Partial<IState>) {
@@ -49,6 +51,8 @@ export class Diff {
                 this.createTrigger(trigger)
             );
         }
+
+        return this;
     }
 
     dropFunction(func: DatabaseFunction) {

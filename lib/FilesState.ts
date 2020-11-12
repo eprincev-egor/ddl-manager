@@ -347,9 +347,8 @@ export class FilesState extends EventEmitter {
         const fileIndex = this.files.indexOf( oldFile );
         this.files.splice(fileIndex, 1);
 
-        const changes = Diff.empty();
-
-        changes.dropState(oldFile.content);
+        const changes = Diff.empty()
+            .dropState(oldFile.content);
 
         try {
             if ( newFile ) {
@@ -383,8 +382,7 @@ export class FilesState extends EventEmitter {
 
         this.files.push( file );
         
-        const changes = Diff.empty();
-        changes.createState(file.content);
+        const changes = Diff.empty().createState(file.content);
 
         this.emit("change", changes);
     }

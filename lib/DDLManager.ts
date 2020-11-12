@@ -160,13 +160,8 @@ export class DDLManager {
                 // запустим одтельно создание новой функции
                 // т.к. сборсить frozen нельзя, а новая функция может быть валидной
 
-                const createDiff = Diff.empty();
-                diff.create.functions.forEach(func =>
-                    createDiff.createFunction(func)
-                );
-                diff.create.triggers.forEach(trigger =>
-                    createDiff.createTrigger(trigger)
-                );
+                const createDiff = Diff.empty()
+                    .createState(diff.create);
 
                 try {
                     await this.migrate(createDiff, true);
