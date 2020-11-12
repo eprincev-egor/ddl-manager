@@ -103,7 +103,6 @@ export class FileParser {
             return;
         }
 
-        // TODO: any => type
         const triggerJson = coach.parse(CreateTrigger).toJSON() as any;
         const trigger = new DatabaseTrigger(triggerJson);
         if ( triggerJson.comment ) {

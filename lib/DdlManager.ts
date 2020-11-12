@@ -1,21 +1,24 @@
 import { FilesState } from "./FilesState";
 import fs from "fs";
+import pg from "pg";
 import path from "path";
-import {
-    getDbClient, 
-    logDiff, 
-    isDbClient
-} from "./utils";
+import { logDiff } from "./utils";
 import { Comparator } from "./Comparator";
 import { Migrator } from "./Migrator";
 import { PostgresDriver } from "./database/PostgresDriver";
+import { getDbClient, IDBConfig } from "./database/getDbClient";
 import { DatabaseTrigger } from "./ast/DatabaseTrigger";
+import { IDiff } from "./interface";
 
 const watchers: FilesState[] = [];
 
 export class DdlManager {
-    // TODO: any => type
-    private static async migrate(params: {db: any, diff: any, throwError?: boolean}) {
+
+    private static async migrate(params: {
+        db: pg.Client, 
+        diff: IDiff, 
+        throwError?: boolean
+    }) {
         const {db, diff, throwError} = params;
 
         const postgres = new PostgresDriver(db);
@@ -33,11 +36,10 @@ export class DdlManager {
     }
 
     static async build(params: {
-        db: any;
+        db: IDBConfig | pg.Client;
         folder: string | string[];
         throwError?: boolean;
     }) {
-        let db = params.db;
 
         let folder!: string[];
         if ( typeof params.folder === "string" ) {
@@ -50,14 +52,8 @@ export class DdlManager {
             path.normalize(folderPath)
         );
 
-        let needCloseConnect = false;
-
-        // if db is config
-        if ( !isDbClient(db) ) {
-            db = await getDbClient(db);
-
-            needCloseConnect = true;
-        }
+        const needCloseConnect = !(params.db instanceof pg.Client);
+        const db = await getDbClient(params.db);
         
         const filesStateInstance = FilesState.create({
             folder,
@@ -101,15 +97,13 @@ export class DdlManager {
         return filesStateInstance;
     }
 
-    // TODO: any => type
-    static async watch(params: {db: any, folder: string | string[]}) {
+    static async watch(params: {
+        db: IDBConfig,
+        folder: string | string[]
+    }) {
         const {folder} = params;
-        let {db} = params;
     
-        // if db is config
-        if ( !isDbClient(db) ) {
-            db = await getDbClient(db);
-        }
+        const db = await getDbClient(params.db);
 
         const filesState = await DdlManager.build({
             db, 
@@ -176,19 +170,15 @@ export class DdlManager {
         watchers.push(filesState);
     }
 
-    // TODO: any => type
-    static async dump(params: {db: any, folder: string, unfreeze?: boolean}) {
-        let {db} = params;
+    static async dump(params: {
+        db: IDBConfig,
+        folder: string,
+        unfreeze?: boolean
+    }) {
         const {folder, unfreeze} = params;
 
-        let needCloseConnect = false;
-
-        // if db is config
-        if ( !isDbClient(db) ) {
-            db = await getDbClient(db);
-
-            needCloseConnect = true;
-        }
+        const needCloseConnect = !(params.db instanceof pg.Client);
+        const db = await getDbClient(params.db);
 
         if ( !fs.existsSync(folder) ) {
             throw new Error(`folder "${ folder }" not found`);
