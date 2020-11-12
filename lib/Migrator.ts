@@ -2,7 +2,7 @@ import assert from "assert";
 import { IDiff } from "./interface";
 import { PostgresDriver } from "./database/PostgresDriver";
 import { TriggerFactory } from "./cache/TriggerFactory";
-import { SelectColumn } from "./ast";
+import { Expression, FuncCall, SelectColumn } from "./ast";
 import { AbstractAgg, AggFactory } from "./cache/aggregator";
 
 export class Migrator {
@@ -125,6 +125,29 @@ export class Migrator {
                     }
                 );
             }
+
+            // TODO: update helpers columns
+            await this.postgres.updateCachePackage(
+                cache.select.cloneWith({
+                    columns: cache.select.columns.map(selectColumn => {
+                        const aggFactory = new AggFactory(selectColumn);
+                        const aggregations = aggFactory.createAggregations();
+                        const agg = Object.values(aggregations)[0] as AbstractAgg;
+
+                        if ( agg.call.name !== "sum" ) {
+                            return selectColumn;
+                        }
+
+                        const newExpression = Expression.funcCall("coalesce", [
+                            selectColumn.expression,
+                            Expression.unknown( agg.default() )
+                        ]);
+                        return selectColumn.replaceExpression(newExpression);
+                    })
+                }),
+                cache.for,
+                500
+            );
 
             const triggersByTableName = cacheTriggerFactory.createTriggers(cache);
 

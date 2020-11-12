@@ -34,6 +34,14 @@ export class SelectColumn {
         });
     }
 
+    replaceExpression(newExpression: Expression) {
+        return new SelectColumn({
+            name: this.name,
+            expression: newExpression,
+            recalculateSelect: this.recalculateSelect
+        });
+    }
+
     toString() {
         return `${this.expression} as ${this.name}`;
     }

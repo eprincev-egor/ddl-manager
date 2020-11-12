@@ -199,6 +199,26 @@ implements IDatabaseDriver {
 
         await this.pgClient.query(sql);
     }
+
+    async updateCachePackage(
+        select: Select,
+        forTable: TableReference,
+        limit: number
+    ) {
+        const columnsToUpdate = select.columns.map(column =>
+            column.name
+        );
+
+        const sql = `
+            update ${forTable} set
+                (
+                    ${ columnsToUpdate.join(", ") }
+                ) = (
+                    ${select}
+                )
+        `;
+        await this.pgClient.query(sql);
+    }
 }
 
 function parseComment(row: {comment?: string}) {
