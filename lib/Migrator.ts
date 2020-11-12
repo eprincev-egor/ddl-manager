@@ -1,13 +1,13 @@
 import assert from "assert";
 import { IDiff } from "./interface";
 import { PostgresDriver } from "./database/PostgresDriver";
-import { TriggerFactory } from "./cache/TriggerFactory";
+import { CacheTriggerFactory } from "./cache/CacheTriggerFactory";
 import { Expression, Cache, SelectColumn } from "./ast";
 import { AbstractAgg, AggFactory } from "./cache/aggregator";
 
 export class Migrator {
     private postgres: PostgresDriver;
-    private cacheTriggerFactory: TriggerFactory;
+    private cacheTriggerFactory: CacheTriggerFactory;
     private outputErrors: Error[];
     private diff: IDiff;
 
@@ -20,7 +20,7 @@ export class Migrator {
     private constructor(postgres: PostgresDriver, diff: IDiff) {
         this.postgres = postgres;
         this.diff = diff;
-        this.cacheTriggerFactory = new TriggerFactory();
+        this.cacheTriggerFactory = new CacheTriggerFactory();
         this.outputErrors = [];
     }
 

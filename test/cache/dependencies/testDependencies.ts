@@ -1,8 +1,8 @@
 import assert from "assert";
 import {
     findDependencies, IDependencies
-} from "../../lib/cache/processor/findDependencies";
-import { CacheParser } from "../../lib/parser/CacheParser";
+} from "../../../lib/cache/processor/findDependencies";
+import { CacheParser } from "../../../lib/parser/CacheParser";
 
 interface ITest {
     cache: string;

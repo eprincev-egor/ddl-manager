@@ -21,7 +21,7 @@ import { findJoinsMeta } from "./processor/findJoinsMeta";
 import { findDependencies } from "./processor/findDependencies";
 import { buildSimpleWhere } from "./processor/buildSimpleWhere";
 
-export class TriggerFactory {
+export class CacheTriggerFactory {
 
     createTriggers(cacheOrSQL: string | Cache) {
         const output: {
