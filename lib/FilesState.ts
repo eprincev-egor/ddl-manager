@@ -4,9 +4,10 @@ import { EventEmitter } from "events";
 import watch from "node-watch";
 import path from "path";
 import { FileParser } from "./parser";
-import { IDiff, IFile } from "./interface";
+import { IFile } from "./interface";
 import { DatabaseTrigger, DatabaseFunction, Cache } from "./ast";
 import { flatMap } from "lodash";
+import { Diff } from "./Diff";
 
 export class FilesState extends EventEmitter {
     static create(params: {folder: string | string[], onError?: any}) {
@@ -269,16 +270,8 @@ export class FilesState extends EventEmitter {
 
     private onRemoveDirOrFile(rootFolderPath: string, subPath: string) {
         let hasChange = false;
-        const changes: IDiff = {
-            drop: {
-                functions: [],
-                triggers: []
-            },
-            create: {
-                functions: [],
-                triggers: []
-            }
-        };
+
+        const changes = Diff.empty();
 
 
         for (let i = 0, n = this.files.length; i < n; i++) {
@@ -308,15 +301,7 @@ export class FilesState extends EventEmitter {
             // generate event
             hasChange = true;
 
-            // any file has functions
-            changes.drop.functions = changes.drop.functions.concat(
-                file.content.functions
-            );
-
-            // sometimes file can contain trigger
-            if ( file.content.triggers ) {
-                changes.drop.triggers = file.content.triggers;
-            }
+            changes.dropState(file.content);
         }
         
 
@@ -362,30 +347,15 @@ export class FilesState extends EventEmitter {
         const fileIndex = this.files.indexOf( oldFile );
         this.files.splice(fileIndex, 1);
 
-        const changes: IDiff = {
-            drop: {
-                functions: oldFile.content.functions,
-                triggers: []
-            },
-            create: {
-                functions: [],
-                triggers: []
-            }
-        };
+        const changes = Diff.empty();
 
-        if ( oldFile.content.triggers ) {
-            changes.drop.triggers = oldFile.content.triggers;
-        }
+        changes.dropState(oldFile.content);
 
         try {
             if ( newFile ) {
                 this.checkDuplicate( newFile );
 
-                changes.create.functions = newFile.content.functions;
-    
-                if ( newFile.content.triggers ) {
-                    changes.create.triggers = newFile.content.triggers;
-                }
+                changes.createState(newFile.content);
 
                 this.files.splice(fileIndex, 0, newFile);
             }
@@ -413,20 +383,8 @@ export class FilesState extends EventEmitter {
 
         this.files.push( file );
         
-        const changes: IDiff = {
-            drop: {
-                functions: [],
-                triggers: []
-            },
-            create: {
-                functions: file.content.functions,
-                triggers: []
-            }
-        };
-
-        if ( file.content.triggers ) {
-            changes.create.triggers = file.content.triggers;
-        }
+        const changes = Diff.empty();
+        changes.createState(file.content);
 
         this.emit("change", changes);
     }

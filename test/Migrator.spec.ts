@@ -3,10 +3,10 @@ import { getDBClient } from "./utils/getDbClient";
 import { Migrator } from "../lib/Migrator";
 import { DatabaseFunction, IDatabaseFunctionParams } from "../lib/ast/DatabaseFunction";
 import { DatabaseTrigger, IDatabaseTriggerParams } from "../lib/ast/DatabaseTrigger";
-import { IDiff } from "../lib/interface";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { PostgresDriver } from "../lib/database/PostgresDriver";
+import { Diff } from "../lib/Diff";
 
 use(chaiShallowDeepEqualPlugin);
 
@@ -38,31 +38,42 @@ describe("Migrator.migrate", () => {
     }
 
     async function migrate(params: {diff: IDiffParams}) {
-        const diff: IDiff = {
-            drop: {
-                functions: createFunctions(params.diff.drop.functions),
-                triggers: createTriggers(params.diff.drop.triggers)
-            },
-            create: {
-                functions: createFunctions(params.diff.create.functions),
-                triggers: createTriggers(params.diff.create.triggers)
-            }
-        };
+        const diff = Diff.empty();
+        dropFunctions(diff, params.diff.drop.functions);
+        dropTriggers(diff, params.diff.drop.triggers);
+        createFunctions(diff, params.diff.create.functions);
+        createTriggers(diff, params.diff.create.triggers);
 
         const postgres = new PostgresDriver(db);
         await Migrator.migrate(postgres, diff);
     }
 
-    function createFunctions(functions: IDatabaseFunctionParams[]) {
-        return functions.map(funcJson => 
-            new DatabaseFunction(funcJson)
-        );
+    function dropFunctions(diff: Diff, functions: IDatabaseFunctionParams[]) {
+        functions.map(funcJson => {
+            const func = new DatabaseFunction(funcJson);
+            diff.dropFunction(func);
+        });
     }
 
-    function createTriggers(triggers: IDatabaseTriggerParams[]) {
-        return triggers.map(triggerJson => 
-            new DatabaseTrigger(triggerJson)
-        );
+    function dropTriggers(diff: Diff, triggers: IDatabaseTriggerParams[]) {
+        triggers.map(triggerJson => {
+            const trigger = new DatabaseTrigger(triggerJson);
+            diff.dropTrigger(trigger);
+        });
+    }
+
+    function createFunctions(diff: Diff, functions: IDatabaseFunctionParams[]) {
+        functions.map(funcJson => {
+            const func = new DatabaseFunction(funcJson);
+            diff.createFunction(func);
+        });
+    }
+
+    function createTriggers(diff: Diff, triggers: IDatabaseTriggerParams[]) {
+        triggers.map(triggerJson => {
+            const trigger = new DatabaseTrigger(triggerJson);
+            diff.createTrigger(trigger);
+        });
     }
 
     it("migrate simple function", async() => {

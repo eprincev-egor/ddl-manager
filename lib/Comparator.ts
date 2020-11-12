@@ -77,12 +77,10 @@ export class Comparator {
                     return true;
                 });
 
-                depsTriggers.forEach(fileTrigger => {
-                    // drop
-                    this.diff.dropTrigger( fileTrigger );
-                    // and create again
-                    this.diff.createTrigger( fileTrigger );
-                });
+                // drop
+                this.diff.dropState({triggers: depsTriggers});
+                // and create again
+                this.diff.createState({triggers: depsTriggers});
             }
             
             
@@ -102,9 +100,7 @@ export class Comparator {
             return !existsSameTriggerFromFile;
         });
 
-        triggersToDrop.forEach(trigger => 
-            this.diff.dropTrigger(trigger)
-        );
+        this.diff.dropState({triggers: triggersToDrop});
     }
 
     private createFunctions() {

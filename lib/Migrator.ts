@@ -1,23 +1,23 @@
 import assert from "assert";
-import { IDiff } from "./interface";
 import { PostgresDriver } from "./database/PostgresDriver";
 import { CacheTriggerFactory } from "./cache/CacheTriggerFactory";
 import { Expression, Cache, SelectColumn } from "./ast";
 import { AbstractAgg, AggFactory } from "./cache/aggregator";
+import { Diff } from "./Diff";
 
 export class Migrator {
     private postgres: PostgresDriver;
     private cacheTriggerFactory: CacheTriggerFactory;
     private outputErrors: Error[];
-    private diff: IDiff;
+    private diff: Diff;
 
-    static async migrate(postgres: PostgresDriver, diff: IDiff) {
+    static async migrate(postgres: PostgresDriver, diff: Diff) {
         assert.ok(diff);
         const migrator = new Migrator(postgres, diff);
         return await migrator.migrate();
     }
     
-    private constructor(postgres: PostgresDriver, diff: IDiff) {
+    private constructor(postgres: PostgresDriver, diff: Diff) {
         this.postgres = postgres;
         this.diff = diff;
         this.cacheTriggerFactory = new CacheTriggerFactory();

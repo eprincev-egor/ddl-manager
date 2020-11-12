@@ -7,11 +7,6 @@ export interface IState {
     cache?: Cache[];
 }
 
-export interface IDiff {
-    drop: IState;
-    create: IState;
-}
-
 export interface IDatabaseDriver {
     loadState(): Promise<IState>;
 }

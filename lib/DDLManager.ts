@@ -2,13 +2,12 @@ import { FilesState } from "./FilesState";
 import fs from "fs";
 import pg from "pg";
 import path from "path";
-import { logDiff } from "./utils";
 import { Comparator } from "./Comparator";
 import { Migrator } from "./Migrator";
 import { PostgresDriver } from "./database/PostgresDriver";
 import { getDbClient, IDBConfig } from "./database/getDbClient";
 import { DatabaseTrigger } from "./ast/DatabaseTrigger";
-import { IDiff } from "./interface";
+import { Diff } from "./Diff";
 
 const watchers: FilesState[] = [];
 
@@ -112,7 +111,7 @@ export class DDLManager {
             postgres.end();
         }
 
-        logDiff(diff);
+        diff.log();
         
         if ( !migrateErrors.length ) {
             // tslint:disable-next-line: no-console
@@ -130,19 +129,19 @@ export class DDLManager {
 
         await filesState.watch();
         
-        filesState.on("change", (diff) => {
+        filesState.on("change", (diff: Diff) => {
             this.onChangeFS(diff);
         });
 
         watchers.push(filesState);
     }
 
-    private async onChangeFS(diff: IDiff) {
+    private async onChangeFS(diff: Diff) {
 
         try {
             await this.migrate(diff, true);
 
-            logDiff(diff);
+            diff.log();
         } catch(err) {
 
             // если в файле была frozen функция
@@ -161,18 +160,18 @@ export class DDLManager {
                 // запустим одтельно создание новой функции
                 // т.к. сборсить frozen нельзя, а новая функция может быть валидной
 
-                const createDiff = {
-                    drop: {
-                        functions: [],
-                        triggers: []
-                    },
-                    create: diff.create
-                };
+                const createDiff = Diff.empty();
+                diff.create.functions.forEach(func =>
+                    createDiff.createFunction(func)
+                );
+                diff.create.triggers.forEach(trigger =>
+                    createDiff.createTrigger(trigger)
+                );
 
                 try {
                     await this.migrate(createDiff, true);
     
-                    logDiff(diff);
+                    diff.log();
                 } catch(err) {
                     // tslint:disable-next-line: no-console
                     console.error(err);
@@ -314,7 +313,7 @@ export class DDLManager {
         }
     }
 
-    private async migrate(diff: IDiff, needThrowError = this.needCloseConnect) {
+    private async migrate(diff: Diff, needThrowError = this.needCloseConnect) {
         const postgres = await this.postgres();
         const outputErrors = await Migrator.migrate(postgres, diff);
 

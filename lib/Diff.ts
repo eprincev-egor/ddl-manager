@@ -23,6 +23,34 @@ export class Diff {
         this.create = params.create;
     }
 
+    dropState(state: Partial<IState>) {
+        if ( state.functions ) {
+            state.functions.forEach(func => 
+                this.dropFunction(func)
+            );
+        }
+
+        if ( state.triggers ) {
+            state.triggers.forEach(trigger => 
+                this.dropTrigger(trigger)
+            );
+        }
+    }
+
+    createState(state: Partial<IState>) {
+        if ( state.functions ) {
+            state.functions.forEach(func => 
+                this.createFunction(func)
+            );
+        }
+
+        if ( state.triggers ) {
+            state.triggers.forEach(trigger => 
+                this.createTrigger(trigger)
+            );
+        }
+    }
+
     dropFunction(func: DatabaseFunction) {
         this.drop.functions.push(func);
     }
