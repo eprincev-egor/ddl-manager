@@ -100,7 +100,10 @@ export class Migrator {
         for (const cache of diff.create.cache || []) {
             
             // TODO: create helpers columns
-            const columnsTypes = await this.postgres.getCacheColumnsTypes(cache);
+            const columnsTypes = await this.postgres.getCacheColumnsTypes(
+                cache.select,
+                cache.for
+            );
             for (const columnName in columnsTypes) {
                 const columnType = columnsTypes[ columnName ];
 

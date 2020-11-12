@@ -6,7 +6,7 @@ import {
 } from "../interface";
 import { FileParser } from "../parser";
 import { PGTypes } from "./PGTypes";
-import { DatabaseFunction, DatabaseTrigger, Cache, Table } from "../ast";
+import { DatabaseFunction, DatabaseTrigger, Table, Select, TableReference } from "../ast";
 import { getCheckFrozenFunctionSql } from "./postgres/getCheckFrozenFunctionSql";
 import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
@@ -161,16 +161,16 @@ implements IDatabaseDriver {
         await this.pgClient.query(ddlSql);
     }
 
-    async getCacheColumnsTypes(cache: Cache) {
+    async getCacheColumnsTypes(select: Select, forTable: TableReference) {
         await this.types.load();
 
         const sql = `
             select
                 ddl_manager_dmp.*
-            from ${cache.for.toString()}
+            from ${forTable.toString()}
 
             left join lateral (
-                ${ cache.select.toString() }
+                ${ select.toString() }
             ) as ddl_manager_dmp on true
 
             limit 1
