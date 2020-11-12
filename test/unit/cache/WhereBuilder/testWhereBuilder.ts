@@ -1,7 +1,7 @@
 import { GrapeQLCoach, Select } from "grapeql-lang";
-import { CacheParser } from "../../../lib/parser";
-import { Table } from "../../../lib/ast";
-import { buildFromAndWhere } from "../../../lib/cache/processor/buildFromAndWhere";
+import { CacheParser } from "../../../../lib/parser";
+import { Table } from "../../../../lib/ast";
+import { buildFromAndWhere } from "../../../../lib/cache/processor/buildFromAndWhere";
 import assert from "assert";
 
 interface ITest {

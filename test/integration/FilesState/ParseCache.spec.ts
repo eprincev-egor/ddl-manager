@@ -1,6 +1,6 @@
 import fs from "fs";
 import fse from "fs-extra";
-import { FilesState } from "../../lib/FilesState";
+import { FilesState } from "../../../lib/FilesState";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 

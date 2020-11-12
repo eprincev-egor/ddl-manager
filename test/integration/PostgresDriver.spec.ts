@@ -1,8 +1,8 @@
 import fs from "fs";
 import fse from "fs-extra";
-import { getDBClient } from "./utils/getDbClient";
-import { DDLManager } from "../lib/DDLManager";
-import { PostgresDriver } from "../lib/database/PostgresDriver";
+import { getDBClient } from "./getDbClient";
+import { DDLManager } from "../../lib/DDLManager";
+import { PostgresDriver } from "../../lib/database/PostgresDriver";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 

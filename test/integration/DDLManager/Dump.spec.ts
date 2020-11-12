@@ -1,9 +1,9 @@
 import assert from "assert";
 import fs from "fs";
 import fse from "fs-extra";
-import { getDBClient } from "../utils/getDbClient";
-import { DDLManager } from "../../lib/DDLManager";
-import { FileParser } from "../../lib/parser/FileParser";
+import { getDBClient } from "../getDbClient";
+import { DDLManager } from "../../../lib/DDLManager";
+import { FileParser } from "../../../lib/parser/FileParser";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 

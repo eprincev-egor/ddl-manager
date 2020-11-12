@@ -1,10 +1,10 @@
 import fs from "fs";
 import fse from "fs-extra";
-import { FilesState } from "../../lib/FilesState";
+import { FilesState } from "../../../lib/FilesState";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
-import { sleep } from "../utils/sleep";
-import { generateEmptyFunction, VOID_BODY } from "../utils/generateEmptyFunction";
+import { sleep } from "../sleep";
+import { generateEmptyFunction, VOID_BODY } from "./fixture/generateEmptyFunction";
 
 use(chaiShallowDeepEqualPlugin);
 

@@ -1,12 +1,12 @@
 import assert from "assert";
-import { getDBClient } from "./utils/getDbClient";
-import { Migrator } from "../lib/Migrator";
-import { DatabaseFunction, IDatabaseFunctionParams } from "../lib/ast/DatabaseFunction";
-import { DatabaseTrigger, IDatabaseTriggerParams } from "../lib/ast/DatabaseTrigger";
+import { getDBClient } from "./getDbClient";
+import { Migrator } from "../../lib/Migrator";
+import { DatabaseFunction, IDatabaseFunctionParams } from "../../lib/ast/DatabaseFunction";
+import { DatabaseTrigger, IDatabaseTriggerParams } from "../../lib/ast/DatabaseTrigger";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
-import { PostgresDriver } from "../lib/database/PostgresDriver";
-import { Diff } from "../lib/Diff";
+import { PostgresDriver } from "../../lib/database/PostgresDriver";
+import { Diff } from "../../lib/Diff";
 
 use(chaiShallowDeepEqualPlugin);
 

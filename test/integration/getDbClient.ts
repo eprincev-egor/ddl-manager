@@ -1,7 +1,7 @@
 import pg from "pg";
 
 export async function getDBClient() {
-    let dbConfig = {
+    const dbConfig = {
         database: false,
         user: false,
         password: false,

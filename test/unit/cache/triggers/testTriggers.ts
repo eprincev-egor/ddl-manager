@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import assert from "assert";
-import { CacheTriggerFactory } from "../../../lib/cache/CacheTriggerFactory";
+import { CacheTriggerFactory } from "../../../../lib/cache/CacheTriggerFactory";
 
 export interface ITest {
     testDir: string;
