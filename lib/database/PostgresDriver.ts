@@ -219,6 +219,10 @@ implements IDatabaseDriver {
         `;
         await this.pgClient.query(sql);
     }
+
+    end() {
+        this.pgClient.end();
+    }
 }
 
 function parseComment(row: {comment?: string}) {

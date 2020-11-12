@@ -1,6 +1,5 @@
 import pg from "pg";
 import _ from "lodash";
-import fs from "fs";
 
 export interface IDBConfig {
     database?: string;

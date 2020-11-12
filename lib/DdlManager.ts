@@ -14,49 +14,81 @@ const watchers: FilesState[] = [];
 
 export class DdlManager {
 
-    private static async migrate(params: {
-        db: pg.Client, 
-        diff: IDiff, 
-        throwError?: boolean
-    }) {
-        const {db, diff, throwError} = params;
-
-        const postgres = new PostgresDriver(db);
-        const migrator = new Migrator(postgres);
-        const outputErrors = await migrator.migrate(diff);
-
-        if ( throwError !== false ) {
-            if ( outputErrors.length ) {
-                const err = outputErrors[0];
-                throw new Error(err.message);
-            }
-        }
-
-        return outputErrors;
-    }
-
     static async build(params: {
         db: IDBConfig | pg.Client;
         folder: string | string[];
         throwError?: boolean;
     }) {
+        const ddlManager = new DdlManager({
+            db: params.db,
+            folder: params.folder,
+            throwError: params.throwError
+        });
+        return await ddlManager.build();
+    }
 
-        let folder!: string[];
+    static async watch(params: {
+        db: IDBConfig,
+        folder: string | string[]
+    }) {
+        const ddlManager = new DdlManager({
+            db: params.db,
+            folder: params.folder
+        });
+
+        await ddlManager.watch();
+    }
+
+    static async dump(params: {
+        db: IDBConfig,
+        folder: string,
+        unfreeze?: boolean
+    }) {
+        const ddlManager = new DdlManager({
+            db: params.db,
+            folder: params.folder
+        });
+        return await ddlManager.dump(params.unfreeze);
+    }
+
+    static stopWatch() {
+        watchers.forEach(watcher => {
+            watcher.stopWatch();
+        });
+        watchers.splice(0, watchers.length);
+    }
+
+    private folders: string[];
+    private needThrowError: boolean;
+    private needCloseConnect: boolean;
+    private dbConfig: IDBConfig | pg.Client;
+
+    private constructor(params: {
+        db: IDBConfig | pg.Client;
+        folder: string | string[];
+        throwError?: boolean;
+    }) {
+
         if ( typeof params.folder === "string" ) {
-            folder = [params.folder];
+            this.folders = [params.folder];
         }
         else {
-            folder = params.folder;
+            this.folders = params.folder;
         }
-        folder = folder.map(folderPath =>
+
+        this.folders = this.folders.map(folderPath =>
             path.normalize(folderPath)
         );
 
-        const needCloseConnect = !(params.db instanceof pg.Client);
-        const db = await getDbClient(params.db);
-        
+        this.needCloseConnect = !(params.db instanceof pg.Client);
+        this.dbConfig = params.db;
+        this.needThrowError = !!params.throwError;
+    }
+
+    private async build() {
+
         const filesStateInstance = FilesState.create({
-            folder,
+            folder: this.folders,
             onError(err: Error) {
                 // tslint:disable-next-line: no-console
                 console.error((err as any).subPath + ": " + err.message);
@@ -68,20 +100,17 @@ export class DdlManager {
             cache: filesStateInstance.getCache()
         };
         
-        const postgres = new PostgresDriver(db);
+        const postgres = await this.postgres();
         const dbState = await postgres.loadState();
 
         const comparator = new Comparator();
         const diff = comparator.compare(dbState, filesState);
 
 
-        const migrateErrors = await DdlManager.migrate({
-            db, diff,
-            throwError: false
-        });
+        const migrateErrors = await this.migrate(diff, false);
 
-        if ( needCloseConnect ) {
-            db.end();
+        if ( this.needCloseConnect ) {
+            postgres.end();
         }
 
         logDiff(diff);
@@ -90,35 +119,21 @@ export class DdlManager {
             // tslint:disable-next-line: no-console
             console.log("ddl-manager build success");
         }
-        else if ( params.throwError ) {
+        else if ( this.needThrowError ) {
             throw migrateErrors[0];
         }
         
         return filesStateInstance;
     }
 
-    static async watch(params: {
-        db: IDBConfig,
-        folder: string | string[]
-    }) {
-        const {folder} = params;
-    
-        const db = await getDbClient(params.db);
-
-        const filesState = await DdlManager.build({
-            db, 
-            folder,
-            throwError: false
-        });
+    private async watch() {
+        const filesState = await this.build();
 
         await filesState.watch();
         
         filesState.on("change", async(diff) => {
             try {
-                await DdlManager.migrate({
-                    db, diff,
-                    throwError: true
-                });
+                await this.migrate(diff, true);
 
                 logDiff(diff);
             } catch(err) {
@@ -148,11 +163,7 @@ export class DdlManager {
                     };
 
                     try {
-                        await DdlManager.migrate({
-                            db, 
-                            diff: createDiff,
-                            throwError: true
-                        });
+                        await this.migrate(createDiff, true);
         
                         logDiff(diff);
                     } catch(err) {
@@ -170,21 +181,13 @@ export class DdlManager {
         watchers.push(filesState);
     }
 
-    static async dump(params: {
-        db: IDBConfig,
-        folder: string,
-        unfreeze?: boolean
-    }) {
-        const {folder, unfreeze} = params;
-
-        const needCloseConnect = !(params.db instanceof pg.Client);
-        const db = await getDbClient(params.db);
-
+    private async dump(unfreeze: boolean = false) {
+        const folder = this.folders[0] as string;
         if ( !fs.existsSync(folder) ) {
             throw new Error(`folder "${ folder }" not found`);
         }
 
-        const postgres = new PostgresDriver(db);
+        const postgres = await this.postgres();
         const dbState = await postgres.loadState();
 
         const existsFolders: {
@@ -302,15 +305,29 @@ export class DdlManager {
             await postgres.unfreezeAll(dbState);
         }
 
-        if ( needCloseConnect ) {
-            db.end();
+        if ( this.needCloseConnect ) {
+            postgres.end();
         }
     }
 
-    static stopWatch() {
-        watchers.forEach(watcher => {
-            watcher.stopWatch();
-        });
-        watchers.splice(0, watchers.length);
+    private async migrate(diff: IDiff, needThrowError = this.needCloseConnect) {
+        const postgres = await this.postgres();
+        const migrator = new Migrator(postgres);
+        const outputErrors = await migrator.migrate(diff);
+
+        if ( needThrowError !== false ) {
+            if ( outputErrors.length ) {
+                const err = outputErrors[0];
+                throw new Error(err.message);
+            }
+        }
+
+        return outputErrors;
+    }
+
+    private async postgres() {
+        const db = await getDbClient(this.dbConfig);
+        const postgres = new PostgresDriver(db);
+        return postgres;
     }
 }
