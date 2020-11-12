@@ -7,7 +7,7 @@ import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 
 use(chaiShallowDeepEqualPlugin);
 
-describe("FilesState parse functions", () => {
+describe("integration/FilesState parse functions", () => {
     const ROOT_TMP_PATH = __dirname + "/tmp";
     
     beforeEach(() => {

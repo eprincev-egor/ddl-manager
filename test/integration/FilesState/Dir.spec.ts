@@ -24,7 +24,7 @@ const test_func1 = {
     body: "select 1"
 };
 
-describe("FilesState watch create and remove folders", () => {
+describe("integration/FilesState watch create and remove folders", () => {
     const ROOT_TMP_PATH = __dirname + "/tmp";
     
     beforeEach(() => {

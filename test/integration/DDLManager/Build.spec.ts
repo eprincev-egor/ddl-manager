@@ -10,7 +10,7 @@ use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
-describe("DDLManager.build", () => {
+describe("integration/DDLManager.build", () => {
     let db: any;
     
     beforeEach(async() => {

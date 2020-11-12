@@ -76,7 +76,7 @@ const test_trigger2 = {
     }
 };
 
-describe("FilesState watch remove triggers", () => {
+describe("integration/FilesState watch remove triggers", () => {
     const ROOT_TMP_PATH = __dirname + "/tmp";
     
     beforeEach(() => {

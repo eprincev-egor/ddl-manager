@@ -8,7 +8,7 @@ import { generateEmptyFunction, VOID_BODY } from "./fixture/generateEmptyFunctio
 
 use(chaiShallowDeepEqualPlugin);
 
-describe("FilesState watch for many directories", () => {
+describe("integration/FilesState watch for many directories", () => {
     const ROOT_TMP_PATH = __dirname + "/tmp";
         
     beforeEach(() => {

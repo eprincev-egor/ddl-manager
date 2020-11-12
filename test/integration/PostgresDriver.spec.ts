@@ -10,7 +10,7 @@ use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
-describe("PostgresDriver.loadState", () => {
+describe("integration/PostgresDriver.loadState", () => {
     let db: any;
 
     beforeEach(async() => {

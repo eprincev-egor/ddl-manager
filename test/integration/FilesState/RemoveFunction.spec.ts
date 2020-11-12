@@ -38,7 +38,7 @@ const test_func2 = {
     body: "select 2"
 };
 
-describe("FilesState watch remove functions", () => {
+describe("integration/FilesState watch remove functions", () => {
     const ROOT_TMP_PATH = __dirname + "/tmp";
     
     beforeEach(() => {

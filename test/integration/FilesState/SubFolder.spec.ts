@@ -7,7 +7,7 @@ import { generateEmptyFunction, VOID_BODY } from "./fixture/generateEmptyFunctio
 
 use(chaiShallowDeepEqualPlugin);
 
-describe("FilesState parse files in sub dirs", () => {
+describe("integration/FilesState parse files in sub dirs", () => {
     const ROOT_TMP_PATH = __dirname + "/tmp";
         
     beforeEach(() => {

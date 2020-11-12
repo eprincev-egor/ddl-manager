@@ -10,7 +10,7 @@ import { Diff } from "../../lib/Diff";
 
 use(chaiShallowDeepEqualPlugin);
 
-describe("Migrator.migrate", () => {
+describe("integration/Migrator", () => {
     let db: any;
     
     beforeEach(async() => {

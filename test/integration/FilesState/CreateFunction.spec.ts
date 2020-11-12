@@ -38,7 +38,7 @@ const test_func2 = {
 };
 
 
-describe("FilesState watch create functions", () => {
+describe("integration/FilesState watch create functions", () => {
     const ROOT_TMP_PATH = __dirname + "/tmp";
     
     beforeEach(() => {

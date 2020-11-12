@@ -11,7 +11,7 @@ use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
-describe("DDLManager.watch", () => {
+describe("integration/DDLManager.watch", () => {
     let db: any;
     
     beforeEach(async() => {

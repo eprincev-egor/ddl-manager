@@ -92,7 +92,7 @@ const test_trigger2 = {
 };
 
 
-describe("FilesState watch change triggers", () => {
+describe("integration/FilesState watch change triggers", () => {
     const ROOT_TMP_PATH = __dirname + "/tmp";
     
     beforeEach(() => {
