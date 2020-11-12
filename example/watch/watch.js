@@ -1,12 +1,12 @@
 "use strict";
 
-const DdlManager = require("../../lib/DdlManager");
+const DDLManager = require("../../lib/DDLManager");
 const dbConfig = require("../ddl-manager-config");
 
 (async function() {
     try {
         
-        await DdlManager.watch({
+        await DDLManager.watch({
             folder: __dirname + "/ddl",
             // user, password, database, port, host
             db: dbConfig

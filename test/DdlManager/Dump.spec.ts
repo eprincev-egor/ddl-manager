@@ -2,7 +2,7 @@ import assert from "assert";
 import fs from "fs";
 import fse from "fs-extra";
 import { getDBClient } from "../utils/getDbClient";
-import { DdlManager } from "../../lib/DdlManager";
+import { DDLManager } from "../../lib/DDLManager";
 import { FileParser } from "../../lib/parser/FileParser";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
@@ -12,7 +12,7 @@ use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
-describe("DdlManager.dump", () => {
+describe("DDLManager.dump", () => {
     let db: any;
     
     beforeEach(async() => {
@@ -37,7 +37,7 @@ describe("DdlManager.dump", () => {
 
     it("dump nonexistent folder", async() => {
         try {
-            await DdlManager.dump({
+            await DDLManager.dump({
                 db, 
                 folder: "---"
             });
@@ -50,7 +50,7 @@ describe("DdlManager.dump", () => {
 
     it("dump empty db", async() => {
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db, 
             folder: ROOT_TMP_PATH
         });
@@ -66,7 +66,7 @@ describe("DdlManager.dump", () => {
             language sql;
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db: {
                 database: db.database,
                 user: db.user,
@@ -105,7 +105,7 @@ describe("DdlManager.dump", () => {
             language sql;
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db: {
                 database: db.database,
                 user: db.user,
@@ -170,7 +170,7 @@ describe("DdlManager.dump", () => {
             execute procedure some_func();
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db, 
             folder: ROOT_TMP_PATH
         });
@@ -234,7 +234,7 @@ describe("DdlManager.dump", () => {
             execute procedure some_func();
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db, 
             folder: ROOT_TMP_PATH
         });
@@ -306,7 +306,7 @@ describe("DdlManager.dump", () => {
             execute procedure some_func();
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db, 
             folder: ROOT_TMP_PATH
         });
@@ -348,7 +348,7 @@ describe("DdlManager.dump", () => {
             language sql;
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db, 
             folder: ROOT_TMP_PATH
         });
@@ -375,7 +375,7 @@ describe("DdlManager.dump", () => {
             language sql;
         `);
 
-        await DdlManager.build({
+        await DDLManager.build({
             db,
             folder: ROOT_TMP_PATH,
             throwError: true
@@ -394,7 +394,7 @@ describe("DdlManager.dump", () => {
             language sql;
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db, 
             folder: ROOT_TMP_PATH,
             unfreeze: true
@@ -422,7 +422,7 @@ describe("DdlManager.dump", () => {
             language sql;
         `);
 
-        await DdlManager.build({
+        await DDLManager.build({
             db,
             folder: ROOT_TMP_PATH,
             throwError: true
@@ -457,7 +457,7 @@ describe("DdlManager.dump", () => {
             execute procedure some_func();
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db, 
             folder: ROOT_TMP_PATH,
             unfreeze: true
@@ -511,7 +511,7 @@ describe("DdlManager.dump", () => {
             execute procedure some_func();
         `);
 
-        await DdlManager.build({
+        await DDLManager.build({
             db,
             folder: ROOT_TMP_PATH,
             throwError: true
@@ -532,7 +532,7 @@ describe("DdlManager.dump", () => {
             comment on function public.simple_func() is $$test$$;
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db, 
             folder: ROOT_TMP_PATH
         });
@@ -578,7 +578,7 @@ describe("DdlManager.dump", () => {
             comment on trigger some_trigger on company is $$trigger$$;
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db, 
             folder: ROOT_TMP_PATH
         });
@@ -629,7 +629,7 @@ describe("DdlManager.dump", () => {
             language plpgsql;
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db, 
             folder: ROOT_TMP_PATH
         });
@@ -676,7 +676,7 @@ describe("DdlManager.dump", () => {
             language plpgsql;
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db, 
             folder: ROOT_TMP_PATH
         });
@@ -729,7 +729,7 @@ describe("DdlManager.dump", () => {
             comment on function simple_func() is $tag1$'$$nice\ncomment$tag1$;
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db, 
             folder: ROOT_TMP_PATH,
             unfreeze: true
@@ -796,7 +796,7 @@ describe("DdlManager.dump", () => {
             comment on trigger some_trigger on company is $tag1$'$$nice\ncomment$tag1$;
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db, 
             folder: ROOT_TMP_PATH,
             unfreeze: true
@@ -881,7 +881,7 @@ describe("DdlManager.dump", () => {
             execute procedure some_func();
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db, 
             folder: ROOT_TMP_PATH
         });
@@ -948,7 +948,7 @@ describe("DdlManager.dump", () => {
             comment on function simple_func(boolean) is 'y';
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db, 
             folder: ROOT_TMP_PATH
         });
@@ -1002,7 +1002,7 @@ describe("DdlManager.dump", () => {
             language sql;
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db: {
                 database: db.database,
                 user: db.user,

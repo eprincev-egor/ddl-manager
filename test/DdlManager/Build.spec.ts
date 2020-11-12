@@ -2,7 +2,7 @@ import assert from "assert";
 import fs from "fs";
 import fse from "fs-extra";
 import { getDBClient } from "../utils/getDbClient";
-import { DdlManager } from "../../lib/DdlManager";
+import { DDLManager } from "../../lib/DDLManager";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 
@@ -10,7 +10,7 @@ use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
-describe("DdlManager.build", () => {
+describe("DDLManager.build", () => {
     let db: any;
     
     beforeEach(async() => {
@@ -33,7 +33,7 @@ describe("DdlManager.build", () => {
     
     it("build nonexistent folder", async() => {
         try {
-            await DdlManager.build({
+            await DDLManager.build({
                 db, 
                 folder: "---"
             });
@@ -48,7 +48,7 @@ describe("DdlManager.build", () => {
         const folderPath = ROOT_TMP_PATH + "/empty";
         fs.mkdirSync(folderPath);
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -73,7 +73,7 @@ describe("DdlManager.build", () => {
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -101,7 +101,7 @@ describe("DdlManager.build", () => {
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db: {
                 database: db.database,
                 user: db.user,
@@ -139,7 +139,7 @@ describe("DdlManager.build", () => {
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -161,7 +161,7 @@ describe("DdlManager.build", () => {
             language plpgsql;
         `);
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -211,7 +211,7 @@ describe("DdlManager.build", () => {
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -257,7 +257,7 @@ describe("DdlManager.build", () => {
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -290,7 +290,7 @@ describe("DdlManager.build", () => {
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -319,7 +319,7 @@ describe("DdlManager.build", () => {
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -335,7 +335,7 @@ describe("DdlManager.build", () => {
         // remove file for remove function from db
         fs.unlinkSync(folderPath + "/nice.sql");
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -378,7 +378,7 @@ describe("DdlManager.build", () => {
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -394,7 +394,7 @@ describe("DdlManager.build", () => {
         // remove file for remove trigger from db
         fs.unlinkSync(folderPath + "/some_trigger.sql");
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -429,7 +429,7 @@ describe("DdlManager.build", () => {
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: ROOT_TMP_PATH
         });
@@ -483,7 +483,7 @@ describe("DdlManager.build", () => {
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: ROOT_TMP_PATH,
             throwError: false
@@ -521,7 +521,7 @@ describe("DdlManager.build", () => {
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -570,7 +570,7 @@ describe("DdlManager.build", () => {
             test: 1
         });
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db,
             folder: folderPath,
             unfreeze: true
@@ -580,7 +580,7 @@ describe("DdlManager.build", () => {
         fs.unlinkSync(folderPath + "/public/test.sql");
         
         // drop trigger by build command
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -632,7 +632,7 @@ describe("DdlManager.build", () => {
             note: "name: super"
         });
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db,
             folder: folderPath,
             unfreeze: true
@@ -642,7 +642,7 @@ describe("DdlManager.build", () => {
         fs.unlinkSync(folderPath + "/public/company/set_note_before_insert_or_update_name.sql");
         
         // drop trigger by build command
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -681,13 +681,13 @@ describe("DdlManager.build", () => {
             test: 1
         });
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db,
             folder: folderPath,
             unfreeze: true
         });
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -753,13 +753,13 @@ describe("DdlManager.build", () => {
             note: "name: super"
         });
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db,
             folder: folderPath,
             unfreeze: true
         });
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -813,7 +813,7 @@ describe("DdlManager.build", () => {
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -843,7 +843,7 @@ describe("DdlManager.build", () => {
             execute procedure set_note_before_insert_or_update_name();
         `);
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -879,7 +879,7 @@ describe("DdlManager.build", () => {
             language plpgsql;
         `);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db,
             folder: folderPath,
             unfreeze: true
@@ -897,7 +897,7 @@ language plpgsql;
         fs.writeFileSync( folderPath + "/public/test.sql", fileContent );
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -944,7 +944,7 @@ language plpgsql;
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -985,7 +985,7 @@ language plpgsql;
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -1035,7 +1035,7 @@ language plpgsql;
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -1072,7 +1072,7 @@ language plpgsql;
         const folderPath = ROOT_TMP_PATH + "/ignore-cascades";
         fs.mkdirSync(folderPath);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db,
             folder: folderPath,
             unfreeze: true
@@ -1098,7 +1098,7 @@ language plpgsql;
             language plpgsql;
         `);
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -1132,7 +1132,7 @@ language plpgsql;
         const folderPath = ROOT_TMP_PATH + "/some-frozen-func";
         fs.mkdirSync(folderPath);
 
-        await DdlManager.dump({
+        await DDLManager.dump({
             db,
             folder: folderPath
         });
@@ -1149,7 +1149,7 @@ language plpgsql;
 
         fs.unlinkSync(folderPath + "/public/my_func.sql");
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -1197,7 +1197,7 @@ language plpgsql;
             language plpgsql;
         `);
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -1238,7 +1238,7 @@ language plpgsql;
             language plpgsql;
         `);
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: [
                 folderPath1, 
@@ -1287,7 +1287,7 @@ language plpgsql;
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath,
             throwError: true
@@ -1339,7 +1339,7 @@ language plpgsql;
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath,
             throwError: true
@@ -1392,7 +1392,7 @@ language plpgsql;
         `);
 
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath,
             throwError: true

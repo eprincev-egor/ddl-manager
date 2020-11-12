@@ -1,12 +1,12 @@
 "use strict";
 
 const {parseConfigFromArgs} = require("../../lib/utils");
-const DdlManager = require("../../lib/DdlManager");
+const DDLManager = require("../../lib/DDLManager");
 
 module.exports = async function(argv) {
     let config = parseConfigFromArgs(argv);
 
-    await DdlManager.build({
+    await DDLManager.build({
         db: config,
         folder: config.folder
     });

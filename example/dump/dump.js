@@ -1,6 +1,6 @@
 "use strict";
 
-const DdlManager = require("../../lib/DdlManager");
+const DDLManager = require("../../lib/DDLManager");
 const dbConfig = require("../ddl-manager-config");
 const fs = require("fs");
 
@@ -12,7 +12,7 @@ const fs = require("fs");
             fs.mkdirSync(dir);
         }
         
-        await DdlManager.dump({
+        await DDLManager.dump({
             folder: dir,
             // user, password, database, port, host
             db: dbConfig,

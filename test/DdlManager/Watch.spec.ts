@@ -2,7 +2,7 @@ import assert from "assert";
 import fs from "fs";
 import fse from "fs-extra";
 import { getDBClient } from "../utils/getDbClient";
-import { DdlManager } from "../../lib/DdlManager";
+import { DDLManager } from "../../lib/DDLManager";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { sleep } from "../utils/sleep";
@@ -11,7 +11,7 @@ use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
-describe("DdlManager.watch", () => {
+describe("DDLManager.watch", () => {
     let db: any;
     
     beforeEach(async() => {
@@ -30,12 +30,12 @@ describe("DdlManager.watch", () => {
 
     afterEach(async() => {
         db.end();
-        DdlManager.stopWatch();
+        DDLManager.stopWatch();
     });
 
     it("watch nonexistent folder", async() => {
         try {
-            await DdlManager.watch({
+            await DDLManager.watch({
                 db, 
                 folder: "---"
             });
@@ -50,7 +50,7 @@ describe("DdlManager.watch", () => {
         const folderPath = ROOT_TMP_PATH + "/empty";
         fs.mkdirSync(folderPath);
 
-        await DdlManager.watch({
+        await DDLManager.watch({
             db, 
             folder: folderPath
         });
@@ -78,7 +78,7 @@ describe("DdlManager.watch", () => {
         `);
 
 
-        await DdlManager.watch({
+        await DDLManager.watch({
             db, 
             folder: folderPath
         });
@@ -116,7 +116,7 @@ describe("DdlManager.watch", () => {
         const folderPath = ROOT_TMP_PATH + "/simple-func";
         fs.mkdirSync(folderPath);
 
-        await DdlManager.watch({
+        await DDLManager.watch({
             db: {
                 database: db.database,
                 user: db.user,
@@ -149,12 +149,12 @@ describe("DdlManager.watch", () => {
 
     it("watch file with error, and without", async() => {
 
-        await DdlManager.watch({
+        await DDLManager.watch({
             db, 
             folder: ROOT_TMP_PATH
         });
 
-        await DdlManager.watch({
+        await DDLManager.watch({
             db, 
             folder: ROOT_TMP_PATH
         });
@@ -187,7 +187,7 @@ describe("DdlManager.watch", () => {
         let result;
         let row;
 
-        await DdlManager.watch({
+        await DDLManager.watch({
             db, 
             folder: ROOT_TMP_PATH
         });
@@ -269,7 +269,7 @@ describe("DdlManager.watch", () => {
         `);
 
 
-        await DdlManager.watch({
+        await DDLManager.watch({
             db, 
             folder: folderPath + "/../watch"
         });
@@ -352,7 +352,7 @@ describe("DdlManager.watch", () => {
             language plpgsql;
         `);
 
-        await DdlManager.watch({
+        await DDLManager.watch({
             db, 
             folder: [
                 folderPath1, 

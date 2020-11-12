@@ -12,14 +12,14 @@ import { IDiff } from "./interface";
 
 const watchers: FilesState[] = [];
 
-export class DdlManager {
+export class DDLManager {
 
     static async build(params: {
         db: IDBConfig | pg.Client;
         folder: string | string[];
         throwError?: boolean;
     }) {
-        const ddlManager = new DdlManager({
+        const ddlManager = new DDLManager({
             db: params.db,
             folder: params.folder,
             throwError: params.throwError
@@ -31,7 +31,7 @@ export class DdlManager {
         db: IDBConfig,
         folder: string | string[]
     }) {
-        const ddlManager = new DdlManager({
+        const ddlManager = new DDLManager({
             db: params.db,
             folder: params.folder
         });
@@ -44,7 +44,7 @@ export class DdlManager {
         folder: string,
         unfreeze?: boolean
     }) {
-        const ddlManager = new DdlManager({
+        const ddlManager = new DDLManager({
             db: params.db,
             folder: params.folder
         });

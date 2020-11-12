@@ -1,7 +1,7 @@
 import fs from "fs";
 import fse from "fs-extra";
 import { getDBClient } from "./utils/getDbClient";
-import { DdlManager } from "../lib/DdlManager";
+import { DDLManager } from "../lib/DDLManager";
 import { PostgresDriver } from "../lib/database/PostgresDriver";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
@@ -511,7 +511,7 @@ describe("PostgresDriver.loadState", () => {
     });
 
 
-    it("load simple function, created by DdlManager.build", async() => {
+    it("load simple function, created by DDLManager.build", async() => {
 
         const folderPath = ROOT_TMP_PATH + "/simple-func";
         fs.mkdirSync(folderPath);
@@ -529,7 +529,7 @@ describe("PostgresDriver.loadState", () => {
             language plpgsql
         `);
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
@@ -558,7 +558,7 @@ describe("PostgresDriver.loadState", () => {
     });
 
     
-    it("load trigger, created by DdlManager.build", async() => {
+    it("load trigger, created by DDLManager.build", async() => {
 
         const folderPath = ROOT_TMP_PATH + "/simple-func";
         fs.mkdirSync(folderPath);
@@ -587,7 +587,7 @@ describe("PostgresDriver.loadState", () => {
             execute procedure test_func();
         `);
 
-        await DdlManager.build({
+        await DDLManager.build({
             db, 
             folder: folderPath
         });
