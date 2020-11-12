@@ -4,7 +4,7 @@ import {
     TableReference,
     Expression
 } from "../../ast";
-import { flatMap } from "../../utils";
+import { flatMap } from "lodash";
 
 export function matchedAllAggFilters(
     cache: Cache,

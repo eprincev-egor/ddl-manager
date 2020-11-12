@@ -6,7 +6,7 @@ import path from "path";
 import { FileParser } from "./parser";
 import { IDiff, IFile } from "./interface";
 import { DatabaseTrigger, DatabaseFunction, Cache } from "./ast";
-import { flatMap } from "./utils";
+import { flatMap } from "lodash";
 
 export class FilesState extends EventEmitter {
     static create(params: {folder: string | string[], onError?: any}) {

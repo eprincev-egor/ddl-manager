@@ -3,7 +3,7 @@ import { FuncCall } from "./FuncCall";
 import { IExpressionElement } from "./interface";
 import { Table } from "../Table";
 import { TableReference } from "../TableReference";
-import { flatMap } from "../../utils";
+import { flatMap } from "lodash";
 import { AbstractAstElement } from "../AbstractAstElement";
 
 export abstract class AbstractExpressionElement

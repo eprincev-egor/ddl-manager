@@ -13,7 +13,7 @@ import {
     NotExpression,
     CaseWhen
 } from "../../ast";
-import { flatMap } from "../../utils";
+import { flatMap } from "lodash";
 import { createAggValue } from "./createAggValue";
 import { IJoinMeta } from "./findJoinsMeta";
 

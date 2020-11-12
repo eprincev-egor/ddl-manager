@@ -26,15 +26,3 @@ export function logDiff(diff: IDiff) {
         console.log("create trigger " + triggerIdentifySql);
     });
 }
-
-export function flatMap<T, V>(arr: T[], iteration: (value: T) => V[]): V[] {
-    const flatArr: V[] = [];
-    
-    for (const value of arr) {
-        flatArr.push(
-            ...iteration(value)
-        );
-    }
-
-    return flatArr;
-}

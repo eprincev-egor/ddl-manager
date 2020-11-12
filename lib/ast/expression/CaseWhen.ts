@@ -1,7 +1,7 @@
 import { Spaces } from "../Spaces";
 import { Expression } from "./Expression";
 import { AbstractExpressionElement } from "./AbstractExpressionElement";
-import { flatMap } from "../../utils";
+import { flatMap } from "lodash";
 
 interface ICase {
     when: Expression;
