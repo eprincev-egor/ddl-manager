@@ -131,54 +131,59 @@ export class DdlManager {
 
         await filesState.watch();
         
-        filesState.on("change", async(diff) => {
-            try {
-                await this.migrate(diff, true);
+        filesState.on("change", (diff) => {
+            this.onChangeFS(diff);
+        });
 
-                logDiff(diff);
-            } catch(err) {
+        watchers.push(filesState);
+    }
 
-                // если в файле была frozen функция
-                // а потом в файле поменяли имя функции на другое (не frozen)
-                // о новая функция должна быть создана, а frozen не должна быть сброшена
-                // 
-                const isFrozenDropError = (
-                    /cannot drop frozen (trigger|function)/i.test(err.message)
-                );
-                const hasCreateFuncOrTrigger = (
-                    diff.create.functions.length ||
-                    diff.create.triggers.length
-                );
+    private async onChangeFS(diff: IDiff) {
 
-                if ( isFrozenDropError && hasCreateFuncOrTrigger ) {
-                    // запустим одтельно создание новой функции
-                    // т.к. сборсить frozen нельзя, а новая функция может быть валидной
+        try {
+            await this.migrate(diff, true);
 
-                    const createDiff = {
-                        drop: {
-                            functions: [],
-                            triggers: []
-                        },
-                        create: diff.create
-                    };
+            logDiff(diff);
+        } catch(err) {
 
-                    try {
-                        await this.migrate(createDiff, true);
-        
-                        logDiff(diff);
-                    } catch(err) {
-                        // tslint:disable-next-line: no-console
-                        console.error(err);
-                    }
-                }
-                else {
+            // если в файле была frozen функция
+            // а потом в файле поменяли имя функции на другое (не frozen)
+            // о новая функция должна быть создана, а frozen не должна быть сброшена
+            // 
+            const isFrozenDropError = (
+                /cannot drop frozen (trigger|function)/i.test(err.message)
+            );
+            const hasCreateFuncOrTrigger = (
+                diff.create.functions.length ||
+                diff.create.triggers.length
+            );
+
+            if ( isFrozenDropError && hasCreateFuncOrTrigger ) {
+                // запустим одтельно создание новой функции
+                // т.к. сборсить frozen нельзя, а новая функция может быть валидной
+
+                const createDiff = {
+                    drop: {
+                        functions: [],
+                        triggers: []
+                    },
+                    create: diff.create
+                };
+
+                try {
+                    await this.migrate(createDiff, true);
+    
+                    logDiff(diff);
+                } catch(err) {
                     // tslint:disable-next-line: no-console
                     console.error(err);
                 }
             }
-        });
-
-        watchers.push(filesState);
+            else {
+                // tslint:disable-next-line: no-console
+                console.error(err);
+            }
+        }
     }
 
     private async dump(unfreeze: boolean = false) {
