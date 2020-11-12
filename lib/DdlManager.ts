@@ -317,8 +317,7 @@ export class DdlManager {
 
     private async migrate(diff: IDiff, needThrowError = this.needCloseConnect) {
         const postgres = await this.postgres();
-        const migrator = new Migrator(postgres);
-        const outputErrors = await migrator.migrate(diff);
+        const outputErrors = await Migrator.migrate(postgres, diff);
 
         if ( needThrowError !== false ) {
             if ( outputErrors.length ) {

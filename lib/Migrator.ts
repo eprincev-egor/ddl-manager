@@ -8,45 +8,47 @@ import { AbstractAgg, AggFactory } from "./cache/aggregator";
 export class Migrator {
     private postgres: PostgresDriver;
     private cacheTriggerFactory: TriggerFactory;
-    
-    constructor(postgres: PostgresDriver) {
-        this.postgres = postgres;
-        this.cacheTriggerFactory = new TriggerFactory();
-    }
+    private outputErrors: Error[];
+    private diff: IDiff;
 
-    async migrate(diff: IDiff) {
+    static async migrate(postgres: PostgresDriver, diff: IDiff) {
         assert.ok(diff);
-
-        const outputErrors: Error[] = [];
-
-        await this.dropTriggers(diff, outputErrors);
-        await this.dropFunctions(diff, outputErrors);
-
-        await this.createFunctions(diff, outputErrors);
-        await this.createTriggers(diff, outputErrors);
-        await this.createAllCache(diff, outputErrors);
-
-        return outputErrors;
+        const migrator = new Migrator(postgres, diff);
+        return await migrator.migrate();
+    }
+    
+    private constructor(postgres: PostgresDriver, diff: IDiff) {
+        this.postgres = postgres;
+        this.diff = diff;
+        this.cacheTriggerFactory = new TriggerFactory();
+        this.outputErrors = [];
     }
 
-    private async dropTriggers(diff: IDiff, outputErrors: Error[]) {
+    async migrate() {
+        await this.dropTriggers();
+        await this.dropFunctions();
 
-        for (const trigger of diff.drop.triggers) {
+        await this.createFunctions();
+        await this.createTriggers();
+        await this.createAllCache();
+
+        return this.outputErrors;
+    }
+
+    private async dropTriggers() {
+
+        for (const trigger of this.diff.drop.triggers) {
             try {
                 await this.postgres.dropTrigger(trigger);
             } catch(err) {
-                // redefine callstack
-                const newErr = new Error(trigger.getSignature() + "\n" + err.message);
-                (newErr as any).originalError = err;
-
-                outputErrors.push(newErr);
+                this.onError(trigger, err);
             }
         }
     }
 
-    private async dropFunctions(diff: IDiff, outputErrors: Error[]) {
+    private async dropFunctions() {
 
-        for (const func of diff.drop.functions) {
+        for (const func of this.diff.drop.functions) {
             // 2BP01
             try {
                 await this.postgres.dropFunction(func);
@@ -55,56 +57,44 @@ export class Migrator {
                 // cannot drop function my_func() because other objects depend on it
                 const isCascadeError = err.code === "2BP01";
                 if ( !isCascadeError ) {
-                    // redefine callstack
-                    const newErr = new Error(func.getSignature() + "\n" + err.message);
-                    (newErr as any).originalError = err;
-
-                    outputErrors.push(newErr);
+                    this.onError(func, err);
                 }
             }
         }
     }
 
-    private async createFunctions(diff: IDiff, outputErrors: Error[]) {
+    private async createFunctions() {
 
-        for (const func of diff.create.functions) {
+        for (const func of this.diff.create.functions) {
             try {
                 await this.postgres.createOrReplaceFunction(func);
             } catch(err) {
-                // redefine callstack
-                const newErr = new Error(func.getSignature() + "\n" + err.message);
-                (newErr as any).originalError = err;
-                
-                outputErrors.push(newErr);
+                this.onError(func, err);
             }
         }
     }
 
-    private async createTriggers(diff: IDiff, outputErrors: Error[]) {
+    private async createTriggers() {
 
-        for (const trigger of diff.create.triggers) {
+        for (const trigger of this.diff.create.triggers) {
             try {
                 await this.postgres.createOrReplaceTrigger(trigger);
             } catch(err) {
-                // redefine callstack
-                const newErr = new Error(trigger.getSignature() + "\n" + err.message);
-                (newErr as any).originalError = err;
-                
-                outputErrors.push(newErr);
+                this.onError(trigger, err);
             }
         }
     }
 
-    private async createAllCache(diff: IDiff, outputErrors: Error[]) {
-        for (const cache of diff.create.cache || []) {
-            await this.createCache(cache, outputErrors);
+    private async createAllCache() {
+        for (const cache of this.diff.create.cache || []) {
+            await this.createCache(cache);
         }
     }
 
-    private async createCache(cache: Cache, outputErrors: Error[]) {
+    private async createCache(cache: Cache) {
         await this.createCacheColumns(cache);
         await this.updateCachePackage(cache);
-        await this.createCacheTriggers(cache, outputErrors);
+        await this.createCacheTriggers(cache);
     }
 
     private async createCacheColumns(cache: Cache) {
@@ -161,7 +151,7 @@ export class Migrator {
         );
     }
 
-    private async createCacheTriggers(cache: Cache, outputErrors: Error[]) {
+    private async createCacheTriggers(cache: Cache) {
         const triggersByTableName = this.cacheTriggerFactory.createTriggers(cache);
 
         for (const tableName in triggersByTableName) {
@@ -171,14 +161,19 @@ export class Migrator {
                 await this.postgres.createOrReplaceFunction(func);
                 await this.postgres.createOrReplaceTrigger(trigger);
             } catch(err) {
-                // redefine callstack
-                const newErr = new Error(
-                    `cache ${cache.name} for ${cache.for}\n${err.message}`
-                );
-                (newErr as any).originalError = err;
-                
-                outputErrors.push(newErr);
+                this.onError(cache, err);
             }
         }
+    }
+
+    private onError(
+        obj: {getSignature(): string},
+        err: Error
+    ) {
+        // redefine callstack
+        const newErr = new Error(obj.getSignature() + "\n" + err.message);
+        (newErr as any).originalError = err;
+        
+        this.outputErrors.push(newErr);
     }
 }

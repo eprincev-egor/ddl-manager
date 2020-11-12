@@ -38,9 +38,6 @@ describe("Migrator.migrate", () => {
     }
 
     async function migrate(params: {diff: IDiffParams}) {
-        const postgres = new PostgresDriver(db);
-        const migrator = new Migrator(postgres);
-
         const diff: IDiff = {
             drop: {
                 functions: createFunctions(params.diff.drop.functions),
@@ -51,7 +48,9 @@ describe("Migrator.migrate", () => {
                 triggers: createTriggers(params.diff.create.triggers)
             }
         };
-        await migrator.migrate(diff);
+
+        const postgres = new PostgresDriver(db);
+        await Migrator.migrate(postgres, diff);
     }
 
     function createFunctions(functions: IDatabaseFunctionParams[]) {
