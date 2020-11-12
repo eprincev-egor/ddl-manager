@@ -2,14 +2,16 @@ import assert from "assert";
 import { IDiff } from "./interface";
 import { PostgresDriver } from "./database/PostgresDriver";
 import { TriggerFactory } from "./cache/TriggerFactory";
-import { Expression, FuncCall, SelectColumn } from "./ast";
+import { Expression, Cache, SelectColumn } from "./ast";
 import { AbstractAgg, AggFactory } from "./cache/aggregator";
 
 export class Migrator {
     private postgres: PostgresDriver;
-
+    private cacheTriggerFactory: TriggerFactory;
+    
     constructor(postgres: PostgresDriver) {
         this.postgres = postgres;
+        this.cacheTriggerFactory = new TriggerFactory();
     }
 
     async migrate(diff: IDiff) {
@@ -22,7 +24,7 @@ export class Migrator {
 
         await this.createFunctions(diff, outputErrors);
         await this.createTriggers(diff, outputErrors);
-        await this.createCache(diff, outputErrors);
+        await this.createAllCache(diff, outputErrors);
 
         return outputErrors;
     }
@@ -93,79 +95,89 @@ export class Migrator {
         }
     }
 
-    private async createCache(diff: IDiff, outputErrors: Error[]) {
-
-        const cacheTriggerFactory = new TriggerFactory();
-
+    private async createAllCache(diff: IDiff, outputErrors: Error[]) {
         for (const cache of diff.create.cache || []) {
-            
-            // TODO: create helpers columns
-            const columnsTypes = await this.postgres.getCacheColumnsTypes(
-                cache.select,
-                cache.for
-            );
-            for (const columnName in columnsTypes) {
-                const columnType = columnsTypes[ columnName ];
+            await this.createCache(cache, outputErrors);
+        }
+    }
 
-                const selectColumn = cache.select.columns.find(column =>
-                    column.name === columnName
-                ) as SelectColumn;
+    private async createCache(cache: Cache, outputErrors: Error[]) {
+        await this.createCacheColumns(cache);
+        await this.updateCachePackage(cache);
+        await this.createCacheTriggers(cache, outputErrors);
+    }
 
-                const aggFactory = new AggFactory(selectColumn);
-                const aggregations = aggFactory.createAggregations();
-                const agg = Object.values(aggregations)[0] as AbstractAgg;
+    private async createCacheColumns(cache: Cache) {
+        // TODO: create helpers columns
+        const columnsTypes = await this.postgres.getCacheColumnsTypes(
+            cache.select,
+            cache.for
+        );
+        for (const columnName in columnsTypes) {
+            const columnType = columnsTypes[ columnName ];
 
-                await this.postgres.createOrReplaceColumn(
-                    cache.for.table,
-                    {
-                        key: columnName,
-                        type: columnType,
-                        // TODO: detect default by expression
-                        default: agg.default()
-                    }
-                );
-            }
+            const selectColumn = cache.select.columns.find(column =>
+                column.name === columnName
+            ) as SelectColumn;
 
-            // TODO: update helpers columns
-            await this.postgres.updateCachePackage(
-                cache.select.cloneWith({
-                    columns: cache.select.columns.map(selectColumn => {
-                        const aggFactory = new AggFactory(selectColumn);
-                        const aggregations = aggFactory.createAggregations();
-                        const agg = Object.values(aggregations)[0] as AbstractAgg;
+            const aggFactory = new AggFactory(selectColumn);
+            const aggregations = aggFactory.createAggregations();
+            const agg = Object.values(aggregations)[0] as AbstractAgg;
 
-                        if ( agg.call.name !== "sum" ) {
-                            return selectColumn;
-                        }
-
-                        const newExpression = Expression.funcCall("coalesce", [
-                            selectColumn.expression,
-                            Expression.unknown( agg.default() )
-                        ]);
-                        return selectColumn.replaceExpression(newExpression);
-                    })
-                }),
-                cache.for,
-                500
-            );
-
-            const triggersByTableName = cacheTriggerFactory.createTriggers(cache);
-
-            for (const tableName in triggersByTableName) {
-                const {trigger, function: func} = triggersByTableName[ tableName ];
-
-                try {
-                    await this.postgres.createOrReplaceFunction(func);
-                    await this.postgres.createOrReplaceTrigger(trigger);
-                } catch(err) {
-                    // redefine callstack
-                    const newErr = new Error(
-                        `cache ${cache.name} for ${cache.for}\n${err.message}`
-                    );
-                    (newErr as any).originalError = err;
-                    
-                    outputErrors.push(newErr);
+            await this.postgres.createOrReplaceColumn(
+                cache.for.table,
+                {
+                    key: columnName,
+                    type: columnType,
+                    // TODO: detect default by expression
+                    default: agg.default()
                 }
+            );
+        }
+    }
+
+    private async updateCachePackage(cache: Cache) {
+        // TODO: update helpers columns
+        await this.postgres.updateCachePackage(
+            cache.select.cloneWith({
+                columns: cache.select.columns.map(selectColumn => {
+                    const aggFactory = new AggFactory(selectColumn);
+                    const aggregations = aggFactory.createAggregations();
+                    const agg = Object.values(aggregations)[0] as AbstractAgg;
+
+                    if ( agg.call.name !== "sum" ) {
+                        return selectColumn;
+                    }
+
+                    const newExpression = Expression.funcCall("coalesce", [
+                        selectColumn.expression,
+                        Expression.unknown( agg.default() )
+                    ]);
+                    return selectColumn.replaceExpression(newExpression);
+                })
+            }),
+            cache.for,
+            500
+        );
+    }
+
+    private async createCacheTriggers(cache: Cache, outputErrors: Error[]) {
+        const triggersByTableName = this.cacheTriggerFactory.createTriggers(cache);
+
+        for (const tableName in triggersByTableName) {
+            const {trigger, function: func} = triggersByTableName[ tableName ];
+
+            try {
+                await this.postgres.createOrReplaceFunction(func);
+                await this.postgres.createOrReplaceTrigger(trigger);
+            } catch(err) {
+                // redefine callstack
+                const newErr = new Error(
+                    `cache ${cache.name} for ${cache.for}\n${err.message}`
+                );
+                (newErr as any).originalError = err;
+                
+                outputErrors.push(newErr);
             }
         }
     }
