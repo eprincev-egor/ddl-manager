@@ -1,4 +1,4 @@
-import { FuncCall, Expression, SelectColumn } from "../../ast";
+import { FuncCall, Expression, SelectColumn, Select } from "../../ast";
 import { AbstractAgg } from "./AbstractAgg";
 import { aggregatorsMap } from "./aggregatorsMap";
 import { ArrayAgg } from "./ArrayAgg";
@@ -12,9 +12,11 @@ interface IAggMap {
 export class AggFactory {
 
     private updateColumn: SelectColumn;
+    private select: Select;
     private columnNameGenerator: ColumnNameGenerator;
 
-    constructor(updateColumn: SelectColumn) {
+    constructor(select: Select, updateColumn: SelectColumn) {
+        this.select = select;
         this.updateColumn = updateColumn;
         this.columnNameGenerator = new ColumnNameGenerator(updateColumn);
     }
@@ -46,9 +48,10 @@ export class AggFactory {
     
         const ConcreteAggregator = aggregatorsMap[ aggCall.name ];
         const agg = new ConcreteAggregator({
+            select: this.select,
+            updateColumn: this.updateColumn,
             call: aggCall,
-            total: Expression.unknown(aggColumnName),
-            recalculateSelect: this.updateColumn.recalculateSelect
+            total: Expression.unknown(aggColumnName)
         });
 
         return {
@@ -63,18 +66,20 @@ export class AggFactory {
         const arrayAggColumnName = aggColumnName + "_array_agg";
 
         const arrayAgg = new ArrayAgg({
+            select: this.select,
+            updateColumn: this.updateColumn,
             call: new FuncCall(
                 "array_agg",
                 aggCall.args
             ),
-            total: Expression.unknown(arrayAggColumnName),
-            recalculateSelect: this.updateColumn.recalculateSelect
+            total: Expression.unknown(arrayAggColumnName)
         });
     
         const stringAgg = new StringAgg({
+            select: this.select,
+            updateColumn: this.updateColumn,
             call: aggCall,
-            total: Expression.unknown(aggColumnName),
-            recalculateSelect: this.updateColumn.recalculateSelect
+            total: Expression.unknown(aggColumnName)
         }, arrayAgg);
 
         map[ arrayAggColumnName ] = arrayAgg;

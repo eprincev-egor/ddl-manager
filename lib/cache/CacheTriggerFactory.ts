@@ -20,8 +20,32 @@ import { buildFromAndWhere } from "./processor/buildFromAndWhere";
 import { findJoinsMeta } from "./processor/findJoinsMeta";
 import { findDependencies } from "./processor/findDependencies";
 import { buildSimpleWhere } from "./processor/buildSimpleWhere";
+import { AbstractAgg, AggFactory } from "./aggregator";
 
 export class CacheTriggerFactory {
+
+    createSelectForUpdate(cache: Cache) {
+        const columnsToUpdate = cache.select.columns.map(selectColumn => {
+            const aggFactory = new AggFactory(cache.select, selectColumn);
+            const aggregations = aggFactory.createAggregations();
+            const agg = Object.values(aggregations)[0] as AbstractAgg;
+
+            if ( agg.call.name !== "sum" ) {
+                return selectColumn;
+            }
+
+            const newExpression = Expression.funcCall("coalesce", [
+                selectColumn.expression,
+                Expression.unknown( agg.default() )
+            ]);
+            return selectColumn.replaceExpression(newExpression);
+        });
+
+        const selectToUpdate = cache.select.cloneWith({
+            columns: columnsToUpdate
+        });
+        return selectToUpdate;
+    }
 
     createTriggers(cacheOrSQL: string | Cache) {
         const output: {

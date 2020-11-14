@@ -98,9 +98,9 @@ export class Migrator {
     }
 
     private async createCacheColumns(cache: Cache) {
-        // TODO: create helpers columns
+        const selectToUpdate = this.cacheTriggerFactory.createSelectForUpdate(cache);
         const columnsTypes = await this.postgres.getCacheColumnsTypes(
-            cache.select,
+            selectToUpdate,
             cache.for
         );
         for (const columnName in columnsTypes) {
@@ -110,7 +110,7 @@ export class Migrator {
                 column.name === columnName
             ) as SelectColumn;
 
-            const aggFactory = new AggFactory(selectColumn);
+            const aggFactory = new AggFactory(cache.select, selectColumn);
             const aggregations = aggFactory.createAggregations();
             const agg = Object.values(aggregations)[0] as AbstractAgg;
 
@@ -127,24 +127,7 @@ export class Migrator {
     }
 
     private async updateCachePackage(cache: Cache) {
-        // TODO: update helpers columns
-        const selectToUpdate = cache.select.cloneWith({
-            columns: cache.select.columns.map(selectColumn => {
-                const aggFactory = new AggFactory(selectColumn);
-                const aggregations = aggFactory.createAggregations();
-                const agg = Object.values(aggregations)[0] as AbstractAgg;
-
-                if ( agg.call.name !== "sum" ) {
-                    return selectColumn;
-                }
-
-                const newExpression = Expression.funcCall("coalesce", [
-                    selectColumn.expression,
-                    Expression.unknown( agg.default() )
-                ]);
-                return selectColumn.replaceExpression(newExpression);
-            })
-        });
+        const selectToUpdate = this.cacheTriggerFactory.createSelectForUpdate(cache);
 
         const limit = 500;
         let updatedCount = 0;

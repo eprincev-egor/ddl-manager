@@ -115,10 +115,6 @@ export class SelectParser {
                     select, 
                     [cacheFor], 
                     expressionSyntax.toString()
-                ),
-                recalculateSelect: this.createRecalculateSelect(
-                    selectSyntax,
-                    column
                 )
             });
 
@@ -126,17 +122,6 @@ export class SelectParser {
         }
 
         return select;
-    }
-
-    private createRecalculateSelect(
-        selectSyntax: SelectSyntax,
-        column: Column
-    ) {
-        const selectClone = selectSyntax.clone();
-        selectClone.set({
-            columns: [column]
-        });
-        return selectClone.toString();
     }
 
     private parseWhere(

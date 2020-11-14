@@ -104,7 +104,7 @@ export class FuncCall extends AbstractExpressionElement {
         sql += ")";
 
         if ( this.where ) {
-            sql += " filter(where ";
+            sql += " filter (where ";
             sql += this.where.toString();
             sql += ")";
         }

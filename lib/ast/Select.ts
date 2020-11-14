@@ -78,12 +78,12 @@ export class Select {
     toString() {
         let sql = "select\n";
 
-        sql += this.columns.join(",\n");
+        sql += this.columns.map(col => "    " + col).join(",\n");
         
         sql += "\nfrom " + this.from.join(", ");
 
         if ( this.where ) {
-            sql += "\nwhere\n" + this.where.toString();
+            sql += "\nwhere\n    " + this.where.toString();
         }
 
         return sql;

@@ -1,9 +1,10 @@
-import { FuncCall, Expression, IExpressionElement } from "../../ast";
+import { FuncCall, Expression, IExpressionElement, Select, SelectColumn } from "../../ast";
 
 export interface IAggParams {
+    select: Select;
+    updateColumn: SelectColumn;
     call: FuncCall;
     total: Expression;
-    recalculateSelect: string;
 }
 
 export abstract class AbstractAgg {
@@ -15,7 +16,9 @@ export abstract class AbstractAgg {
     constructor(params: IAggParams) {
         this.call = params.call;
         this.total = params.total;
-        this.recalculateSelect = params.recalculateSelect;
+        this.recalculateSelect = params.select.cloneWith({
+            columns: [params.updateColumn]
+        }).toString();
     }
 
     abstract minus(value: Expression): IExpressionElement;

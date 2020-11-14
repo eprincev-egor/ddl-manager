@@ -48,6 +48,7 @@ function createSetItems(
     const updateColumns = prepareUpdateColumns(cache, aggType);
     const setItems = flatMap(updateColumns, updateColumn => 
         createSetItemsByColumn(
+            cache,
             triggerTable, 
             joins,
             updateColumn,
@@ -88,6 +89,7 @@ function prepareUpdateColumns(cache: Cache, aggType: AggType) {
 }
 
 function createSetItemsByColumn(
+    cache: Cache,
     triggerTable: Table,
     joins: IJoinMeta[],
     updateColumn: SelectColumn,
@@ -95,7 +97,7 @@ function createSetItemsByColumn(
     hasOtherColumns: boolean
 ): SetItem[] {
 
-    const aggFactory = new AggFactory(updateColumn);
+    const aggFactory = new AggFactory(cache.select, updateColumn);
     const aggMap = aggFactory.createAggregations();
 
     const setItems: SetItem[] = [];

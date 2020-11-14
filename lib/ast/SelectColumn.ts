@@ -13,7 +13,6 @@ const aggFuncsNames = [
 interface ISelectColumnParams {
     name: string;
     expression: Expression;
-    recalculateSelect: string;
 }
 
 export class SelectColumn {
@@ -29,16 +28,14 @@ export class SelectColumn {
     clone() {
         return new SelectColumn({
             name: this.name,
-            expression: this.expression.clone(),
-            recalculateSelect: this.recalculateSelect
+            expression: this.expression.clone()
         });
     }
 
     replaceExpression(newExpression: Expression) {
         return new SelectColumn({
             name: this.name,
-            expression: newExpression,
-            recalculateSelect: this.recalculateSelect
+            expression: newExpression
         });
     }
 
