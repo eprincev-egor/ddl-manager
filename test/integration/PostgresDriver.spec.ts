@@ -1,10 +1,12 @@
 import fs from "fs";
 import fse from "fs-extra";
+import assert from "assert";
 import { getDBClient } from "./getDbClient";
 import { DDLManager } from "../../lib/DDLManager";
 import { PostgresDriver } from "../../lib/database/PostgresDriver";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import { From, Select, SelectColumn, Table, TableReference, Expression, ColumnReference, Operator } from "../../lib/ast";
 
 use(chaiShallowDeepEqualPlugin);
 
@@ -863,6 +865,143 @@ describe("integration/PostgresDriver.loadState", () => {
             ],
             triggers: []
         });
+    });
+
+    it("updateCachePackage", async() => {
+        
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                name text not null unique,
+                orders_profit numeric default 0
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer not null,
+                profit numeric
+            );
+
+            insert into companies
+                (name)
+            select
+                'c' || i
+            from generate_series(1, 10) as i;
+
+            insert into orders
+                (id_client, profit)
+            select
+                company_id, 100
+            from generate_series(1, 10) as company_id;
+        `);
+
+        const driver = new PostgresDriver(db);
+        
+        const companiesTable = new Table(
+            "public",
+            "companies"
+        );
+        const companiesTableRef = new TableReference( companiesTable );
+
+        const ordersTable = new Table(
+            "public",
+            "orders"
+        );
+        const ordersTableRef = new TableReference( ordersTable );
+
+        const select = new Select({
+            columns: [
+                new SelectColumn({
+                    expression: Expression.funcCall("sum", [
+                        new Expression([
+                            new ColumnReference(ordersTableRef, "profit")
+                        ])
+                    ]),
+                    name: "orders_profit"
+                })
+            ],
+            from: [
+                new From( ordersTableRef )
+            ],
+            where: new Expression([
+                new ColumnReference(ordersTableRef, "id_client"),
+                new Operator("="),
+                new ColumnReference(companiesTableRef, "id")
+            ])
+        });
+
+        let result: any;
+        let updatedCount: any;
+
+        updatedCount = await driver.updateCachePackage(
+            select,
+            companiesTableRef,
+            3
+        );
+
+        assert.strictEqual(updatedCount, 3);
+
+        result = await db.query("select * from companies order by id");
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, name: "c1", orders_profit: "100"},
+            {id: 2, name: "c2", orders_profit: "100"},
+            {id: 3, name: "c3", orders_profit: "100"},
+            {id: 4, name: "c4", orders_profit: "0"},
+            {id: 5, name: "c5", orders_profit: "0"},
+            {id: 6, name: "c6", orders_profit: "0"},
+            {id: 7, name: "c7", orders_profit: "0"},
+            {id: 8, name: "c8", orders_profit: "0"},
+            {id: 9, name: "c9", orders_profit: "0"},
+            {id:10, name:"c10", orders_profit: "0"},
+        ], "first update");
+
+        // after second update, more rows should be updated
+        // also should be update broken rows
+        await db.query("update companies set orders_profit = 20 where id in (1,2,3)");
+        updatedCount = await driver.updateCachePackage(
+            select,
+            companiesTableRef,
+            6
+        );
+
+        assert.strictEqual(updatedCount, 6);
+
+        result = await db.query("select * from companies order by id");
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, name: "c1", orders_profit: "100"},
+            {id: 2, name: "c2", orders_profit: "100"},
+            {id: 3, name: "c3", orders_profit: "100"},
+            {id: 4, name: "c4", orders_profit: "100"},
+            {id: 5, name: "c5", orders_profit: "100"},
+            {id: 6, name: "c6", orders_profit: "100"},
+            {id: 7, name: "c7", orders_profit: "0"},
+            {id: 8, name: "c8", orders_profit: "0"},
+            {id: 9, name: "c9", orders_profit: "0"},
+            {id:10, name:"c10", orders_profit: "0"},
+        ], "second update");
+
+        
+        // last update, all rows should be updated
+        updatedCount = await driver.updateCachePackage(
+            select,
+            companiesTableRef,
+            5
+        );
+
+        assert.strictEqual(updatedCount, 4);
+
+        result = await db.query("select * from companies order by id");
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, name: "c1", orders_profit: "100"},
+            {id: 2, name: "c2", orders_profit: "100"},
+            {id: 3, name: "c3", orders_profit: "100"},
+            {id: 4, name: "c4", orders_profit: "100"},
+            {id: 5, name: "c5", orders_profit: "100"},
+            {id: 6, name: "c6", orders_profit: "100"},
+            {id: 7, name: "c7", orders_profit: "100"},
+            {id: 8, name: "c8", orders_profit: "100"},
+            {id: 9, name: "c9", orders_profit: "100"},
+            {id:10, name:"c10", orders_profit: "100"},
+        ], "third update");
     });
 
 });

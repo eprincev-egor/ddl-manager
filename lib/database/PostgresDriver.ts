@@ -205,18 +205,46 @@ implements IDatabaseDriver {
             column.name
         );
 
+        const whereRowIsBroken = columnsToUpdate.map(columnName =>
+            `${forTable.getIdentifier()}.${columnName} is distinct from ddl_manager_tmp.${columnName}`
+        ).join(" or ");
+
+        const selectBrokenRowsWithLimit = `
+            select
+                ${forTable.getIdentifier()}.id,
+                ddl_manager_tmp.*
+            from ${forTable}
+
+            left join lateral (
+                ${ select }
+            ) as ddl_manager_tmp on true
+
+            where
+                ${ whereRowIsBroken }
+            
+            order by ${forTable.getIdentifier()}.id asc
+            limit ${ limit }
+        `;
+
         const sql = `
             update ${forTable} set
                 (
                     ${ columnsToUpdate.join(", ") }
                 ) = (
-                    ${select}
+                    ${ select }
                 )
-        `;
-        await this.pgClient.query(sql);
+            from (
+                ${ selectBrokenRowsWithLimit }
+            ) as ddl_manager_tmp
 
-        // TODO: test it
-        return 0;
+            where
+                ddl_manager_tmp.id = ${forTable.getIdentifier()}.id
+            
+            returning ${forTable.getIdentifier()}.id
+        `;
+        const {rows} = await this.pgClient.query(sql);
+
+        return rows.length;
     }
 
     end() {
