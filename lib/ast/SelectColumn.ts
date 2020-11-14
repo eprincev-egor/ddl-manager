@@ -18,8 +18,6 @@ interface ISelectColumnParams {
 export class SelectColumn {
     readonly name!: string;
     readonly expression!: Expression;
-    // TODO: remove it
-    readonly recalculateSelect!: string;
 
     constructor(params: ISelectColumnParams) {
         Object.assign(this, params);
