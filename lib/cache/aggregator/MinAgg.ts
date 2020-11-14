@@ -1,7 +1,7 @@
 import { CaseWhen, Expression, Operator } from "../../ast";
-import { AbstractAgg } from "./AbstractAgg";
+import { MinMaxAbstractAgg } from "./MinMaxAbstractAgg";
 
-export class MinAgg extends AbstractAgg {
+export class MinAgg extends MinMaxAbstractAgg {
 
     minus(value: Expression) {
         return new CaseWhen({

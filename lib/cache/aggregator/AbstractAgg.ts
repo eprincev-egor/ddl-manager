@@ -10,15 +10,15 @@ export interface IAggParams {
 export abstract class AbstractAgg {
 
     readonly call: FuncCall;
+    protected readonly select: Select;
+    protected readonly updateColumn: SelectColumn;
     protected readonly total: Expression;
-    protected readonly recalculateSelect: string;
 
     constructor(params: IAggParams) {
         this.call = params.call;
         this.total = params.total;
-        this.recalculateSelect = params.select.cloneWith({
-            columns: [params.updateColumn]
-        }).toString();
+        this.select = params.select;
+        this.updateColumn = params.updateColumn;
     }
 
     abstract minus(value: Expression): IExpressionElement;
@@ -27,10 +27,5 @@ export abstract class AbstractAgg {
 
     default(): string {
         return "null";
-    }
-
-    protected printSelect(spaces: string) {
-        const selectSQL = spaces + this.recalculateSelect.replace(/\n/g, `\n${spaces}`);
-        return selectSQL;
     }
 }
