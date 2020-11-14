@@ -4,7 +4,8 @@ import {
     Table,
     Cache,
     DatabaseFunction,
-    DatabaseTrigger
+    DatabaseTrigger,
+    SelectColumn
 } from "../ast";
 import { buildReferenceMeta, IReferenceMeta } from "./processor/buildReferenceMeta";
 import { buildCommutativeBody } from "./processor/buildCommutativeBody";
@@ -20,25 +21,41 @@ import { buildFromAndWhere } from "./processor/buildFromAndWhere";
 import { findJoinsMeta } from "./processor/findJoinsMeta";
 import { findDependencies } from "./processor/findDependencies";
 import { buildSimpleWhere } from "./processor/buildSimpleWhere";
-import { AbstractAgg, AggFactory } from "./aggregator";
+import { AggFactory } from "./aggregator";
+import { flatMap } from "lodash";
 
 export class CacheTriggerFactory {
 
     createSelectForUpdate(cache: Cache) {
-        const columnsToUpdate = cache.select.columns.map(selectColumn => {
+        const columnsToUpdate = flatMap(cache.select.columns, selectColumn => {
             const aggFactory = new AggFactory(cache.select, selectColumn);
             const aggregations = aggFactory.createAggregations();
-            const agg = Object.values(aggregations)[0] as AbstractAgg;
+            
+            const columns = Object.keys(aggregations).map(aggColumnName => {
+                const agg = aggregations[ aggColumnName ];
 
-            if ( agg.call.name !== "sum" ) {
-                return selectColumn;
+                let expression = new Expression([
+                    agg.call
+                ]);
+                if ( agg.call.name === "sum" ) {
+                    expression = Expression.funcCall("coalesce", [
+                        selectColumn.expression,
+                        Expression.unknown( agg.default() )
+                    ]);
+                }
+
+                const column = new SelectColumn({
+                    name: aggColumnName,
+                    expression
+                });
+                return column;
+            });
+
+            if ( !selectColumn.expression.isFuncCall() ) {
+                columns.push(selectColumn);
             }
 
-            const newExpression = Expression.funcCall("coalesce", [
-                selectColumn.expression,
-                Expression.unknown( agg.default() )
-            ]);
-            return selectColumn.replaceExpression(newExpression);
+            return columns;
         });
 
         const selectToUpdate = cache.select.cloneWith({

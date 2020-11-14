@@ -106,7 +106,7 @@ export class Migrator {
         for (const columnName in columnsTypes) {
             const columnType = columnsTypes[ columnName ];
 
-            const selectColumn = cache.select.columns.find(column =>
+            const selectColumn = selectToUpdate.columns.find(column =>
                 column.name === columnName
             ) as SelectColumn;
 

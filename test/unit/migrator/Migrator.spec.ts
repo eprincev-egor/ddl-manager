@@ -16,6 +16,16 @@ describe("Migrator", () => {
         changes = Diff.empty();
     });
 
+    const ordersProfitCacheSQL = `
+        cache test for some_table (
+            select
+                sum( another_table.profit ) as orders_profit
+            from another_table
+            where
+                another_table.id_client = some_table.id
+        )
+    `;
+
     it("create function", async() => {
         changes.createState({
             functions: [
@@ -78,7 +88,7 @@ describe("Migrator", () => {
             orders_profit: "numeric"
         });
 
-        changes.createState({cache: [generateTestCache()]});
+        changes.createState({cache: [parseCache(ordersProfitCacheSQL)]});
 
         await Migrator.migrate(database, changes);
 
@@ -115,7 +125,7 @@ describe("Migrator", () => {
             orders_profit: "numeric"
         });
 
-        const cache = generateTestCache()
+        const cache = parseCache(ordersProfitCacheSQL);
         changes.createState({cache: [cache]});
 
         database.setRowsCount(cache.for.table.toString(), 1499);
@@ -128,16 +138,84 @@ describe("Migrator", () => {
         );
     });
 
-    function generateTestCache() {
-        const fileContent = FileParser.parse(`
+
+    it("create cache helpers columns for string_agg", async() => {
+
+        database.setColumnsTypes({
+            doc_numbers_array_agg: "text[]",
+            doc_numbers: "text"
+        });
+
+        changes.createState({cache: [parseCache(`
             cache test for some_table (
                 select
-                    sum( another_table.profit ) as orders_profit
+                    string_agg( another_table.doc_number, ', ' ) as doc_numbers
                 from another_table
                 where
                     another_table.id_client = some_table.id
             )
-        `) as IState;
+        `)]});
+
+        await Migrator.migrate(database, changes);
+
+        assert.deepStrictEqual(database.columns, {
+            "public.some_table.doc_numbers_array_agg": {
+                key: "doc_numbers_array_agg",
+                type: "text[]",
+                "default": "null"
+            },
+            "public.some_table.doc_numbers": {
+                key: "doc_numbers",
+                type: "text",
+                "default": "null"
+            }
+        });
+    });
+
+
+    it("create cache helpers columns for hard expression", async() => {
+
+        database.setColumnsTypes({
+            some_profit_sum_profit: "numeric",
+            some_profit_sum_xxx: "numeric",
+            some_profit: "numeric"
+        });
+
+        changes.createState({cache: [parseCache(`
+            cache test for some_table (
+                select
+                    sum( another_table.profit ) * 2 + 
+                    sum( another_table.xxx )
+                    as some_profit
+                from another_table
+                where
+                    another_table.id_client = some_table.id
+            )
+        `)]});
+
+        await Migrator.migrate(database, changes);
+
+        assert.deepStrictEqual(database.columns, {
+            "public.some_table.some_profit_sum_profit": {
+                key: "some_profit_sum_profit",
+                type: "numeric",
+                "default": "0"
+            },
+            "public.some_table.some_profit_sum_xxx": {
+                key: "some_profit_sum_xxx",
+                type: "numeric",
+                "default": "0"
+            },
+            "public.some_table.some_profit": {
+                key: "some_profit",
+                type: "numeric",
+                "default": "0"
+            }
+        });
+    });
+
+    function parseCache(sql: string) {
+        const fileContent = FileParser.parse(sql) as IState;
         const testCache = (fileContent.cache as Cache[])[0] as Cache;
 
         return testCache;
