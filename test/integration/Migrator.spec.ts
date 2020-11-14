@@ -1,4 +1,5 @@
 import assert from "assert";
+import { Client } from "pg";
 import { getDBClient } from "./getDbClient";
 import { Migrator } from "../../lib/Migrator";
 import { DatabaseFunction, IDatabaseFunctionParams } from "../../lib/ast/DatabaseFunction";
@@ -7,11 +8,14 @@ import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { PostgresDriver } from "../../lib/database/PostgresDriver";
 import { Diff } from "../../lib/Diff";
+import { FileParser } from "../../lib/parser";
+import { IState } from "../../lib/interface";
+import { Cache } from "../../lib/ast";
 
 use(chaiShallowDeepEqualPlugin);
 
 describe("integration/Migrator", () => {
-    let db: any;
+    let db!: Client;
     
     beforeEach(async() => {
         db = await getDBClient();
@@ -1008,4 +1012,69 @@ describe("integration/Migrator", () => {
 
     });
 
+    it("update cache helpers columns", async() => {
+
+        await db.query(`
+            create table companies (
+                id serial primary key
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer,
+                doc_number text,
+                profit numeric,
+                xxx numeric
+            );
+
+            insert into companies default values;
+            insert into orders
+                (id_client, doc_number, profit, xxx)
+            values
+                (1, 'o1', 100, 10),
+                (1, 'o2', 200, 20)
+        `);
+        
+        const cache = parseCache(`
+            cache test for companies (
+                select
+                    string_agg( distinct orders.doc_number, ', ' ) 
+                    as doc_numbers,
+
+                    sum( orders.profit ) * 2 + 
+                    sum( orders.xxx )
+                    as some_profit,
+
+                    max( orders.profit ) as max_profit
+                
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+
+        const changes = Diff.empty().createState({
+            cache: [cache]
+        });
+
+        const postgres = new PostgresDriver(db);
+        await Migrator.migrate(postgres, changes);
+
+        const {rows} = await db.query("select * from companies");
+        assert.deepStrictEqual(rows[0], {
+            id: 1,
+            doc_numbers_array_agg: ["o1", "o2"] ,
+            doc_numbers: "o1, o2",
+            some_profit_sum_profit: "300",
+            some_profit_sum_xxx: "30",
+            some_profit: "630",
+            max_profit: "200"
+        });
+    });
+
+    function parseCache(sql: string) {
+        const fileContent = FileParser.parse(sql) as IState;
+        const testCache = (fileContent.cache as Cache[])[0] as Cache;
+
+        return testCache;
+    }
 });

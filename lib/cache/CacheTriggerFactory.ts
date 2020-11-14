@@ -39,7 +39,7 @@ export class CacheTriggerFactory {
                 ]);
                 if ( agg.call.name === "sum" ) {
                     expression = Expression.funcCall("coalesce", [
-                        selectColumn.expression,
+                        expression,
                         Expression.unknown( agg.default() )
                     ]);
                 }
