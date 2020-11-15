@@ -6,15 +6,25 @@ import {
     CacheFor
 } from "grapeql-lang";
 import { IState } from "../interface";
-import { DatabaseFunction, DatabaseTrigger } from "../ast";
-import assert from "assert";
+import { DatabaseFunction, DatabaseTrigger, Cache } from "../ast";
 import { CacheParser } from "./CacheParser";
+import assert from "assert";
 
 export class FileParser {
 
     static parse(sql: string) {
         const parser = new FileParser();
         return parser.parse(sql);
+    }
+
+    static parseCache(sql: string) {
+        const fileContent = FileParser.parse(sql);
+        assert.ok( fileContent, "should be not empty sql" );
+        
+        const cache = (fileContent.cache || [])[0];
+        assert.ok( cache instanceof Cache, "sql should contain cache" );
+
+        return cache;
     }
 
     parse(sql: string): IState | undefined {

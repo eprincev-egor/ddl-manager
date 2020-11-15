@@ -37,7 +37,8 @@ implements IDatabaseDriver {
             ),
             triggers: await this.loadObjects<DatabaseTrigger>(
                 selectAllTriggersSQL
-            )
+            ),
+            cache: []
         };
         return state;
     }

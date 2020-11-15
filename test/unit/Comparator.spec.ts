@@ -1,5 +1,6 @@
 import _ from "lodash";
 import { Comparator } from "../../lib/Comparator";
+import { FileParser } from "../../lib/parser/FileParser";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 
@@ -7,6 +8,21 @@ use(chaiShallowDeepEqualPlugin);
 
 function diffState(params: {filesState: any, dbState: any}) {
     const {dbState, filesState} = params;
+    
+    Object.assign(dbState, {
+        functions: [],
+        triggers: [],
+        cache: [],
+        ...dbState
+    });
+
+    Object.assign(filesState, {
+        functions: [],
+        triggers: [],
+        cache: [],
+        ...filesState
+    });
+
     const diff = Comparator.compare(dbState, filesState);
     return diff;
 }
@@ -704,4 +720,111 @@ describe("Comparator", () => {
             }
         });
     });
+
+    it("create cache", () => {
+        const cache = FileParser.parseCache(`
+            cache test_cache for y (
+                select
+                    array_agg(y.id) as y_ids
+                from y
+            )
+        `);
+
+        const diff = diffState({
+            filesState: {
+                functions: [],
+                triggers: [],
+                cache: [cache]
+            },
+            dbState: {
+                functions: [],
+                triggers: []
+            }
+        });
+
+        expect(diff).to.be.shallowDeepEqual({
+            drop: {
+                triggers: [],
+                functions: []
+            },
+            create: {
+                triggers: [],
+                functions: [],
+                cache: [cache]
+            }
+        });
+    });
+
+    it("drop cache", () => {
+        const cache = FileParser.parseCache(`
+            cache test_cache for y (
+                select
+                    array_agg(y.id) as y_ids
+                from y
+            )
+        `);
+
+        const diff = diffState({
+            filesState: {
+                functions: [],
+                triggers: [],
+                cache: []
+            },
+            dbState: {
+                functions: [],
+                triggers: [],
+                cache: [cache]
+            }
+        });
+
+        expect(diff).to.be.shallowDeepEqual({
+            drop: {
+                triggers: [],
+                functions: [],
+                cache: [cache]
+            },
+            create: {
+                triggers: [],
+                functions: [],
+                cache: []
+            }
+        });
+    });
+
+    it("empty migration if cache equals", () => {
+        const cache = FileParser.parseCache(`
+            cache test_cache for y (
+                select
+                    array_agg(y.id) as y_ids
+                from y
+            )
+        `);
+
+        const diff = diffState({
+            filesState: {
+                functions: [],
+                triggers: [],
+                cache: [cache]
+            },
+            dbState: {
+                functions: [],
+                triggers: [],
+                cache: [cache]
+            }
+        });
+
+        expect(diff).to.be.shallowDeepEqual({
+            drop: {
+                triggers: [],
+                functions: [],
+                cache: []
+            },
+            create: {
+                triggers: [],
+                functions: [],
+                cache: []
+            }
+        });
+    });
+
 });

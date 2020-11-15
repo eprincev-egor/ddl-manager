@@ -133,7 +133,7 @@ export class Migrator {
     
             // ищем те, которые явно указали, что они будут после prevItem
             const nextItems = allSelectsForEveryColumn.filter((nextItem) =>
-                dependentOn(allSelectsForEveryColumn, nextItem, prevItem)
+                dependentOn(nextItem, prevItem)
             );
     
             for (let j = 0, m = nextItems.length; j < m; j++) {
@@ -248,14 +248,13 @@ export class Migrator {
 function isRoot(allItems: ISortSelectItem[], item: ISortSelectItem) {
     const hasDependencies = allItems.some(prevItem =>
         prevItem !== item &&
-        dependentOn(allItems, item, prevItem)
+        dependentOn(item, prevItem)
     );
     return !hasDependencies;
 }
 
 // x dependent on y ?
 function dependentOn(
-    allItems: ISortSelectItem[],
     xItem: ISortSelectItem,
     yItem: ISortSelectItem
 ): boolean {

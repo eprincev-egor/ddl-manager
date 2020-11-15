@@ -7,7 +7,7 @@ import {
 export interface IState {
     functions: DatabaseFunction[];
     triggers: DatabaseTrigger[];
-    cache?: Cache[];
+    cache: Cache[];
 }
 
 export interface IFile {

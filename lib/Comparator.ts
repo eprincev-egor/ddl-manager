@@ -2,6 +2,7 @@ import assert from "assert";
 import { isObject, isArray } from "lodash";
 import { Diff } from "./Diff";
 import { IState } from "./interface";
+import { isEqual } from "lodash";
 
 export class Comparator {
 
@@ -27,6 +28,7 @@ export class Comparator {
     compare() {
         this.dropFunctions();
         this.dropTriggers();
+        this.dropCache();
         
         this.createFunctions();
         this.createTriggers();
@@ -44,7 +46,7 @@ export class Comparator {
             }
 
             const existsSameFuncFromFile = this.filesState.functions.some(fileFunc =>
-                equalFunction(fileFunc, func)
+                isEqual(fileFunc, func)
             );
 
             if ( existsSameFuncFromFile ) {
@@ -64,7 +66,7 @@ export class Comparator {
                     }
                     
                     const existsSameTriggerFromFile = this.filesState.triggers.some(fileTrigger =>
-                        equalTrigger(fileTrigger, dbTrigger)
+                        isEqual(fileTrigger, dbTrigger)
                     );
 
                     // if trigger has change, then he will dropped
@@ -95,7 +97,7 @@ export class Comparator {
         const triggersToDrop = triggersCreatedFromDDLManager.filter(trigger => {
 
             const existsSameTriggerFromFile = this.filesState.triggers.some(fileTrigger =>
-                equalTrigger(fileTrigger, trigger)
+                isEqual(fileTrigger, trigger)
             );
             return !existsSameTriggerFromFile;
         });
@@ -103,11 +105,24 @@ export class Comparator {
         this.diff.dropState({triggers: triggersToDrop});
     }
 
+    private dropCache() {
+        for (const cache of this.dbState.cache) {
+            const sameCacheFromFile = this.filesState.cache.find(fileCache =>
+                fileCache.name === cache.name &&
+                fileCache.for.equal(cache.for)
+            );
+
+            if ( !isEqual(cache, sameCacheFromFile) ) {
+                this.diff.dropCache(cache);
+            }
+        }
+    }
+
     private createFunctions() {
         for (const func of this.filesState.functions) {
 
             const existsSameFuncFromDb = this.dbState.functions.find(dbFunc =>
-                equalFunction(dbFunc, func)
+                isEqual(dbFunc, func)
             );
 
             if ( existsSameFuncFromDb ) {
@@ -122,7 +137,7 @@ export class Comparator {
         for (const trigger of this.filesState.triggers) {
             
             const existsSameTriggerFromDb = this.dbState.triggers.some(dbTrigger =>
-                equalTrigger(dbTrigger, trigger)
+                isEqual(dbTrigger, trigger)
             );
 
             if ( existsSameTriggerFromDb ) {
@@ -134,28 +149,15 @@ export class Comparator {
     }
 
     private createCache() {
-        if ( this.filesState.cache ) {
-            this.filesState.cache.forEach(cache => 
-                this.diff.createCache(cache)
+        for (const cache of this.filesState.cache) {
+            const sameCacheFromDB = this.dbState.cache.find(dbCache =>
+                dbCache.name === cache.name &&
+                dbCache.for.equal(cache.for)
             );
+
+            if ( !isEqual(cache, sameCacheFromDB) ) {
+                this.diff.createCache(cache);
+            }
         }
-    }
-}
-
-
-function equalFunction(func1: any, func2: any) {
-    return deepEqual(func1, func2);
-}
-
-function equalTrigger(trigger1: any, trigger2: any) {
-    return deepEqual(trigger1, trigger2);
-}
-
-function deepEqual(obj1: any, obj2: any) {
-    try {
-        assert.deepStrictEqual(obj1, obj2);
-        return true;
-    } catch(err) {
-        return false;
     }
 }

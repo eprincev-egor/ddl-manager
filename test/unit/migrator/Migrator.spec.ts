@@ -88,7 +88,7 @@ describe("Migrator", () => {
             orders_profit: "numeric"
         });
 
-        changes.createState({cache: [parseCache(ordersProfitCacheSQL)]});
+        changes.createState({cache: [FileParser.parseCache(ordersProfitCacheSQL)]});
 
         await Migrator.migrate(database, changes);
 
@@ -125,7 +125,7 @@ describe("Migrator", () => {
             orders_profit: "numeric"
         });
 
-        const cache = parseCache(ordersProfitCacheSQL);
+        const cache = FileParser.parseCache(ordersProfitCacheSQL);
         changes.createState({cache: [cache]});
 
         database.setRowsCount(cache.for.table.toString(), 1499);
@@ -146,7 +146,7 @@ describe("Migrator", () => {
             doc_numbers: "text"
         });
 
-        changes.createState({cache: [parseCache(`
+        changes.createState({cache: [FileParser.parseCache(`
             cache test for some_table (
                 select
                     string_agg( another_table.doc_number, ', ' ) as doc_numbers
@@ -181,7 +181,7 @@ describe("Migrator", () => {
             some_profit: "numeric"
         });
 
-        changes.createState({cache: [parseCache(`
+        changes.createState({cache: [FileParser.parseCache(`
             cache test for some_table (
                 select
                     sum( another_table.profit ) * 2 + 
@@ -214,10 +214,4 @@ describe("Migrator", () => {
         });
     });
 
-    function parseCache(sql: string) {
-        const fileContent = FileParser.parse(sql) as IState;
-        const testCache = (fileContent.cache as Cache[])[0] as Cache;
-
-        return testCache;
-    }
 });

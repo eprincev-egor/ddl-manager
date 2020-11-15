@@ -1034,7 +1034,7 @@ describe("integration/Migrator", () => {
                 (1, 'o2', 200, 20)
         `);
         
-        const cache = parseCache(`
+        const cache = FileParser.parseCache(`
             cache test for companies (
                 select
                     string_agg( distinct orders.doc_number, ', ' ) 
@@ -1071,10 +1071,4 @@ describe("integration/Migrator", () => {
         });
     });
 
-    function parseCache(sql: string) {
-        const fileContent = FileParser.parse(sql) as IState;
-        const testCache = (fileContent.cache as Cache[])[0] as Cache;
-
-        return testCache;
-    }
 });

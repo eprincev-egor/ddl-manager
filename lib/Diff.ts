@@ -9,16 +9,18 @@ export class Diff {
         return new Diff({
             drop: {
                 functions: [],
-                triggers: []
+                triggers: [],
+                cache: []
             },
             create: {
                 functions: [],
-                triggers: []
+                triggers: [],
+                cache: []
             }
         });
     }
 
-    constructor(params: {drop: IState, create: IState}) {
+    private constructor(params: {drop: IState, create: IState}) {
         this.drop = params.drop;
         this.create = params.create;
     }
@@ -35,6 +37,13 @@ export class Diff {
                 this.dropTrigger(trigger)
             );
         }
+
+        if ( state.cache ) {
+            state.cache.forEach(cache => 
+                this.dropCache(cache)
+            );
+        }
+
 
         return this;
     }
@@ -77,10 +86,11 @@ export class Diff {
         this.create.triggers.push(trigger);
     }
 
+    dropCache(cache: Cache) {
+        this.drop.cache.push(cache);
+    }
+
     createCache(cache: Cache) {
-        if ( !this.create.cache ) {
-            this.create.cache = [];
-        }
         this.create.cache.push(cache);
     }
 
