@@ -1,4 +1,5 @@
 import {
+    Cache,
     Select,
     Table,
     TableReference,
@@ -25,5 +26,7 @@ export interface IDatabaseDriver {
     }>;
     createOrReplaceColumn(table: Table, column: ITableColumn): Promise<void>;
     updateCachePackage(select: Select, forTable: TableReference, limit: number): Promise<number>;
+    createOrReplaceCacheTrigger(trigger: DatabaseTrigger, func: DatabaseFunction): Promise<void>;
+    saveCacheMeta(allCache: Cache[]): Promise<void>;
     end(): void;
 }

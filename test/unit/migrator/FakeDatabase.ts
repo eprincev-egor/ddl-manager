@@ -1,4 +1,11 @@
-import { DatabaseFunction, DatabaseTrigger, Select, TableReference, Table } from "../../../lib/ast";
+import {
+    DatabaseFunction,
+    DatabaseTrigger,
+    Select,
+    TableReference,
+    Table,
+    Cache
+} from "../../../lib/ast";
 import { IDatabaseDriver, ITableColumn } from "../../../lib/database//interface";
 import { IState } from "../../../lib/interface";
 
@@ -14,6 +21,7 @@ implements IDatabaseDriver {
     private updatedPackages: {[table: string]: {
         limit: number;
     }[]};
+    private allCache: Cache[];
     constructor(state?: IState) {
         this.state = state || {
             functions: [],
@@ -24,6 +32,7 @@ implements IDatabaseDriver {
         this.columnsTypes = {};
         this.rowsCountByTable = {};
         this.updatedPackages = {};
+        this.allCache = [];
     }
 
     async loadState(): Promise<IState> {
@@ -108,6 +117,15 @@ implements IDatabaseDriver {
 
     unfreezeAll(dbState: IState): Promise<void> {
         throw new Error("Method not implemented.");
+    }
+
+    async createOrReplaceCacheTrigger(trigger: DatabaseTrigger, func: DatabaseFunction) {
+        await this.createOrReplaceFunction(func);
+        await this.createOrReplaceTrigger(trigger);
+    }
+
+    async saveCacheMeta(allCache: Cache[]) {
+        this.allCache = allCache;
     }
 
     end() {

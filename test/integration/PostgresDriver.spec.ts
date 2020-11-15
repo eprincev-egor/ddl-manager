@@ -7,6 +7,7 @@ import { PostgresDriver } from "../../lib/database/PostgresDriver";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { From, Select, SelectColumn, Table, TableReference, Expression, ColumnReference, Operator } from "../../lib/ast";
+import { FileParser } from "../../lib/parser";
 
 use(chaiShallowDeepEqualPlugin);
 
@@ -1002,6 +1003,49 @@ describe("integration/PostgresDriver.loadState", () => {
             {id: 9, name: "c9", orders_profit: "100"},
             {id:10, name:"c10", orders_profit: "100"},
         ], "third update");
+    });
+
+    it("load cache, created by DDLManager.build", async() => {
+
+        await db.query(`
+            create table companies (
+                id serial primary key
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer not null,
+                profit numeric
+            );
+        `);
+
+        const folderPath = ROOT_TMP_PATH + "/some-cache";
+        fs.mkdirSync(folderPath);
+
+        const cacheSQL =`
+            cache test_cache for companies (
+                select
+                    array_agg( orders.id ) as orders_ids
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `;
+        const cache = FileParser.parseCache(cacheSQL);
+
+        fs.writeFileSync(folderPath + "/cache1.sql", cacheSQL);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        const state = await loadState();
+
+        expect(state).to.be.shallowDeepEqual({
+            functions: [],
+            triggers: [],
+            cache: [cache]
+        });
     });
 
 });

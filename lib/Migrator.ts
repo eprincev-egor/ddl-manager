@@ -1,9 +1,13 @@
 import assert from "assert";
 import { CacheTriggerFactory } from "./cache/CacheTriggerFactory";
-import { Cache, Expression, From, Select, SelectColumn, TableReference } from "./ast";
+import { Cache, From, Select, SelectColumn, TableReference } from "./ast";
 import { AbstractAgg, AggFactory } from "./cache/aggregator";
 import { Diff } from "./Diff";
 import { IDatabaseDriver } from "./database/interface";
+
+// create functions:
+// cm_array_remove_one_element
+// cm_array_to_string_distinct
 
 interface ISortSelectItem {
     select: Select;
@@ -98,6 +102,8 @@ export class Migrator {
         for (const cache of this.diff.create.cache || []) {
             await this.createCacheTriggers(cache);
         }
+
+        await this.postgres.saveCacheMeta(this.diff.create.cache);
     }
 
     private async createAndUpdateAllCacheColumns() {
@@ -225,8 +231,7 @@ export class Migrator {
             const {trigger, function: func} = triggersByTableName[ tableName ];
 
             try {
-                await this.postgres.createOrReplaceFunction(func);
-                await this.postgres.createOrReplaceTrigger(trigger);
+                await this.postgres.createOrReplaceCacheTrigger(trigger, func);
             } catch(err) {
                 this.onError(cache, err);
             }

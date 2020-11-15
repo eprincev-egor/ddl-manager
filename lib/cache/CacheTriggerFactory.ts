@@ -148,8 +148,7 @@ export class CacheTriggerFactory {
             table: {
                 schema: triggerTable.schema || "public",
                 name: triggerTable.name
-            },
-            comment: "cache"
+            }
         });
 
         return {

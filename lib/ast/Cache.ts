@@ -15,4 +15,12 @@ export class Cache {
     getSignature() {
         return `cache ${this.name} for ${this.for}`;
     }
+
+    toString() {
+        return `
+cache ${this.name} for ${this.for} (
+    ${this.select}
+)
+        `;
+    }
 }

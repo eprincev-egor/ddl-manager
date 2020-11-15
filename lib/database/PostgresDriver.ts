@@ -6,11 +6,19 @@ import {
 import { IDatabaseDriver, ITableColumn } from "./interface";
 import { FileParser } from "../parser";
 import { PGTypes } from "./PGTypes";
-import { DatabaseFunction, DatabaseTrigger, Table, Select, TableReference } from "../ast";
+import {
+    DatabaseFunction,
+    DatabaseTrigger,
+    Table,
+    Select,
+    TableReference,
+    Cache
+} from "../ast";
 import { getCheckFrozenFunctionSql } from "./postgres/getCheckFrozenFunctionSql";
 import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
 import { getCheckFrozenTriggerSql } from "./postgres/getCheckFrozenTriggerSql";
+import { wrapText } from "./postgres/wrapText";
 
 const selectAllFunctionsSQL = fs.readFileSync(__dirname + "/postgres/select-all-functions.sql")
     .toString();
@@ -38,7 +46,7 @@ implements IDatabaseDriver {
             triggers: await this.loadObjects<DatabaseTrigger>(
                 selectAllTriggersSQL
             ),
-            cache: []
+            cache: await this.loadCache()
         };
         return state;
     }
@@ -246,6 +254,61 @@ implements IDatabaseDriver {
         const {rows} = await this.pgClient.query(sql);
 
         return rows.length;
+    }
+
+    async createOrReplaceCacheTrigger(trigger: DatabaseTrigger, func: DatabaseFunction) {
+        const sql = `
+            drop trigger if exists ${ trigger.getSignature() };
+            drop function if exists ${ func.getSignature() };
+
+            ${ func.toSQL() };
+            ${ trigger.toSQL() };
+
+            comment on function ${ func.getSignature() }
+            is 'ddl-manager-cache';
+
+            comment on trigger ${ trigger.getSignature() }
+            is 'ddl-manager-cache';
+        `;
+
+        await this.pgClient.query(sql);
+    }
+
+    async saveCacheMeta(allCache: Cache[]) {
+        if ( !allCache.length ) {
+            return;
+        }
+
+        const allCacheSQL = allCache
+            .map(cache => 
+                "(" + wrapText( cache.toString() ) + ")"
+            );
+        
+        const sql = `
+            drop table if exists ddl_manager_caches;
+            create table ddl_manager_caches (
+                cache_sql text
+            );
+            insert into ddl_manager_caches
+                (cache_sql)
+            values
+                ${allCacheSQL.join(",\n")}
+            ;
+        `;
+        await this.pgClient.query(sql);
+    }
+
+    private async loadCache() {
+        try {
+            const response = await this.pgClient.query(`select * from ddl_manager_caches`);
+            const allCache = response.rows.map(row => {
+                const cache = FileParser.parseCache(row.cache_sql);
+                return cache;
+            });
+            return allCache;
+        } catch(err) {
+            return [];
+        }
     }
 
     end() {
