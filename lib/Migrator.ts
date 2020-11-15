@@ -1,9 +1,14 @@
 import assert from "assert";
 import { CacheTriggerFactory } from "./cache/CacheTriggerFactory";
-import { Expression, Cache, SelectColumn } from "./ast";
+import { Cache, Expression, From, Select, SelectColumn, TableReference } from "./ast";
 import { AbstractAgg, AggFactory } from "./cache/aggregator";
 import { Diff } from "./Diff";
 import { IDatabaseDriver } from "./database/interface";
+
+interface ISortSelectItem {
+    select: Select;
+    cache: Cache;
+}
 
 export class Migrator {
     private postgres: IDatabaseDriver;
@@ -86,31 +91,81 @@ export class Migrator {
     }
 
     private async createAllCache() {
+        // one cache can dependent on other cache
+        // need build all columns before package updates
+        await this.createAndUpdateAllCacheColumns();
+
         for (const cache of this.diff.create.cache || []) {
-            await this.createCache(cache);
+            await this.createCacheTriggers(cache);
         }
     }
 
-    private async createCache(cache: Cache) {
-        await this.createCacheColumns(cache);
-        await this.updateCachePackage(cache);
-        await this.createCacheTriggers(cache);
-    }
+    private async createAndUpdateAllCacheColumns() {
+        const allCaches = this.diff.create.cache || [];
 
-    private async createCacheColumns(cache: Cache) {
-        const selectToUpdate = this.cacheTriggerFactory.createSelectForUpdate(cache);
-        const columnsTypes = await this.postgres.getCacheColumnsTypes(
-            selectToUpdate,
-            cache.for
-        );
-        for (const columnName in columnsTypes) {
-            const columnType = columnsTypes[ columnName ];
+        const allSelectsForEveryColumn: ISortSelectItem[] = [];
 
-            const selectColumn = selectToUpdate.columns.find(column =>
-                column.name === columnName
-            ) as SelectColumn;
+        for (const cache of allCaches) {
+            const selectToUpdate = this.cacheTriggerFactory.createSelectForUpdate(cache);
+            
+            for (const updateColumn of selectToUpdate.columns) {
 
-            const aggFactory = new AggFactory(cache.select, selectColumn);
+                const selectThatColumn = new Select({
+                    columns: [updateColumn],
+                    from: selectToUpdate.getAllTableReferences().map(tableRef =>
+                        new From(tableRef)
+                    )
+                });
+                allSelectsForEveryColumn.push({
+                    select: selectThatColumn,
+                    cache
+                });
+            }
+        }
+
+        // sort selects be dependencies
+        const sortedSelectsForEveryColumn = allSelectsForEveryColumn
+            .filter(item =>
+                isRoot(allSelectsForEveryColumn, item)
+            );
+
+        for (const prevItem of sortedSelectsForEveryColumn) {
+    
+            // ищем те, которые явно указали, что они будут после prevItem
+            const nextItems = allSelectsForEveryColumn.filter((nextItem) =>
+                dependentOn(allSelectsForEveryColumn, nextItem, prevItem)
+            );
+    
+            for (let j = 0, m = nextItems.length; j < m; j++) {
+                const nextItem = nextItems[ j ];
+    
+                // если в очереди уже есть этот элемент
+                const index = sortedSelectsForEveryColumn.indexOf(nextItem);
+                //  удалим дубликат
+                if ( index !== -1 ) {
+                    sortedSelectsForEveryColumn.splice(index, 1);
+                }
+    
+                //  и перенесем в конец очереди,
+                //  таким образом, если у элемента есть несколько "after"
+                //  то он будет постоянно уходить в конец после всех своих "after"
+                sortedSelectsForEveryColumn.push(nextItem);
+            }
+        }
+        
+        
+        for (const {select, cache} of sortedSelectsForEveryColumn) {
+            const columnsTypes = await this.postgres.getCacheColumnsTypes(
+                select,
+                cache.for
+            );
+
+            const [columnName, columnType] = Object.entries(columnsTypes)[0];
+
+            const aggFactory = new AggFactory(
+                select,
+                select.columns[0] as SelectColumn
+            );
             const aggregations = aggFactory.createAggregations();
             const agg = Object.values(aggregations)[0] as AbstractAgg;
 
@@ -124,18 +179,40 @@ export class Migrator {
                 }
             );
         }
+
+        for (let i = 0, n = sortedSelectsForEveryColumn.length; i < n; i++) {
+            const {select, cache} = sortedSelectsForEveryColumn[ i ];
+            const columnsToUpdate: SelectColumn[] = [select.columns[0] as SelectColumn];
+
+            for (let j = i + 1; j < n; j++) {
+                const nextItem = sortedSelectsForEveryColumn[ j ];
+                if ( nextItem.cache !== cache ) {
+                    break;
+                }
+
+                columnsToUpdate.push(nextItem.select.columns[0] as SelectColumn);
+            }
+
+            const selectToUpdate = this.cacheTriggerFactory.createSelectForUpdate(cache)
+                .cloneWith({
+                    columns: columnsToUpdate
+                });
+            
+            await this.updateCachePackage(
+                selectToUpdate,
+                cache.for
+            );
+        }
     }
 
-    private async updateCachePackage(cache: Cache) {
-        const selectToUpdate = this.cacheTriggerFactory.createSelectForUpdate(cache);
-
+    private async updateCachePackage(selectToUpdate: Select, forTableRef: TableReference) {
         const limit = 500;
         let updatedCount = 0;
 
         do {
             updatedCount = await this.postgres.updateCachePackage(
                 selectToUpdate,
-                cache.for,
+                forTableRef,
                 limit
             );
         } while( updatedCount >= limit );
@@ -166,4 +243,34 @@ export class Migrator {
         
         this.outputErrors.push(newErr);
     }
+}
+
+function isRoot(allItems: ISortSelectItem[], item: ISortSelectItem) {
+    const hasDependencies = allItems.some(prevItem =>
+        prevItem !== item &&
+        dependentOn(allItems, item, prevItem)
+    );
+    return !hasDependencies;
+}
+
+// x dependent on y ?
+function dependentOn(
+    allItems: ISortSelectItem[],
+    xItem: ISortSelectItem,
+    yItem: ISortSelectItem
+): boolean {
+    
+    const xColumn = xItem.select.columns[0];
+    const yColumn = yItem.select.columns[0];
+
+    assert.ok(xColumn);
+    assert.ok(yColumn);
+
+    const xRefs = xColumn.expression.getColumnReferences();
+    const xDependentOnY = xRefs.some(xColumnRef =>
+        xColumnRef.tableReference.table.equal( yItem.cache.for.table ) &&
+        xColumnRef.name === yColumn.name
+    );
+
+    return xDependentOnY;
 }

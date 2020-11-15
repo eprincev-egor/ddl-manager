@@ -73,7 +73,14 @@ implements IDatabaseDriver {
     }
 
     async getCacheColumnsTypes(select: Select, forTable: TableReference): Promise<{ [columnName: string]: string; }> {
-        return this.columnsTypes;
+        const outputTypes: {[columnName: string]: string} = {};
+        
+        for (const column of select.columns) {
+            const type = this.columnsTypes[ column.name ];
+            outputTypes[ column.name ] = type;
+        }
+
+        return outputTypes;
     }
 
     async createOrReplaceColumn(table: Table, column: ITableColumn): Promise<void> {

@@ -1410,4 +1410,68 @@ language plpgsql;
         });
     });
 
+    it("build two cache, with the second dependent on the first", async() => {
+        const folderPath = ROOT_TMP_PATH + "/two-caches";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table companies (
+                id serial primary key
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer,
+                profit integer
+            );
+            create table cargos (
+                id serial primary key,
+                id_order integer,
+                gross_weight integer
+            );
+
+            insert into companies default values;
+            insert into orders (id_client, profit) values (1, 100);
+            insert into cargos (id_order, gross_weight) values (1, 150);
+        `);
+        
+        fs.writeFileSync(folderPath + "/orders_cache.sql", `
+            cache totals for orders (
+                select
+                    sum( cargos.gross_weight ) as cargos_gross_weight
+                from cargos
+                where
+                    cargos.id_order = orders.id
+            )
+        `);
+        fs.writeFileSync(folderPath + "/companies_cache.sql", `
+            cache totals for companies (
+                select
+                    sum( orders.cargos_gross_weight ) as cargos_gross_weight,
+                    sum( orders.profit ) as orders_profit
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            select orders_profit, cargos_gross_weight
+            from companies
+            where id = 1
+        `);
+        const row = result.rows[0];
+
+        expect(row).to.be.shallowDeepEqual({
+            orders_profit: 100,
+            cargos_gross_weight: 150
+        });
+    });
+
 });

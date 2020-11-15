@@ -170,7 +170,7 @@ implements IDatabaseDriver {
             from ${forTable.toString()}
 
             left join lateral (
-                ${ select.toString() }
+                ${ select }
             ) as ddl_manager_dmp on true
 
             limit 1
