@@ -16,6 +16,7 @@ where
     routines.routine_schema <> 'information_schema' and
     routines.routine_definition is distinct from 'aggregate_dummy' and
     pg_catalog.obj_description( pg_proc.oid ) is distinct from 'ddl-manager-cache' and
+    pg_catalog.obj_description( pg_proc.oid ) is distinct from 'ddl-manager-helper' and
     not exists(
         select from pg_catalog.pg_aggregate as pg_aggregate
         where

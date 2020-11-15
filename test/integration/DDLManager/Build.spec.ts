@@ -1570,4 +1570,77 @@ language plpgsql;
             a_sum: "101"
         });
     });
+
+
+    it("test cache triggers working", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table companies (
+                id serial primary key
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer,
+                profit numeric,
+                doc_number text
+            );
+
+            insert into companies default values;
+        `);
+        
+        fs.writeFileSync(folderPath + "/set_note_trigger.sql", `
+            cache totals for companies (
+                select
+                    sum( orders.profit ) as orders_profit,
+                    string_agg( distinct orders.doc_number, ', ' ) as orders_doc_numbers
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        let result: any;
+
+        await db.query(`
+            insert into orders (id_client, profit, doc_number)
+            values (1, 100, 'hello');
+            insert into orders (id_client, profit, doc_number)
+            values (1, 200, 'world');
+        `);
+
+        result = await db.query(`
+            select orders_profit, orders_doc_numbers
+            from companies
+            where id = 1
+        `);
+        expect(result.rows[0]).to.be.shallowDeepEqual({
+            orders_profit: 300,
+            orders_doc_numbers: "hello, world"
+        });
+
+
+        await db.query(`
+            delete from orders
+        `);
+
+        result = await db.query(`
+            select orders_profit, orders_doc_numbers
+            from companies
+            where id = 1
+        `);
+        expect(result.rows[0]).to.be.shallowDeepEqual({
+            orders_profit: 0,
+            orders_doc_numbers: null
+        });
+    });
+
 });

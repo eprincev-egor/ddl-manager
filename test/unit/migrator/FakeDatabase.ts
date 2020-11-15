@@ -124,6 +124,10 @@ implements IDatabaseDriver {
         await this.createOrReplaceTrigger(trigger);
     }
 
+    async createOrReplaceHelperFunc(func: DatabaseFunction) {
+        
+    }
+
     async saveCacheMeta(allCache: Cache[]) {
         this.allCache = allCache;
     }

@@ -1,13 +1,9 @@
 import assert from "assert";
 import { CacheTriggerFactory } from "./cache/CacheTriggerFactory";
-import { Cache, From, Select, SelectColumn, TableReference } from "./ast";
+import { Cache, DatabaseFunction, From, Select, SelectColumn, TableReference } from "./ast";
 import { AbstractAgg, AggFactory } from "./cache/aggregator";
 import { Diff } from "./Diff";
 import { IDatabaseDriver } from "./database/interface";
-
-// create functions:
-// cm_array_remove_one_element
-// cm_array_to_string_distinct
 
 interface ISortSelectItem {
     select: Select;
@@ -34,6 +30,8 @@ export class Migrator {
     }
 
     async migrate() {
+        await this.createCacheHelpersFunctions();
+
         await this.dropTriggers();
         await this.dropFunctions();
 
@@ -42,6 +40,60 @@ export class Migrator {
         await this.createAllCache();
 
         return this.outputErrors;
+    }
+
+    private async createCacheHelpersFunctions() {
+        const CM_ARRAY_REMOVE_ONE_ELEMENT = new DatabaseFunction({
+            schema: "public",
+            name: "cm_array_remove_one_element",
+            args: [
+                {name: "input_arr", type: "anyarray"},
+                {name: "element_to_remove", type: "anyelement"}
+            ],
+            returns: {
+                type: "anyarray"
+            },
+            body: `
+declare element_position integer;
+begin
+
+    element_position = array_position(
+        input_arr,
+        element_to_remove
+    );
+
+    return (
+        input_arr[:(element_position - 1)] || 
+        input_arr[(element_position + 1):]
+    );
+    
+end
+            `
+        });
+        const CM_ARRAY_TO_STRING_DISTINCT = new DatabaseFunction({
+            schema: "public",
+            name: "cm_array_to_string_distinct",
+            args: [
+                {name: "input_arr", type: "text[]"},
+                {name: "separator", type: "text"}
+            ],
+            returns: {
+                type: "text"
+            },
+            body: `
+begin
+    
+    return (
+        select 
+            string_agg(distinct input_value, separator)
+        from unnest( input_arr ) as input_value
+    );
+end
+            `
+        });
+
+        await this.postgres.createOrReplaceHelperFunc(CM_ARRAY_REMOVE_ONE_ELEMENT);
+        await this.postgres.createOrReplaceHelperFunc(CM_ARRAY_TO_STRING_DISTINCT);
     }
 
     private async dropTriggers() {

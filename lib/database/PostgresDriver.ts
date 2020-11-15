@@ -274,6 +274,19 @@ implements IDatabaseDriver {
         await this.pgClient.query(sql);
     }
 
+    async createOrReplaceHelperFunc(func: DatabaseFunction) {
+        const sql = `
+            drop function if exists ${ func.getSignature() };
+
+            ${ func.toSQL() };
+
+            comment on function ${ func.getSignature() }
+            is 'ddl-manager-helper';
+        `;
+
+        await this.pgClient.query(sql);
+    }
+
     async saveCacheMeta(allCache: Cache[]) {
         if ( !allCache.length ) {
             return;
