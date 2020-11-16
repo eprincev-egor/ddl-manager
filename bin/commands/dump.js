@@ -1,7 +1,7 @@
 "use strict";
 
-const {parseConfigFromArgs} = require("../../lib/utils");
-const DDLManager = require("../../lib/DDLManager");
+const {parseConfigFromArgs} = require("../parseConfigFromArgs");
+const DDLManager = require("../../dist/DDLManager");
 
 module.exports = async function(argv) {
     let config = parseConfigFromArgs(argv);

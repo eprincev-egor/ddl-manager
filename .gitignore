@@ -4,3 +4,4 @@ ddl-manager-config.js
 .vscode
 coverage
 .nyc_output
+dist
