@@ -18,7 +18,7 @@ export class FileParser {
     }
 
     static parseCache(sql: string) {
-        const fileContent = FileParser.parse(sql);
+        const fileContent = FileParser.parse(sql) as IState;
         assert.ok( fileContent, "should be not empty sql" );
         
         const cache = (fileContent.cache || [])[0];

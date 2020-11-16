@@ -32,7 +32,7 @@ export function testDependencies(test: ITest) {
                     const cache = CacheParser.parse(test.cache);
                     findDependencies(cache);
                 },
-                (err) =>
+                (err: Error) =>
                     regExp.test(err.message)
             );
         }

@@ -81,7 +81,7 @@ export class ColumnNameGenerator {
 
         const firstArg = agg.args[0];
         const argName = getFirstColumnRefName(firstArg);
-        const filterName = getFirstColumnRefName(agg.where);
+        const filterName = getFirstColumnRefName(agg.where as Expression);
 
         return `${this.updateColumn.name}_${agg.name}_${argName}_${filterName}`;
     }

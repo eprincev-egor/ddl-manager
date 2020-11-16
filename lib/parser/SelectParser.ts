@@ -3,7 +3,9 @@ import {
     Column,
     Expression as ExpressionSyntax,
     FromItem,
-    Join as JoinSyntax
+    Join as JoinSyntax,
+    TableLink,
+    ObjectName
 } from "grapeql-lang";
 import { ExpressionParser } from "./ExpressionParser";
 import { TableReferenceParser } from "./TableReferenceParser";
@@ -45,7 +47,7 @@ export class SelectParser {
         fromItem: FromItem
     ) {
         const alias = fromItem.get("as");
-        const tableLink = fromItem.get("table");
+        const tableLink = fromItem.get("table") as TableLink;
 
         assert.ok(tableLink, "supported only 'from table'");
 
@@ -65,7 +67,7 @@ export class SelectParser {
     private parseJoin(cacheFor: TableReference, select: Select, from: From, joinSyntax: JoinSyntax) {
         const fromItem = joinSyntax.get("from") as FromItem;
         const alias = fromItem.get("as");
-        const tableLink = fromItem.get("table");
+        const tableLink = fromItem.get("table") as TableLink;
 
         assert.ok(tableLink, "supported only 'join table'");
 
@@ -101,7 +103,7 @@ export class SelectParser {
         const columns = selectSyntax.get("columns") as Column[];
 
         for (const column of columns) {
-            const nameSyntax = column.get("as");
+            const nameSyntax = column.get("as") as ObjectName;
 
             assert.ok(nameSyntax, "required alias for every cache column: " + column.toString());
 
