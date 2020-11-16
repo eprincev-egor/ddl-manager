@@ -91,9 +91,30 @@ begin
 end
             `
         });
+        const CM_DISTINCT_ARRAY = new DatabaseFunction({
+            schema: "public",
+            name: "cm_distinct_array",
+            args: [
+                {name: "input_arr", type: "anyarray"}
+            ],
+            returns: {
+                type: "anyarray"
+            },
+            body: `
+begin
+    return (
+        select 
+            array_agg(distinct input_value)
+        from unnest( input_arr ) as input_value
+    );
+    
+end
+            `
+        });
 
         await this.postgres.createOrReplaceHelperFunc(CM_ARRAY_REMOVE_ONE_ELEMENT);
         await this.postgres.createOrReplaceHelperFunc(CM_ARRAY_TO_STRING_DISTINCT);
+        await this.postgres.createOrReplaceHelperFunc(CM_DISTINCT_ARRAY);
     }
 
     private async dropTriggers() {

@@ -1594,7 +1594,8 @@ language plpgsql;
             cache totals for companies (
                 select
                     sum( orders.profit ) as orders_profit,
-                    string_agg( distinct orders.doc_number, ', ' ) as orders_doc_numbers
+                    string_agg( distinct orders.doc_number, ', ' ) as orders_doc_numbers,
+                    array_agg( distinct orders.profit ) as distinct_profits
                 from orders
                 where
                     orders.id_client = companies.id
@@ -1618,13 +1619,14 @@ language plpgsql;
         `);
 
         result = await db.query(`
-            select orders_profit, orders_doc_numbers
+            select orders_profit, orders_doc_numbers, distinct_profits
             from companies
             where id = 1
         `);
         expect(result.rows[0]).to.be.shallowDeepEqual({
             orders_profit: 300,
-            orders_doc_numbers: "hello, world"
+            orders_doc_numbers: "hello, world",
+            distinct_profits: [100, 200]
         });
 
 
@@ -1633,13 +1635,14 @@ language plpgsql;
         `);
 
         result = await db.query(`
-            select orders_profit, orders_doc_numbers
+            select orders_profit, orders_doc_numbers, distinct_profits
             from companies
             where id = 1
         `);
         expect(result.rows[0]).to.be.shallowDeepEqual({
             orders_profit: 0,
-            orders_doc_numbers: null
+            orders_doc_numbers: null,
+            distinct_profits: null
         });
     });
 

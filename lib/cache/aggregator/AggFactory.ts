@@ -4,6 +4,7 @@ import { aggregatorsMap } from "./aggregatorsMap";
 import { ArrayAgg } from "./ArrayAgg";
 import { ColumnNameGenerator } from "./ColumnNameGenerator";
 import { StringAgg } from "./StringAgg";
+import { DistinctArrayAgg } from "./DistinctArrayAgg";
 
 interface IAggMap {
     [column: string]: AbstractAgg;
@@ -37,6 +38,9 @@ export class AggFactory {
         if ( aggCall.name === "string_agg" ) {
             return this.createStringAgg(aggCall);
         }
+        else if ( aggCall.name === "array_agg" && aggCall.distinct ) {
+            return this.createDistinctArrayAgg(aggCall);
+        }
         else {
             return this.createDefaultAgg(aggCall);
         }
@@ -57,6 +61,35 @@ export class AggFactory {
         return {
             [ aggColumnName ]: agg
         };
+    }
+
+    private createDistinctArrayAgg(aggCall: FuncCall) {
+        const map: IAggMap = {};
+
+        const aggColumnName = this.columnNameGenerator.generateName(aggCall);
+        const arrayAggAllColumnName = aggColumnName + "_array_agg";
+
+        const arrayAggAll = new ArrayAgg({
+            select: this.select,
+            updateColumn: this.updateColumn,
+            call: new FuncCall(
+                "array_agg",
+                [aggCall.args[0]]
+            ),
+            total: Expression.unknown(arrayAggAllColumnName)
+        });
+    
+        const arrayAggDistinct = new DistinctArrayAgg({
+            select: this.select,
+            updateColumn: this.updateColumn,
+            call: aggCall,
+            total: Expression.unknown(aggColumnName)
+        }, arrayAggAll);
+
+        map[ arrayAggAllColumnName ] = arrayAggAll;
+        map[ aggColumnName ] = arrayAggDistinct;
+
+        return map;
     }
 
     private createStringAgg(aggCall: FuncCall) {
