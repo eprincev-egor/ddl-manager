@@ -5,6 +5,7 @@ import {
     TableReference
 } from "../../ast";
 import { IReferenceMeta } from "./buildReferenceMeta";
+import { replaceOperatorAnyToIndexedOperator } from "./replaceOperatorAnyToIndexedOperator";
 
 export function buildSimpleWhere(
     cache: Cache,
@@ -26,6 +27,11 @@ export function buildSimpleWhere(
                 )
             );
         });
+
+        expression = replaceOperatorAnyToIndexedOperator(
+            cache,
+            expression
+        );
 
         return expression;
     });

@@ -337,5 +337,9 @@ function noReferenceChanges(referenceMeta: IReferenceMeta) {
         importantColumns.push( ...filterColumns );
     }
 
-    return isNotDistinctFrom(importantColumns);
+    const mutableImportantColumns = importantColumns.filter(column =>
+        column !== "id"
+    );
+
+    return isNotDistinctFrom(mutableImportantColumns);
 }

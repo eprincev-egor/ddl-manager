@@ -15,16 +15,16 @@ export interface IColumnsMap {
 
 export class UnknownExpressionElement extends AbstractExpressionElement {
 
-    static fromSql(sql: string) {
+    static fromSql(sql: string, columnsMap: IColumnsMap = {}) {
         const syntax = () => ({
             toString: () => sql,
             clone: () => syntax()
         });
-        return new UnknownExpressionElement(syntax());
+        return new UnknownExpressionElement(syntax(), columnsMap);
     }
 
     private syntax: IUnknownSyntax;
-    private columnsMap: IColumnsMap;
+    readonly columnsMap: IColumnsMap;
     constructor(syntax: IUnknownSyntax, columnsMap: IColumnsMap = {}) {
         super();
         this.syntax = syntax;

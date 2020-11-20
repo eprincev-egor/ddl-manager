@@ -96,8 +96,34 @@ export class Expression extends AbstractExpressionElement {
         );
     }
 
-    isEmpty() {
-        return this.elements.length === 0;
+    isBinary(operator: string) {
+        const isBinaryExpression = (
+            this.elements.length === 3 &&
+            this.elements[1] instanceof Operator &&
+            this.elements[1].toString() === operator
+        );
+        return isBinaryExpression;
+    }
+
+    getOperands() {
+        return this.elements.filter(elem =>
+            !(elem instanceof Operator)
+        );
+    }
+
+    isEmpty(): boolean {
+        if ( this.elements.length === 0 ) {
+            return true;
+        }
+
+        if ( this.elements.length === 1 ) {
+            const firstElem = this.elements[0];
+            if ( firstElem instanceof Expression ) {
+                return firstElem.isEmpty();
+            }
+        }
+
+        return false;
     }
 
     replaceFuncCall(replaceFunc: FuncCall, toSql: string): Expression {
