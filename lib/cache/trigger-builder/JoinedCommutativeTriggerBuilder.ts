@@ -5,20 +5,17 @@ import { noReferenceChanges } from "../processor/condition/noReferenceChanges";
 import { hasEffect } from "../processor/condition/hasEffect";
 import { hasReference } from "../processor/condition/hasReference";
 import { buildSimpleWhere } from "../processor/condition/buildSimpleWhere";
-import { isNotDistinctFrom } from "../processor/condition/isNotDistinctFrom";
 
 import { buildCommutativeBodyWithJoins } from "../processor/buildCommutativeBodyWithJoins";
 import { buildUpdate } from "../processor/buildUpdate";
 import { buildJoins } from "../processor/buildJoins";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
+import { noChanges } from "../processor/condition/noChanges";
 
 export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
     protected createBody() {
-        const mutableColumns = this.triggerTableColumns
-            .filter(col => col !== "id");
-        
         const joins = findJoinsMeta(this.cache.select);
 
         const whereOld = buildSimpleWhere(
@@ -33,13 +30,17 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
             "new",
             this.referenceMeta
         );
-        const noChanges = isNotDistinctFrom(mutableColumns);
+        const noChangesCondition = noChanges(
+            this.triggerTableColumns,
+            this.triggerTable,
+            this.databaseStructure
+        );
 
         const oldJoins = buildJoins(joins, "old");
         const newJoins = buildJoins(joins, "new");
         
         const bodyWithJoins = buildCommutativeBodyWithJoins(
-            noChanges,
+            noChangesCondition,
             {
                 hasReference: hasReference(
                     this.triggerTable,
