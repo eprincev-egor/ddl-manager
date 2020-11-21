@@ -1,5 +1,5 @@
 import assert from "assert";
-import { CacheTriggerFactory } from "./cache/CacheTriggerFactory";
+import { CacheTriggersBuilder } from "./cache/CacheTriggersBuilder";
 import { Cache, DatabaseFunction, From, Select, SelectColumn, TableReference } from "./ast";
 import { AbstractAgg, AggFactory } from "./cache/aggregator";
 import { Diff } from "./Diff";
@@ -189,7 +189,7 @@ end
         const allSelectsForEveryColumn: ISortSelectItem[] = [];
 
         for (const cache of allCaches) {
-            const cacheTriggerFactory = new CacheTriggerFactory(
+            const cacheTriggerFactory = new CacheTriggersBuilder(
                 cache,
                 new DatabaseStructure([])
             );
@@ -280,7 +280,7 @@ end
                 columnsToUpdate.push(nextItem.select.columns[0] as SelectColumn);
             }
 
-            const cacheTriggerFactory = new CacheTriggerFactory(
+            const cacheTriggerFactory = new CacheTriggersBuilder(
                 cache,
                 new DatabaseStructure([])
             );
@@ -310,7 +310,7 @@ end
     }
 
     private async createCacheTriggers(cache: Cache) {
-        const cacheTriggerFactory = new CacheTriggerFactory(
+        const cacheTriggerFactory = new CacheTriggersBuilder(
             cache,
             new DatabaseStructure([])
         );

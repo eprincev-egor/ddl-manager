@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import assert from "assert";
-import { CacheTriggerFactory } from "../../../../lib/cache/CacheTriggerFactory";
+import { CacheTriggersBuilder } from "../../../../lib/cache/CacheTriggersBuilder";
 import { Database } from "../../../../lib/cache/schema/Database";
 import { Table } from "../../../../lib/cache/schema/Table";
 import { Column } from "../../../../lib/cache/schema/Column";
@@ -16,7 +16,7 @@ export function testTriggers(test: ITest) {
     const cacheFilePath = path.join(test.testDir, "cache.sql");
     const cacheSQL = fs.readFileSync(cacheFilePath).toString();
 
-    const factory = new CacheTriggerFactory(
+    const builder = new CacheTriggersBuilder(
         cacheSQL,
         new Database([
             new Table(
@@ -28,7 +28,7 @@ export function testTriggers(test: ITest) {
             )
         ])
     );
-    const triggers = factory.createTriggers();
+    const triggers = builder.createTriggers();
 
     for (const schemaTable of test.tables) {
 

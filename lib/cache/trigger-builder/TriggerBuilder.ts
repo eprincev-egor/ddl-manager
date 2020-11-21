@@ -4,23 +4,23 @@ import {
     Cache,
     DatabaseFunction,
     DatabaseTrigger
-} from "../ast";
-import { buildReferenceMeta, IReferenceMeta } from "./processor/condition/buildReferenceMeta";
-import { noReferenceChanges } from "./processor/condition/noReferenceChanges";
-import { buildCommutativeBody } from "./processor/buildCommutativeBody";
-import { buildNeedUpdateCondition } from "./processor/condition/buildNeedUpdateCondition";
-import { hasEffect } from "./processor/condition/hasEffect";
-import { hasReference } from "./processor/condition/hasReference";
-import { buildSimpleWhere } from "./processor/condition/buildSimpleWhere";
-import { isNotDistinctFrom } from "./processor/condition/isNotDistinctFrom";
+} from "../../ast";
+import { buildReferenceMeta, IReferenceMeta } from "../processor/condition/buildReferenceMeta";
+import { noReferenceChanges } from "../processor/condition/noReferenceChanges";
+import { buildCommutativeBody } from "../processor/buildCommutativeBody";
+import { buildNeedUpdateCondition } from "../processor/condition/buildNeedUpdateCondition";
+import { hasEffect } from "../processor/condition/hasEffect";
+import { hasReference } from "../processor/condition/hasReference";
+import { buildSimpleWhere } from "../processor/condition/buildSimpleWhere";
+import { isNotDistinctFrom } from "../processor/condition/isNotDistinctFrom";
 
-import { buildCommutativeBodyWithJoins } from "./processor/buildCommutativeBodyWithJoins";
-import { buildUpdate } from "./processor/buildUpdate";
-import { buildJoins } from "./processor/buildJoins";
-import { buildUniversalBody } from "./processor/buildUniversalBody";
-import { buildFromAndWhere } from "./processor/buildFromAndWhere";
-import { findJoinsMeta } from "./processor/findJoinsMeta";
-import { Database as DatabaseStructure } from "./schema/Database";
+import { buildCommutativeBodyWithJoins } from "../processor/buildCommutativeBodyWithJoins";
+import { buildUpdate } from "../processor/buildUpdate";
+import { buildJoins } from "../processor/buildJoins";
+import { buildUniversalBody } from "../processor/buildUniversalBody";
+import { buildFromAndWhere } from "../processor/buildFromAndWhere";
+import { findJoinsMeta } from "../processor/findJoinsMeta";
+import { Database as DatabaseStructure } from "../schema/Database";
 
 export class TriggerBuilder {
     private readonly cache: Cache;

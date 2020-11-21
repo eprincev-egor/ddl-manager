@@ -11,9 +11,9 @@ import { findDependencies } from "./processor/findDependencies";
 import { AggFactory } from "./aggregator";
 import { flatMap } from "lodash";
 import { Database as DatabaseStructure } from "./schema/Database";
-import { TriggerBuilder } from "./TriggerBuilder";
+import { TriggerBuilder } from "./trigger-builder/TriggerBuilder";
 
-export class CacheTriggerFactory {
+export class CacheTriggersBuilder {
 
     private readonly cache: Cache;
     private readonly databaseStructure: DatabaseStructure;
