@@ -4,6 +4,7 @@ import { Cache, DatabaseFunction, From, Select, SelectColumn, TableReference } f
 import { AbstractAgg, AggFactory } from "./cache/aggregator";
 import { Diff } from "./Diff";
 import { IDatabaseDriver } from "./database/interface";
+import { Database as DatabaseStructure } from "./cache/schema/Database";
 
 interface ISortSelectItem {
     select: Select;
@@ -43,6 +44,8 @@ export class Migrator {
     }
 
     private async createCacheHelpersFunctions() {
+        // TODO: parse from files
+        
         const CM_ARRAY_REMOVE_ONE_ELEMENT = new DatabaseFunction({
             schema: "public",
             name: "cm_array_remove_one_element",
@@ -111,6 +114,9 @@ begin
 end
             `
         });
+        // TODO: cm_is_distinct_arrays
+        // TODO: cm_get_deleted_elements
+        // TODO: cm_get_inserted_elements
 
         await this.postgres.createOrReplaceHelperFunc(CM_ARRAY_REMOVE_ONE_ELEMENT);
         await this.postgres.createOrReplaceHelperFunc(CM_ARRAY_TO_STRING_DISTINCT);
@@ -298,7 +304,10 @@ end
     }
 
     private async createCacheTriggers(cache: Cache) {
-        const triggersByTableName = this.cacheTriggerFactory.createTriggers(cache);
+        const triggersByTableName = this.cacheTriggerFactory.createTriggers(
+            cache,
+            new DatabaseStructure([])
+        );
 
         for (const tableName in triggersByTableName) {
             const {trigger, function: func} = triggersByTableName[ tableName ];

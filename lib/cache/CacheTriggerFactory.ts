@@ -13,7 +13,6 @@ import { buildCommutativeBodyWithJoins } from "./processor/buildCommutativeBodyW
 import { buildNeedUpdateCondition } from "./processor/buildNeedUpdateCondition";
 import { hasEffect } from "./processor/hasEffect";
 import { hasReference } from "./processor/hasReference";
-import { isNotDistinctFrom } from "./processor/isNotDistinctFrom";
 import { buildUpdate } from "./processor/buildUpdate";
 import { buildJoins } from "./processor/buildJoins";
 import { buildUniversalBody } from "./processor/buildUniversalBody";
@@ -23,6 +22,10 @@ import { findDependencies } from "./processor/findDependencies";
 import { buildSimpleWhere } from "./processor/buildSimpleWhere";
 import { AggFactory } from "./aggregator";
 import { flatMap } from "lodash";
+import { Database as DatabaseStructure } from "./schema/Database";
+import { Table as TableStructure } from "./schema/Table";
+import { Column } from "./schema/Column";
+import assert from "assert";
 
 export class CacheTriggerFactory {
 
@@ -64,7 +67,10 @@ export class CacheTriggerFactory {
         return selectToUpdate;
     }
 
-    createTriggers(cacheOrSQL: string | Cache) {
+    createTriggers(
+        cacheOrSQL: string | Cache,
+        databaseStructure: DatabaseStructure
+    ) {
         const output: {
             [tableName: string]: {
                 trigger: DatabaseTrigger,
@@ -89,7 +95,8 @@ export class CacheTriggerFactory {
                 output[ schemaTable ] = this.createTrigger(
                     cache,
                     triggerTable,
-                    tableDeps.columns
+                    tableDeps.columns,
+                    databaseStructure
                 );
             } catch(err) {
                 if ( /no [\w\.]+ in select/.test(err.message) ) {
@@ -105,7 +112,8 @@ export class CacheTriggerFactory {
     private createTrigger(
         cache: Cache,
         triggerTable: Table,
-        triggerTableColumns: string[]
+        triggerTableColumns: string[],
+        databaseStructure: DatabaseStructure
     ) {
         const triggerName = [
             "cache",
@@ -122,7 +130,8 @@ export class CacheTriggerFactory {
             body: "\n" + this.createBody(
                 cache,
                 triggerTable,
-                triggerTableColumns
+                triggerTableColumns,
+                databaseStructure
             ).toSQL() + "\n",
             comment: "cache",
             args: [],
@@ -160,7 +169,8 @@ export class CacheTriggerFactory {
     private createBody(
         cache: Cache,
         triggerTable: Table,
-        triggerTableColumns: string[]
+        triggerTableColumns: string[],
+        databaseStructure: DatabaseStructure
     ) {
         const referenceMeta = buildReferenceMeta(
             cache,
@@ -173,7 +183,8 @@ export class CacheTriggerFactory {
                 cache,
                 triggerTable,
                 triggerTableColumns,
-                referenceMeta
+                referenceMeta,
+                databaseStructure
             );
             return optimizedBody;
         }
@@ -196,7 +207,8 @@ export class CacheTriggerFactory {
         cache: Cache,
         triggerTable: Table,
         triggerTableColumns: string[],
-        referenceMeta: IReferenceMeta
+        referenceMeta: IReferenceMeta,
+        databaseStructure: DatabaseStructure
     ) {
         const mutableColumns = triggerTableColumns
             .filter(col => col !== "id");
@@ -258,7 +270,11 @@ export class CacheTriggerFactory {
                 },
                 {
                     hasReference: hasReference(triggerTable, referenceMeta, "new"),
-                    needUpdate: noReferenceChanges(referenceMeta),
+                    needUpdate: noReferenceChanges(
+                        referenceMeta,
+                        triggerTable,
+                        databaseStructure
+                    ),
                     update: buildUpdate(
                         cache,
                         triggerTable,
@@ -311,7 +327,11 @@ export class CacheTriggerFactory {
                     )
                 },
                 mutableColumnsDepsInAggregations.length ? {
-                    needUpdate: noReferenceChanges(referenceMeta),
+                    needUpdate: noReferenceChanges(
+                        referenceMeta,
+                        triggerTable,
+                        databaseStructure
+                    ),
                     update: buildUpdate(
                         cache,
                         triggerTable,
@@ -327,7 +347,11 @@ export class CacheTriggerFactory {
     }
 }
 
-function noReferenceChanges(referenceMeta: IReferenceMeta) {
+function noReferenceChanges(
+    referenceMeta: IReferenceMeta,
+    triggerTable: Table,
+    databaseStructure: DatabaseStructure
+) {
     const importantColumns = referenceMeta.columns.slice();
 
     for (const filter of referenceMeta.filters) {
@@ -341,5 +365,21 @@ function noReferenceChanges(referenceMeta: IReferenceMeta) {
         column !== "id"
     );
 
-    return isNotDistinctFrom(mutableImportantColumns);
+    const tableStructure = databaseStructure.getTable(triggerTable) as TableStructure;
+    // assert.ok(tableStructure, `table ${ triggerTable.toString() } does not exists`);
+
+    const conditions: string[] = [];
+    for (const columnName of mutableImportantColumns) {
+        const column = tableStructure && tableStructure.getColumn(columnName) as Column;
+        // assert.ok(column, `column ${ triggerTable.toString() }.${ columnName } does not exists`);
+
+        if ( column && column.type.isArray() ) {
+            conditions.push(`not cm_is_distinct_arrays(new.${columnName}, old.${columnName})`);
+        }
+        else {
+            conditions.push(`new.${ columnName } is not distinct from old.${ columnName }`);
+        }
+    }
+    
+    return Expression.and(conditions);
 }

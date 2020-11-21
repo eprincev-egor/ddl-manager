@@ -5,26 +5,31 @@ begin
     if TG_OP = 'DELETE' then
 
         if
-            old.companies_ids is not null
-            and
-            old.doc_number is not null
-            and
-            old.deleted = 0
+            old.id_client is not null
         then
             update companies set
                 orders_numbers_array_agg = cm_array_remove_one_element(
                     orders_numbers_array_agg,
-                    old.doc_number
+                    json_build_object(
+                        'doc_number', old.doc_number,
+                        'doc_date', old.doc_date
+                    )
                 ),
-                orders_numbers = cm_array_to_string_distinct(
-                    cm_array_remove_one_element(
+                orders_numbers = (
+                    select
+                        string_agg(
+                            distinct input_row.doc_number,
+                            ', '
+                            
+                            order by input_row.doc_date
+                        )
+                    from unnest( cm_array_remove_one_element(
                         orders_numbers_array_agg,
                         old.doc_number
-                    ),
-                    ', '
+                    ) ) as input_row
                 )
             where
-                companies.id = any( old.companies_ids );
+                old.id_client = companies.id;
         end if;
 
         return old;
@@ -32,20 +37,14 @@ begin
 
     if TG_OP = 'UPDATE' then
         if
-            not is_distinct_arrays(new.companies_ids, old.companies_ids)
-            and
-            new.deleted is not distinct from old.deleted
-            and
             new.doc_number is not distinct from old.doc_number
+            and
+            new.id_client is not distinct from old.id_client
         then
             return new;
         end if;
 
-        if
-            not cm_is_distinct_arrays(new.companies_ids, old.companies_ids)
-            and
-            new.deleted is not distinct from old.deleted
-        then
+        if new.id_client is not distinct from old.id_client then
             update companies set
                 orders_numbers_array_agg = array_append(
                     cm_array_remove_one_element(
@@ -54,7 +53,7 @@ begin
                     ),
                     new.doc_number
                 ),
-                orders_numbers = cm_array_to_string_distinct(
+                orders_numbers = array_to_string(
                     array_append(
                         cm_array_remove_one_element(
                             orders_numbers_array_agg,
@@ -65,24 +64,22 @@ begin
                     ', '
                 )
             where
-                companies.id = any( new.companies_ids );
+                new.id_client = companies.id;
 
             return new;
         end if;
 
         if
-            cm_get_deleted_elements(old.companies_ids, new.companies_ids) is not null
+            old.id_client is not null
             and
             old.doc_number is not null
-            and
-            old.deleted = 0
         then
             update companies set
                 orders_numbers_array_agg = cm_array_remove_one_element(
                     orders_numbers_array_agg,
                     old.doc_number
                 ),
-                orders_numbers = cm_array_to_string_distinct(
+                orders_numbers = array_to_string(
                     cm_array_remove_one_element(
                         orders_numbers_array_agg,
                         old.doc_number
@@ -90,22 +87,20 @@ begin
                     ', '
                 )
             where
-                companies.id = any( cm_get_deleted_elements(old.companies_ids, new.companies_ids) );
+                old.id_client = companies.id;
         end if;
 
         if
-            cm_get_inserted_elements(old.companies_ids, new.companies_ids) is not null
+            new.id_client is not null
             and
             new.doc_number is not null
-            and
-            new.deleted = 0
         then
             update companies set
                 orders_numbers_array_agg = array_append(
                     orders_numbers_array_agg,
                     new.doc_number
                 ),
-                orders_numbers = cm_array_to_string_distinct(
+                orders_numbers = array_to_string(
                     array_append(
                         orders_numbers_array_agg,
                         new.doc_number
@@ -113,7 +108,7 @@ begin
                     ', '
                 )
             where
-                companies.id = any( cm_get_inserted_elements(old.companies_ids, new.companies_ids) );
+                new.id_client = companies.id;
         end if;
 
         return new;
@@ -122,18 +117,16 @@ begin
     if TG_OP = 'INSERT' then
 
         if
-            new.companies_ids is not null
+            new.id_client is not null
             and
             new.doc_number is not null
-            and
-            new.deleted = 0
         then
             update companies set
                 orders_numbers_array_agg = array_append(
                     orders_numbers_array_agg,
                     new.doc_number
                 ),
-                orders_numbers = cm_array_to_string_distinct(
+                orders_numbers = array_to_string(
                     array_append(
                         orders_numbers_array_agg,
                         new.doc_number
@@ -141,7 +134,7 @@ begin
                     ', '
                 )
             where
-                companies.id = any( new.companies_ids );
+                new.id_client = companies.id;
         end if;
 
         return new;
@@ -152,7 +145,7 @@ $body$
 language plpgsql;
 
 create trigger cache_totals_for_companies_on_orders
-after insert or update of companies_ids, deleted, doc_number or delete
+after insert or update of doc_date, doc_number, id_client or delete
 on public.orders
 for each row
 execute procedure cache_totals_for_companies_on_orders();
