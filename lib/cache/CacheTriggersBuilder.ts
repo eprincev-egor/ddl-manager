@@ -87,12 +87,12 @@ export class CacheTriggersBuilder {
             const triggerTable = new Table(schemaName, tableName);
             const tableDeps = allDeps[ schemaTable ];
 
-            const triggerBuilder = this.builderFactory.createBuilder(
-                triggerTable,
-                tableDeps.columns
-            );
-
             try {
+                const triggerBuilder = this.builderFactory.createBuilder(
+                    triggerTable,
+                    tableDeps.columns
+                );
+    
                 output[ schemaTable ] = triggerBuilder.createTrigger();
             } catch(err) {
                 if ( /no [\w\.]+ in select/.test(err.message) ) {
