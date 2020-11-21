@@ -1,12 +1,12 @@
-import { noReferenceChanges } from "../processor/condition/noReferenceChanges";
+import { noReferenceChanges } from "./condition/noReferenceChanges";
 import { buildCommutativeBody } from "../processor/buildCommutativeBody";
-import { buildNeedUpdateCondition } from "../processor/condition/buildNeedUpdateCondition";
-import { buildSimpleWhere } from "../processor/condition/buildSimpleWhere";
+import { buildNeedUpdateCondition } from "./condition/buildNeedUpdateCondition";
+import { buildSimpleWhere } from "./condition/buildSimpleWhere";
 
 import { buildUpdate } from "../processor/buildUpdate";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
-import { noChanges } from "../processor/condition/noChanges";
+import { noChanges } from "./condition/noChanges";
 
 
 export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {

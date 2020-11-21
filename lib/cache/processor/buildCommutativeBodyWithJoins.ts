@@ -9,7 +9,6 @@ import {
     AssignVariable,
     SimpleSelect
 } from "../../ast";
-import { isNotDistinctFrom } from "./condition/isNotDistinctFrom";
 import { updateIf } from "./updateIf";
 import { ICase } from "./buildCommutativeBody";
 
@@ -246,4 +245,11 @@ function reassignVariables(newJoins: IJoin[], oldJoins: IJoin[]) {
     }
     
     return lines;
+}
+
+function isNotDistinctFrom(columns: string[]) {
+    const conditions = columns.map(column =>
+        `new.${ column } is not distinct from old.${ column }`
+    );
+    return Expression.and(conditions);
 }

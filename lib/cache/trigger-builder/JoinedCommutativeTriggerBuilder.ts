@@ -1,17 +1,17 @@
 import {
     Expression
 } from "../../ast";
-import { noReferenceChanges } from "../processor/condition/noReferenceChanges";
-import { hasEffect } from "../processor/condition/hasEffect";
-import { hasReference } from "../processor/condition/hasReference";
-import { buildSimpleWhere } from "../processor/condition/buildSimpleWhere";
+import { noReferenceChanges } from "./condition/noReferenceChanges";
+import { hasEffect } from "./condition/hasEffect";
+import { hasReference } from "./condition/hasReference";
+import { buildSimpleWhere } from "./condition/buildSimpleWhere";
 
 import { buildCommutativeBodyWithJoins } from "../processor/buildCommutativeBodyWithJoins";
 import { buildUpdate } from "../processor/buildUpdate";
 import { buildJoins } from "../processor/buildJoins";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
-import { noChanges } from "../processor/condition/noChanges";
+import { noChanges } from "./condition/noChanges";
 
 export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
 

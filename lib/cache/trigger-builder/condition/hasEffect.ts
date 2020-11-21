@@ -4,8 +4,8 @@ import {
     Expression,
     FuncCall
 } from "../../../ast";
-import { createAggValue } from "../createAggValue";
-import { IJoinMeta } from "../findJoinsMeta";
+import { createAggValue } from "../../processor/createAggValue";
+import { IJoinMeta } from "../../processor/findJoinsMeta";
 
 type RowType = "new" | "old";
 

@@ -6,7 +6,7 @@ import {
     AbstractAstElement,
     Expression
 } from "../../ast";
-import { buildReferenceMeta, IReferenceMeta } from "../processor/condition/buildReferenceMeta";
+import { buildReferenceMeta, IReferenceMeta } from "./condition/buildReferenceMeta";
 import { Database as DatabaseStructure } from "../schema/Database";
 import { buildFromAndWhere } from "../processor/buildFromAndWhere";
 
