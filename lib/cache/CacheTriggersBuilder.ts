@@ -11,12 +11,12 @@ import { findDependencies } from "./processor/findDependencies";
 import { AggFactory } from "./aggregator";
 import { flatMap } from "lodash";
 import { Database as DatabaseStructure } from "./schema/Database";
-import { TriggerBuilder } from "./trigger-builder/TriggerBuilder";
+import { TriggerBuilderFactory } from "./trigger-builder/TriggerBuilderFactory";
 
 export class CacheTriggersBuilder {
 
     private readonly cache: Cache;
-    private readonly databaseStructure: DatabaseStructure;
+    private readonly builderFactory: TriggerBuilderFactory;
 
     constructor(
         cacheOrSQL: string | Cache,
@@ -27,7 +27,10 @@ export class CacheTriggersBuilder {
             cache = CacheParser.parse(cacheOrSQL);
         }
         this.cache = cache;
-        this.databaseStructure = databaseStructure;
+        this.builderFactory = new TriggerBuilderFactory(
+            cache,
+            databaseStructure
+        );
     }
 
     createSelectForUpdate() {
@@ -84,9 +87,7 @@ export class CacheTriggersBuilder {
             const triggerTable = new Table(schemaName, tableName);
             const tableDeps = allDeps[ schemaTable ];
 
-            const triggerBuilder = new TriggerBuilder(
-                this.cache,
-                this.databaseStructure,
+            const triggerBuilder = this.builderFactory.createBuilder(
                 triggerTable,
                 tableDeps.columns
             );

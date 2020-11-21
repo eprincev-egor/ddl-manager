@@ -20,26 +20,9 @@ import { buildJoins } from "../processor/buildJoins";
 import { buildUniversalBody } from "../processor/buildUniversalBody";
 import { buildFromAndWhere } from "../processor/buildFromAndWhere";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
-import { Database as DatabaseStructure } from "../schema/Database";
+import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 
-export class TriggerBuilder {
-    private readonly cache: Cache;
-    private readonly databaseStructure: DatabaseStructure;
-    private readonly triggerTable: Table;
-    private readonly triggerTableColumns: string[];
-
-    constructor(
-        cache: Cache,
-        databaseStructure: DatabaseStructure,
-        triggerTable: Table,
-        triggerTableColumns: string[]
-    ) {
-        this.cache = cache;
-        this.databaseStructure = databaseStructure;
-        this.triggerTable = triggerTable;
-        this.triggerTableColumns = triggerTableColumns;
-    }
-
+export class TriggerBuilder extends AbstractTriggerBuilder {
 
     createTrigger() {
         const triggerName = [
