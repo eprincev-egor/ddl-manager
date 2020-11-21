@@ -29,9 +29,24 @@ import { Database as DatabaseStructure } from "./schema/Database";
 
 export class CacheTriggerFactory {
 
-    createSelectForUpdate(cache: Cache) {
-        const columnsToUpdate = flatMap(cache.select.columns, selectColumn => {
-            const aggFactory = new AggFactory(cache.select, selectColumn);
+    private readonly cache: Cache;
+    private readonly databaseStructure: DatabaseStructure;
+
+    constructor(
+        cacheOrSQL: string | Cache,
+        databaseStructure: DatabaseStructure
+    ) {
+        let cache: Cache = cacheOrSQL as Cache;
+        if ( typeof cacheOrSQL === "string" ) {
+            cache = CacheParser.parse(cacheOrSQL);
+        }
+        this.cache = cache;
+        this.databaseStructure = databaseStructure;
+    }
+
+    createSelectForUpdate() {
+        const columnsToUpdate = flatMap(this.cache.select.columns, selectColumn => {
+            const aggFactory = new AggFactory(this.cache.select, selectColumn);
             const aggregations = aggFactory.createAggregations();
             
             const columns = Object.keys(aggregations).map(aggColumnName => {
@@ -61,16 +76,13 @@ export class CacheTriggerFactory {
             return columns;
         });
 
-        const selectToUpdate = cache.select.cloneWith({
+        const selectToUpdate = this.cache.select.cloneWith({
             columns: columnsToUpdate
         });
         return selectToUpdate;
     }
 
-    createTriggers(
-        cacheOrSQL: string | Cache,
-        databaseStructure: DatabaseStructure
-    ) {
+    createTriggers() {
         const output: {
             [tableName: string]: {
                 trigger: DatabaseTrigger,
@@ -78,12 +90,7 @@ export class CacheTriggerFactory {
             };
         } = {};
 
-        let cache: Cache = cacheOrSQL as Cache;
-        if ( typeof cacheOrSQL === "string" ) {
-            cache = CacheParser.parse(cacheOrSQL);
-        }
-
-        const allDeps = findDependencies(cache);
+        const allDeps = findDependencies(this.cache);
 
         for (const schemaTable in allDeps) {
             const [schemaName, tableName] = schemaTable.split(".");
@@ -93,10 +100,8 @@ export class CacheTriggerFactory {
 
             try {
                 output[ schemaTable ] = this.createTrigger(
-                    cache,
                     triggerTable,
-                    tableDeps.columns,
-                    databaseStructure
+                    tableDeps.columns
                 );
             } catch(err) {
                 if ( /no [\w\.]+ in select/.test(err.message) ) {
@@ -110,16 +115,14 @@ export class CacheTriggerFactory {
     }
 
     private createTrigger(
-        cache: Cache,
         triggerTable: Table,
-        triggerTableColumns: string[],
-        databaseStructure: DatabaseStructure
+        triggerTableColumns: string[]
     ) {
         const triggerName = [
             "cache",
-            cache.name,
+            this.cache.name,
             "for",
-            cache.for.table.name,
+            this.cache.for.table.name,
             "on",
             triggerTable.name
         ].join("_");
@@ -128,10 +131,8 @@ export class CacheTriggerFactory {
             schema: "public",
             name: triggerName,
             body: "\n" + this.createBody(
-                cache,
                 triggerTable,
-                triggerTableColumns,
-                databaseStructure
+                triggerTableColumns
             ).toSQL() + "\n",
             comment: "cache",
             args: [],
@@ -167,34 +168,30 @@ export class CacheTriggerFactory {
     }
 
     private createBody(
-        cache: Cache,
         triggerTable: Table,
-        triggerTableColumns: string[],
-        databaseStructure: DatabaseStructure
+        triggerTableColumns: string[]
     ) {
         const referenceMeta = buildReferenceMeta(
-            cache,
+            this.cache,
             triggerTable
         );
-        const {from, where} = buildFromAndWhere(cache, triggerTable);
+        const {from, where} = buildFromAndWhere(this.cache, triggerTable);
 
         if ( from.length === 1 ) {
             const optimizedBody = this.createOptimizedBody(
-                cache,
                 triggerTable,
                 triggerTableColumns,
-                referenceMeta,
-                databaseStructure
+                referenceMeta
             );
             return optimizedBody;
         }
 
         const universalBody = buildUniversalBody({
             triggerTable,
-            forTable: cache.for.toString(),
-            updateColumns: cache.select.columns
+            forTable: this.cache.for.toString(),
+            updateColumns: this.cache.select.columns
                 .map(col => col.name),
-            select: cache.select.toString(),
+            select: this.cache.select.toString(),
 
             from,
             where,
@@ -204,25 +201,23 @@ export class CacheTriggerFactory {
     }
 
     private createOptimizedBody(
-        cache: Cache,
         triggerTable: Table,
         triggerTableColumns: string[],
-        referenceMeta: IReferenceMeta,
-        databaseStructure: DatabaseStructure
+        referenceMeta: IReferenceMeta
     ) {
         const mutableColumns = triggerTableColumns
             .filter(col => col !== "id");
         
-        const joins = findJoinsMeta(cache.select);
+        const joins = findJoinsMeta(this.cache.select);
 
         const whereOld = buildSimpleWhere(
-            cache,
+            this.cache,
             triggerTable,
             "old",
             referenceMeta
         );
         const whereNew = buildSimpleWhere(
-            cache,
+            this.cache,
             triggerTable,
             "new",
             referenceMeta
@@ -238,13 +233,13 @@ export class CacheTriggerFactory {
                 {
                     hasReference: hasReference(triggerTable, referenceMeta, "old"),
                     needUpdate: hasEffect(
-                        cache,
+                        this.cache,
                         triggerTable,
                         "old",
                         joins
                     ) as Expression,
                     update: buildUpdate(
-                        cache,
+                        this.cache,
                         triggerTable,
                         whereOld,
                         joins,
@@ -255,13 +250,13 @@ export class CacheTriggerFactory {
                 {
                     hasReference: hasReference(triggerTable, referenceMeta, "new"),
                     needUpdate: hasEffect(
-                        cache,
+                        this.cache,
                         triggerTable,
                         "new",
                         joins
                     ) as Expression,
                     update: buildUpdate(
-                        cache,
+                        this.cache,
                         triggerTable,
                         whereNew,
                         joins,
@@ -274,10 +269,10 @@ export class CacheTriggerFactory {
                     needUpdate: noReferenceChanges(
                         referenceMeta,
                         triggerTable,
-                        databaseStructure
+                        this.databaseStructure
                     ),
                     update: buildUpdate(
-                        cache,
+                        this.cache,
                         triggerTable,
                         whereNew,
                         joins,
@@ -300,13 +295,13 @@ export class CacheTriggerFactory {
                 noChanges,
                 {
                     needUpdate: buildNeedUpdateCondition(
-                        cache,
+                        this.cache,
                         triggerTable,
                         referenceMeta,
                         "old"
                     ),
                     update: buildUpdate(
-                        cache,
+                        this.cache,
                         triggerTable,
                         whereOld,
                         joins,
@@ -315,13 +310,13 @@ export class CacheTriggerFactory {
                 },
                 {
                     needUpdate: buildNeedUpdateCondition(
-                        cache,
+                        this.cache,
                         triggerTable,
                         referenceMeta,
                         "new"
                     ),
                     update: buildUpdate(
-                        cache,
+                        this.cache,
                         triggerTable,
                         whereNew,
                         joins,
@@ -332,10 +327,10 @@ export class CacheTriggerFactory {
                     needUpdate: noReferenceChanges(
                         referenceMeta,
                         triggerTable,
-                        databaseStructure
+                        this.databaseStructure
                     ),
                     update: buildUpdate(
-                        cache,
+                        this.cache,
                         triggerTable,
                         whereNew,
                         joins,

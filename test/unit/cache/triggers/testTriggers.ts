@@ -16,8 +16,7 @@ export function testTriggers(test: ITest) {
     const cacheFilePath = path.join(test.testDir, "cache.sql");
     const cacheSQL = fs.readFileSync(cacheFilePath).toString();
 
-    const fabric = new CacheTriggerFactory();
-    const triggers = fabric.createTriggers(
+    const factory = new CacheTriggerFactory(
         cacheSQL,
         new Database([
             new Table(
@@ -29,6 +28,7 @@ export function testTriggers(test: ITest) {
             )
         ])
     );
+    const triggers = factory.createTriggers();
 
     for (const schemaTable of test.tables) {
 

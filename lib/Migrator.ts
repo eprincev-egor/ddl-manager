@@ -13,7 +13,6 @@ interface ISortSelectItem {
 
 export class Migrator {
     private postgres: IDatabaseDriver;
-    private cacheTriggerFactory: CacheTriggerFactory;
     private outputErrors: Error[];
     private diff: Diff;
 
@@ -26,7 +25,6 @@ export class Migrator {
     private constructor(postgres: IDatabaseDriver, diff: Diff) {
         this.postgres = postgres;
         this.diff = diff;
-        this.cacheTriggerFactory = new CacheTriggerFactory();
         this.outputErrors = [];
     }
 
@@ -191,7 +189,11 @@ end
         const allSelectsForEveryColumn: ISortSelectItem[] = [];
 
         for (const cache of allCaches) {
-            const selectToUpdate = this.cacheTriggerFactory.createSelectForUpdate(cache);
+            const cacheTriggerFactory = new CacheTriggerFactory(
+                cache,
+                new DatabaseStructure([])
+            );
+            const selectToUpdate = cacheTriggerFactory.createSelectForUpdate();
             
             for (const updateColumn of selectToUpdate.columns) {
 
@@ -278,7 +280,11 @@ end
                 columnsToUpdate.push(nextItem.select.columns[0] as SelectColumn);
             }
 
-            const selectToUpdate = this.cacheTriggerFactory.createSelectForUpdate(cache)
+            const cacheTriggerFactory = new CacheTriggerFactory(
+                cache,
+                new DatabaseStructure([])
+            );
+            const selectToUpdate = cacheTriggerFactory.createSelectForUpdate()
                 .cloneWith({
                     columns: columnsToUpdate
                 });
@@ -304,10 +310,11 @@ end
     }
 
     private async createCacheTriggers(cache: Cache) {
-        const triggersByTableName = this.cacheTriggerFactory.createTriggers(
+        const cacheTriggerFactory = new CacheTriggerFactory(
             cache,
             new DatabaseStructure([])
         );
+        const triggersByTableName = cacheTriggerFactory.createTriggers();
 
         for (const tableName in triggersByTableName) {
             const {trigger, function: func} = triggersByTableName[ tableName ];
