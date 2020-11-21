@@ -9,6 +9,7 @@ import {
 import { buildReferenceMeta, IReferenceMeta } from "./condition/buildReferenceMeta";
 import { Database as DatabaseStructure } from "../schema/Database";
 import { buildFromAndWhere } from "../processor/buildFromAndWhere";
+import { ConditionBuilder } from "./condition/ConditionBuilder";
 
 export abstract class AbstractTriggerBuilder {
     protected readonly cache: Cache;
@@ -18,6 +19,7 @@ export abstract class AbstractTriggerBuilder {
     protected readonly referenceMeta: IReferenceMeta;
     protected readonly from: string[];
     protected readonly where: Expression;
+    protected readonly conditionBuilder: ConditionBuilder;
 
     constructor(
         cache: Cache,
@@ -29,6 +31,13 @@ export abstract class AbstractTriggerBuilder {
         this.databaseStructure = databaseStructure;
         this.triggerTable = triggerTable;
         this.triggerTableColumns = triggerTableColumns;
+        
+        this.conditionBuilder = new ConditionBuilder(
+            cache,
+            triggerTable,
+            triggerTableColumns,
+            databaseStructure
+        );
         
         this.referenceMeta = buildReferenceMeta(
             this.cache,

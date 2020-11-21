@@ -1,21 +1,12 @@
-import { noReferenceChanges } from "./condition/noReferenceChanges";
 import { buildCommutativeBody } from "../processor/buildCommutativeBody";
-import { buildNeedUpdateCondition } from "./condition/buildNeedUpdateCondition";
 import { buildSimpleWhere } from "./condition/buildSimpleWhere";
-
 import { buildUpdate } from "../processor/buildUpdate";
-import { findJoinsMeta } from "../processor/findJoinsMeta";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
-import { noChanges } from "./condition/noChanges";
-
 
 export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
     protected createBody() {
-        const mutableColumns = this.triggerTableColumns
-            .filter(col => col !== "id");
-        
-        const joins = findJoinsMeta(this.cache.select);
+        const conditions = this.conditionBuilder.build();
 
         const whereOld = buildSimpleWhere(
             this.cache,
@@ -29,12 +20,9 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
             "new",
             this.referenceMeta
         );
-        const noChangesCondition = noChanges(
-            this.triggerTableColumns,
-            this.triggerTable,
-            this.databaseStructure
-        );
 
+        const mutableColumns = this.triggerTableColumns
+            .filter(col => col !== "id");
         const mutableColumnsDepsInAggregations = mutableColumns
             .filter(col => 
                 !this.referenceMeta.columns.includes(col)
@@ -42,48 +30,34 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
         const body = buildCommutativeBody(
             mutableColumns,
-            noChangesCondition,
+            conditions.noChanges,
             {
-                needUpdate: buildNeedUpdateCondition(
-                    this.cache,
-                    this.triggerTable,
-                    this.referenceMeta,
-                    "old"
-                ),
+                needUpdate: conditions.needUpdateOnDelete,
                 update: buildUpdate(
                     this.cache,
                     this.triggerTable,
                     whereOld,
-                    joins,
+                    [],
                     "minus"
                 )
             },
             {
-                needUpdate: buildNeedUpdateCondition(
-                    this.cache,
-                    this.triggerTable,
-                    this.referenceMeta,
-                    "new"
-                ),
+                needUpdate: conditions.needUpdateOnInsert,
                 update: buildUpdate(
                     this.cache,
                     this.triggerTable,
                     whereNew,
-                    joins,
+                    [],
                     "plus"
                 )
             },
             mutableColumnsDepsInAggregations.length ? {
-                needUpdate: noReferenceChanges(
-                    this.referenceMeta,
-                    this.triggerTable,
-                    this.databaseStructure
-                ),
+                needUpdate: conditions.noReferenceChanges,
                 update: buildUpdate(
                     this.cache,
                     this.triggerTable,
                     whereNew,
-                    joins,
+                    [],
                     "delta"
                 )
             } : undefined

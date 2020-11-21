@@ -1,9 +1,6 @@
 import {
     Expression
 } from "../../ast";
-import { noReferenceChanges } from "./condition/noReferenceChanges";
-import { hasEffect } from "./condition/hasEffect";
-import { hasReference } from "./condition/hasReference";
 import { buildSimpleWhere } from "./condition/buildSimpleWhere";
 
 import { buildCommutativeBodyWithJoins } from "../processor/buildCommutativeBodyWithJoins";
@@ -16,6 +13,8 @@ import { noChanges } from "./condition/noChanges";
 export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
     protected createBody() {
+        const conditions = this.conditionBuilder.build();
+        
         const joins = findJoinsMeta(this.cache.select);
 
         const whereOld = buildSimpleWhere(
@@ -42,17 +41,8 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
         const bodyWithJoins = buildCommutativeBodyWithJoins(
             noChangesCondition,
             {
-                hasReference: hasReference(
-                    this.triggerTable,
-                    this.referenceMeta,
-                    "old"
-                ),
-                needUpdate: hasEffect(
-                    this.cache,
-                    this.triggerTable,
-                    "old",
-                    joins
-                ) as Expression,
+                hasReference: conditions.hasOldReference,
+                needUpdate: conditions.hasOldEffect as Expression,
                 update: buildUpdate(
                     this.cache,
                     this.triggerTable,
@@ -63,17 +53,8 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 joins: oldJoins
             },
             {
-                hasReference: hasReference(
-                    this.triggerTable,
-                    this.referenceMeta,
-                    "new"
-                ),
-                needUpdate: hasEffect(
-                    this.cache,
-                    this.triggerTable,
-                    "new",
-                    joins
-                ) as Expression,
+                hasReference: conditions.hasNewReference,
+                needUpdate: conditions.hasNewEffect as Expression,
                 update: buildUpdate(
                     this.cache,
                     this.triggerTable,
@@ -84,16 +65,8 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 joins: newJoins
             },
             {
-                hasReference: hasReference(
-                    this.triggerTable,
-                    this.referenceMeta,
-                    "new"
-                ),
-                needUpdate: noReferenceChanges(
-                    this.referenceMeta,
-                    this.triggerTable,
-                    this.databaseStructure
-                ),
+                hasReference: conditions.hasNewReference,
+                needUpdate: conditions.noReferenceChanges,
                 update: buildUpdate(
                     this.cache,
                     this.triggerTable,
