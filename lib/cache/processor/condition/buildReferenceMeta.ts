@@ -1,4 +1,4 @@
-import { Cache, Table, Expression } from "../../ast";
+import { Cache, Table, Expression } from "../../../ast";
 
 export interface IReferenceMeta {
     columns: string[];

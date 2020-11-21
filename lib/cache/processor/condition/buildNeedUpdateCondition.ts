@@ -3,9 +3,9 @@ import {
     Table,
     TableReference,
     Expression
-} from "../../ast";
+} from "../../../ast";
 import { IReferenceMeta } from "./buildReferenceMeta";
-import { IJoinMeta } from "./findJoinsMeta";
+import { IJoinMeta } from "../findJoinsMeta";
 import { hasEffect } from "./hasEffect";
 import { hasReference } from "./hasReference";
 import { matchedAllAggFilters } from "./matchedAllAggFilters";

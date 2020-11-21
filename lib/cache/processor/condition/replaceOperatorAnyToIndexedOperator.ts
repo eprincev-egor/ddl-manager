@@ -5,7 +5,7 @@ import {
     ColumnReference,
     IExpressionElement,
     UnknownExpressionElement
-} from "../../ast";
+} from "../../../ast";
 
 // try using gin-index scan
 // input (cannot use gin-index):

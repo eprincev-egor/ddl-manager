@@ -9,7 +9,7 @@ import {
     AssignVariable,
     SimpleSelect
 } from "../../ast";
-import { isNotDistinctFrom } from "./isNotDistinctFrom";
+import { isNotDistinctFrom } from "./condition/isNotDistinctFrom";
 import { updateIf } from "./updateIf";
 import { ICase } from "./buildCommutativeBody";
 
@@ -36,7 +36,7 @@ export interface IJoinedCase extends ICase {
 }
 
 export function buildCommutativeBodyWithJoins(
-    mutableColumns: string[],
+    noChanges: Expression,
     oldCase: IJoinedCase,
     newCase: IJoinedCase,
     deltaCase: IJoinedCase
@@ -66,7 +66,7 @@ export function buildCommutativeBodyWithJoins(
                 if: new HardCode({sql: "TG_OP = 'UPDATE'"}),
                 then: [
                     new If({
-                        if: isNotDistinctFrom(mutableColumns),
+                        if: noChanges,
                         then: [
                             new HardCode({sql: "return new;"})
                         ]

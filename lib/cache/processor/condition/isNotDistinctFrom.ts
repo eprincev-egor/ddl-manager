@@ -1,4 +1,4 @@
-import { Expression } from "../../ast";
+import { Expression } from "../../../ast";
 
 export function isNotDistinctFrom(columns: string[]) {
     const conditions = columns.map(column =>

@@ -1,4 +1,4 @@
-import { Expression, Table } from "../../ast";
+import { Expression, Table } from "../../../ast";
 import { IReferenceMeta } from "./buildReferenceMeta";
 
 type RowType = "new" | "old";

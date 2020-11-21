@@ -3,7 +3,7 @@ import {
     Table,
     TableReference,
     Expression
-} from "../../ast";
+} from "../../../ast";
 import { flatMap } from "lodash";
 
 export function matchedAllAggFilters(

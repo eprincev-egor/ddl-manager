@@ -7,25 +7,25 @@ import {
     DatabaseTrigger,
     SelectColumn
 } from "../ast";
-import { buildReferenceMeta, IReferenceMeta } from "./processor/buildReferenceMeta";
+import { buildReferenceMeta, IReferenceMeta } from "./processor/condition/buildReferenceMeta";
+import { noReferenceChanges } from "./processor/condition/noReferenceChanges";
 import { buildCommutativeBody } from "./processor/buildCommutativeBody";
+import { buildNeedUpdateCondition } from "./processor/condition/buildNeedUpdateCondition";
+import { hasEffect } from "./processor/condition/hasEffect";
+import { hasReference } from "./processor/condition/hasReference";
+import { buildSimpleWhere } from "./processor/condition/buildSimpleWhere";
+import { isNotDistinctFrom } from "./processor/condition/isNotDistinctFrom";
+
 import { buildCommutativeBodyWithJoins } from "./processor/buildCommutativeBodyWithJoins";
-import { buildNeedUpdateCondition } from "./processor/buildNeedUpdateCondition";
-import { hasEffect } from "./processor/hasEffect";
-import { hasReference } from "./processor/hasReference";
 import { buildUpdate } from "./processor/buildUpdate";
 import { buildJoins } from "./processor/buildJoins";
 import { buildUniversalBody } from "./processor/buildUniversalBody";
 import { buildFromAndWhere } from "./processor/buildFromAndWhere";
 import { findJoinsMeta } from "./processor/findJoinsMeta";
 import { findDependencies } from "./processor/findDependencies";
-import { buildSimpleWhere } from "./processor/buildSimpleWhere";
 import { AggFactory } from "./aggregator";
 import { flatMap } from "lodash";
 import { Database as DatabaseStructure } from "./schema/Database";
-import { Table as TableStructure } from "./schema/Table";
-import { Column } from "./schema/Column";
-import assert from "assert";
 
 export class CacheTriggerFactory {
 
@@ -227,13 +227,14 @@ export class CacheTriggerFactory {
             "new",
             referenceMeta
         );
+        const noChanges = isNotDistinctFrom(mutableColumns);
 
         if ( joins.length ) {
             const oldJoins = buildJoins(joins, "old");
             const newJoins = buildJoins(joins, "new");
             
             const bodyWithJoins = buildCommutativeBodyWithJoins(
-                mutableColumns,
+                noChanges,
                 {
                     hasReference: hasReference(triggerTable, referenceMeta, "old"),
                     needUpdate: hasEffect(
@@ -296,6 +297,7 @@ export class CacheTriggerFactory {
 
             const body = buildCommutativeBody(
                 mutableColumns,
+                noChanges,
                 {
                     needUpdate: buildNeedUpdateCondition(
                         cache,
@@ -345,41 +347,4 @@ export class CacheTriggerFactory {
             return body;
         }
     }
-}
-
-function noReferenceChanges(
-    referenceMeta: IReferenceMeta,
-    triggerTable: Table,
-    databaseStructure: DatabaseStructure
-) {
-    const importantColumns = referenceMeta.columns.slice();
-
-    for (const filter of referenceMeta.filters) {
-        const filterColumns = filter.getColumnReferences().map(columnRef =>
-            columnRef.name
-        );
-        importantColumns.push( ...filterColumns );
-    }
-
-    const mutableImportantColumns = importantColumns.filter(column =>
-        column !== "id"
-    );
-
-    const tableStructure = databaseStructure.getTable(triggerTable) as TableStructure;
-    // assert.ok(tableStructure, `table ${ triggerTable.toString() } does not exists`);
-
-    const conditions: string[] = [];
-    for (const columnName of mutableImportantColumns) {
-        const column = tableStructure && tableStructure.getColumn(columnName) as Column;
-        // assert.ok(column, `column ${ triggerTable.toString() }.${ columnName } does not exists`);
-
-        if ( column && column.type.isArray() ) {
-            conditions.push(`not cm_is_distinct_arrays(new.${columnName}, old.${columnName})`);
-        }
-        else {
-            conditions.push(`new.${ columnName } is not distinct from old.${ columnName }`);
-        }
-    }
-    
-    return Expression.and(conditions);
 }

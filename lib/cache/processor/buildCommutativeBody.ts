@@ -5,7 +5,6 @@ import {
     BlankLine,
     Expression
 } from "../../ast";
-import { isNotDistinctFrom } from "./isNotDistinctFrom";
 import { updateIf } from "./updateIf";
 import { Update } from "../../ast/Update";
 
@@ -16,6 +15,7 @@ export interface ICase {
 
 export function buildCommutativeBody(
     mutableColumns: string[],
+    noChanges: Expression,
     oldCase: ICase,
     newCase: ICase,
     deltaCase?: ICase
@@ -33,7 +33,7 @@ export function buildCommutativeBody(
                 new If({
                     if: new HardCode({sql: "TG_OP = 'UPDATE'"}),
                     then: buildUpdateCaseBody(
-                        mutableColumns,
+                        noChanges,
                         oldCase,
                         newCase,
                         deltaCase
@@ -82,14 +82,14 @@ function buildInsertOrDeleteCase(
 }
 
 function buildUpdateCaseBody(
-    mutableColumns: string[],
+    noChanges: Expression,
     oldCase: ICase,
     newCase: ICase,
     deltaCase?: ICase
 ) {
     return [
         new If({
-            if: isNotDistinctFrom(mutableColumns),
+            if: noChanges,
             then: [
                 new HardCode({sql: "return new;"})
             ]

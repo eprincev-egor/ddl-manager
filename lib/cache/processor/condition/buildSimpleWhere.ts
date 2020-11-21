@@ -3,7 +3,7 @@ import {
     Table,
     Cache,
     TableReference
-} from "../../ast";
+} from "../../../ast";
 import { IReferenceMeta } from "./buildReferenceMeta";
 import { replaceOperatorAnyToIndexedOperator } from "./replaceOperatorAnyToIndexedOperator";
 
