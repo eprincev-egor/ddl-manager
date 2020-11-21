@@ -2,11 +2,11 @@ import { noReferenceChanges } from "../processor/condition/noReferenceChanges";
 import { buildCommutativeBody } from "../processor/buildCommutativeBody";
 import { buildNeedUpdateCondition } from "../processor/condition/buildNeedUpdateCondition";
 import { buildSimpleWhere } from "../processor/condition/buildSimpleWhere";
-import { isNotDistinctFrom } from "../processor/condition/isNotDistinctFrom";
 
 import { buildUpdate } from "../processor/buildUpdate";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
+import { noChanges } from "../processor/condition/noChanges";
 
 
 export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
@@ -29,7 +29,11 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
             "new",
             this.referenceMeta
         );
-        const noChanges = isNotDistinctFrom(mutableColumns);
+        const noChangesCondition = noChanges(
+            this.triggerTableColumns,
+            this.triggerTable,
+            this.databaseStructure
+        );
 
         const mutableColumnsDepsInAggregations = mutableColumns
             .filter(col => 
@@ -38,7 +42,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
         const body = buildCommutativeBody(
             mutableColumns,
-            noChanges,
+            noChangesCondition,
             {
                 needUpdate: buildNeedUpdateCondition(
                     this.cache,
