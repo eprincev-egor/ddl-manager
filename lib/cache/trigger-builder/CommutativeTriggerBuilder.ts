@@ -1,25 +1,11 @@
-import { buildCommutativeBody } from "../processor/buildCommutativeBody";
-import { buildSimpleWhere } from "./condition/buildSimpleWhere";
-import { buildUpdate } from "../processor/buildUpdate";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
+import { buildCommutativeBody } from "../processor/buildCommutativeBody";
+import { buildUpdate } from "../processor/buildUpdate";
 
 export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
     protected createBody() {
         const conditions = this.conditionBuilder.build();
-
-        const whereOld = buildSimpleWhere(
-            this.cache,
-            this.triggerTable,
-            "old",
-            this.referenceMeta
-        );
-        const whereNew = buildSimpleWhere(
-            this.cache,
-            this.triggerTable,
-            "new",
-            this.referenceMeta
-        );
 
         const mutableColumns = this.triggerTableColumns
             .filter(col => col !== "id");
@@ -36,7 +22,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 update: buildUpdate(
                     this.cache,
                     this.triggerTable,
-                    whereOld,
+                    conditions.whereOld,
                     [],
                     "minus"
                 )
@@ -46,7 +32,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 update: buildUpdate(
                     this.cache,
                     this.triggerTable,
-                    whereNew,
+                    conditions.whereNew,
                     [],
                     "plus"
                 )
@@ -56,7 +42,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 update: buildUpdate(
                     this.cache,
                     this.triggerTable,
-                    whereNew,
+                    conditions.whereNew,
                     [],
                     "delta"
                 )

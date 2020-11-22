@@ -10,6 +10,7 @@ import { hasReference } from "./hasReference";
 import { hasEffect } from "./hasEffect";
 import { findJoinsMeta } from "../../processor/findJoinsMeta";
 import { Database as DatabaseStructure } from "../../schema/Database";
+import { buildSimpleWhere } from "./buildSimpleWhere";
 
 export class ConditionBuilder {
     private readonly cache: Cache;
@@ -79,6 +80,18 @@ export class ConditionBuilder {
                 this.triggerTable,
                 "new",
                 joins
+            ),
+            whereOld: buildSimpleWhere(
+                this.cache,
+                this.triggerTable,
+                "old",
+                referenceMeta
+            ),
+            whereNew: buildSimpleWhere(
+                this.cache,
+                this.triggerTable,
+                "new",
+                referenceMeta
             )
         };
     }

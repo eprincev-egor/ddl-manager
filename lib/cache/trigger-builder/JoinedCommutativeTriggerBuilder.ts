@@ -1,14 +1,11 @@
 import {
     Expression
 } from "../../ast";
-import { buildSimpleWhere } from "./condition/buildSimpleWhere";
-
 import { buildCommutativeBodyWithJoins } from "../processor/buildCommutativeBodyWithJoins";
 import { buildUpdate } from "../processor/buildUpdate";
 import { buildJoins } from "../processor/buildJoins";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
-import { noChanges } from "./condition/noChanges";
 
 export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
@@ -17,36 +14,18 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
         
         const joins = findJoinsMeta(this.cache.select);
 
-        const whereOld = buildSimpleWhere(
-            this.cache,
-            this.triggerTable,
-            "old",
-            this.referenceMeta
-        );
-        const whereNew = buildSimpleWhere(
-            this.cache,
-            this.triggerTable,
-            "new",
-            this.referenceMeta
-        );
-        const noChangesCondition = noChanges(
-            this.triggerTableColumns,
-            this.triggerTable,
-            this.databaseStructure
-        );
-
         const oldJoins = buildJoins(joins, "old");
         const newJoins = buildJoins(joins, "new");
         
         const bodyWithJoins = buildCommutativeBodyWithJoins(
-            noChangesCondition,
+            conditions.noChanges,
             {
                 hasReference: conditions.hasOldReference,
                 needUpdate: conditions.hasOldEffect as Expression,
                 update: buildUpdate(
                     this.cache,
                     this.triggerTable,
-                    whereOld,
+                    conditions.whereOld,
                     joins,
                     "minus"
                 ),
@@ -58,7 +37,7 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 update: buildUpdate(
                     this.cache,
                     this.triggerTable,
-                    whereNew,
+                    conditions.whereNew,
                     joins,
                     "plus"
                 ),
@@ -70,7 +49,7 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 update: buildUpdate(
                     this.cache,
                     this.triggerTable,
-                    whereNew,
+                    conditions.whereNew,
                     joins,
                     "delta"
                 ),
