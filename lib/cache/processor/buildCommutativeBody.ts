@@ -14,7 +14,7 @@ export interface ICase {
 }
 
 export function buildCommutativeBody(
-    mutableColumns: string[],
+    hasMutableColumns: boolean,
     noChanges: Expression,
     oldCase: ICase,
     newCase: ICase,
@@ -29,7 +29,7 @@ export function buildCommutativeBody(
                 "old"
             ),
 
-            ...(mutableColumns.length ? [
+            ...(hasMutableColumns ? [
                 new If({
                     if: new HardCode({sql: "TG_OP = 'UPDATE'"}),
                     then: buildUpdateCaseBody(

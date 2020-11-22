@@ -7,15 +7,8 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
     protected createBody() {
         const conditions = this.conditionBuilder.build();
 
-        const mutableColumns = this.triggerTableColumns
-            .filter(col => col !== "id");
-        const mutableColumnsDepsInAggregations = mutableColumns
-            .filter(col => 
-                !this.referenceMeta.columns.includes(col)
-            );
-
         const body = buildCommutativeBody(
-            mutableColumns,
+            conditions.hasMutableColumns,
             conditions.noChanges,
             {
                 needUpdate: conditions.needUpdateOnDelete,
@@ -37,7 +30,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                     "plus"
                 )
             },
-            mutableColumnsDepsInAggregations.length ? {
+            conditions.hasMutableColumnsDepsInAggregations ? {
                 needUpdate: conditions.noReferenceChanges,
                 update: buildUpdate(
                     this.cache,

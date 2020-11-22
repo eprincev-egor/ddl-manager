@@ -36,7 +36,20 @@ export class ConditionBuilder {
             this.triggerTable
         );
 
+        const mutableColumns = this.triggerTableColumns
+            .filter(col => col !== "id");
+        const mutableColumnsDepsInAggregations = mutableColumns
+            .filter(col => 
+                !referenceMeta.columns.includes(col)
+            );
+
         return {
+
+            hasMutableColumns: 
+                mutableColumns.length > 0,
+            hasMutableColumnsDepsInAggregations: 
+                mutableColumnsDepsInAggregations.length > 0,
+            
             noReferenceChanges: noReferenceChanges(
                 referenceMeta,
                 this.triggerTable,

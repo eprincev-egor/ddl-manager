@@ -3,12 +3,9 @@ import {
     Cache,
     DatabaseTrigger,
     DatabaseFunction,
-    AbstractAstElement,
-    Expression
+    AbstractAstElement
 } from "../../ast";
-import { buildReferenceMeta, IReferenceMeta } from "./condition/buildReferenceMeta";
 import { Database as DatabaseStructure } from "../schema/Database";
-import { buildFromAndWhere } from "../processor/buildFromAndWhere";
 import { ConditionBuilder } from "./condition/ConditionBuilder";
 
 export abstract class AbstractTriggerBuilder {
@@ -16,9 +13,6 @@ export abstract class AbstractTriggerBuilder {
     protected readonly databaseStructure: DatabaseStructure;
     protected readonly triggerTable: Table;
     protected readonly triggerTableColumns: string[];
-    protected readonly referenceMeta: IReferenceMeta;
-    protected readonly from: string[];
-    protected readonly where: Expression;
     protected readonly conditionBuilder: ConditionBuilder;
 
     constructor(
@@ -38,17 +32,6 @@ export abstract class AbstractTriggerBuilder {
             triggerTableColumns,
             databaseStructure
         );
-        
-        this.referenceMeta = buildReferenceMeta(
-            this.cache,
-            this.triggerTable
-        );
-        const {from, where} = buildFromAndWhere(
-            this.cache,
-            this.triggerTable
-        );
-        this.from = from;
-        this.where = where;
     }
 
     createTrigger(): {
