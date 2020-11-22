@@ -1,6 +1,7 @@
 import {
     Table,
-    Cache
+    Cache,
+    Expression
 } from "../../../ast";
 import { noReferenceChanges } from "./noReferenceChanges";
 import { buildNeedUpdateCondition } from "./buildNeedUpdateCondition";
@@ -43,7 +44,7 @@ export class ConditionBuilder {
                 !referenceMeta.columns.includes(col)
             );
 
-        return {
+        const conditions = {
 
             hasMutableColumns: 
                 mutableColumns.length > 0,
@@ -71,6 +72,28 @@ export class ConditionBuilder {
                 this.triggerTable,
                 referenceMeta,
                 "old"
+            ),
+            needUpdateOnUpdateOld: replaceArrayNotNullOn(
+                buildNeedUpdateCondition(
+                    this.cache,
+                    this.triggerTable,
+                    referenceMeta,
+                    "old"
+                ),
+                this.triggerTable,
+                this.databaseStructure,
+                "cm_get_deleted_elements"
+            ),
+            needUpdateOnUpdateNew: replaceArrayNotNullOn(
+                buildNeedUpdateCondition(
+                    this.cache,
+                    this.triggerTable,
+                    referenceMeta,
+                    "new"
+                ),
+                this.triggerTable,
+                this.databaseStructure,
+                "cm_get_inserted_elements"
             ),
             hasOldReference: hasReference(
                 this.triggerTable,
@@ -105,7 +128,60 @@ export class ConditionBuilder {
                 this.triggerTable,
                 "new",
                 referenceMeta
+            ),
+            whereOldOnUpdate: replaceArrayNotNullOn(
+                buildSimpleWhere(
+                    this.cache,
+                    this.triggerTable,
+                    "old",
+                    referenceMeta
+                ),
+                this.triggerTable,
+                this.databaseStructure,
+                "cm_get_deleted_elements"
+            ),
+            whereNewOnUpdate: replaceArrayNotNullOn(
+                buildSimpleWhere(
+                    this.cache,
+                    this.triggerTable,
+                    "new",
+                    referenceMeta
+                ),
+                this.triggerTable,
+                this.databaseStructure,
+                "cm_get_inserted_elements"
             )
         };
+        return conditions;
     }
+}
+
+function replaceArrayNotNullOn(
+    sourceExpression: Expression | undefined,
+    triggerTable: Table,
+    databaseStructure: DatabaseStructure,
+    funcName: string
+): Expression | undefined {
+    if ( !sourceExpression ) {
+        return;
+    }
+
+    let outputExpression = sourceExpression;
+    const tableStructure = databaseStructure.getTable(triggerTable);
+
+    for (const columnRef of sourceExpression.getColumnReferences()) {
+        if ( !columnRef.tableReference.table.equal(triggerTable) ) {
+            continue;
+        }
+
+        const column = tableStructure && tableStructure.getColumn(columnRef.name);
+        if ( column && column.type.isArray() ) {
+            outputExpression = outputExpression.replaceColumn(
+                columnRef.toString(),
+                `${funcName}(old.${column.name}, new.${column.name})`
+            );
+        }
+    }
+
+    return outputExpression;
 }

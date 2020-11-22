@@ -38,7 +38,27 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                     conditions.whereNew,
                     [],
                     "delta"
-                )
+                ),
+                old: {
+                    needUpdate: conditions.needUpdateOnUpdateOld,
+                    update: buildUpdate(
+                        this.cache,
+                        this.triggerTable,
+                        conditions.whereOldOnUpdate,
+                        [],
+                        "minus"
+                    )
+                },
+                new: {
+                    needUpdate: conditions.needUpdateOnUpdateNew,
+                    update: buildUpdate(
+                        this.cache,
+                        this.triggerTable,
+                        conditions.whereNewOnUpdate,
+                        [],
+                        "plus"
+                    )
+                }
             } : undefined
         );
         

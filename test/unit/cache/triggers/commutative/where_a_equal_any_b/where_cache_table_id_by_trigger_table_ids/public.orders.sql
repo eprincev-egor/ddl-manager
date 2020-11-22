@@ -90,7 +90,7 @@ begin
                     ', '
                 )
             where
-                companies.id = any( cm_get_deleted_elements(old.companies_ids, new.companies_ids) );
+                companies.id = any (cm_get_deleted_elements(old.companies_ids, new.companies_ids));
         end if;
 
         if
@@ -113,7 +113,7 @@ begin
                     ', '
                 )
             where
-                companies.id = any( cm_get_inserted_elements(old.companies_ids, new.companies_ids) );
+                companies.id = any (cm_get_inserted_elements(old.companies_ids, new.companies_ids));
         end if;
 
         return new;

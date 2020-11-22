@@ -13,12 +13,17 @@ export interface ICase {
     update: Update;
 }
 
+export interface IDeltaCase extends ICase {
+    old: ICase;
+    new: ICase;
+}
+
 export function buildCommutativeBody(
     hasMutableColumns: boolean,
     noChanges: Expression,
     oldCase: ICase,
     newCase: ICase,
-    deltaCase?: ICase
+    deltaCase?: IDeltaCase
 ) {
     const body = new Body({
         statements: [
@@ -85,7 +90,7 @@ function buildUpdateCaseBody(
     noChanges: Expression,
     oldCase: ICase,
     newCase: ICase,
-    deltaCase?: ICase
+    deltaCase?: IDeltaCase
 ) {
     return [
         new If({
@@ -100,7 +105,8 @@ function buildUpdateCaseBody(
         ...(
             (
                 !deltaCase ||
-                deltaCase.needUpdate && deltaCase.needUpdate.isEmpty()
+                deltaCase.needUpdate && 
+                deltaCase.needUpdate.isEmpty()
             ) ? [
                 new BlankLine()
             ] : (
@@ -123,15 +129,15 @@ function buildUpdateCaseBody(
         new BlankLine(),
 
         updateIf(
-            oldCase.needUpdate,
-            oldCase.update
+            (deltaCase && deltaCase.old || oldCase).needUpdate,
+            (deltaCase && deltaCase.old || oldCase).update
         ),
 
         new BlankLine(),
 
         updateIf(
-            newCase.needUpdate,
-            newCase.update
+            (deltaCase && deltaCase.new || newCase).needUpdate,
+            (deltaCase && deltaCase.new || newCase).update
         ),
         new BlankLine(),
         new HardCode({sql: "return new;"})

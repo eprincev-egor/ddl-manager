@@ -1,4 +1,4 @@
-import { Expression, Table } from "../../../ast";
+import { Expression, Table, TableReference, UnknownExpressionElement } from "../../../ast";
 import { IReferenceMeta } from "./buildReferenceMeta";
 
 type RowType = "new" | "old";
@@ -66,8 +66,20 @@ function replaceSimpleExpressionToNotNulls(
         .filter(columnRef =>
             columnRef.name !== "id"
         )
+        // TODO: format it
         .map(columnRef =>
-            `${row}.${ columnRef.name } is not null`
+            UnknownExpressionElement.fromSql(
+                `${row}.${ columnRef.name } is not null`,
+                {
+                    [`${row}.${columnRef.name}`]: columnRef.replaceTable(
+                        columnRef.tableReference,
+                        new TableReference(
+                            columnRef.tableReference.table,
+                            row
+                        )
+                    )
+                }
+            )
         );
     
     return Expression.and(notNullTriggerColumns);
