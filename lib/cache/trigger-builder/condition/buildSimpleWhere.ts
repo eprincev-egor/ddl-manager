@@ -6,6 +6,7 @@ import {
 } from "../../../ast";
 import { IReferenceMeta } from "./buildReferenceMeta";
 import { replaceOperatorAnyToIndexedOperator } from "./replaceOperatorAnyToIndexedOperator";
+import { replaceAmpArrayToAny } from "./replaceAmpArrayToAny";
 
 export function buildSimpleWhere(
     cache: Cache,
@@ -29,6 +30,10 @@ export function buildSimpleWhere(
         });
 
         expression = replaceOperatorAnyToIndexedOperator(
+            cache,
+            expression
+        );
+        expression = replaceAmpArrayToAny(
             cache,
             expression
         );
