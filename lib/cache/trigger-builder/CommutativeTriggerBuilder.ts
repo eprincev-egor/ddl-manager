@@ -14,7 +14,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 needUpdate: conditions.needUpdateOnDelete,
                 update: buildUpdate(
                     this.context,
-                    conditions.whereOld,
+                    this.conditionBuilder.getSimpleWhere("old"),
                     [],
                     "minus"
                 )
@@ -23,7 +23,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 needUpdate: conditions.needUpdateOnInsert,
                 update: buildUpdate(
                     this.context,
-                    conditions.whereNew,
+                    this.conditionBuilder.getSimpleWhere("new"),
                     [],
                     "plus"
                 )
@@ -32,7 +32,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 needUpdate: conditions.noReferenceChanges,
                 update: buildUpdate(
                     this.context,
-                    conditions.whereNew,
+                    this.conditionBuilder.getSimpleWhere("new"),
                     [],
                     "delta"
                 ),
@@ -40,7 +40,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                     needUpdate: conditions.needUpdateOnUpdateOld,
                     update: buildUpdate(
                         this.context,
-                        conditions.whereOldOnUpdate,
+                        this.conditionBuilder.getSimpleWhereOnUpdate("old"),
                         [],
                         "minus"
                     )
@@ -49,7 +49,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                     needUpdate: conditions.needUpdateOnUpdateNew,
                     update: buildUpdate(
                         this.context,
-                        conditions.whereNewOnUpdate,
+                        this.conditionBuilder.getSimpleWhereOnUpdate("new"),
                         [],
                         "plus"
                     )

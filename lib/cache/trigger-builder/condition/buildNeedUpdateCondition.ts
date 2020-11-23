@@ -1,5 +1,4 @@
 import {
-    Table,
     TableReference,
     Expression
 } from "../../../ast";

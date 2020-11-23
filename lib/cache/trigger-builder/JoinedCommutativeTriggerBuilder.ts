@@ -24,7 +24,7 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 needUpdate: conditions.hasOldEffect as Expression,
                 update: buildUpdate(
                     this.context,
-                    conditions.whereOld,
+                    this.conditionBuilder.getSimpleWhere("old"),
                     joins,
                     "minus"
                 ),
@@ -35,7 +35,7 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 needUpdate: conditions.hasNewEffect as Expression,
                 update: buildUpdate(
                     this.context,
-                    conditions.whereNew,
+                    this.conditionBuilder.getSimpleWhere("new"),
                     joins,
                     "plus"
                 ),
@@ -46,7 +46,7 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 needUpdate: conditions.noReferenceChanges,
                 update: buildUpdate(
                     this.context,
-                    conditions.whereNew,
+                    this.conditionBuilder.getSimpleWhere("new"),
                     joins,
                     "delta"
                 ),

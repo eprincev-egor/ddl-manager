@@ -1,29 +1,13 @@
-import {
-    Expression,
-    TableReference
-} from "../../../ast";
+import { Expression } from "../../../ast";
 import { replaceOperatorAnyToIndexedOperator } from "./replaceOperatorAnyToIndexedOperator";
 import { replaceAmpArrayToAny } from "./replaceAmpArrayToAny";
 import { CacheContext } from "../CacheContext";
 
 export function buildSimpleWhere(
-    context: CacheContext,
-    row: "new" | "old"
+    context: CacheContext
 ) {
-    const linksToTriggerTable = context.getTableReferencesToTriggerTable();
 
     const conditions = context.referenceMeta.expressions.map(expression => {
-
-        linksToTriggerTable.forEach((linkToTriggerTable) => {
-
-            expression = expression.replaceTable(
-                linkToTriggerTable,
-                new TableReference(
-                    context.triggerTable,
-                    row
-                )
-            );
-        });
 
         expression = replaceOperatorAnyToIndexedOperator(
             context.cache,

@@ -7,6 +7,12 @@ import { findJoinsMeta } from "../../processor/findJoinsMeta";
 import { buildSimpleWhere } from "./buildSimpleWhere";
 import { replaceArrayNotNullOn } from "./replaceArrayNotNullOn";
 import { CacheContext } from "../CacheContext";
+import {
+    Expression,
+    TableReference
+} from "../../../ast";
+
+export type RowType = "new" | "old";
 
 export class ConditionBuilder {
     private readonly context: CacheContext;
@@ -25,7 +31,7 @@ export class ConditionBuilder {
             .filter(col => 
                 !this.context.referenceMeta.columns.includes(col)
             );
-
+        
         const conditions = {
 
             hasMutableColumns: 
@@ -80,32 +86,49 @@ export class ConditionBuilder {
                 this.context,
                 "new",
                 joins
-            ),
-            whereOld: buildSimpleWhere(
-                this.context,
-                "old"
-            ),
-            whereNew: buildSimpleWhere(
-                this.context,
-                "new"
-            ),
-            whereOldOnUpdate: replaceArrayNotNullOn(
-                this.context,
-                buildSimpleWhere(
-                    this.context,
-                    "old"
-                ),
-                "cm_get_deleted_elements"
-            ),
-            whereNewOnUpdate: replaceArrayNotNullOn(
-                this.context,
-                buildSimpleWhere(
-                    this.context,
-                    "new"
-                ),
-                "cm_get_inserted_elements"
             )
         };
         return conditions;
+    }
+
+    getSimpleWhere(row: RowType) {
+        const simpleWhere = buildSimpleWhere(this.context);
+        const output = this.replaceTriggerTableRefsTo(simpleWhere, row);
+        return output;
+    }
+
+    getSimpleWhereOnUpdate(row: RowType) {
+        const simpleWhere = buildSimpleWhere(this.context);
+        const output = replaceArrayNotNullOn(
+            this.context,
+            this.replaceTriggerTableRefsTo(simpleWhere, row),
+            row === "old" ? "cm_get_deleted_elements" : "cm_get_inserted_elements"
+        );
+        return output;
+    }
+
+    private replaceTriggerTableRefsTo(
+        expression: Expression | undefined,
+        row: "new" | "old"
+    ) {
+        if ( !expression ) {
+            return;
+        }
+        let outputExpression = expression as Expression;
+
+        const refsToTriggerTable = this.context.getTableReferencesToTriggerTable();
+
+        refsToTriggerTable.forEach((triggerTableRef) => {
+
+            outputExpression = outputExpression.replaceTable(
+                triggerTableRef,
+                new TableReference(
+                    this.context.triggerTable,
+                    row
+                )
+            );
+        });
+
+        return outputExpression;
     }
 }
