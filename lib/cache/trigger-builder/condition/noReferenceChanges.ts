@@ -1,18 +1,12 @@
-import {
-    Table
-} from "../../../ast";
-import { IReferenceMeta } from "./buildReferenceMeta";
-import { Database as DatabaseStructure } from "../../schema/Database";
 import { noChanges } from "./noChanges";
+import { CacheContext } from "../CacheContext";
 
 export function noReferenceChanges(
-    referenceMeta: IReferenceMeta,
-    triggerTable: Table,
-    databaseStructure: DatabaseStructure
+    context: CacheContext
 ) {
-    const importantColumns = referenceMeta.columns.slice();
+    const importantColumns = context.referenceMeta.columns.slice();
 
-    for (const filter of referenceMeta.filters) {
+    for (const filter of context.referenceMeta.filters) {
         const filterColumns = filter.getColumnReferences().map(columnRef =>
             columnRef.name
         );
@@ -20,8 +14,7 @@ export function noReferenceChanges(
     }
 
     return noChanges(
-        importantColumns,
-        triggerTable,
-        databaseStructure
+        context,
+        importantColumns
     );
 }

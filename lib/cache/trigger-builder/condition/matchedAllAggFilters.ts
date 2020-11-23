@@ -1,18 +1,19 @@
 import {
-    Cache,
-    Table,
     TableReference,
     Expression
 } from "../../../ast";
 import { flatMap } from "lodash";
+import { CacheContext } from "../CacheContext";
 
 export function matchedAllAggFilters(
-    cache: Cache,
-    triggerTable: Table,
+    context: CacheContext,
     row: "new" | "old"
 ) {
 
-    const allAggCalls = flatMap(cache.select.columns, column => column.getAggregations());
+    const allAggCalls = flatMap(
+        context.cache.select.columns, 
+        column => column.getAggregations()
+    );
     const everyAggCallHaveFilter = allAggCalls.every(aggCall => aggCall.where != null);
     if ( !everyAggCallHaveFilter ) {
         return;
@@ -22,9 +23,9 @@ export function matchedAllAggFilters(
         let expression = aggCall.where as Expression;
         
         expression = expression.replaceTable(
-            triggerTable,
+            context.triggerTable,
             new TableReference(
-                triggerTable,
+                context.triggerTable,
                 row
             )
         );

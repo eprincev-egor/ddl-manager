@@ -1,13 +1,11 @@
 import {
-    Table,
     Expression
 } from "../../../ast";
-import { Database as DatabaseStructure } from "../../schema/Database";
+import { CacheContext } from "../CacheContext";
 
 export function replaceArrayNotNullOn(
+    context: CacheContext,
     sourceExpression: Expression | undefined,
-    triggerTable: Table,
-    databaseStructure: DatabaseStructure,
     funcName: string
 ): Expression | undefined {
     if ( !sourceExpression ) {
@@ -15,10 +13,10 @@ export function replaceArrayNotNullOn(
     }
 
     let outputExpression = sourceExpression;
-    const tableStructure = databaseStructure.getTable(triggerTable);
+    const tableStructure = context.databaseStructure.getTable(context.triggerTable);
 
     for (const columnRef of sourceExpression.getColumnReferences()) {
-        if ( !columnRef.tableReference.table.equal(triggerTable) ) {
+        if ( !columnRef.tableReference.table.equal(context.triggerTable) ) {
             continue;
         }
 

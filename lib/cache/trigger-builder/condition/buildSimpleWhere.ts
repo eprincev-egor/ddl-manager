@@ -1,40 +1,36 @@
 import {
     Expression,
-    Table,
-    Cache,
     TableReference
 } from "../../../ast";
-import { IReferenceMeta } from "./buildReferenceMeta";
 import { replaceOperatorAnyToIndexedOperator } from "./replaceOperatorAnyToIndexedOperator";
 import { replaceAmpArrayToAny } from "./replaceAmpArrayToAny";
+import { CacheContext } from "../CacheContext";
 
 export function buildSimpleWhere(
-    cache: Cache,
-    triggerTable: Table,
-    row: "new" | "old",
-    referenceMeta: IReferenceMeta
+    context: CacheContext,
+    row: "new" | "old"
 ) {
-    const linksToTriggerTable = cache.select.findTableReferences(triggerTable);
+    const linksToTriggerTable = context.cache.select.findTableReferences(context.triggerTable);
 
-    const conditions = referenceMeta.expressions.map(expression => {
+    const conditions = context.referenceMeta.expressions.map(expression => {
 
         linksToTriggerTable.forEach((linkToTriggerTable) => {
 
             expression = expression.replaceTable(
                 linkToTriggerTable,
                 new TableReference(
-                    triggerTable,
+                    context.triggerTable,
                     row
                 )
             );
         });
 
         expression = replaceOperatorAnyToIndexedOperator(
-            cache,
+            context.cache,
             expression
         );
         expression = replaceAmpArrayToAny(
-            cache,
+            context.cache,
             expression
         );
 

@@ -1,22 +1,22 @@
 import {
-    Expression,
-    Table
+    Expression
 } from "../../../ast";
-import { Database as DatabaseStructure } from "../../schema/Database";
 import { Table as TableStructure } from "../../schema/Table";
 import { Column } from "../../schema/Column";
+import { CacheContext } from "../CacheContext";
 import assert from "assert";
 
 export function noChanges(
-    columns: string[],
-    triggerTable: Table,
-    databaseStructure: DatabaseStructure
+    context: CacheContext,
+    columns?: string[]
 ) {
-    const mutableColumns = columns.filter(column =>
+    const mutableColumns = (columns || context.triggerTableColumns).filter(column =>
         column !== "id"
     );
 
-    const tableStructure = databaseStructure.getTable(triggerTable) as TableStructure;
+    const tableStructure = context.databaseStructure.getTable(
+        context.triggerTable
+    ) as TableStructure;
     // assert.ok(tableStructure, `table ${ triggerTable.toString() } does not exists`);
 
     const conditions: string[] = [];

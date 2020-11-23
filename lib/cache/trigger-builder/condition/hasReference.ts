@@ -1,21 +1,20 @@
 import { Expression, Table, TableReference, UnknownExpressionElement } from "../../../ast";
-import { IReferenceMeta } from "./buildReferenceMeta";
+import { CacheContext } from "../CacheContext";
 
 type RowType = "new" | "old";
 
 export function hasReference(
-    triggerTable: Table,
-    referenceMeta: IReferenceMeta,
+    context: CacheContext,
     row: RowType
 ) {
-    if ( !referenceMeta.expressions ) {
+    if ( !context.referenceMeta.expressions ) {
         return;
     }
 
     return buildReferenceExpression(
-        referenceMeta.expressions,
+        context.referenceMeta.expressions,
         "and",
-        triggerTable,
+        context.triggerTable,
         row
     );
 }

@@ -1,21 +1,20 @@
 import {
     Cache,
-    Table,
     Expression,
     FuncCall
 } from "../../../ast";
 import { createAggValue } from "../../processor/createAggValue";
 import { IJoinMeta } from "../../processor/findJoinsMeta";
+import { CacheContext } from "../CacheContext";
 
 type RowType = "new" | "old";
 
 export function hasEffect(
-    cache: Cache,
-    triggerTable: Table,
+    context: CacheContext,
     row: RowType,
     joinsMeta: IJoinMeta[]
 ) {
-    const aggCalls = findAggCalls(cache);
+    const aggCalls = findAggCalls(context.cache);
 
     const hasCountAgg = aggCalls.some(aggCall => aggCall.name === "count");
     const hasArrayAgg = aggCalls.some(aggCall => aggCall.name === "array_agg");
@@ -35,7 +34,7 @@ export function hasEffect(
     for (const aggCall of aggCallsForMutableColumns) {
 
         const aggValue = createAggValue(
-            triggerTable,
+            context.triggerTable,
             joinsMeta,
             aggCall.args,
             row

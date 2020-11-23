@@ -1,27 +1,24 @@
 import {
-    Cache,
     Table,
     TableReference,
     Expression
 } from "../../../ast";
-import { IReferenceMeta } from "./buildReferenceMeta";
 import { IJoinMeta } from "../../processor/findJoinsMeta";
 import { hasEffect } from "./hasEffect";
 import { hasReference } from "./hasReference";
 import { matchedAllAggFilters } from "./matchedAllAggFilters";
+import { CacheContext } from "../CacheContext";
 
 export function buildNeedUpdateCondition(
-    cache: Cache,
-    triggerTable: Table,
-    referenceMeta: IReferenceMeta,
+    context: CacheContext,
     row: "new" | "old",
     joinsMeta: IJoinMeta[] = []
 ) {
     const conditions = [
-        hasReference(triggerTable, referenceMeta, row),
-        hasEffect(cache, triggerTable, row, joinsMeta),
-        matchedFilter(triggerTable, referenceMeta.filters, row),
-        matchedAllAggFilters(cache, triggerTable, row)
+        hasReference(context, row),
+        hasEffect(context, row, joinsMeta),
+        matchedFilter(context, row),
+        matchedAllAggFilters(context, row)
     ].filter(condition => 
         condition != null &&
         !condition.isEmpty()
@@ -34,19 +31,18 @@ export function buildNeedUpdateCondition(
 }
 
 function matchedFilter(
-    triggerTable: Table,
-    filters: Expression[],
+    context: CacheContext,
     row: "new" | "old"
 ) {
-    if ( !filters.length ) {
+    if ( !context.referenceMeta.filters.length ) {
         return;
     }
 
-    const filterConditions = filters.map(filter =>
+    const filterConditions = context.referenceMeta.filters.map(filter =>
         filter.replaceTable(
-            triggerTable,
+            context.triggerTable,
             new TableReference(
-                triggerTable,
+                context.triggerTable,
                 row
             )
         ).toString()
