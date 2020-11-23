@@ -8,8 +8,8 @@ import {
     Declare,
     AssignVariable,
     SimpleSelect
-} from "../../ast";
-import { updateIf } from "./updateIf";
+} from "../../../ast";
+import { updateIf } from "./util/updateIf";
 import { ICase } from "./buildCommutativeBody";
 
 export interface IVariable {

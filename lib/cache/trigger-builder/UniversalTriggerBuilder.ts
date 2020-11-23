@@ -1,4 +1,4 @@
-import { buildUniversalBody } from "../processor/buildUniversalBody";
+import { buildUniversalBody } from "./body/buildUniversalBody";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { buildFrom } from "../processor/buildFrom";
 import { buildUniversalWhere } from "../processor/buildUniversalWhere";

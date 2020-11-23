@@ -13,7 +13,7 @@ import {
     WithQuery,
     Table,
     TableReference
-} from "../../ast";
+} from "../../../ast";
 
 export interface IUniversalAST {
     forTable: string;

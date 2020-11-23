@@ -4,9 +4,9 @@ import {
     HardCode,
     BlankLine,
     Expression
-} from "../../ast";
-import { updateIf } from "./updateIf";
-import { Update } from "../../ast/Update";
+} from "../../../ast";
+import { updateIf } from "./util/updateIf";
+import { Update } from "../../../ast/Update";
 
 export interface ICase {
     needUpdate?: Expression;

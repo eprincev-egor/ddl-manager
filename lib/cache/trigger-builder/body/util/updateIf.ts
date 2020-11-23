@@ -1,8 +1,8 @@
 import {
     If,
-    Expression
-} from "../../ast";
-import { Update } from "../../ast/Update";
+    Expression,
+    Update
+} from "../../../../ast";
 
 export function updateIf(
     condition: Expression | undefined,

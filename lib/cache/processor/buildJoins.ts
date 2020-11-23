@@ -1,5 +1,5 @@
 import { IJoinMeta } from "./findJoinsMeta";
-import { IJoin } from "./buildCommutativeBodyWithJoins";
+import { IJoin } from "../trigger-builder/body/buildCommutativeBodyWithJoins";
 
 export function buildJoins(
     joins: IJoinMeta[],

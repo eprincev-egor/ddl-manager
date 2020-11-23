@@ -1,7 +1,7 @@
 import {
     Expression
 } from "../../ast";
-import { buildCommutativeBodyWithJoins } from "../processor/buildCommutativeBodyWithJoins";
+import { buildCommutativeBodyWithJoins } from "./body/buildCommutativeBodyWithJoins";
 import { buildUpdate } from "../processor/buildUpdate";
 import { buildJoins } from "../processor/buildJoins";
 import { findJoinsMeta } from "../processor/findJoinsMeta";

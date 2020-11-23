@@ -1,5 +1,5 @@
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
-import { buildCommutativeBody } from "../processor/buildCommutativeBody";
+import { buildCommutativeBody } from "./body/buildCommutativeBody";
 import { buildUpdate } from "../processor/buildUpdate";
 
 export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
