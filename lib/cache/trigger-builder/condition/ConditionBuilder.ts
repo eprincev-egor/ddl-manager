@@ -1,16 +1,17 @@
 import { noReferenceChanges } from "./noReferenceChanges";
-import { buildNeedUpdateCondition } from "./buildNeedUpdateCondition";
 import { noChanges } from "./noChanges";
 import { hasReference } from "./hasReference";
 import { hasEffect } from "./hasEffect";
 import { findJoinsMeta } from "../../processor/findJoinsMeta";
-import { buildSimpleWhere } from "./buildSimpleWhere";
 import { replaceArrayNotNullOn } from "./replaceArrayNotNullOn";
 import { CacheContext } from "../CacheContext";
 import {
     Expression,
     TableReference
 } from "../../../ast";
+import { replaceOperatorAnyToIndexedOperator } from "./replaceOperatorAnyToIndexedOperator";
+import { replaceAmpArrayToAny } from "./replaceAmpArrayToAny";
+import { flatMap } from "lodash";
 
 export type RowType = "new" | "old";
 
@@ -69,10 +70,7 @@ export class ConditionBuilder {
     }
 
     getNeedUpdateCondition(row: RowType) {
-        const needUpdate = buildNeedUpdateCondition(
-            this.context,
-            row
-        );
+        const needUpdate = this.buildNeedUpdateCondition(row);
         const output = this.replaceTriggerTableRefsTo(needUpdate, row);
         return output;
     }
@@ -80,10 +78,7 @@ export class ConditionBuilder {
     getNeedUpdateConditionOnUpdate(row: RowType) {
         const needUpdate = replaceArrayNotNullOn(
             this.context,
-            buildNeedUpdateCondition(
-                this.context,
-                row
-            ),
+            this.buildNeedUpdateCondition(row),
             arrayChangesFunc(row)
         );
         const output = this.replaceTriggerTableRefsTo(needUpdate, row);
@@ -91,19 +86,76 @@ export class ConditionBuilder {
     }
 
     getSimpleWhere(row: RowType) {
-        const simpleWhere = buildSimpleWhere(this.context);
+        const simpleWhere = this.buildSimpleWhere();
         const output = this.replaceTriggerTableRefsTo(simpleWhere, row);
         return output;
     }
 
     getSimpleWhereOnUpdate(row: RowType) {
-        const simpleWhere = buildSimpleWhere(this.context);
+        const simpleWhere = this.buildSimpleWhere();
         const output = replaceArrayNotNullOn(
             this.context,
             this.replaceTriggerTableRefsTo(simpleWhere, row),
             arrayChangesFunc(row)
         );
         return output;
+    }
+
+    private buildSimpleWhere() {
+        const conditions = this.context.referenceMeta.expressions.map(expression => {
+
+            expression = replaceOperatorAnyToIndexedOperator(
+                this.context.cache,
+                expression
+            );
+            expression = replaceAmpArrayToAny(
+                this.context.cache,
+                expression
+            );
+
+            return expression;
+        });
+
+        const where = Expression.and(conditions);
+        if ( !where.isEmpty() ) {
+            return where;
+        }
+    }
+
+    private buildNeedUpdateCondition(row: RowType) {
+        const conditions = [
+            hasReference(this.context),
+            hasEffect(this.context, row, []),
+            Expression.and(this.context.referenceMeta.filters),
+            this.matchedAllAggFilters()
+        ].filter(condition => 
+            condition != null &&
+            !condition.isEmpty()
+        ) as Expression[];
+    
+        const needUpdate = Expression.and(conditions);
+        if ( !needUpdate.isEmpty() ) {
+            return needUpdate;
+        }
+    }
+    
+    private matchedAllAggFilters() {
+    
+        const allAggCalls = flatMap(
+            this.context.cache.select.columns, 
+            column => column.getAggregations()
+        );
+        const everyAggCallHaveFilter = allAggCalls.every(aggCall => aggCall.where != null);
+        if ( !everyAggCallHaveFilter ) {
+            return;
+        }
+    
+        const filterConditions = allAggCalls.map(aggCall => {
+            const expression = aggCall.where as Expression;
+            return expression;
+        });
+    
+        return Expression.or(filterConditions);
     }
 
     private replaceTriggerTableRefsTo(
