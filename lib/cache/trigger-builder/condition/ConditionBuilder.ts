@@ -17,47 +17,38 @@ export type RowType = "new" | "old";
 
 export class ConditionBuilder {
     private readonly context: CacheContext;
-    constructor(
-        context: CacheContext
-    ) {
+    constructor(context: CacheContext) {
         this.context = context;
     }
 
-    build() {
-        const joins = findJoinsMeta(this.context.cache.select);
+    hasMutableColumns() {
+        return this.getMutableColumns().length > 0;
+    }
 
-        const mutableColumns = this.context.triggerTableColumns
-            .filter(col => col !== "id");
-        const mutableColumnsDepsInAggregations = mutableColumns
+    hasMutableColumnsDepsInAggregations() {
+        const mutableColumnsDepsInAggregations = this.getMutableColumns()
             .filter(col => 
                 !this.context.referenceMeta.columns.includes(col)
             );
-        
-        const conditions = {
+        return mutableColumnsDepsInAggregations.length > 0;
+    }
 
-            hasMutableColumns: 
-                mutableColumns.length > 0,
-            hasMutableColumnsDepsInAggregations: 
-                mutableColumnsDepsInAggregations.length > 0,
-            
-            noReferenceChanges: noReferenceChanges(
-                this.context
-            ),
-            noChanges: noChanges(
-                this.context
-            ),
-            hasOldEffect: hasEffect(
-                this.context,
-                "old",
-                joins
-            ),
-            hasNewEffect: hasEffect(
-                this.context,
-                "new",
-                joins
-            )
-        };
-        return conditions;
+    getNoReferenceChanges() {
+        return noReferenceChanges( this.context );
+    }
+
+    getNoChanges() {
+        return noChanges(this.context);
+    }
+
+    getHasEffect(row: RowType) {
+        const joins = findJoinsMeta(this.context.cache.select);
+
+        return hasEffect(
+            this.context,
+            row,
+            joins
+        );
     }
 
     getHasReference(row: RowType) {
@@ -99,6 +90,12 @@ export class ConditionBuilder {
             arrayChangesFunc(row)
         );
         return output;
+    }
+
+    private getMutableColumns() {
+        const mutableColumns = this.context.triggerTableColumns
+            .filter(col => col !== "id");
+        return mutableColumns;
     }
 
     private buildSimpleWhere() {
@@ -160,7 +157,7 @@ export class ConditionBuilder {
 
     private replaceTriggerTableRefsTo(
         expression: Expression | undefined,
-        row: "new" | "old"
+        row: RowType
     ) {
         if ( !expression ) {
             return;

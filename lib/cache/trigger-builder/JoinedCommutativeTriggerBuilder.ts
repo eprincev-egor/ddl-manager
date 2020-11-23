@@ -10,18 +10,16 @@ import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
     protected createBody() {
-        const conditions = this.conditionBuilder.build();
-        
         const joins = findJoinsMeta(this.context.cache.select);
 
         const oldJoins = buildJoins(joins, "old");
         const newJoins = buildJoins(joins, "new");
         
         const bodyWithJoins = buildCommutativeBodyWithJoins(
-            conditions.noChanges,
+            this.conditionBuilder.getNoChanges(),
             {
                 hasReference: this.conditionBuilder.getHasReference("old"),
-                needUpdate: conditions.hasOldEffect as Expression,
+                needUpdate: this.conditionBuilder.getHasEffect("old") as Expression,
                 update: buildUpdate(
                     this.context,
                     this.conditionBuilder.getSimpleWhere("old"),
@@ -32,7 +30,7 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
             },
             {
                 hasReference: this.conditionBuilder.getHasReference("new"),
-                needUpdate: conditions.hasNewEffect as Expression,
+                needUpdate: this.conditionBuilder.getHasEffect("new") as Expression,
                 update: buildUpdate(
                     this.context,
                     this.conditionBuilder.getSimpleWhere("new"),
@@ -43,7 +41,7 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
             },
             {
                 hasReference: this.conditionBuilder.getHasReference("new"),
-                needUpdate: conditions.noReferenceChanges,
+                needUpdate: this.conditionBuilder.getNoReferenceChanges(),
                 update: buildUpdate(
                     this.context,
                     this.conditionBuilder.getSimpleWhere("new"),
