@@ -11,7 +11,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
             conditions.hasMutableColumns,
             conditions.noChanges,
             {
-                needUpdate: conditions.needUpdateOnDelete,
+                needUpdate: this.conditionBuilder.getNeedUpdateCondition("old"),
                 update: buildUpdate(
                     this.context,
                     this.conditionBuilder.getSimpleWhere("old"),
@@ -20,7 +20,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 )
             },
             {
-                needUpdate: conditions.needUpdateOnInsert,
+                needUpdate: this.conditionBuilder.getNeedUpdateCondition("new"),
                 update: buildUpdate(
                     this.context,
                     this.conditionBuilder.getSimpleWhere("new"),
@@ -37,7 +37,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                     "delta"
                 ),
                 old: {
-                    needUpdate: conditions.needUpdateOnUpdateOld,
+                    needUpdate: this.conditionBuilder.getNeedUpdateConditionOnUpdate("old"),
                     update: buildUpdate(
                         this.context,
                         this.conditionBuilder.getSimpleWhereOnUpdate("old"),
@@ -46,7 +46,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                     )
                 },
                 new: {
-                    needUpdate: conditions.needUpdateOnUpdateNew,
+                    needUpdate: this.conditionBuilder.getNeedUpdateConditionOnUpdate("new"),
                     update: buildUpdate(
                         this.context,
                         this.conditionBuilder.getSimpleWhereOnUpdate("new"),

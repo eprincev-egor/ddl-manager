@@ -16,7 +16,7 @@ export function buildNeedUpdateCondition(
     const conditions = [
         hasReference(context, row),
         hasEffect(context, row, joinsMeta),
-        matchedFilter(context, row),
+        matchedFilter(context),
         matchedAllAggFilters(context, row)
     ].filter(condition => 
         condition != null &&
@@ -29,23 +29,10 @@ export function buildNeedUpdateCondition(
     }
 }
 
-function matchedFilter(
-    context: CacheContext,
-    row: "new" | "old"
-) {
+function matchedFilter(context: CacheContext) {
     if ( !context.referenceMeta.filters.length ) {
         return;
     }
 
-    const filterConditions = context.referenceMeta.filters.map(filter =>
-        filter.replaceTable(
-            context.triggerTable,
-            new TableReference(
-                context.triggerTable,
-                row
-            )
-        ).toString()
-    );
-
-    return Expression.and(filterConditions);
+    return Expression.and(context.referenceMeta.filters);
 }

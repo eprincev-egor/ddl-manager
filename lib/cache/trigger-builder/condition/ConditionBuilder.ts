@@ -45,30 +45,6 @@ export class ConditionBuilder {
             noChanges: noChanges(
                 this.context
             ),
-            needUpdateOnInsert: buildNeedUpdateCondition(
-                this.context,
-                "new"
-            ),
-            needUpdateOnDelete: buildNeedUpdateCondition(
-                this.context,
-                "old"
-            ),
-            needUpdateOnUpdateOld: replaceArrayNotNullOn(
-                this.context,
-                buildNeedUpdateCondition(
-                    this.context,
-                    "old"
-                ),
-                "cm_get_deleted_elements"
-            ),
-            needUpdateOnUpdateNew: replaceArrayNotNullOn(
-                this.context,
-                buildNeedUpdateCondition(
-                    this.context,
-                    "new"
-                ),
-                "cm_get_inserted_elements"
-            ),
             hasOldReference: hasReference(
                 this.context,
                 "old"
@@ -91,6 +67,28 @@ export class ConditionBuilder {
         return conditions;
     }
 
+    getNeedUpdateCondition(row: RowType) {
+        const needUpdate = buildNeedUpdateCondition(
+            this.context,
+            row
+        );
+        const output = this.replaceTriggerTableRefsTo(needUpdate, row);
+        return output;
+    }
+
+    getNeedUpdateConditionOnUpdate(row: RowType) {
+        const needUpdate = replaceArrayNotNullOn(
+            this.context,
+            buildNeedUpdateCondition(
+                this.context,
+                row
+            ),
+            arrayChangesFunc(row)
+        );
+        const output = this.replaceTriggerTableRefsTo(needUpdate, row);
+        return output;
+    }
+
     getSimpleWhere(row: RowType) {
         const simpleWhere = buildSimpleWhere(this.context);
         const output = this.replaceTriggerTableRefsTo(simpleWhere, row);
@@ -102,7 +100,7 @@ export class ConditionBuilder {
         const output = replaceArrayNotNullOn(
             this.context,
             this.replaceTriggerTableRefsTo(simpleWhere, row),
-            row === "old" ? "cm_get_deleted_elements" : "cm_get_inserted_elements"
+            arrayChangesFunc(row)
         );
         return output;
     }
@@ -131,4 +129,8 @@ export class ConditionBuilder {
 
         return outputExpression;
     }
+}
+
+function arrayChangesFunc(row: RowType) {
+    return row === "old" ? "cm_get_deleted_elements" : "cm_get_inserted_elements";
 }
