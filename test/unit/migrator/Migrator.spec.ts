@@ -3,7 +3,6 @@ import { FakeDatabase } from "./FakeDatabase";
 import { Migrator } from "../../../lib/Migrator";
 import { Diff } from "../../../lib/Diff";
 import { Cache, DatabaseFunction, DatabaseTrigger } from "../../../lib/ast";
-import { IState } from "../../../lib/interface";
 import { FileParser } from "../../../lib/parser";
 
 

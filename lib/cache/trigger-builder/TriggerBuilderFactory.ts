@@ -23,10 +23,10 @@ export class TriggerBuilderFactory {
         this.databaseStructure = databaseStructure;
     }
 
-    createBuilder(
+    tryCreateBuilder(
         triggerTable: Table,
         triggerTableColumns: string[]
-    ): AbstractTriggerBuilder {
+    ): AbstractTriggerBuilder | undefined {
 
         const context = new CacheContext(
             this.cache,
@@ -36,11 +36,12 @@ export class TriggerBuilderFactory {
         );
 
         const Builder = this.chooseConstructor(context);
-
-        const builder = new Builder(
-            context
-        );
-        return builder;
+        if ( Builder ) {
+            const builder = new Builder(
+                context
+            );
+            return builder;
+        }
     }
 
     private chooseConstructor(context: CacheContext) {
@@ -51,11 +52,25 @@ export class TriggerBuilderFactory {
         if ( from.length > 1 ) {
             return UniversalTriggerBuilder;
         }
-        else if ( joins.length ) {
-            return JoinedCommutativeTriggerBuilder;
-        }
         else {
-            return CommutativeTriggerBuilder;
+            const isTriggerOnCacheTable = context.triggerTable.equal(context.cache.for.table);
+            const noDepsToCacheTable = context.cache.select
+                .getAllTableReferences()
+                .every(tableRef =>
+                    !tableRef.table.equal(context.cache.for.table)
+                );
+            
+            if ( isTriggerOnCacheTable && noDepsToCacheTable ) {
+                return;
+            }
+
+
+            if ( joins.length ) {
+                return JoinedCommutativeTriggerBuilder;
+            }
+            else {
+                return CommutativeTriggerBuilder;
+            }
         }
     }
 }
