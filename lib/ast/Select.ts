@@ -66,15 +66,6 @@ export class Select {
         return outputTableRef;
     }
 
-    findTableReferences(table: Table) {
-        const tableReferences = this.getAllTableReferences()
-            .filter(tableRef =>
-                tableRef.table.equal(table)
-            );
-
-        return tableReferences;
-    }
-
     toString() {
         let sql = "select\n";
 

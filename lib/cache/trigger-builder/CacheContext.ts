@@ -31,6 +31,14 @@ export class CacheContext {
         this.referenceMeta = this.buildReferenceMeta();
     }
 
+    getTableReferencesToTriggerTable() {
+        const tableReferences = this.cache.select.getAllTableReferences()
+            .filter(tableRef =>
+                tableRef.table.equal(this.triggerTable)
+            );
+
+        return tableReferences;
+    }
 
     private buildReferenceMeta(): IReferenceMeta {
 

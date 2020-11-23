@@ -10,7 +10,7 @@ export function buildUniversalWhere(context: CacheContext): Expression {
     const necessaryTableMatrix: string[][] = findNecessaryTableMatrix(context);
     const conditionsMatrix: Expression[][] = buildConditionsMatrix(context.cache);
 
-    const linksToChangedTable = context.cache.select.findTableReferences(context.triggerTable);
+    const linksToChangedTable = context.getTableReferencesToTriggerTable();
 
     const orConditions: Expression[] = [];
 

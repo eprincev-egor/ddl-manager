@@ -10,7 +10,7 @@ export function buildSimpleWhere(
     context: CacheContext,
     row: "new" | "old"
 ) {
-    const linksToTriggerTable = context.cache.select.findTableReferences(context.triggerTable);
+    const linksToTriggerTable = context.getTableReferencesToTriggerTable();
 
     const conditions = context.referenceMeta.expressions.map(expression => {
 

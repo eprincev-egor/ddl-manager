@@ -6,7 +6,7 @@ import { buildConditionsMatrix } from "./buildConditionsMatrix";
 export function findNecessaryTableMatrix(context: CacheContext) {
     const conditionsMatrix: Expression[][] = buildConditionsMatrix(context.cache);
 
-    const linksToChangedTable = context.cache.select.findTableReferences(context.triggerTable);
+    const linksToChangedTable = context.getTableReferencesToTriggerTable();
     const necessaryTableMatrix: string[][] = [];
 
     for (const andConditions of conditionsMatrix) {
