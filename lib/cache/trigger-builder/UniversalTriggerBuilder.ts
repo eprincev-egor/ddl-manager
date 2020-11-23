@@ -7,20 +7,20 @@ export class UniversalTriggerBuilder extends AbstractTriggerBuilder {
     protected createBody() {
 
         const {from, where} = buildFromAndWhere(
-            this.cache,
-            this.triggerTable
+            this.context.cache,
+            this.context.triggerTable
         );
 
         const universalBody = buildUniversalBody({
-            triggerTable: this.triggerTable,
-            forTable: this.cache.for.toString(),
-            updateColumns: this.cache.select.columns
+            triggerTable: this.context.triggerTable,
+            forTable: this.context.cache.for.toString(),
+            updateColumns: this.context.cache.select.columns
                 .map(col => col.name),
-            select: this.cache.select.toString(),
+            select: this.context.cache.select.toString(),
 
             from,
             where,
-            triggerTableColumns: this.triggerTableColumns
+            triggerTableColumns: this.context.triggerTableColumns
         });
         return universalBody;
     }

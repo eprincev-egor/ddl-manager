@@ -1,43 +1,25 @@
-import {
-    Table,
-    Cache
-} from "../../../ast";
 import { noReferenceChanges } from "./noReferenceChanges";
 import { buildNeedUpdateCondition } from "./buildNeedUpdateCondition";
 import { noChanges } from "./noChanges";
 import { hasReference } from "./hasReference";
 import { hasEffect } from "./hasEffect";
 import { findJoinsMeta } from "../../processor/findJoinsMeta";
-import { Database as DatabaseStructure } from "../../schema/Database";
 import { buildSimpleWhere } from "./buildSimpleWhere";
 import { replaceArrayNotNullOn } from "./replaceArrayNotNullOn";
 import { CacheContext } from "../CacheContext";
 
 export class ConditionBuilder {
     private readonly context: CacheContext;
-    private readonly cache: Cache;
-    private readonly triggerTableColumns: string[];
     constructor(
-        cache: Cache,
-        triggerTable: Table,
-        triggerTableColumns: string[],
-        databaseStructure: DatabaseStructure
+        context: CacheContext
     ) {
-        this.cache = cache;
-        this.triggerTableColumns = triggerTableColumns;
-
-        this.context = new CacheContext(
-            cache,
-            triggerTable,
-            triggerTableColumns,
-            databaseStructure
-        );
+        this.context = context;
     }
 
     build() {
-        const joins = findJoinsMeta(this.cache.select);
+        const joins = findJoinsMeta(this.context.cache.select);
 
-        const mutableColumns = this.triggerTableColumns
+        const mutableColumns = this.context.triggerTableColumns
             .filter(col => col !== "id");
         const mutableColumnsDepsInAggregations = mutableColumns
             .filter(col => 

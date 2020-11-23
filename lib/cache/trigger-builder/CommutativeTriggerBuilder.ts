@@ -13,8 +13,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
             {
                 needUpdate: conditions.needUpdateOnDelete,
                 update: buildUpdate(
-                    this.cache,
-                    this.triggerTable,
+                    this.context,
                     conditions.whereOld,
                     [],
                     "minus"
@@ -23,8 +22,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
             {
                 needUpdate: conditions.needUpdateOnInsert,
                 update: buildUpdate(
-                    this.cache,
-                    this.triggerTable,
+                    this.context,
                     conditions.whereNew,
                     [],
                     "plus"
@@ -33,8 +31,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
             conditions.hasMutableColumnsDepsInAggregations ? {
                 needUpdate: conditions.noReferenceChanges,
                 update: buildUpdate(
-                    this.cache,
-                    this.triggerTable,
+                    this.context,
                     conditions.whereNew,
                     [],
                     "delta"
@@ -42,8 +39,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 old: {
                     needUpdate: conditions.needUpdateOnUpdateOld,
                     update: buildUpdate(
-                        this.cache,
-                        this.triggerTable,
+                        this.context,
                         conditions.whereOldOnUpdate,
                         [],
                         "minus"
@@ -52,8 +48,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 new: {
                     needUpdate: conditions.needUpdateOnUpdateNew,
                     update: buildUpdate(
-                        this.cache,
-                        this.triggerTable,
+                        this.context,
                         conditions.whereNewOnUpdate,
                         [],
                         "plus"

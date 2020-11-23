@@ -16,21 +16,21 @@ import {
 import { flatMap } from "lodash";
 import { createAggValue } from "./createAggValue";
 import { IJoinMeta } from "./findJoinsMeta";
+import { CacheContext } from "../trigger-builder/CacheContext";
 
 type AggType = "minus" | "plus" | "delta";
 
 export function buildUpdate(
-    cache: Cache,
-    triggerTable: Table,
+    context: CacheContext,
     where: Expression | undefined,
     joins: IJoinMeta[],
     aggType: AggType
 ) {
     const update = new Update({
-        table: cache.for.toString(),
+        table: context.cache.for.toString(),
         set: createSetItems(
-            cache,
-            triggerTable,
+            context.cache,
+            context.triggerTable,
             joins,
             aggType
         ),

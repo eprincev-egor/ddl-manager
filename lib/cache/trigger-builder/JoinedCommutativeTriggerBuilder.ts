@@ -12,7 +12,7 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
     protected createBody() {
         const conditions = this.conditionBuilder.build();
         
-        const joins = findJoinsMeta(this.cache.select);
+        const joins = findJoinsMeta(this.context.cache.select);
 
         const oldJoins = buildJoins(joins, "old");
         const newJoins = buildJoins(joins, "new");
@@ -23,8 +23,7 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 hasReference: conditions.hasOldReference,
                 needUpdate: conditions.hasOldEffect as Expression,
                 update: buildUpdate(
-                    this.cache,
-                    this.triggerTable,
+                    this.context,
                     conditions.whereOld,
                     joins,
                     "minus"
@@ -35,8 +34,7 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 hasReference: conditions.hasNewReference,
                 needUpdate: conditions.hasNewEffect as Expression,
                 update: buildUpdate(
-                    this.cache,
-                    this.triggerTable,
+                    this.context,
                     conditions.whereNew,
                     joins,
                     "plus"
@@ -47,8 +45,7 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 hasReference: conditions.hasNewReference,
                 needUpdate: conditions.noReferenceChanges,
                 update: buildUpdate(
-                    this.cache,
-                    this.triggerTable,
+                    this.context,
                     conditions.whereNew,
                     joins,
                     "delta"

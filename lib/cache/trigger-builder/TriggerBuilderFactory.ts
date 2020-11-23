@@ -9,6 +9,7 @@ import { buildFromAndWhere } from "../processor/buildFromAndWhere";
 import { UniversalTriggerBuilder } from "./UniversalTriggerBuilder";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
 import { JoinedCommutativeTriggerBuilder } from "./JoinedCommutativeTriggerBuilder";
+import { CacheContext } from "./CacheContext";
 
 export class TriggerBuilderFactory {
     private readonly cache: Cache;
@@ -29,11 +30,14 @@ export class TriggerBuilderFactory {
 
         const Builder = this.chooseConstructor(triggerTable);
 
-        const builder = new Builder(
+        const context = new CacheContext(
             this.cache,
-            this.databaseStructure,
             triggerTable,
-            triggerTableColumns
+            triggerTableColumns,
+            this.databaseStructure
+        );
+        const builder = new Builder(
+            context
         );
         return builder;
     }

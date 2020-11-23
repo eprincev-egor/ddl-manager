@@ -1,36 +1,19 @@
 import {
-    Table,
-    Cache,
     DatabaseTrigger,
     DatabaseFunction,
     AbstractAstElement
 } from "../../ast";
-import { Database as DatabaseStructure } from "../schema/Database";
+import { CacheContext } from "./CacheContext";
 import { ConditionBuilder } from "./condition/ConditionBuilder";
 
 export abstract class AbstractTriggerBuilder {
-    protected readonly cache: Cache;
-    protected readonly databaseStructure: DatabaseStructure;
-    protected readonly triggerTable: Table;
-    protected readonly triggerTableColumns: string[];
+    protected readonly context: CacheContext;
     protected readonly conditionBuilder: ConditionBuilder;
 
-    constructor(
-        cache: Cache,
-        databaseStructure: DatabaseStructure,
-        triggerTable: Table,
-        triggerTableColumns: string[]
-    ) {
-        this.cache = cache;
-        this.databaseStructure = databaseStructure;
-        this.triggerTable = triggerTable;
-        this.triggerTableColumns = triggerTableColumns;
-        
+    constructor(context: CacheContext) {
+        this.context = context;
         this.conditionBuilder = new ConditionBuilder(
-            cache,
-            triggerTable,
-            triggerTableColumns,
-            databaseStructure
+            context
         );
     }
 
@@ -59,7 +42,7 @@ export abstract class AbstractTriggerBuilder {
 
     private createDatabaseTrigger() {
         
-        const updateOfColumns = this.triggerTableColumns
+        const updateOfColumns = this.context.triggerTableColumns
             .filter(column =>  column !== "id" )
             .sort();
         
@@ -76,8 +59,8 @@ export abstract class AbstractTriggerBuilder {
                 args: []
             },
             table: {
-                schema: this.triggerTable.schema || "public",
-                name: this.triggerTable.name
+                schema: this.context.triggerTable.schema || "public",
+                name: this.context.triggerTable.name
             }
         });
 
@@ -87,11 +70,11 @@ export abstract class AbstractTriggerBuilder {
     private generateTriggerName() {
         const triggerName = [
             "cache",
-            this.cache.name,
+            this.context.cache.name,
             "for",
-            this.cache.for.table.name,
+            this.context.cache.for.table.name,
             "on",
-            this.triggerTable.name
+            this.context.triggerTable.name
         ].join("_");
         return triggerName;
     }
