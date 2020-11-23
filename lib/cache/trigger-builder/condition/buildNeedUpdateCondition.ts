@@ -1,12 +1,9 @@
-import {
-    TableReference,
-    Expression
-} from "../../../ast";
+import { Expression } from "../../../ast";
 import { IJoinMeta } from "../../processor/findJoinsMeta";
 import { hasEffect } from "./hasEffect";
 import { hasReference } from "./hasReference";
-import { matchedAllAggFilters } from "./matchedAllAggFilters";
 import { CacheContext } from "../CacheContext";
+import { flatMap } from "lodash";
 
 export function buildNeedUpdateCondition(
     context: CacheContext,
@@ -14,10 +11,10 @@ export function buildNeedUpdateCondition(
     joinsMeta: IJoinMeta[] = []
 ) {
     const conditions = [
-        hasReference(context, row),
+        hasReference(context),
         hasEffect(context, row, joinsMeta),
-        matchedFilter(context),
-        matchedAllAggFilters(context, row)
+        Expression.and(context.referenceMeta.filters),
+        matchedAllAggFilters(context)
     ].filter(condition => 
         condition != null &&
         !condition.isEmpty()
@@ -29,10 +26,21 @@ export function buildNeedUpdateCondition(
     }
 }
 
-function matchedFilter(context: CacheContext) {
-    if ( !context.referenceMeta.filters.length ) {
+function matchedAllAggFilters(context: CacheContext) {
+
+    const allAggCalls = flatMap(
+        context.cache.select.columns, 
+        column => column.getAggregations()
+    );
+    const everyAggCallHaveFilter = allAggCalls.every(aggCall => aggCall.where != null);
+    if ( !everyAggCallHaveFilter ) {
         return;
     }
 
-    return Expression.and(context.referenceMeta.filters);
+    const filterConditions = allAggCalls.map(aggCall => {
+        const expression = aggCall.where as Expression;
+        return expression;
+    });
+
+    return Expression.or(filterConditions);
 }

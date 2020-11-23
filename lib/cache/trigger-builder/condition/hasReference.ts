@@ -1,12 +1,7 @@
-import { Expression, Table, TableReference, UnknownExpressionElement } from "../../../ast";
+import { Expression, Table, UnknownExpressionElement } from "../../../ast";
 import { CacheContext } from "../CacheContext";
 
-type RowType = "new" | "old";
-
-export function hasReference(
-    context: CacheContext,
-    row: RowType
-) {
+export function hasReference(context: CacheContext) {
     if ( !context.referenceMeta.expressions ) {
         return;
     }
@@ -14,16 +9,14 @@ export function hasReference(
     return buildReferenceExpression(
         context.referenceMeta.expressions,
         "and",
-        context.triggerTable,
-        row
+        context.triggerTable
     );
 }
 
 function buildReferenceExpression(
     expressions: Expression[],
     operator: "and" | "or",
-    triggerTable: Table,
-    row: RowType
+    triggerTable: Table
 ): Expression {
 
     const referenceExpressions = expressions.map(expression => {
@@ -33,15 +26,13 @@ function buildReferenceExpression(
             return buildReferenceExpression(
                 orConditions,
                 "or",
-                triggerTable,
-                row
+                triggerTable
             );
         }
 
         return replaceSimpleExpressionToNotNulls(
             expression,
-            triggerTable,
-            row
+            triggerTable
         )
     });
 
@@ -55,8 +46,7 @@ function buildReferenceExpression(
 
 function replaceSimpleExpressionToNotNulls(
     expression: Expression,
-    triggerTable: Table,
-    row: RowType
+    triggerTable: Table
 ) {
     const notNullTriggerColumns = expression.getColumnReferences()
         .filter(columnRef =>
@@ -65,19 +55,10 @@ function replaceSimpleExpressionToNotNulls(
         .filter(columnRef =>
             columnRef.name !== "id"
         )
-        // TODO: format it
         .map(columnRef =>
             UnknownExpressionElement.fromSql(
-                `${row}.${ columnRef.name } is not null`,
-                {
-                    [`${row}.${columnRef.name}`]: columnRef.replaceTable(
-                        columnRef.tableReference,
-                        new TableReference(
-                            columnRef.tableReference.table,
-                            row
-                        )
-                    )
-                }
+                `${ columnRef } is not null`,
+                { [`${columnRef}`]: columnRef }
             )
         );
     

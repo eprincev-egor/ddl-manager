@@ -20,7 +20,7 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
         const bodyWithJoins = buildCommutativeBodyWithJoins(
             conditions.noChanges,
             {
-                hasReference: conditions.hasOldReference,
+                hasReference: this.conditionBuilder.getHasReference("old"),
                 needUpdate: conditions.hasOldEffect as Expression,
                 update: buildUpdate(
                     this.context,
@@ -31,7 +31,7 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 joins: oldJoins
             },
             {
-                hasReference: conditions.hasNewReference,
+                hasReference: this.conditionBuilder.getHasReference("new"),
                 needUpdate: conditions.hasNewEffect as Expression,
                 update: buildUpdate(
                     this.context,
@@ -42,7 +42,7 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 joins: newJoins
             },
             {
-                hasReference: conditions.hasNewReference,
+                hasReference: this.conditionBuilder.getHasReference("new"),
                 needUpdate: conditions.noReferenceChanges,
                 update: buildUpdate(
                     this.context,

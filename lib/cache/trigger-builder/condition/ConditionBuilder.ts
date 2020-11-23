@@ -45,14 +45,6 @@ export class ConditionBuilder {
             noChanges: noChanges(
                 this.context
             ),
-            hasOldReference: hasReference(
-                this.context,
-                "old"
-            ),
-            hasNewReference: hasReference(
-                this.context,
-                "new"
-            ),
             hasOldEffect: hasEffect(
                 this.context,
                 "old",
@@ -65,6 +57,15 @@ export class ConditionBuilder {
             )
         };
         return conditions;
+    }
+
+    getHasReference(row: RowType) {
+        const hasReferenceCondition = hasReference(this.context);
+        const output = this.replaceTriggerTableRefsTo(
+            hasReferenceCondition,
+            row
+        );
+        return output;
     }
 
     getNeedUpdateCondition(row: RowType) {
