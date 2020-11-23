@@ -1,8 +1,11 @@
 import { GrapeQLCoach, Select } from "grapeql-lang";
 import { CacheParser } from "../../../../lib/parser";
 import { Table } from "../../../../lib/ast";
-import { buildFromAndWhere } from "../../../../lib/cache/processor/buildFromAndWhere";
 import assert from "assert";
+import { CacheContext } from "../../../../lib/cache/trigger-builder/CacheContext";
+import { Database as DatabaseStructure } from "../../../../lib/cache/schema/Database";
+import { buildUniversalWhere } from "../../../../lib/cache/processor/buildUniversalWhere";
+import { buildFrom } from "../../../../lib/cache/processor/buildFrom";
 
 interface ITest {
     cache: string;
@@ -19,7 +22,14 @@ export function testWhereBuilder(test: ITest) {
         const [schemaName, tableName] = changedSchemaTable.split(".");
         const triggerTable = new Table(schemaName, tableName);
 
-        const {from, where} = buildFromAndWhere(cache, triggerTable);
+        const context = new CacheContext(
+            cache,
+            triggerTable,
+            [],
+            new DatabaseStructure([])
+        );
+        const from = buildFrom(context);
+        const where = buildUniversalWhere(context);
 
         let actualSelect = `select from ${from.join(", ")}`;
         if ( where.toString().trim() ) {

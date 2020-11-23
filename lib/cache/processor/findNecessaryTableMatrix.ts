@@ -1,12 +1,12 @@
 import { findMinimalRoute } from "./findMinimalRoute";
-import { Cache, Expression, Table } from "../../ast";
+import { Expression } from "../../ast";
+import { CacheContext } from "../trigger-builder/CacheContext";
+import { buildConditionsMatrix } from "./buildConditionsMatrix";
 
-export function findNecessaryTableMatrix(
-    cache: Cache,
-    triggerTable: Table,
-    conditionsMatrix: Expression[][]
-) {
-    const linksToChangedTable = cache.select.findTableReferences(triggerTable);
+export function findNecessaryTableMatrix(context: CacheContext) {
+    const conditionsMatrix: Expression[][] = buildConditionsMatrix(context.cache);
+
+    const linksToChangedTable = context.cache.select.findTableReferences(context.triggerTable);
     const necessaryTableMatrix: string[][] = [];
 
     for (const andConditions of conditionsMatrix) {
@@ -22,7 +22,7 @@ export function findNecessaryTableMatrix(
             const minimalRoute = findMinimalRoute({
                 graph,
                 start: changedTableInSelect.getIdentifier(),
-                end: cache.for.getIdentifier()
+                end: context.cache.for.getIdentifier()
             });
     
             if ( !minimalRoute ) {

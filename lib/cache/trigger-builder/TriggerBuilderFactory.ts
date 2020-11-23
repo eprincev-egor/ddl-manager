@@ -5,7 +5,7 @@ import {
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { CommutativeTriggerBuilder } from "./CommutativeTriggerBuilder";
 import { Database as DatabaseStructure } from "../schema/Database";
-import { buildFromAndWhere } from "../processor/buildFromAndWhere";
+import { buildFrom } from "../processor/buildFrom";
 import { UniversalTriggerBuilder } from "./UniversalTriggerBuilder";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
 import { JoinedCommutativeTriggerBuilder } from "./JoinedCommutativeTriggerBuilder";
@@ -28,26 +28,24 @@ export class TriggerBuilderFactory {
         triggerTableColumns: string[]
     ): AbstractTriggerBuilder {
 
-        const Builder = this.chooseConstructor(triggerTable);
-
         const context = new CacheContext(
             this.cache,
             triggerTable,
             triggerTableColumns,
             this.databaseStructure
         );
+
+        const Builder = this.chooseConstructor(context);
+
         const builder = new Builder(
             context
         );
         return builder;
     }
 
-    private chooseConstructor(triggerTable: Table) {
+    private chooseConstructor(context: CacheContext) {
 
-        const {from} = buildFromAndWhere(
-            this.cache,
-            triggerTable
-        );
+        const from = buildFrom(context);
         const joins = findJoinsMeta(this.cache.select);
 
         if ( from.length > 1 ) {

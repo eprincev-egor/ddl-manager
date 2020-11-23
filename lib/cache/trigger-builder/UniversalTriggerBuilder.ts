@@ -1,15 +1,14 @@
 import { buildUniversalBody } from "../processor/buildUniversalBody";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
-import { buildFromAndWhere } from "../processor/buildFromAndWhere";
+import { buildFrom } from "../processor/buildFrom";
+import { buildUniversalWhere } from "../processor/buildUniversalWhere";
 
 export class UniversalTriggerBuilder extends AbstractTriggerBuilder {
 
     protected createBody() {
 
-        const {from, where} = buildFromAndWhere(
-            this.context.cache,
-            this.context.triggerTable
-        );
+        const from = buildFrom(this.context);
+        const where = buildUniversalWhere(this.context);
 
         const universalBody = buildUniversalBody({
             triggerTable: this.context.triggerTable,
