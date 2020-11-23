@@ -1,17 +1,19 @@
+import {
+    Expression,
+    TableReference
+} from "../../../ast";
+import { CacheContext } from "../CacheContext";
+import { flatMap } from "lodash";
+
 import { noReferenceChanges } from "./noReferenceChanges";
 import { noChanges } from "./noChanges";
 import { hasReference } from "./hasReference";
 import { hasEffect } from "./hasEffect";
 import { findJoinsMeta } from "../../processor/findJoinsMeta";
 import { replaceArrayNotNullOn } from "./replaceArrayNotNullOn";
-import { CacheContext } from "../CacheContext";
-import {
-    Expression,
-    TableReference
-} from "../../../ast";
 import { replaceOperatorAnyToIndexedOperator } from "./replaceOperatorAnyToIndexedOperator";
 import { replaceAmpArrayToAny } from "./replaceAmpArrayToAny";
-import { flatMap } from "lodash";
+
 
 export type RowType = "new" | "old";
 
