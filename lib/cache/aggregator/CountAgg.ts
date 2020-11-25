@@ -23,4 +23,8 @@ export class CountAgg extends AbstractAgg {
     delta(): Expression {
         throw new Error("no matter (+1-1 = 0)");
     }
+
+    default() {
+        return "0";
+    }
 }
