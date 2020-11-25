@@ -33,6 +33,7 @@ export class Migrator {
 
         await this.dropTriggers();
         await this.dropFunctions();
+        await this.dropCache();
 
         await this.createFunctions();
         await this.createTriggers();
@@ -170,6 +171,44 @@ end
             }
         }
     }
+
+    private async dropCache() {
+        for (const cache of this.diff.drop.cache) {
+
+            const cacheTriggerFactory = new CacheTriggersBuilder(
+                cache,
+                new DatabaseStructure([])
+            );
+            const selectToUpdate = cacheTriggerFactory.createSelectForUpdate();
+            const columns = selectToUpdate.columns.map(col => col.name);
+            
+            const table = cache.for.table;
+            for (const columnName of columns) {
+                try {
+                    await this.postgres.dropColumn(table, columnName);
+                } catch(err) {
+                    this.onError(cache, err);
+                }
+            }
+
+            const triggersByTableName = cacheTriggerFactory.createTriggers();
+            for (const {trigger, function: func} of Object.values(triggersByTableName)) {
+
+                try {
+                    await this.postgres.forceDropTrigger(trigger);
+                } catch(err) {
+                    this.onError(cache, err);
+                }
+                
+                try {
+                    await this.postgres.forceDropFunction(func);
+                } catch(err) {
+                    this.onError(cache, err);
+                }
+            }
+        }
+    }
+
 
     private async createAllCache() {
         // one cache can dependent on other cache

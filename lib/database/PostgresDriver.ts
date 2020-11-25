@@ -131,6 +131,11 @@ implements IDatabaseDriver {
         await this.pgClient.query(ddlSql);
     }
 
+    async forceDropFunction(func: DatabaseFunction) {
+        const sql = `drop function if exists ${ func.getSignature() }`;
+        await this.pgClient.query(sql);
+    }
+
     async createOrReplaceTrigger(trigger: DatabaseTrigger) {
         let ddlSql = "";
         
@@ -170,6 +175,11 @@ implements IDatabaseDriver {
         await this.pgClient.query(ddlSql);
     }
 
+    async forceDropTrigger(trigger: DatabaseTrigger) {
+        const sql = `drop trigger if exists ${ trigger.getSignature() }`;
+        await this.pgClient.query(sql);
+    }
+
     async getCacheColumnsTypes(select: Select, forTable: TableReference) {
         await this.types.load();
 
@@ -200,6 +210,14 @@ implements IDatabaseDriver {
         const sql = `
             alter table ${table} drop column if exists ${column.key};
             alter table ${table} add column ${column.key} ${column.type} default ${ column.default };
+        `;
+
+        await this.pgClient.query(sql);
+    }
+
+    async dropColumn(table: Table, columnName: string) {
+        const sql = `
+            alter table ${table} drop column if exists ${columnName};
         `;
 
         await this.pgClient.query(sql);

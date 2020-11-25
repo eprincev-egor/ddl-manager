@@ -60,6 +60,10 @@ implements IDatabaseDriver {
         }
     }
 
+    async forceDropFunction(func: DatabaseFunction): Promise<void> {
+        await this.dropFunction(func);
+    }
+
     async createOrReplaceTrigger(trigger: DatabaseTrigger): Promise<void> {
         const existentTriggerIndex = this.state.triggers.findIndex(someTrigger =>
             someTrigger.getSignature() === trigger.getSignature()
@@ -81,6 +85,10 @@ implements IDatabaseDriver {
         }
     }
 
+    async forceDropTrigger(trigger: DatabaseTrigger): Promise<void> {
+        await this.dropTrigger(trigger);
+    }
+
     async getCacheColumnsTypes(select: Select, forTable: TableReference): Promise<{ [columnName: string]: string; }> {
         const outputTypes: {[columnName: string]: string} = {};
         
@@ -94,6 +102,10 @@ implements IDatabaseDriver {
 
     async createOrReplaceColumn(table: Table, column: ITableColumn): Promise<void> {
         this.columns[ table.toString() + "." + column.key ] = column;
+    }
+
+    async dropColumn(table: Table, columnName: string): Promise<void> {
+        delete this.columns[ table.toString() + "." + columnName ];
     }
 
     async updateCachePackage(select: Select, forTable: TableReference, limit: number): Promise<number> {

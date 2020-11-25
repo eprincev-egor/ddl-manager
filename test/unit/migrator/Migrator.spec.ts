@@ -213,4 +213,39 @@ describe("Migrator", () => {
         });
     });
 
+    it("drop cache triggers and columns", async() => {
+        
+        const testCache = FileParser.parseCache(ordersProfitCacheSQL);
+
+        database.setColumnsTypes({
+            orders_profit: "numeric"
+        });
+
+        changes.createState({cache: [testCache]});
+
+        await Migrator.migrate(database, changes);
+
+        assert.deepStrictEqual(database.columns, {
+            "public.some_table.orders_profit": {
+                key: "orders_profit",
+                type: "numeric",
+                "default": "0"
+            }
+        });
+
+        assert.strictEqual(database.state.triggers.length, 1);
+
+
+        const dropChanges = Diff.empty().dropState({
+            cache: [testCache]
+        });
+        await Migrator.migrate(database, dropChanges);
+
+
+        assert.deepStrictEqual(database.columns, {
+        });
+
+        assert.strictEqual(database.state.triggers.length, 0);
+    });
+
 });

@@ -1646,4 +1646,72 @@ language plpgsql;
         });
     });
 
+
+    it("drop cache columns and triggers", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table companies (
+                id serial primary key
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer,
+                profit numeric
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/set_note_trigger.sql", `
+            cache totals for companies (
+                select
+                    sum( orders.profit ) as orders_profit
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        let result;
+
+        result = await db.query(`
+            insert into companies default values
+            returning *;
+        `);
+
+        assert.deepStrictEqual(result.rows[0], {
+            id: 1,
+            orders_profit: "0"
+        });
+
+
+        fs.unlinkSync(folderPath + "/set_note_trigger.sql");
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        // expected without errors
+        await db.query(`
+            insert into orders default values;
+        `);
+
+        result = await db.query(`
+            insert into companies default values
+            returning *;
+        `);
+
+        assert.deepStrictEqual(result.rows[0], {
+            id: 2
+        });
+    });
 });
