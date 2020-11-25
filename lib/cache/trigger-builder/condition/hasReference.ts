@@ -2,6 +2,15 @@ import { Expression, Table, UnknownExpressionElement } from "../../../ast";
 import { CacheContext } from "../CacheContext";
 
 export function hasReference(context: CacheContext) {
+    return hasReferenceCondition(context, "is not null");
+}
+
+export function hasNoReference(context: CacheContext) {
+    return hasReferenceCondition(context, "is null");
+}
+
+type CheckType = "is not null" | "is null";
+function hasReferenceCondition(context: CacheContext, check: CheckType) {
     if ( !context.referenceMeta.expressions ) {
         return;
     }
@@ -9,14 +18,16 @@ export function hasReference(context: CacheContext) {
     return buildReferenceExpression(
         context.referenceMeta.expressions,
         "and",
-        context.triggerTable
+        context.triggerTable,
+        check
     );
 }
 
 function buildReferenceExpression(
     expressions: Expression[],
     operator: "and" | "or",
-    triggerTable: Table
+    triggerTable: Table,
+    check: CheckType
 ): Expression {
 
     const referenceExpressions = expressions.map(expression => {
@@ -26,13 +37,15 @@ function buildReferenceExpression(
             return buildReferenceExpression(
                 orConditions,
                 "or",
-                triggerTable
+                triggerTable,
+                check
             );
         }
 
         return replaceSimpleExpressionToNotNulls(
             expression,
-            triggerTable
+            triggerTable,
+            check
         )
     });
 
@@ -46,7 +59,8 @@ function buildReferenceExpression(
 
 function replaceSimpleExpressionToNotNulls(
     expression: Expression,
-    triggerTable: Table
+    triggerTable: Table,
+    check: CheckType
 ) {
     const notNullTriggerColumns = expression.getColumnReferences()
         .filter(columnRef =>
@@ -57,7 +71,7 @@ function replaceSimpleExpressionToNotNulls(
         )
         .map(columnRef =>
             UnknownExpressionElement.fromSql(
-                `${ columnRef } is not null`,
+                `${ columnRef } ${check}`,
                 { [`${columnRef}`]: columnRef }
             )
         );

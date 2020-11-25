@@ -40,7 +40,7 @@ export abstract class AbstractTriggerBuilder {
         return func;
     }
 
-    private createDatabaseTrigger() {
+    protected createDatabaseTrigger() {
         
         const updateOfColumns = this.context.triggerTableColumns
             .filter(column =>  column !== "id" )
@@ -67,7 +67,7 @@ export abstract class AbstractTriggerBuilder {
         return trigger;
     }
 
-    private generateTriggerName() {
+    protected generateTriggerName() {
         const triggerName = [
             "cache",
             this.context.cache.name,

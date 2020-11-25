@@ -10,6 +10,7 @@ import { UniversalTriggerBuilder } from "./UniversalTriggerBuilder";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
 import { JoinedCommutativeTriggerBuilder } from "./JoinedCommutativeTriggerBuilder";
 import { CacheContext } from "./CacheContext";
+import { CacheTableTriggerBuilder } from "./CacheTableTriggerBuilder";
 
 export class TriggerBuilderFactory {
     private readonly cache: Cache;
@@ -45,6 +46,21 @@ export class TriggerBuilderFactory {
     }
 
     private chooseConstructor(context: CacheContext) {
+
+        const isTriggerForSelfUpdate = (
+            // trigger on cache table
+            context.cache.for.table.equal(context.triggerTable) &&
+            // has mutable columns in deps
+            context.triggerTableColumns.filter(col => col !== "id").length > 0 &&
+            // no "from cache table"
+            !context.cache.select.getAllTableReferences().some(tableRef =>
+                tableRef.table.equal(context.cache.for.table)
+            )
+        );
+
+        if ( isTriggerForSelfUpdate) {
+            return CacheTableTriggerBuilder;
+        }
 
         const from = buildFrom(context);
         const joins = findJoinsMeta(this.cache.select);

@@ -7,7 +7,7 @@ import { flatMap } from "lodash";
 
 import { noReferenceChanges } from "./noReferenceChanges";
 import { noChanges } from "./noChanges";
-import { hasReference } from "./hasReference";
+import { hasNoReference, hasReference } from "./hasReference";
 import { hasEffect } from "./hasEffect";
 import { findJoinsMeta } from "../../processor/findJoinsMeta";
 import { replaceArrayNotNullOn } from "./replaceArrayNotNullOn";
@@ -55,6 +55,15 @@ export class ConditionBuilder {
 
     getHasReference(row: RowType) {
         const hasReferenceCondition = hasReference(this.context);
+        const output = this.replaceTriggerTableRefsTo(
+            hasReferenceCondition,
+            row
+        );
+        return output;
+    }
+
+    getHasNoReference(row: RowType) {
+        const hasReferenceCondition = hasNoReference(this.context);
         const output = this.replaceTriggerTableRefsTo(
             hasReferenceCondition,
             row
