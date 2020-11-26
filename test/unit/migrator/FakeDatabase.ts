@@ -22,6 +22,8 @@ implements IDatabaseDriver {
         limit: number;
     }[]};
     private allCache: Cache[];
+    private columnsDrops: {[tableColumn: string]: boolean};
+
     constructor(state?: IState) {
         this.state = state || {
             functions: [],
@@ -33,6 +35,7 @@ implements IDatabaseDriver {
         this.rowsCountByTable = {};
         this.updatedPackages = {};
         this.allCache = [];
+        this.columnsDrops = {};
     }
 
     async loadState(): Promise<IState> {
@@ -106,6 +109,7 @@ implements IDatabaseDriver {
 
     async dropColumn(table: Table, columnName: string): Promise<void> {
         delete this.columns[ table.toString() + "." + columnName ];
+        this.columnsDrops[ table.toString() + "." + columnName ] = true;
     }
 
     async updateCachePackage(select: Select, forTable: TableReference, limit: number): Promise<number> {
@@ -159,5 +163,9 @@ implements IDatabaseDriver {
 
     getUpdatedPackages(table: string) {
         return this.updatedPackages[table];
+    }
+
+    wasDroppedColumn(table: string, columnName: string): boolean {
+        return !!this.columnsDrops[ table + "." + columnName ];
     }
 }

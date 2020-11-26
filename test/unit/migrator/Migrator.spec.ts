@@ -2,7 +2,7 @@ import assert from "assert";
 import { FakeDatabase } from "./FakeDatabase";
 import { Migrator } from "../../../lib/Migrator";
 import { Diff } from "../../../lib/Diff";
-import { Cache, DatabaseFunction, DatabaseTrigger } from "../../../lib/ast";
+import { DatabaseFunction, DatabaseTrigger } from "../../../lib/ast";
 import { FileParser } from "../../../lib/parser";
 
 
@@ -246,6 +246,83 @@ describe("Migrator", () => {
         });
 
         assert.strictEqual(database.state.triggers.length, 0);
+    });
+
+    xit("don't drop cache columns, but recreate triggers if was just cache renaming", async() => {
+
+        const cacheBeforeRenamingSQL = `
+            cache before_rename for some_table (
+                select
+                    sum( my_table.profit ) as orders_profit
+                from my_table
+                where
+                    my_table.id_client = some_table.id
+            )
+        `;
+        const cacheBeforeRenaming = FileParser.parseCache(cacheBeforeRenamingSQL);
+
+        const cacheAfterRenamingSQL = `
+            cache after_rename for some_table (
+                select
+                    sum( my_table.profit ) as orders_profit
+                from my_table
+                where
+                    my_table.id_client = some_table.id
+            )
+        `;
+        const cacheAfterRenaming = FileParser.parseCache(cacheAfterRenamingSQL);
+
+
+        database.setColumnsTypes({
+            orders_profit: "numeric"
+        });
+        database.setRowsCount("public.some_table", 1400);
+
+        await Migrator.migrate(database, Diff.empty().createState({
+            cache: [cacheBeforeRenaming]
+        }));
+        assert.deepStrictEqual(database.columns, {
+            "public.some_table.orders_profit": {
+                key: "orders_profit",
+                type: "numeric",
+                "default": "0"
+            }
+        });
+        assert.strictEqual(
+            database.state.triggers[0].name,
+            "cache_before_rename_for_some_table_on_my_table"
+        );
+
+
+        await Migrator.migrate(database, Diff.empty()
+            .dropState({
+                cache: [cacheBeforeRenaming]
+            })
+            .createState({
+                cache: [cacheAfterRenaming]
+            })
+        );
+        assert.deepStrictEqual(database.columns, {
+            "public.some_table.orders_profit": {
+                key: "orders_profit",
+                type: "numeric",
+                "default": "0"
+            }
+        });
+        assert.strictEqual(
+            database.state.triggers[0].name,
+            "cache_after_rename_for_some_table_on_my_table"
+        );
+
+        assert.strictEqual(
+            database.wasDroppedColumn("public.some_table", "orders_profit"),
+            false,
+            "check column drop"
+        );
+        assert.deepStrictEqual(
+            database.getUpdatedPackages("public.some_table"),
+            [{limit: 500}, {limit: 500}, {limit: 500}]
+        );
     });
 
 });

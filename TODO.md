@@ -14,5 +14,6 @@
   - i can rename cache but, don't need recreate columns and update rows,
         need change only triggers
   - do not drop cache columns if no changes
+  - do not drop cache columns if same columns exists in db
 - Migrator: need REAL load schema
 - fix renaming file or directory
