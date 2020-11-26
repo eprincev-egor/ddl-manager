@@ -3,13 +3,13 @@ import { Diff } from "../Diff";
 import { IDatabaseDriver } from "../database/interface";
 import { FunctionsMigrator } from "./FunctionsMigrator";
 import { TriggersMigrator } from "./TriggersMigrator";
-import { CacheMigrator } from "./CacheMigrator";
+import { MainCacheMigrator } from "./cache/MainCacheMigrator";
 
 export class MainMigrator {
     private outputErrors: Error[];
     private functions: FunctionsMigrator;
     private triggers: TriggersMigrator;
-    private cache: CacheMigrator;
+    private cache: MainCacheMigrator;
 
     static async migrate(postgres: IDatabaseDriver, diff: Diff) {
         assert.ok(diff);
@@ -30,7 +30,7 @@ export class MainMigrator {
             diff,
             this.outputErrors
         );
-        this.cache = new CacheMigrator(
+        this.cache = new MainCacheMigrator(
             postgres,
             diff,
             this.outputErrors
