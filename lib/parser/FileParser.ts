@@ -17,6 +17,16 @@ export class FileParser {
         return parser.parse(sql);
     }
 
+    static parseFunction(sql: string) {
+        const fileContent = FileParser.parse(sql) as IState;
+        assert.ok( fileContent, "should be not empty sql" );
+        
+        const func = (fileContent.functions || [])[0];
+        assert.ok( func instanceof DatabaseFunction, "sql should contain function" );
+
+        return func;
+    }
+
     static parseCache(sql: string) {
         const fileContent = FileParser.parse(sql) as IState;
         assert.ok( fileContent, "should be not empty sql" );

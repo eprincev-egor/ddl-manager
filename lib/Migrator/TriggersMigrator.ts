@@ -1,21 +1,7 @@
-import { Diff } from "../Diff";
-import { IDatabaseDriver } from "../database/interface";
+import { AbstractMigrator } from "./AbstractMigrator";
 
-export class TriggersMigrator {
-    private postgres: IDatabaseDriver;
-    private outputErrors: Error[];
-    private diff: Diff;
-
-    constructor(
-        postgres: IDatabaseDriver,
-        diff: Diff,
-        outputErrors: Error[]
-    ) {
-        this.postgres = postgres;
-        this.diff = diff;
-        this.outputErrors = outputErrors;
-    }
-
+export class TriggersMigrator extends AbstractMigrator {
+    
     async drop() {
         await this.dropTriggers();
     }
@@ -44,15 +30,5 @@ export class TriggersMigrator {
                 this.onError(trigger, err);
             }
         }
-    }
-    private onError(
-        obj: {getSignature(): string},
-        err: Error
-    ) {
-        // redefine callstack
-        const newErr = new Error(obj.getSignature() + "\n" + err.message);
-        (newErr as any).originalError = err;
-        
-        this.outputErrors.push(newErr);
     }
 }
