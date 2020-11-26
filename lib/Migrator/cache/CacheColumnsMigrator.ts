@@ -43,6 +43,82 @@ export class CacheColumnsMigrator extends AbstractMigrator {
 
 
     private async createAndUpdateAllCacheColumns() {
+        
+        const allSelectsForEveryColumn = this.generateAllSelectsForEveryColumn();
+        const sortedSelectsForEveryColumn = this.sortSelectsByDependencies(
+            allSelectsForEveryColumn
+        );
+        
+        await this.createAllColumns(
+            sortedSelectsForEveryColumn
+        );
+        await this.updateAllColumns(
+            sortedSelectsForEveryColumn
+        );
+    }
+
+    private async createAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
+
+        for (const {select, cache} of sortedSelectsForEveryColumn) {
+            const columnsTypes = await this.postgres.getCacheColumnsTypes(
+                select,
+                cache.for
+            );
+
+            const [columnName, columnType] = Object.entries(columnsTypes)[0];
+
+            const aggFactory = new AggFactory(
+                select,
+                select.columns[0] as SelectColumn
+            );
+            const aggregations = aggFactory.createAggregations();
+            const agg = Object.values(aggregations)[0] as AbstractAgg;
+
+            await this.postgres.createOrReplaceColumn(
+                cache.for.table,
+                {
+                    key: columnName,
+                    type: columnType,
+                    // TODO: detect default by expression
+                    default: agg.default()
+                }
+            );
+        }
+
+    }
+
+    private async updateAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
+
+        for (let i = 0, n = sortedSelectsForEveryColumn.length; i < n; i++) {
+            const {select, cache} = sortedSelectsForEveryColumn[ i ];
+            const columnsToUpdate: SelectColumn[] = [select.columns[0] as SelectColumn];
+
+            for (let j = i + 1; j < n; j++) {
+                const nextItem = sortedSelectsForEveryColumn[ j ];
+                if ( nextItem.cache !== cache ) {
+                    break;
+                }
+
+                columnsToUpdate.push(nextItem.select.columns[0] as SelectColumn);
+            }
+
+            const cacheTriggerFactory = new CacheTriggersBuilder(
+                cache,
+                new DatabaseStructure([])
+            );
+            const selectToUpdate = cacheTriggerFactory.createSelectForUpdate()
+                .cloneWith({
+                    columns: columnsToUpdate
+                });
+            
+            await this.updateCachePackage(
+                selectToUpdate,
+                cache.for
+            );
+        }
+    }
+
+    private generateAllSelectsForEveryColumn() {
         const allCaches = this.diff.create.cache || [];
 
         const allSelectsForEveryColumn: ISortSelectItem[] = [];
@@ -68,6 +144,11 @@ export class CacheColumnsMigrator extends AbstractMigrator {
                 });
             }
         }
+
+        return allSelectsForEveryColumn;
+    }
+
+    private sortSelectsByDependencies(allSelectsForEveryColumn: ISortSelectItem[]) {
 
         // sort selects be dependencies
         const sortedSelectsForEveryColumn = allSelectsForEveryColumn
@@ -98,61 +179,8 @@ export class CacheColumnsMigrator extends AbstractMigrator {
                 sortedSelectsForEveryColumn.push(nextItem);
             }
         }
-        
-        
-        for (const {select, cache} of sortedSelectsForEveryColumn) {
-            const columnsTypes = await this.postgres.getCacheColumnsTypes(
-                select,
-                cache.for
-            );
 
-            const [columnName, columnType] = Object.entries(columnsTypes)[0];
-
-            const aggFactory = new AggFactory(
-                select,
-                select.columns[0] as SelectColumn
-            );
-            const aggregations = aggFactory.createAggregations();
-            const agg = Object.values(aggregations)[0] as AbstractAgg;
-
-            await this.postgres.createOrReplaceColumn(
-                cache.for.table,
-                {
-                    key: columnName,
-                    type: columnType,
-                    // TODO: detect default by expression
-                    default: agg.default()
-                }
-            );
-        }
-
-        for (let i = 0, n = sortedSelectsForEveryColumn.length; i < n; i++) {
-            const {select, cache} = sortedSelectsForEveryColumn[ i ];
-            const columnsToUpdate: SelectColumn[] = [select.columns[0] as SelectColumn];
-
-            for (let j = i + 1; j < n; j++) {
-                const nextItem = sortedSelectsForEveryColumn[ j ];
-                if ( nextItem.cache !== cache ) {
-                    break;
-                }
-
-                columnsToUpdate.push(nextItem.select.columns[0] as SelectColumn);
-            }
-
-            const cacheTriggerFactory = new CacheTriggersBuilder(
-                cache,
-                new DatabaseStructure([])
-            );
-            const selectToUpdate = cacheTriggerFactory.createSelectForUpdate()
-                .cloneWith({
-                    columns: columnsToUpdate
-                });
-            
-            await this.updateCachePackage(
-                selectToUpdate,
-                cache.for
-            );
-        }
+        return sortedSelectsForEveryColumn;
     }
 
     private async updateCachePackage(selectToUpdate: Select, forTableRef: TableReference) {
