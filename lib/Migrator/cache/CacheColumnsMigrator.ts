@@ -28,21 +28,22 @@ export class CacheColumnsMigrator extends AbstractMigrator {
     }
 
     async dropOnlyTrashColumns() {
-        for (const cache of this.diff.drop.cache) {
-            await this.dropCacheColumns(cache);
-        }
-    }
-
-    async dropCacheColumns(cache: Cache) {
-        const table = cache.for.table;
-
-        const selectToUpdate = this.createSelectForUpdate(cache);
-        const columns = selectToUpdate.columns
-            .map(col => col.name);
+        const allCacheColumns = flatMap(this.diff.drop.cache, cache => {
+            const selectToUpdate = this.createSelectForUpdate(cache);
         
-        for (const columnName of columns) {
+            const columns = selectToUpdate.columns
+                .map(updateColumn => ({
+                    key: updateColumn.name,
+                    cache
+                }));
+            
+            return columns;
+        });
+
+        for (const {key, cache} of allCacheColumns) {
+            const table = cache.for.table;
             try {
-                await this.postgres.dropColumn(table, columnName);
+                await this.postgres.dropColumn(table, key);
             } catch(err) {
                 this.onError(cache, err);
             }
