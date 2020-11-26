@@ -16,12 +16,7 @@ export class CacheColumnsMigrator extends AbstractMigrator {
     }
 
     async create() {
-        // one cache can dependent on other cache
-        // need build all columns before package updates
-        const allSelectsForEveryColumn = this.generateAllSelectsForEveryColumn();
-        const sortedSelectsForEveryColumn = sortSelectsByDependencies(
-            allSelectsForEveryColumn
-        );
+        const sortedSelectsForEveryColumn = this.sortSelectsByDependencies();
         
         await this.createAllColumns(
             sortedSelectsForEveryColumn
@@ -47,6 +42,17 @@ export class CacheColumnsMigrator extends AbstractMigrator {
                 this.onError(cache, err);
             }
         }
+    }
+
+    private sortSelectsByDependencies() {
+        // one cache can dependent on other cache
+        // need build all columns before package updates
+        const allSelectsForEveryColumn = this.generateAllSelectsForEveryColumn();
+        const sortedSelectsForEveryColumn = sortSelectsByDependencies(
+            allSelectsForEveryColumn
+        );
+
+        return sortedSelectsForEveryColumn;
     }
 
     private async createAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
