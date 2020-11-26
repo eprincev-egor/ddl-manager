@@ -6,6 +6,7 @@ import { Diff } from "../Diff";
 import { IDatabaseDriver } from "../database/interface";
 import { Database as DatabaseStructure } from "../cache/schema/Database";
 import { FunctionsMigrator } from "./FunctionsMigrator";
+import { TriggersMigrator } from "./TriggersMigrator";
 
 interface ISortSelectItem {
     select: Select;
@@ -17,6 +18,7 @@ export class MainMigrator {
     private outputErrors: Error[];
     private diff: Diff;
     private functions: FunctionsMigrator;
+    private triggers: TriggersMigrator;
 
     static async migrate(postgres: IDatabaseDriver, diff: Diff) {
         assert.ok(diff);
@@ -34,40 +36,23 @@ export class MainMigrator {
             diff,
             this.outputErrors
         );
+        this.triggers = new TriggersMigrator(
+            postgres,
+            diff,
+            this.outputErrors
+        );
     }
 
     async migrate() {
-        await this.dropTriggers();
+        await this.triggers.drop();
         await this.functions.drop();
         await this.dropCache();
 
         await this.functions.create();
-        await this.createTriggers();
+        await this.triggers.create();
         await this.createAllCache();
 
         return this.outputErrors;
-    }
-
-    private async dropTriggers() {
-
-        for (const trigger of this.diff.drop.triggers) {
-            try {
-                await this.postgres.dropTrigger(trigger);
-            } catch(err) {
-                this.onError(trigger, err);
-            }
-        }
-    }
-
-    private async createTriggers() {
-
-        for (const trigger of this.diff.create.triggers) {
-            try {
-                await this.postgres.createOrReplaceTrigger(trigger);
-            } catch(err) {
-                this.onError(trigger, err);
-            }
-        }
     }
 
     private async dropCache() {
