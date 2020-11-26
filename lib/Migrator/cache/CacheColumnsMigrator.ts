@@ -33,17 +33,33 @@ export class CacheColumnsMigrator extends AbstractMigrator {
         
             const columns = selectToUpdate.columns
                 .map(updateColumn => ({
-                    key: updateColumn.name,
+                    columnName: updateColumn.name,
                     cache
                 }));
             
             return columns;
         });
+        const trashColumns = allCacheColumns.filter(({columnName: columnNameToDrop, cache: cacheToDrop}) => {
+            const cachesOnThatTableForCreate = this.diff.create.cache.filter(cacheToCreate =>
+                cacheToCreate.for.table.equal(cacheToDrop.for.table)
+            );
 
-        for (const {key, cache} of allCacheColumns) {
+            const existsSameColumnToCreate = cachesOnThatTableForCreate.some(cacheToCreate => {
+                const selectToUpdate = this.createSelectForUpdate(cacheToCreate);
+                const existsSameColumn = selectToUpdate.columns.some(column => 
+                    column.name === columnNameToDrop
+                );
+                return existsSameColumn;
+            });
+
+            // TODO: also check type
+            return !existsSameColumnToCreate;
+        });
+
+        for (const {columnName, cache} of trashColumns) {
             const table = cache.for.table;
             try {
-                await this.postgres.dropColumn(table, key);
+                await this.postgres.dropColumn(table, columnName);
             } catch(err) {
                 this.onError(cache, err);
             }
@@ -106,26 +122,46 @@ export class CacheColumnsMigrator extends AbstractMigrator {
     private async updateAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
 
         for (let i = 0, n = sortedSelectsForEveryColumn.length; i < n; i++) {
-            const {select, cache} = sortedSelectsForEveryColumn[ i ];
+            const {select, cache: cacheToCreate} = sortedSelectsForEveryColumn[ i ];
             const columnsToUpdate: SelectColumn[] = [select.columns[0] as SelectColumn];
 
             for (let j = i + 1; j < n; j++) {
                 const nextItem = sortedSelectsForEveryColumn[ j ];
-                if ( nextItem.cache !== cache ) {
+                if ( nextItem.cache !== cacheToCreate ) {
                     break;
                 }
 
                 columnsToUpdate.push(nextItem.select.columns[0] as SelectColumn);
             }
 
-            const selectToUpdate = this.createSelectForUpdate(cache)
+            const columnsToOnlyRequiredUpdate = columnsToUpdate.filter(columnToCreate => {
+                const cachesToDropOnThatTable = this.diff.drop.cache.filter(cacheToDrop =>
+                    cacheToDrop.for.table.equal( cacheToCreate.for.table )
+                );
+
+                const existsSameColumnToDrop = cachesToDropOnThatTable.some(cacheToDrop => {
+                    const selectToUpdateByDropCache = this.createSelectForUpdate(cacheToCreate);
+                    const existsSameColumn = selectToUpdateByDropCache.columns.some(columnNameToDrop => 
+                        columnToCreate.name === columnNameToDrop.name
+                    );
+                    return existsSameColumn;
+                });
+
+                return !existsSameColumnToDrop;
+            });
+
+            if ( !columnsToOnlyRequiredUpdate.length ) {
+                continue;
+            }
+
+            const selectToUpdate = this.createSelectForUpdate(cacheToCreate)
                 .cloneWith({
-                    columns: columnsToUpdate
+                    columns: columnsToOnlyRequiredUpdate
                 });
             
             await this.updateCachePackage(
                 selectToUpdate,
-                cache.for
+                cacheToCreate.for
             );
         }
     }

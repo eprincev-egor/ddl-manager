@@ -248,7 +248,7 @@ describe("Migrator", () => {
         assert.strictEqual(database.state.triggers.length, 0);
     });
 
-    xit("don't drop cache columns, but recreate triggers if was just cache renaming", async() => {
+    it("don't drop cache columns, but recreate triggers if was just cache renaming", async() => {
 
         const cacheBeforeRenamingSQL = `
             cache before_rename for some_table (
