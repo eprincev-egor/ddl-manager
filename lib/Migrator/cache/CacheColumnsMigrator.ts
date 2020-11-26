@@ -10,9 +10,7 @@ import {
 
 export class CacheColumnsMigrator extends AbstractMigrator {
     async drop() {
-        for (const cache of this.diff.drop.cache) {
-            await this.dropCacheColumns(cache);
-        }
+        await this.dropOnlyTrashColumns();
     }
 
     async create() {
@@ -24,6 +22,12 @@ export class CacheColumnsMigrator extends AbstractMigrator {
         await this.updateAllColumns(
             sortedSelectsForEveryColumn
         );
+    }
+
+    async dropOnlyTrashColumns() {
+        for (const cache of this.diff.drop.cache) {
+            await this.dropCacheColumns(cache);
+        }
     }
 
     async dropCacheColumns(cache: Cache) {
@@ -57,32 +61,44 @@ export class CacheColumnsMigrator extends AbstractMigrator {
 
     private async createAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
 
-        for (const {select, cache} of sortedSelectsForEveryColumn) {
-            const columnsTypes = await this.postgres.getCacheColumnsTypes(
-                select,
-                cache.for
-            );
-
-            const [columnName, columnType] = Object.entries(columnsTypes)[0];
-
-            const aggFactory = new AggFactory(
-                select,
-                select.columns[0] as SelectColumn
-            );
-            const aggregations = aggFactory.createAggregations();
-            const agg = Object.values(aggregations)[0] as AbstractAgg;
-
-            await this.postgres.createOrReplaceColumn(
-                cache.for.table,
-                {
-                    key: columnName,
-                    type: columnType,
-                    // TODO: detect default by expression
-                    default: agg.default()
-                }
-            );
+        for (const {cache, select} of sortedSelectsForEveryColumn) {
+            await this.createColumn(cache, select);
         }
+    }
 
+    private async createColumn(cache: Cache, select: Select) {
+        const column = {
+            key: (select.columns[0] as SelectColumn).name,
+            type: await this.getColumnType(cache, select),
+            default: this.getColumnDefault(select)
+        };
+        await this.postgres.createOrReplaceColumn(
+            cache.for.table,
+            column
+        );
+    }
+
+    private async getColumnType(cache: Cache, select: Select) {
+        const columnsTypes = await this.postgres.getCacheColumnsTypes(
+            select,
+            cache.for
+        );
+
+        // TODO: detect default by expression
+        const [columnName, columnType] = Object.entries(columnsTypes)[0];
+        return columnType;
+    }
+
+    private getColumnDefault(select: Select) {
+        const aggFactory = new AggFactory(
+            select,
+            select.columns[0] as SelectColumn
+        );
+        const aggregations = aggFactory.createAggregations();
+        const agg = Object.values(aggregations)[0] as AbstractAgg;
+
+        const defaultExpression = agg.default();
+        return defaultExpression;
     }
 
     private async updateAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
