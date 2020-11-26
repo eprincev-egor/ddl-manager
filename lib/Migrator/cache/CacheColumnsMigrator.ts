@@ -7,8 +7,11 @@ import {
     ISortSelectItem,
     sortSelectsByDependencies
 } from "./graph-util";
+import { flatMap } from "lodash";
 
 export class CacheColumnsMigrator extends AbstractMigrator {
+    private databaseStructure: DatabaseStructure = new DatabaseStructure([]);
+
     async drop() {
         await this.dropOnlyTrashColumns();
     }
@@ -31,14 +34,12 @@ export class CacheColumnsMigrator extends AbstractMigrator {
     }
 
     async dropCacheColumns(cache: Cache) {
-        const cacheTriggerFactory = new CacheTriggersBuilder(
-            cache,
-            new DatabaseStructure([])
-        );
-        const selectToUpdate = cacheTriggerFactory.createSelectForUpdate();
-        const columns = selectToUpdate.columns.map(col => col.name);
-        
         const table = cache.for.table;
+
+        const selectToUpdate = this.createSelectForUpdate(cache);
+        const columns = selectToUpdate.columns
+            .map(col => col.name);
+        
         for (const columnName of columns) {
             try {
                 await this.postgres.dropColumn(table, columnName);
@@ -85,7 +86,7 @@ export class CacheColumnsMigrator extends AbstractMigrator {
         );
 
         // TODO: detect default by expression
-        const [columnName, columnType] = Object.entries(columnsTypes)[0];
+        const columnType = Object.values(columnsTypes)[0];
         return columnType;
     }
 
@@ -116,11 +117,7 @@ export class CacheColumnsMigrator extends AbstractMigrator {
                 columnsToUpdate.push(nextItem.select.columns[0] as SelectColumn);
             }
 
-            const cacheTriggerFactory = new CacheTriggersBuilder(
-                cache,
-                new DatabaseStructure([])
-            );
-            const selectToUpdate = cacheTriggerFactory.createSelectForUpdate()
+            const selectToUpdate = this.createSelectForUpdate(cache)
                 .cloneWith({
                     columns: columnsToUpdate
                 });
@@ -133,33 +130,36 @@ export class CacheColumnsMigrator extends AbstractMigrator {
     }
 
     private generateAllSelectsForEveryColumn() {
-        const allCaches = this.diff.create.cache || [];
 
-        const allSelectsForEveryColumn: ISortSelectItem[] = [];
+        const allSelectsForEveryColumn = flatMap(this.diff.create.cache, cache => {
 
-        for (const cache of allCaches) {
-            const cacheTriggerFactory = new CacheTriggersBuilder(
-                cache,
-                new DatabaseStructure([])
-            );
-            const selectToUpdate = cacheTriggerFactory.createSelectForUpdate();
+            const selectToUpdate = this.createSelectForUpdate(cache);
             
-            for (const updateColumn of selectToUpdate.columns) {
-
+            return selectToUpdate.columns.map(updateColumn => {
                 const selectThatColumn = new Select({
                     columns: [updateColumn],
                     from: selectToUpdate.getAllTableReferences().map(tableRef =>
                         new From(tableRef)
                     )
                 });
-                allSelectsForEveryColumn.push({
+
+                return {
                     select: selectThatColumn,
                     cache
-                });
-            }
-        }
+                };
+            });
+        });
 
         return allSelectsForEveryColumn;
+    }
+
+    private createSelectForUpdate(cache: Cache) {
+        const cacheTriggerFactory = new CacheTriggersBuilder(
+            cache,
+            this.databaseStructure
+        );
+        const selectToUpdate = cacheTriggerFactory.createSelectForUpdate();
+        return selectToUpdate;
     }
 
     private async updateCachePackage(selectToUpdate: Select, forTableRef: TableReference) {
