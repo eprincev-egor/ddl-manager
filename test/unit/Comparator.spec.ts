@@ -1,30 +1,85 @@
 import _ from "lodash";
 import { Comparator } from "../../lib/Comparator";
 import { FileParser } from "../../lib/parser/FileParser";
-import {expect, use} from "chai";
-import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import assert from "assert";
+import {
+    Cache,
+    DatabaseFunction,
+    DatabaseTrigger,
+    IDatabaseFunctionParams,
+    IDatabaseTriggerParams
+} from "../../lib/ast";
+import { Diff } from "../../lib/Diff";
+interface IStateParams {
+    functions: (DatabaseFunction | IDatabaseFunctionParams)[];
+    triggers: (DatabaseTrigger | IDatabaseTriggerParams)[];
+    cache: Cache[];
+}
 
-use(chaiShallowDeepEqualPlugin);
-
-function diffState(params: {filesState: any, dbState: any}) {
-    const {dbState, filesState} = params;
+function diffState(params: {filesState: Partial<IStateParams>, dbState: Partial<IStateParams>}) {
+    const {
+        dbState: dbStateParams,
+        filesState: filesStateParams
+    } = params;
     
-    Object.assign(dbState, {
-        functions: [],
-        triggers: [],
-        cache: [],
-        ...dbState
-    });
+    const dbState = {
+        functions: createFuncsInstances(dbStateParams),
+        triggers: createTriggersInstances(dbStateParams),
+        cache: dbStateParams.cache || []
+    };
 
-    Object.assign(filesState, {
-        functions: [],
-        triggers: [],
-        cache: [],
-        ...filesState
-    });
+    const filesState = {
+        functions: createFuncsInstances(filesStateParams),
+        triggers: createTriggersInstances(filesStateParams),
+        cache: filesStateParams.cache || []
+    };
 
     const diff = Comparator.compare(dbState, filesState);
     return diff;
+}
+
+
+function deepStrictEqualDiff(
+    actualDiff: Diff,
+    expectedDiffParams: Partial<{
+        create: Partial<IStateParams>;
+        drop: Partial<IStateParams>;
+    }>
+) {
+    
+    const expectedCreate: Partial<IStateParams> = expectedDiffParams.create || {};
+    const expectedDrop: Partial<IStateParams> = expectedDiffParams.drop || {};
+
+    const expectedDiff = Diff.empty()
+        .createState({
+            functions: createFuncsInstances(expectedCreate),
+            triggers: createTriggersInstances(expectedCreate),
+            cache: expectedCreate.cache
+        })
+        .dropState({
+            functions: createFuncsInstances(expectedDrop),
+            triggers: createTriggersInstances(expectedDrop),
+            cache: expectedDrop.cache
+        })
+    ;
+    
+    assert.deepStrictEqual(actualDiff, expectedDiff);
+}
+
+function createFuncsInstances(state: Partial<IStateParams>) {
+    return (state.functions || []).map(funcParams =>
+        funcParams instanceof DatabaseFunction ?
+            funcParams :
+            new DatabaseFunction(funcParams)
+    );
+}
+
+function createTriggersInstances(state: Partial<IStateParams>) {
+    return (state.triggers || []).map(triggerParams =>
+        triggerParams instanceof DatabaseTrigger ?
+            triggerParams :
+            new DatabaseTrigger(triggerParams)
+    );
 }
 
 describe("Comparator", () => {
@@ -32,23 +87,21 @@ describe("Comparator", () => {
     it("sync empty state", () => {
         const diff = diffState({
             filesState: {
-                functions: [],
-                triggers: []
             },
             dbState: {
-                functions: [],
-                triggers: []
             }
         });
 
-        expect(diff).to.be.shallowDeepEqual({
+        deepStrictEqualDiff(diff, {
             drop: {
                 triggers: [],
-                functions: []
+                functions: [],
+                cache: []
             },
             create: {
                 triggers: [],
-                functions: []
+                functions: [],
+                cache: []
             }
         });
     });
@@ -77,25 +130,24 @@ describe("Comparator", () => {
             filesState: {
                 functions: [
                     func
-                ],
-                triggers: []
+                ]
             },
             dbState: {
-                functions: [],
-                triggers: []
             }
         });
 
-        expect(diff).to.be.shallowDeepEqual({
+        deepStrictEqualDiff(diff, {
             drop: {
                 triggers: [],
-                functions: []
+                functions: [],
+                cache: []
             },
             create: {
                 triggers: [],
                 functions: [
                     func
-                ]
+                ],
+                cache: []
             }
         });
     });
@@ -121,27 +173,26 @@ describe("Comparator", () => {
         };
         const diff = diffState({
             filesState: {
-                functions: [],
-                triggers: []
             },
             dbState: {
                 functions: [
                     func
-                ],
-                triggers: []
+                ]
             }
         });
 
-        expect(diff).to.be.shallowDeepEqual({
+        deepStrictEqualDiff(diff, {
             drop: {
                 triggers: [],
                 functions: [
                     func
-                ]
+                ],
+                cache: []
             },
             create: {
                 triggers: [],
-                functions: []
+                functions: [],
+                cache: []
             }
         });
     });
@@ -189,30 +240,30 @@ describe("Comparator", () => {
             filesState: {
                 functions: [
                     fileFunc
-                ],
-                triggers: []
+                ]
             },
             dbState: {
                 functions: [
                     dbFunc
-                ],
-                triggers: []
+                ]
             }
         });
         
 
-        expect(diff).to.be.shallowDeepEqual({
+        deepStrictEqualDiff(diff, {
             drop: {
                 triggers: [],
                 functions: [
                     dbFunc
-                ]
+                ],
+                cache: []
             },
             create: {
                 triggers: [],
                 functions: [
                     fileFunc
-                ]
+                ],
+                cache: []
             }
         });
     });
@@ -265,29 +316,29 @@ describe("Comparator", () => {
             filesState: {
                 functions: [
                     fileFunc
-                ],
-                triggers: []
+                ]
             },
             dbState: {
                 functions: [
                     dbFunc
-                ],
-                triggers: []
+                ]
             }
         });
         
-        expect(diff).to.be.shallowDeepEqual({
+        deepStrictEqualDiff(diff, {
             drop: {
                 triggers: [],
                 functions: [
                     dbFunc
-                ]
+                ],
+                cache: []
             },
             create: {
                 triggers: [],
                 functions: [
                     fileFunc
-                ]
+                ],
+                cache: []
             }
         });
     });
@@ -307,25 +358,25 @@ describe("Comparator", () => {
             filesState: {
                 functions: [
                     func
-                ],
-                triggers: []
+                ]
             },
             dbState: {
                 functions: [
                     func
-                ],
-                triggers: []
+                ]
             }
         });
 
-        expect(diff).to.be.shallowDeepEqual({
+        deepStrictEqualDiff(diff, {
             drop: {
                 triggers: [],
-                functions: []
+                functions: [],
+                cache: []
             },
             create: {
                 triggers: [],
-                functions: []
+                functions: [],
+                cache: []
             }
         });
     });
@@ -350,7 +401,8 @@ describe("Comparator", () => {
             name: "some_action_on_some_event_trigger",
             procedure: {
                 schema: "public",
-                name: "some_action_on_some_event"
+                name: "some_action_on_some_event",
+                args: []
             }
         };
         const dbTrigger = {
@@ -363,7 +415,8 @@ describe("Comparator", () => {
             name: "some_action_on_some_event_trigger",
             procedure: {
                 schema: "public",
-                name: "some_action_on_some_event"
+                name: "some_action_on_some_event",
+                args: []
             }
         };
 
@@ -387,18 +440,20 @@ describe("Comparator", () => {
         });
 
 
-        expect(diff).to.be.shallowDeepEqual({
+        deepStrictEqualDiff(diff, {
             drop: {
                 triggers: [
                     dbTrigger
                 ],
-                functions: []
+                functions: [],
+                cache: []
             },
             create: {
                 triggers: [
                     fileTrigger
                 ],
-                functions: []
+                functions: [],
+                cache: []
             }
         });
     });
@@ -425,7 +480,8 @@ describe("Comparator", () => {
             name: "some_action_on_some_event_trigger",
             procedure: {
                 schema: "public",
-                name: "some_action_on_some_event"
+                name: "some_action_on_some_event",
+                args: []
             }
         };
         const dbTrigger = _.cloneDeep(trigger);
@@ -450,14 +506,16 @@ describe("Comparator", () => {
         });
 
 
-        expect(diff).to.be.shallowDeepEqual({
+        deepStrictEqualDiff(diff, {
             drop: {
                 triggers: [],
-                functions: []
+                functions: [],
+                cache: []
             },
             create: {
                 triggers: [],
-                functions: []
+                functions: [],
+                cache: []
             }
         });
     });
@@ -478,25 +536,24 @@ describe("Comparator", () => {
             filesState: {
                 functions: [
                     func
-                ],
-                triggers: []
+                ]
             },
             dbState: {
-                functions: [],
-                triggers: []
             }
         });
 
-        expect(diff).to.be.shallowDeepEqual({
+        deepStrictEqualDiff(diff, {
             drop: {
                 triggers: [],
-                functions: []
+                functions: [],
+                cache: []
             },
             create: {
                 triggers: [],
                 functions: [
                     func
-                ]
+                ],
+                cache: []
             }
         });
     });
@@ -515,25 +572,24 @@ describe("Comparator", () => {
 
         const diff = diffState({
             filesState: {
-                functions: [],
-                triggers: []
             },
             dbState: {
                 functions: [
                     func
-                ],
-                triggers: []
+                ]
             }
         });
 
-        expect(diff).to.be.shallowDeepEqual({
+        deepStrictEqualDiff(diff, {
             drop: {
                 triggers: [],
-                functions: []
+                functions: [],
+                cache: []
             },
             create: {
                 triggers: [],
-                functions: []
+                functions: [],
+                cache: []
             }
         });
     });
@@ -559,15 +615,14 @@ describe("Comparator", () => {
             name: "some_action_on_some_event_trigger",
             procedure: {
                 schema: "public",
-                name: "some_action_on_some_event"
+                name: "some_action_on_some_event",
+                args: []
             },
             frozen: true
         };
 
         const diff = diffState({
             filesState: {
-                functions: [],
-                triggers: []
             },
             dbState: {
                 functions: [
@@ -579,14 +634,16 @@ describe("Comparator", () => {
             }
         });
 
-        expect(diff).to.be.shallowDeepEqual({
+        deepStrictEqualDiff(diff, {
             drop: {
                 triggers: [],
-                functions: []
+                functions: [],
+                cache: []
             },
             create: {
                 triggers: [],
-                functions: []
+                functions: [],
+                cache: []
             }
         });
     });
@@ -621,7 +678,8 @@ describe("Comparator", () => {
             name: "some_action_on_some_event_trigger",
             procedure: {
                 schema: "public",
-                name: "some_action_on_some_event"
+                name: "some_action_on_some_event",
+                args: []
             }
         };
         const trigger2 = {
@@ -634,7 +692,8 @@ describe("Comparator", () => {
             name: "some_action_on_some_event_trigger",
             procedure: {
                 schema: "public",
-                name: "some_action_on_some_event"
+                name: "some_action_on_some_event",
+                args: []
             }
         };
 
@@ -660,14 +719,15 @@ describe("Comparator", () => {
             }
         });
 
-        expect(diff).to.be.shallowDeepEqual({
+        deepStrictEqualDiff(diff, {
             drop: {
                 triggers: [
                     trigger1
                 ],
                 functions: [
                     func2
-                ]
+                ],
+                cache: []
             },
             create: {
                 triggers: [
@@ -675,7 +735,8 @@ describe("Comparator", () => {
                 ],
                 functions: [
                     func1
-                ]
+                ],
+                cache: []
             }
         });
 
@@ -701,14 +762,15 @@ describe("Comparator", () => {
             }
         });
 
-        expect(diff).to.be.shallowDeepEqual({
+        deepStrictEqualDiff(diff, {
             drop: {
                 triggers: [
                     trigger1
                 ],
                 functions: [
                     func2
-                ]
+                ],
+                cache: []
             },
             create: {
                 triggers: [
@@ -716,7 +778,8 @@ describe("Comparator", () => {
                 ],
                 functions: [
                     func1
-                ]
+                ],
+                cache: []
             }
         });
     });
@@ -732,20 +795,17 @@ describe("Comparator", () => {
 
         const diff = diffState({
             filesState: {
-                functions: [],
-                triggers: [],
                 cache: [cache]
             },
             dbState: {
-                functions: [],
-                triggers: []
             }
         });
 
-        expect(diff).to.be.shallowDeepEqual({
+        deepStrictEqualDiff(diff, {
             drop: {
                 triggers: [],
-                functions: []
+                functions: [],
+                cache: []
             },
             create: {
                 triggers: [],
@@ -766,18 +826,13 @@ describe("Comparator", () => {
 
         const diff = diffState({
             filesState: {
-                functions: [],
-                triggers: [],
-                cache: []
             },
             dbState: {
-                functions: [],
-                triggers: [],
                 cache: [cache]
             }
         });
 
-        expect(diff).to.be.shallowDeepEqual({
+        deepStrictEqualDiff(diff, {
             drop: {
                 triggers: [],
                 functions: [],
@@ -802,18 +857,14 @@ describe("Comparator", () => {
 
         const diff = diffState({
             filesState: {
-                functions: [],
-                triggers: [],
                 cache: [cache]
             },
             dbState: {
-                functions: [],
-                triggers: [],
                 cache: [cache]
             }
         });
 
-        expect(diff).to.be.shallowDeepEqual({
+        deepStrictEqualDiff(diff, {
             drop: {
                 triggers: [],
                 functions: [],
@@ -827,4 +878,113 @@ describe("Comparator", () => {
         });
     });
 
+    it("function with long name inside fs and db", () => {
+        const someFuncParams = {
+            schema: "public",
+            args: [
+                {
+                    name: "x",
+                    type: "integer"
+                },
+                {
+                    name: "y",
+                    type: "integer"
+                }
+            ],
+            returns: {type: "integer"},
+            body: `begin
+                return x + y;
+            end`
+        };
+        const longName = "long_name_0123456789012345678901234567890123456789012345678901234567890123456789";
+
+        const funcInFS = new DatabaseFunction({
+            ...someFuncParams,
+            name: longName
+        });
+        const funcInDB = new DatabaseFunction({
+            ...someFuncParams,
+            name: longName.slice(0, 64)
+        });
+
+        const diff = diffState({
+            filesState: {
+                functions: [
+                    funcInFS
+                ]
+            },
+            dbState: {
+                functions: [
+                    funcInDB
+                ]
+            }
+        });
+
+        deepStrictEqualDiff(diff, {
+            drop: {
+                triggers: [],
+                functions: [],
+                cache: []
+            },
+            create: {
+                triggers: [],
+                functions: [],
+                cache: []
+            }
+        });
+    });
+
+
+    it("trigger with long name inside fs and db", () => {
+        const someTriggerParams = {
+            table: {
+                schema: "public",
+                name: "company"
+            },
+            after: true,
+            insert: true,
+            procedure: {
+                schema: "public",
+                name: "some_action_on_some_event",
+                args: []
+            }
+        };
+
+        const longName = "long_name_0123456789012345678901234567890123456789012345678901234567890123456789";
+
+        const triggerInFS = new DatabaseTrigger({
+            ...someTriggerParams,
+            name: longName
+        });
+        const triggerInDB = new DatabaseTrigger({
+            ...someTriggerParams,
+            name: longName.slice(0, 64)
+        });
+
+        const diff = diffState({
+            filesState: {
+                triggers: [
+                    triggerInFS
+                ]
+            },
+            dbState: {
+                triggers: [
+                    triggerInDB
+                ]
+            }
+        });
+
+        deepStrictEqualDiff(diff, {
+            drop: {
+                triggers: [],
+                functions: [],
+                cache: []
+            },
+            create: {
+                triggers: [],
+                functions: [],
+                cache: []
+            }
+        });
+    });
 });

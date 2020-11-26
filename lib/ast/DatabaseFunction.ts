@@ -1,4 +1,5 @@
 import { wrapText } from "../database/postgres/wrapText";
+import { MAX_NAME_LENGTH } from "../database/postgres/constants";
 
 export interface IDatabaseFunctionParams {
     schema: string;
@@ -51,6 +52,11 @@ export class DatabaseFunction  {
     constructor(json: IDatabaseFunctionParams) {
         Object.assign(this, json);
         this.language = json.language || "plpgsql";
+
+        if ( this.name.length > MAX_NAME_LENGTH ) {
+            console.error(`name ${this.name} too long (> 64 symbols)`);
+        }
+        this.name = this.name.slice(0, MAX_NAME_LENGTH);
     }
 
     getSignature() {

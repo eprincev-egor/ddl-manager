@@ -1,4 +1,5 @@
 import { wrapText } from "../database/postgres/wrapText";
+import { MAX_NAME_LENGTH } from "../database/postgres/constants";
 
 export interface IDatabaseTriggerParams {
     name: string;
@@ -60,6 +61,10 @@ export class DatabaseTrigger {
 
     constructor(json: IDatabaseTriggerParams) {
         Object.assign(this, json);
+        if ( this.name.length > MAX_NAME_LENGTH ) {
+            console.error(`name ${this.name} too long (> 64 symbols)`);
+        }
+        this.name = this.name.slice(0, MAX_NAME_LENGTH);
     }
 
     getSignature() {
