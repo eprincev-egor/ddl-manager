@@ -3,7 +3,7 @@ import fs from "fs";
 import pg from "pg";
 import path from "path";
 import { Comparator } from "./Comparator";
-import { Migrator } from "./Migrator";
+import { MainMigrator } from "./Migrator/MainMigrator";
 import { IDatabaseDriver } from "./database/interface";
 import { PostgresDriver } from "./database/PostgresDriver";
 import { getDbClient, IDBConfig } from "./database/getDbClient";
@@ -311,7 +311,7 @@ export class DDLManager {
 
     private async migrate(diff: Diff, needThrowError = this.needCloseConnect) {
         const postgres = await this.postgres();
-        const outputErrors = await Migrator.migrate(postgres, diff);
+        const outputErrors = await MainMigrator.migrate(postgres, diff);
 
         if ( needThrowError !== false ) {
             if ( outputErrors.length ) {

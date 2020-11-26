@@ -1,6 +1,6 @@
 import assert from "assert";
 import { FakeDatabase } from "./FakeDatabase";
-import { Migrator } from "../../../lib/Migrator";
+import { MainMigrator } from "../../../lib/Migrator/MainMigrator";
 import { Diff } from "../../../lib/Diff";
 import { DatabaseFunction, DatabaseTrigger } from "../../../lib/ast";
 import { FileParser } from "../../../lib/parser";
@@ -38,7 +38,7 @@ describe("Migrator", () => {
             ]
         });
 
-        await Migrator.migrate(database, changes);
+        await MainMigrator.migrate(database, changes);
 
         assert.strictEqual(
             database.state.functions.length,
@@ -69,7 +69,7 @@ describe("Migrator", () => {
             ]
         });
 
-        await Migrator.migrate(database, changes);
+        await MainMigrator.migrate(database, changes);
 
         assert.strictEqual(
             database.state.triggers.length,
@@ -89,7 +89,7 @@ describe("Migrator", () => {
 
         changes.createState({cache: [FileParser.parseCache(ordersProfitCacheSQL)]});
 
-        await Migrator.migrate(database, changes);
+        await MainMigrator.migrate(database, changes);
 
         assert.deepStrictEqual(database.columns, {
             "public.some_table.orders_profit": {
@@ -129,7 +129,7 @@ describe("Migrator", () => {
 
         database.setRowsCount(cache.for.table.toString(), 1499);
 
-        await Migrator.migrate(database, changes);
+        await MainMigrator.migrate(database, changes);
 
         assert.deepStrictEqual(
             database.getUpdatedPackages(cache.for.table.toString()),
@@ -155,7 +155,7 @@ describe("Migrator", () => {
             )
         `)]});
 
-        await Migrator.migrate(database, changes);
+        await MainMigrator.migrate(database, changes);
 
         assert.deepStrictEqual(database.columns, {
             "public.some_table.doc_numbers_array_agg": {
@@ -192,7 +192,7 @@ describe("Migrator", () => {
             )
         `)]});
 
-        await Migrator.migrate(database, changes);
+        await MainMigrator.migrate(database, changes);
 
         assert.deepStrictEqual(database.columns, {
             "public.some_table.some_profit_sum_profit": {
@@ -223,7 +223,7 @@ describe("Migrator", () => {
 
         changes.createState({cache: [testCache]});
 
-        await Migrator.migrate(database, changes);
+        await MainMigrator.migrate(database, changes);
 
         assert.deepStrictEqual(database.columns, {
             "public.some_table.orders_profit": {
@@ -239,7 +239,7 @@ describe("Migrator", () => {
         const dropChanges = Diff.empty().dropState({
             cache: [testCache]
         });
-        await Migrator.migrate(database, dropChanges);
+        await MainMigrator.migrate(database, dropChanges);
 
 
         assert.deepStrictEqual(database.columns, {
@@ -278,7 +278,7 @@ describe("Migrator", () => {
         });
         database.setRowsCount("public.some_table", 1400);
 
-        await Migrator.migrate(database, Diff.empty().createState({
+        await MainMigrator.migrate(database, Diff.empty().createState({
             cache: [cacheBeforeRenaming]
         }));
         assert.deepStrictEqual(database.columns, {
@@ -294,7 +294,7 @@ describe("Migrator", () => {
         );
 
 
-        await Migrator.migrate(database, Diff.empty()
+        await MainMigrator.migrate(database, Diff.empty()
             .dropState({
                 cache: [cacheBeforeRenaming]
             })

@@ -1,7 +1,7 @@
 import assert from "assert";
 import { Client } from "pg";
 import { getDBClient } from "./getDbClient";
-import { Migrator } from "../../lib/Migrator";
+import { MainMigrator } from "../../lib/Migrator/MainMigrator";
 import { DatabaseFunction, IDatabaseFunctionParams } from "../../lib/ast/DatabaseFunction";
 import { DatabaseTrigger, IDatabaseTriggerParams } from "../../lib/ast/DatabaseTrigger";
 import {expect, use} from "chai";
@@ -9,12 +9,10 @@ import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { PostgresDriver } from "../../lib/database/PostgresDriver";
 import { Diff } from "../../lib/Diff";
 import { FileParser } from "../../lib/parser";
-import { IState } from "../../lib/interface";
-import { Cache } from "../../lib/ast";
 
 use(chaiShallowDeepEqualPlugin);
 
-describe("integration/Migrator", () => {
+describe("integration/MainMigrator", () => {
     let db!: Client;
     
     beforeEach(async() => {
@@ -49,7 +47,7 @@ describe("integration/Migrator", () => {
         createTriggers(diff, params.diff.create.triggers);
 
         const postgres = new PostgresDriver(db);
-        await Migrator.migrate(postgres, diff);
+        await MainMigrator.migrate(postgres, diff);
     }
 
     function dropFunctions(diff: Diff, functions: IDatabaseFunctionParams[]) {
@@ -1057,7 +1055,7 @@ describe("integration/Migrator", () => {
         });
 
         const postgres = new PostgresDriver(db);
-        await Migrator.migrate(postgres, changes);
+        await MainMigrator.migrate(postgres, changes);
 
         const {rows} = await db.query("select * from companies");
         assert.deepStrictEqual(rows[0], {
