@@ -222,21 +222,25 @@ export class FilesState extends EventEmitter {
 
     private checkDuplicateCache(cache: Cache) {
         const identify = cache.getSignature();
+        const cacheColumns = cache.select.columns.map(col => col.name);;
 
-        const hasDuplicate = this.files.some(someFile => {
-            const someCaches = someFile.content.cache;
+        for (const someFile of this.files) {
+            for (const someCache of someFile.content.cache) {
+                // duplicated cache name
+                if ( someCache.getSignature() === identify ) {
+                    throw new Error(`duplicate ${ identify }`);
+                }
+                // duplicate cache columns
 
-            if ( someCaches ) {
-                return someCaches.some((someCache) => {
-                    const someIdentify = someCache.getSignature();
+                if ( someCache.for.table.equal(cache.for.table) ) {
+                    const someCacheColumns = someCache.select.columns.map(col => col.name);
+                    const duplicatedColumns = someCacheColumns.filter(columnName =>
+                        cacheColumns.includes(columnName)
+                    );
 
-                    return identify === someIdentify;
-                });
+                    throw new Error(`duplicated columns: ${ duplicatedColumns } by cache: ${cache.name}, ${someCache.name}`);
+                }
             }
-        });
-
-        if ( hasDuplicate ) {
-            throw new Error(`duplicate ${ identify }`);
         }
     }
 

@@ -10,9 +10,10 @@
       + group by
       + with
       + union
-    - no column name in select
-    - column name is not unique
-    - exists same column name in another cache in another file
+    + no column name in select
+    - no columns
+    + column name is not unique
+    + exists same column name in another cache in another file
     - exists column in db with another type
 + diff: compare caches
 - Migrator: 

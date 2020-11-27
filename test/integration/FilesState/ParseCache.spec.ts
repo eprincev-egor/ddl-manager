@@ -276,4 +276,117 @@ describe("integration/FilesState parse cache", () => {
         );
     });
 
+    it("required alias for columns", () => {
+
+        const sql = `
+            cache totals for companies (
+                select
+                    sum( orders.profit )
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `.trim();
+
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
+        fs.writeFileSync(filePath, sql);
+
+        assert.throws(() => {
+            FilesState.create({
+                folder: ROOT_TMP_PATH
+            });
+        }, (err: Error) =>
+            /required alias for every cache column: sum\(orders\.profit\)/
+                .test(err.message)
+        );
+    });
+
+    it("duplicated cache column name inside one file", () => {
+
+        const sql = `
+            cache totals for companies (
+                select
+                    sum( orders.debet ) as orders_profit,
+                    sum( orders.credit ) as orders_profit
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `.trim();
+
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
+        fs.writeFileSync(filePath, sql);
+
+        assert.throws(() => {
+            FilesState.create({
+                folder: ROOT_TMP_PATH
+            });
+        }, (err: Error) =>
+            /duplicated cache column companies\.orders_profit/
+                .test(err.message)
+        );
+    });
+
+    it("duplicated cache column name inside one files", () => {
+
+        const sql1 = `
+            cache totals1 for companies (
+                select
+                    sum( orders.debet ) as orders_profit
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `.trim();
+
+        const sql2 = `
+            cache totals2 for companies (
+                select
+                    sum( orders.credit ) as orders_profit
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `.trim();
+        
+        const filePath1 = ROOT_TMP_PATH + "/test-file-1.sql";
+        fs.writeFileSync(filePath1, sql1);
+
+        const filePath2 = ROOT_TMP_PATH + "/test-file-2.sql";
+        fs.writeFileSync(filePath2, sql2);
+
+        assert.throws(() => {
+            FilesState.create({
+                folder: ROOT_TMP_PATH
+            });
+        }, (err: Error) =>
+            /duplicated columns: orders_profit by cache: totals2, totals1/
+                .test(err.message)
+        );
+    });
+
+    it("required cache columns", () => {
+
+        const sql = `
+            cache totals for companies (
+                select
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `.trim();
+
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
+        fs.writeFileSync(filePath, sql);
+
+        assert.throws(() => {
+            FilesState.create({
+                folder: ROOT_TMP_PATH
+            });
+        }, (err: Error) =>
+            /required select any columns or expressions/
+                .test(err.message)
+        );
+    });
+
 });

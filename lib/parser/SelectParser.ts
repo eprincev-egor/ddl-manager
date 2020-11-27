@@ -35,6 +35,26 @@ export class SelectParser {
             throw new Error("GROUP BY are not supported");
         }
 
+        const columns = selectSyntax.get("columns");
+        if ( !columns || !columns.length ) {
+            throw new Error("required select any columns or expressions");
+        }
+
+        for (let i = 0, n = columns.length; i < n; i++) {
+            const column = columns[i];
+            const columnAlias = (column.get("as") || "").toString();
+
+            for (let j = i + 1; j < n; j++) {
+                const nextColumn = columns[j];
+                const nextColumnAlias = (nextColumn.get("as") || "").toString();
+
+                if ( columnAlias === nextColumnAlias ) {
+                    throw new Error(`duplicated cache column ${cacheFor.toString()}\.${columnAlias}`);
+                }
+            }
+        }
+
+
         select = this.parseFromItems(cacheFor, selectSyntax, select);
         select = this.parseColumns(cacheFor, selectSyntax, select);
         select = this.parseWhere(cacheFor, selectSyntax, select);
