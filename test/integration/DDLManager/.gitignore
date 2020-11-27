@@ -1,2 +1,4 @@
 tmp/*
 tmp/**/*
+Build/tmp/*
+Build/tmp/**/*
