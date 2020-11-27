@@ -21,6 +21,20 @@ export class SelectParser {
 
         let select = new Select();
 
+        if ( selectSyntax.get("with") ) {
+            throw new Error("CTE (with queries) are not supported");
+        }
+        if ( selectSyntax.get("union") ) {
+            throw new Error("UNION are not supported");
+        }
+        const hasSubQuery = selectSyntax.filterChildrenByInstance(SelectSyntax).length > 0;
+        if ( hasSubQuery ) {
+            throw new Error("SUB QUERIES are not supported");
+        }
+        if ( selectSyntax.get("groupBy") ) {
+            throw new Error("GROUP BY are not supported");
+        }
+
         select = this.parseFromItems(cacheFor, selectSyntax, select);
         select = this.parseColumns(cacheFor, selectSyntax, select);
         select = this.parseWhere(cacheFor, selectSyntax, select);
@@ -49,7 +63,7 @@ export class SelectParser {
         const alias = fromItem.get("as");
         const tableLink = fromItem.get("table") as TableLink;
 
-        assert.ok(tableLink, "supported only 'from table'");
+        assert.ok(tableLink, "sub queries are not supported");
 
         const tableRef = this.tableParser.parse(tableLink, alias);
         let fromTable = new From(tableRef);

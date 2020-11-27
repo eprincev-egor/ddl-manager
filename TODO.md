@@ -5,7 +5,11 @@
     + fix object.toSQL 
     + log warning: name XXXX too long (> 64 symbols)
 - test errors on:
-    - hard select query
+    + hard select query
+      + sub query
+      + group by
+      + with
+      + union
     - no column name in select
     - column name is not unique
     - exists same column name in another cache in another file

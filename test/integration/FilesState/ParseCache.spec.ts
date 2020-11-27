@@ -140,4 +140,140 @@ describe("integration/FilesState parse cache", () => {
     });
 
     
+    it("sub queries are not supported (from (sub query))", () => {
+
+        const sql = `
+            cache totals for companies (
+                select
+                    sum( orders.profit ) as orders_profit
+                from (
+                    select *
+                    from orders
+                    where
+                        orders.id_client = companies.id
+                ) as orders
+            )
+        `.trim();
+
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
+        fs.writeFileSync(filePath, sql);
+
+        assert.throws(() => {
+            FilesState.create({
+                folder: ROOT_TMP_PATH
+            });
+        }, (err: Error) =>
+            /SUB QUERIES are not supported/
+                .test(err.message)
+        );
+    });
+
+    it("sub queries are not supported (select (sub query))", () => {
+
+        const sql = `
+            cache totals for companies (
+                select
+                    sum(
+                        orders.profit + 
+                        (select id from order_type limit 1) 
+                    ) as orders_profit
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `.trim();
+
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
+        fs.writeFileSync(filePath, sql);
+
+        assert.throws(() => {
+            FilesState.create({
+                folder: ROOT_TMP_PATH
+            });
+        }, (err: Error) =>
+            /SUB QUERIES are not supported/
+                .test(err.message)
+        );
+    });
+
+    it("GROUP BY are not supported", () => {
+
+        const sql = `
+            cache totals for companies (
+                select
+                    sum( orders.profit ) as orders_profit
+                from orders
+                where
+                    orders.id_client = companies.id
+                group by orders.id_client
+            )
+        `.trim();
+
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
+        fs.writeFileSync(filePath, sql);
+
+        assert.throws(() => {
+            FilesState.create({
+                folder: ROOT_TMP_PATH
+            });
+        }, (err: Error) =>
+            /GROUP BY are not supported/
+                .test(err.message)
+        );
+    });
+
+    it("CTE are not supported", () => {
+
+        const sql = `
+            cache totals for companies (
+                with totals as (select 1)
+                select
+                    sum( orders.profit ) as orders_profit
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `.trim();
+
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
+        fs.writeFileSync(filePath, sql);
+
+        assert.throws(() => {
+            FilesState.create({
+                folder: ROOT_TMP_PATH
+            });
+        }, (err: Error) =>
+            /CTE \(with queries\) are not supported/
+                .test(err.message)
+        );
+    });
+
+
+    it("UNION are not supported", () => {
+
+        const sql = `
+            cache totals for companies (
+                select
+                    sum( orders.profit ) as orders_profit
+                from orders
+                where
+                    orders.id_client = companies.id
+                union
+                select 1
+            )
+        `.trim();
+
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
+        fs.writeFileSync(filePath, sql);
+
+        assert.throws(() => {
+            FilesState.create({
+                folder: ROOT_TMP_PATH
+            });
+        }, (err: Error) =>
+            /UNION are not supported/
+                .test(err.message)
+        );
+    });
+
 });
