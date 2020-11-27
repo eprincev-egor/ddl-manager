@@ -1,7 +1,7 @@
 import { AbstractMigrator } from "../AbstractMigrator";
 import { Cache } from "../../ast";
 import { CacheTriggersBuilder } from "../../cache/CacheTriggersBuilder";
-import { Database as DatabaseStructure } from "../../cache/schema/Database";
+import { Database as DatabaseStructure } from "../../database/schema/Database";
 
 export class CacheTriggersMigrator extends AbstractMigrator {
     async drop() {

@@ -7,6 +7,7 @@ import {
     DatabaseFunction 
 } from "../ast";
 import { IState } from "../interface";
+import { Database as DatabaseSchema } from "./schema/Database";
 
 export interface ITableColumn {
     key: string;
@@ -14,8 +15,10 @@ export interface ITableColumn {
     default: string | null;
 }
 
+// TODO: apply I from SOLID
 export interface IDatabaseDriver {
     loadState(): Promise<IState>;
+    loadTables(): Promise<DatabaseSchema>;
     unfreezeAll(dbState: IState): Promise<void>;
     createOrReplaceFunction(func: DatabaseFunction): Promise<void>;
     dropFunction(func: DatabaseFunction): Promise<void>;

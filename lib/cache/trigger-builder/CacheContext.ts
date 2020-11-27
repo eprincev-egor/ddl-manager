@@ -3,7 +3,7 @@ import {
     Expression,
     Cache
 } from "../../ast";
-import { Database as DatabaseStructure } from "../schema/Database";
+import { Database as DatabaseStructure } from "../../database/schema/Database";
 
 export interface IReferenceMeta {
     columns: string[];

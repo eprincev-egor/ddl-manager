@@ -1,5 +1,6 @@
 import { Diff } from "../Diff";
 import { IDatabaseDriver } from "../database/interface";
+import { Database as DatabaseStructure } from "../database/schema/Database";
 
 export abstract class AbstractMigrator {
     
@@ -9,14 +10,17 @@ export abstract class AbstractMigrator {
     protected postgres: IDatabaseDriver;
     protected outputErrors: Error[];
     protected diff: Diff;
+    protected databaseStructure: DatabaseStructure;
 
     constructor(
         postgres: IDatabaseDriver,
         diff: Diff,
+        databaseStructure: DatabaseStructure,
         outputErrors: Error[]
     ) {
         this.postgres = postgres;
         this.diff = diff;
+        this.databaseStructure = databaseStructure;
         this.outputErrors = outputErrors;
     }
 

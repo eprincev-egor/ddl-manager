@@ -3,7 +3,7 @@ import { CacheParser } from "../../../../lib/parser";
 import { Table } from "../../../../lib/ast";
 import assert from "assert";
 import { CacheContext } from "../../../../lib/cache/trigger-builder/CacheContext";
-import { Database as DatabaseStructure } from "../../../../lib/cache/schema/Database";
+import { Database as DatabaseStructure } from "../../../../lib/database/schema/Database";
 import { buildUniversalWhere } from "../../../../lib/cache/processor/buildUniversalWhere";
 import { buildFrom } from "../../../../lib/cache/processor/buildFrom";
 

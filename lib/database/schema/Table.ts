@@ -1,11 +1,16 @@
 import { Column } from "./Column";
 
+export interface ITableID {
+    schema: string;
+    name: string;
+}
+
 export class Table {
     readonly schema: string;
     readonly name: string;
     readonly columns: Column[];
 
-    constructor(schema: string, name: string, columns: Column[]) {
+    constructor(schema: string, name: string, columns: Column[] = []) {
         this.schema = schema;
         this.name = name;
         this.columns = columns;
@@ -13,5 +18,9 @@ export class Table {
 
     getColumn(name: string) {
         return this.columns.find(column => column.name === name);
+    }
+
+    addColumn(column: Column) {
+        this.columns.push(column);
     }
 }

@@ -6,7 +6,8 @@ import {
     Table,
     Cache
 } from "../../../lib/ast";
-import { IDatabaseDriver, ITableColumn } from "../../../lib/database//interface";
+import { IDatabaseDriver, ITableColumn } from "../../../lib/database/interface";
+import { Database } from "../../../lib/database/schema/Database";
 import { IState } from "../../../lib/interface";
 
 export class FakeDatabase
@@ -146,6 +147,10 @@ implements IDatabaseDriver {
 
     async saveCacheMeta(allCache: Cache[]) {
         this.allCache = allCache;
+    }
+
+    async loadTables() {
+        return new Database([]);
     }
 
     end() {

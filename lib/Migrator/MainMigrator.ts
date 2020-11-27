@@ -6,10 +6,8 @@ import { TriggersMigrator } from "./TriggersMigrator";
 import { MainCacheMigrator } from "./cache/MainCacheMigrator";
 
 export class MainMigrator {
-    private outputErrors: Error[];
-    private functions: FunctionsMigrator;
-    private triggers: TriggersMigrator;
-    private cache: MainCacheMigrator;
+    private diff: Diff;
+    private postgres: IDatabaseDriver;
 
     static async migrate(postgres: IDatabaseDriver, diff: Diff) {
         assert.ok(diff);
@@ -18,34 +16,41 @@ export class MainMigrator {
     }
     
     private constructor(postgres: IDatabaseDriver, diff: Diff) {
-        this.outputErrors = [];
-
-        this.functions = new FunctionsMigrator(
-            postgres,
-            diff,
-            this.outputErrors
-        );
-        this.triggers = new TriggersMigrator(
-            postgres,
-            diff,
-            this.outputErrors
-        );
-        this.cache = new MainCacheMigrator(
-            postgres,
-            diff,
-            this.outputErrors
-        );
+        this.postgres = postgres;
+        this.diff = diff;
     }
 
     async migrate() {
-        await this.triggers.drop();
-        await this.functions.drop();
-        await this.cache.drop();
+        const databaseStructure = await this.postgres.loadTables();
+        const outputErrors: Error[] = [];
 
-        await this.functions.create();
-        await this.triggers.create();
-        await this.cache.create();
+        const functions = new FunctionsMigrator(
+            this.postgres,
+            this.diff,
+            databaseStructure,
+            outputErrors
+        );
+        const triggers = new TriggersMigrator(
+            this.postgres,
+            this.diff,
+            databaseStructure,
+            outputErrors
+        );
+        const cache = new MainCacheMigrator(
+            this.postgres,
+            this.diff,
+            databaseStructure,
+            outputErrors
+        );
 
-        return this.outputErrors;
+        await triggers.drop();
+        await functions.drop();
+        await cache.drop();
+
+        await functions.create();
+        await triggers.create();
+        await cache.create();
+
+        return outputErrors;
     }
 }

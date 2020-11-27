@@ -4,7 +4,7 @@ import {
 } from "../../ast";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { CommutativeTriggerBuilder } from "./CommutativeTriggerBuilder";
-import { Database as DatabaseStructure } from "../schema/Database";
+import { Database as DatabaseStructure } from "../../database/schema/Database";
 import { buildFrom } from "../processor/buildFrom";
 import { UniversalTriggerBuilder } from "./UniversalTriggerBuilder";
 import { findJoinsMeta } from "../processor/findJoinsMeta";

@@ -2,7 +2,6 @@ import { AbstractMigrator } from "../AbstractMigrator";
 import { CacheTriggersBuilder } from "../../cache/CacheTriggersBuilder";
 import { Cache, From, Select, SelectColumn, TableReference } from "../../ast";
 import { AbstractAgg, AggFactory } from "../../cache/aggregator";
-import { Database as DatabaseStructure } from "../../cache/schema/Database";
 import {
     ISortSelectItem,
     sortSelectsByDependencies
@@ -10,7 +9,6 @@ import {
 import { flatMap } from "lodash";
 
 export class CacheColumnsMigrator extends AbstractMigrator {
-    private databaseStructure: DatabaseStructure = new DatabaseStructure([]);
 
     async drop() {
         await this.dropOnlyTrashColumns();

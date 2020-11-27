@@ -2,9 +2,9 @@ import fs from "fs";
 import path from "path";
 import assert from "assert";
 import { CacheTriggersBuilder } from "../../../../lib/cache/CacheTriggersBuilder";
-import { Database } from "../../../../lib/cache/schema/Database";
-import { Table } from "../../../../lib/cache/schema/Table";
-import { Column } from "../../../../lib/cache/schema/Column";
+import { Database } from "../../../../lib/database/schema/Database";
+import { Table } from "../../../../lib/database/schema/Table";
+import { Column } from "../../../../lib/database/schema/Column";
 
 export interface ITest {
     testDir: string;

@@ -10,7 +10,7 @@ import {
 import { findDependencies } from "./processor/findDependencies";
 import { AggFactory } from "./aggregator";
 import { flatMap } from "lodash";
-import { Database as DatabaseStructure } from "./schema/Database";
+import { Database as DatabaseStructure } from "../database/schema/Database";
 import { TriggerBuilderFactory } from "./trigger-builder/TriggerBuilderFactory";
 
 export class CacheTriggersBuilder {

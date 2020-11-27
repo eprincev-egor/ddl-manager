@@ -1,10 +1,9 @@
 import {
     Expression
 } from "../../../ast";
-import { Table as TableStructure } from "../../schema/Table";
-import { Column } from "../../schema/Column";
+import { Table as TableStructure } from "../../../database/schema/Table";
+import { Column } from "../../../database/schema/Column";
 import { CacheContext } from "../CacheContext";
-import assert from "assert";
 
 export function noChanges(
     context: CacheContext,

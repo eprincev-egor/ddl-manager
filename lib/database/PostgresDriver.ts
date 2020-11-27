@@ -19,6 +19,9 @@ import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
 import { getCheckFrozenTriggerSql } from "./postgres/getCheckFrozenTriggerSql";
 import { wrapText } from "./postgres/wrapText";
+import { Database } from "./schema/Database";
+import { Column } from "./schema/Column";
+import { Table as TableSchema } from "./schema/Table";
 
 const selectAllFunctionsSQL = fs.readFileSync(__dirname + "/postgres/select-all-functions.sql")
     .toString();
@@ -67,6 +70,49 @@ implements IDatabaseDriver {
         }
 
         return objects;
+    }
+
+    async loadTables() {
+        const {rows: columnsRows} = await this.pgClient.query(`
+            select
+                pg_columns.table_schema,
+                pg_columns.table_name,
+                pg_columns.table_schema || '.' || pg_columns.table_name as table_identify,
+                pg_columns.column_name,
+                pg_columns.column_default,
+                pg_columns.data_type,
+                pg_columns.is_nullable
+            from information_schema.columns as pg_columns
+            where
+                pg_columns.table_schema != 'pg_catalog' and
+                pg_columns.table_schema != 'information_schema'
+
+            order by pg_columns.ordinal_position
+        `);
+        
+        const database = new Database();
+        for (const columnRow of columnsRows) {
+            
+            const tableId = {
+                schema: columnRow.table_schema,
+                name: columnRow.table_name
+            };
+            const table = database.getTable(tableId) || new TableSchema(
+                columnRow.table_schema,
+                columnRow.table_name
+            );
+            database.setTable(table);
+            
+            const column = new Column(
+                columnRow.column_name,
+                columnRow.data_type
+            );
+            // default: columnRow.column_default,
+            // nulls: parseColumnNulls(columnRow)
+            table.addColumn(column);
+        }
+
+        return database;
     }
 
     async unfreezeAll(dbState: IState) {
@@ -358,4 +404,12 @@ function isFrozen(row: {comment?: string}) {
         /ddl-manager-sync/i.test(row.comment)
     );
     return !createByDDLManager;
+}
+
+function parseColumnNulls(columnRow: any) {
+    if ( columnRow.is_nullable === "YES" ) {
+        return true;
+    } else {
+        return false;
+    }
 }
