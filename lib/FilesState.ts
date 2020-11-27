@@ -177,6 +177,11 @@ export class FilesState extends EventEmitter {
                 this.checkDuplicateTrigger( trigger );
             });
         }
+        if ( content.cache ) {
+            content.cache.forEach(cache => {
+                this.checkDuplicateCache( cache );
+            })
+        }
     }
 
     private checkDuplicateFunction(func: DatabaseFunction) {
@@ -212,6 +217,26 @@ export class FilesState extends EventEmitter {
 
         if ( hasDuplicate ) {
             throw new Error(`duplicate trigger ${ identify }`);
+        }
+    }
+
+    private checkDuplicateCache(cache: Cache) {
+        const identify = cache.getSignature();
+
+        const hasDuplicate = this.files.some(someFile => {
+            const someCaches = someFile.content.cache;
+
+            if ( someCaches ) {
+                return someCaches.some((someCache) => {
+                    const someIdentify = someCache.getSignature();
+
+                    return identify === someIdentify;
+                });
+            }
+        });
+
+        if ( hasDuplicate ) {
+            throw new Error(`duplicate ${ identify }`);
         }
     }
 

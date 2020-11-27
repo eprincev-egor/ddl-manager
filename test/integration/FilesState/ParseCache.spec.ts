@@ -3,6 +3,7 @@ import fse from "fs-extra";
 import { FilesState } from "../../../lib/FilesState";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import assert from "assert";
 
 use(chaiShallowDeepEqualPlugin);
 
@@ -98,6 +99,44 @@ describe("integration/FilesState parse cache", () => {
                 }
             }
         ]);
+    });
+
+    it("cache name for table should be unique", () => {
+
+        const sql1 = `
+            cache totals for companies (
+                select
+                    sum( orders.profit ) as orders_profit
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `.trim();
+
+        const sql2 = `
+            cache totals for companies (
+                select
+                    sum( invoices.profit ) as invoices_profit
+                from invoices
+                where
+                    invoices.id_payer = companies.id
+            )
+        `.trim();
+        
+        const filePath1 = ROOT_TMP_PATH + "/test-file-1.sql";
+        fs.writeFileSync(filePath1, sql1);
+
+        const filePath2 = ROOT_TMP_PATH + "/test-file-2.sql";
+        fs.writeFileSync(filePath2, sql2);
+
+        assert.throws(() => {
+            FilesState.create({
+                folder: ROOT_TMP_PATH
+            });
+        }, (err: Error) =>
+            /duplicate cache totals for companies/
+                .test(err.message)
+        );
     });
 
     
