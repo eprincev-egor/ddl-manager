@@ -20,7 +20,7 @@ export class CacheTriggersMigrator extends AbstractMigrator {
 
         const cacheTriggerFactory = new CacheTriggersBuilder(
             cache,
-            new DatabaseStructure([])
+            this.databaseStructure
         );
         
         const triggersByTableName = cacheTriggerFactory.createTriggers();
@@ -43,7 +43,7 @@ export class CacheTriggersMigrator extends AbstractMigrator {
     private async createCacheTriggers(cache: Cache) {
         const cacheTriggerFactory = new CacheTriggersBuilder(
             cache,
-            new DatabaseStructure([])
+            this.databaseStructure
         );
         const triggersByTableName = cacheTriggerFactory.createTriggers();
 

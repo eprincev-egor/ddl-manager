@@ -93,7 +93,7 @@ describe("Migrator", () => {
 
         assert.deepStrictEqual(database.columns, {
             "public.some_table.orders_profit": {
-                key: "orders_profit",
+                name: "orders_profit",
                 type: "numeric",
                 "default": "0"
             }
@@ -159,12 +159,12 @@ describe("Migrator", () => {
 
         assert.deepStrictEqual(database.columns, {
             "public.some_table.doc_numbers_array_agg": {
-                key: "doc_numbers_array_agg",
+                name: "doc_numbers_array_agg",
                 type: "text[]",
                 "default": "null"
             },
             "public.some_table.doc_numbers": {
-                key: "doc_numbers",
+                name: "doc_numbers",
                 type: "text",
                 "default": "null"
             }
@@ -196,17 +196,17 @@ describe("Migrator", () => {
 
         assert.deepStrictEqual(database.columns, {
             "public.some_table.some_profit_sum_profit": {
-                key: "some_profit_sum_profit",
+                name: "some_profit_sum_profit",
                 type: "numeric",
                 "default": "0"
             },
             "public.some_table.some_profit_sum_xxx": {
-                key: "some_profit_sum_xxx",
+                name: "some_profit_sum_xxx",
                 type: "numeric",
                 "default": "0"
             },
             "public.some_table.some_profit": {
-                key: "some_profit",
+                name: "some_profit",
                 type: "numeric",
                 "default": "0"
             }
@@ -227,7 +227,7 @@ describe("Migrator", () => {
 
         assert.deepStrictEqual(database.columns, {
             "public.some_table.orders_profit": {
-                key: "orders_profit",
+                name: "orders_profit",
                 type: "numeric",
                 "default": "0"
             }
@@ -283,7 +283,7 @@ describe("Migrator", () => {
         }));
         assert.deepStrictEqual(database.columns, {
             "public.some_table.orders_profit": {
-                key: "orders_profit",
+                name: "orders_profit",
                 type: "numeric",
                 "default": "0"
             }
@@ -304,7 +304,7 @@ describe("Migrator", () => {
         );
         assert.deepStrictEqual(database.columns, {
             "public.some_table.orders_profit": {
-                key: "orders_profit",
+                name: "orders_profit",
                 type: "numeric",
                 "default": "0"
             }

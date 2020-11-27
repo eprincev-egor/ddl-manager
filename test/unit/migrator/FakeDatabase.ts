@@ -105,7 +105,7 @@ implements IDatabaseDriver {
     }
 
     async createOrReplaceColumn(table: Table, column: ITableColumn): Promise<void> {
-        this.columns[ table.toString() + "." + column.key ] = column;
+        this.columns[ table.toString() + "." + column.name ] = column;
     }
 
     async dropColumn(table: Table, columnName: string): Promise<void> {

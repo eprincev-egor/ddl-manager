@@ -24,7 +24,7 @@ export function noChanges(
         // assert.ok(column, `column ${ triggerTable.toString() }.${ columnName } does not exists`);
 
         if ( column && column.type.isArray() ) {
-            conditions.push(`not cm_is_distinct_arrays(new.${columnName}, old.${columnName})`);
+            conditions.push(`cm_equal_arrays(new.${columnName}, old.${columnName})`);
         }
         else {
             conditions.push(`new.${ columnName } is not distinct from old.${ columnName }`);

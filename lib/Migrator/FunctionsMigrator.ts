@@ -15,25 +15,10 @@ export class FunctionsMigrator extends AbstractMigrator {
 
     private async createCacheHelpersFunctions() {
 
-        const CM_ARRAY_REMOVE_ONE_ELEMENT = FileParser.parseFunction(
-            helperFunctions.CM_ARRAY_REMOVE_ONE_ELEMENT
-        );
-
-        const CM_ARRAY_TO_STRING_DISTINCT = FileParser.parseFunction(
-            helperFunctions.CM_ARRAY_TO_STRING_DISTINCT
-        );
-        
-        const CM_DISTINCT_ARRAY = FileParser.parseFunction(
-            helperFunctions.CM_DISTINCT_ARRAY
-        );
-
-        // TODO: cm_is_distinct_arrays
-        // TODO: cm_get_deleted_elements
-        // TODO: cm_get_inserted_elements
-
-        await this.postgres.createOrReplaceHelperFunc(CM_ARRAY_REMOVE_ONE_ELEMENT);
-        await this.postgres.createOrReplaceHelperFunc(CM_ARRAY_TO_STRING_DISTINCT);
-        await this.postgres.createOrReplaceHelperFunc(CM_DISTINCT_ARRAY);
+        for (const helperFunctionSQL of Object.values(helperFunctions)) {
+            const parsedFunction = FileParser.parseFunction(helperFunctionSQL);
+            await this.postgres.createOrReplaceHelperFunc(parsedFunction);
+        }
     }
 
     private async dropFunctions() {

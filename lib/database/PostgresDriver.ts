@@ -73,6 +73,8 @@ implements IDatabaseDriver {
     }
 
     async loadTables() {
+        await this.types.load();
+
         const {rows: columnsRows} = await this.pgClient.query(`
             select
                 pg_columns.table_schema,
@@ -80,9 +82,13 @@ implements IDatabaseDriver {
                 pg_columns.table_schema || '.' || pg_columns.table_name as table_identify,
                 pg_columns.column_name,
                 pg_columns.column_default,
-                pg_columns.data_type,
+                pg_type.oid as column_type_oid,
                 pg_columns.is_nullable
             from information_schema.columns as pg_columns
+
+            left join pg_type on
+                pg_type.typname = pg_columns.udt_name
+
             where
                 pg_columns.table_schema != 'pg_catalog' and
                 pg_columns.table_schema != 'information_schema'
@@ -103,9 +109,12 @@ implements IDatabaseDriver {
             );
             database.setTable(table);
             
+            const columnType = this.types.getTypeById(
+                columnRow.column_type_oid
+            ) as string;
             const column = new Column(
                 columnRow.column_name,
-                columnRow.data_type
+                columnType
             );
             // default: columnRow.column_default,
             // nulls: parseColumnNulls(columnRow)
@@ -254,8 +263,7 @@ implements IDatabaseDriver {
 
     async createOrReplaceColumn(table: Table, column: ITableColumn) {
         const sql = `
-            alter table ${table} drop column if exists ${column.key};
-            alter table ${table} add column ${column.key} ${column.type} default ${ column.default };
+            alter table ${table} add column if not exists ${column.name} ${column.type} default ${ column.default };
         `;
 
         await this.pgClient.query(sql);

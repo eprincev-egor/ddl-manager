@@ -32,7 +32,7 @@ begin
 
     if TG_OP = 'UPDATE' then
         if
-            not cm_is_distinct_arrays(new.companies_ids, old.companies_ids)
+            cm_equal_arrays(new.companies_ids, old.companies_ids)
             and
             new.deleted is not distinct from old.deleted
             and
@@ -42,7 +42,7 @@ begin
         end if;
 
         if
-            not cm_is_distinct_arrays(new.companies_ids, old.companies_ids)
+            cm_equal_arrays(new.companies_ids, old.companies_ids)
             and
             new.deleted is not distinct from old.deleted
         then

@@ -10,7 +10,7 @@ import { IState } from "../interface";
 import { Database as DatabaseSchema } from "./schema/Database";
 
 export interface ITableColumn {
-    key: string;
+    name: string;
     type: string;
     default: string | null;
 }

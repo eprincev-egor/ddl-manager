@@ -16,4 +16,5 @@
   + do not drop cache columns if no changes
   - do not drop cache columns if same columns exists in db
 - Migrator: need REAL load schema
+- other helper functions
 - fix renaming file or directory

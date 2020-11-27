@@ -7,6 +7,7 @@ import {
     sortSelectsByDependencies
 } from "./graph-util";
 import { flatMap } from "lodash";
+import { ITableColumn } from "../../database/interface";
 
 export class CacheColumnsMigrator extends AbstractMigrator {
 
@@ -83,8 +84,8 @@ export class CacheColumnsMigrator extends AbstractMigrator {
     }
 
     private async createColumn(cache: Cache, select: Select) {
-        const column = {
-            key: (select.columns[0] as SelectColumn).name,
+        const column: ITableColumn = {
+            name: (select.columns[0] as SelectColumn).name,
             type: await this.getColumnType(cache, select),
             default: this.getColumnDefault(select)
         };

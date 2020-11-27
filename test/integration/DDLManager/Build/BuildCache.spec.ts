@@ -531,4 +531,128 @@ describe("integration/DDLManager.build cache", () => {
             orders_count: "0"
         });
     });
+
+    it("test cache with array operators search, check update count", async() => {
+        const folderPath = ROOT_TMP_PATH + "/cache-with-array-search";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                orders_numbers text
+            );
+            create table orders (
+                id serial primary key,
+                doc_number text,
+                deleted integer default 0,
+                client_companies_ids integer[]
+            );
+            create table company_updates (
+                company_id integer,
+                orders_numbers text
+            );
+
+            insert into companies default values;
+            insert into companies default values;
+
+            create function log_updates()
+            returns trigger as $body$
+            begin
+                insert into company_updates (company_id, orders_numbers) 
+                values (new.id, new.orders_numbers);
+                return new;
+            end
+            $body$
+            language plpgsql;
+
+            create trigger log_updates
+            after update of orders_numbers
+            on companies
+            for each row
+            execute procedure log_updates();
+        `);
+        
+        fs.writeFileSync(folderPath + "/doc_numbers.sql", `
+            cache totals for companies (
+                select
+                    string_agg(distinct orders.doc_number, ', ') as orders_numbers
+                
+                from orders
+                where
+                    orders.client_companies_ids && array[ companies.id ] and
+                    orders.deleted = 0
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        let result;
+
+
+        // test insert
+        await db.query(`
+            insert into orders (
+                doc_number,
+                client_companies_ids,
+                deleted
+            ) 
+            values 
+                ('order 1', array[1], 0 ),
+                ('order 2', array[2], 0 ),
+                ('order 3', array[1,2], 0 )
+        `);
+        result = await db.query(`
+            select id, orders_numbers
+            from companies
+            order by id
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, orders_numbers: "order 1, order 3"},
+            {id: 2, orders_numbers: "order 2, order 3"}
+        ], "after insert three orders");
+
+        result = await db.query(`
+            select *
+            from company_updates
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {company_id: 1, orders_numbers: "order 1"},
+            {company_id: 2, orders_numbers: "order 2"},
+            {company_id: 1, orders_numbers: "order 1, order 3"},
+            {company_id: 2, orders_numbers: "order 2, order 3"}
+        ], "after insert three orders");
+
+
+        // test update
+        await db.query(`
+            update orders set
+                client_companies_ids = array[2,1]
+            where id = 3
+        `);
+        result = await db.query(`
+            select id, orders_numbers
+            from companies
+            order by id
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, orders_numbers: "order 1, order 3"},
+            {id: 2, orders_numbers: "order 2, order 3"}
+        ], "after update last order");
+
+        result = await db.query(`
+            select *
+            from company_updates
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {company_id: 1, orders_numbers: "order 1"},
+            {company_id: 2, orders_numbers: "order 2"},
+            {company_id: 1, orders_numbers: "order 1, order 3"},
+            {company_id: 2, orders_numbers: "order 2, order 3"}
+        ], "after insert three orders");
+    });
+
 });
