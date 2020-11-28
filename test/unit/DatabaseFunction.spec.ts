@@ -284,4 +284,28 @@ describe("DatabaseFunction", () => {
         
     });
 
+    // soo, maybe need another way?
+    it("equal cost: 100 == null", () => {
+        const func1 = new DatabaseFunction({
+            schema: "public",
+            name: "my_func",
+            args: [],
+            returns: {type: "bigint"},
+            body: "body",
+            cost: 100 as any
+        });
+
+        const func2 = new DatabaseFunction({
+            schema: "public",
+            name: "my_func",
+            args: [],
+            returns: {type: "bigint"},
+            body: "body",
+            cost: null as any
+        });
+        
+        assert.ok( func1.equal(func2), "func1 == func2" );
+        assert.ok( func2.equal(func1), "func2 == func1" );
+    });
+
 })

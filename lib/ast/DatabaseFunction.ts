@@ -88,10 +88,6 @@ export class DatabaseFunction  {
 
             // null == undefined
             // tslint:disable-next-line: triple-equals
-            this.cost == otherFunc.cost &&
-
-            // null == undefined
-            // tslint:disable-next-line: triple-equals
             this.comment == otherFunc.comment
         );
     }
