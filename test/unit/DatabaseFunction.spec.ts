@@ -350,6 +350,19 @@ describe("DatabaseFunction", () => {
             {
                 argA: {
                     name: "name",
+                    type: "boolean",
+                    default: "false ::boolean"
+                },
+                argB: {
+                    name: "name",
+                    type: "boolean",
+                    default: " false "
+                }, 
+                equal: true
+            },
+            {
+                argA: {
+                    name: "name",
                     type: "smallint",
                     default: "0 :: smallint"
                 },
@@ -357,6 +370,19 @@ describe("DatabaseFunction", () => {
                     name: "name",
                     type: "smallint",
                     default: " 0 "
+                }, 
+                equal: true
+            },
+            {
+                argA: {
+                    name: "name",
+                    type: "text",
+                    default: "'both' :: text"
+                },
+                argB: {
+                    name: "name",
+                    type: "text",
+                    default: " 'both' "
                 }, 
                 equal: true
             }

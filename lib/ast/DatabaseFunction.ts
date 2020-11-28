@@ -249,20 +249,11 @@ function equalArgumentDefault(argA: IDatabaseFunctionArgument, argB: IDatabaseFu
 function formatDefault(someArg: IDatabaseFunctionArgument) {
     let someDefault = ("" + someArg.default).trim();
 
-    const emptyValues = [
-        "null",
-        "{}",
-        "'{}'",
-        "''",
-        "false",
-        "0"
-    ];
-    for (const emptyValue of emptyValues) {
-        if ( someDefault === emptyValue ) {
-            someDefault = emptyValue + "::" + formatType(someArg.type);
-        }
+    someDefault = someDefault.replace(/\s*::\s*/g, "::");
 
-        someDefault = someDefault.replace(/\s+::\s+/g, "::");
+    const type = formatType(someArg.type);
+    if ( !someDefault.endsWith("::" + type) ) {
+        someDefault += "::" + type;
     }
 
     if ( someDefault.startsWith("{}::") ) {
