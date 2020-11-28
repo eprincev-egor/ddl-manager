@@ -14,7 +14,8 @@ const commands = {
     help: require("./commands/help"),
     build: require("./commands/build"),
     watch: require("./commands/watch"),
-    dump: require("./commands/dump")
+    dump: require("./commands/dump"),
+    "refresh-cache": require("./commands/refresh-cache")
 };
 
 // $ ddl-manager build

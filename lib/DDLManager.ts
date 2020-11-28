@@ -27,6 +27,19 @@ export class DDLManager {
         return await ddlManager.build();
     }
 
+    static async refreshCache(params: {
+        db: IDBConfig | pg.Client;
+        folder: string | string[];
+        throwError?: boolean;
+    }) {
+        const ddlManager = new DDLManager({
+            db: params.db,
+            folder: params.folder,
+            throwError: params.throwError
+        });
+        return await ddlManager.refreshCache();
+    }
+
     static async watch(params: {
         db: IDBConfig,
         folder: string | string[]
@@ -86,7 +99,32 @@ export class DDLManager {
     }
 
     private async build() {
+        const {diff, postgres, fileState} = await this.compareDbAndFs();
 
+        const migrateErrors = await MainMigrator.migrate(postgres, diff);
+
+        this.onMigrate(
+            postgres,
+            diff,
+            migrateErrors
+        );
+        
+        return fileState;
+    }
+
+    private async refreshCache() {
+        const {diff, postgres} = await this.compareDbAndFs();
+
+        const migrateErrors = await MainMigrator.refreshCache(postgres, diff);
+        
+        this.onMigrate(
+            postgres,
+            diff,
+            migrateErrors
+        );
+    }
+
+    private async compareDbAndFs() {
         const filesStateInstance = FilesState.create({
             folder: this.folders,
             onError(err: Error) {
@@ -104,10 +142,14 @@ export class DDLManager {
         const dbState = await postgres.loadState();
 
         const diff = Comparator.compare(dbState, filesState);
+        return {diff, postgres, fileState: filesStateInstance};
+    }
 
-
-        const migrateErrors = await this.tryMigrate(diff);
-
+    private onMigrate(
+        postgres: IDatabaseDriver,
+        diff: Diff,
+        migrateErrors: Error[]
+    ) {
         if ( this.needCloseConnect ) {
             postgres.end();
         }
@@ -121,8 +163,6 @@ export class DDLManager {
         else if ( this.needThrowError ) {
             throw migrateErrors[0];
         }
-        
-        return filesStateInstance;
     }
 
     private async watch() {
@@ -319,12 +359,6 @@ export class DDLManager {
             const err = outputErrors[0];
             throw new Error(err.message);
         }
-    }
-
-    private async tryMigrate(diff: Diff) {
-        const postgres = await this.postgres();
-        const outputErrors = await MainMigrator.migrate(postgres, diff);
-        return outputErrors;
     }
 
     private async postgres(): Promise<IDatabaseDriver> {

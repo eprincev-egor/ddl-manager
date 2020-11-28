@@ -26,6 +26,10 @@ const commands_help = {
     dump:  {     
         description: " write functions and triggers from database into folder",
         options: ["config", "database", "user", "password", "port", "host", "folder", "unfreeze", "help"]
+    },
+    "refresh-cache":  {     
+        description: " update all cache columns to actual values",
+        options: ["config", "database", "user", "password", "port", "host", "folder", "help"]
     }
 };
 
@@ -37,7 +41,7 @@ module.exports = function(args, commandName) {
 
     console.log(" commands:");
 
-    let commandsOrder = ["build", "watch", "dump"];
+    let commandsOrder = ["build", "watch", "dump", "refresh-cache"];
     if ( commandName ) {
         commandsOrder = [commandName];
     }
@@ -64,9 +68,10 @@ module.exports = function(args, commandName) {
     if ( !commandName ) {
         console.log(`
     example:  
-        $ ddl-manager build --config=ddl-manager-config.js  
-        $ ddl-manager watch --config=ddl-manager-config.js  
-        $ ddl-manager dump  --config=ddl-manager-config.js  --unfreeze=true  
+        $ ddl-manager build          --config=ddl-manager-config.js  
+        $ ddl-manager watch          --config=ddl-manager-config.js  
+        $ ddl-manager dump           --config=ddl-manager-config.js  --unfreeze=true  
+        $ ddl-manager refresh-cache  --config=ddl-manager-config.js
         `);
     }
 };

@@ -17,13 +17,18 @@ export class MainMigrator {
         const migrator = new MainMigrator(postgres, diff);
         return await migrator.migrateWithoutUpdateCacheColumns();
     }
+
+    static async refreshCache(postgres: IDatabaseDriver, diff: Diff) {
+        const migrator = new MainMigrator(postgres, diff);
+        return await migrator.refreshCache();
+    }
     
     private constructor(postgres: IDatabaseDriver, diff: Diff) {
         this.postgres = postgres;
         this.diff = diff;
     }
 
-    async migrate() {
+    private async migrate() {
         const {
             functions,
             triggers,
@@ -42,7 +47,7 @@ export class MainMigrator {
         return outputErrors;
     }
 
-    async migrateWithoutUpdateCacheColumns() {
+    private async migrateWithoutUpdateCacheColumns() {
         const {
             functions,
             triggers,
@@ -57,6 +62,18 @@ export class MainMigrator {
         await functions.create();
         await triggers.create();
         await cache.createWithoutUpdateCacheColumns();
+
+        return outputErrors;
+    }
+
+    private async refreshCache() {
+        const {
+            cache,
+            outputErrors
+        } = await this.createMigrators();
+
+        await cache.drop();
+        await cache.create();
 
         return outputErrors;
     }
