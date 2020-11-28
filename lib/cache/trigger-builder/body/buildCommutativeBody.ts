@@ -101,30 +101,7 @@ function buildUpdateCaseBody(
         }),
         new BlankLine(),
 
-        // TODO: refactor sub ternary
-        ...(
-            (
-                !deltaCase ||
-                deltaCase.needUpdate && 
-                deltaCase.needUpdate.isEmpty()
-            ) ? [
-                new BlankLine()
-            ] : (
-                deltaCase.needUpdate ?
-                    [new If({
-                        if: deltaCase.needUpdate,
-                        then: [
-                            deltaCase.update,
-                            new BlankLine(),
-                            new HardCode({sql: "return new;"})
-                        ]
-                    })] : [
-                        deltaCase.update,
-                        new BlankLine(),
-                        new HardCode({sql: "return new;"})
-                    ]
-            )
-        ),
+        ...buildDeltaUpdate(deltaCase),
         
         new BlankLine(),
 
@@ -142,4 +119,31 @@ function buildUpdateCaseBody(
         new BlankLine(),
         new HardCode({sql: "return new;"})
     ];
+}
+
+function buildDeltaUpdate(deltaCase?: IDeltaCase) {
+    if ( !deltaCase ) {
+        return [new BlankLine()];
+    }
+    if ( deltaCase.needUpdate && deltaCase.needUpdate.isEmpty() ) {
+        return [new BlankLine()];
+    }
+
+    if ( deltaCase.needUpdate ) {
+        return [new If({
+            if: deltaCase.needUpdate,
+            then: [
+                deltaCase.update,
+                new BlankLine(),
+                new HardCode({sql: "return new;"})
+            ]
+        })];
+    }
+    else {
+        return [
+            deltaCase.update,
+            new BlankLine(),
+            new HardCode({sql: "return new;"})
+        ]
+    }
 }
