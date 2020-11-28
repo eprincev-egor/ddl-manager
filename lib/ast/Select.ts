@@ -89,7 +89,7 @@ export class Select extends AbstractAstElement {
             ]: []),
 
             ...(this.intoRow ? [
-                spaces + `into ${ this.intoRow }`
+                spaces + `into ${ this.intoRow };`
             ]: [])
         ];
     }

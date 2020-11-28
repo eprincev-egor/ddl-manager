@@ -24,7 +24,7 @@
   + do not drop cache columns if same columns exists in db
   + need REAL load schema
   - universal agg
-  - cache like are
+  + cache like are
     cache totals for companies (
       select companies.id * 2
     )

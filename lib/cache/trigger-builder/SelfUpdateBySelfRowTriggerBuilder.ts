@@ -1,32 +1,34 @@
-import {
-    TableReference,
-    Expression
-} from "../../ast";
-import { DatabaseTrigger } from "../../ast";
+import { DatabaseTrigger, TableReference } from "../../ast";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
-import { buildCacheTableBody } from "./body/buildCacheTableBody";
+import { buildSelfUpdateBySelfRowBody } from "./body/buildSelfUpdateBySelfRowBody";
 
-export class CacheTableTriggerBuilder extends AbstractTriggerBuilder {
+export class SelfUpdateBySelfRowTriggerBuilder extends AbstractTriggerBuilder {
 
     createBody() {
-        let hasReference = this.conditionBuilder.getHasNoReference("new") as Expression;
-        hasReference = hasReference.replaceTable(
+        return buildSelfUpdateBySelfRowBody(
             this.context.cache.for,
-            new TableReference(
-                this.context.triggerTable,
-                "new"
-            )
+            this.conditionBuilder.getNoChanges(),
+            this.buildSelectValues()
+        );
+    }
+
+    private buildSelectValues() {
+        const {cache} = this.context;
+        const newRow = new TableReference(
+            cache.for.table,
+            "new"
         );
 
-        // TODO: update also helper columns
+        const columns = cache.select.columns.map(column => {
+            const newExpression = column.expression.replaceTable(cache.for, newRow);
+            const newColumn = column.replaceExpression(newExpression);
+            return newColumn;
+        });
 
-        return buildCacheTableBody(
-            this.context.cache.for,
-            this.conditionBuilder.getNoReferenceChanges(),
-            hasReference,
-            this.context.cache.select.columns.map(col => col.name),
-            this.context.cache.select.toString()
-        );
+        const selectValues = cache.select.cloneWith({
+            columns
+        })
+        return selectValues;
     }
 
 

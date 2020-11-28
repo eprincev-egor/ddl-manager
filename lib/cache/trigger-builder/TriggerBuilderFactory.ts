@@ -10,7 +10,8 @@ import { UniversalTriggerBuilder } from "./UniversalTriggerBuilder";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
 import { JoinedCommutativeTriggerBuilder } from "./JoinedCommutativeTriggerBuilder";
 import { CacheContext } from "./CacheContext";
-import { CacheTableTriggerBuilder } from "./CacheTableTriggerBuilder";
+import { SelfUpdateByOtherTablesTriggerBuilder } from "./SelfUpdateByOtherTablesTriggerBuilder";
+import { SelfUpdateBySelfRowTriggerBuilder } from "./SelfUpdateBySelfRowTriggerBuilder";
 
 export class TriggerBuilderFactory {
     private readonly cache: Cache;
@@ -58,8 +59,13 @@ export class TriggerBuilderFactory {
             )
         );
 
-        if ( isTriggerForSelfUpdate) {
-            return CacheTableTriggerBuilder;
+        if ( isTriggerForSelfUpdate ) {
+            if ( context.cache.select.from.length > 0 ) {
+                return SelfUpdateByOtherTablesTriggerBuilder;
+            }
+            else {
+                return SelfUpdateBySelfRowTriggerBuilder;
+            }
         }
 
         const from = buildFrom(context);

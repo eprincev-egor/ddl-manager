@@ -9,7 +9,7 @@ import {
     Expression
 } from "../../../ast";
 
-export function buildCacheTableBody(
+export function buildSelfUpdateByOtherTablesBody(
     updateTable: TableReference,
     noReferenceChanges: Expression,
     hasReference: Expression,
