@@ -255,6 +255,71 @@ describe("DatabaseFunction", () => {
                     default: "null :: timestamp without time zone "
                 }, 
                 equal: true
+            },
+            {
+                argA: {
+                    name: "name",
+                    type: "text",
+                    default: "'' :: text"
+                },
+                argB: {
+                    name: "name",
+                    type: "text",
+                    default: " '' "
+                }, 
+                equal: true
+            },
+            {
+                argA: {
+                    name: "name",
+                    type: "jsonb",
+                    default: "{} :: jsonb"
+                },
+                argB: {
+                    name: "name",
+                    type: "jsonb",
+                    default: " {} "
+                }, 
+                equal: true
+            },
+            {
+                argA: {
+                    name: "name",
+                    type: "boolean",
+                    default: "false :: boolean"
+                },
+                argB: {
+                    name: "name",
+                    type: "boolean",
+                    default: " false "
+                }, 
+                equal: true
+            },
+            {
+                argA: {
+                    name: "name",
+                    type: "boolean",
+                    default: "false :: boolean"
+                },
+                argB: {
+                    name: "name",
+                    type: "boolean",
+                    default: " false "
+                }, 
+                equal: true
+            },
+            {
+                argA: {
+                    name: "name",
+                    type: "smallint",
+                    default: "0 :: smallint"
+                },
+                argB: {
+                    name: "name",
+                    type: "smallint",
+                    default: " 0 "
+                }, 
+                equal: true
             }
         ];
 

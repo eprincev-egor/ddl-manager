@@ -241,20 +241,30 @@ function equalArgumentDefault(argA: IDatabaseFunctionArgument, argB: IDatabaseFu
         return true;
     }
 
-    let defaultA = ("" + argA.default).trim();
-    let defaultB = ("" + argB.default).trim();
-
-    if ( defaultA === "null" ) {
-        defaultA = "null::" + formatType(argA.type);
-    }
-    defaultA = defaultA.replace(/^null\s*::\s*/i, "null::");
-
-    if ( defaultB === "null" ) {
-        defaultB = "null::" + formatType(argB.type);
-    }
-    defaultB = defaultB.replace(/^null\s*::\s*/i, "null::");
-
+    const defaultA = formatDefault(argA);
+    const defaultB = formatDefault(argB);
     return defaultA === defaultB;
+}
+
+function formatDefault(someArg: IDatabaseFunctionArgument) {
+    let someDefault = ("" + someArg.default).trim();
+
+    const emptyValues = [
+        "null",
+        "{}",
+        "''",
+        "false",
+        "0"
+    ];
+    for (const emptyValue of emptyValues) {
+        if ( someDefault === emptyValue ) {
+            someDefault = emptyValue + "::" + formatType(someArg.type);
+        }
+
+        someDefault = someDefault.replace(/\s+::\s+/g, "::");
+    }
+    
+    return someDefault;
 }
 
 function formatType(someType?: string) {
