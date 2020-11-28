@@ -5,6 +5,7 @@ import { getDBClient } from "../../getDbClient";
 import { DDLManager } from "../../../../lib/DDLManager";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import { PostgresDriver } from "../../../../lib/database/PostgresDriver";
 
 use(chaiShallowDeepEqualPlugin);
 
@@ -462,6 +463,63 @@ describe("integration/DDLManager.build triggers", () => {
         expect(result.rows[0]).to.be.shallowDeepEqual({
             id: 1,
             name: "not frozen"
+        });
+    });
+
+    it("change trigger and frozen status on build", async() => {
+        // create frozen function
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                name text
+            );
+
+            create or replace function my_super_frozen_func()
+            returns trigger as $body$
+            begin
+                new.name = 'frozen';
+                return new;
+            end
+            $body$
+            language plpgsql;
+
+            create trigger my_trigger
+            before insert
+            on companies
+            for each row
+            execute procedure my_super_frozen_func();
+        `);
+
+        fs.writeFileSync(ROOT_TMP_PATH + "/func1.sql", `
+            create or replace function my_super_frozen_func()
+            returns trigger as $body$
+            begin
+                new.name = 'frozen';
+                return new;
+            end
+            $body$
+            language plpgsql;
+
+
+            create trigger my_trigger
+            before insert
+            on companies
+            for each row
+            execute procedure my_super_frozen_func();
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: false
+        });
+
+        const postgres = new PostgresDriver(db);
+        const state = await postgres.loadState();
+
+        expect(state.triggers[0]).to.be.shallowDeepEqual({
+            name: "my_trigger",
+            frozen: false
         });
     });
 

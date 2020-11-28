@@ -190,18 +190,7 @@ implements IDatabaseDriver {
     }
 
     async createOrReplaceTrigger(trigger: DatabaseTrigger) {
-        let ddlSql = "";
-        
-        // check frozen object
-        const checkFrozenSql = getCheckFrozenTriggerSql( 
-            trigger,
-            `cannot replace frozen trigger ${ trigger.getSignature() }`
-        );
-        ddlSql = checkFrozenSql;
-
-
-        ddlSql += ";";
-        ddlSql += `drop trigger if exists ${ trigger.getSignature() }`;
+        let ddlSql = `drop trigger if exists ${ trigger.getSignature() }`;
         
         ddlSql += ";";
         ddlSql += trigger.toSQL();
