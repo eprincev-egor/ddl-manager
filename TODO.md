@@ -1,5 +1,6 @@
 + cache name should be unique for table
 - cancel update rows from prev run (Migrator)
+- new command: update cache rows
 + fix long names > 64
     + fix signature (for detect changes)
     + fix object.toSQL 
@@ -24,3 +25,9 @@
 + Migrator: need REAL load schema
 + other helper functions
 - fix renaming file or directory
+- universal agg
+- cache like are
+  cache totals for companies (
+    select companies.id * 2
+  )
+- find and fix any TODO:
