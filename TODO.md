@@ -46,3 +46,5 @@
 
 - fix renaming file or directory
 - find and fix any TODO:
++ log building cache
+- when need drop function while trigger is frozen, but function not

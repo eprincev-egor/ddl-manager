@@ -1,6 +1,7 @@
 import { DatabaseFunction, DatabaseTrigger, Cache } from "./ast";
 import { IState } from "./interface";
 
+// tslint:disable: no-console
 export class Diff {
     readonly drop: IState;
     readonly create: IState;
@@ -95,28 +96,29 @@ export class Diff {
     }
 
     log() {
-        this.drop.triggers.forEach((trigger: any) => {
-            const triggerIdentifySql = trigger.getSignature();
-            // tslint:disable-next-line: no-console
-            console.log("drop trigger " + triggerIdentifySql);
+        this.drop.triggers.forEach((trigger) => {
+            console.log("drop trigger " + trigger.getSignature());
         });
     
-        this.drop.functions.forEach((func: any) => {
-            const funcIdentifySql = func.getSignature();
-            // tslint:disable-next-line: no-console
-            console.log("drop function " + funcIdentifySql);
+        this.drop.functions.forEach((func) => {
+            console.log("drop function " + func.getSignature());
+        });
+
+        this.drop.cache.forEach((cache) => {
+            console.log("drop " + cache.getSignature());
         });
         
-        this.create.functions.forEach((func: any) => {
-            const funcIdentifySql = func.getSignature();
-            // tslint:disable-next-line: no-console
-            console.log("create function " + funcIdentifySql);
+
+        this.create.functions.forEach((func) => {
+            console.log("create function " + func.getSignature());
         });
     
-        this.create.triggers.forEach((trigger: any) => {
-            const triggerIdentifySql = trigger.getSignature();
-            // tslint:disable-next-line: no-console
-            console.log("create trigger " + triggerIdentifySql);
+        this.create.triggers.forEach((trigger) => {
+            console.log("create trigger " + trigger.getSignature());
+        });
+
+        this.create.cache.forEach((cache) => {
+            console.log("create " + cache.getSignature());
         });
     }
     
