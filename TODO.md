@@ -31,5 +31,15 @@
       ! before insert/update => need listen more fields in other caches
       => use after
 + other helper functions
+- don't create cache triggers for some tables
+    cache totals for companies (
+      select
+        string_agg(distinct order_type.name) as orders_types_names
+      from orders
+      left join order_type on
+        order_type.id = orders.id_order_type
+    )
+    without triggers on order_type
+
 - fix renaming file or directory
 - find and fix any TODO:
