@@ -1,4 +1,6 @@
+import { AbstractAstElement } from "./AbstractAstElement";
 import { Expression } from "./expression/Expression";
+import { Spaces } from "./Spaces";
 
 // TODO: load from db
 const aggFuncsNames = [
@@ -15,11 +17,12 @@ interface ISelectColumnParams {
     expression: Expression;
 }
 
-export class SelectColumn {
+export class SelectColumn extends AbstractAstElement {
     readonly name!: string;
     readonly expression!: Expression;
 
     constructor(params: ISelectColumnParams) {
+        super();
         Object.assign(this, params);
     }
 
@@ -37,8 +40,8 @@ export class SelectColumn {
         });
     }
 
-    toString() {
-        return `${this.expression} as ${this.name}`;
+    template(spaces: Spaces) {
+        return [`${this.expression.toSQL(spaces.plusOneLevel() )} as ${this.name}`];
     }
 
     getAggregations() {

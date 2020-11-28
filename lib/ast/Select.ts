@@ -1,24 +1,29 @@
+import { AbstractAstElement } from "./AbstractAstElement";
 import { ColumnReference } from "./expression/ColumnReference";
 import { Expression } from "./expression/Expression";
 import { From } from "./From";
 import { SelectColumn } from "./SelectColumn";
-import { Table } from "./Table";
+import { Spaces } from "./Spaces";
 import { TableReference, IReferenceFilter } from "./TableReference";
 
 interface ISelectParams {
     columns: SelectColumn[];
     where?: Expression;
     from: From[];
+    intoRow?: string;
 }
 
-export class Select {
+export class Select extends AbstractAstElement {
     readonly columns!: SelectColumn[];
     readonly where?: Expression;
     readonly from!: From[];
+    readonly intoRow?: string;
+
     constructor(params: ISelectParams = {
         columns: [], 
         from: []
     }) {
+        super();
         Object.assign(this, params);
     }
 
@@ -66,18 +71,27 @@ export class Select {
         return outputTableRef;
     }
 
-    toString() {
-        let sql = "select\n";
+    template(spaces: Spaces) {
+        return [
+            spaces + "select",
 
-        sql += this.columns.map(col => "    " + col).join(",\n");
-        
-        sql += "\nfrom " + this.from.join(", ");
+            this.columns.map(column =>
+                column.toSQL( spaces )
+            ).join(",\n"),
 
-        if ( this.where ) {
-            sql += "\nwhere\n    " + this.where.toString();
-        }
+            ...(this.from.length ? [
+                spaces + "from " + this.from.join(", "),
+            ]: []),
 
-        return sql;
+            ...(this.where ? [
+                spaces + "where",
+                this.where.toSQL( spaces.plusOneLevel() )
+            ]: []),
+
+            ...(this.intoRow ? [
+                spaces + `into ${ this.intoRow }`
+            ]: [])
+        ];
     }
 
     getAllColumnReferences() {
