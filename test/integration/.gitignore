@@ -1,0 +1,8 @@
+tmp/*
+tmp/**/*
+FilesState/tmp/*
+FilesState/tmp/**/*
+DDLManager/tmp/*
+DDLManager/tmp/**/*
+DDLManager/Build/tmp/*
+DDLManager/Build/tmp/**/*
