@@ -285,6 +285,45 @@ describe("DatabaseFunction", () => {
             {
                 argA: {
                     name: "name",
+                    type: "jsonb",
+                    default: "'{}' :: jsonb"
+                },
+                argB: {
+                    name: "name",
+                    type: "jsonb",
+                    default: " '{}' "
+                }, 
+                equal: true
+            },
+            {
+                argA: {
+                    name: "name",
+                    type: "jsonb",
+                    default: "{} :: jsonb"
+                },
+                argB: {
+                    name: "name",
+                    type: "jsonb",
+                    default: " '{}' "
+                }, 
+                equal: true
+            },
+            {
+                argA: {
+                    name: "name",
+                    type: "jsonb",
+                    default: "'{}'"
+                },
+                argB: {
+                    name: "name",
+                    type: "jsonb",
+                    default: " {} "
+                }, 
+                equal: true
+            },
+            {
+                argA: {
+                    name: "name",
                     type: "boolean",
                     default: "false :: boolean"
                 },

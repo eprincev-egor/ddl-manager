@@ -252,6 +252,7 @@ function formatDefault(someArg: IDatabaseFunctionArgument) {
     const emptyValues = [
         "null",
         "{}",
+        "'{}'",
         "''",
         "false",
         "0"
@@ -262,6 +263,10 @@ function formatDefault(someArg: IDatabaseFunctionArgument) {
         }
 
         someDefault = someDefault.replace(/\s+::\s+/g, "::");
+    }
+
+    if ( someDefault.startsWith("{}::") ) {
+        someDefault = someDefault.replace("{}::", "'{}'::");
     }
     
     return someDefault;
