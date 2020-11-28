@@ -14,6 +14,7 @@ export interface IDatabaseFunctionParams {
     strict?: boolean;
     parallel?: ("safe" | "unsafe" | "restricted")[];
     cost?: number;
+    frozen?: boolean;
     comment?: string;
 }
 
@@ -54,9 +55,45 @@ export class DatabaseFunction  {
         this.language = json.language || "plpgsql";
 
         if ( this.name.length > MAX_NAME_LENGTH ) {
+            // tslint:disable-next-line: no-console
             console.error(`name "${this.name}" too long (> 64 symbols)`);
         }
         this.name = this.name.slice(0, MAX_NAME_LENGTH);
+    }
+
+    equal(otherFunc: DatabaseFunction) {
+        return (
+            this.schema === otherFunc.schema &&
+            this.name === otherFunc.name &&
+            this.body === otherFunc.body &&
+
+            this.args.length === otherFunc.args.length &&
+            this.args.every((myArg, i) =>
+                equalArgument(myArg, otherFunc.args[i])
+            )
+            &&
+            equalReturns(this.returns, otherFunc.returns) &&
+
+            this.language === otherFunc.language &&
+            !!this.immutable === !!otherFunc.immutable &&
+            !!this.returnsNullOnNull === !!otherFunc.returnsNullOnNull &&
+            !!this.stable === !!otherFunc.stable &&
+            !!this.strict === !!otherFunc.strict &&
+
+            !!this.frozen === !!otherFunc.frozen &&
+
+            // null == undefined
+            // tslint:disable-next-line: triple-equals
+            this.parallel == otherFunc.parallel &&
+
+            // null == undefined
+            // tslint:disable-next-line: triple-equals
+            this.cost == otherFunc.cost &&
+
+            // null == undefined
+            // tslint:disable-next-line: triple-equals
+            this.comment == otherFunc.comment
+        );
     }
 
     getSignature() {
@@ -183,4 +220,39 @@ function arg2sql(arg: IDatabaseFunctionArgument) {
     }
 
     return out;
+}
+
+function equalArgument(argA: IDatabaseFunctionArgument, argB: IDatabaseFunctionArgument) {
+    return (
+        // null == undefined
+        // tslint:disable-next-line: triple-equals
+        argA.name == argB.name &&
+        // null == undefined
+        // tslint:disable-next-line: triple-equals
+        argA.default == argB.default &&
+        // null == undefined
+        // tslint:disable-next-line: triple-equals
+        argA.default == argB.default &&
+        !!argA.in === !!argB.in &&
+        !!argA.out === !!argB.out
+    );
+}
+
+function equalReturns(returnsA: IDatabaseFunctionReturns, returnsB: IDatabaseFunctionReturns) {
+    return (
+        // null == undefined
+        // tslint:disable-next-line: triple-equals
+        returnsA.type == returnsB.type &&
+        !!returnsA.setof === !!returnsB.setof &&
+        (
+            returnsA.table && returnsB.table &&
+            returnsA.table.every((argA, i) =>
+                equalArgument(argA, (returnsB.table as any)[i])
+            )
+            ||
+            // null == undefined
+            // tslint:disable-next-line: triple-equals
+            returnsA.table == returnsB.table
+        )
+    );
 }

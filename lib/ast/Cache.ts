@@ -19,6 +19,15 @@ export class Cache {
         this.withoutTriggers = withoutTriggers;
     }
 
+    equal(otherCache: Cache) {
+        return (
+            this.name === otherCache.name &&
+            this.for.equal(otherCache.for) &&
+            this.select.toString() === otherCache.select.toString() &&
+            this.withoutTriggers.join(",") === otherCache.withoutTriggers.join(",")
+        );
+    }
+
     getSignature() {
         return `cache ${this.name} for ${this.for}`;
     }

@@ -2,7 +2,6 @@ import assert from "assert";
 import { isObject, isArray } from "lodash";
 import { Diff } from "./Diff";
 import { IState } from "./interface";
-import { isEqual } from "lodash";
 
 export class Comparator {
 
@@ -46,7 +45,7 @@ export class Comparator {
             }
 
             const existsSameFuncFromFile = this.filesState.functions.some(fileFunc =>
-                isEqual(fileFunc, func)
+                fileFunc.equal(func)
             );
 
             if ( existsSameFuncFromFile ) {
@@ -66,7 +65,7 @@ export class Comparator {
                     }
                     
                     const existsSameTriggerFromFile = this.filesState.triggers.some(fileTrigger =>
-                        isEqual(fileTrigger, dbTrigger)
+                        fileTrigger.equal(dbTrigger)
                     );
 
                     // if trigger has change, then he will dropped
@@ -97,7 +96,7 @@ export class Comparator {
         const triggersToDrop = triggersCreatedFromDDLManager.filter(trigger => {
 
             const existsSameTriggerFromFile = this.filesState.triggers.some(fileTrigger =>
-                isEqual(fileTrigger, trigger)
+                fileTrigger.equal(trigger)
             );
             return !existsSameTriggerFromFile;
         });
@@ -107,12 +106,11 @@ export class Comparator {
 
     private dropCache() {
         for (const cache of this.dbState.cache) {
-            const sameCacheFromFile = this.filesState.cache.find(fileCache =>
-                fileCache.name === cache.name &&
-                fileCache.for.equal(cache.for)
+            const existsSameCacheFromFile = this.filesState.cache.some(fileCache =>
+                fileCache.equal(cache)
             );
 
-            if ( !isEqual(cache, sameCacheFromFile) ) {
+            if ( !existsSameCacheFromFile ) {
                 this.diff.dropCache(cache);
             }
         }
@@ -122,7 +120,7 @@ export class Comparator {
         for (const func of this.filesState.functions) {
 
             const existsSameFuncFromDb = this.dbState.functions.find(dbFunc =>
-                isEqual(dbFunc, func)
+                dbFunc.equal(func)
             );
 
             if ( existsSameFuncFromDb ) {
@@ -137,7 +135,7 @@ export class Comparator {
         for (const trigger of this.filesState.triggers) {
             
             const existsSameTriggerFromDb = this.dbState.triggers.some(dbTrigger =>
-                isEqual(dbTrigger, trigger)
+                dbTrigger.equal(trigger)
             );
 
             if ( existsSameTriggerFromDb ) {
@@ -150,12 +148,11 @@ export class Comparator {
 
     private createCache() {
         for (const cache of this.filesState.cache) {
-            const sameCacheFromDB = this.dbState.cache.find(dbCache =>
-                dbCache.name === cache.name &&
-                dbCache.for.equal(cache.for)
+            const existsSameCacheFromDB = this.dbState.cache.some(dbCache =>
+                dbCache.equal(cache)
             );
 
-            if ( !isEqual(cache, sameCacheFromDB) ) {
+            if ( !existsSameCacheFromDB ) {
                 this.diff.createCache(cache);
             }
         }

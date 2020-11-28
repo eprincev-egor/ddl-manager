@@ -28,6 +28,7 @@ export interface IDatabaseTriggerParams {
     initially?: "immediate" | "deferred";
 
     comment?: string;
+    frozen?: boolean;
 }
 
 export class DatabaseTrigger {
@@ -62,9 +63,51 @@ export class DatabaseTrigger {
     constructor(json: IDatabaseTriggerParams) {
         Object.assign(this, json);
         if ( this.name.length > MAX_NAME_LENGTH ) {
+            // tslint:disable-next-line: no-console
             console.error(`name "${this.name}" too long (> 64 symbols)`);
         }
         this.name = this.name.slice(0, MAX_NAME_LENGTH);
+    }
+
+    equal(otherTrigger: DatabaseTrigger) {
+        return (
+            this.name === otherTrigger.name &&
+            this.table.schema === otherTrigger.table.schema &&
+            this.table.name === otherTrigger.table.name &&
+            this.procedure.schema === otherTrigger.procedure.schema &&
+            this.procedure.name === otherTrigger.procedure.name &&
+            this.procedure.args.join(",") === otherTrigger.procedure.args.join(",") &&
+            !!this.before === !!otherTrigger.before &&
+            !!this.after === !!otherTrigger.after &&
+            !!this.insert === !!otherTrigger.insert &&
+            !!this.delete === !!otherTrigger.delete &&
+            !!this.update === !!otherTrigger.update &&
+            (
+                this.updateOf && otherTrigger.updateOf &&
+                this.updateOf.join(",") === otherTrigger.updateOf.join(",")
+                ||
+                // null == undefined
+                // tslint:disable-next-line: triple-equals
+                this.updateOf == otherTrigger.updateOf
+            ) &&
+            // null == undefined
+            // tslint:disable-next-line: triple-equals
+            this.comment == otherTrigger.comment &&
+            // null == undefined
+            // tslint:disable-next-line: triple-equals
+            this.when == otherTrigger.when &&
+            // null == undefined == false
+            !!this.frozen === !!otherTrigger.frozen
+            &&
+            !!this.constraint === !!otherTrigger.constraint &&
+            !!this.deferrable === !!otherTrigger.deferrable &&
+            !!this.notDeferrable === !!otherTrigger.notDeferrable &&
+            !!this.statement === !!otherTrigger.statement &&
+            // null == undefined
+            // tslint:disable-next-line: triple-equals
+            this.initially == otherTrigger.initially
+        
+        );
     }
 
     getSignature() {
