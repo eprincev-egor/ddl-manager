@@ -1,5 +1,5 @@
 + cache name should be unique for table
-- cancel update rows from prev run (Migrator)
++ cancel update rows from prev run (Migrator)
 - new command: update cache rows
 + fix long names > 64
     + fix signature (for detect changes)

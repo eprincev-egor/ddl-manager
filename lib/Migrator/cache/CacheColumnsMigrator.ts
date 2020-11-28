@@ -26,6 +26,14 @@ export class CacheColumnsMigrator extends AbstractMigrator {
         );
     }
 
+    async createWithoutUpdateCacheColumns() {
+        const sortedSelectsForEveryColumn = this.sortSelectsByDependencies();
+        
+        await this.createAllColumns(
+            sortedSelectsForEveryColumn
+        );
+    }
+
     async dropOnlyTrashColumns() {
         const allCacheColumns = flatMap(this.diff.drop.cache, cache => {
             const selectToUpdate = this.createSelectForUpdate(cache);

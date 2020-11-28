@@ -140,7 +140,7 @@ export class DDLManager {
     private async onChangeFS(diff: Diff) {
 
         try {
-            await this.migrateAndThrowFirstError(diff);
+            await this.migrateWithoutUpdateCacheColumns(diff);
 
             diff.log();
         } catch(err) {
@@ -165,7 +165,7 @@ export class DDLManager {
                     .createState(diff.create);
 
                 try {
-                    await this.migrateAndThrowFirstError(createDiff);
+                    await this.migrateWithoutUpdateCacheColumns(createDiff);
     
                     diff.log();
                 } catch(err) {
@@ -309,9 +309,11 @@ export class DDLManager {
         }
     }
 
-    private async migrateAndThrowFirstError(diff: Diff) {
+    private async migrateWithoutUpdateCacheColumns(diff: Diff) {
         const postgres = await this.postgres();
-        const outputErrors = await MainMigrator.migrate(postgres, diff);
+        const outputErrors = await MainMigrator.migrateWithoutUpdateCacheColumns(
+            postgres, diff
+        );
 
         if ( outputErrors.length ) {
             const err = outputErrors[0];

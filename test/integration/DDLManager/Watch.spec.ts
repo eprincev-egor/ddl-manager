@@ -325,7 +325,7 @@ describe("integration/DDLManager.watch", () => {
         });
     });
 
-    it("build from many folders", async() => {
+    it("watch from many folders", async() => {
 
         const folderPath1 = ROOT_TMP_PATH + "/many-folder-1";
         fs.mkdirSync(folderPath1);
@@ -401,6 +401,54 @@ describe("integration/DDLManager.watch", () => {
             func1: "changed func1",
             func2: "changed func2"
         });
+    });
+
+    it("don't update cache columns in watcher mode (cpu high load)", async() => {
+        const folderPath = ROOT_TMP_PATH + "/watch-cache";
+    
+        
+        await db.query(`
+            create table companies (
+                id serial primary key
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer
+            );
+            insert into companies default values;
+            insert into companies default values;
+
+            insert into orders (id_client) values (1);
+            insert into orders (id_client) values (1);
+        `);
+
+        fs.mkdirSync(folderPath);
+
+        await DDLManager.watch({
+            db, 
+            folder: folderPath
+        });
+
+        fs.writeFileSync(folderPath + "/watch_cache.sql", `
+            cache totals for companies (
+                select count(*) as orders_count
+                from orders
+                where orders.id_client = companies.id
+            )
+        `);
+        await sleep(100);
+
+
+        const result = await db.query(`
+            select id, orders_count 
+            from companies 
+            order by id
+        `);
+
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, orders_count: "0"},
+            {id: 2, orders_count: "0"}
+        ]);
     });
 
 });
