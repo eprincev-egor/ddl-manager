@@ -22,12 +22,14 @@
         need change only triggers
   + do not drop cache columns if no changes
   + do not drop cache columns if same columns exists in db
-+ Migrator: need REAL load schema
+  + need REAL load schema
+  - universal agg
+  - cache like are
+    cache totals for companies (
+      select companies.id * 2
+    )
+      ! before insert/update => need listen more fields in other caches
+      => use after
 + other helper functions
 - fix renaming file or directory
-- universal agg
-- cache like are
-  cache totals for companies (
-    select companies.id * 2
-  )
 - find and fix any TODO:
