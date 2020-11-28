@@ -106,7 +106,7 @@ export class DDLManager {
         const diff = Comparator.compare(dbState, filesState);
 
 
-        const migrateErrors = await this.migrate(diff, false);
+        const migrateErrors = await this.tryMigrate(diff);
 
         if ( this.needCloseConnect ) {
             postgres.end();
@@ -140,7 +140,7 @@ export class DDLManager {
     private async onChangeFS(diff: Diff) {
 
         try {
-            await this.migrate(diff, true);
+            await this.migrateAndThrowFirstError(diff);
 
             diff.log();
         } catch(err) {
@@ -165,7 +165,7 @@ export class DDLManager {
                     .createState(diff.create);
 
                 try {
-                    await this.migrate(createDiff, true);
+                    await this.migrateAndThrowFirstError(createDiff);
     
                     diff.log();
                 } catch(err) {
@@ -309,17 +309,19 @@ export class DDLManager {
         }
     }
 
-    private async migrate(diff: Diff, needThrowError = this.needCloseConnect) {
+    private async migrateAndThrowFirstError(diff: Diff) {
         const postgres = await this.postgres();
         const outputErrors = await MainMigrator.migrate(postgres, diff);
 
-        if ( needThrowError !== false ) {
-            if ( outputErrors.length ) {
-                const err = outputErrors[0];
-                throw new Error(err.message);
-            }
+        if ( outputErrors.length ) {
+            const err = outputErrors[0];
+            throw new Error(err.message);
         }
+    }
 
+    private async tryMigrate(diff: Diff) {
+        const postgres = await this.postgres();
+        const outputErrors = await MainMigrator.migrate(postgres, diff);
         return outputErrors;
     }
 
