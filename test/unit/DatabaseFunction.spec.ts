@@ -308,4 +308,33 @@ describe("DatabaseFunction", () => {
         assert.ok( func2.equal(func1), "func2 == func1" );
     });
 
+    it("equal arg type: numeric(14, 2) == numeric", () => {
+        const func1 = new DatabaseFunction({
+            schema: "public",
+            name: "my_func",
+            args: [{
+                name: "test",
+                type: "numeric(14,2)"
+            }],
+            returns: {type: "numeric(14,2)"},
+            body: "body",
+            frozen: null as any
+        });
+
+        const func2 = new DatabaseFunction({
+            schema: "public",
+            name: "my_func",
+            args: [{
+                name: "test",
+                type: "numeric"
+            }],
+            returns: {type: "numeric"},
+            body: "body",
+            frozen: false
+        });
+        
+        assert.ok( func1.equal(func2), "func1 == func2" );
+        assert.ok( func2.equal(func1), "func2 == func1" );
+    });
+
 })

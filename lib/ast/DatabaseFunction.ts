@@ -223,9 +223,7 @@ function equalArgument(argA: IDatabaseFunctionArgument, argB: IDatabaseFunctionA
         // null == undefined
         // tslint:disable-next-line: triple-equals
         argA.name == argB.name &&
-        // null == undefined
-        // tslint:disable-next-line: triple-equals
-        argA.type == argB.type &&
+        formatType(argA.type) === formatType(argB.type) &&
         equalArgumentDefault(argA, argB) &&
         !!argA.in === !!argB.in &&
         !!argA.out === !!argB.out
@@ -247,23 +245,33 @@ function equalArgumentDefault(argA: IDatabaseFunctionArgument, argB: IDatabaseFu
     let defaultB = ("" + argB.default).trim();
 
     if ( defaultA === "null" ) {
-        defaultA = "null::" + argA.type;
+        defaultA = "null::" + formatType(argA.type);
     }
     defaultA = defaultA.replace(/^null\s*::\s*/i, "null::");
 
     if ( defaultB === "null" ) {
-        defaultB = "null::" + argB.type;
+        defaultB = "null::" + formatType(argB.type);
     }
     defaultB = defaultB.replace(/^null\s*::\s*/i, "null::");
 
     return defaultA === defaultB;
 }
 
+function formatType(someType?: string) {
+    if ( !someType ) {
+        return null;
+    }
+
+    if ( /^\s*numeric/i.test(someType) ) {
+        return "numeric";
+    }
+
+    return someType.toLowerCase();
+}
+
 function equalReturns(returnsA: IDatabaseFunctionReturns, returnsB: IDatabaseFunctionReturns) {
     return (
-        // null == undefined
-        // tslint:disable-next-line: triple-equals
-        returnsA.type == returnsB.type &&
+        formatType(returnsA.type) === formatType(returnsB.type) &&
         !!returnsA.setof === !!returnsB.setof &&
         (
             returnsA.table && returnsB.table &&
