@@ -2,5 +2,6 @@
 --require source-map-support/register
 --require ts-node/register
 --recursive
- --exit
+--timeout 5000
+--exit
 test/**/*.spec.ts
