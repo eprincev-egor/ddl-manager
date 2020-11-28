@@ -81,7 +81,18 @@ export class CacheTriggersBuilder {
 
         const allDeps = findDependencies(this.cache);
 
+        for (const schemaTable of this.cache.withoutTriggers) {
+            if ( !(schemaTable in allDeps) ) {
+                throw new Error(`unknown table to ignore triggers: ${schemaTable}`);
+            }
+        }
+
         for (const schemaTable in allDeps) {
+            const needIgnore = this.cache.withoutTriggers.includes(schemaTable);
+            if ( needIgnore ) {
+                continue;
+            }
+
             const [schemaName, tableName] = schemaTable.split(".");
 
             const triggerTable = new Table(schemaName, tableName);

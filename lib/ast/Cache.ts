@@ -5,11 +5,18 @@ export class Cache {
     readonly name: string;
     readonly for: TableReference;
     readonly select: Select;
+    readonly withoutTriggers: string[];
 
-    constructor(name: string, forTable: TableReference, select: Select) {
+    constructor(
+        name: string,
+        forTable: TableReference,
+        select: Select,
+        withoutTriggers: string[] = []
+    ) {
         this.name = name;
         this.for = forTable;
         this.select = select;
+        this.withoutTriggers = withoutTriggers;
     }
 
     getSignature() {
@@ -21,6 +28,9 @@ export class Cache {
 cache ${this.name} for ${this.for} (
     ${this.select}
 )
+${ this.withoutTriggers.map(onTable => 
+    `without triggers on ${onTable}`
+).join(" ").trim() }
         `;
     }
 }

@@ -40,7 +40,8 @@ export class CacheParser {
         const cache = new Cache(
             this.parseCacheName(),
             forTable,
-            this.parseSelect(forTable)
+            this.parseSelect(forTable),
+            this.parseWithoutTriggers()
         );
         return cache;
     }
@@ -57,4 +58,11 @@ export class CacheParser {
         return select;
     }
 
+    private parseWithoutTriggers() {
+        const withoutTriggersSyntaxes = this.syntax.get("withoutTriggers") || [];
+        const withoutTriggers = withoutTriggersSyntaxes.map(onTableSyntax =>
+            this.tableParser.parse(onTableSyntax).table.toString()
+        );
+        return withoutTriggers;
+    }
 }

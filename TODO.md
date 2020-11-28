@@ -24,6 +24,9 @@
   + do not drop cache columns if same columns exists in db
   + need REAL load schema
   - universal agg
+  - first agg
+  - last agg
+  - date_or_null_agg
   + cache like are
     cache totals for companies (
       select companies.id * 2
@@ -31,7 +34,7 @@
       ! before insert/update => need listen more fields in other caches
       => use after
 + other helper functions
-- don't create cache triggers for some tables
++ don't create cache triggers for some tables
     cache totals for companies (
       select
         string_agg(distinct order_type.name) as orders_types_names
