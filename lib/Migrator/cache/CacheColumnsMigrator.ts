@@ -209,8 +209,12 @@ export class CacheColumnsMigrator extends AbstractMigrator {
     private async updateCachePackage(selectToUpdate: Select, forTableRef: TableReference) {
         const limit = 500;
         let updatedCount = 0;
+        let packageIndex = 0;
 
         do {
+            // tslint:disable-next-line: no-console
+            console.log(`updating ${forTableRef} #${ ++packageIndex }`);
+
             updatedCount = await this.postgres.updateCachePackage(
                 selectToUpdate,
                 forTableRef,

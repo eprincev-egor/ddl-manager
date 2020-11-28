@@ -24,7 +24,7 @@ interface IDatabaseFunctionReturns {
     type?: string;
 }
 
-interface IDatabaseFunctionArgument {
+export interface IDatabaseFunctionArgument {
     out?: boolean;
     in?: boolean;
     name?: string;
@@ -229,13 +229,38 @@ function equalArgument(argA: IDatabaseFunctionArgument, argB: IDatabaseFunctionA
         argA.name == argB.name &&
         // null == undefined
         // tslint:disable-next-line: triple-equals
-        argA.default == argB.default &&
-        // null == undefined
-        // tslint:disable-next-line: triple-equals
-        argA.default == argB.default &&
+        argA.type == argB.type &&
+        equalArgumentDefault(argA, argB) &&
         !!argA.in === !!argB.in &&
         !!argA.out === !!argB.out
     );
+}
+
+function equalArgumentDefault(argA: IDatabaseFunctionArgument, argB: IDatabaseFunctionArgument) {
+    if ( !argA.default && !argB.default ) {
+        return true;
+    }
+
+    // null == undefined
+    // tslint:disable-next-line: triple-equals
+    if ( argA.default == argB.default ) {
+        return true;
+    }
+
+    let defaultA = ("" + argA.default).trim();
+    let defaultB = ("" + argB.default).trim();
+
+    if ( defaultA === "null" ) {
+        defaultA = "null::" + argA.type;
+    }
+    defaultA = defaultA.replace(/^null\s*::\s*/i, "null::");
+
+    if ( defaultB === "null" ) {
+        defaultB = "null::" + argB.type;
+    }
+    defaultB = defaultB.replace(/^null\s*::\s*/i, "null::");
+
+    return defaultA === defaultB;
 }
 
 function equalReturns(returnsA: IDatabaseFunctionReturns, returnsB: IDatabaseFunctionReturns) {
