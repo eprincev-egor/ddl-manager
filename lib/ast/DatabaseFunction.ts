@@ -247,14 +247,12 @@ function equalArgumentDefault(argA: IDatabaseFunctionArgument, argB: IDatabaseFu
 }
 
 function formatDefault(someArg: IDatabaseFunctionArgument) {
-    let someDefault = ("" + someArg.default).trim();
+    let someDefault = ("" + someArg.default).trim().toLowerCase();
 
-    someDefault = someDefault.replace(/\s*::\s*/g, "::");
+    someDefault = someDefault.replace(/\s*::\s*([\w\s]+|numeric\([\d\s,]+\))$/, "");
 
     const type = formatType(someArg.type);
-    if ( !someDefault.endsWith("::" + type) ) {
-        someDefault += "::" + type;
-    }
+    someDefault += "::" + type;
 
     if ( someDefault.startsWith("{}::") ) {
         someDefault = someDefault.replace("{}::", "'{}'::");
@@ -268,11 +266,17 @@ function formatType(someType?: string) {
         return null;
     }
 
-    if ( /^\s*numeric/i.test(someType) ) {
+    someType = someType.trim().toLowerCase().replace(/\s+/g, " ");
+
+    if ( someType.startsWith("numeric") ) {
         return "numeric";
     }
 
-    return someType.toLowerCase();
+    if ( someType === "timestamp" ) {
+        return "timestamp without time zone";
+    }
+
+    return someType;
 }
 
 function equalReturns(returnsA: IDatabaseFunctionReturns, returnsB: IDatabaseFunctionReturns) {

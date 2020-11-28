@@ -251,11 +251,41 @@ describe("DatabaseFunction", () => {
                 },
                 argB: {
                     name: "_start_date",
-                    type: "timestamp without time zone",
+                    type: "timestamp WITHOUT time zone",
                     default: "null :: timestamp without time zone "
                 }, 
                 equal: true
             },
+
+            {
+                argA: {
+                    name: "_start_date",
+                    type: "timestamp ",
+                    default: "null::timestamp "
+                },
+                argB: {
+                    name: "_start_date",
+                    type: "timestamp without  time zone",
+                    default: "null :: timestamp without time zone "
+                }, 
+                equal: true
+            },
+
+
+            {
+                argA: {
+                    name: "_start_date",
+                    type: "numeric",
+                    default: "null::NUMERIc(14, 2)"
+                },
+                argB: {
+                    name: "_start_date",
+                    type: "numeric",
+                    default: "null :: numeric"
+                }, 
+                equal: true
+            },
+
             {
                 argA: {
                     name: "name",
