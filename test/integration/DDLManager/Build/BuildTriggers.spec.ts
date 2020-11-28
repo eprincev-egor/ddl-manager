@@ -413,54 +413,55 @@ describe("integration/DDLManager.build triggers", () => {
         });
     });
 
-    it("don't drop frozen functions and triggers", async() => {
+    it("recreate trigger function if has frozen triggers", async() => {
         await db.query(`
-            create or replace function my_func()
-            returns text as $body$
+            create table companies (
+                id serial primary key,
+                name text
+            );
+
+            create or replace function my_super_frozen_func()
+            returns trigger as $body$
             begin
-                return 'test';
+                new.name = 'frozen';
+                return new;
             end
             $body$
             language plpgsql;
 
-            create view my_view as
-                select my_func() as my_func;
+            create trigger my_trigger
+            before insert
+            on companies
+            for each row
+            execute procedure my_super_frozen_func();
         `);
 
-        const folderPath = ROOT_TMP_PATH + "/some-frozen-func";
+        const folderPath = ROOT_TMP_PATH + "/some-frozen-trigger";
         fs.mkdirSync(folderPath);
 
-        await DDLManager.dump({
+        fs.writeFileSync(folderPath + "/my_super_frozen_func.sql", `
+            create or replace function my_super_frozen_func()
+            returns trigger as $body$
+            begin
+                new.name = 'not frozen';
+                return new;
+            end
+            $body$
+            language plpgsql;
+        `);
+
+        await DDLManager.build({
             db,
             folder: folderPath
         });
 
-        let result = await db.query(`
-            select *
-            from my_view
+        const result = await db.query(`
+            insert into companies default values
+            returning *
         `);
-        let row = result.rows[0];
-
-        expect(row).to.be.shallowDeepEqual({
-            my_func: "test"
-        });
-
-        fs.unlinkSync(folderPath + "/public/my_func.sql");
-
-        await DDLManager.build({
-            db, 
-            folder: folderPath
-        });
-
-
-        result = await db.query(`
-            select *
-            from my_view
-        `);
-        row = result.rows[0];
-
-        expect(row).to.be.shallowDeepEqual({
-            my_func: "test"
+        expect(result.rows[0]).to.be.shallowDeepEqual({
+            id: 1,
+            name: "not frozen"
         });
     });
 

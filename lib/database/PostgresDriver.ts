@@ -149,19 +149,17 @@ implements IDatabaseDriver {
     }
 
     async createOrReplaceFunction(func: DatabaseFunction) {
-        let ddlSql = "";
+        try {
+            // if func has other arguments,
+            // then need drop function before replace
+            // 
+            // but can exists triggers or views who dependent on this function
+            await this.forceDropFunction(func);
+        } catch(err) {
+            // 
+        }
 
-        // check frozen object
-        const checkFrozenSql = getCheckFrozenFunctionSql( 
-            func,
-            "",
-            "drop"
-        );
-        
-        ddlSql += checkFrozenSql;
-
-        ddlSql += ";";
-        ddlSql += func.toSQL();
+        let ddlSql = func.toSQL();
         
         ddlSql += ";";
         ddlSql += getUnfreezeFunctionSql(func);

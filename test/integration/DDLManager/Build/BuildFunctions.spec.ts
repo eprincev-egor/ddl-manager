@@ -5,6 +5,7 @@ import { getDBClient } from "../../getDbClient";
 import { DDLManager } from "../../../../lib/DDLManager";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import { PostgresDriver } from "../../../../lib/database/PostgresDriver";
 
 use(chaiShallowDeepEqualPlugin);
 
@@ -788,6 +789,99 @@ language plpgsql;
         `);
         expect(result.rows[0]).to.be.shallowDeepEqual({
             my_int_func: "nice 101"
+        });
+    });
+
+    it("change function and frozen status on build", async() => {
+        // create frozen function
+        await db.query(`
+            create or replace function func1(a integer)
+            returns integer as $body$
+                begin
+                    return 0;
+                end
+            $body$
+            language plpgsql;
+        `);
+
+        fs.writeFileSync(ROOT_TMP_PATH + "/func1.sql", `
+            create or replace function func1(a integer)
+            returns integer as $body$
+                begin
+                    return 1;
+                end
+            $body$
+            language plpgsql;
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: false
+        });
+
+        const result = await db.query("select func1(1) as func1");
+        expect(result.rows[0]).to.be.shallowDeepEqual({
+            func1: 1
+        });
+
+        const postgres = new PostgresDriver(db);
+        const state = await postgres.loadState();
+
+        expect(state.functions[0]).to.be.shallowDeepEqual({
+            name: "func1",
+            frozen: false
+        });
+    });
+
+    it("don't drop frozen functions", async() => {
+        await db.query(`
+            create or replace function my_func()
+            returns text as $body$
+            begin
+                return 'test';
+            end
+            $body$
+            language plpgsql;
+
+            create view my_view as
+                select my_func() as my_func;
+        `);
+
+        const folderPath = ROOT_TMP_PATH + "/some-frozen-func";
+        fs.mkdirSync(folderPath);
+
+        await DDLManager.dump({
+            db,
+            folder: folderPath
+        });
+
+        let result = await db.query(`
+            select *
+            from my_view
+        `);
+        let row = result.rows[0];
+
+        expect(row).to.be.shallowDeepEqual({
+            my_func: "test"
+        });
+
+        fs.unlinkSync(folderPath + "/public/my_func.sql");
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath
+        });
+
+
+        result = await db.query(`
+            select *
+            from my_view
+        `);
+        row = result.rows[0];
+
+        expect(row).to.be.shallowDeepEqual({
+            my_func: "test"
         });
     });
 
