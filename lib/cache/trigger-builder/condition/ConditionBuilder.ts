@@ -1,8 +1,6 @@
-import {
-    Expression,
-    TableReference
-} from "../../../ast";
+import { Expression } from "../../../ast";
 import { CacheContext } from "../CacheContext";
+import { TableReference } from "../../../database/schema/TableReference";
 import { flatMap } from "lodash";
 
 import { noReferenceChanges } from "./noReferenceChanges";

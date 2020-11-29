@@ -1,7 +1,5 @@
-import { 
-    TableReference,
-    Expression
-} from "../../ast";
+import { Expression } from "../../ast";
+import { TableReference } from "../../database/schema/TableReference";
 import { CacheContext } from "../trigger-builder/CacheContext";
 import { buildConditionsMatrix } from "./buildConditionsMatrix";
 import { findNecessaryTableMatrix } from "./findNecessaryTableMatrix";

@@ -1,7 +1,7 @@
 // cycle import
 import { Expression } from "./Expression";
-import { TableReference } from "../TableReference";
-import { Table } from "../Table";
+import { TableReference } from "../../database/schema/TableReference";
+import { TableID } from "../../database/schema/TableID";
 import { UnknownExpressionElement } from "./UnknownExpressionElement";
 import { AbstractExpressionElement } from "./AbstractExpressionElement";
 import { Spaces } from "../Spaces";
@@ -41,7 +41,7 @@ export class FuncCall extends AbstractExpressionElement {
     }
 
     replaceTable(
-        replaceTable: TableReference | Table,
+        replaceTable: TableReference | TableID,
         toTable: TableReference
     ) {
         const newArgs = this.args.map(arg =>

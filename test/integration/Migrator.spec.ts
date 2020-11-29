@@ -2,8 +2,9 @@ import assert from "assert";
 import { Client } from "pg";
 import { getDBClient } from "./getDbClient";
 import { MainMigrator } from "../../lib/Migrator/MainMigrator";
-import { DatabaseFunction, IDatabaseFunctionParams } from "../../lib/ast/DatabaseFunction";
-import { DatabaseTrigger, IDatabaseTriggerParams } from "../../lib/ast/DatabaseTrigger";
+import { DatabaseFunction, IDatabaseFunctionParams } from "../../lib/database/schema/DatabaseFunction";
+import { DatabaseTrigger, IDatabaseTriggerParams } from "../../lib/database/schema/DatabaseTrigger";
+import { TableID } from "../../lib/database/schema/TableID";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { PostgresDriver } from "../../lib/database/PostgresDriver";
@@ -146,10 +147,10 @@ describe("integration/MainMigrator", () => {
                     ],
                     triggers: [
                         {
-                            table: {
-                                schema: "public",
-                                name: "ddl_manager_test"
-                            },
+                            table: new TableID(
+                                "public",
+                                "ddl_manager_test"
+                            ),
                             after: true,
                             insert: true,
                             updateOf: ["name", "note"],
@@ -208,10 +209,10 @@ describe("integration/MainMigrator", () => {
                 ],
                 triggers: [
                     {
-                        table: {
-                            schema: "public",
-                            name: "ddl_manager_test"
-                        },
+                        table: new TableID(
+                            "public",
+                            "ddl_manager_test"
+                        ),
                         after: true,
                         insert: true,
                         updateOf: ["name", "note"],
@@ -444,10 +445,10 @@ describe("integration/MainMigrator", () => {
                     ],
                     triggers: [
                         {
-                            table: {
-                                schema: "public",
-                                name: "company"
-                            },
+                            table: new TableID(
+                                "public",
+                                "company"
+                            ),
                             name: "x",
                             after: true,
                             delete: true,
@@ -506,10 +507,10 @@ describe("integration/MainMigrator", () => {
                     ],
                     triggers: [
                         {
-                            table: {
-                                schema: "public",
-                                name: "company"
-                            },
+                            table: new TableID(
+                                "public",
+                                "company"
+                            ),
                             name: "x",
                             after: true,
                             delete: true,
@@ -813,10 +814,10 @@ describe("integration/MainMigrator", () => {
                     ],
                     triggers: [
                         {
-                            table: {
-                                schema: "public",
-                                name: "ddl_manager_test"
-                            },
+                            table: new TableID(
+                                "public",
+                                "ddl_manager_test"
+                            ),
                             after: true,
                             insert: true,
                             updateOf: ["name", "note"],

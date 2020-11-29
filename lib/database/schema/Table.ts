@@ -1,20 +1,13 @@
-import { DatabaseTrigger } from "../../ast";
 import { Column } from "./Column";
+import { TableID } from "./TableID";
+import { DatabaseTrigger } from "./DatabaseTrigger";
 
-export interface ITableID {
-    schema: string;
-    name: string;
-}
-
-export class Table {
-    readonly schema: string;
-    readonly name: string;
+export class Table extends TableID {
     readonly columns: Column[];
     readonly triggers: DatabaseTrigger[];
 
     constructor(schema: string, name: string, columns: Column[] = []) {
-        this.schema = schema;
-        this.name = name;
+        super(schema, name);
         this.columns = columns;
         this.triggers = [];
     }

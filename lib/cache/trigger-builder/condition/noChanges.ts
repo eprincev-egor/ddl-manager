@@ -1,7 +1,7 @@
 import {
     Expression
 } from "../../../ast";
-import { Table as TableStructure } from "../../../database/schema/Table";
+import { Table } from "../../../database/schema/Table";
 import { Column } from "../../../database/schema/Column";
 import { CacheContext } from "../CacheContext";
 
@@ -13,9 +13,9 @@ export function noChanges(
         column !== "id"
     );
 
-    const tableStructure = context.databaseStructure.getTable(
+    const tableStructure = context.database.getTable(
         context.triggerTable
-    ) as TableStructure;
+    ) as Table;
     // assert.ok(tableStructure, `table ${ triggerTable.toString() } does not exists`);
 
     const conditions: string[] = [];

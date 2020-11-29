@@ -1,7 +1,7 @@
 import { Spaces } from "../Spaces";
 import { AbstractExpressionElement } from "./AbstractExpressionElement";
-import { Table } from "../Table";
-import { TableReference } from "../TableReference";
+import { TableID } from "../../database/schema/TableID";
+import { TableReference } from "../../database/schema/TableReference";
 import { UnknownExpressionElement } from "./UnknownExpressionElement";
 
 export class ColumnReference extends AbstractExpressionElement {
@@ -15,7 +15,7 @@ export class ColumnReference extends AbstractExpressionElement {
     }
 
     replaceTable(
-        replaceTable: TableReference | Table,
+        replaceTable: TableReference | TableID,
         toTable: TableReference
     ) {
         if ( this.tableReference.equal(replaceTable) ) {

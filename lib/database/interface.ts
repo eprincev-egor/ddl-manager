@@ -1,18 +1,10 @@
-import {
-    Select,
-    Table,
-    TableReference,
-    DatabaseTrigger,
-    DatabaseFunction 
-} from "../ast";
+import { Select } from "../ast";
 import { Database } from "./schema/Database";
-
-export interface ITableColumn {
-    name: string;
-    type: string;
-    default: string | null;
-    comment?: string;
-}
+import { Column } from "./schema/Column";
+import { TableID } from "./schema/TableID";
+import { TableReference } from "./schema/TableReference";
+import { DatabaseTrigger } from "./schema/DatabaseTrigger";
+import { DatabaseFunction  } from "./schema/DatabaseFunction";
 
 // TODO: apply I from SOLID
 export interface IDatabaseDriver {
@@ -27,8 +19,8 @@ export interface IDatabaseDriver {
     getCacheColumnsTypes(select: Select, forTable: TableReference): Promise<{
         [columnName: string]: string
     }>;
-    createOrReplaceColumn(table: Table, column: ITableColumn): Promise<void>;
-    dropColumn(table: Table, columnName: string): Promise<void>;
+    createOrReplaceColumn(tableID: TableID, column: Column): Promise<void>;
+    dropColumn(table: TableID, columnName: string): Promise<void>;
     updateCachePackage(select: Select, forTable: TableReference, limit: number): Promise<number>;
     createOrReplaceCacheTrigger(
         trigger: DatabaseTrigger,

@@ -1,16 +1,16 @@
 import { CacheParser } from "../parser";
 import {
     Expression,
-    Table,
     Cache,
-    DatabaseFunction,
-    DatabaseTrigger,
     SelectColumn
 } from "../ast";
 import { findDependencies } from "./processor/findDependencies";
 import { AggFactory } from "./aggregator";
 import { flatMap } from "lodash";
-import { Database as DatabaseStructure } from "../database/schema/Database";
+import { Database } from "../database/schema/Database";
+import { DatabaseFunction } from "../database/schema/DatabaseFunction";
+import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
+import { TableID } from "../database/schema/TableID";
 import { TriggerBuilderFactory } from "./trigger-builder/TriggerBuilderFactory";
 
 export class CacheTriggersBuilder {
@@ -20,7 +20,7 @@ export class CacheTriggersBuilder {
 
     constructor(
         cacheOrSQL: string | Cache,
-        databaseStructure: DatabaseStructure
+        database: Database
     ) {
         let cache: Cache = cacheOrSQL as Cache;
         if ( typeof cacheOrSQL === "string" ) {
@@ -29,7 +29,7 @@ export class CacheTriggersBuilder {
         this.cache = cache;
         this.builderFactory = new TriggerBuilderFactory(
             cache,
-            databaseStructure
+            database
         );
     }
 
@@ -95,7 +95,7 @@ export class CacheTriggersBuilder {
 
             const [schemaName, tableName] = schemaTable.split(".");
 
-            const triggerTable = new Table(schemaName, tableName);
+            const triggerTable = new TableID(schemaName, tableName);
             const tableDeps = allDeps[ schemaTable ];
 
             const triggerBuilder = this.builderFactory.tryCreateBuilder(

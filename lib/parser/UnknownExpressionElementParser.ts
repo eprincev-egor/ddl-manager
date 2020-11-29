@@ -4,9 +4,9 @@ import {
     UnknownExpressionElement,
     IUnknownSyntax,
     IColumnsMap,
-    Select,
-    TableReference 
+    Select
 } from "../ast";
+import { TableReference } from "../database/schema/TableReference"
 
 export class UnknownExpressionElementParser {
 

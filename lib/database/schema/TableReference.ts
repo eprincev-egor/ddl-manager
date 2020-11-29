@@ -1,4 +1,4 @@
-import { Table } from "./Table";
+import { TableID } from "./TableID";
 
 export interface IReferenceFilter {
     schema?: string;
@@ -21,10 +21,10 @@ export class TableReference {
         }
     }
 
-    readonly table: Table;
+    readonly table: TableID;
     readonly alias?: string;
 
-    constructor(table: Table, alias?: string) {
+    constructor(table: TableID, alias?: string) {
         this.table = table;
         this.alias = alias;
     }
@@ -49,7 +49,7 @@ export class TableReference {
         return this.table.name === filter.aliasOrTableName;
     }
 
-    equal(otherTable: TableReference | Table) {
+    equal(otherTable: TableReference | TableID) {
         if ( otherTable instanceof TableReference ) {
             return (
                 otherTable.alias === this.alias &&
@@ -60,7 +60,7 @@ export class TableReference {
     }
 
     clone() {
-        return new TableReference(new Table(
+        return new TableReference(new TableID(
             this.table.schema,
             this.table.name
         ), this.alias);

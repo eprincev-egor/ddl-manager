@@ -1,4 +1,6 @@
-import { DatabaseFunction, DatabaseTrigger, Cache } from "./ast";
+import { DatabaseFunction } from "./database/schema/DatabaseFunction";
+import { DatabaseTrigger } from "./database/schema/DatabaseTrigger";
+import { Cache } from "./ast";
 
 interface IChanges {
     functions: DatabaseFunction[];

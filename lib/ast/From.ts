@@ -1,5 +1,5 @@
 import { Join } from "./Join";
-import { TableReference } from "./TableReference";
+import { TableReference } from "../database/schema/TableReference";
 
 export class From {
     readonly table: TableReference;

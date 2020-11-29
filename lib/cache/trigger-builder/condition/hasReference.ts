@@ -1,4 +1,5 @@
-import { Expression, Table, UnknownExpressionElement } from "../../../ast";
+import { Expression, UnknownExpressionElement } from "../../../ast";
+import { TableID } from "../../../database/schema/TableID";
 import { CacheContext } from "../CacheContext";
 
 export function hasReference(context: CacheContext) {
@@ -26,7 +27,7 @@ function hasReferenceCondition(context: CacheContext, check: CheckType) {
 function buildReferenceExpression(
     expressions: Expression[],
     operator: "and" | "or",
-    triggerTable: Table,
+    triggerTable: TableID,
     check: CheckType
 ): Expression {
 
@@ -59,7 +60,7 @@ function buildReferenceExpression(
 
 function replaceSimpleExpressionToNotNulls(
     expression: Expression,
-    triggerTable: Table,
+    triggerTable: TableID,
     check: CheckType
 ) {
     const notNullTriggerColumns = expression.getColumnReferences()

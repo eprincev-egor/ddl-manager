@@ -5,9 +5,11 @@ import watch from "node-watch";
 import path from "path";
 import { FileParser } from "../parser";
 import { IFileParams } from "./File";
-import { DatabaseTrigger, DatabaseFunction, Cache } from "../ast";
+import { Cache } from "../ast";
 import { Diff } from "../Diff";
 import { FilesState } from "./FilesState";
+import { DatabaseFunction } from "../database/schema/DatabaseFunction";
+import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
 
 export class FileReader extends EventEmitter {
     static read(params: {folder: string | string[], onError?: any}) {

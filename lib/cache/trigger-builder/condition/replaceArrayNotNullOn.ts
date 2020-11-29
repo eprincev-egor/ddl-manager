@@ -13,7 +13,7 @@ export function replaceArrayNotNullOn(
     }
 
     let outputExpression = sourceExpression;
-    const tableStructure = context.databaseStructure.getTable(context.triggerTable);
+    const tableStructure = context.database.getTable(context.triggerTable);
 
     for (const columnRef of sourceExpression.getColumnReferences()) {
         if ( !columnRef.tableReference.table.equal(context.triggerTable) ) {

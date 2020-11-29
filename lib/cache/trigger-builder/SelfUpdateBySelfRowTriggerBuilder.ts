@@ -1,4 +1,6 @@
-import { DatabaseTrigger, TableReference } from "../../ast";
+import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
+import { TableReference } from "../../database/schema/TableReference";
+import { TableID } from "../../database/schema/TableID";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { buildSelfUpdateBySelfRowBody } from "./body/buildSelfUpdateBySelfRowBody";
 
@@ -52,10 +54,10 @@ export class SelfUpdateBySelfRowTriggerBuilder extends AbstractTriggerBuilder {
                 name: this.generateTriggerName(),
                 args: []
             },
-            table: {
-                schema: this.context.triggerTable.schema || "public",
-                name: this.context.triggerTable.name
-            },
+            table: new TableID(
+                this.context.triggerTable.schema || "public",
+                this.context.triggerTable.name
+            ),
             cacheSignature: this.context.cache.getSignature()
         });
 

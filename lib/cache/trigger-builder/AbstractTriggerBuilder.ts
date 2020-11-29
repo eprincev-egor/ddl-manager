@@ -1,8 +1,9 @@
 import {
-    DatabaseTrigger,
-    DatabaseFunction,
     AbstractAstElement
 } from "../../ast";
+import { DatabaseFunction } from "../../database/schema/DatabaseFunction";
+import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
+import { TableID } from "../../database/schema/TableID";
 import { CacheContext } from "./CacheContext";
 import { ConditionBuilder } from "./condition/ConditionBuilder";
 
@@ -59,10 +60,10 @@ export abstract class AbstractTriggerBuilder {
                 name: this.generateTriggerName(),
                 args: []
             },
-            table: {
-                schema: this.context.triggerTable.schema || "public",
-                name: this.context.triggerTable.name
-            },
+            table: new TableID(
+                this.context.triggerTable.schema || "public",
+                this.context.triggerTable.name
+            ),
             cacheSignature: this.context.cache.getSignature()
         });
 

@@ -6,8 +6,10 @@ import {
     CacheFor
 } from "grapeql-lang";
 import { IFileContent } from "../fs/File";
-import { DatabaseFunction, DatabaseTrigger, Cache } from "../ast";
+import { Cache } from "../ast";
 import { CacheParser } from "./CacheParser";
+import { DatabaseFunction } from "../database/schema/DatabaseFunction";
+import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
 import assert from "assert";
 
 export class FileParser {

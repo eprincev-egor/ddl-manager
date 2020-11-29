@@ -1,5 +1,5 @@
-import { wrapText } from "../database/postgres/wrapText";
-import { MAX_NAME_LENGTH } from "../database/postgres/constants";
+import { wrapText } from "../postgres/wrapText";
+import { MAX_NAME_LENGTH } from "../postgres/constants";
 
 export interface IDatabaseFunctionParams {
     schema: string;

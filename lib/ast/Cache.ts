@@ -1,5 +1,5 @@
 import { Select } from "./Select";
-import { TableReference } from "./TableReference";
+import { TableReference } from "../database/schema/TableReference";
 
 export class Cache {
     readonly name: string;

@@ -7,7 +7,7 @@ import { MainMigrator } from "./Migrator/MainMigrator";
 import { IDatabaseDriver } from "./database/interface";
 import { PostgresDriver } from "./database/PostgresDriver";
 import { getDbClient, IDBConfig } from "./database/getDbClient";
-import { DatabaseTrigger } from "./ast/DatabaseTrigger";
+import { DatabaseTrigger } from "./database/schema/DatabaseTrigger";
 import { Diff } from "./Diff";
 
 const watchers: FileReader[] = [];

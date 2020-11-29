@@ -1,5 +1,5 @@
 import { Expression } from "./expression/Expression";
-import { TableReference } from "./TableReference";
+import { TableReference } from "../database/schema/TableReference";
 
 export class Join {
     readonly type: string;

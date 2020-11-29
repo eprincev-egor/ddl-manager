@@ -1,4 +1,4 @@
-import { DatabaseFunction, IDatabaseFunctionArgument } from "../../lib/ast";
+import { DatabaseFunction, IDatabaseFunctionArgument } from "../../lib/database/schema/DatabaseFunction";
 import assert from "assert";
 
 describe("DatabaseFunction", () => {

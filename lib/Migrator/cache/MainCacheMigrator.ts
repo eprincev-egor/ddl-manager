@@ -1,7 +1,7 @@
 import { AbstractMigrator } from "../AbstractMigrator";
 import { CacheTriggersMigrator } from "./CacheTriggersMigrator";
 import { Diff } from "../../Diff";
-import { Database as DatabaseStructure } from "../../database/schema/Database";
+import { Database } from "../../database/schema/Database";
 import { IDatabaseDriver } from "../../database/interface";
 import { CacheColumnsMigrator } from "./CacheColumnsMigrator";
 
@@ -13,21 +13,21 @@ export class MainCacheMigrator extends AbstractMigrator {
     constructor(
         postgres: IDatabaseDriver,
         diff: Diff,
-        databaseStructure: DatabaseStructure,
+        database: Database,
         outputErrors: Error[]
     ) {
-        super(postgres, diff, databaseStructure, outputErrors);
+        super(postgres, diff, database, outputErrors);
 
         this.triggers = new CacheTriggersMigrator(
             postgres,
             diff,
-            databaseStructure,
+            database,
             outputErrors
         );
         this.columns = new CacheColumnsMigrator(
             postgres,
             diff,
-            databaseStructure,
+            database,
             outputErrors
         );
     }

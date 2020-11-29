@@ -1,8 +1,7 @@
-import {
-    TableReference,
-    Expression
-} from "../../ast";
-import { DatabaseTrigger } from "../../ast";
+import { Expression } from "../../ast";
+import { TableReference } from "../../database/schema/TableReference";
+import { TableID } from "../../database/schema/TableID";
+import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { buildSelfUpdateByOtherTablesBody } from "./body/buildSelfUpdateByOtherTablesBody";
 
@@ -50,10 +49,10 @@ export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilde
                 name: this.generateTriggerName(),
                 args: []
             },
-            table: {
-                schema: this.context.triggerTable.schema || "public",
-                name: this.context.triggerTable.name
-            },
+            table: new TableID(
+                this.context.triggerTable.schema || "public",
+                this.context.triggerTable.name
+            ),
             cacheSignature: this.context.cache.getSignature()
         });
 

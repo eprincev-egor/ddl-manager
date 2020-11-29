@@ -1,10 +1,8 @@
-import {
-    Table,
-    Cache
-} from "../../ast";
+import { Cache } from "../../ast";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { CommutativeTriggerBuilder } from "./CommutativeTriggerBuilder";
-import { Database as DatabaseStructure } from "../../database/schema/Database";
+import { Database } from "../../database/schema/Database";
+import { TableID } from "../../database/schema/TableID";
 import { buildFrom } from "../processor/buildFrom";
 import { UniversalTriggerBuilder } from "./UniversalTriggerBuilder";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
@@ -15,18 +13,18 @@ import { SelfUpdateBySelfRowTriggerBuilder } from "./SelfUpdateBySelfRowTriggerB
 
 export class TriggerBuilderFactory {
     private readonly cache: Cache;
-    private readonly databaseStructure: DatabaseStructure;
+    private readonly database: Database;
 
     constructor(
         cache: Cache,
-        databaseStructure: DatabaseStructure,
+        database: Database,
     ) {
         this.cache = cache;
-        this.databaseStructure = databaseStructure;
+        this.database = database;
     }
 
     tryCreateBuilder(
-        triggerTable: Table,
+        triggerTable: TableID,
         triggerTableColumns: string[]
     ): AbstractTriggerBuilder | undefined {
 
@@ -34,7 +32,7 @@ export class TriggerBuilderFactory {
             this.cache,
             triggerTable,
             triggerTableColumns,
-            this.databaseStructure
+            this.database
         );
 
         const Builder = this.chooseConstructor(context);

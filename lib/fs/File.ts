@@ -1,4 +1,6 @@
-import { DatabaseFunction, DatabaseTrigger, Cache } from "../ast";
+import { Cache } from "../ast";
+import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
+import { DatabaseFunction } from "../database/schema/DatabaseFunction";
 
 export interface IFileParams {
     name: string;

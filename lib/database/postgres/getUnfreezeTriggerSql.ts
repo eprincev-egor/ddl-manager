@@ -1,4 +1,4 @@
-import { DatabaseTrigger } from "../../ast/DatabaseTrigger";
+import { DatabaseTrigger } from "../schema/DatabaseTrigger";
 import {
     wrapText
 } from "./wrapText";

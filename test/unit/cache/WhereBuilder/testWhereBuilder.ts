@@ -1,9 +1,9 @@
 import { GrapeQLCoach, Select } from "grapeql-lang";
 import { CacheParser } from "../../../../lib/parser";
-import { Table } from "../../../../lib/ast";
 import assert from "assert";
 import { CacheContext } from "../../../../lib/cache/trigger-builder/CacheContext";
-import { Database as DatabaseStructure } from "../../../../lib/database/schema/Database";
+import { TableID } from "../../../../lib/database/schema/TableID";
+import { Database } from "../../../../lib/database/schema/Database";
 import { buildUniversalWhere } from "../../../../lib/cache/processor/buildUniversalWhere";
 import { buildFrom } from "../../../../lib/cache/processor/buildFrom";
 
@@ -20,13 +20,13 @@ export function testWhereBuilder(test: ITest) {
     for (const changedSchemaTable in test.where) {
 
         const [schemaName, tableName] = changedSchemaTable.split(".");
-        const triggerTable = new Table(schemaName, tableName);
+        const triggerTable = new TableID(schemaName, tableName);
 
         const context = new CacheContext(
             cache,
             triggerTable,
             [],
-            new DatabaseStructure([])
+            new Database()
         );
         const from = buildFrom(context);
         const where = buildUniversalWhere(context);

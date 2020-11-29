@@ -2,7 +2,8 @@ import {
     ObjectName,
     TableLink
 } from "grapeql-lang";
-import { TableReference, Table } from "../ast";
+import { TableID } from "../database/schema/TableID";
+import { TableReference } from "../database/schema/TableReference";
 
 const DEFAULT_SCHEMA = "public";
 
@@ -42,7 +43,7 @@ export class TableReferenceParser {
         }
     
         const tableAlias = new TableReference(
-            new Table(
+            new TableID(
                 output.schema,
                 output.table,
             ),

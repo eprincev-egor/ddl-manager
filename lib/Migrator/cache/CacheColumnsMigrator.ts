@@ -1,13 +1,14 @@
 import { AbstractMigrator } from "../AbstractMigrator";
 import { CacheTriggersBuilder } from "../../cache/CacheTriggersBuilder";
-import { Cache, From, Select, SelectColumn, TableReference } from "../../ast";
+import { Cache, From, Select, SelectColumn } from "../../ast";
+import { TableReference } from "../../database/schema/TableReference";
+import { Column } from "../../database/schema/Column";
 import { AbstractAgg, AggFactory } from "../../cache/aggregator";
 import {
     ISortSelectItem,
     sortSelectsByDependencies
 } from "./graph-util";
 import { flatMap } from "lodash";
-import { ITableColumn } from "../../database/interface";
 
 export class CacheColumnsMigrator extends AbstractMigrator {
 
@@ -92,11 +93,11 @@ export class CacheColumnsMigrator extends AbstractMigrator {
     }
 
     private async createColumn(cache: Cache, select: Select) {
-        const column: ITableColumn = {
-            name: (select.columns[0] as SelectColumn).name,
-            type: await this.getColumnType(cache, select),
-            default: this.getColumnDefault(select)
-        };
+        const column = new Column(
+            (select.columns[0] as SelectColumn).name,
+            await this.getColumnType(cache, select),
+            this.getColumnDefault(select)
+        );
         await this.postgres.createOrReplaceColumn(
             cache.for.table,
             column
@@ -200,7 +201,7 @@ export class CacheColumnsMigrator extends AbstractMigrator {
     private createSelectForUpdate(cache: Cache) {
         const cacheTriggerFactory = new CacheTriggersBuilder(
             cache,
-            this.databaseStructure
+            this.database
         );
         const selectToUpdate = cacheTriggerFactory.createSelectForUpdate();
         return selectToUpdate;

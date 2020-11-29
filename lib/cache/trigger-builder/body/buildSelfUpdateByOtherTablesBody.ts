@@ -5,9 +5,9 @@ import {
     BlankLine,
     Update,
     SetSelectItem,
-    TableReference,
     Expression
 } from "../../../ast";
+import { TableReference } from "../../../database/schema/TableReference";
 
 export function buildSelfUpdateByOtherTablesBody(
     updateTable: TableReference,

@@ -10,14 +10,14 @@ import {
     SetSelectItem,
     Update,
     With,
-    WithQuery,
-    Table,
-    TableReference
+    WithQuery
 } from "../../../ast";
+import { TableReference } from "../../../database/schema/TableReference";
+import { TableID } from "../../../database/schema/TableID";
 
 export interface IUniversalAST {
     forTable: string;
-    triggerTable: Table;
+    triggerTable: TableID;
     from: string[];
     where?: Expression;
     select: string;

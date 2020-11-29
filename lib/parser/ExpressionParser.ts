@@ -11,12 +11,12 @@ import {
     FuncCall,
     Select,
     Operator,
-    TableReference,
     Expression,
     UnknownExpressionElement
 } from "../ast";
 import { UnknownExpressionElementParser } from "./UnknownExpressionElementParser";
 import { ColumnReferenceParser } from "./ColumnReferenceParser";
+import { TableReference } from "../database/schema/TableReference";
 import assert from "assert";
 
 export class ExpressionParser {

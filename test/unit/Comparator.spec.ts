@@ -1,15 +1,12 @@
 import _ from "lodash";
 import { Comparator } from "../../lib/Comparator";
 import assert from "assert";
-import {
-    Cache,
-    DatabaseFunction,
-    DatabaseTrigger,
-    IDatabaseFunctionParams,
-    IDatabaseTriggerParams
-} from "../../lib/ast";
+import { Cache } from "../../lib/ast";
 import { Database } from "../../lib/database/schema/Database";
-import { Table as DBTable } from "../../lib/database/schema/Table";
+import { DatabaseFunction, IDatabaseFunctionParams } from "../../lib/database/schema/DatabaseFunction";
+import { DatabaseTrigger, IDatabaseTriggerParams } from "../../lib/database/schema/DatabaseTrigger";
+import { Table } from "../../lib/database/schema/Table";
+import { TableID } from "../../lib/database/schema/TableID";
 import { Diff } from "../../lib/Diff";
 import { FilesState } from "../../lib/fs/FilesState";
 import { File } from "../../lib/fs/File";
@@ -30,7 +27,7 @@ function diffState(params: {filesState: Partial<IStateParams>, dbState: Partial<
     database.addFunctions(createFuncsInstances(dbStateParams));
 
     for (const trigger of createTriggersInstances(dbStateParams)) {
-        const table = new DBTable(
+        const table = new Table(
             trigger.table.schema,
             trigger.table.name
         );
@@ -423,10 +420,10 @@ describe("Comparator", () => {
             end`
         };
         const fileTrigger = {
-            table: {
-                schema: "public",
-                name: "company"
-            },
+            table: new TableID(
+                "public",
+                "company"
+            ),
             after: true,
             insert: true,
             name: "some_action_on_some_event_trigger",
@@ -437,10 +434,10 @@ describe("Comparator", () => {
             }
         };
         const dbTrigger = {
-            table: {
-                schema: "public",
-                name: "company"
-            },
+            table: new TableID(
+                "public",
+                "company"
+            ),
             before: true,
             insert: true,
             name: "some_action_on_some_event_trigger",
@@ -502,10 +499,10 @@ describe("Comparator", () => {
         const dbFunc = _.cloneDeep(func);
 
         const trigger = {
-            table: {
-                schema: "public",
-                name: "company"
-            },
+            table: new TableID(
+                "public",
+                "company"
+            ),
             after: true,
             insert: true,
             name: "some_action_on_some_event_trigger",
@@ -637,10 +634,10 @@ describe("Comparator", () => {
             frozen: true
         };
         const trigger = {
-            table: {
-                schema: "public",
-                name: "company"
-            },
+            table: new TableID(
+                "public",
+                "company"
+            ),
             after: true,
             insert: true,
             name: "some_action_on_some_event_trigger",
@@ -700,10 +697,10 @@ describe("Comparator", () => {
             end`
         };
         const trigger1 = {
-            table: {
-                schema: "public",
-                name: "company"
-            },
+            table: new TableID(
+                "public",
+                "company"
+            ),
             after: true,
             insert: true,
             name: "some_action_on_some_event_trigger",
@@ -714,10 +711,10 @@ describe("Comparator", () => {
             }
         };
         const trigger2 = {
-            table: {
-                schema: "public",
-                name: "company"
-            },
+            table: new TableID(
+                "public",
+                "company"
+            ),
             before: true,
             insert: true,
             name: "some_action_on_some_event_trigger",
@@ -815,6 +812,115 @@ describe("Comparator", () => {
         });
     });
 
+    it("function with long name inside fs and db", () => {
+        const someFuncParams = {
+            schema: "public",
+            args: [
+                {
+                    name: "x",
+                    type: "integer"
+                },
+                {
+                    name: "y",
+                    type: "integer"
+                }
+            ],
+            returns: {type: "integer"},
+            body: `begin
+                return x + y;
+            end`
+        };
+        const longName = "long_name_0123456789012345678901234567890123456789012345678901234567890123456789";
+
+        const funcInFS = new DatabaseFunction({
+            ...someFuncParams,
+            name: longName
+        });
+        const funcInDB = new DatabaseFunction({
+            ...someFuncParams,
+            name: longName.slice(0, 64)
+        });
+
+        const diff = diffState({
+            filesState: {
+                functions: [
+                    funcInFS
+                ]
+            },
+            dbState: {
+                functions: [
+                    funcInDB
+                ]
+            }
+        });
+
+        deepStrictEqualDiff(diff, {
+            drop: {
+                triggers: [],
+                functions: [],
+                cache: []
+            },
+            create: {
+                triggers: [],
+                functions: [],
+                cache: []
+            }
+        });
+    });
+
+
+    it("trigger with long name inside fs and db", () => {
+        const someTriggerParams = {
+            table: new TableID(
+                "public",
+                "company"
+            ),
+            after: true,
+            insert: true,
+            procedure: {
+                schema: "public",
+                name: "some_action_on_some_event",
+                args: []
+            }
+        };
+
+        const longName = "long_name_0123456789012345678901234567890123456789012345678901234567890123456789";
+
+        const triggerInFS = new DatabaseTrigger({
+            ...someTriggerParams,
+            name: longName
+        });
+        const triggerInDB = new DatabaseTrigger({
+            ...someTriggerParams,
+            name: longName.slice(0, 64)
+        });
+
+        const diff = diffState({
+            filesState: {
+                triggers: [
+                    triggerInFS
+                ]
+            },
+            dbState: {
+                triggers: [
+                    triggerInDB
+                ]
+            }
+        });
+
+        deepStrictEqualDiff(diff, {
+            drop: {
+                triggers: [],
+                functions: [],
+                cache: []
+            },
+            create: {
+                triggers: [],
+                functions: [],
+                cache: []
+            }
+        });
+    });
     /*
 
     it("create cache", () => {
@@ -911,114 +1017,5 @@ describe("Comparator", () => {
         });
     });
 
-    it("function with long name inside fs and db", () => {
-        const someFuncParams = {
-            schema: "public",
-            args: [
-                {
-                    name: "x",
-                    type: "integer"
-                },
-                {
-                    name: "y",
-                    type: "integer"
-                }
-            ],
-            returns: {type: "integer"},
-            body: `begin
-                return x + y;
-            end`
-        };
-        const longName = "long_name_0123456789012345678901234567890123456789012345678901234567890123456789";
-
-        const funcInFS = new DatabaseFunction({
-            ...someFuncParams,
-            name: longName
-        });
-        const funcInDB = new DatabaseFunction({
-            ...someFuncParams,
-            name: longName.slice(0, 64)
-        });
-
-        const diff = diffState({
-            filesState: {
-                functions: [
-                    funcInFS
-                ]
-            },
-            dbState: {
-                functions: [
-                    funcInDB
-                ]
-            }
-        });
-
-        deepStrictEqualDiff(diff, {
-            drop: {
-                triggers: [],
-                functions: [],
-                cache: []
-            },
-            create: {
-                triggers: [],
-                functions: [],
-                cache: []
-            }
-        });
-    });
-
-
-    it("trigger with long name inside fs and db", () => {
-        const someTriggerParams = {
-            table: {
-                schema: "public",
-                name: "company"
-            },
-            after: true,
-            insert: true,
-            procedure: {
-                schema: "public",
-                name: "some_action_on_some_event",
-                args: []
-            }
-        };
-
-        const longName = "long_name_0123456789012345678901234567890123456789012345678901234567890123456789";
-
-        const triggerInFS = new DatabaseTrigger({
-            ...someTriggerParams,
-            name: longName
-        });
-        const triggerInDB = new DatabaseTrigger({
-            ...someTriggerParams,
-            name: longName.slice(0, 64)
-        });
-
-        const diff = diffState({
-            filesState: {
-                triggers: [
-                    triggerInFS
-                ]
-            },
-            dbState: {
-                triggers: [
-                    triggerInDB
-                ]
-            }
-        });
-
-        deepStrictEqualDiff(diff, {
-            drop: {
-                triggers: [],
-                functions: [],
-                cache: []
-            },
-            create: {
-                triggers: [],
-                functions: [],
-                cache: []
-            }
-        });
-    });
     */
 });

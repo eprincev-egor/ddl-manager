@@ -1,6 +1,8 @@
 import { flatMap } from "lodash";
-import { DatabaseFunction, DatabaseTrigger } from "../../ast";
-import { Table, ITableID } from "./Table";
+import { Table } from "./Table";
+import { TableID } from "./TableID";
+import { DatabaseTrigger } from "./DatabaseTrigger";
+import { DatabaseFunction } from "./DatabaseFunction";
 
 export class Database {
     readonly tables: Table[];
@@ -11,7 +13,7 @@ export class Database {
         this.functions = [];
     }
 
-    getTable(tableId: ITableID) {
+    getTable(tableId: TableID) {
         return this.tables.find(table => 
             table.name === tableId.name &&
             table.schema === tableId.schema

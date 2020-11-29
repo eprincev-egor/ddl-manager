@@ -4,12 +4,12 @@ import {
     HardCode,
     BlankLine,
     Update,
-    TableReference,
     Expression,
     Declare,
     Select,
     SetItem
 } from "../../../ast";
+import { TableReference } from "../../../database/schema/TableReference";
 
 export function buildSelfUpdateBySelfRowBody(
     updateTable: TableReference,

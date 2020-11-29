@@ -1,5 +1,5 @@
 
-export class Table {
+export class TableID {
     readonly schema: string;
     readonly name: string;
 
@@ -8,7 +8,7 @@ export class Table {
         this.name = name;
     }
 
-    equal(otherTable: Table) {
+    equal(otherTable: TableID) {
         return (
             this.schema === otherTable.schema &&
             this.name === otherTable.name

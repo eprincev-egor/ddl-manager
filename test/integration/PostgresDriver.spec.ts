@@ -4,9 +4,11 @@ import assert from "assert";
 import { getDBClient } from "./getDbClient";
 import { DDLManager } from "../../lib/DDLManager";
 import { PostgresDriver } from "../../lib/database/PostgresDriver";
+import { TableID } from "../../lib/database/schema/TableID";
+import { TableReference } from "../../lib/database/schema/TableReference";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
-import { From, Select, SelectColumn, Table, TableReference, Expression, ColumnReference, Operator } from "../../lib/ast";
+import { From, Select, SelectColumn, Expression, ColumnReference, Operator } from "../../lib/ast";
 import { FileParser } from "../../lib/parser";
 import { flatMap } from "lodash";
 
@@ -903,13 +905,13 @@ describe("integration/PostgresDriver.loadState", () => {
 
         const driver = new PostgresDriver(db);
         
-        const companiesTable = new Table(
+        const companiesTable = new TableID(
             "public",
             "companies"
         );
         const companiesTableRef = new TableReference( companiesTable );
 
-        const ordersTable = new Table(
+        const ordersTable = new TableID(
             "public",
             "orders"
         );

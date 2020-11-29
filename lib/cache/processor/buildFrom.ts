@@ -1,6 +1,4 @@
-import {
-    TableReference
-} from "../../ast";
+import { TableReference } from "../../database/schema/TableReference";
 import { CacheContext } from "../trigger-builder/CacheContext";
 import { findNecessaryTableMatrix } from "./findNecessaryTableMatrix";
 

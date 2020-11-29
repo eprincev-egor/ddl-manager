@@ -1,8 +1,9 @@
 import { Database } from "./database/schema/Database";
+import { DatabaseTrigger } from "./database/schema/DatabaseTrigger";
+import { DatabaseFunction } from "./database/schema/DatabaseFunction";
 import { FilesState } from "./fs/FilesState";
 import { Diff } from "./Diff";
 import { flatMap } from "lodash";
-import { DatabaseFunction, DatabaseTrigger } from "./ast";
 
 export class Comparator {
 

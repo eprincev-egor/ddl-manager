@@ -1,22 +1,20 @@
 import fs from "fs";
 import { Client } from "pg";
-import { IDatabaseDriver, ITableColumn } from "./interface";
+import { IDatabaseDriver } from "./interface";
 import { FileParser } from "../parser";
 import { PGTypes } from "./PGTypes";
-import {
-    DatabaseFunction,
-    DatabaseTrigger,
-    Table,
-    Select,
-    TableReference
-} from "../ast";
+import { Select } from "../ast";
 import { getCheckFrozenFunctionSql } from "./postgres/getCheckFrozenFunctionSql";
 import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
 import { getCheckFrozenTriggerSql } from "./postgres/getCheckFrozenTriggerSql";
 import { Database } from "./schema/Database";
 import { Column } from "./schema/Column";
-import { Table as TableSchema } from "./schema/Table";
+import { DatabaseFunction } from "./schema/DatabaseFunction";
+import { DatabaseTrigger } from "./schema/DatabaseTrigger";
+import { TableReference } from "./schema/TableReference";
+import { Table } from "./schema/Table";
+import { TableID } from "./schema/TableID";
 import { flatMap } from "lodash";
 
 const selectAllFunctionsSQL = fs.readFileSync(__dirname + "/postgres/select-all-functions.sql")
@@ -111,11 +109,11 @@ implements IDatabaseDriver {
         const database = new Database();
         for (const columnRow of columnsRows) {
             
-            const tableId = {
-                schema: columnRow.table_schema,
-                name: columnRow.table_name
-            };
-            const table = database.getTable(tableId) || new TableSchema(
+            const tableId = new TableID(
+                columnRow.table_schema,
+                columnRow.table_name
+            );
+            const table = database.getTable(tableId) || new Table(
                 columnRow.table_schema,
                 columnRow.table_name
             );
@@ -260,7 +258,7 @@ implements IDatabaseDriver {
         return columnsTypes;
     }
 
-    async createOrReplaceColumn(table: Table, column: ITableColumn) {
+    async createOrReplaceColumn(table: TableID, column: Column) {
         const sql = `
             alter table ${table} add column if not exists ${column.name} ${column.type} default ${ column.default };
         `;
@@ -268,7 +266,7 @@ implements IDatabaseDriver {
         await this.pgClient.query(sql);
     }
 
-    async dropColumn(table: Table, columnName: string) {
+    async dropColumn(table: TableID, columnName: string) {
         const sql = `
             alter table ${table} drop column if exists ${columnName};
         `;

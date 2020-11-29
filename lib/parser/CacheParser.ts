@@ -7,7 +7,8 @@ import {
 } from "grapeql-lang";
 import { TableReferenceParser } from "./TableReferenceParser";
 import { SelectParser } from "./SelectParser";
-import { Cache, TableReference } from "../ast";
+import { Cache } from "../ast";
+import { TableReference } from "../database/schema/TableReference";
 
 export class CacheParser {
 

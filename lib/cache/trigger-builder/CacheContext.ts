@@ -1,9 +1,9 @@
 import {
-    Table,
     Expression,
     Cache
 } from "../../ast";
-import { Database as DatabaseStructure } from "../../database/schema/Database";
+import { Database } from "../../database/schema/Database";
+import { TableID } from "../../database/schema/TableID";
 
 export interface IReferenceMeta {
     columns: string[];
@@ -13,21 +13,21 @@ export interface IReferenceMeta {
 
 export class CacheContext {
     readonly cache: Cache;
-    readonly triggerTable: Table;
+    readonly triggerTable: TableID;
     readonly triggerTableColumns: string[];
-    readonly databaseStructure: DatabaseStructure;
+    readonly database: Database;
     readonly referenceMeta: IReferenceMeta;
     
     constructor(
         cache: Cache,
-        triggerTable: Table,
+        triggerTable: TableID,
         triggerTableColumns: string[],
-        databaseStructure: DatabaseStructure
+        database: Database
     ) {
         this.cache = cache;
         this.triggerTable = triggerTable;
         this.triggerTableColumns = triggerTableColumns;
-        this.databaseStructure = databaseStructure;
+        this.database = database;
         this.referenceMeta = this.buildReferenceMeta();
     }
 

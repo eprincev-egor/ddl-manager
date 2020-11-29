@@ -1,5 +1,6 @@
 import { ColumnLink, ObjectName } from "grapeql-lang";
-import { ColumnReference, TableReference, IReferenceFilter, Select } from "../ast";
+import { ColumnReference, Select } from "../ast";
+import { IReferenceFilter, TableReference } from "../database/schema/TableReference";
 
 export class ColumnReferenceParser {
 

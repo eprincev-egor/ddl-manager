@@ -2,7 +2,9 @@ import assert from "assert";
 import { FakeDatabase } from "./FakeDatabase";
 import { MainMigrator } from "../../../lib/Migrator/MainMigrator";
 import { Diff } from "../../../lib/Diff";
-import { DatabaseFunction, DatabaseTrigger } from "../../../lib/ast";
+import { DatabaseFunction } from "../../../lib/database/schema/DatabaseFunction";
+import { DatabaseTrigger } from "../../../lib/database/schema/DatabaseTrigger";
+import { TableID } from "../../../lib/database/schema/TableID";
 import { FileParser } from "../../../lib/parser";
 
 
@@ -56,10 +58,10 @@ describe("Migrator", () => {
             triggers: [
                 new DatabaseTrigger({
                     name: "some_simple_trigger",
-                    table: {
-                        schema: "public",
-                        name: "some_table"
-                    },
+                    table: new TableID(
+                        "public",
+                        "some_table"
+                    ),
                     procedure: {
                         schema: "public",
                         name: "some_trigger_func",

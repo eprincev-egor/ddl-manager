@@ -4,7 +4,7 @@ import { Expression } from "./expression/Expression";
 import { From } from "./From";
 import { SelectColumn } from "./SelectColumn";
 import { Spaces } from "./Spaces";
-import { TableReference, IReferenceFilter } from "./TableReference";
+import { TableReference, IReferenceFilter } from "../database/schema/TableReference";
 
 interface ISelectParams {
     columns: SelectColumn[];

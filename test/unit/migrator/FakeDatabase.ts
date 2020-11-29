@@ -1,13 +1,12 @@
-import {
-    DatabaseFunction,
-    DatabaseTrigger,
-    Select,
-    TableReference,
-    Table
-} from "../../../lib/ast";
-import { IDatabaseDriver, ITableColumn } from "../../../lib/database/interface";
+import { Select } from "../../../lib/ast";
+import { IDatabaseDriver } from "../../../lib/database/interface";
 import { Database } from "../../../lib/database/schema/Database";
-import { Table as DBTable } from "../../../lib/database/schema/Table";
+import { Table } from "../../../lib/database/schema/Table";
+import { DatabaseFunction } from "../../../lib/database/schema/DatabaseFunction";
+import { TableReference } from "../../../lib/database/schema/TableReference";
+import { DatabaseTrigger } from "../../../lib/database/schema/DatabaseTrigger";
+import { TableID } from "../../../lib/database/schema/TableID";
+import { Column } from "../../../lib/database/schema/Column";
 import { IFileContent } from "../../../lib/fs/File";
 
 export class FakeDatabase
@@ -15,7 +14,7 @@ implements IDatabaseDriver {
 
     readonly state: IFileContent;
     readonly columns: {
-        [tableAndColumn: string]: ITableColumn;
+        [tableAndColumn: string]: Column;
     };
     private columnsTypes: {[column: string]: string};
     private rowsCountByTable: {[table: string]: number};
@@ -42,7 +41,7 @@ implements IDatabaseDriver {
         database.addFunctions(this.state.functions);
 
         for (const trigger of this.state.triggers) {
-            const table = new DBTable(
+            const table = new Table(
                 trigger.table.schema,
                 trigger.table.name
             );
@@ -114,11 +113,11 @@ implements IDatabaseDriver {
         return outputTypes;
     }
 
-    async createOrReplaceColumn(table: Table, column: ITableColumn): Promise<void> {
+    async createOrReplaceColumn(table: TableID, column: Column): Promise<void> {
         this.columns[ table.toString() + "." + column.name ] = column;
     }
 
-    async dropColumn(table: Table, columnName: string): Promise<void> {
+    async dropColumn(table: TableID, columnName: string): Promise<void> {
         delete this.columns[ table.toString() + "." + columnName ];
         this.columnsDrops[ table.toString() + "." + columnName ] = true;
     }

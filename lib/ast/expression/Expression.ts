@@ -1,8 +1,8 @@
 import { Operator } from "./Operator";
 import { FuncCall } from "./FuncCall";
 import { IExpressionElement } from "./interface";
-import { TableReference } from "../TableReference";
-import { Table } from "../Table";
+import { TableReference } from "../../database/schema/TableReference";
+import { TableID } from "../../database/schema/TableID";
 import { AbstractExpressionElement } from "./AbstractExpressionElement";
 import { Spaces } from "../Spaces";
 import { UnknownExpressionElement } from "./UnknownExpressionElement";
@@ -134,7 +134,7 @@ export class Expression extends AbstractExpressionElement {
     }
 
     replaceTable(
-        replaceTable: TableReference | Table,
+        replaceTable: TableReference | TableID,
         toTable: TableReference
     ): Expression {
         const newElements = this.elements.map(elem => 

@@ -9,7 +9,8 @@ import {
 } from "grapeql-lang";
 import { ExpressionParser } from "./ExpressionParser";
 import { TableReferenceParser } from "./TableReferenceParser";
-import { From, Join, Select, SelectColumn, TableReference } from "../ast";
+import { From, Join, Select, SelectColumn } from "../ast";
+import { TableReference } from "../database/schema/TableReference";
 import assert from "assert";
 
 export class SelectParser {

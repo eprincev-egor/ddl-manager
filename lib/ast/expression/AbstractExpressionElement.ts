@@ -1,8 +1,8 @@
 import { ColumnReference } from "./ColumnReference";
 import { FuncCall } from "./FuncCall";
 import { IExpressionElement } from "./interface";
-import { Table } from "../Table";
-import { TableReference } from "../TableReference";
+import { TableID } from "../../database/schema/TableID";
+import { TableReference } from "../../database/schema/TableReference";
 import { flatMap } from "lodash";
 import { AbstractAstElement } from "../AbstractAstElement";
 
@@ -33,7 +33,7 @@ implements IExpressionElement {
     }
 
     replaceTable(
-        replaceTable: TableReference | Table,
+        replaceTable: TableReference | TableID,
         toTable: TableReference
     ) {
         return this.clone();

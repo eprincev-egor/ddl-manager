@@ -10,17 +10,17 @@ export abstract class AbstractMigrator {
     protected postgres: IDatabaseDriver;
     protected outputErrors: Error[];
     protected diff: Diff;
-    protected databaseStructure: DatabaseStructure;
+    protected database: DatabaseStructure;
 
     constructor(
         postgres: IDatabaseDriver,
         diff: Diff,
-        databaseStructure: DatabaseStructure,
+        database: DatabaseStructure,
         outputErrors: Error[]
     ) {
         this.postgres = postgres;
         this.diff = diff;
-        this.databaseStructure = databaseStructure;
+        this.database = database;
         this.outputErrors = outputErrors;
     }
 

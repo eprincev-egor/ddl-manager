@@ -2,11 +2,9 @@ import { AbstractAgg, AggFactory } from "../aggregator";
 import {
     AbstractAstElement,
     Cache,
-    Table,
     Expression,
     FuncCall,
     SelectColumn,
-    TableReference,
     HardCode,
     SetItem,
     Update,
@@ -17,6 +15,8 @@ import { flatMap } from "lodash";
 import { createAggValue } from "./createAggValue";
 import { IJoinMeta } from "./findJoinsMeta";
 import { CacheContext } from "../trigger-builder/CacheContext";
+import { TableReference } from "../../database/schema/TableReference";
+import { TableID } from "../../database/schema/TableID";
 
 type AggType = "minus" | "plus" | "delta";
 
@@ -41,7 +41,7 @@ export function buildUpdate(
 
 function createSetItems(
     cache: Cache,
-    triggerTable: Table,
+    triggerTable: TableID,
     joins: IJoinMeta[],
     aggType: AggType
 ) {
@@ -90,7 +90,7 @@ function prepareUpdateColumns(cache: Cache, aggType: AggType) {
 
 function createSetItemsByColumn(
     cache: Cache,
-    triggerTable: Table,
+    triggerTable: TableID,
     joins: IJoinMeta[],
     updateColumn: SelectColumn,
     aggType: AggType,
@@ -144,7 +144,7 @@ function createSetItemsByColumn(
 }
 
 function aggregate(
-    triggerTable: Table,
+    triggerTable: TableID,
     joins: IJoinMeta[],
     aggCall: FuncCall,
     aggType: AggType,

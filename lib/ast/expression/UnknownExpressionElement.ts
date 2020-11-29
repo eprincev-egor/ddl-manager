@@ -1,7 +1,7 @@
 import { AbstractExpressionElement } from "./AbstractExpressionElement";
 import { ColumnReference } from "./ColumnReference";
-import { Table } from "../Table";
-import { TableReference } from "../TableReference";
+import { TableID } from "../../database/schema/TableID";
+import { TableReference } from "../../database/schema/TableReference";
 import { Spaces } from "../Spaces";
 
 export interface IUnknownSyntax {
@@ -39,7 +39,7 @@ export class UnknownExpressionElement extends AbstractExpressionElement {
     }
 
     replaceTable(
-        replaceTable: TableReference | Table,
+        replaceTable: TableReference | TableID,
         toTable: TableReference
     ) {
         const newColumnsMap = {...this.columnsMap};

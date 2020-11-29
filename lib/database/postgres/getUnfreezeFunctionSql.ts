@@ -1,4 +1,4 @@
-import { DatabaseFunction } from "../../ast";
+import { DatabaseFunction } from "../schema/DatabaseFunction";
 import {
     wrapText
 } from "./wrapText";

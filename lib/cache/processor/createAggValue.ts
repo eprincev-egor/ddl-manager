@@ -1,9 +1,11 @@
-import { Expression, Table, TableReference } from "../../ast";
+import { Expression } from "../../ast";
+import { TableID } from "../../database/schema/TableID";
+import { TableReference } from "../../database/schema/TableReference";
 import { buildJoins } from "./buildJoins";
 import { IJoinMeta } from "./findJoinsMeta";
 
 export function createAggValue(
-    triggerTable: Table,
+    triggerTable: TableID,
     joinsMeta: IJoinMeta[],
     aggArgs: Expression[],
     row: "new" | "old"

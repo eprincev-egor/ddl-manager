@@ -1,12 +1,10 @@
-import { wrapText } from "../database/postgres/wrapText";
-import { MAX_NAME_LENGTH } from "../database/postgres/constants";
+import { wrapText } from "../postgres/wrapText";
+import { MAX_NAME_LENGTH } from "../postgres/constants";
+import { TableID } from "./TableID";
 
 export interface IDatabaseTriggerParams {
     name: string;
-    table: {
-        schema: string;
-        name: string;
-    };
+    table: TableID;
     procedure: {
         schema: string;
         name: string;
@@ -39,10 +37,7 @@ export class DatabaseTrigger {
         name: string;
         args: string[];
     };
-    table!: {
-        schema: string;
-        name: string;
-    };
+    table!: TableID;
 
     before?: boolean;
     after?: boolean;

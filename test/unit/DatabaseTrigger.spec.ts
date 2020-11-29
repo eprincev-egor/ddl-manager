@@ -1,4 +1,5 @@
-import { DatabaseTrigger } from "../../lib/ast";
+import { DatabaseTrigger } from "../../lib/database/schema/DatabaseTrigger";
+import { TableID } from "../../lib/database/schema/TableID";
 import assert from "assert";
 
 describe("DatabaseTrigger", () => {
@@ -11,10 +12,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            }
+            table: new TableID(
+                "public",
+                "my_table"
+            )
         });
 
         const trigger2 = new DatabaseTrigger({
@@ -24,10 +25,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            }
+            table: new TableID(
+                "public",
+                "my_table"
+            )
         });
         
         assert.ok( trigger1.equal(trigger2), "trigger1 == trigger2" );
@@ -42,10 +43,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            }
+            table: new TableID(
+                "public",
+                "my_table"
+            )
         });
 
         const trigger2 = new DatabaseTrigger({
@@ -55,10 +56,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            }
+            table: new TableID(
+                "public",
+                "my_table"
+            )
         });
         
         assert.ok( !trigger1.equal(trigger2), "trigger1 != trigger2" );
@@ -73,10 +74,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table_1"
-            }
+            table: new TableID(
+                "public",
+                "my_table_1"
+            )
         });
 
         const trigger2 = new DatabaseTrigger({
@@ -86,10 +87,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table_2"
-            }
+            table: new TableID(
+                "public",
+                "my_table_2"
+            )
         });
         
         assert.ok( !trigger1.equal(trigger2), "trigger1 != trigger2" );
@@ -105,10 +106,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function_1",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            }
+            table: new TableID(
+                "public",
+                "my_table"
+            )
         });
 
         const trigger2 = new DatabaseTrigger({
@@ -118,10 +119,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function_2",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            }
+            table: new TableID(
+                "public",
+                "my_table"
+            )
         });
         
         assert.ok( !trigger1.equal(trigger2), "trigger1 != trigger2" );
@@ -137,10 +138,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            },
+            table: new TableID(
+                "public",
+                "my_table"
+            ),
 
             before: true,
             insert: true
@@ -153,10 +154,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            },
+            table: new TableID(
+                "public",
+                "my_table"
+            ),
 
             after: true,
             delete: true
@@ -174,10 +175,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            },
+            table: new TableID(
+                "public",
+                "my_table"
+            ),
             when: "when 1"
         });
 
@@ -188,10 +189,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            },
+            table: new TableID(
+                "public",
+                "my_table"
+            ),
             when: "when 2"
         });
         
@@ -207,10 +208,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            },
+            table: new TableID(
+                "public",
+                "my_table"
+            ),
             comment: "comment 1"
         });
 
@@ -221,10 +222,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            },
+            table: new TableID(
+                "public",
+                "my_table"
+            ),
             comment: "comment 2"
         });
         
@@ -240,10 +241,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            },
+            table: new TableID(
+                "public",
+                "my_table"
+            ),
             comment: null as any
         });
 
@@ -254,10 +255,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            },
+            table: new TableID(
+                "public",
+                "my_table"
+            ),
             comment: undefined as any
         });
         
@@ -273,10 +274,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            },
+            table: new TableID(
+                "public",
+                "my_table"
+            ),
             frozen: false
         });
 
@@ -287,10 +288,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            },
+            table: new TableID(
+                "public",
+                "my_table"
+            ),
             frozen: true
         });
         
@@ -306,10 +307,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            },
+            table: new TableID(
+                "public",
+                "my_table"
+            ),
             frozen: null as any
         });
 
@@ -320,10 +321,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            },
+            table: new TableID(
+                "public",
+                "my_table"
+            ),
             frozen: undefined as any
         });
         
@@ -334,10 +335,10 @@ describe("DatabaseTrigger", () => {
                 name: "my_trigger_function",
                 args: []
             },
-            table: {
-                schema: "public",
-                name: "my_table"
-            },
+            table: new TableID(
+                "public",
+                "my_table"
+            ),
             frozen: false
         });
         
