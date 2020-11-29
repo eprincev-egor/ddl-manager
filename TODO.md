@@ -50,6 +50,5 @@
 + log update cache columns
   + fix package number
 + when need drop function while trigger is frozen, but function not
-- ddl-manager-build: throw error on fails in cache migrators
 - timeline
 - change sleep ms in tests

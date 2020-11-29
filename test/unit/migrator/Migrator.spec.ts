@@ -325,4 +325,21 @@ describe("Migrator", () => {
         );
     });
 
+    it("return error on creating cache", async() => {
+
+        database.setColumnsTypes({
+            orders_profit: "numeric"
+        });
+
+        database.createOrReplaceCacheTrigger = async () => {
+            throw new Error("test error");
+        };
+
+        changes.createState({cache: [FileParser.parseCache(ordersProfitCacheSQL)]});
+
+        const errors = await MainMigrator.migrate(database, changes);
+
+        assert.strictEqual(errors.length, 1);
+    });
+
 });
