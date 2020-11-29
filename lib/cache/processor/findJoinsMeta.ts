@@ -22,7 +22,15 @@ export function findJoinsMeta(select: Select) {
                 select,
                 columnReference
             });
-            if ( joinMeta ) {
+            if ( !joinMeta ) {
+                continue;
+            }
+
+            const existsSimilarJoin = joins.find(someMeta =>
+                someMeta.joinAlias === joinMeta.joinAlias &&
+                someMeta.joinedTable === joinMeta.joinedTable
+            );
+            if ( !existsSimilarJoin ) {
                 joins.push(joinMeta);
             }
         }

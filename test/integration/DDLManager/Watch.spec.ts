@@ -101,7 +101,7 @@ describe("integration/DDLManager.watch", () => {
             language plpgsql;
         `);
         
-        await sleep(100);
+        await sleep(150);
 
         result = await db.query("select some_func() as some_func");
         row = result.rows[0];
