@@ -6,7 +6,7 @@ import path from "path";
 import { FileParser } from "../parser";
 import { IFileParams } from "./File";
 import { Cache } from "../ast";
-import { Diff } from "../Diff";
+import { Migration } from "../Migrator/Migration";
 import { FilesState } from "./FilesState";
 import { DatabaseFunction } from "../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
@@ -272,7 +272,7 @@ export class FileReader extends EventEmitter {
     private onRemoveDirOrFile(rootFolderPath: string, subPath: string) {
         let hasChange = false;
 
-        const changes = Diff.empty();
+        const changes = Migration.empty();
 
 
         for (let i = 0, n = this.state.files.length; i < n; i++) {
@@ -347,7 +347,7 @@ export class FileReader extends EventEmitter {
 
         this.state.removeFile(oldFile);
 
-        const changes = Diff.empty()
+        const changes = Migration.empty()
             .drop(oldFile.content);
 
         try {
@@ -382,7 +382,7 @@ export class FileReader extends EventEmitter {
 
         this.state.addFile( file );
         
-        const changes = Diff.empty().create(file.content);
+        const changes = Migration.empty().create(file.content);
 
         this.emit("change", changes);
     }

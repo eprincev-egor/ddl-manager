@@ -1,31 +1,31 @@
-import { Diff } from "../Diff";
+import { Migration } from "./Migration";
 import { IDatabaseDriver } from "../database/interface";
 import { FunctionsMigrator } from "./FunctionsMigrator";
 import { TriggersMigrator } from "./TriggersMigrator";
 import { MainCacheMigrator } from "./cache/MainCacheMigrator";
 
 export class MainMigrator {
-    private diff: Diff;
+    private migration: Migration;
     private postgres: IDatabaseDriver;
 
-    static async migrate(postgres: IDatabaseDriver, diff: Diff) {
-        const migrator = new MainMigrator(postgres, diff);
+    static async migrate(postgres: IDatabaseDriver, migration: Migration) {
+        const migrator = new MainMigrator(postgres, migration);
         return await migrator.migrate();
     }
 
-    static async migrateWithoutUpdateCacheColumns(postgres: IDatabaseDriver, diff: Diff) {
-        const migrator = new MainMigrator(postgres, diff);
+    static async migrateWithoutUpdateCacheColumns(postgres: IDatabaseDriver, migration: Migration) {
+        const migrator = new MainMigrator(postgres, migration);
         return await migrator.migrateWithoutUpdateCacheColumns();
     }
 
-    static async refreshCache(postgres: IDatabaseDriver, diff: Diff) {
-        const migrator = new MainMigrator(postgres, diff);
+    static async refreshCache(postgres: IDatabaseDriver, migration: Migration) {
+        const migrator = new MainMigrator(postgres, migration);
         return await migrator.refreshCache();
     }
     
-    private constructor(postgres: IDatabaseDriver, diff: Diff) {
+    private constructor(postgres: IDatabaseDriver, migration: Migration) {
         this.postgres = postgres;
-        this.diff = diff;
+        this.migration = migration;
     }
 
     private async migrate() {
@@ -85,19 +85,19 @@ export class MainMigrator {
 
         const functions = new FunctionsMigrator(
             this.postgres,
-            this.diff,
+            this.migration,
             databaseStructure,
             outputErrors
         );
         const triggers = new TriggersMigrator(
             this.postgres,
-            this.diff,
+            this.migration,
             databaseStructure,
             outputErrors
         );
         const cache = new MainCacheMigrator(
             this.postgres,
-            this.diff,
+            this.migration,
             databaseStructure,
             outputErrors
         );

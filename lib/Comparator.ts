@@ -2,7 +2,7 @@ import { Database } from "./database/schema/Database";
 import { DatabaseTrigger } from "./database/schema/DatabaseTrigger";
 import { DatabaseFunction } from "./database/schema/DatabaseFunction";
 import { FilesState } from "./fs/FilesState";
-import { Diff } from "./Diff";
+import { Migration } from "./Migrator/Migration";
 import { flatMap } from "lodash";
 
 export class Comparator {
@@ -12,21 +12,21 @@ export class Comparator {
         return comparator.compare();
     }
 
-    private diff: Diff;
+    private migration: Migration;
     private database: Database;
     private fs: FilesState;
 
     private constructor(database: Database, fs: FilesState) {
         this.database = database;
         this.fs = fs;
-        this.diff = Diff.empty();
+        this.migration = Migration.empty();
     }
 
     compare() {
         this.dropOldObjects();
         this.createNewObjects();
 
-        return this.diff;
+        return this.migration;
     }
 
     private dropOldObjects() {
@@ -47,7 +47,7 @@ export class Comparator {
                 );
 
                 if ( !existsSameTriggerFromFile ) {
-                    this.diff.drop({
+                    this.migration.drop({
                         triggers: [dbTrigger]
                     });
                 }
@@ -102,13 +102,13 @@ export class Comparator {
                 });
 
                 // drop
-                this.diff.drop({triggers: depsTriggers});
+                this.migration.drop({triggers: depsTriggers});
                 // and create again
-                this.diff.create({triggers: depsTriggers});
+                this.migration.create({triggers: depsTriggers});
             }
             
             
-            this.diff.drop({
+            this.migration.drop({
                 functions: [dbFunc]
             });
         }
@@ -131,7 +131,7 @@ export class Comparator {
                 continue;
             }
 
-            this.diff.create({
+            this.migration.create({
                 functions: [func]
             });
         }
@@ -150,7 +150,7 @@ export class Comparator {
                 continue;
             }
 
-            this.diff.create({
+            this.migration.create({
                 triggers: [trigger]
             });
         }

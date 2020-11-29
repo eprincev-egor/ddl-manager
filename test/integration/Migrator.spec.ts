@@ -8,7 +8,7 @@ import { TableID } from "../../lib/database/schema/TableID";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { PostgresDriver } from "../../lib/database/PostgresDriver";
-import { Diff } from "../../lib/Diff";
+import { Migration } from "../../lib/Migrator/Migration";
 import { FileParser } from "../../lib/parser";
 
 use(chaiShallowDeepEqualPlugin);
@@ -29,7 +29,7 @@ describe("integration/MainMigrator", () => {
         db.end();
     });
 
-    interface IDiffParams {
+    interface IMigrationParams {
         drop: {
             functions: IDatabaseFunctionParams[];
             triggers: IDatabaseTriggerParams[];
@@ -40,42 +40,42 @@ describe("integration/MainMigrator", () => {
         };
     }
 
-    async function migrate(params: {diff: IDiffParams}) {
-        const diff = Diff.empty();
-        dropFunctions(diff, params.diff.drop.functions);
-        dropTriggers(diff, params.diff.drop.triggers);
-        createFunctions(diff, params.diff.create.functions);
-        createTriggers(diff, params.diff.create.triggers);
+    async function migrate(params: {migration: IMigrationParams}) {
+        const migration = Migration.empty();
+        dropFunctions(migration, params.migration.drop.functions);
+        dropTriggers(migration, params.migration.drop.triggers);
+        createFunctions(migration, params.migration.create.functions);
+        createTriggers(migration, params.migration.create.triggers);
 
         const postgres = new PostgresDriver(db);
-        await MainMigrator.migrate(postgres, diff);
+        await MainMigrator.migrate(postgres, migration);
     }
 
-    function dropFunctions(diff: Diff, functions: IDatabaseFunctionParams[]) {
+    function dropFunctions(migration: Migration, functions: IDatabaseFunctionParams[]) {
         functions.map(funcJson => {
             const func = new DatabaseFunction(funcJson);
-            diff.drop({functions: [func]});
+            migration.drop({functions: [func]});
         });
     }
 
-    function dropTriggers(diff: Diff, triggers: IDatabaseTriggerParams[]) {
+    function dropTriggers(migration: Migration, triggers: IDatabaseTriggerParams[]) {
         triggers.map(triggerJson => {
             const trigger = new DatabaseTrigger(triggerJson);
-            diff.drop({triggers: [trigger]});
+            migration.drop({triggers: [trigger]});
         });
     }
 
-    function createFunctions(diff: Diff, functions: IDatabaseFunctionParams[]) {
+    function createFunctions(migration: Migration, functions: IDatabaseFunctionParams[]) {
         functions.map(funcJson => {
             const func = new DatabaseFunction(funcJson);
-            diff.create({functions: [func]});
+            migration.create({functions: [func]});
         });
     }
 
-    function createTriggers(diff: Diff, triggers: IDatabaseTriggerParams[]) {
+    function createTriggers(migration: Migration, triggers: IDatabaseTriggerParams[]) {
         triggers.map(triggerJson => {
             const trigger = new DatabaseTrigger(triggerJson);
-            diff.create({triggers: [trigger]});
+            migration.create({triggers: [trigger]});
         });
     }
 
@@ -85,7 +85,7 @@ describe("integration/MainMigrator", () => {
         
         await migrate({
             
-            diff: {
+            migration: {
                 drop: {
                     functions: [],
                     triggers: []
@@ -127,7 +127,7 @@ describe("integration/MainMigrator", () => {
 
         await migrate({
             
-            diff: {
+            migration: {
                 drop: {
                     functions: [],
                     triggers: []
@@ -189,7 +189,7 @@ describe("integration/MainMigrator", () => {
             );
         `);
 
-        const diff: IDiffParams = {
+        const migration: IMigrationParams = {
             drop: {
                 functions: [],
                 triggers: []
@@ -229,8 +229,8 @@ describe("integration/MainMigrator", () => {
         };
 
         // do it twice without errors
-        await migrate({diff});
-        await migrate({diff});
+        await migrate({migration: migration});
+        await migrate({migration: migration});
         
 
         // check trigger on table
@@ -254,7 +254,7 @@ describe("integration/MainMigrator", () => {
             language sql;
         `);
 
-        await migrate({diff: {
+        await migrate({migration: {
             drop: {
                 functions: [],
                 triggers: []
@@ -290,7 +290,7 @@ describe("integration/MainMigrator", () => {
         `);
 
         try {
-            await migrate({diff: {
+            await migrate({migration: {
                 drop: {
                     functions: [
                         {
@@ -321,7 +321,7 @@ describe("integration/MainMigrator", () => {
             language sql;
         `);
 
-        await migrate({diff: {
+        await migrate({migration: {
             drop: {
                 functions: [],
                 triggers: []
@@ -367,7 +367,7 @@ describe("integration/MainMigrator", () => {
             language sql;
         `);
 
-        await migrate({diff: {
+        await migrate({migration: {
             drop: {
                 functions: [],
                 triggers: []
@@ -423,7 +423,7 @@ describe("integration/MainMigrator", () => {
         `);
 
         try {
-            await migrate({diff: {
+            await migrate({migration: {
                 drop: {
                     functions: [],
                     triggers: []
@@ -489,7 +489,7 @@ describe("integration/MainMigrator", () => {
 
         
         try {
-            await migrate({diff: {
+            await migrate({migration: {
                 drop: {
                     functions: [
                         {
@@ -540,7 +540,7 @@ describe("integration/MainMigrator", () => {
             );
         `);
 
-        await migrate({diff: {
+        await migrate({migration: {
             drop: {
                 functions: [],
                 triggers: []
@@ -587,7 +587,7 @@ describe("integration/MainMigrator", () => {
             default values;
         `);
 
-        await migrate({diff: {
+        await migrate({migration: {
             drop: {
                 functions: [],
                 triggers: []
@@ -631,7 +631,7 @@ describe("integration/MainMigrator", () => {
             );
         `);
 
-        await migrate({diff: {
+        await migrate({migration: {
             drop: {
                 functions: [],
                 triggers: []
@@ -663,7 +663,7 @@ describe("integration/MainMigrator", () => {
     });
 
     it("migrate function, arg without name", async() => {
-        await migrate({diff: {
+        await migrate({migration: {
             drop: {
                 functions: [],
                 triggers: []
@@ -695,7 +695,7 @@ describe("integration/MainMigrator", () => {
     });
 
     it("migrate function, in/out arg", async() => {
-        await migrate({diff: {
+        await migrate({migration: {
             drop: {
                 functions: [],
                 triggers: []
@@ -740,7 +740,7 @@ describe("integration/MainMigrator", () => {
 
         await migrate({
             
-            diff: {
+            migration: {
                 drop: {
                     functions: [],
                     triggers: []
@@ -794,7 +794,7 @@ describe("integration/MainMigrator", () => {
 
         await migrate({
             
-            diff: {
+            migration: {
                 drop: {
                     functions: [],
                     triggers: []
@@ -868,7 +868,7 @@ describe("integration/MainMigrator", () => {
             end`
         };
 
-        await migrate({diff: {
+        await migrate({migration: {
             drop: {
                 functions: [],
                 triggers: []
@@ -888,7 +888,7 @@ describe("integration/MainMigrator", () => {
         });
 
 
-        await migrate({diff: {
+        await migrate({migration: {
             drop: {
                 functions: [
                     func
@@ -917,7 +917,7 @@ describe("integration/MainMigrator", () => {
         }
     });
 
-    it("migrate two functions, same name, diff args", async() => {
+    it("migrate two functions, same name, migration args", async() => {
         const func1: IDatabaseFunctionParams = {
             language: "plpgsql",
             schema: "public",
@@ -953,7 +953,7 @@ describe("integration/MainMigrator", () => {
             end`
         };
 
-        await migrate({diff: {
+        await migrate({migration: {
             drop: {
                 functions: [],
                 triggers: []
@@ -980,7 +980,7 @@ describe("integration/MainMigrator", () => {
         });
 
 
-        await migrate({diff: {
+        await migrate({migration: {
             drop: {
                 functions: [
                     func1,
@@ -1051,7 +1051,7 @@ describe("integration/MainMigrator", () => {
             )
         `);
 
-        const changes = Diff.empty().create({
+        const changes = Migration.empty().create({
             // cache: [cache]
         });
 

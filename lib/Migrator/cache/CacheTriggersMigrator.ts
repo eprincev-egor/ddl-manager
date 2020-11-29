@@ -5,13 +5,13 @@ import { CacheTriggersBuilder } from "../../cache/CacheTriggersBuilder";
 export class CacheTriggersMigrator extends AbstractMigrator {
 
     async drop() {
-        // for (const cache of this.diff.toDrop.cache) {
+        // for (const cache of this.migration.toDrop.cache) {
         //     await this.dropCacheTriggers(cache);
         // }
     }
 
     async create() {
-        // for (const cache of this.diff.toCreate.cache || []) {
+        // for (const cache of this.migration.toCreate.cache || []) {
         //     await this.createCacheTriggers(cache);
         // }
     }

@@ -8,7 +8,7 @@ import { IDatabaseDriver } from "./database/interface";
 import { PostgresDriver } from "./database/PostgresDriver";
 import { getDbClient, IDBConfig } from "./database/getDbClient";
 import { DatabaseTrigger } from "./database/schema/DatabaseTrigger";
-import { Diff } from "./Diff";
+import { Migration } from "./Migrator/Migration";
 
 const watchers: FileReader[] = [];
 
@@ -99,13 +99,13 @@ export class DDLManager {
     }
 
     private async build() {
-        const {diff, postgres, fileReader} = await this.compareDbAndFs();
+        const {migration, postgres, fileReader} = await this.compareDbAndFs();
 
-        const migrateErrors = await MainMigrator.migrate(postgres, diff);
+        const migrateErrors = await MainMigrator.migrate(postgres, migration);
 
         this.onMigrate(
             postgres,
-            diff,
+            migration,
             migrateErrors
         );
         
@@ -113,13 +113,13 @@ export class DDLManager {
     }
 
     private async refreshCache() {
-        const {diff, postgres} = await this.compareDbAndFs();
+        const {migration, postgres} = await this.compareDbAndFs();
 
-        const migrateErrors = await MainMigrator.refreshCache(postgres, diff);
+        const migrateErrors = await MainMigrator.refreshCache(postgres, migration);
         
         this.onMigrate(
             postgres,
-            diff,
+            migration,
             migrateErrors
         );
     }
@@ -136,20 +136,20 @@ export class DDLManager {
         const postgres = await this.postgres();
         const databaseState = await postgres.load();
 
-        const diff = Comparator.compare(databaseState, fileReader.state);
-        return {diff, postgres, fileReader};
+        const migration = Comparator.compare(databaseState, fileReader.state);
+        return {migration, postgres, fileReader};
     }
 
     private onMigrate(
         postgres: IDatabaseDriver,
-        diff: Diff,
+        migration: Migration,
         migrateErrors: Error[]
     ) {
         if ( this.needCloseConnect ) {
             postgres.end();
         }
 
-        diff.log();
+        migration.log();
         
         if ( !migrateErrors.length ) {
             // tslint:disable-next-line: no-console
@@ -165,19 +165,19 @@ export class DDLManager {
 
         await filesState.watch();
         
-        filesState.on("change", (diff: Diff) => {
-            this.onChangeFS(diff);
+        filesState.on("change", (migration: Migration) => {
+            this.onChangeFS(migration);
         });
 
         watchers.push(filesState);
     }
 
-    private async onChangeFS(diff: Diff) {
+    private async onChangeFS(migration: Migration) {
 
         try {
-            await this.migrateWithoutUpdateCacheColumns(diff);
+            await this.migrateWithoutUpdateCacheColumns(migration);
 
-            diff.log();
+            migration.log();
         } catch(err) {
 
             // если в файле была frozen функция
@@ -188,21 +188,21 @@ export class DDLManager {
                 /cannot drop frozen (trigger|function)/i.test(err.message)
             );
             const hasCreateFuncOrTrigger = (
-                diff.toCreate.functions.length ||
-                diff.toCreate.triggers.length
+                migration.toCreate.functions.length ||
+                migration.toCreate.triggers.length
             );
 
             if ( isFrozenDropError && hasCreateFuncOrTrigger ) {
                 // запустим одтельно создание новой функции
                 // т.к. сборсить frozen нельзя, а новая функция может быть валидной
 
-                const createDiff = Diff.empty()
-                    .create(diff.toCreate);
+                const createDiff = Migration.empty()
+                    .create(migration.toCreate);
 
                 try {
                     await this.migrateWithoutUpdateCacheColumns(createDiff);
     
-                    diff.log();
+                    migration.log();
                 } catch(err) {
                     // tslint:disable-next-line: no-console
                     console.error(err);
@@ -345,10 +345,10 @@ export class DDLManager {
         }
     }
 
-    private async migrateWithoutUpdateCacheColumns(diff: Diff) {
+    private async migrateWithoutUpdateCacheColumns(migration: Migration) {
         const postgres = await this.postgres();
         const outputErrors = await MainMigrator.migrateWithoutUpdateCacheColumns(
-            postgres, diff
+            postgres, migration
         );
 
         if ( outputErrors.length ) {

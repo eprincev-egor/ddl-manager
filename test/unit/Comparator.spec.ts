@@ -7,7 +7,7 @@ import { DatabaseFunction, IDatabaseFunctionParams } from "../../lib/database/sc
 import { DatabaseTrigger, IDatabaseTriggerParams } from "../../lib/database/schema/DatabaseTrigger";
 import { Table } from "../../lib/database/schema/Table";
 import { TableID } from "../../lib/database/schema/TableID";
-import { Diff } from "../../lib/Diff";
+import { Migration } from "../../lib/Migrator/Migration";
 import { FilesState } from "../../lib/fs/FilesState";
 import { File } from "../../lib/fs/File";
 interface IStateParams {
@@ -16,7 +16,7 @@ interface IStateParams {
     cache: Cache[];
 }
 
-function diffState(params: {filesState: Partial<IStateParams>, dbState: Partial<IStateParams>}) {
+function compare(params: {filesState: Partial<IStateParams>, dbState: Partial<IStateParams>}) {
     const {
         dbState: dbStateParams,
         filesState: filesStateParams
@@ -62,23 +62,23 @@ function diffState(params: {filesState: Partial<IStateParams>, dbState: Partial<
         }));
     }
 
-    const diff = Comparator.compare(database, filesState);
-    return diff;
+    const migration = Comparator.compare(database, filesState);
+    return migration;
 }
 
 
-function deepStrictEqualDiff(
-    actualDiff: Diff,
-    expectedDiffParams: Partial<{
+function deepStrictEqualMigration(
+    actualMigration: Migration,
+    expectedMigrationParams: Partial<{
         create: Partial<IStateParams>;
         drop: Partial<IStateParams>;
     }>
 ) {
     
-    const expectedCreate: Partial<IStateParams> = expectedDiffParams.create || {};
-    const expectedDrop: Partial<IStateParams> = expectedDiffParams.drop || {};
+    const expectedCreate: Partial<IStateParams> = expectedMigrationParams.create || {};
+    const expectedDrop: Partial<IStateParams> = expectedMigrationParams.drop || {};
 
-    const expectedDiff = Diff.empty()
+    const expectedDiff = Migration.empty()
         .create({
             functions: createFuncsInstances(expectedCreate),
             triggers: createTriggersInstances(expectedCreate),
@@ -91,7 +91,7 @@ function deepStrictEqualDiff(
         })
     ;
     
-    assert.deepStrictEqual(actualDiff, expectedDiff);
+    assert.deepStrictEqual(actualMigration, expectedDiff);
 }
 
 function createFuncsInstances(state: Partial<IStateParams>) {
@@ -113,14 +113,14 @@ function createTriggersInstances(state: Partial<IStateParams>) {
 describe("Comparator", () => {
 
     it("sync empty state", () => {
-        const diff = diffState({
+        const migration = compare({
             filesState: {
             },
             dbState: {
             }
         });
 
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualMigration(migration, {
             drop: {
                 triggers: [],
                 functions: [],
@@ -154,7 +154,7 @@ describe("Comparator", () => {
             end`
         };
 
-        const diff = diffState({
+        const migration = compare({
             filesState: {
                 functions: [
                     func
@@ -164,7 +164,7 @@ describe("Comparator", () => {
             }
         });
 
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualMigration(migration, {
             drop: {
                 triggers: [],
                 functions: [],
@@ -199,7 +199,7 @@ describe("Comparator", () => {
                 return x + y;
             end`
         };
-        const diff = diffState({
+        const migration = compare({
             filesState: {
             },
             dbState: {
@@ -209,7 +209,7 @@ describe("Comparator", () => {
             }
         });
 
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualMigration(migration, {
             drop: {
                 triggers: [],
                 functions: [
@@ -264,7 +264,7 @@ describe("Comparator", () => {
             end`
         };
 
-        const diff = diffState({
+        const migration = compare({
             filesState: {
                 functions: [
                     fileFunc
@@ -278,7 +278,7 @@ describe("Comparator", () => {
         });
         
 
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualMigration(migration, {
             drop: {
                 triggers: [],
                 functions: [
@@ -340,7 +340,7 @@ describe("Comparator", () => {
             end`
         };
 
-        const diff = diffState({
+        const migration = compare({
             filesState: {
                 functions: [
                     fileFunc
@@ -353,7 +353,7 @@ describe("Comparator", () => {
             }
         });
         
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualMigration(migration, {
             drop: {
                 triggers: [],
                 functions: [
@@ -371,7 +371,7 @@ describe("Comparator", () => {
         });
     });
 
-    it("no changes, same states, empty diff", () => {
+    it("no changes, same states, empty migration", () => {
         const func = {
             schema: "public",
             name: "some_test_func3",
@@ -382,7 +382,7 @@ describe("Comparator", () => {
             end`
         };
 
-        const diff = diffState({
+        const migration = compare({
             filesState: {
                 functions: [
                     func
@@ -395,7 +395,7 @@ describe("Comparator", () => {
             }
         });
 
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualMigration(migration, {
             drop: {
                 triggers: [],
                 functions: [],
@@ -448,7 +448,7 @@ describe("Comparator", () => {
             }
         };
 
-        const diff = diffState({
+        const migration = compare({
             filesState: {
                 functions: [
                     func
@@ -468,7 +468,7 @@ describe("Comparator", () => {
         });
 
 
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualMigration(migration, {
             drop: {
                 triggers: [
                     dbTrigger
@@ -486,7 +486,7 @@ describe("Comparator", () => {
         });
     });
 
-    it("no changes, same states, empty diff (triggers)", () => {
+    it("no changes, same states, empty migration (triggers)", () => {
         const func = {
             schema: "public",
             name: "some_action_on_some_event",
@@ -514,7 +514,7 @@ describe("Comparator", () => {
         };
         const dbTrigger = _.cloneDeep(trigger);
 
-        const diff = diffState({
+        const migration = compare({
             filesState: {
                 functions: [
                     func
@@ -534,7 +534,7 @@ describe("Comparator", () => {
         });
 
 
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualMigration(migration, {
             drop: {
                 triggers: [],
                 functions: [],
@@ -560,7 +560,7 @@ describe("Comparator", () => {
             comment: "test"
         };
 
-        const diff = diffState({
+        const migration = compare({
             filesState: {
                 functions: [
                     func
@@ -570,7 +570,7 @@ describe("Comparator", () => {
             }
         });
 
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualMigration(migration, {
             drop: {
                 triggers: [],
                 functions: [],
@@ -586,7 +586,7 @@ describe("Comparator", () => {
         });
     });
 
-    it("empty diff on new frozen function", () => {
+    it("empty migration on new frozen function", () => {
         const func = {
             schema: "public",
             name: "some_func",
@@ -598,7 +598,7 @@ describe("Comparator", () => {
             frozen: true
         };
 
-        const diff = diffState({
+        const migration = compare({
             filesState: {
             },
             dbState: {
@@ -608,7 +608,7 @@ describe("Comparator", () => {
             }
         });
 
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualMigration(migration, {
             drop: {
                 triggers: [],
                 functions: [],
@@ -622,7 +622,7 @@ describe("Comparator", () => {
         });
     });
 
-    it("empty diff on new frozen trigger", () => {
+    it("empty migration on new frozen trigger", () => {
         const func = {
             schema: "public",
             name: "some_action_on_some_event",
@@ -649,7 +649,7 @@ describe("Comparator", () => {
             frozen: true
         };
 
-        const diff = diffState({
+        const migration = compare({
             filesState: {
             },
             dbState: {
@@ -662,7 +662,7 @@ describe("Comparator", () => {
             }
         });
 
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualMigration(migration, {
             drop: {
                 triggers: [],
                 functions: [],
@@ -725,10 +725,10 @@ describe("Comparator", () => {
             }
         };
 
-        let diff;
+        let migration;
 
         // for drop function, need drop trigger, who call it function
-        diff = diffState({
+        migration = compare({
             filesState: {
                 functions: [
                     func1
@@ -747,7 +747,7 @@ describe("Comparator", () => {
             }
         });
 
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualMigration(migration, {
             drop: {
                 triggers: [
                     trigger1
@@ -769,9 +769,9 @@ describe("Comparator", () => {
         });
 
 
-        // check diff on duplicate trigger
+        // check migration on duplicate trigger
         // when we have changes in trigger and function
-        diff = diffState({
+        migration = compare({
             filesState: {
                 functions: [
                     func1
@@ -790,7 +790,7 @@ describe("Comparator", () => {
             }
         });
 
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualMigration(migration, {
             drop: {
                 triggers: [
                     trigger1
@@ -841,7 +841,7 @@ describe("Comparator", () => {
             name: longName.slice(0, 64)
         });
 
-        const diff = diffState({
+        const migration = compare({
             filesState: {
                 functions: [
                     funcInFS
@@ -854,7 +854,7 @@ describe("Comparator", () => {
             }
         });
 
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualMigration(migration, {
             drop: {
                 triggers: [],
                 functions: [],
@@ -895,7 +895,7 @@ describe("Comparator", () => {
             name: longName.slice(0, 64)
         });
 
-        const diff = diffState({
+        const migration = compare({
             filesState: {
                 triggers: [
                     triggerInFS
@@ -908,7 +908,7 @@ describe("Comparator", () => {
             }
         });
 
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualMigration(migration, {
             drop: {
                 triggers: [],
                 functions: [],
@@ -932,7 +932,7 @@ describe("Comparator", () => {
             )
         `);
 
-        const diff = diffState({
+        const migration = compare({
             filesState: {
                 cache: [cache]
             },
@@ -940,7 +940,7 @@ describe("Comparator", () => {
             }
         });
 
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualMigration(migration, {
             drop: {
                 triggers: [],
                 functions: [],
@@ -963,7 +963,7 @@ describe("Comparator", () => {
             )
         `);
 
-        const diff = diffState({
+        const migration = diffState({
             filesState: {
             },
             dbState: {
@@ -971,7 +971,7 @@ describe("Comparator", () => {
             }
         });
 
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualDiff(migration, {
             drop: {
                 triggers: [],
                 functions: [],
@@ -994,7 +994,7 @@ describe("Comparator", () => {
             )
         `);
 
-        const diff = diffState({
+        const migration = diffState({
             filesState: {
                 cache: [cache]
             },
@@ -1003,7 +1003,7 @@ describe("Comparator", () => {
             }
         });
 
-        deepStrictEqualDiff(diff, {
+        deepStrictEqualDiff(migration, {
             drop: {
                 triggers: [],
                 functions: [],

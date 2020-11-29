@@ -12,7 +12,7 @@ export class TriggersMigrator extends AbstractMigrator {
 
     private async dropTriggers() {
 
-        for (const trigger of this.diff.toDrop.triggers) {
+        for (const trigger of this.migration.toDrop.triggers) {
             try {
                 await this.postgres.dropTrigger(trigger);
             } catch(err) {
@@ -23,7 +23,7 @@ export class TriggersMigrator extends AbstractMigrator {
 
     private async createTriggers() {
 
-        for (const trigger of this.diff.toCreate.triggers) {
+        for (const trigger of this.migration.toCreate.triggers) {
             try {
                 await this.postgres.createOrReplaceTrigger(trigger);
             } catch(err) {

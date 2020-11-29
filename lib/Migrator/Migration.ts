@@ -1,6 +1,5 @@
-import { DatabaseFunction } from "./database/schema/DatabaseFunction";
-import { DatabaseTrigger } from "./database/schema/DatabaseTrigger";
-import { Cache } from "./ast";
+import { DatabaseFunction } from "../database/schema/DatabaseFunction";
+import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
 
 interface IChanges {
     functions: DatabaseFunction[];
@@ -8,12 +7,12 @@ interface IChanges {
 }
 
 // tslint:disable: no-console
-export class Diff {
+export class Migration {
     readonly toDrop: IChanges;
     readonly toCreate: IChanges;
 
     static empty() {
-        return new Diff();
+        return new Migration();
     }
 
     private constructor() {
