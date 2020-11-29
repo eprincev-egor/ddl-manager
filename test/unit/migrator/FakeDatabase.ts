@@ -8,7 +8,7 @@ import {
 import { IDatabaseDriver, ITableColumn } from "../../../lib/database/interface";
 import { Database } from "../../../lib/database/schema/Database";
 import { Table as DBTable } from "../../../lib/database/schema/Table";
-import { IFileContent } from "../../../lib/interface";
+import { IFileContent } from "../../../lib/fs/File";
 
 export class FakeDatabase
 implements IDatabaseDriver {

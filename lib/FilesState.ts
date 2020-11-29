@@ -4,7 +4,7 @@ import { EventEmitter } from "events";
 import watch from "node-watch";
 import path from "path";
 import { FileParser } from "./parser";
-import { IFile } from "./interface";
+import { IFileParams } from "./fs/File";
 import { DatabaseTrigger, DatabaseFunction, Cache } from "./ast";
 import { flatMap } from "lodash";
 import { Diff } from "./Diff";
@@ -26,7 +26,7 @@ export class FilesState extends EventEmitter {
     }
 
     private folders: string[];
-    private files: IFile[];
+    private files: IFileParams[];
     private fsWatcher?: ReturnType<typeof watch>;
 
     private fileParser: FileParser;
@@ -165,7 +165,7 @@ export class FilesState extends EventEmitter {
         });
     }
 
-    private checkDuplicate(file: IFile) {
+    private checkDuplicate(file: IFileParams) {
         const content = file.content;
 
         content.functions.forEach(func => 
@@ -244,7 +244,7 @@ export class FilesState extends EventEmitter {
         }
     }
 
-    private parseFile(rootFolderPath: string, filePath: string): IFile | undefined {
+    private parseFile(rootFolderPath: string, filePath: string): IFileParams | undefined {
         const sql = fs.readFileSync(filePath).toString();
         
         const sqlFile = this.fileParser.parse(sql);
@@ -348,7 +348,7 @@ export class FilesState extends EventEmitter {
         this.emit("error", outError);
     }
 
-    private onChangeFile(rootFolderPath: string, subPath: string, oldFile: IFile) {
+    private onChangeFile(rootFolderPath: string, subPath: string, oldFile: IFileParams) {
         let newFile = null;
 
         try {

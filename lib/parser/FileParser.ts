@@ -5,7 +5,7 @@ import {
     Comment,
     CacheFor
 } from "grapeql-lang";
-import { IFileContent } from "../interface";
+import { IFileContent } from "../fs/File";
 import { DatabaseFunction, DatabaseTrigger, Cache } from "../ast";
 import { CacheParser } from "./CacheParser";
 import assert from "assert";

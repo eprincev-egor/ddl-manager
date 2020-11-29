@@ -1,5 +1,5 @@
 import { DatabaseFunction, DatabaseTrigger, Cache } from "./ast";
-import { IFileContent } from "./interface";
+import { IFileContent } from "./fs/File";
 
 // tslint:disable: no-console
 export class Diff {

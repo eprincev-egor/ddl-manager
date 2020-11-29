@@ -1,8 +1,8 @@
 import assert from "assert";
 import { isObject, isArray, flatMap } from "lodash";
 import { Database } from "./database/schema/Database";
+import { IFileContent } from "./fs/File";
 import { Diff } from "./Diff";
-import { IFileContent } from "./interface";
 
 export class Comparator {
 

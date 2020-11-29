@@ -793,4 +793,210 @@ describe("Comparator", () => {
         });
     });
 
+    /*
+
+    it("create cache", () => {
+        const cache = FileParser.parseCache(`
+            cache test_cache for y (
+                select
+                    array_agg(y.id) as y_ids
+                from y
+            )
+        `);
+
+        const diff = diffState({
+            filesState: {
+                cache: [cache]
+            },
+            dbState: {
+            }
+        });
+
+        deepStrictEqualDiff(diff, {
+            drop: {
+                triggers: [],
+                functions: [],
+                cache: []
+            },
+            create: {
+                triggers: [],
+                functions: [],
+                cache: [cache]
+            }
+        });
+    });
+
+    it("drop cache", () => {
+        const cache = FileParser.parseCache(`
+            cache test_cache for y (
+                select
+                    array_agg(y.id) as y_ids
+                from y
+            )
+        `);
+
+        const diff = diffState({
+            filesState: {
+            },
+            dbState: {
+                cache: [cache]
+            }
+        });
+
+        deepStrictEqualDiff(diff, {
+            drop: {
+                triggers: [],
+                functions: [],
+                cache: [cache]
+            },
+            create: {
+                triggers: [],
+                functions: [],
+                cache: []
+            }
+        });
+    });
+
+    it("empty migration if cache equals", () => {
+        const cache = FileParser.parseCache(`
+            cache test_cache for y (
+                select
+                    array_agg(y.id) as y_ids
+                from y
+            )
+        `);
+
+        const diff = diffState({
+            filesState: {
+                cache: [cache]
+            },
+            dbState: {
+                cache: [cache]
+            }
+        });
+
+        deepStrictEqualDiff(diff, {
+            drop: {
+                triggers: [],
+                functions: [],
+                cache: []
+            },
+            create: {
+                triggers: [],
+                functions: [],
+                cache: []
+            }
+        });
+    });
+
+    it("function with long name inside fs and db", () => {
+        const someFuncParams = {
+            schema: "public",
+            args: [
+                {
+                    name: "x",
+                    type: "integer"
+                },
+                {
+                    name: "y",
+                    type: "integer"
+                }
+            ],
+            returns: {type: "integer"},
+            body: `begin
+                return x + y;
+            end`
+        };
+        const longName = "long_name_0123456789012345678901234567890123456789012345678901234567890123456789";
+
+        const funcInFS = new DatabaseFunction({
+            ...someFuncParams,
+            name: longName
+        });
+        const funcInDB = new DatabaseFunction({
+            ...someFuncParams,
+            name: longName.slice(0, 64)
+        });
+
+        const diff = diffState({
+            filesState: {
+                functions: [
+                    funcInFS
+                ]
+            },
+            dbState: {
+                functions: [
+                    funcInDB
+                ]
+            }
+        });
+
+        deepStrictEqualDiff(diff, {
+            drop: {
+                triggers: [],
+                functions: [],
+                cache: []
+            },
+            create: {
+                triggers: [],
+                functions: [],
+                cache: []
+            }
+        });
+    });
+
+
+    it("trigger with long name inside fs and db", () => {
+        const someTriggerParams = {
+            table: {
+                schema: "public",
+                name: "company"
+            },
+            after: true,
+            insert: true,
+            procedure: {
+                schema: "public",
+                name: "some_action_on_some_event",
+                args: []
+            }
+        };
+
+        const longName = "long_name_0123456789012345678901234567890123456789012345678901234567890123456789";
+
+        const triggerInFS = new DatabaseTrigger({
+            ...someTriggerParams,
+            name: longName
+        });
+        const triggerInDB = new DatabaseTrigger({
+            ...someTriggerParams,
+            name: longName.slice(0, 64)
+        });
+
+        const diff = diffState({
+            filesState: {
+                triggers: [
+                    triggerInFS
+                ]
+            },
+            dbState: {
+                triggers: [
+                    triggerInDB
+                ]
+            }
+        });
+
+        deepStrictEqualDiff(diff, {
+            drop: {
+                triggers: [],
+                functions: [],
+                cache: []
+            },
+            create: {
+                triggers: [],
+                functions: [],
+                cache: []
+            }
+        });
+    });
+    */
 });
