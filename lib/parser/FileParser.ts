@@ -5,7 +5,7 @@ import {
     Comment,
     CacheFor
 } from "grapeql-lang";
-import { IState } from "../interface";
+import { IFileContent } from "../interface";
 import { DatabaseFunction, DatabaseTrigger, Cache } from "../ast";
 import { CacheParser } from "./CacheParser";
 import assert from "assert";
@@ -18,7 +18,7 @@ export class FileParser {
     }
 
     static parseFunction(sql: string) {
-        const fileContent = FileParser.parse(sql) as IState;
+        const fileContent = FileParser.parse(sql) as IFileContent;
         assert.ok( fileContent, "should be not empty sql" );
         
         const func = (fileContent.functions || [])[0];
@@ -28,7 +28,7 @@ export class FileParser {
     }
 
     static parseCache(sql: string) {
-        const fileContent = FileParser.parse(sql) as IState;
+        const fileContent = FileParser.parse(sql) as IFileContent;
         assert.ok( fileContent, "should be not empty sql" );
         
         const cache = (fileContent.cache || [])[0];
@@ -37,7 +37,7 @@ export class FileParser {
         return cache;
     }
 
-    parse(sql: string): IState | undefined {
+    parse(sql: string): IFileContent | undefined {
         const coach = replaceComments(sql);
         
         if ( coach.str.trim() === "" ) {
@@ -52,7 +52,7 @@ export class FileParser {
     private parseFile(coach: GrapeQLCoach) {
         coach.skipSpace();
 
-        const state: IState = {
+        const state: IFileContent = {
             functions: [],
             triggers: [],
             cache: []
@@ -67,7 +67,7 @@ export class FileParser {
         return state;
     }
 
-    private parseFunctions(coach: GrapeQLCoach, state: IState) {
+    private parseFunctions(coach: GrapeQLCoach, state: IFileContent) {
         if ( !coach.is(CreateFunction) ) {
             return;
         }
@@ -113,7 +113,7 @@ export class FileParser {
         }
     }
 
-    private parseTriggers(coach: GrapeQLCoach, state: IState) {
+    private parseTriggers(coach: GrapeQLCoach, state: IFileContent) {
         coach.skipSpace();
 
         // skip spaces and some ;
@@ -168,7 +168,7 @@ export class FileParser {
         this.parseTriggers( coach, state );
     }
 
-    private parseCache(coach: GrapeQLCoach, state: IState) {
+    private parseCache(coach: GrapeQLCoach, state: IFileContent) {
         assert.ok(state.cache);
         coach.skipSpace();
 

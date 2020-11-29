@@ -193,8 +193,8 @@ export class DDLManager {
                 /cannot drop frozen (trigger|function)/i.test(err.message)
             );
             const hasCreateFuncOrTrigger = (
-                diff.create.functions.length ||
-                diff.create.triggers.length
+                diff.toCreate.functions.length ||
+                diff.toCreate.triggers.length
             );
 
             if ( isFrozenDropError && hasCreateFuncOrTrigger ) {
@@ -202,7 +202,7 @@ export class DDLManager {
                 // т.к. сборсить frozen нельзя, а новая функция может быть валидной
 
                 const createDiff = Diff.empty()
-                    .createState(diff.create);
+                    .create(diff.toCreate);
 
                 try {
                     await this.migrateWithoutUpdateCacheColumns(createDiff);

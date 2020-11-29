@@ -8,12 +8,12 @@ import {
 import { IDatabaseDriver, ITableColumn } from "../../../lib/database/interface";
 import { Database } from "../../../lib/database/schema/Database";
 import { Table as DBTable } from "../../../lib/database/schema/Table";
-import { IState } from "../../../lib/interface";
+import { IFileContent } from "../../../lib/interface";
 
 export class FakeDatabase
 implements IDatabaseDriver {
 
-    readonly state: IState;
+    readonly state: IFileContent;
     readonly columns: {
         [tableAndColumn: string]: ITableColumn;
     };
@@ -24,7 +24,7 @@ implements IDatabaseDriver {
     }[]};
     private columnsDrops: {[tableColumn: string]: boolean};
 
-    constructor(state?: IState) {
+    constructor(state?: IFileContent) {
         this.state = state || {
             functions: [],
             triggers: [],

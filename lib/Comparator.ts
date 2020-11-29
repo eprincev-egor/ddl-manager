@@ -2,11 +2,11 @@ import assert from "assert";
 import { isObject, isArray, flatMap } from "lodash";
 import { Database } from "./database/schema/Database";
 import { Diff } from "./Diff";
-import { IState } from "./interface";
+import { IFileContent } from "./interface";
 
 export class Comparator {
 
-    static compare(database: Database, filesState: IState) {
+    static compare(database: Database, filesState: IFileContent) {
         assert.ok(isObject(filesState), "undefined filesState");
         assert.ok(isArray(filesState.functions), "undefined filesState.functions");
         assert.ok(isArray(filesState.triggers), "undefined filesState.triggers");
@@ -17,9 +17,9 @@ export class Comparator {
 
     private diff: Diff;
     private database: Database;
-    private filesState: IState;
+    private filesState: IFileContent;
 
-    private constructor(database: Database, filesState: IState) {
+    private constructor(database: Database, filesState: IFileContent) {
         this.diff = Diff.empty();
         this.database = database;
         this.filesState = filesState;
@@ -31,7 +31,6 @@ export class Comparator {
         
         this.createFunctions();
         this.createTriggers();
-        this.createCache();
 
         return this.diff;
     }
@@ -83,9 +82,9 @@ export class Comparator {
                 });
 
                 // drop
-                this.diff.dropState({triggers: depsTriggers});
+                this.diff.drop({triggers: depsTriggers});
                 // and create again
-                this.diff.createState({triggers: depsTriggers});
+                this.diff.create({triggers: depsTriggers});
             }
             
             
@@ -105,7 +104,7 @@ export class Comparator {
             return !existsSameTriggerFromFile;
         });
 
-        this.diff.dropState({triggers: triggersToDrop});
+        this.diff.drop({triggers: triggersToDrop});
     }
 
     private createFunctions() {
@@ -138,9 +137,4 @@ export class Comparator {
         }
     }
 
-    private createCache() {
-        for (const cache of this.filesState.cache) {
-            this.diff.createCache(cache);
-        }
-    }
 }

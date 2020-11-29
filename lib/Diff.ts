@@ -1,10 +1,10 @@
 import { DatabaseFunction, DatabaseTrigger, Cache } from "./ast";
-import { IState } from "./interface";
+import { IFileContent } from "./interface";
 
 // tslint:disable: no-console
 export class Diff {
-    readonly drop: IState;
-    readonly create: IState;
+    readonly toDrop: IFileContent;
+    readonly toCreate: IFileContent;
 
     static empty() {
         return new Diff({
@@ -21,12 +21,12 @@ export class Diff {
         });
     }
 
-    private constructor(params: {drop: IState, create: IState}) {
-        this.drop = params.drop;
-        this.create = params.create;
+    private constructor(params: {drop: IFileContent, create: IFileContent}) {
+        this.toDrop = params.drop;
+        this.toCreate = params.create;
     }
 
-    dropState(state: Partial<IState>) {
+    drop(state: Partial<IFileContent>) {
         if ( state.functions ) {
             state.functions.forEach(func => 
                 this.dropFunction(func)
@@ -39,17 +39,10 @@ export class Diff {
             );
         }
 
-        if ( state.cache ) {
-            state.cache.forEach(cache => 
-                this.dropCache(cache)
-            );
-        }
-
-
         return this;
     }
 
-    createState(state: Partial<IState>) {
+    create(state: Partial<IFileContent>) {
         if ( state.functions ) {
             state.functions.forEach(func => 
                 this.createFunction(func)
@@ -62,63 +55,45 @@ export class Diff {
             );
         }
 
-        if ( state.cache ) {
-            state.cache.forEach(cache => 
-                this.createCache(cache)
-            );
-        }
-
         return this;
     }
 
     dropFunction(func: DatabaseFunction) {
-        this.drop.functions.push(func);
+        this.toDrop.functions.push(func);
     }
 
     createFunction(func: DatabaseFunction) {
-        this.create.functions.push(func);
+        this.toCreate.functions.push(func);
     }
 
     dropTrigger(trigger: DatabaseTrigger) {
-        this.drop.triggers.push(trigger);
+        this.toDrop.triggers.push(trigger);
     }
 
     createTrigger(trigger: DatabaseTrigger) {
-        this.create.triggers.push(trigger);
+        this.toCreate.triggers.push(trigger);
     }
 
     dropCache(cache: Cache) {
-        this.drop.cache.push(cache);
-    }
-
-    createCache(cache: Cache) {
-        this.create.cache.push(cache);
+        this.toDrop.cache.push(cache);
     }
 
     log() {
-        this.drop.triggers.forEach((trigger) => {
+        this.toDrop.triggers.forEach((trigger) => {
             console.log("drop trigger " + trigger.getSignature());
         });
     
-        this.drop.functions.forEach((func) => {
+        this.toDrop.functions.forEach((func) => {
             console.log("drop function " + func.getSignature());
-        });
-
-        this.drop.cache.forEach((cache) => {
-            console.log("drop " + cache.getSignature());
         });
         
 
-        this.create.functions.forEach((func) => {
+        this.toCreate.functions.forEach((func) => {
             console.log("create function " + func.getSignature());
         });
     
-        this.create.triggers.forEach((trigger) => {
+        this.toCreate.triggers.forEach((trigger) => {
             console.log("create trigger " + trigger.getSignature());
-        });
-
-        this.create.cache.forEach((cache) => {
-            console.log("create " + cache.getSignature());
         });
     }
     

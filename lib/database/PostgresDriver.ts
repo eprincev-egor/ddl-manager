@@ -1,8 +1,5 @@
 import fs from "fs";
 import { Client } from "pg";
-import {
-    IState
-} from "../interface";
 import { IDatabaseDriver, ITableColumn } from "./interface";
 import { FileParser } from "../parser";
 import { PGTypes } from "./PGTypes";

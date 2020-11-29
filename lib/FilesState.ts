@@ -330,7 +330,7 @@ export class FilesState extends EventEmitter {
             // generate event
             hasChange = true;
 
-            changes.dropState(file.content);
+            changes.drop(file.content);
         }
         
 
@@ -377,13 +377,13 @@ export class FilesState extends EventEmitter {
         this.files.splice(fileIndex, 1);
 
         const changes = Diff.empty()
-            .dropState(oldFile.content);
+            .drop(oldFile.content);
 
         try {
             if ( newFile ) {
                 this.checkDuplicate( newFile );
 
-                changes.createState(newFile.content);
+                changes.create(newFile.content);
 
                 this.files.splice(fileIndex, 0, newFile);
             }
@@ -411,7 +411,7 @@ export class FilesState extends EventEmitter {
 
         this.files.push( file );
         
-        const changes = Diff.empty().createState(file.content);
+        const changes = Diff.empty().create(file.content);
 
         this.emit("change", changes);
     }

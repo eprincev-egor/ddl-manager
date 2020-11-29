@@ -1050,7 +1050,7 @@ describe("integration/MainMigrator", () => {
             )
         `);
 
-        const changes = Diff.empty().createState({
+        const changes = Diff.empty().create({
             cache: [cache]
         });
 

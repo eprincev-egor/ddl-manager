@@ -23,7 +23,7 @@ export class FunctionsMigrator extends AbstractMigrator {
 
     private async dropFunctions() {
 
-        for (const func of this.diff.drop.functions) {
+        for (const func of this.diff.toDrop.functions) {
             // 2BP01
             try {
                 await this.postgres.dropFunction(func);
@@ -40,7 +40,7 @@ export class FunctionsMigrator extends AbstractMigrator {
 
     private async createFunctions() {
 
-        for (const func of this.diff.create.functions) {
+        for (const func of this.diff.toCreate.functions) {
             try {
                 await this.postgres.createOrReplaceFunction(func);
             } catch(err) {
