@@ -53,7 +53,8 @@ export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilde
             table: {
                 schema: this.context.triggerTable.schema || "public",
                 name: this.context.triggerTable.name
-            }
+            },
+            cacheSignature: this.context.cache.getSignature()
         });
 
         return trigger;

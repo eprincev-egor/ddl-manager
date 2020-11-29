@@ -9,6 +9,8 @@ import {
     IDatabaseFunctionParams,
     IDatabaseTriggerParams
 } from "../../lib/ast";
+import { Database } from "../../lib/database/schema/Database";
+import { Table as DBTable } from "../../lib/database/schema/Table";
 import { Diff } from "../../lib/Diff";
 interface IStateParams {
     functions: (DatabaseFunction | IDatabaseFunctionParams)[];
@@ -21,12 +23,19 @@ function diffState(params: {filesState: Partial<IStateParams>, dbState: Partial<
         dbState: dbStateParams,
         filesState: filesStateParams
     } = params;
-    
-    const dbState = {
-        functions: createFuncsInstances(dbStateParams),
-        triggers: createTriggersInstances(dbStateParams),
-        cache: dbStateParams.cache || []
-    };
+
+
+    const database = new Database([]);
+    database.addFunctions(createFuncsInstances(dbStateParams));
+
+    for (const trigger of createTriggersInstances(dbStateParams)) {
+        const table = new DBTable(
+            trigger.table.schema,
+            trigger.table.name
+        );
+        database.setTable(table);
+        database.addTrigger( trigger );
+    }
 
     const filesState = {
         functions: createFuncsInstances(filesStateParams),
@@ -34,7 +43,7 @@ function diffState(params: {filesState: Partial<IStateParams>, dbState: Partial<
         cache: filesStateParams.cache || []
     };
 
-    const diff = Comparator.compare(dbState, filesState);
+    const diff = Comparator.compare(database, filesState);
     return diff;
 }
 

@@ -5,21 +5,19 @@ import {
     DatabaseTrigger,
     DatabaseFunction 
 } from "../ast";
-import { IState } from "../interface";
-import { Database as DatabaseSchema } from "./schema/Database";
+import { Database } from "./schema/Database";
 
 export interface ITableColumn {
     name: string;
     type: string;
     default: string | null;
+    comment?: string;
 }
 
 // TODO: apply I from SOLID
 export interface IDatabaseDriver {
-    loadFunctions(): Promise<DatabaseFunction[]>;
-    loadTriggers(): Promise<DatabaseTrigger[]>;
-    loadTables(): Promise<DatabaseSchema>;
-    unfreezeAll(dbState: IState): Promise<void>;
+    load(): Promise<Database>;
+    unfreezeAll(dbState: Database): Promise<void>;
     createOrReplaceFunction(func: DatabaseFunction): Promise<void>;
     dropFunction(func: DatabaseFunction): Promise<void>;
     forceDropFunction(func: DatabaseFunction): Promise<void>;
@@ -33,7 +31,6 @@ export interface IDatabaseDriver {
     dropColumn(table: Table, columnName: string): Promise<void>;
     updateCachePackage(select: Select, forTable: TableReference, limit: number): Promise<number>;
     createOrReplaceCacheTrigger(
-        cacheSignature: string,
         trigger: DatabaseTrigger,
         func: DatabaseFunction
     ): Promise<void>;

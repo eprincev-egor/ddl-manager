@@ -8,6 +8,7 @@ import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { From, Select, SelectColumn, Table, TableReference, Expression, ColumnReference, Operator } from "../../lib/ast";
 import { FileParser } from "../../lib/parser";
+import { flatMap } from "lodash";
 
 use(chaiShallowDeepEqualPlugin);
 
@@ -36,9 +37,10 @@ describe("integration/PostgresDriver.loadState", () => {
 
     async function loadState() {
         const driver = new PostgresDriver(db);
+        const database = await driver.load();
         const state = {
-            functions: await driver.loadFunctions(),
-            triggers: await driver.loadTriggers(),
+            functions: database.functions,
+            triggers: flatMap(database.tables, table => table.triggers),
             cache: []
         };
         return state;
@@ -1052,6 +1054,10 @@ describe("integration/PostgresDriver.loadState", () => {
             state.functions[0].cacheSignature,
             cache.getSignature()
         );
+        assert.strictEqual(
+            state.functions[0].frozen,
+            false
+        );
 
         assert.strictEqual(
             state.triggers.length,
@@ -1060,6 +1066,10 @@ describe("integration/PostgresDriver.loadState", () => {
         assert.strictEqual(
             state.triggers[0].cacheSignature,
             cache.getSignature()
+        );
+        assert.strictEqual(
+            state.triggers[0].frozen,
+            false
         );
     });
 

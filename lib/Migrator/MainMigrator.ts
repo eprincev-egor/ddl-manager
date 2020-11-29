@@ -80,7 +80,7 @@ export class MainMigrator {
 
     private async createMigrators() {
 
-        const databaseStructure = await this.postgres.loadTables();
+        const databaseStructure = await this.postgres.load();
         const outputErrors: Error[] = [];
 
         const functions = new FunctionsMigrator(

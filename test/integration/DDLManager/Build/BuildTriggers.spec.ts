@@ -1,6 +1,7 @@
 import assert from "assert";
 import fs from "fs";
 import fse from "fs-extra";
+import { flatMap } from "lodash";
 import { getDBClient } from "../../getDbClient";
 import { DDLManager } from "../../../../lib/DDLManager";
 import {expect, use} from "chai";
@@ -515,7 +516,10 @@ describe("integration/DDLManager.build triggers", () => {
         });
 
         const postgres = new PostgresDriver(db);
-        const triggers = await postgres.loadTriggers();
+        const triggers = flatMap(
+            (await postgres.load()).tables,
+            table => table.triggers
+        );
 
         expect(triggers[0]).to.be.shallowDeepEqual({
             name: "my_trigger",

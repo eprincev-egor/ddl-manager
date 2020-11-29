@@ -139,9 +139,9 @@ export class DDLManager {
         };
         
         const postgres = await this.postgres();
-        const dbState = await this.loadDbState(postgres);
+        const databaseState = await postgres.load();
 
-        const diff = Comparator.compare(dbState, filesState);
+        const diff = Comparator.compare(databaseState, filesState);
         return {diff, postgres, fileState: filesStateInstance};
     }
 
@@ -227,7 +227,7 @@ export class DDLManager {
         }
 
         const postgres = await this.postgres();
-        const dbState = await this.loadDbState(postgres);
+        const dbState = await postgres.load();
 
         const existsFolders: {
             [dirPath: string]: boolean
@@ -285,11 +285,12 @@ export class DDLManager {
                 sameFunc.returns.type === "trigger"
             );
             if ( isTrigger ) {
-                const triggers = dbState.triggers.filter(trigger =>
-                    trigger.procedure.schema === func.schema &&
-                    trigger.procedure.name === func.name
-                );
-    
+                const triggers = dbState.getTriggersByProcedure({
+                    schema: func.schema,
+                    name: func.name,
+                    args: func.args.map(arg => arg.type)
+                });
+
                 if ( triggers.length ) {
                     if ( !firstTrigger ) {
                         firstTrigger = triggers[0];
@@ -365,14 +366,5 @@ export class DDLManager {
         const db = await getDbClient(this.dbConfig);
         const postgres = new PostgresDriver(db);
         return postgres;
-    }
-
-    private async loadDbState(postgres: IDatabaseDriver) {
-        const dbState = {
-            functions: await postgres.loadFunctions(),
-            triggers: await postgres.loadTriggers(),
-            cache: []
-        };
-        return dbState;
     }
 }

@@ -35,7 +35,8 @@ export abstract class AbstractTriggerBuilder {
             body: "\n" + this.createBody().toSQL() + "\n",
             comment: "cache",
             args: [],
-            returns: {type: "trigger"}
+            returns: {type: "trigger"},
+            cacheSignature: this.context.cache.getSignature()
         });
         return func;
     }
@@ -61,7 +62,8 @@ export abstract class AbstractTriggerBuilder {
             table: {
                 schema: this.context.triggerTable.schema || "public",
                 name: this.context.triggerTable.name
-            }
+            },
+            cacheSignature: this.context.cache.getSignature()
         });
 
         return trigger;

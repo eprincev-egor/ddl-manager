@@ -11,8 +11,7 @@ import {
     DatabaseTrigger,
     Table,
     Select,
-    TableReference,
-    Cache
+    TableReference
 } from "../ast";
 import { getCheckFrozenFunctionSql } from "./postgres/getCheckFrozenFunctionSql";
 import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
@@ -21,6 +20,7 @@ import { getCheckFrozenTriggerSql } from "./postgres/getCheckFrozenTriggerSql";
 import { Database } from "./schema/Database";
 import { Column } from "./schema/Column";
 import { Table as TableSchema } from "./schema/Table";
+import { flatMap } from "lodash";
 
 const selectAllFunctionsSQL = fs.readFileSync(__dirname + "/postgres/select-all-functions.sql")
     .toString();
@@ -40,14 +40,28 @@ implements IDatabaseDriver {
         this.types = new PGTypes(pgClient);
     }
 
-    async loadFunctions(): Promise<DatabaseFunction[]> {
+    async load() {
+        const database = await this.loadTables();
+        
+        const functions = await this.loadFunctions();
+        database.addFunctions(functions);
+
+        const triggers = await this.loadTriggers();
+        for (const trigger of triggers) {
+            database.addTrigger(trigger);
+        }
+
+        return database;
+    }
+
+    private async loadFunctions(): Promise<DatabaseFunction[]> {
         const funcs = await this.loadObjects<DatabaseFunction>(
             selectAllFunctionsSQL
         );
         return funcs;
     }
 
-    async loadTriggers(): Promise<DatabaseTrigger[]> {
+    private async loadTriggers(): Promise<DatabaseTrigger[]> {
         const triggers = await this.loadObjects<DatabaseTrigger>(
             selectAllTriggersSQL
         );
@@ -73,7 +87,7 @@ implements IDatabaseDriver {
         return objects;
     }
 
-    async loadTables() {
+    private async loadTables() {
         await this.types.load();
 
         const {rows: columnsRows} = await this.pgClient.query(`
@@ -125,7 +139,7 @@ implements IDatabaseDriver {
         return database;
     }
 
-    async unfreezeAll(dbState: IState) {
+    async unfreezeAll(dbState: Database) {
         let ddlSql = "";
 
         dbState.functions.forEach(func => {
@@ -133,7 +147,7 @@ implements IDatabaseDriver {
             ddlSql += ";";
         });
 
-        dbState.triggers.forEach(trigger => {
+        flatMap(dbState.tables, table => table.triggers).forEach(trigger => {
             ddlSql += getUnfreezeTriggerSql( trigger );
             ddlSql += ";";
         });
@@ -317,7 +331,6 @@ implements IDatabaseDriver {
     }
 
     async createOrReplaceCacheTrigger(
-        cacheSignature: string,
         trigger: DatabaseTrigger,
         func: DatabaseFunction
     ) {
@@ -329,10 +342,10 @@ implements IDatabaseDriver {
             ${ trigger.toSQL() };
 
             comment on function ${ func.getSignature() }
-            is 'ddl-manager-sync ddl-cache-signature(${cacheSignature})';
+            is 'ddl-manager-sync ddl-cache-signature(${func.cacheSignature})';
 
             comment on trigger ${ trigger.getSignature() }
-            is 'ddl-manager-sync: ddl-cache-signature(${cacheSignature})';
+            is 'ddl-manager-sync: ddl-cache-signature(${trigger.cacheSignature})';
         `;
 
         await this.pgClient.query(sql);
@@ -363,7 +376,7 @@ function parseComment(row: {comment?: string}) {
 
 function parseCacheSignature(row: {comment?: string}) {
     const comment = (row.comment || "").trim();
-    const matchedResult = comment.match(/ddl-cache-signature\(([^\_]+)\)/) || [];
+    const matchedResult = comment.match(/ddl-cache-signature\(([^\\)]+)\)/) || [];
     const cacheSignature = matchedResult[1];
     return cacheSignature;
 }

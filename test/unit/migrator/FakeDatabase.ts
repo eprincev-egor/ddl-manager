@@ -7,6 +7,7 @@ import {
 } from "../../../lib/ast";
 import { IDatabaseDriver, ITableColumn } from "../../../lib/database/interface";
 import { Database } from "../../../lib/database/schema/Database";
+import { Table as DBTable } from "../../../lib/database/schema/Table";
 import { IState } from "../../../lib/interface";
 
 export class FakeDatabase
@@ -36,12 +37,20 @@ implements IDatabaseDriver {
         this.columnsDrops = {};
     }
 
-    async loadFunctions(): Promise<DatabaseFunction[]> {
-        return this.state.functions;
-    }
+    async load() {
+        const database = new Database([]);
+        database.addFunctions(this.state.functions);
 
-    async loadTriggers(): Promise<DatabaseTrigger[]> {
-        return this.state.triggers;
+        for (const trigger of this.state.triggers) {
+            const table = new DBTable(
+                trigger.table.schema,
+                trigger.table.name
+            );
+            database.setTable(table);
+            database.addTrigger( trigger );
+        }
+
+        return database;
     }
 
     async createOrReplaceFunction(func: DatabaseFunction): Promise<void> {
@@ -133,12 +142,11 @@ implements IDatabaseDriver {
         return Math.min(remainder, limit);
     }
 
-    unfreezeAll(dbState: IState): Promise<void> {
+    unfreezeAll(dbState: Database): Promise<void> {
         throw new Error("Method not implemented.");
     }
 
     async createOrReplaceCacheTrigger(
-        cacheSignature: string,
         trigger: DatabaseTrigger,
         func: DatabaseFunction
     ) {
@@ -148,10 +156,6 @@ implements IDatabaseDriver {
 
     async createOrReplaceHelperFunc(func: DatabaseFunction) {
         
-    }
-
-    async loadTables() {
-        return new Database([]);
     }
 
     end() {

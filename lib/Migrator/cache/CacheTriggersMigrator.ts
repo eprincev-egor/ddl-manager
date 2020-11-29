@@ -52,7 +52,6 @@ export class CacheTriggersMigrator extends AbstractMigrator {
 
             try {
                 await this.postgres.createOrReplaceCacheTrigger(
-                    cache.getSignature(),
                     trigger,
                     func
                 );

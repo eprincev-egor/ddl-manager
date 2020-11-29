@@ -1,33 +1,33 @@
 import assert from "assert";
-import { isObject, isArray } from "lodash";
+import { isObject, isArray, flatMap } from "lodash";
+import { Database } from "./database/schema/Database";
 import { Diff } from "./Diff";
 import { IState } from "./interface";
 
 export class Comparator {
 
-    static compare(dbState: IState, filesState: IState) {
+    static compare(database: Database, filesState: IState) {
         assert.ok(isObject(filesState), "undefined filesState");
         assert.ok(isArray(filesState.functions), "undefined filesState.functions");
         assert.ok(isArray(filesState.triggers), "undefined filesState.triggers");
 
-        const comparator = new Comparator(dbState, filesState);
+        const comparator = new Comparator(database, filesState);
         return comparator.compare();
     }
 
     private diff: Diff;
-    private dbState: IState;
+    private database: Database;
     private filesState: IState;
 
-    private constructor(dbState: IState, filesState: IState) {
+    private constructor(database: Database, filesState: IState) {
         this.diff = Diff.empty();
-        this.dbState = dbState;
+        this.database = database;
         this.filesState = filesState;
     }
 
     compare() {
         this.dropFunctions();
         this.dropTriggers();
-        this.dropCache();
         
         this.createFunctions();
         this.createTriggers();
@@ -37,7 +37,7 @@ export class Comparator {
     }
 
     private dropFunctions() {
-        for (const func of this.dbState.functions) {
+        for (const func of this.database.functions) {
             
             // ddl-manager cannot drop frozen function
             if ( func.frozen ) {
@@ -54,7 +54,11 @@ export class Comparator {
 
             // for drop function, need drop trigger, who call it function
             if ( func.returns.type === "trigger" ) {
-                const depsTriggers = this.dbState.triggers.filter(dbTrigger => {
+                const depsTriggers = this.database.getTriggersByProcedure({
+                    schema: func.schema,
+                    name: func.name,
+                    args: func.args.map(arg => arg.type)
+                }).filter(dbTrigger => {
                     const isDepsTrigger = (
                         dbTrigger.procedure.schema === func.schema &&
                         dbTrigger.procedure.name === func.name
@@ -90,7 +94,7 @@ export class Comparator {
     }
 
     private dropTriggers() {
-        const triggersCreatedFromDDLManager = this.dbState.triggers.filter(trigger =>
+        const triggersCreatedFromDDLManager = flatMap(this.database.tables, table => table.triggers).filter(trigger =>
             !trigger.frozen
         );
         const triggersToDrop = triggersCreatedFromDDLManager.filter(trigger => {
@@ -104,22 +108,10 @@ export class Comparator {
         this.diff.dropState({triggers: triggersToDrop});
     }
 
-    private dropCache() {
-        for (const cache of this.dbState.cache) {
-            const existsSameCacheFromFile = this.filesState.cache.some(fileCache =>
-                fileCache.equal(cache)
-            );
-
-            if ( !existsSameCacheFromFile ) {
-                this.diff.dropCache(cache);
-            }
-        }
-    }
-
     private createFunctions() {
         for (const func of this.filesState.functions) {
 
-            const existsSameFuncFromDb = this.dbState.functions.find(dbFunc =>
+            const existsSameFuncFromDb = this.database.functions.find(dbFunc =>
                 dbFunc.equal(func)
             );
 
@@ -134,7 +126,7 @@ export class Comparator {
     private createTriggers() {
         for (const trigger of this.filesState.triggers) {
             
-            const existsSameTriggerFromDb = this.dbState.triggers.some(dbTrigger =>
+            const existsSameTriggerFromDb = flatMap(this.database.tables, table => table.triggers).some(dbTrigger =>
                 dbTrigger.equal(trigger)
             );
 
@@ -148,13 +140,7 @@ export class Comparator {
 
     private createCache() {
         for (const cache of this.filesState.cache) {
-            const existsSameCacheFromDB = this.dbState.cache.some(dbCache =>
-                dbCache.equal(cache)
-            );
-
-            if ( !existsSameCacheFromDB ) {
-                this.diff.createCache(cache);
-            }
+            this.diff.createCache(cache);
         }
     }
 }
