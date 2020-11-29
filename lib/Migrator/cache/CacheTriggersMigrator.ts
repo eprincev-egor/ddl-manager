@@ -4,16 +4,17 @@ import { CacheTriggersBuilder } from "../../cache/CacheTriggersBuilder";
 import { Database as DatabaseStructure } from "../../database/schema/Database";
 
 export class CacheTriggersMigrator extends AbstractMigrator {
+
     async drop() {
-        for (const cache of this.diff.toDrop.cache) {
-            await this.dropCacheTriggers(cache);
-        }
+        // for (const cache of this.diff.toDrop.cache) {
+        //     await this.dropCacheTriggers(cache);
+        // }
     }
 
     async create() {
-        for (const cache of this.diff.toCreate.cache || []) {
-            await this.createCacheTriggers(cache);
-        }
+        // for (const cache of this.diff.toCreate.cache || []) {
+        //     await this.createCacheTriggers(cache);
+        // }
     }
 
     private async dropCacheTriggers(cache: Cache) {

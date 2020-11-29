@@ -87,7 +87,9 @@ describe("Migrator", () => {
             orders_profit: "numeric"
         });
 
-        changes.create({cache: [FileParser.parseCache(ordersProfitCacheSQL)]});
+        changes.create({
+            // cache: [FileParser.parseCache(ordersProfitCacheSQL)]
+        });
 
         await MainMigrator.migrate(database, changes);
 
@@ -125,7 +127,9 @@ describe("Migrator", () => {
         });
 
         const cache = FileParser.parseCache(ordersProfitCacheSQL);
-        changes.create({cache: [cache]});
+        changes.create({
+            // cache: [cache]
+        });
 
         database.setRowsCount(cache.for.table.toString(), 1499);
 
@@ -145,15 +149,17 @@ describe("Migrator", () => {
             doc_numbers: "text"
         });
 
-        changes.create({cache: [FileParser.parseCache(`
-            cache test for some_table (
-                select
-                    string_agg( another_table.doc_number, ', ' ) as doc_numbers
-                from another_table
-                where
-                    another_table.id_client = some_table.id
-            )
-        `)]});
+        changes.create({
+            // cache: [FileParser.parseCache(`
+            //     cache test for some_table (
+            //         select
+            //             string_agg( another_table.doc_number, ', ' ) as doc_numbers
+            //         from another_table
+            //         where
+            //             another_table.id_client = some_table.id
+            //     )
+            // `)]
+        });
 
         await MainMigrator.migrate(database, changes);
 
@@ -180,17 +186,19 @@ describe("Migrator", () => {
             some_profit: "numeric"
         });
 
-        changes.create({cache: [FileParser.parseCache(`
-            cache test for some_table (
-                select
-                    sum( another_table.profit ) * 2 + 
-                    sum( another_table.xxx )
-                    as some_profit
-                from another_table
-                where
-                    another_table.id_client = some_table.id
-            )
-        `)]});
+        changes.create({
+            // cache: [FileParser.parseCache(`
+            //     cache test for some_table (
+            //         select
+            //             sum( another_table.profit ) * 2 + 
+            //             sum( another_table.xxx )
+            //             as some_profit
+            //         from another_table
+            //         where
+            //             another_table.id_client = some_table.id
+            //     )
+            // `)]
+        });
 
         await MainMigrator.migrate(database, changes);
 
@@ -221,7 +229,9 @@ describe("Migrator", () => {
             orders_profit: "numeric"
         });
 
-        changes.create({cache: [testCache]});
+        changes.create({
+            // cache: [testCache]
+        });
 
         await MainMigrator.migrate(database, changes);
 
@@ -237,7 +247,7 @@ describe("Migrator", () => {
 
 
         const dropChanges = Diff.empty().drop({
-            cache: [testCache]
+            // cache: [testCache]
         });
         await MainMigrator.migrate(database, dropChanges);
 
@@ -279,7 +289,7 @@ describe("Migrator", () => {
         database.setRowsCount("public.some_table", 1400);
 
         await MainMigrator.migrate(database, Diff.empty().create({
-            cache: [cacheBeforeRenaming]
+            // cache: [cacheBeforeRenaming]
         }));
         assert.deepStrictEqual(database.columns, {
             "public.some_table.orders_profit": {
@@ -296,10 +306,10 @@ describe("Migrator", () => {
 
         await MainMigrator.migrate(database, Diff.empty()
             .drop({
-                cache: [cacheBeforeRenaming]
+                // cache: [cacheBeforeRenaming]
             })
             .create({
-                cache: [cacheAfterRenaming]
+                // cache: [cacheAfterRenaming]
             })
         );
         assert.deepStrictEqual(database.columns, {
@@ -335,7 +345,9 @@ describe("Migrator", () => {
             throw new Error("test error");
         };
 
-        changes.create({cache: [FileParser.parseCache(ordersProfitCacheSQL)]});
+        changes.create({
+            // cache: [FileParser.parseCache(ordersProfitCacheSQL)]
+        });
 
         const errors = await MainMigrator.migrate(database, changes);
 

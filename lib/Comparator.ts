@@ -1,7 +1,8 @@
-import { flatMap } from "lodash";
 import { Database } from "./database/schema/Database";
 import { FilesState } from "./fs/FilesState";
 import { Diff } from "./Diff";
+import { flatMap } from "lodash";
+import { DatabaseFunction, DatabaseTrigger } from "./ast";
 
 export class Comparator {
 
@@ -15,31 +16,54 @@ export class Comparator {
     private fs: FilesState;
 
     private constructor(database: Database, fs: FilesState) {
-        this.diff = Diff.empty();
         this.database = database;
         this.fs = fs;
+        this.diff = Diff.empty();
     }
 
     compare() {
-        this.dropFunctions();
-        this.dropTriggers();
-        
-        this.createFunctions();
-        this.createTriggers();
+        this.dropOldObjects();
+        this.createNewObjects();
 
         return this.diff;
     }
 
-    private dropFunctions() {
-        for (const func of this.database.functions) {
+    private dropOldObjects() {
+        this.dropOldTriggers();
+        this.dropOldFunctions();
+    }
+
+    private dropOldTriggers() {
+        for (const table of this.database.tables) {
+            for (const dbTrigger of table.triggers) {
+                
+                if ( dbTrigger.frozen ) {
+                    continue;
+                }
+
+                const existsSameTriggerFromFile = flatMap(this.fs.files, file => file.content.triggers).some(fileTrigger =>
+                    fileTrigger.equal(dbTrigger)
+                );
+
+                if ( !existsSameTriggerFromFile ) {
+                    this.diff.drop({
+                        triggers: [dbTrigger]
+                    });
+                }
+            }
+        }
+    }
+
+    private dropOldFunctions() {
+        for (const dbFunc of this.database.functions) {
             
             // ddl-manager cannot drop frozen function
-            if ( func.frozen ) {
+            if ( dbFunc.frozen ) {
                 continue;
             }
 
             const existsSameFuncFromFile = flatMap(this.fs.files, file => file.content.functions).some(fileFunc =>
-                fileFunc.equal(func)
+                fileFunc.equal(dbFunc)
             );
 
             if ( existsSameFuncFromFile ) {
@@ -47,15 +71,15 @@ export class Comparator {
             }
 
             // for drop function, need drop trigger, who call it function
-            if ( func.returns.type === "trigger" ) {
+            if ( dbFunc.returns.type === "trigger" ) {
                 const depsTriggers = this.database.getTriggersByProcedure({
-                    schema: func.schema,
-                    name: func.name,
-                    args: func.args.map(arg => arg.type)
+                    schema: dbFunc.schema,
+                    name: dbFunc.name,
+                    args: dbFunc.args.map(arg => arg.type)
                 }).filter(dbTrigger => {
                     const isDepsTrigger = (
-                        dbTrigger.procedure.schema === func.schema &&
-                        dbTrigger.procedure.name === func.name
+                        dbTrigger.procedure.schema === dbFunc.schema &&
+                        dbTrigger.procedure.name === dbFunc.name
                     );
 
                     if ( !isDepsTrigger ) {
@@ -83,28 +107,21 @@ export class Comparator {
             }
             
             
-            this.diff.dropFunction(func);
+            this.diff.drop({
+                functions: [dbFunc]
+            });
         }
     }
 
-    private dropTriggers() {
-        const triggersCreatedFromDDLManager = flatMap(this.database.tables, table => table.triggers).filter(trigger =>
-            !trigger.frozen
-        );
-        const triggersToDrop = triggersCreatedFromDDLManager.filter(trigger => {
-
-            const existsSameTriggerFromFile = flatMap(this.fs.files, file => file.content.triggers).some(fileTrigger =>
-                fileTrigger.equal(trigger)
-            );
-            return !existsSameTriggerFromFile;
-        });
-
-        this.diff.drop({triggers: triggersToDrop});
+    private createNewObjects() {
+        for (const file of this.fs.files) {
+            this.createNewFunctions( file.content.functions );
+            this.createNewTriggers( file.content.triggers );
+        }
     }
 
-    private createFunctions() {
-        for (const func of flatMap(this.fs.files, file => file.content.functions)) {
-
+    private createNewFunctions(functions: DatabaseFunction[]) {
+        for (const func of functions) {
             const existsSameFuncFromDb = this.database.functions.find(dbFunc =>
                 dbFunc.equal(func)
             );
@@ -113,14 +130,18 @@ export class Comparator {
                 continue;
             }
 
-            this.diff.createFunction(func);
+            this.diff.create({
+                functions: [func]
+            });
         }
     }
 
-    private createTriggers() {
-        for (const trigger of flatMap(this.fs.files, file => file.content.triggers)) {
-            
-            const existsSameTriggerFromDb = flatMap(this.database.tables, table => table.triggers).some(dbTrigger =>
+    private createNewTriggers(triggers: DatabaseTrigger[]) {
+        for (const trigger of triggers) {
+
+            const dbTable = this.database.getTable(trigger.table);
+
+            const existsSameTriggerFromDb = dbTable && dbTable.triggers.some(dbTrigger =>
                 dbTrigger.equal(trigger)
             );
 
@@ -128,8 +149,9 @@ export class Comparator {
                 continue;
             }
 
-            this.diff.createTrigger(trigger);
+            this.diff.create({
+                triggers: [trigger]
+            });
         }
     }
-
 }

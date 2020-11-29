@@ -53,28 +53,28 @@ describe("integration/MainMigrator", () => {
     function dropFunctions(diff: Diff, functions: IDatabaseFunctionParams[]) {
         functions.map(funcJson => {
             const func = new DatabaseFunction(funcJson);
-            diff.dropFunction(func);
+            diff.drop({functions: [func]});
         });
     }
 
     function dropTriggers(diff: Diff, triggers: IDatabaseTriggerParams[]) {
         triggers.map(triggerJson => {
             const trigger = new DatabaseTrigger(triggerJson);
-            diff.dropTrigger(trigger);
+            diff.drop({triggers: [trigger]});
         });
     }
 
     function createFunctions(diff: Diff, functions: IDatabaseFunctionParams[]) {
         functions.map(funcJson => {
             const func = new DatabaseFunction(funcJson);
-            diff.createFunction(func);
+            diff.create({functions: [func]});
         });
     }
 
     function createTriggers(diff: Diff, triggers: IDatabaseTriggerParams[]) {
         triggers.map(triggerJson => {
             const trigger = new DatabaseTrigger(triggerJson);
-            diff.createTrigger(trigger);
+            diff.create({triggers: [trigger]});
         });
     }
 
@@ -1051,7 +1051,7 @@ describe("integration/MainMigrator", () => {
         `);
 
         const changes = Diff.empty().create({
-            cache: [cache]
+            // cache: [cache]
         });
 
         const postgres = new PostgresDriver(db);

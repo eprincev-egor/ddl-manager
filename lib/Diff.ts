@@ -1,81 +1,54 @@
 import { DatabaseFunction, DatabaseTrigger, Cache } from "./ast";
-import { IFileContent } from "./fs/File";
+
+interface IChanges {
+    functions: DatabaseFunction[];
+    triggers: DatabaseTrigger[];
+}
 
 // tslint:disable: no-console
 export class Diff {
-    readonly toDrop: IFileContent;
-    readonly toCreate: IFileContent;
+    readonly toDrop: IChanges;
+    readonly toCreate: IChanges;
 
     static empty() {
-        return new Diff({
-            drop: {
-                functions: [],
-                triggers: [],
-                cache: []
-            },
-            create: {
-                functions: [],
-                triggers: [],
-                cache: []
-            }
-        });
+        return new Diff();
     }
 
-    private constructor(params: {drop: IFileContent, create: IFileContent}) {
-        this.toDrop = params.drop;
-        this.toCreate = params.create;
+    private constructor() {
+        this.toDrop = {functions: [], triggers: []};
+        this.toCreate = {functions: [], triggers: []};
     }
 
-    drop(state: Partial<IFileContent>) {
+    drop(state: Partial<IChanges>) {
         if ( state.functions ) {
             state.functions.forEach(func => 
-                this.dropFunction(func)
+                this.toDrop.functions.push(func)
             );
         }
 
         if ( state.triggers ) {
             state.triggers.forEach(trigger => 
-                this.dropTrigger(trigger)
+                this.toDrop.triggers.push(trigger)
             );
         }
 
         return this;
     }
 
-    create(state: Partial<IFileContent>) {
+    create(state: Partial<IChanges>) {
         if ( state.functions ) {
             state.functions.forEach(func => 
-                this.createFunction(func)
+                this.toCreate.functions.push(func)
             );
         }
 
         if ( state.triggers ) {
             state.triggers.forEach(trigger => 
-                this.createTrigger(trigger)
+                this.toCreate.triggers.push(trigger)
             );
         }
 
         return this;
-    }
-
-    dropFunction(func: DatabaseFunction) {
-        this.toDrop.functions.push(func);
-    }
-
-    createFunction(func: DatabaseFunction) {
-        this.toCreate.functions.push(func);
-    }
-
-    dropTrigger(trigger: DatabaseTrigger) {
-        this.toDrop.triggers.push(trigger);
-    }
-
-    createTrigger(trigger: DatabaseTrigger) {
-        this.toCreate.triggers.push(trigger);
-    }
-
-    dropCache(cache: Cache) {
-        this.toDrop.cache.push(cache);
     }
 
     log() {

@@ -35,7 +35,7 @@ export class CacheColumnsMigrator extends AbstractMigrator {
     }
 
     async dropOnlyTrashColumns() {
-        const allCacheColumns = flatMap(this.diff.toDrop.cache, cache => {
+        const allCacheColumns = flatMap([] as Cache[]/*this.diff.toDrop.cache*/, cache => {
             const selectToUpdate = this.createSelectForUpdate(cache);
         
             const columns = selectToUpdate.columns
@@ -47,7 +47,7 @@ export class CacheColumnsMigrator extends AbstractMigrator {
             return columns;
         });
         const trashColumns = allCacheColumns.filter(({columnName: columnNameToDrop, cache: cacheToDrop}) => {
-            const cachesOnThatTableForCreate = this.diff.toCreate.cache.filter(cacheToCreate =>
+            const cachesOnThatTableForCreate = ([] as Cache[])/*this.diff.toCreate.cache*/.filter(cacheToCreate =>
                 cacheToCreate.for.table.equal(cacheToDrop.for.table)
             );
 
@@ -142,7 +142,7 @@ export class CacheColumnsMigrator extends AbstractMigrator {
             }
 
             const columnsToOnlyRequiredUpdate = columnsToUpdate.filter(columnToCreate => {
-                const cachesToDropOnThatTable = this.diff.toDrop.cache.filter(cacheToDrop =>
+                const cachesToDropOnThatTable = ([] as Cache[])/*this.diff.toDrop.cache*/.filter(cacheToDrop =>
                     cacheToDrop.for.table.equal( cacheToCreate.for.table )
                 );
 
@@ -175,7 +175,7 @@ export class CacheColumnsMigrator extends AbstractMigrator {
 
     private generateAllSelectsForEveryColumn() {
 
-        const allSelectsForEveryColumn = flatMap(this.diff.toCreate.cache, cache => {
+        const allSelectsForEveryColumn = flatMap([] as Cache[]/*this.diff.toCreate.cache*/, cache => {
 
             const selectToUpdate = this.createSelectForUpdate(cache);
             

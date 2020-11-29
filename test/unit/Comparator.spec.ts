@@ -85,12 +85,12 @@ function deepStrictEqualDiff(
         .create({
             functions: createFuncsInstances(expectedCreate),
             triggers: createTriggersInstances(expectedCreate),
-            cache: expectedCreate.cache
+            // cache: expectedCreate.cache
         })
         .drop({
             functions: createFuncsInstances(expectedDrop),
             triggers: createTriggersInstances(expectedDrop),
-            cache: expectedDrop.cache
+            // cache: expectedDrop.cache
         })
     ;
     
