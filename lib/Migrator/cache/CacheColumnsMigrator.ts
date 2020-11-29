@@ -206,10 +206,13 @@ export class CacheColumnsMigrator extends AbstractMigrator {
         return selectToUpdate;
     }
 
-    private async updateCachePackage(selectToUpdate: Select, forTableRef: TableReference) {
+    private async updateCachePackage(
+        selectToUpdate: Select,
+        forTableRef: TableReference,
+        packageIndex = 0
+    ) {
         const limit = 500;
         let updatedCount = 0;
-        let packageIndex = 0;
 
         do {
             // tslint:disable-next-line: no-console
