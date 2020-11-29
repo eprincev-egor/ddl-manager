@@ -390,7 +390,7 @@ describe("integration/DDLManager.watch", () => {
             $body$
             language plpgsql;
         `);
-        await sleep(100);
+        await sleep(150);
 
         result = await db.query(`
             select 

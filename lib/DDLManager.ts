@@ -139,7 +139,7 @@ export class DDLManager {
         };
         
         const postgres = await this.postgres();
-        const dbState = await postgres.loadState();
+        const dbState = await this.loadDbState(postgres);
 
         const diff = Comparator.compare(dbState, filesState);
         return {diff, postgres, fileState: filesStateInstance};
@@ -227,7 +227,7 @@ export class DDLManager {
         }
 
         const postgres = await this.postgres();
-        const dbState = await postgres.loadState();
+        const dbState = await this.loadDbState(postgres);
 
         const existsFolders: {
             [dirPath: string]: boolean
@@ -365,5 +365,14 @@ export class DDLManager {
         const db = await getDbClient(this.dbConfig);
         const postgres = new PostgresDriver(db);
         return postgres;
+    }
+
+    private async loadDbState(postgres: IDatabaseDriver) {
+        const dbState = {
+            functions: await postgres.loadFunctions(),
+            triggers: await postgres.loadTriggers(),
+            cache: []
+        };
+        return dbState;
     }
 }

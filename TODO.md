@@ -50,5 +50,6 @@
 + log update cache columns
   + fix package number
 + when need drop function while trigger is frozen, but function not
+- when not all columns or trigger exists for cache, need rebuild cache
 - timeline
 - change sleep ms in tests

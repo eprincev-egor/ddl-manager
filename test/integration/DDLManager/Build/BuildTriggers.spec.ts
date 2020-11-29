@@ -515,9 +515,9 @@ describe("integration/DDLManager.build triggers", () => {
         });
 
         const postgres = new PostgresDriver(db);
-        const state = await postgres.loadState();
+        const triggers = await postgres.loadTriggers();
 
-        expect(state.triggers[0]).to.be.shallowDeepEqual({
+        expect(triggers[0]).to.be.shallowDeepEqual({
             name: "my_trigger",
             frozen: false
         });

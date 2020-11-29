@@ -16,6 +16,7 @@ export interface IDatabaseFunctionParams {
     cost?: number;
     frozen?: boolean;
     comment?: string;
+    cacheSignature?: string;
 }
 
 interface IDatabaseFunctionReturns {
@@ -49,6 +50,7 @@ export class DatabaseFunction  {
 
     frozen?: boolean;
     comment?: string;
+    cacheSignature?: string;
 
     constructor(json: IDatabaseFunctionParams) {
         Object.assign(this, json);

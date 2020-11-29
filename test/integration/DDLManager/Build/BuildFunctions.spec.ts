@@ -826,9 +826,9 @@ language plpgsql;
         });
 
         const postgres = new PostgresDriver(db);
-        const state = await postgres.loadState();
+        const funcs = await postgres.loadFunctions();
 
-        expect(state.functions[0]).to.be.shallowDeepEqual({
+        expect(funcs[0]).to.be.shallowDeepEqual({
             name: "func1",
             frozen: false
         });

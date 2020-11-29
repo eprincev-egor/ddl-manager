@@ -36,7 +36,11 @@ describe("integration/PostgresDriver.loadState", () => {
 
     async function loadState() {
         const driver = new PostgresDriver(db);
-        const state = await driver.loadState();
+        const state = {
+            functions: await driver.loadFunctions(),
+            triggers: await driver.loadTriggers(),
+            cache: []
+        };
         return state;
     }
 
@@ -1005,7 +1009,7 @@ describe("integration/PostgresDriver.loadState", () => {
         ], "third update");
     });
 
-    it("load cache, created by DDLManager.build", async() => {
+    it("load cache functions and triggers, created by DDLManager.build", async() => {
 
         await db.query(`
             create table companies (
@@ -1021,7 +1025,7 @@ describe("integration/PostgresDriver.loadState", () => {
         const folderPath = ROOT_TMP_PATH + "/some-cache";
         fs.mkdirSync(folderPath);
 
-        const cacheSQL =`
+        const cacheSQL = `
             cache test_cache for companies (
                 select
                     array_agg( orders.id ) as orders_ids
@@ -1031,7 +1035,6 @@ describe("integration/PostgresDriver.loadState", () => {
             )
         `;
         const cache = FileParser.parseCache(cacheSQL);
-
         fs.writeFileSync(folderPath + "/cache1.sql", cacheSQL);
 
         await DDLManager.build({
@@ -1041,11 +1044,23 @@ describe("integration/PostgresDriver.loadState", () => {
 
         const state = await loadState();
 
-        expect(state).to.be.shallowDeepEqual({
-            functions: [],
-            triggers: [],
-            cache: [cache]
-        });
+        assert.strictEqual(
+            state.functions.length,
+            1
+        );
+        assert.strictEqual(
+            state.functions[0].cacheSignature,
+            cache.getSignature()
+        );
+
+        assert.strictEqual(
+            state.triggers.length,
+            1
+        );
+        assert.strictEqual(
+            state.triggers[0].cacheSignature,
+            cache.getSignature()
+        );
     });
 
 });

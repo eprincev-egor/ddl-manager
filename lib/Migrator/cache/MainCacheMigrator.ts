@@ -40,14 +40,10 @@ export class MainCacheMigrator extends AbstractMigrator {
     async create() {
         await this.columns.create();
         await this.triggers.create();
-
-        await this.postgres.saveCacheMeta(this.diff.create.cache);
     }
 
     async createWithoutUpdateCacheColumns() {
         await this.columns.createWithoutUpdateCacheColumns();
         await this.triggers.create();
-
-        await this.postgres.saveCacheMeta(this.diff.create.cache);
     }
 }

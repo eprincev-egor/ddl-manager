@@ -18,7 +18,6 @@ import { getCheckFrozenFunctionSql } from "./postgres/getCheckFrozenFunctionSql"
 import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
 import { getCheckFrozenTriggerSql } from "./postgres/getCheckFrozenTriggerSql";
-import { wrapText } from "./postgres/wrapText";
 import { Database } from "./schema/Database";
 import { Column } from "./schema/Column";
 import { Table as TableSchema } from "./schema/Table";
@@ -41,17 +40,18 @@ implements IDatabaseDriver {
         this.types = new PGTypes(pgClient);
     }
 
-    async loadState() {
-        const state: IState = {
-            functions: await this.loadObjects<DatabaseFunction>(
-                selectAllFunctionsSQL
-            ),
-            triggers: await this.loadObjects<DatabaseTrigger>(
-                selectAllTriggersSQL
-            ),
-            cache: await this.loadCache()
-        };
-        return state;
+    async loadFunctions(): Promise<DatabaseFunction[]> {
+        const funcs = await this.loadObjects<DatabaseFunction>(
+            selectAllFunctionsSQL
+        );
+        return funcs;
+    }
+
+    async loadTriggers(): Promise<DatabaseTrigger[]> {
+        const triggers = await this.loadObjects<DatabaseTrigger>(
+            selectAllTriggersSQL
+        );
+        return triggers;
     }
 
     private async loadObjects<T>(selectAllObjectsSQL: string): Promise<T[]> {
@@ -65,6 +65,7 @@ implements IDatabaseDriver {
  
             json.frozen = isFrozen(row);
             json.comment = parseComment(row);
+            json.cacheSignature = parseCacheSignature(row);
         
             objects.push(json);
         }
@@ -315,7 +316,11 @@ implements IDatabaseDriver {
         return rows.length;
     }
 
-    async createOrReplaceCacheTrigger(trigger: DatabaseTrigger, func: DatabaseFunction) {
+    async createOrReplaceCacheTrigger(
+        cacheSignature: string,
+        trigger: DatabaseTrigger,
+        func: DatabaseFunction
+    ) {
         const sql = `
             drop trigger if exists ${ trigger.getSignature() };
             drop function if exists ${ func.getSignature() };
@@ -324,10 +329,10 @@ implements IDatabaseDriver {
             ${ trigger.toSQL() };
 
             comment on function ${ func.getSignature() }
-            is 'ddl-manager-cache';
+            is 'ddl-manager-sync ddl-cache-signature(${cacheSignature})';
 
             comment on trigger ${ trigger.getSignature() }
-            is 'ddl-manager-cache';
+            is 'ddl-manager-sync: ddl-cache-signature(${cacheSignature})';
         `;
 
         await this.pgClient.query(sql);
@@ -346,43 +351,6 @@ implements IDatabaseDriver {
         await this.pgClient.query(sql);
     }
 
-    async saveCacheMeta(allCache: Cache[]) {
-        if ( !allCache.length ) {
-            return;
-        }
-
-        const allCacheSQL = allCache
-            .map(cache => 
-                "(" + wrapText( cache.toString() ) + ")"
-            );
-        
-        const sql = `
-            drop table if exists ddl_manager_caches;
-            create table ddl_manager_caches (
-                cache_sql text
-            );
-            insert into ddl_manager_caches
-                (cache_sql)
-            values
-                ${allCacheSQL.join(",\n")}
-            ;
-        `;
-        await this.pgClient.query(sql);
-    }
-
-    private async loadCache() {
-        try {
-            const response = await this.pgClient.query(`select * from ddl_manager_caches`);
-            const allCache = response.rows.map(row => {
-                const cache = FileParser.parseCache(row.cache_sql);
-                return cache;
-            });
-            return allCache;
-        } catch(err) {
-            return [];
-        }
-    }
-
     end() {
         this.pgClient.end();
     }
@@ -391,6 +359,13 @@ implements IDatabaseDriver {
 function parseComment(row: {comment?: string}) {
     const comment = (row.comment || "").replace(/ddl-manager-sync$/i, "").trim();
     return comment || undefined;
+}
+
+function parseCacheSignature(row: {comment?: string}) {
+    const comment = (row.comment || "").trim();
+    const matchedResult = comment.match(/ddl-cache-signature\(([^\_]+)\)/) || [];
+    const cacheSignature = matchedResult[1];
+    return cacheSignature;
 }
 
 function isFrozen(row: {comment?: string}) {

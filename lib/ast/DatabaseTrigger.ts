@@ -29,6 +29,7 @@ export interface IDatabaseTriggerParams {
 
     comment?: string;
     frozen?: boolean;
+    cacheSignature?: string;
 }
 
 export class DatabaseTrigger {
@@ -59,6 +60,7 @@ export class DatabaseTrigger {
 
     frozen?: boolean;
     comment?: string;
+    cacheSignature?: string;
 
     constructor(json: IDatabaseTriggerParams) {
         Object.assign(this, json);

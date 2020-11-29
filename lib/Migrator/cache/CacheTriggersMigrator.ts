@@ -51,7 +51,11 @@ export class CacheTriggersMigrator extends AbstractMigrator {
             const {trigger, function: func} = triggersByTableName[ tableName ];
 
             try {
-                await this.postgres.createOrReplaceCacheTrigger(trigger, func);
+                await this.postgres.createOrReplaceCacheTrigger(
+                    cache.getSignature(),
+                    trigger,
+                    func
+                );
             } catch(err) {
                 this.onError(cache, err);
             }

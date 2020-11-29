@@ -3,8 +3,7 @@ import {
     DatabaseTrigger,
     Select,
     TableReference,
-    Table,
-    Cache
+    Table
 } from "../../../lib/ast";
 import { IDatabaseDriver, ITableColumn } from "../../../lib/database/interface";
 import { Database } from "../../../lib/database/schema/Database";
@@ -22,7 +21,6 @@ implements IDatabaseDriver {
     private updatedPackages: {[table: string]: {
         limit: number;
     }[]};
-    private allCache: Cache[];
     private columnsDrops: {[tableColumn: string]: boolean};
 
     constructor(state?: IState) {
@@ -35,12 +33,15 @@ implements IDatabaseDriver {
         this.columnsTypes = {};
         this.rowsCountByTable = {};
         this.updatedPackages = {};
-        this.allCache = [];
         this.columnsDrops = {};
     }
 
-    async loadState(): Promise<IState> {
-        return this.state;
+    async loadFunctions(): Promise<DatabaseFunction[]> {
+        return this.state.functions;
+    }
+
+    async loadTriggers(): Promise<DatabaseTrigger[]> {
+        return this.state.triggers;
     }
 
     async createOrReplaceFunction(func: DatabaseFunction): Promise<void> {
@@ -136,17 +137,17 @@ implements IDatabaseDriver {
         throw new Error("Method not implemented.");
     }
 
-    async createOrReplaceCacheTrigger(trigger: DatabaseTrigger, func: DatabaseFunction) {
+    async createOrReplaceCacheTrigger(
+        cacheSignature: string,
+        trigger: DatabaseTrigger,
+        func: DatabaseFunction
+    ) {
         await this.createOrReplaceFunction(func);
         await this.createOrReplaceTrigger(trigger);
     }
 
     async createOrReplaceHelperFunc(func: DatabaseFunction) {
         
-    }
-
-    async saveCacheMeta(allCache: Cache[]) {
-        this.allCache = allCache;
     }
 
     async loadTables() {
