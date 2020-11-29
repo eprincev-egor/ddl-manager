@@ -1,6 +1,7 @@
 import fs from "fs";
 import fse from "fs-extra";
-import { FilesState } from "../../../lib/FilesState";
+import { flatMap } from "lodash";
+import { FileReader } from "../../../lib/fs/FileReader";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { generateEmptyFunction, VOID_BODY } from "./fixture/generateEmptyFunction";
@@ -33,7 +34,7 @@ describe("integration/FilesState parse files in sub dirs", () => {
         fs.writeFileSync(ROOT_TMP_PATH + "/some.md", sql);
 
         // parse folder
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
 
@@ -47,10 +48,10 @@ describe("integration/FilesState parse files in sub dirs", () => {
             body: VOID_BODY
         };
 
-        expect(filesState.getFiles()).to.be.shallowDeepEqual([
+        expect(filesReader.state.files).to.be.shallowDeepEqual([
             {
                 name: "some.sql",
-                folder: filesState.getFolders()[0],
+                folder: filesReader.rootFolders[0],
                 path: "some.sql",
                 content: {
                     functions: [func]
@@ -58,7 +59,7 @@ describe("integration/FilesState parse files in sub dirs", () => {
             }
         ]);
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             func
         ]);
     });
@@ -77,7 +78,7 @@ describe("integration/FilesState parse files in sub dirs", () => {
 
 
         // parse folder
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
 
@@ -100,11 +101,11 @@ describe("integration/FilesState parse files in sub dirs", () => {
         };
 
         // check
-        expect(filesState.getFiles()).to.be.shallowDeepEqual([
+        expect(filesReader.state.files).to.be.shallowDeepEqual([
             {
                 name: "some1.sql",
                 path: "some1.sql",
-                folder: filesState.getFolders()[0],
+                folder: filesReader.rootFolders[0],
                 content: {
                     functions: [func1]
                 }
@@ -112,14 +113,14 @@ describe("integration/FilesState parse files in sub dirs", () => {
             {
                 name: "some2.sql",
                 path: "some2.sql",
-                folder: filesState.getFolders()[0],
+                folder: filesReader.rootFolders[0],
                 content: {
                     functions: [func2]
                 }
             }
         ]);
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             func1,
             func2
         ]);
@@ -163,11 +164,11 @@ describe("integration/FilesState parse files in sub dirs", () => {
 
 
         // parse folder
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
 
-        let files = filesState.getFiles();
+        let files = filesReader.state.files;
         
         // for test stability we sorting result
         files = files.sort((file1, file2) => 
@@ -180,7 +181,7 @@ describe("integration/FilesState parse files in sub dirs", () => {
             {
                 name: "test1.sql",
                 path: "first/test1.sql",
-                folder: filesState.getFolders()[0],
+                folder: filesReader.rootFolders[0],
                 content: {
                     functions: [{
                         language: "plpgsql",
@@ -195,7 +196,7 @@ describe("integration/FilesState parse files in sub dirs", () => {
             {
                 name: "test2.sql",
                 path: "first/second/test2.sql",
-                folder: filesState.getFolders()[0],
+                folder: filesReader.rootFolders[0],
                 content: {
                     functions: [{
                         language: "plpgsql",
@@ -210,7 +211,7 @@ describe("integration/FilesState parse files in sub dirs", () => {
             {
                 name: "test3.sql",
                 path: "first/second/third/test3.sql",
-                folder: filesState.getFolders()[0],
+                folder: filesReader.rootFolders[0],
                 content: {
                     functions: [{
                         language: "plpgsql",
@@ -225,7 +226,7 @@ describe("integration/FilesState parse files in sub dirs", () => {
             {
                 name: "x.sql",
                 path: "first/x.sql",
-                folder: filesState.getFolders()[0],
+                folder: filesReader.rootFolders[0],
                 content: {
                     functions: [{
                         language: "plpgsql",
@@ -240,7 +241,7 @@ describe("integration/FilesState parse files in sub dirs", () => {
             {
                 name: "x.sql",
                 path: "first/second/third/x.sql",
-                folder: filesState.getFolders()[0],
+                folder: filesReader.rootFolders[0],
                 content: {
                     functions: [{
                         language: "plpgsql",

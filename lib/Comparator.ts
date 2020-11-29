@@ -1,28 +1,23 @@
-import assert from "assert";
-import { isObject, isArray, flatMap } from "lodash";
+import { flatMap } from "lodash";
 import { Database } from "./database/schema/Database";
-import { IFileContent } from "./fs/File";
+import { FilesState } from "./fs/FilesState";
 import { Diff } from "./Diff";
 
 export class Comparator {
 
-    static compare(database: Database, filesState: IFileContent) {
-        assert.ok(isObject(filesState), "undefined filesState");
-        assert.ok(isArray(filesState.functions), "undefined filesState.functions");
-        assert.ok(isArray(filesState.triggers), "undefined filesState.triggers");
-
-        const comparator = new Comparator(database, filesState);
+    static compare(database: Database, fs: FilesState) {
+        const comparator = new Comparator(database, fs);
         return comparator.compare();
     }
 
     private diff: Diff;
     private database: Database;
-    private filesState: IFileContent;
+    private fs: FilesState;
 
-    private constructor(database: Database, filesState: IFileContent) {
+    private constructor(database: Database, fs: FilesState) {
         this.diff = Diff.empty();
         this.database = database;
-        this.filesState = filesState;
+        this.fs = fs;
     }
 
     compare() {
@@ -43,7 +38,7 @@ export class Comparator {
                 continue;
             }
 
-            const existsSameFuncFromFile = this.filesState.functions.some(fileFunc =>
+            const existsSameFuncFromFile = flatMap(this.fs.files, file => file.content.functions).some(fileFunc =>
                 fileFunc.equal(func)
             );
 
@@ -67,7 +62,7 @@ export class Comparator {
                         return false;
                     }
                     
-                    const existsSameTriggerFromFile = this.filesState.triggers.some(fileTrigger =>
+                    const existsSameTriggerFromFile = flatMap(this.fs.files, file => file.content.triggers).some(fileTrigger =>
                         fileTrigger.equal(dbTrigger)
                     );
 
@@ -98,7 +93,7 @@ export class Comparator {
         );
         const triggersToDrop = triggersCreatedFromDDLManager.filter(trigger => {
 
-            const existsSameTriggerFromFile = this.filesState.triggers.some(fileTrigger =>
+            const existsSameTriggerFromFile = flatMap(this.fs.files, file => file.content.triggers).some(fileTrigger =>
                 fileTrigger.equal(trigger)
             );
             return !existsSameTriggerFromFile;
@@ -108,7 +103,7 @@ export class Comparator {
     }
 
     private createFunctions() {
-        for (const func of this.filesState.functions) {
+        for (const func of flatMap(this.fs.files, file => file.content.functions)) {
 
             const existsSameFuncFromDb = this.database.functions.find(dbFunc =>
                 dbFunc.equal(func)
@@ -123,7 +118,7 @@ export class Comparator {
     }
 
     private createTriggers() {
-        for (const trigger of this.filesState.triggers) {
+        for (const trigger of flatMap(this.fs.files, file => file.content.triggers)) {
             
             const existsSameTriggerFromDb = flatMap(this.database.tables, table => table.triggers).some(dbTrigger =>
                 dbTrigger.equal(trigger)

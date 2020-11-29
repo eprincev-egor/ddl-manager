@@ -1,6 +1,7 @@
 import fs from "fs";
 import fse from "fs-extra";
-import { FilesState } from "../../../lib/FilesState";
+import { flatMap } from "lodash";
+import { FileReader } from "../../../lib/fs/FileReader";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { sleep } from "../sleep";
@@ -89,8 +90,8 @@ describe("integration/FilesState watch remove triggers", () => {
     afterEach(() => {
         fse.removeSync(ROOT_TMP_PATH);
 
-        watchers_to_stop.forEach(filesState => 
-            filesState.stopWatch()
+        watchers_to_stop.forEach(filesReader => 
+            filesReader.stopWatch()
         );
     });
 
@@ -101,25 +102,25 @@ describe("integration/FilesState watch remove triggers", () => {
 
         fs.writeFileSync(filePath, test_func1_sql);
 
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual(
             [test_func1]
         );
 
-        expect(filesState.getTriggers()).to.be.shallowDeepEqual(
+        expect(flatMap(filesReader.state.files, file => file.content.triggers)).to.be.shallowDeepEqual(
             [test_trigger1]
         );
 
         let changes;
-        filesState.on("change", (_changes) => {
+        filesReader.on("change", (_changes) => {
             changes = _changes;
         });
-        watchers_to_stop.push(filesState);
+        watchers_to_stop.push(filesReader);
 
-        await filesState.watch();
+        await filesReader.watch();
 
         fs.unlinkSync(filePath);
         
@@ -140,8 +141,8 @@ describe("integration/FilesState watch remove triggers", () => {
             }
         });
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
-        expect(filesState.getTriggers()).to.be.shallowDeepEqual([]);
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([]);
+        expect(flatMap(filesReader.state.files, file => file.content.triggers)).to.be.shallowDeepEqual([]);
     });
 
 
@@ -153,17 +154,17 @@ describe("integration/FilesState watch remove triggers", () => {
         fs.writeFileSync(filePath2, test_func2_sql);
         
         
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual(
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual(
             [
                 test_func1,
                 test_func2
             ]
         );
-        expect(filesState.getTriggers()).to.be.shallowDeepEqual(
+        expect(flatMap(filesReader.state.files, file => file.content.triggers)).to.be.shallowDeepEqual(
             [
                 test_trigger1,
                 test_trigger2
@@ -172,13 +173,13 @@ describe("integration/FilesState watch remove triggers", () => {
 
 
         let changes;
-        filesState.on("change", (_changes) => {
+        filesReader.on("change", (_changes) => {
             changes = _changes;
         });
-        watchers_to_stop.push(filesState);
+        watchers_to_stop.push(filesReader);
 
 
-        await filesState.watch();
+        await filesReader.watch();
 
         fs.unlinkSync(filePath1);
 
@@ -200,10 +201,10 @@ describe("integration/FilesState watch remove triggers", () => {
         });
 
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             test_func2
         ]);
-        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.triggers)).to.be.shallowDeepEqual([
             test_trigger2
         ]);
 
@@ -227,7 +228,7 @@ describe("integration/FilesState watch remove triggers", () => {
         });
 
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
-        expect(filesState.getTriggers()).to.be.shallowDeepEqual([]);
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([]);
+        expect(flatMap(filesReader.state.files, file => file.content.triggers)).to.be.shallowDeepEqual([]);
     });
 });

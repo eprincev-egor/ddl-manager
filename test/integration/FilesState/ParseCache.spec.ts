@@ -1,6 +1,7 @@
 import fs from "fs";
 import fse from "fs-extra";
-import { FilesState } from "../../../lib/FilesState";
+import { flatMap } from "lodash";
+import { FileReader } from "../../../lib/fs/FileReader";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import assert from "assert";
@@ -36,11 +37,11 @@ describe("integration/FilesState parse cache", () => {
         const filePath = ROOT_TMP_PATH + "/test-file.sql";
         fs.writeFileSync(filePath, sql);
 
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
 
-        expect(filesState.getCache()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.cache)).to.be.shallowDeepEqual([
             {
                 name: "totals",
                 for: {
@@ -130,7 +131,7 @@ describe("integration/FilesState parse cache", () => {
         fs.writeFileSync(filePath2, sql2);
 
         assert.throws(() => {
-            FilesState.create({
+            FileReader.read({
                 folder: ROOT_TMP_PATH
             });
         }, (err: Error) =>
@@ -159,7 +160,7 @@ describe("integration/FilesState parse cache", () => {
         fs.writeFileSync(filePath, sql);
 
         assert.throws(() => {
-            FilesState.create({
+            FileReader.read({
                 folder: ROOT_TMP_PATH
             });
         }, (err: Error) =>
@@ -187,7 +188,7 @@ describe("integration/FilesState parse cache", () => {
         fs.writeFileSync(filePath, sql);
 
         assert.throws(() => {
-            FilesState.create({
+            FileReader.read({
                 folder: ROOT_TMP_PATH
             });
         }, (err: Error) =>
@@ -213,7 +214,7 @@ describe("integration/FilesState parse cache", () => {
         fs.writeFileSync(filePath, sql);
 
         assert.throws(() => {
-            FilesState.create({
+            FileReader.read({
                 folder: ROOT_TMP_PATH
             });
         }, (err: Error) =>
@@ -239,7 +240,7 @@ describe("integration/FilesState parse cache", () => {
         fs.writeFileSync(filePath, sql);
 
         assert.throws(() => {
-            FilesState.create({
+            FileReader.read({
                 folder: ROOT_TMP_PATH
             });
         }, (err: Error) =>
@@ -267,7 +268,7 @@ describe("integration/FilesState parse cache", () => {
         fs.writeFileSync(filePath, sql);
 
         assert.throws(() => {
-            FilesState.create({
+            FileReader.read({
                 folder: ROOT_TMP_PATH
             });
         }, (err: Error) =>
@@ -292,7 +293,7 @@ describe("integration/FilesState parse cache", () => {
         fs.writeFileSync(filePath, sql);
 
         assert.throws(() => {
-            FilesState.create({
+            FileReader.read({
                 folder: ROOT_TMP_PATH
             });
         }, (err: Error) =>
@@ -318,7 +319,7 @@ describe("integration/FilesState parse cache", () => {
         fs.writeFileSync(filePath, sql);
 
         assert.throws(() => {
-            FilesState.create({
+            FileReader.read({
                 folder: ROOT_TMP_PATH
             });
         }, (err: Error) =>
@@ -356,7 +357,7 @@ describe("integration/FilesState parse cache", () => {
         fs.writeFileSync(filePath2, sql2);
 
         assert.throws(() => {
-            FilesState.create({
+            FileReader.read({
                 folder: ROOT_TMP_PATH
             });
         }, (err: Error) =>
@@ -380,7 +381,7 @@ describe("integration/FilesState parse cache", () => {
         fs.writeFileSync(filePath, sql);
 
         assert.throws(() => {
-            FilesState.create({
+            FileReader.read({
                 folder: ROOT_TMP_PATH
             });
         }, (err: Error) =>

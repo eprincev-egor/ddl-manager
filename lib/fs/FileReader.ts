@@ -3,30 +3,30 @@ import glob from "glob";
 import { EventEmitter } from "events";
 import watch from "node-watch";
 import path from "path";
-import { FileParser } from "./parser";
-import { IFileParams } from "./fs/File";
-import { DatabaseTrigger, DatabaseFunction, Cache } from "./ast";
-import { flatMap } from "lodash";
-import { Diff } from "./Diff";
+import { FileParser } from "../parser";
+import { IFileParams } from "./File";
+import { DatabaseTrigger, DatabaseFunction, Cache } from "../ast";
+import { Diff } from "../Diff";
+import { FilesState } from "./FilesState";
 
-export class FilesState extends EventEmitter {
-    static create(params: {folder: string | string[], onError?: any}) {
+export class FileReader extends EventEmitter {
+    static read(params: {folder: string | string[], onError?: any}) {
 
-        const filesState = new FilesState({
+        const reader = new FileReader({
             folder: params.folder
         });
 
         if ( params.onError ) {
-            filesState.on("error", params.onError);
+            reader.on("error", params.onError);
         }
 
-        filesState.parse();
+        reader.parse();
 
-        return filesState;
+        return reader;
     }
 
-    private folders: string[];
-    private files: IFileParams[];
+    readonly state: FilesState;
+    readonly rootFolders: string[];
     private fsWatcher?: ReturnType<typeof watch>;
 
     private fileParser: FileParser;
@@ -35,44 +35,14 @@ export class FilesState extends EventEmitter {
         super();
 
         this.fileParser = new FileParser();
+        this.state = new FilesState();
 
         if ( typeof params.folder === "string" ) {
-            this.folders = [params.folder];
+            this.rootFolders = [params.folder];
         }
         else {
-            this.folders = params.folder;
+            this.rootFolders = params.folder;
         }
-
-        this.files = [];
-    }
-
-    getFolders() {
-        return this.folders;
-    }
-
-    getFunctions() {
-        const outFunctions = flatMap(this.files, file =>
-            file.content.functions
-        );
-        return outFunctions;
-    }
-
-    getTriggers() {
-        const outTriggers = flatMap(this.files, file =>
-            file.content.triggers
-        );
-        return outTriggers;
-    }
-
-    getCache(): Cache[] {
-        const outCache = flatMap(this.files, file =>
-            file.content.cache || []
-        );
-        return outCache;
-    }
-
-    getFiles() {
-        return this.files;
     }
 
     async watch() {
@@ -87,7 +57,7 @@ export class FilesState extends EventEmitter {
             }
         };
 
-        const promise = Promise.all(this.folders.map(rootFolder =>
+        const promise = Promise.all(this.rootFolders.map(rootFolder =>
             new Promise((resolve) => {
                 this.fsWatcher = watch(rootFolder, {
                     recursive: true,
@@ -115,7 +85,7 @@ export class FilesState extends EventEmitter {
     }
     
     private parse() {
-        for (const folderPath of this.folders) {
+        for (const folderPath of this.rootFolders) {
             this.parseFolder(folderPath);
         }
     }
@@ -160,7 +130,7 @@ export class FilesState extends EventEmitter {
             }
             
             if ( file ) {
-                this.files.push(file);
+                this.state.addFile(file);
             }
         });
     }
@@ -187,7 +157,7 @@ export class FilesState extends EventEmitter {
     private checkDuplicateFunction(func: DatabaseFunction) {
         const identify = func.getSignature();
 
-        const hasDuplicate = this.files.some(someFile => {
+        const hasDuplicate = this.state.files.some(someFile => {
             return someFile.content.functions.some((someFunc) => {
                 const someIdentify = someFunc.getSignature();
                 
@@ -203,7 +173,7 @@ export class FilesState extends EventEmitter {
     private checkDuplicateTrigger(trigger: DatabaseTrigger) {
         const identify = trigger.getSignature();
 
-        const hasDuplicate = this.files.some(someFile => {
+        const hasDuplicate = this.state.files.some(someFile => {
             const someTriggers = someFile.content.triggers;
 
             if ( someTriggers ) {
@@ -224,7 +194,7 @@ export class FilesState extends EventEmitter {
         const identify = cache.getSignature();
         const cacheColumns = cache.select.columns.map(col => col.name);;
 
-        for (const someFile of this.files) {
+        for (const someFile of this.state.files) {
             for (const someCache of someFile.content.cache) {
                 // duplicated cache name
                 if ( someCache.getSignature() === identify ) {
@@ -282,7 +252,7 @@ export class FilesState extends EventEmitter {
             }
 
             // if file was parsed early
-            const parsedFile = this.files.find(file =>
+            const parsedFile = this.state.files.find(file =>
                 file.path === subPath &&
                 file.folder === rootFolderPath
             );
@@ -303,8 +273,8 @@ export class FilesState extends EventEmitter {
         const changes = Diff.empty();
 
 
-        for (let i = 0, n = this.files.length; i < n; i++) {
-            const file = this.files[ i ];
+        for (let i = 0, n = this.state.files.length; i < n; i++) {
+            const file = this.state.files[ i ];
 
             if ( file.folder !== rootFolderPath ) {
                 continue;
@@ -323,7 +293,7 @@ export class FilesState extends EventEmitter {
 
 
             // remove file, from state
-            this.files.splice(i, 1);
+            this.state.removeFile(file);
             i--;
             n--;
 
@@ -373,8 +343,7 @@ export class FilesState extends EventEmitter {
             return;
         }
 
-        const fileIndex = this.files.indexOf( oldFile );
-        this.files.splice(fileIndex, 1);
+        this.state.removeFile(oldFile);
 
         const changes = Diff.empty()
             .drop(oldFile.content);
@@ -385,7 +354,7 @@ export class FilesState extends EventEmitter {
 
                 changes.create(newFile.content);
 
-                this.files.splice(fileIndex, 0, newFile);
+                this.state.addFile(newFile);
             }
         } catch(err) {
             this.emitError({
@@ -409,7 +378,7 @@ export class FilesState extends EventEmitter {
 
         this.checkDuplicate( file );
 
-        this.files.push( file );
+        this.state.addFile( file );
         
         const changes = Diff.empty().create(file.content);
 

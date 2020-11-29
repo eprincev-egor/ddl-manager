@@ -1,7 +1,8 @@
 import assert from "assert";
 import fs from "fs";
 import fse from "fs-extra";
-import { FilesState } from "../../../lib/FilesState";
+import { flatMap } from "lodash";
+import { FileReader } from "../../../lib/fs/FileReader";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { sleep } from "../sleep";
@@ -50,8 +51,8 @@ describe("integration/FilesState watch change functions", () => {
     afterEach(() => {
         fse.removeSync(ROOT_TMP_PATH);
 
-        WATCHERS_TO_STOP.forEach(filesState => 
-            filesState.stopWatch()
+        WATCHERS_TO_STOP.forEach(filesReader => 
+            filesReader.stopWatch()
         );
     });
 
@@ -62,24 +63,24 @@ describe("integration/FilesState watch change functions", () => {
         fs.writeFileSync(filePath, TEST_FUNC1_SQL);
         
 
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
         
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             TEST_FUNC1
         ]);
         
 
         let changes;
         let counter = 0;
-        filesState.on("change", (_changes) => {
+        filesReader.on("change", (_changes) => {
             changes = _changes;
             counter++;
         });
-        WATCHERS_TO_STOP.push(filesState);
+        WATCHERS_TO_STOP.push(filesReader);
         
-        await filesState.watch();
+        await filesReader.watch();
         
         
         fs.writeFileSync(filePath, TEST_FUNC2_SQL);
@@ -101,7 +102,7 @@ describe("integration/FilesState watch change functions", () => {
         });
         assert.equal(counter, 1);
         
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             TEST_FUNC2
         ]);
     });
@@ -113,22 +114,22 @@ describe("integration/FilesState watch change functions", () => {
         fs.writeFileSync(filePath, TEST_FUNC1_SQL);
         
 
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
         
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             TEST_FUNC1
         ]);
         
 
         let counter = 0;
-        filesState.on("change", () => {
+        filesReader.on("change", () => {
             counter++;
         });
-        WATCHERS_TO_STOP.push(filesState);
+        WATCHERS_TO_STOP.push(filesReader);
         
-        await filesState.watch();
+        await filesReader.watch();
         
         
         fs.writeFileSync(filePath, TEST_FUNC1_SQL);
@@ -136,7 +137,7 @@ describe("integration/FilesState watch change functions", () => {
         
         assert.equal(counter, 0);
         
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             TEST_FUNC1
         ]);
     });
@@ -148,23 +149,23 @@ describe("integration/FilesState watch change functions", () => {
         fs.writeFileSync(filePath2, TEST_FUNC2_SQL);
         
 
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
         
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             TEST_FUNC1,
             TEST_FUNC2
         ]);
         
 
         let error: Error | undefined;
-        filesState.on("error", (err) => {
+        filesReader.on("error", (err) => {
             error = err;
         });
-        WATCHERS_TO_STOP.push(filesState);
+        WATCHERS_TO_STOP.push(filesReader);
         
-        await filesState.watch();
+        await filesReader.watch();
         
         
         fs.writeFileSync(filePath2, TEST_FUNC1_SQL);
@@ -172,7 +173,7 @@ describe("integration/FilesState watch change functions", () => {
         
         assert.equal(error && error.message, "duplicate function public.some_func1()");
 
-        expect( filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect( flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             TEST_FUNC1
         ]);
     });
@@ -184,24 +185,24 @@ describe("integration/FilesState watch change functions", () => {
         fs.writeFileSync(filePath, TEST_FUNC1_SQL);
         
 
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
         
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             TEST_FUNC1
         ]);
         
 
         let changes;
         let counter = 0;
-        filesState.on("change", (_changes) => {
+        filesReader.on("change", (_changes) => {
             changes = _changes;
             counter++;
         });
-        WATCHERS_TO_STOP.push(filesState);
+        WATCHERS_TO_STOP.push(filesReader);
         
-        await filesState.watch();
+        await filesReader.watch();
         
         
         fs.writeFileSync(filePath, TEST_FUNC2_SQL);
@@ -223,7 +224,7 @@ describe("integration/FilesState watch change functions", () => {
         });
         assert.equal(counter, 1);
         
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             TEST_FUNC2
         ]);
 
@@ -248,7 +249,7 @@ describe("integration/FilesState watch change functions", () => {
         });
         assert.equal(counter, 2);
         
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             TEST_FUNC1
         ]);
     });
@@ -261,23 +262,23 @@ describe("integration/FilesState watch change functions", () => {
         `);
         
 
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
         
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             {...TEST_FUNC1, comment: "nice"}
         ]);
 
         let changes;
         let counter = 0;
-        filesState.on("change", (_changes) => {
+        filesReader.on("change", (_changes) => {
             changes = _changes;
             counter++;
         });
-        WATCHERS_TO_STOP.push(filesState);
+        WATCHERS_TO_STOP.push(filesReader);
         
-        await filesState.watch();
+        await filesReader.watch();
         
         
         fs.writeFileSync(filePath, TEST_FUNC1_SQL + `
@@ -301,7 +302,7 @@ describe("integration/FilesState watch change functions", () => {
         });
         assert.equal(counter, 1);
         
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             {...TEST_FUNC1, comment: "good"}
         ]);
     });

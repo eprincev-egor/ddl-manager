@@ -1,4 +1,4 @@
-import { FilesState } from "./FilesState";
+import { FileReader } from "./fs/FileReader";
 import fs from "fs";
 import pg from "pg";
 import path from "path";
@@ -10,7 +10,7 @@ import { getDbClient, IDBConfig } from "./database/getDbClient";
 import { DatabaseTrigger } from "./ast/DatabaseTrigger";
 import { Diff } from "./Diff";
 
-const watchers: FilesState[] = [];
+const watchers: FileReader[] = [];
 
 export class DDLManager {
 
@@ -99,7 +99,7 @@ export class DDLManager {
     }
 
     private async build() {
-        const {diff, postgres, fileState} = await this.compareDbAndFs();
+        const {diff, postgres, fileReader} = await this.compareDbAndFs();
 
         const migrateErrors = await MainMigrator.migrate(postgres, diff);
 
@@ -109,7 +109,7 @@ export class DDLManager {
             migrateErrors
         );
         
-        return fileState;
+        return fileReader;
     }
 
     private async refreshCache() {
@@ -125,24 +125,19 @@ export class DDLManager {
     }
 
     private async compareDbAndFs() {
-        const filesStateInstance = FilesState.create({
+        const fileReader = FileReader.read({
             folder: this.folders,
             onError(err: Error) {
                 // tslint:disable-next-line: no-console
                 console.error((err as any).subPath + ": " + err.message);
             }
         });
-        const filesState = {
-            functions: filesStateInstance.getFunctions(),
-            triggers: filesStateInstance.getTriggers(),
-            cache: filesStateInstance.getCache()
-        };
         
         const postgres = await this.postgres();
         const databaseState = await postgres.load();
 
-        const diff = Comparator.compare(databaseState, filesState);
-        return {diff, postgres, fileState: filesStateInstance};
+        const diff = Comparator.compare(databaseState, fileReader.state);
+        return {diff, postgres, fileReader};
     }
 
     private onMigrate(

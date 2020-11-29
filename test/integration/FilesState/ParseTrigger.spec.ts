@@ -1,7 +1,8 @@
 import assert from "assert";
 import fs from "fs";
 import fse from "fs-extra";
-import { FilesState } from "../../../lib/FilesState";
+import { flatMap } from "lodash";
+import { FileReader } from "../../../lib/fs/FileReader";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 
@@ -74,12 +75,12 @@ describe("integration/FilesState parse functions and triggers", () => {
             }
         ];
         
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
 
-        const actualFunctions = filesState.getFunctions();
-        const actualTriggers = filesState.getTriggers();
+        const actualFunctions = flatMap(filesReader.state.files, file => file.content.functions);
+        const actualTriggers = flatMap(filesReader.state.files, file => file.content.triggers);
 
         expect(actualFunctions).to.be.shallowDeepEqual(expectedFunctions);
         expect(actualTriggers).to.be.shallowDeepEqual(expectedTriggers);
@@ -110,7 +111,7 @@ describe("integration/FilesState parse functions and triggers", () => {
         fs.writeFileSync(filePath, sql);
 
         let err = {message: "expected error"};
-        FilesState.create({
+        FileReader.read({
             folder: ROOT_TMP_PATH,
             onError(_err: Error) {
                 err = _err;
@@ -144,7 +145,7 @@ describe("integration/FilesState parse functions and triggers", () => {
         fs.writeFileSync(filePath, sql);
 
         let err = {message: "expected error"};
-        FilesState.create({
+        FileReader.read({
             folder: ROOT_TMP_PATH,
             onError(_err: Error) {
                 err = _err;
@@ -185,7 +186,7 @@ describe("integration/FilesState parse functions and triggers", () => {
 
 
         let err = {message: "expected error"};
-        FilesState.create({
+        FileReader.read({
             folder: ROOT_TMP_PATH,
             onError(_err: Error) {
                 err = _err;
@@ -220,11 +221,11 @@ describe("integration/FilesState parse functions and triggers", () => {
         const filePath = ROOT_TMP_PATH + "/test-file.sql";
         fs.writeFileSync(filePath, sql);
 
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
 
-        expect(filesState.getTriggers()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.triggers)).to.be.shallowDeepEqual([
             {
                 table: {
                     schema: "public",

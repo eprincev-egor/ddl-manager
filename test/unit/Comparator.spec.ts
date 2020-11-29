@@ -1,6 +1,5 @@
 import _ from "lodash";
 import { Comparator } from "../../lib/Comparator";
-import { FileParser } from "../../lib/parser/FileParser";
 import assert from "assert";
 import {
     Cache,
@@ -12,6 +11,8 @@ import {
 import { Database } from "../../lib/database/schema/Database";
 import { Table as DBTable } from "../../lib/database/schema/Table";
 import { Diff } from "../../lib/Diff";
+import { FilesState } from "../../lib/fs/FilesState";
+import { File } from "../../lib/fs/File";
 interface IStateParams {
     functions: (DatabaseFunction | IDatabaseFunctionParams)[];
     triggers: (DatabaseTrigger | IDatabaseTriggerParams)[];
@@ -37,11 +38,32 @@ function diffState(params: {filesState: Partial<IStateParams>, dbState: Partial<
         database.addTrigger( trigger );
     }
 
-    const filesState = {
-        functions: createFuncsInstances(filesStateParams),
-        triggers: createTriggersInstances(filesStateParams),
-        cache: filesStateParams.cache || []
-    };
+    const filesState = new FilesState();
+    for (const func of createFuncsInstances(filesStateParams)) {
+        filesState.addFile(new File({
+            name: func.name + ".sql",
+            folder: "",
+            path: func.name + ".sql",
+            content: {
+                functions: [func],
+                triggers: [],
+                cache: []
+            }
+        }));
+    }
+
+    for (const trigger of createTriggersInstances(filesStateParams)) {
+        filesState.addFile(new File({
+            name: trigger.name + ".sql",
+            folder: "",
+            path: trigger.name + ".sql",
+            content: {
+                functions: [],
+                triggers: [trigger],
+                cache: []
+            }
+        }));
+    }
 
     const diff = Comparator.compare(database, filesState);
     return diff;

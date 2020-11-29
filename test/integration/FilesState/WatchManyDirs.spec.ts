@@ -1,6 +1,7 @@
 import fs from "fs";
 import fse from "fs-extra";
-import { FilesState } from "../../../lib/FilesState";
+import { FileReader } from "../../../lib/fs/FileReader";
+import { flatMap } from "lodash";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { sleep } from "../sleep";
@@ -37,7 +38,7 @@ describe("integration/FilesState watch for many directories", () => {
 
 
         // parse folder
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: [
                 ROOT_TMP_PATH + "/root_1",
                 ROOT_TMP_PATH + "/root_2"
@@ -62,7 +63,7 @@ describe("integration/FilesState watch for many directories", () => {
             body: VOID_BODY
         };
 
-        expect(filesState.getFiles()).to.be.shallowDeepEqual([
+        expect(filesReader.state.files).to.be.shallowDeepEqual([
             {
                 name: "some.sql",
                 path: "some.sql",
@@ -81,7 +82,7 @@ describe("integration/FilesState watch for many directories", () => {
             }
         ]);
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             func1,
             func2
         ]);
@@ -95,14 +96,14 @@ describe("integration/FilesState watch for many directories", () => {
 
 
         // parse folder
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: [
                 ROOT_TMP_PATH + "/root_1",
                 ROOT_TMP_PATH + "/root_2"
             ]
         });
         
-        await filesState.watch();
+        await filesReader.watch();
         
 
         // create sql files
@@ -132,7 +133,7 @@ describe("integration/FilesState watch for many directories", () => {
             body: VOID_BODY
         };
 
-        expect(filesState.getFiles()).to.be.shallowDeepEqual([
+        expect(filesReader.state.files).to.be.shallowDeepEqual([
             {
                 name: "some.sql",
                 path: "some.sql",
@@ -151,7 +152,7 @@ describe("integration/FilesState watch for many directories", () => {
             }
         ]);
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             func1,
             func2
         ]);
@@ -172,14 +173,14 @@ describe("integration/FilesState watch for many directories", () => {
 
 
         // parse folder
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: [
                 ROOT_TMP_PATH + "/root_1",
                 ROOT_TMP_PATH + "/root_2"
             ]
         });
         
-        await filesState.watch();
+        await filesReader.watch();
         
 
         fs.unlinkSync(ROOT_TMP_PATH + "/root_2/some.sql");
@@ -195,7 +196,7 @@ describe("integration/FilesState watch for many directories", () => {
             body: VOID_BODY
         };
 
-        expect(filesState.getFiles()).to.be.shallowDeepEqual([
+        expect(filesReader.state.files).to.be.shallowDeepEqual([
             {
                 name: "some.sql",
                 path: "some.sql",
@@ -206,7 +207,7 @@ describe("integration/FilesState watch for many directories", () => {
             }
         ]);
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             func1
         ]);
     });
@@ -226,14 +227,14 @@ describe("integration/FilesState watch for many directories", () => {
 
 
         // parse folder
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: [
                 ROOT_TMP_PATH + "/root_1",
                 ROOT_TMP_PATH + "/root_2"
             ]
         });
         
-        await filesState.watch();
+        await filesReader.watch();
         
 
         const sql3 = generateEmptyFunction("changed_func");
@@ -259,7 +260,7 @@ describe("integration/FilesState watch for many directories", () => {
             body: VOID_BODY
         };
 
-        expect(filesState.getFiles()).to.be.shallowDeepEqual([
+        expect(filesReader.state.files).to.be.shallowDeepEqual([
             {
                 name: "some.sql",
                 path: "some.sql",
@@ -278,7 +279,7 @@ describe("integration/FilesState watch for many directories", () => {
             }
         ]);
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             func1,
             func2
         ]);

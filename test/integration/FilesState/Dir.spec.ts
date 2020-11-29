@@ -1,7 +1,8 @@
 import assert from "assert";
 import fs from "fs";
 import fse from "fs-extra";
-import { FilesState } from "../../../lib/FilesState";
+import { flatMap } from "lodash";
+import { FileReader } from "../../../lib/fs/FileReader";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { sleep } from "../sleep";
@@ -35,8 +36,8 @@ describe("integration/FilesState watch create and remove folders", () => {
     });
     
     afterEach(() => {
-        watchers_to_stop.forEach(filesState => 
-            filesState.stopWatch()
+        watchers_to_stop.forEach(filesReader => 
+            filesReader.stopWatch()
         );
 
         fse.removeSync(ROOT_TMP_PATH);
@@ -49,78 +50,78 @@ describe("integration/FilesState watch create and remove folders", () => {
 
         fs.mkdirSync(dirPath);
 
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([]);
 
         let counter = 0;
-        filesState.on("change", () => {
+        filesReader.on("change", () => {
             counter++;
         });
 
-        watchers_to_stop.push(filesState);
-        await filesState.watch();
+        watchers_to_stop.push(filesReader);
+        await filesReader.watch();
 
 
         fse.removeSync(dirPath);
         await sleep(50);
 
         assert.equal(counter, 0);
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([]);
     });
 
     it("create empty dir", async() => {
 
         const dirPath = ROOT_TMP_PATH + "/some-dir";
 
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([]);
 
         let counter = 0;
-        filesState.on("change", () => {
+        filesReader.on("change", () => {
             counter++;
         });
 
-        watchers_to_stop.push(filesState);
-        await filesState.watch();
+        watchers_to_stop.push(filesReader);
+        await filesReader.watch();
 
 
         fs.mkdirSync(dirPath);
         await sleep(50);
 
         assert.equal(counter, 0);
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([]);
     });
 
     it("create dir.sql", async() => {
         
         const dirPath = ROOT_TMP_PATH + "/some-dir.sql";
 
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([]);
 
         let counter = 0;
-        filesState.on("change", () => {
+        filesReader.on("change", () => {
             counter++;
         });
 
-        watchers_to_stop.push(filesState);
-        await filesState.watch();
+        watchers_to_stop.push(filesReader);
+        await filesReader.watch();
 
 
         fs.mkdirSync(dirPath);
         await sleep(50);
 
         assert.equal(counter, 0);
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([]);
     });
 
     it("remove dir.sql", async() => {
@@ -129,25 +130,25 @@ describe("integration/FilesState watch create and remove folders", () => {
         fs.mkdirSync(dirPath);
 
 
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([]);
 
         let counter = 0;
-        filesState.on("change", () => {
+        filesReader.on("change", () => {
             counter++;
         });
 
-        watchers_to_stop.push(filesState);
-        await filesState.watch();
+        watchers_to_stop.push(filesReader);
+        await filesReader.watch();
 
         fse.removeSync(dirPath);
         await sleep(50);
 
         assert.equal(counter, 0);
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([]);
     });
 
 
@@ -156,21 +157,21 @@ describe("integration/FilesState watch create and remove folders", () => {
         const dirPath = ROOT_TMP_PATH + "/some-dir";
         const filePath = dirPath + "/some.sql";
 
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([]);
 
         let counter = 0;
         let changes;
-        filesState.on("change", (_changes) => {
+        filesReader.on("change", (_changes) => {
             counter++;
             changes = _changes;
         });
 
-        watchers_to_stop.push(filesState);
-        await filesState.watch();
+        watchers_to_stop.push(filesReader);
+        await filesReader.watch();
 
 
         fs.mkdirSync(dirPath);
@@ -180,7 +181,7 @@ describe("integration/FilesState watch create and remove folders", () => {
         await sleep(50);
 
         assert.equal(counter, 1);
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             test_func1
         ]);
 
@@ -207,30 +208,30 @@ describe("integration/FilesState watch create and remove folders", () => {
         fs.mkdirSync(dirPath);
         fs.writeFileSync(filePath, test_func1_sql);
 
-        const filesState = FilesState.create({
+        const filesReader = FileReader.read({
             folder: ROOT_TMP_PATH
         });
 
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             test_func1
         ]);
 
 
         let counter = 0;
         let changes;
-        filesState.on("change", (_changes) => {
+        filesReader.on("change", (_changes) => {
             counter++;
             changes = _changes;
         });
 
-        watchers_to_stop.push(filesState);
-        await filesState.watch();
+        watchers_to_stop.push(filesReader);
+        await filesReader.watch();
 
         fse.removeSync(dirPath);
         await sleep(50);
 
         assert.equal(counter, 1);
-        expect(filesState.getFunctions()).to.be.shallowDeepEqual([]);
+        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([]);
 
         expect(changes).to.be.shallowDeepEqual({
             drop: {
