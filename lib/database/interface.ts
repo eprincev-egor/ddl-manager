@@ -1,7 +1,6 @@
 import { Select } from "../ast";
 import { Database } from "./schema/Database";
 import { Column } from "./schema/Column";
-import { TableID } from "./schema/TableID";
 import { TableReference } from "./schema/TableReference";
 import { DatabaseTrigger } from "./schema/DatabaseTrigger";
 import { DatabaseFunction  } from "./schema/DatabaseFunction";
@@ -19,8 +18,8 @@ export interface IDatabaseDriver {
     getCacheColumnsTypes(select: Select, forTable: TableReference): Promise<{
         [columnName: string]: string
     }>;
-    createOrReplaceColumn(tableID: TableID, column: Column): Promise<void>;
-    dropColumn(table: TableID, columnName: string): Promise<void>;
+    createOrReplaceColumn(column: Column): Promise<void>;
+    dropColumn(column: Column): Promise<void>;
     updateCachePackage(select: Select, forTable: TableReference, limit: number): Promise<number>;
     createOrReplaceCacheTrigger(
         trigger: DatabaseTrigger,

@@ -16,6 +16,7 @@ import { TableReference } from "./schema/TableReference";
 import { Table } from "./schema/Table";
 import { TableID } from "./schema/TableID";
 import { flatMap } from "lodash";
+import { wrapText } from "./postgres/wrapText";
 
 const selectAllFunctionsSQL = fs.readFileSync(__dirname + "/postgres/select-all-functions.sql")
     .toString();
@@ -123,6 +124,7 @@ implements IDatabaseDriver {
                 columnRow.column_type_oid
             ) as string;
             const column = new Column(
+                tableId,
                 columnRow.column_name,
                 columnType
             );
@@ -258,17 +260,20 @@ implements IDatabaseDriver {
         return columnsTypes;
     }
 
-    async createOrReplaceColumn(table: TableID, column: Column) {
-        const sql = `
-            alter table ${table} add column if not exists ${column.name} ${column.type} default ${ column.default };
+    async createOrReplaceColumn(column: Column) {
+        let sql = `
+            alter table ${column.table} add column if not exists ${column.name} ${column.type} default ${ column.default };
         `;
+        if ( column.comment ) {
+            sql += `comment on column ${ column.getSignature() } is ${wrapText( column.comment )}`;
+        }
 
         await this.pgClient.query(sql);
     }
 
-    async dropColumn(table: TableID, columnName: string) {
+    async dropColumn(column: Column) {
         const sql = `
-            alter table ${table} drop column if exists ${columnName};
+            alter table ${column.table} drop column if exists ${column.name};
         `;
 
         await this.pgClient.query(sql);

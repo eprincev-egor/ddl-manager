@@ -2,10 +2,14 @@ import assert from "assert";
 import { FakeDatabase } from "./FakeDatabase";
 import { MainMigrator } from "../../../lib/Migrator/MainMigrator";
 import { Migration } from "../../../lib/Migrator/Migration";
+import { Comparator } from "../../../lib/Comparator";
 import { DatabaseFunction } from "../../../lib/database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../../../lib/database/schema/DatabaseTrigger";
 import { TableID } from "../../../lib/database/schema/TableID";
 import { FileParser } from "../../../lib/parser";
+import { Database } from "../../../lib/database/schema/Database";
+import { FilesState } from "../../../lib/fs/FilesState";
+import { File, IFileContent } from "../../../lib/fs/File";
 
 
 describe("Migrator", () => {
@@ -89,11 +93,19 @@ describe("Migrator", () => {
             orders_profit: "numeric"
         });
 
-        changes.create({
-            // cache: [FileParser.parseCache(ordersProfitCacheSQL)]
-        });
+        const migration = Comparator.compare(
+            new Database(),
+            new FilesState([
+                new File({
+                    name: "cache.sql",
+                    folder: "",
+                    path: "",
+                    content: FileParser.parse(ordersProfitCacheSQL) as IFileContent
+                })
+            ])
+        );
 
-        await MainMigrator.migrate(database, changes);
+        await MainMigrator.migrate(database, migration);
 
         assert.deepStrictEqual(database.columns, {
             "public.some_table.orders_profit": {
@@ -128,17 +140,26 @@ describe("Migrator", () => {
             orders_profit: "numeric"
         });
 
-        const cache = FileParser.parseCache(ordersProfitCacheSQL);
-        changes.create({
-            // cache: [cache]
-        });
+        const migration = Comparator.compare(
+            new Database(),
+            new FilesState([
+                new File({
+                    name: "cache.sql",
+                    folder: "",
+                    path: "",
+                    content: FileParser.parse(ordersProfitCacheSQL) as IFileContent
+                })
+            ])
+        );
 
-        database.setRowsCount(cache.for.table.toString(), 1499);
+        await MainMigrator.migrate(database, migration);
 
-        await MainMigrator.migrate(database, changes);
+        database.setRowsCount("public.some_table", 1499);
+
+        await MainMigrator.migrate(database, migration);
 
         assert.deepStrictEqual(
-            database.getUpdatedPackages(cache.for.table.toString()),
+            database.getUpdatedPackages("public.some_table"),
             [{limit: 500}, {limit: 500}, {limit: 500}]
         );
     });
@@ -151,19 +172,27 @@ describe("Migrator", () => {
             doc_numbers: "text"
         });
 
-        changes.create({
-            // cache: [FileParser.parseCache(`
-            //     cache test for some_table (
-            //         select
-            //             string_agg( another_table.doc_number, ', ' ) as doc_numbers
-            //         from another_table
-            //         where
-            //             another_table.id_client = some_table.id
-            //     )
-            // `)]
-        });
+        const migration = Comparator.compare(
+            new Database(),
+            new FilesState([
+                new File({
+                    name: "cache.sql",
+                    folder: "",
+                    path: "",
+                    content: FileParser.parse(`
+                        cache test for some_table (
+                            select
+                                string_agg( another_table.doc_number, ', ' ) as doc_numbers
+                            from another_table
+                            where
+                                another_table.id_client = some_table.id
+                        )
+                    `) as IFileContent
+                })
+            ])
+        );
 
-        await MainMigrator.migrate(database, changes);
+        await MainMigrator.migrate(database, migration);
 
         assert.deepStrictEqual(database.columns, {
             "public.some_table.doc_numbers_array_agg": {

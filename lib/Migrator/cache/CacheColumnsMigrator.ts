@@ -67,7 +67,9 @@ export class CacheColumnsMigrator extends AbstractMigrator {
         for (const {columnName, cache} of trashColumns) {
             const table = cache.for.table;
             try {
-                await this.postgres.dropColumn(table, columnName);
+                await this.postgres.dropColumn(
+                    new Column(table, columnName, "any")
+                );
             } catch(err) {
                 this.onError(cache, err);
             }
@@ -94,12 +96,12 @@ export class CacheColumnsMigrator extends AbstractMigrator {
 
     private async createColumn(cache: Cache, select: Select) {
         const column = new Column(
+            cache.for.table,
             (select.columns[0] as SelectColumn).name,
             await this.getColumnType(cache, select),
             this.getColumnDefault(select)
         );
         await this.postgres.createOrReplaceColumn(
-            cache.for.table,
             column
         );
     }

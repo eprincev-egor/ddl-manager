@@ -5,6 +5,7 @@ import { CacheTriggersBuilder } from "../../../../lib/cache/CacheTriggersBuilder
 import { Database } from "../../../../lib/database/schema/Database";
 import { Table } from "../../../../lib/database/schema/Table";
 import { Column } from "../../../../lib/database/schema/Column";
+import { TableID } from "../../../../lib/database/schema/TableID";
 
 export interface ITest {
     testDir: string;
@@ -23,7 +24,14 @@ export function testTriggers(test: ITest) {
                 "public",
                 "orders",
                 [
-                    new Column("companies_ids", "integer[]")
+                    new Column(
+                        new TableID(
+                            "public",
+                            "orders",
+                        ),
+                        "companies_ids",
+                        "integer[]"
+                    )
                 ]
             )
         ])

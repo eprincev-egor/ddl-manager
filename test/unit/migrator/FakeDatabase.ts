@@ -5,7 +5,6 @@ import { Table } from "../../../lib/database/schema/Table";
 import { DatabaseFunction } from "../../../lib/database/schema/DatabaseFunction";
 import { TableReference } from "../../../lib/database/schema/TableReference";
 import { DatabaseTrigger } from "../../../lib/database/schema/DatabaseTrigger";
-import { TableID } from "../../../lib/database/schema/TableID";
 import { Column } from "../../../lib/database/schema/Column";
 import { IFileContent } from "../../../lib/fs/File";
 
@@ -14,7 +13,11 @@ implements IDatabaseDriver {
 
     readonly state: IFileContent;
     readonly columns: {
-        [tableAndColumn: string]: Column;
+        [tableAndColumn: string]: {
+            name: string;
+            type: string;
+            default: string | null;
+        };
     };
     private columnsTypes: {[column: string]: string};
     private rowsCountByTable: {[table: string]: number};
@@ -113,13 +116,17 @@ implements IDatabaseDriver {
         return outputTypes;
     }
 
-    async createOrReplaceColumn(table: TableID, column: Column): Promise<void> {
-        this.columns[ table.toString() + "." + column.name ] = column;
+    async createOrReplaceColumn(column: Column): Promise<void> {
+        this.columns[ column.getSignature() ] = {
+            name: column.name,
+            type: column.type.value,
+            "default": column.default
+        };
     }
 
-    async dropColumn(table: TableID, columnName: string): Promise<void> {
-        delete this.columns[ table.toString() + "." + columnName ];
-        this.columnsDrops[ table.toString() + "." + columnName ] = true;
+    async dropColumn(column: Column): Promise<void> {
+        delete this.columns[ column.getSignature() ];
+        this.columnsDrops[ column.getSignature() ] = true;
     }
 
     async updateCachePackage(select: Select, forTable: TableReference, limit: number): Promise<number> {

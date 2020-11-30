@@ -2,7 +2,8 @@ import { Migration } from "./Migration";
 import { IDatabaseDriver } from "../database/interface";
 import { FunctionsMigrator } from "./FunctionsMigrator";
 import { TriggersMigrator } from "./TriggersMigrator";
-import { MainCacheMigrator } from "./cache/MainCacheMigrator";
+import { ColumnsMigrator } from "./ColumnsMigrator";
+import { UpdateMigrator } from "./UpdateMigrator";
 
 export class MainMigrator {
     private migration: Migration;
@@ -32,17 +33,19 @@ export class MainMigrator {
         const {
             functions,
             triggers,
-            cache,
+            columns,
+            updates,
             outputErrors
         } = await this.createMigrators();
 
         await triggers.drop();
         await functions.drop();
-        await cache.drop();
+        await columns.drop();
 
+        await columns.create();
+        await updates.create();
         await functions.create();
         await triggers.create();
-        await cache.create();
 
         return outputErrors;
     }
@@ -51,29 +54,28 @@ export class MainMigrator {
         const {
             functions,
             triggers,
-            cache,
+            columns,
             outputErrors
         } = await this.createMigrators();
 
         await triggers.drop();
         await functions.drop();
-        await cache.drop();
+        await columns.drop();
 
+        await columns.create();
         await functions.create();
         await triggers.create();
-        await cache.createWithoutUpdateCacheColumns();
 
         return outputErrors;
     }
 
     private async refreshCache() {
         const {
-            cache,
+            updates,
             outputErrors
         } = await this.createMigrators();
 
-        await cache.drop();
-        await cache.create();
+        await updates.create();
 
         return outputErrors;
     }
@@ -95,7 +97,13 @@ export class MainMigrator {
             databaseStructure,
             outputErrors
         );
-        const cache = new MainCacheMigrator(
+        const columns = new ColumnsMigrator(
+            this.postgres,
+            this.migration,
+            databaseStructure,
+            outputErrors
+        );
+        const updates = new UpdateMigrator(
             this.postgres,
             this.migration,
             databaseStructure,
@@ -105,7 +113,8 @@ export class MainMigrator {
         return {
             functions,
             triggers,
-            cache,
+            columns,
+            updates,
             outputErrors
         };
     }
