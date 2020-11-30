@@ -4,4 +4,4 @@
 --recursive
 --timeout 5000
 --exit
-test/**/*.spec.ts
+test/unit/migrator/*.spec.ts

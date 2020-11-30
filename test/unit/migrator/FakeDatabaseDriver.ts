@@ -8,7 +8,7 @@ import { DatabaseTrigger } from "../../../lib/database/schema/DatabaseTrigger";
 import { Column } from "../../../lib/database/schema/Column";
 import { IFileContent } from "../../../lib/fs/File";
 
-export class FakeDatabase
+export class FakeDatabaseDriver
 implements IDatabaseDriver {
 
     readonly state: IFileContent;
