@@ -1,4 +1,4 @@
-import { File } from "./File";
+import { File, IFileParams } from "./File";
 
 export class FilesState {
     readonly files: File[];
@@ -7,7 +7,15 @@ export class FilesState {
         this.files = files;
     }
 
-    addFile(file: File) {
+    addFile(fileOrParams: File | IFileParams) {
+        let file!: File;
+        if ( fileOrParams instanceof File ) {
+            file = fileOrParams;
+        }
+        else {
+            file = new File(fileOrParams);
+        }
+
         this.files.push(file);
     }
 

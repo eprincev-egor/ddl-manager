@@ -4,12 +4,12 @@ import { Column } from "../database/schema/Column";
 import { TableReference } from "../database/schema/TableReference";
 import { Select } from "../ast";
 
-interface IUpdate {
+export interface IUpdate {
     select: Select;
     forTable: TableReference;
 }
 
-interface IChanges {
+export interface IChanges {
     functions: DatabaseFunction[];
     triggers: DatabaseTrigger[];
     columns: Column[];

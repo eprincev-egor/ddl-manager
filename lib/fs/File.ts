@@ -6,7 +6,7 @@ export interface IFileParams {
     name: string;
     folder: string;
     path: string;
-    content: IFileContent;
+    content: Partial<IFileContent>;
 }
 
 export interface IFileContent {
@@ -23,5 +23,14 @@ export class File {
 
     constructor(params: IFileParams) {
         Object.assign(this, params);
+        if ( !this.content.functions ) {
+            this.content.functions = [];
+        }
+        if ( !this.content.triggers ) {
+            this.content.triggers = [];
+        }
+        if ( !this.content.cache ) {
+            this.content.cache = [];
+        }
     }
 }

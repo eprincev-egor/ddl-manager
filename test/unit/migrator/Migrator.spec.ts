@@ -31,62 +31,6 @@ xdescribe("Migrator", () => {
         )
     `;
 
-    it("create function", async() => {
-        changes.create({
-            functions: [
-                new DatabaseFunction({
-                    schema: "public",
-                    name: "some_simple_func",
-                    args: [],
-                    returns: {type: "void"},
-                    body: ""
-                })
-            ]
-        });
-
-        await MainMigrator.migrate(databaseDriver, changes);
-
-        assert.strictEqual(
-            databaseDriver.state.functions.length,
-            1
-        );
-        assert.strictEqual(
-            databaseDriver.state.functions[0].getSignature(),
-            "public.some_simple_func()"
-        );
-    });
-
-    it("create trigger", async() => {
-
-        changes.create({
-            triggers: [
-                new DatabaseTrigger({
-                    name: "some_simple_trigger",
-                    table: new TableID(
-                        "public",
-                        "some_table"
-                    ),
-                    procedure: {
-                        schema: "public",
-                        name: "some_trigger_func",
-                        args: []
-                    }
-                })
-            ]
-        });
-
-        await MainMigrator.migrate(databaseDriver, changes);
-
-        assert.strictEqual(
-            databaseDriver.state.triggers.length,
-            1
-        );
-        assert.strictEqual(
-            databaseDriver.state.triggers[0].getSignature(),
-            "some_simple_trigger on public.some_table"
-        );
-    });
-
     it("create cache triggers and columns", async() => {
 
         databaseDriver.setColumnsTypes({
