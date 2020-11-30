@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Comparator } from "../../lib/Comparator";
+import { Comparator } from "../../lib/Comparator/Comparator";
 import assert from "assert";
 import { Cache } from "../../lib/ast";
 import { Database } from "../../lib/database/schema/Database";

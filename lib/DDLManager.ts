@@ -2,7 +2,7 @@ import { FileReader } from "./fs/FileReader";
 import fs from "fs";
 import pg from "pg";
 import path from "path";
-import { Comparator } from "./Comparator";
+import { Comparator } from "./Comparator/Comparator";
 import { MainMigrator } from "./Migrator/MainMigrator";
 import { IDatabaseDriver } from "./database/interface";
 import { PostgresDriver } from "./database/PostgresDriver";

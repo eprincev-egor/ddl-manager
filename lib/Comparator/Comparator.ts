@@ -1,9 +1,9 @@
-import { Database } from "./database/schema/Database";
-import { DatabaseTrigger } from "./database/schema/DatabaseTrigger";
-import { DatabaseFunction } from "./database/schema/DatabaseFunction";
-import { Column } from "./database/schema/Column";
-import { FilesState } from "./fs/FilesState";
-import { Migration } from "./Migrator/Migration";
+import { Database } from "../database/schema/Database";
+import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
+import { DatabaseFunction } from "../database/schema/DatabaseFunction";
+import { Column } from "../database/schema/Column";
+import { FilesState } from "../fs/FilesState";
+import { Migration } from "../Migrator/Migration";
 import {
     Cache,
     Select,
@@ -12,14 +12,14 @@ import {
     FuncCall,
     Expression,
     ColumnReference 
-} from "./ast";
-import { CacheTriggersBuilder } from "./cache/CacheTriggersBuilder";
-import { AbstractAgg, AggFactory } from "./cache/aggregator";
+} from "../ast";
+import { CacheTriggersBuilder } from "../cache/CacheTriggersBuilder";
+import { AbstractAgg, AggFactory } from "../cache/aggregator";
 import { flatMap } from "lodash";
 import {
     ISortSelectItem,
     sortSelectsByDependencies
-} from "./Migrator/cache/graph-util";
+} from "./graph-util";
 
 export class Comparator {
 

@@ -2,7 +2,7 @@ import assert from "assert";
 import { FakeDatabase } from "./FakeDatabase";
 import { MainMigrator } from "../../../lib/Migrator/MainMigrator";
 import { Migration } from "../../../lib/Migrator/Migration";
-import { Comparator } from "../../../lib/Comparator";
+import { Comparator } from "../../../lib/Comparator/Comparator";
 import { DatabaseFunction } from "../../../lib/database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../../../lib/database/schema/DatabaseTrigger";
 import { TableID } from "../../../lib/database/schema/TableID";

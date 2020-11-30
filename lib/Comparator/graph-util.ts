@@ -1,5 +1,5 @@
 import assert from "assert";
-import { Cache, Select } from "../../ast";
+import { Cache, Select } from "../ast";
 
 export interface ISortSelectItem {
     select: Select;
