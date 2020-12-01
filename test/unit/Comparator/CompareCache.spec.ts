@@ -4,7 +4,12 @@ import { FilesState } from "../../../lib/fs/FilesState";
 import { deepStrictEqualMigration } from "./deepStrictEqualMigration";
 import assert from "assert";
 import {
-    testFileWithCache
+    testFileWithCache,
+    testCacheFunc,
+    testCacheTrigger,
+    testTableWithCache,
+    testTableSource,
+    testCacheColumn
 } from "./fixture/cache-fixture";
 
 describe("Comparator: compare cache", () => {
@@ -34,12 +39,12 @@ describe("Comparator: compare cache", () => {
         
         fs.addFile(testFileWithCache);
 
-        const migration = Comparator.compare(database, fs);
+        const {toCreate, toDrop} = Comparator.compare(database, fs);
 
-        assert.strictEqual(migration.toDrop.columns.length, 0, "no columns to drop");
-        assert.strictEqual(migration.toCreate.columns.length, 1, "one column to create");
+        assert.strictEqual(toDrop.columns.length, 0, "no columns to drop");
+        assert.strictEqual(toCreate.columns.length, 1, "one column to create");
         
-        const actualColumn = migration.toCreate.columns[0];
+        const actualColumn = toCreate.columns[0];
         assert.deepStrictEqual(actualColumn.toJSON(), {
             table: {
                 schema: "public",
@@ -52,15 +57,61 @@ describe("Comparator: compare cache", () => {
             comment: actualColumn.comment
         });
 
-        assert.strictEqual(migration.toCreate.updates.length, 1, "one update for columns");
+        assert.strictEqual(toCreate.updates.length, 1, "one update for columns");
         assert.strictEqual(
-            migration.toCreate.updates[0].forTable.toString(),
+            toCreate.updates[0].forTable.toString(),
             "companies"
         );
         assert.strictEqual(
-            migration.toCreate.updates[0].select.columns[0].toString().trim(),
+            toCreate.updates[0].select.columns[0].toString().trim(),
             "coalesce(sum(orders.profit), 0) as orders_profit"
         );
+
+        assert.strictEqual(toCreate.triggers.length, 1, "one cache func to create");
+        assert.strictEqual(toCreate.functions.length, 1, "one cache trigger to create");
+
+        assert.strictEqual(toCreate.functions[0].cacheSignature, "cache totals for companies");
+        assert.strictEqual(toCreate.triggers[0].cacheSignature, "cache totals for companies");
+
+        assert.deepStrictEqual(
+            toCreate.triggers[0].table.toString(),
+            "public.orders"
+        );
     });
+
+    it("drop cache", () => {
+        
+        database.addFunctions([ testCacheFunc ]);
+        database.setTable(testTableWithCache);
+        database.setTable(testTableSource);
+        database.addTrigger(testCacheTrigger);
+
+        const {toDrop, toCreate} = Comparator.compare(database, fs);
+
+        assert.strictEqual(toCreate.columns.length, 0, "no columns to create");
+        assert.strictEqual(toCreate.updates.length, 0, "no triggers to create");
+        assert.strictEqual(toCreate.triggers.length, 0, "no triggers to create");
+        assert.strictEqual(toCreate.functions.length, 0, "no funcs to create");
+
+        assert.strictEqual(toDrop.triggers.length, 1, "one trigger to drop");
+        assert.strictEqual(toDrop.functions.length, 1, "one func to drop");
+        assert.strictEqual(toDrop.columns.length, 1, "one column to drop");
+
+        assert.deepStrictEqual(toDrop.columns[0].toJSON(), {
+            table: {
+                schema: "public",
+                name: "companies"
+            },
+            name: "orders_profit",
+            type: "numeric",
+            "default": "0",
+            cacheSignature: "cache totals for companies",
+            comment: testCacheColumn.comment
+        });
+    });
+
+    // it("don't drop column if was just cache renaming, but recreate triggers and funcs", () => {
+
+    // });
 
 });

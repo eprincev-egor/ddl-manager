@@ -40,9 +40,6 @@ export class Migration {
         this.toDrop.columns.push(
             ...(state.columns || [])
         );
-        this.toDrop.updates.push(
-            ...(state.updates || [])
-        );
         return this;
     }
 

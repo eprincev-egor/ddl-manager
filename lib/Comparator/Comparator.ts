@@ -58,6 +58,9 @@ export class Comparator {
                 if ( dbTrigger.frozen ) {
                     continue;
                 }
+                if ( dbTrigger.cacheSignature ) {
+                    continue;
+                }
 
                 const existsSameTriggerFromFile = flatMap(this.fs.files, file => file.content.triggers).some(fileTrigger =>
                     fileTrigger.equal(dbTrigger)
@@ -77,6 +80,9 @@ export class Comparator {
             
             // ddl-manager cannot drop frozen function
             if ( dbFunc.frozen ) {
+                continue;
+            }
+            if ( dbFunc.cacheSignature ) {
                 continue;
             }
 
@@ -162,6 +168,23 @@ export class Comparator {
                 this.migration.drop({
                     functions: [cacheFunc]
                 });
+            }
+        }
+
+        for (const table of this.database.tables) {
+            for (const column of table.columns) {
+                if ( column.cacheSignature ) {
+                    const existsCache = this.fs.files.some(file => 
+                        file.content.cache.some(cache =>
+                            cache.getSignature() === column.cacheSignature
+                        )
+                    );
+                    if ( !existsCache ) {
+                        this.migration.drop({
+                            columns: [column]
+                        });
+                    }
+                }
             }
         }
     }
