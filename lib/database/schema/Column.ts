@@ -28,4 +28,18 @@ export class Column {
     getSignature() {
         return this.table.toString() + "." + this.name;
     }
+
+    toJSON() {
+        return {
+            table: {
+                schema: this.table.schema,
+                name: this.table.name
+            },
+            name: this.name,
+            type: this.type.value,
+            "default": this.default,
+            cacheSignature: this.cacheSignature,
+            comment: this.comment
+        };
+    }
 }

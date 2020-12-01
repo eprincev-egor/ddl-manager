@@ -53,3 +53,4 @@
 - when not all columns or trigger exists for cache, need rebuild cache
 - timeline
 - change sleep ms in tests
+- remove unfreeze command

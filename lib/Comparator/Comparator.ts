@@ -248,7 +248,8 @@ export class Comparator {
                 this.getColumnType(cache, select),
                 this.getColumnDefault(select),
 
-                `ddl-cache-signature(${ cache.getSignature() })`
+                `ddl-cache-signature(${ cache.getSignature() })`,
+                cache.getSignature()
             );
 
             this.migration.create({
