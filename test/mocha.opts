@@ -4,4 +4,4 @@
 --recursive
 --timeout 5000
 --exit
-test/unit/Comparator/*.spec.ts
+test/**/*.spec.ts

@@ -4,7 +4,7 @@ import { EventEmitter } from "events";
 import watch from "node-watch";
 import path from "path";
 import { FileParser } from "../parser";
-import { IFileParams } from "./File";
+import { File } from "./File";
 import { Cache } from "../ast";
 import { Migration } from "../Migrator/Migration";
 import { FilesState } from "./FilesState";
@@ -117,7 +117,7 @@ export class FileReader extends EventEmitter {
                 return;
             }
 
-            let file;
+            let file: File | undefined;
             try {
                 file = this.parseFile(folderPath, filePath);
 
@@ -137,23 +137,16 @@ export class FileReader extends EventEmitter {
         });
     }
 
-    private checkDuplicate(file: IFileParams) {
-        const content = file.content;
-
-        content.functions.forEach(func => 
+    private checkDuplicate(file: File) {
+        file.content.functions.forEach(func => 
             this.checkDuplicateFunction( func )
         );
-
-        if ( content.triggers ) {
-            content.triggers.forEach(trigger => {
-                this.checkDuplicateTrigger( trigger );
-            });
-        }
-        if ( content.cache ) {
-            content.cache.forEach(cache => {
-                this.checkDuplicateCache( cache );
-            })
-        }
+        file.content.triggers.forEach(trigger => {
+            this.checkDuplicateTrigger( trigger );
+        });
+        file.content.cache.forEach(cache => {
+            this.checkDuplicateCache( cache );
+        });
     }
 
     private checkDuplicateFunction(func: DatabaseFunction) {
@@ -216,7 +209,7 @@ export class FileReader extends EventEmitter {
         }
     }
 
-    private parseFile(rootFolderPath: string, filePath: string): IFileParams | undefined {
+    private parseFile(rootFolderPath: string, filePath: string): File | undefined {
         const sql = fs.readFileSync(filePath).toString();
         
         const sqlFile = this.fileParser.parse(sql);
@@ -320,7 +313,7 @@ export class FileReader extends EventEmitter {
         this.emit("error", outError);
     }
 
-    private onChangeFile(rootFolderPath: string, subPath: string, oldFile: IFileParams) {
+    private onChangeFile(rootFolderPath: string, subPath: string, oldFile: File) {
         let newFile = null;
 
         try {
