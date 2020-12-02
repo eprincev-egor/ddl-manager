@@ -373,6 +373,18 @@ export class Comparator {
 
             return "text[]";
         }
+        if ( funcCall.name === "max" || funcCall.name === "min" ) {
+
+            const firstArg = funcCall.args[0] as Expression;
+            const columnRef = firstArg.getColumnReferences()[0] as ColumnReference;
+            const table = this.database.getTable(columnRef.tableReference.table);
+            const column = table && table.getColumn(columnRef.name);
+            
+            if ( column ) {
+                return column.type.toString();
+            }
+        }
+
         return "text";
     }
 
