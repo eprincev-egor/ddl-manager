@@ -67,7 +67,7 @@ implements IDatabaseDriver {
     private async loadObjects<T>(selectAllObjectsSQL: string): Promise<T[]> {
         const objects: any[] = [];
 
-        const {rows} = await this.pgClient.query(selectAllObjectsSQL);
+        const {rows} = await this.query(selectAllObjectsSQL);
         for (const row of rows) {
 
             const fileContent = this.fileParser.parse(row.ddl) as any;
@@ -86,7 +86,7 @@ implements IDatabaseDriver {
     private async loadTables() {
         await this.types.load();
 
-        const {rows: columnsRows} = await this.pgClient.query(`
+        const {rows: columnsRows} = await this.query(`
             select
                 pg_columns.table_schema,
                 pg_columns.table_name,
@@ -149,15 +149,7 @@ implements IDatabaseDriver {
             ddlSql += ";";
         });
 
-        try {
-            await this.pgClient.query(ddlSql);
-        } catch(err) {
-            // redefine callstack
-            const newErr = new Error(err.message);
-            (newErr as any).originalError = err;
-            
-            throw newErr;
-        }
+        await this.query(ddlSql);
     }
 
     async createOrReplaceFunction(func: DatabaseFunction) {
@@ -176,7 +168,7 @@ implements IDatabaseDriver {
         ddlSql += ";";
         ddlSql += getUnfreezeFunctionSql(func);
 
-        await this.pgClient.query(ddlSql);
+        await this.query(ddlSql);
     }
 
     async dropFunction(func: DatabaseFunction) {
@@ -193,12 +185,12 @@ implements IDatabaseDriver {
         ddlSql += ";";
         ddlSql += `drop function if exists ${ func.getSignature() }`;
         
-        await this.pgClient.query(ddlSql);
+        await this.query(ddlSql);
     }
 
     async forceDropFunction(func: DatabaseFunction) {
         const sql = `drop function if exists ${ func.getSignature() }`;
-        await this.pgClient.query(sql);
+        await this.query(sql);
     }
 
     async createOrReplaceTrigger(trigger: DatabaseTrigger) {
@@ -210,7 +202,7 @@ implements IDatabaseDriver {
         ddlSql += ";";
         ddlSql += getUnfreezeTriggerSql(trigger);
 
-        await this.pgClient.query(ddlSql);
+        await this.query(ddlSql);
     }
 
     async dropTrigger(trigger: DatabaseTrigger) {
@@ -226,12 +218,12 @@ implements IDatabaseDriver {
         ddlSql += ";";
         ddlSql += `drop trigger if exists ${ trigger.getSignature() }`;
 
-        await this.pgClient.query(ddlSql);
+        await this.query(ddlSql);
     }
 
     async forceDropTrigger(trigger: DatabaseTrigger) {
         const sql = `drop trigger if exists ${ trigger.getSignature() }`;
-        await this.pgClient.query(sql);
+        await this.query(sql);
     }
 
     async getCacheColumnsTypes(select: Select, forTable: TableReference) {
@@ -248,7 +240,7 @@ implements IDatabaseDriver {
 
             limit 1
         `;
-        const {fields} = await this.pgClient.query(sql);
+        const {fields} = await this.query(sql);
 
         const columnsTypes: {[columnName: string]: string} = {};
         for (const field of fields) {
@@ -268,7 +260,7 @@ implements IDatabaseDriver {
             sql += `comment on column ${ column.getSignature() } is ${wrapText( column.comment )}`;
         }
 
-        await this.pgClient.query(sql);
+        await this.query(sql);
     }
 
     async dropColumn(column: Column) {
@@ -276,7 +268,7 @@ implements IDatabaseDriver {
             alter table ${column.table} drop column if exists ${column.name};
         `;
 
-        await this.pgClient.query(sql);
+        await this.query(sql);
     }
 
     async updateCachePackage(
@@ -325,7 +317,7 @@ implements IDatabaseDriver {
             
             returning ${forTable.getIdentifier()}.id
         `;
-        const {rows} = await this.pgClient.query(sql);
+        const {rows} = await this.query(sql);
 
         return rows.length;
     }
@@ -348,7 +340,7 @@ implements IDatabaseDriver {
             is 'ddl-manager-sync: ddl-cache-signature(${trigger.cacheSignature})';
         `;
 
-        await this.pgClient.query(sql);
+        await this.query(sql);
     }
 
     async createOrReplaceHelperFunc(func: DatabaseFunction) {
@@ -361,11 +353,23 @@ implements IDatabaseDriver {
             is 'ddl-manager-helper';
         `;
 
-        await this.pgClient.query(sql);
+        await this.query(sql);
     }
 
     end() {
         this.pgClient.end();
+    }
+
+    private async query(sql: string) {
+        try {
+            return await this.pgClient.query(sql);
+        } catch(originalErr) {
+            // redefine call stack
+            const err = new Error(originalErr.message);
+            (err as any).sql = sql;
+            (err as any).originalError = originalErr;
+            throw err;
+        }
     }
 }
 
