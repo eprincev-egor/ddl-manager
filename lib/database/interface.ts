@@ -21,10 +21,6 @@ export interface IDatabaseDriver {
     createOrReplaceColumn(column: Column): Promise<void>;
     dropColumn(column: Column): Promise<void>;
     updateCachePackage(select: Select, forTable: TableReference, limit: number): Promise<number>;
-    createOrReplaceCacheTrigger(
-        trigger: DatabaseTrigger,
-        func: DatabaseFunction
-    ): Promise<void>;
     createOrReplaceHelperFunc(func: DatabaseFunction): Promise<void>;
     end(): void;
 }

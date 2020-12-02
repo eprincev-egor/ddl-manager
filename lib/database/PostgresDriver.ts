@@ -166,7 +166,16 @@ implements IDatabaseDriver {
         let ddlSql = func.toSQL();
         
         ddlSql += ";";
-        ddlSql += getUnfreezeFunctionSql(func);
+
+        // TODO: move this code to Comparator
+        let dbComment = "ddl-manager-sync";
+        if ( func.comment ) {
+            dbComment = func.comment + "\n" + "ddl-manager-sync";
+        }
+        if ( func.cacheSignature ) {
+            dbComment += ` ddl-cache-signature(${ func.cacheSignature })`;
+        }
+        ddlSql += `comment on function ${func.getSignature()} is ${wrapText(dbComment)}`
 
         await this.query(ddlSql);
     }
@@ -200,7 +209,17 @@ implements IDatabaseDriver {
         ddlSql += trigger.toSQL();
 
         ddlSql += ";";
-        ddlSql += getUnfreezeTriggerSql(trigger);
+        
+        // TODO: move this code to Comparator
+        let dbComment = "ddl-manager-sync";
+        if ( trigger.comment ) {
+            dbComment = trigger.comment + "\n" + "ddl-manager-sync";
+        }
+        if ( trigger.cacheSignature ) {
+            dbComment += ` ddl-cache-signature(${ trigger.cacheSignature })`;
+        }
+        ddlSql += `comment on trigger ${trigger.getSignature()} is ${wrapText(dbComment)}`
+
 
         await this.query(ddlSql);
     }
@@ -320,27 +339,6 @@ implements IDatabaseDriver {
         const {rows} = await this.query(sql);
 
         return rows.length;
-    }
-
-    async createOrReplaceCacheTrigger(
-        trigger: DatabaseTrigger,
-        func: DatabaseFunction
-    ) {
-        const sql = `
-            drop trigger if exists ${ trigger.getSignature() };
-            drop function if exists ${ func.getSignature() };
-
-            ${ func.toSQL() };
-            ${ trigger.toSQL() };
-
-            comment on function ${ func.getSignature() }
-            is 'ddl-manager-sync ddl-cache-signature(${func.cacheSignature})';
-
-            comment on trigger ${ trigger.getSignature() }
-            is 'ddl-manager-sync: ddl-cache-signature(${trigger.cacheSignature})';
-        `;
-
-        await this.query(sql);
     }
 
     async createOrReplaceHelperFunc(func: DatabaseFunction) {

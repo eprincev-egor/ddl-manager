@@ -152,14 +152,6 @@ implements IDatabaseDriver {
         throw new Error("Method not implemented.");
     }
 
-    async createOrReplaceCacheTrigger(
-        trigger: DatabaseTrigger,
-        func: DatabaseFunction
-    ) {
-        await this.createOrReplaceFunction(func);
-        await this.createOrReplaceTrigger(trigger);
-    }
-
     async createOrReplaceHelperFunc(func: DatabaseFunction) {
         
     }
