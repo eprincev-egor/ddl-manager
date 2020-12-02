@@ -10,6 +10,8 @@ import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { PostgresDriver } from "../../lib/database/PostgresDriver";
 import { Migration } from "../../lib/Migrator/Migration";
 import { FileParser } from "../../lib/parser";
+import { Comparator } from "../../lib/Comparator/Comparator";
+import { FilesState } from "../../lib/fs/FilesState";
 
 use(chaiShallowDeepEqualPlugin);
 
@@ -1051,12 +1053,25 @@ describe("integration/MainMigrator", () => {
             )
         `);
 
-        const changes = Migration.empty().create({
-            // cache: [cache]
+        const postgres = new PostgresDriver(db);
+        const databaseStructure = await postgres.load();
+        const fs = new FilesState();
+        
+        fs.addFile({
+            name: "test.sql",
+            path: "test.sql",
+            folder: "",
+            content: {
+                cache: [cache]
+            }
         });
 
-        const postgres = new PostgresDriver(db);
-        await MainMigrator.migrate(postgres, changes);
+        const migration = Comparator.compare(
+            databaseStructure,
+            fs
+        );
+
+        await MainMigrator.migrate(postgres, migration);
 
         const {rows} = await db.query("select * from companies");
         assert.deepStrictEqual(rows[0], {

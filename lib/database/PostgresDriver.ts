@@ -22,6 +22,8 @@ const selectAllFunctionsSQL = fs.readFileSync(__dirname + "/postgres/select-all-
     .toString();
 const selectAllTriggersSQL = fs.readFileSync(__dirname + "/postgres/select-all-triggers.sql")
     .toString();
+const selectAllColumnsSQL = fs.readFileSync(__dirname + "/postgres/select-all-columns.sql")
+    .toString();
 
 export class PostgresDriver
 implements IDatabaseDriver {
@@ -86,26 +88,7 @@ implements IDatabaseDriver {
     private async loadTables() {
         await this.types.load();
 
-        const {rows: columnsRows} = await this.query(`
-            select
-                pg_columns.table_schema,
-                pg_columns.table_name,
-                pg_columns.table_schema || '.' || pg_columns.table_name as table_identify,
-                pg_columns.column_name,
-                pg_columns.column_default,
-                pg_type.oid as column_type_oid,
-                pg_columns.is_nullable
-            from information_schema.columns as pg_columns
-
-            left join pg_type on
-                pg_type.typname = pg_columns.udt_name
-
-            where
-                pg_columns.table_schema != 'pg_catalog' and
-                pg_columns.table_schema != 'information_schema'
-
-            order by pg_columns.ordinal_position
-        `);
+        const {rows: columnsRows} = await this.query(selectAllColumnsSQL);
         
         const database = new Database();
         for (const columnRow of columnsRows) {
@@ -126,9 +109,11 @@ implements IDatabaseDriver {
             const column = new Column(
                 tableId,
                 columnRow.column_name,
-                columnType
+                columnType,
+                columnRow.column_default,
+                undefined,
+                parseCacheSignature(columnRow)
             );
-            // default: columnRow.column_default,
             // nulls: parseColumnNulls(columnRow)
             table.addColumn(column);
         }
@@ -275,6 +260,7 @@ implements IDatabaseDriver {
         let sql = `
             alter table ${column.table} add column if not exists ${column.name} ${column.type} default ${ column.default };
         `;
+        let dbComment = "ddl-manager-sync";
         if ( column.comment ) {
             sql += `comment on column ${ column.getSignature() } is ${wrapText( column.comment )}`;
         }
