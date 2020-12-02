@@ -186,11 +186,11 @@ describe("integration/FilesState watch create and remove folders", () => {
         ]);
 
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [],
                 triggers: []
             },
-            create: {
+            toCreate: {
                 functions: [
                     test_func1
                 ],
@@ -234,13 +234,13 @@ describe("integration/FilesState watch create and remove folders", () => {
         expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([]);
 
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [
                     test_func1
                 ],
                 triggers: []
             },
-            create: {
+            toCreate: {
                 functions: [],
                 triggers: []
             }

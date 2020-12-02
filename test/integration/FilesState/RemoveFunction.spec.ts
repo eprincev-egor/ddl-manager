@@ -85,13 +85,13 @@ describe("integration/FilesState watch remove functions", () => {
         await sleep(50);
 
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [
                     test_func1
                 ],
                 triggers: []
             },
-            create: {
+            toCreate: {
                 functions: [],
                 triggers: []
             }
@@ -165,13 +165,13 @@ describe("integration/FilesState watch remove functions", () => {
         await sleep(50);
 
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [
                     test_func1
                 ],
                 triggers: []
             },
-            create: {
+            toCreate: {
                 functions: [],
                 triggers: []
             }
@@ -215,13 +215,13 @@ describe("integration/FilesState watch remove functions", () => {
         await sleep(50);
 
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [
                     test_func1
                 ],
                 triggers: []
             },
-            create: {
+            toCreate: {
                 functions: [],
                 triggers: []
             }
@@ -237,13 +237,13 @@ describe("integration/FilesState watch remove functions", () => {
         await sleep(50);
 
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [
                     test_func2
                 ],
                 triggers: []
             },
-            create: {
+            toCreate: {
                 functions: [],
                 triggers: []
             }
@@ -282,13 +282,13 @@ describe("integration/FilesState watch remove functions", () => {
         await sleep(50);
 
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [
                     test_func1
                 ],
                 triggers: []
             },
-            create: {
+            toCreate: {
                 functions: [],
                 triggers: []
             }
@@ -342,13 +342,13 @@ describe("integration/FilesState watch remove functions", () => {
         await sleep(50);
 
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [
                     func
                 ],
                 triggers: []
             },
-            create: {
+            toCreate: {
                 functions: [],
                 triggers: []
             }

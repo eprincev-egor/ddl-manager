@@ -145,7 +145,7 @@ describe("integration/FilesState watch change triggers", () => {
         await sleep(50);
         
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [
                     test_func1
                 ],
@@ -153,7 +153,7 @@ describe("integration/FilesState watch change triggers", () => {
                     test_trigger1
                 ]
             },
-            create: {
+            toCreate: {
                 functions: [
                     test_func2
                 ],
@@ -300,7 +300,7 @@ describe("integration/FilesState watch change triggers", () => {
         await sleep(50);
         
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [
                     test_func1
                 ],
@@ -308,7 +308,7 @@ describe("integration/FilesState watch change triggers", () => {
                     test_trigger1
                 ]
             },
-            create: {
+            toCreate: {
                 functions: [
                     test_func2
                 ],
@@ -332,7 +332,7 @@ describe("integration/FilesState watch change triggers", () => {
         await sleep(50);
         
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [
                     test_func2
                 ],
@@ -340,7 +340,7 @@ describe("integration/FilesState watch change triggers", () => {
                     test_trigger2
                 ]
             },
-            create: {
+            toCreate: {
                 functions: [
                     test_func1
                 ],
@@ -392,7 +392,7 @@ describe("integration/FilesState watch change triggers", () => {
         await sleep(50);
         
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [
                     test_func1
                 ],
@@ -400,7 +400,7 @@ describe("integration/FilesState watch change triggers", () => {
                     test_trigger1
                 ]
             },
-            create: {
+            toCreate: {
                 functions: [
                     only_function
                 ],
@@ -446,13 +446,13 @@ describe("integration/FilesState watch change triggers", () => {
         await sleep(50);
         
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [
                     only_function
                 ],
                 triggers: []
             },
-            create: {
+            toCreate: {
                 functions: [
                     test_func1
                 ],

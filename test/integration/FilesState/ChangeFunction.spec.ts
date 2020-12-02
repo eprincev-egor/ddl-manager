@@ -87,13 +87,13 @@ describe("integration/FilesState watch change functions", () => {
         await sleep(50);
         
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [
                     TEST_FUNC1
                 ],
                 triggers: []
             },
-            create: {
+            toCreate: {
                 functions: [
                     TEST_FUNC2
                 ],
@@ -209,13 +209,13 @@ describe("integration/FilesState watch change functions", () => {
         await sleep(50);
         
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [
                     TEST_FUNC1
                 ],
                 triggers: []
             },
-            create: {
+            toCreate: {
                 functions: [
                     TEST_FUNC2
                 ],
@@ -234,13 +234,13 @@ describe("integration/FilesState watch change functions", () => {
         await sleep(50);
         
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [
                     TEST_FUNC2
                 ],
                 triggers: []
             },
-            create: {
+            toCreate: {
                 functions: [
                     TEST_FUNC1
                 ],
@@ -287,13 +287,13 @@ describe("integration/FilesState watch change functions", () => {
         await sleep(50);
         
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [
                     TEST_FUNC1
                 ],
                 triggers: []
             },
-            create: {
+            toCreate: {
                 functions: [
                     {...TEST_FUNC1, comment: "good"}
                 ],

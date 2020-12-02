@@ -87,11 +87,11 @@ describe("integration/FilesState watch create functions", () => {
         assert.equal(counter, 1);
         
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [],
                 triggers: []
             },
-            create: {
+            toCreate: {
                 functions: [
                     test_func1
                 ],
@@ -195,11 +195,11 @@ describe("integration/FilesState watch create functions", () => {
         await sleep(50);
         
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [],
                 triggers: []
             },
-            create: {
+            toCreate: {
                 functions: [
                     test_func1
                 ],
@@ -216,11 +216,11 @@ describe("integration/FilesState watch create functions", () => {
         await sleep(50);
         
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [],
                 triggers: []
             },
-            create: {
+            toCreate: {
                 functions: [
                     test_func2
                 ],
@@ -265,11 +265,11 @@ describe("integration/FilesState watch create functions", () => {
         assert.equal(counter, 1);
         
         expect(changes).to.be.shallowDeepEqual({
-            drop: {
+            toDrop: {
                 functions: [],
                 triggers: []
             },
-            create: {
+            toCreate: {
                 functions: [
                     {...test_func1, comment: "sweet"}
                 ],
