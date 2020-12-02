@@ -262,7 +262,7 @@ export class Comparator {
         );
     }
 
-    private async createAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
+    private createAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
 
         for (const {cache, select} of sortedSelectsForEveryColumn) {
             const column = new Column(

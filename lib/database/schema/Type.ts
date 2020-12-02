@@ -8,4 +8,8 @@ export class Type {
     isArray() {
         return /\[\]$/.test(this.value);
     }
+
+    toString() {
+        return this.value;
+    }
 }
