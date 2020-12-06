@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Comparator } from "../../lib/Comparator/Comparator";
+import { MainComparator } from "../../lib/Comparator/MainComparator";
 import assert from "assert";
 import { Cache } from "../../lib/ast";
 import { Database } from "../../lib/database/schema/Database";
@@ -62,7 +62,7 @@ function compare(params: {filesState: Partial<IStateParams>, dbState: Partial<IS
         }));
     }
 
-    const migration = Comparator.compare(database, filesState);
+    const migration = MainComparator.compare(database, filesState);
     return migration;
 }
 
@@ -110,6 +110,7 @@ function createTriggersInstances(state: Partial<IStateParams>) {
     );
 }
 
+// TODO: remove it file
 describe("Comparator", () => {
 
     it("sync empty state", () => {

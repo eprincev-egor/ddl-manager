@@ -2,7 +2,7 @@ import { FileReader } from "./fs/FileReader";
 import fs from "fs";
 import pg from "pg";
 import path from "path";
-import { Comparator } from "./Comparator/Comparator";
+import { MainComparator } from "./Comparator/MainComparator";
 import { MainMigrator } from "./Migrator/MainMigrator";
 import { IDatabaseDriver } from "./database/interface";
 import { PostgresDriver } from "./database/PostgresDriver";
@@ -137,7 +137,7 @@ export class DDLManager {
         const postgres = await this.postgres();
         const databaseState = await postgres.load();
 
-        const migration = Comparator.compare(databaseState, fileReader.state);
+        const migration = MainComparator.compare(databaseState, fileReader.state);
         return {migration, postgres, fileReader};
     }
 
@@ -175,7 +175,7 @@ export class DDLManager {
 
     private async onChangeFS(fsEvent: FSEvent) {
 
-        const migration = Comparator.fsEventToMigration(fsEvent);
+        const migration = MainComparator.fsEventToMigration(fsEvent);
         const postgres = await this.postgres();
 
         const outputErrors = await MainMigrator.migrate(

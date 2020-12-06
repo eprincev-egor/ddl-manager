@@ -1,4 +1,4 @@
-import { Comparator } from "../../../lib/Comparator/Comparator";
+import { MainComparator } from "../../../lib/Comparator/MainComparator";
 import { Database } from "../../../lib/database/schema/Database";
 import { FilesState } from "../../../lib/fs/FilesState";
 import { deepStrictEqualMigration } from "./deepStrictEqualMigration";
@@ -22,7 +22,7 @@ describe("Comparator: compare cache", () => {
     });
 
     it("sync empty state", () => {
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -39,7 +39,7 @@ describe("Comparator: compare cache", () => {
         
         fs.addFile(testFileWithCache);
 
-        const {toCreate, toDrop} = Comparator.compare(database, fs);
+        const {toCreate, toDrop} = MainComparator.compare(database, fs);
 
         assert.strictEqual(toDrop.columns.length, 0, "no columns to drop");
         assert.strictEqual(toCreate.columns.length, 1, "one column to create");
@@ -86,7 +86,7 @@ describe("Comparator: compare cache", () => {
         database.setTable(testTableSource);
         database.addTrigger(testCacheTrigger);
 
-        const {toDrop, toCreate} = Comparator.compare(database, fs);
+        const {toDrop, toCreate} = MainComparator.compare(database, fs);
 
         assert.strictEqual(toCreate.columns.length, 0, "no columns to create");
         assert.strictEqual(toCreate.updates.length, 0, "no triggers to create");

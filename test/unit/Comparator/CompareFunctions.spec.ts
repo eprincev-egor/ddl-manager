@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Comparator } from "../../../lib/Comparator/Comparator";
+import { MainComparator } from "../../../lib/Comparator/MainComparator";
 import { Database } from "../../../lib/database/schema/Database";
 import { DatabaseFunction } from "../../../lib/database/schema/DatabaseFunction";
 import { FilesState } from "../../../lib/fs/FilesState";
@@ -21,7 +21,7 @@ describe("Comparator: compare functions", () => {
     });
 
     it("sync empty state", () => {
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -37,7 +37,7 @@ describe("Comparator: compare functions", () => {
         
         fs.addFile(testFileWithFunc);
 
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -54,7 +54,7 @@ describe("Comparator: compare functions", () => {
     it("drop function", () => {
         database.addFunctions([ testFunc ]);
 
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -91,7 +91,7 @@ describe("Comparator: compare functions", () => {
             }
         });
 
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -149,7 +149,7 @@ describe("Comparator: compare functions", () => {
             }
         });
 
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
         
         deepStrictEqualMigration(migration, {
             drop: {
@@ -170,7 +170,7 @@ describe("Comparator: compare functions", () => {
         database.addFunctions([testFunc]);
         fs.addFile(testFileWithFunc);
 
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -194,7 +194,7 @@ describe("Comparator: compare functions", () => {
             }
         });
 
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -215,7 +215,7 @@ describe("Comparator: compare functions", () => {
         });
         database.addFunctions([func]);
 
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -247,7 +247,7 @@ describe("Comparator: compare functions", () => {
             }
         });
 
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {

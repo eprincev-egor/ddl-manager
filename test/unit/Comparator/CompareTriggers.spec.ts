@@ -1,4 +1,4 @@
-import { Comparator } from "../../../lib/Comparator/Comparator";
+import { MainComparator } from "../../../lib/Comparator/MainComparator";
 import { Database } from "../../../lib/database/schema/Database";
 import { DatabaseFunction } from "../../../lib/database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../../../lib/database/schema/DatabaseTrigger";
@@ -24,7 +24,7 @@ describe("Comparator: compare triggers", () => {
     });
 
     it("sync empty state", () => {
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -42,7 +42,7 @@ describe("Comparator: compare triggers", () => {
 
         fs.addFile(testFileWithTrigger);
 
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -66,7 +66,7 @@ describe("Comparator: compare triggers", () => {
         database.setTable(new Table(testTrigger.table.schema, testTrigger.table.name));
         database.addTrigger(testTrigger);
 
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -110,7 +110,7 @@ describe("Comparator: compare triggers", () => {
             }
         });
 
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
 
 
         deepStrictEqualMigration(migration, {
@@ -138,7 +138,7 @@ describe("Comparator: compare triggers", () => {
 
         fs.addFile(testFileWithTrigger);
 
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -167,7 +167,7 @@ describe("Comparator: compare triggers", () => {
         database.addTrigger(trigger);
 
 
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -209,7 +209,7 @@ describe("Comparator: compare triggers", () => {
             }
         });
 
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -255,7 +255,7 @@ describe("Comparator: compare triggers", () => {
             }
         });
 
-        const migration = Comparator.compare(database, fs);
+        const migration = MainComparator.compare(database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {

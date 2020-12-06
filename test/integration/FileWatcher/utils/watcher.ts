@@ -1,5 +1,5 @@
 import { FileReader } from "../../../../lib/fs/FileReader";
-import { Comparator } from "../../../../lib/Comparator/Comparator";
+import { MainComparator } from "../../../../lib/Comparator/MainComparator";
 import { Migration } from "../../../../lib/Migrator/Migration";
 import { prepare } from "../../utils/prepare";
 
@@ -25,7 +25,7 @@ export function watcher(ROOT_TMP_PATH: string) {
 
         if ( onChange ) {
             fsWatcher.on("change", (fsEvent) => {
-                const migration = Comparator.fsEventToMigration(fsEvent);
+                const migration = MainComparator.fsEventToMigration(fsEvent);
                 onChange(migration);
             });
         }

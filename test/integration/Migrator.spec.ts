@@ -10,7 +10,7 @@ import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { PostgresDriver } from "../../lib/database/PostgresDriver";
 import { Migration } from "../../lib/Migrator/Migration";
 import { FileParser } from "../../lib/parser";
-import { Comparator } from "../../lib/Comparator/Comparator";
+import { MainComparator } from "../../lib/Comparator/MainComparator";
 import { FilesState } from "../../lib/fs/FilesState";
 
 use(chaiShallowDeepEqualPlugin);
@@ -1066,7 +1066,7 @@ describe("integration/MainMigrator", () => {
             }
         });
 
-        const migration = Comparator.compare(
+        const migration = MainComparator.compare(
             databaseStructure,
             fs
         );
