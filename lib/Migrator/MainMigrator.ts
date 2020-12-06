@@ -48,9 +48,11 @@ export class MainMigrator {
     private async refreshCache() {
         const {
             updates,
+            columns,
             outputErrors
         } = await this.createMigrators();
 
+        await columns.create();
         await updates.create();
 
         return outputErrors;
