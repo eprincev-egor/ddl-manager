@@ -1,8 +1,6 @@
 tmp/*
 tmp/**/*
-FilesState/tmp/*
-FilesState/tmp/**/*
-DDLManager/tmp/*
-DDLManager/tmp/**/*
+*/tmp/*
+*/tmp/**/*
 DDLManager/Build/tmp/*
 DDLManager/Build/tmp/**/*

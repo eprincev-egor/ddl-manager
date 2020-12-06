@@ -6,7 +6,7 @@ import path from "path";
 import { FileParser } from "../parser";
 import { File } from "./File";
 import { Cache } from "../ast";
-import { Migration } from "../Migrator/Migration";
+import { FSEvent } from "./FSEvent";
 import { FilesState } from "./FilesState";
 import { DatabaseFunction } from "../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
@@ -265,7 +265,7 @@ export class FileReader extends EventEmitter {
     private onRemoveDirOrFile(rootFolderPath: string, subPath: string) {
         let hasChange = false;
 
-        const changes = Migration.empty();
+        let fsEvent = new FSEvent();
 
 
         for (let i = 0, n = this.state.files.length; i < n; i++) {
@@ -295,12 +295,12 @@ export class FileReader extends EventEmitter {
             // generate event
             hasChange = true;
 
-            changes.drop(file.content);
+            fsEvent = fsEvent.remove(file);
         }
         
 
         if ( hasChange ) {
-            this.emit("change", changes);
+            this.emit("change", fsEvent);
         }
     }
 
@@ -340,14 +340,15 @@ export class FileReader extends EventEmitter {
 
         this.state.removeFile(oldFile);
 
-        const changes = Migration.empty()
-            .drop(oldFile.content);
+        let fsEvent = new FSEvent({
+            removed: [oldFile]
+        });
 
         try {
             if ( newFile ) {
                 this.checkDuplicate( newFile );
 
-                changes.create(newFile.content);
+                fsEvent = fsEvent.create(newFile);
 
                 this.state.addFile(newFile);
             }
@@ -358,7 +359,7 @@ export class FileReader extends EventEmitter {
             });
         }
         
-        this.emit("change", changes);
+        this.emit("change", fsEvent);
     }
 
     private onCreateFile(rootFolderPath: string, subPath: string) {
@@ -375,9 +376,9 @@ export class FileReader extends EventEmitter {
 
         this.state.addFile( file );
         
-        const changes = Migration.empty().create(file.content);
+        const fsEvent = new FSEvent({created: [file]});
 
-        this.emit("change", changes);
+        this.emit("change", fsEvent);
     }
 
     

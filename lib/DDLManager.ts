@@ -9,6 +9,7 @@ import { PostgresDriver } from "./database/PostgresDriver";
 import { getDbClient, IDBConfig } from "./database/getDbClient";
 import { DatabaseTrigger } from "./database/schema/DatabaseTrigger";
 import { Migration } from "./Migrator/Migration";
+import { FSEvent } from "./fs/FSEvent";
 
 const watchers: FileReader[] = [];
 
@@ -165,52 +166,24 @@ export class DDLManager {
 
         await filesState.watch();
         
-        filesState.on("change", (migration: Migration) => {
-            this.onChangeFS(migration);
+        filesState.on("change", (fsEvent: FSEvent) => {
+            this.onChangeFS(fsEvent);
         });
 
         watchers.push(filesState);
     }
 
-    private async onChangeFS(migration: Migration) {
+    private async onChangeFS(fsEvent: FSEvent) {
 
-        try {
-            await this.migrateWithoutUpdateCacheColumns(migration);
+        const migration = Comparator.fsEventToMigration(fsEvent);
+        const postgres = await this.postgres();
 
-            migration.log();
-        } catch(err) {
-
-            // если в файле была frozen функция
-            // а потом в файле поменяли имя функции на другое (не frozen)
-            // о новая функция должна быть создана, а frozen не должна быть сброшена
-            // 
-            const isFrozenDropError = (
-                /cannot drop frozen (trigger|function)/i.test(err.message)
-            );
-            const hasCreateFuncOrTrigger = (
-                migration.toCreate.functions.length ||
-                migration.toCreate.triggers.length
-            );
-
-            if ( isFrozenDropError && hasCreateFuncOrTrigger ) {
-                // запустим одтельно создание новой функции
-                // т.к. сборсить frozen нельзя, а новая функция может быть валидной
-
-                const createDiff = Migration.empty()
-                    .create(migration.toCreate);
-
-                try {
-                    await this.migrateWithoutUpdateCacheColumns(createDiff);
-    
-                    migration.log();
-                } catch(err) {
-                    // tslint:disable-next-line: no-console
-                    console.error(err);
-                }
-            }
-            else {
-                // tslint:disable-next-line: no-console
-                console.error(err);
+        const outputErrors = await MainMigrator.migrate(
+            postgres, migration
+        );
+        if ( outputErrors.length ) {
+            for (const error of outputErrors) {
+                console.error(error);
             }
         }
     }
@@ -342,18 +315,6 @@ export class DDLManager {
 
         if ( this.needCloseConnect ) {
             postgres.end();
-        }
-    }
-
-    private async migrateWithoutUpdateCacheColumns(migration: Migration) {
-        const postgres = await this.postgres();
-        const outputErrors = await MainMigrator.migrateWithoutUpdateCacheColumns(
-            postgres, migration
-        );
-
-        if ( outputErrors.length ) {
-            const err = outputErrors[0];
-            throw new Error(err.message);
         }
     }
 

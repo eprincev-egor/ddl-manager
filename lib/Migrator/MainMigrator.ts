@@ -14,11 +14,6 @@ export class MainMigrator {
         return await migrator.migrate();
     }
 
-    static async migrateWithoutUpdateCacheColumns(postgres: IDatabaseDriver, migration: Migration) {
-        const migrator = new MainMigrator(postgres, migration);
-        return await migrator.migrateWithoutUpdateCacheColumns();
-    }
-
     static async refreshCache(postgres: IDatabaseDriver, migration: Migration) {
         const migrator = new MainMigrator(postgres, migration);
         return await migrator.refreshCache();
@@ -44,25 +39,6 @@ export class MainMigrator {
 
         await columns.create();
         await updates.create();
-        await functions.create();
-        await triggers.create();
-
-        return outputErrors;
-    }
-
-    private async migrateWithoutUpdateCacheColumns() {
-        const {
-            functions,
-            triggers,
-            columns,
-            outputErrors
-        } = await this.createMigrators();
-
-        await triggers.drop();
-        await functions.drop();
-        await columns.drop();
-
-        await columns.create();
         await functions.create();
         await triggers.create();
 

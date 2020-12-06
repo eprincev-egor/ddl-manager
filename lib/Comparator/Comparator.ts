@@ -20,12 +20,33 @@ import {
     ISortSelectItem,
     sortSelectsByDependencies
 } from "./graph-util";
+import { FSEvent } from "../fs/FSEvent";
 
 export class Comparator {
 
     static compare(database: Database, fs: FilesState) {
         const comparator = new Comparator(database, fs);
         return comparator.compare();
+    }
+
+    static fsEventToMigration(fsEvent: FSEvent) {
+        const migration = Migration.empty();
+        
+        for (const removedFile of fsEvent.removed) {
+            migration.drop({
+                functions: removedFile.content.functions,
+                triggers: removedFile.content.triggers
+            });
+        }
+
+        for (const createdFile of fsEvent.created) {
+            migration.create({
+                functions: createdFile.content.functions,
+                triggers: createdFile.content.triggers
+            });
+        }
+
+        return migration;
     }
 
     private migration: Migration;

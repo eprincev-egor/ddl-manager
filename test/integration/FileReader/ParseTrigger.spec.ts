@@ -1,28 +1,17 @@
 import assert from "assert";
 import fs from "fs";
-import fse from "fs-extra";
 import { flatMap } from "lodash";
 import { FileReader } from "../../../lib/fs/FileReader";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import { prepare } from "../utils/prepare";
 
 use(chaiShallowDeepEqualPlugin);
 
-describe("integration/FilesState parse functions and triggers", () => {
-    const ROOT_TMP_PATH = __dirname + "/tmp";
-        
-    beforeEach(() => {
-        if ( fs.existsSync(ROOT_TMP_PATH) ) {
-            fse.removeSync(ROOT_TMP_PATH);
-        }
-        fs.mkdirSync(ROOT_TMP_PATH);
-    });
-    
-    afterEach(() => {
-        fse.removeSync(ROOT_TMP_PATH);
-    });
+describe("integration/FileReader parse functions and triggers", () => {
 
-    
+    const ROOT_TMP_PATH = __dirname + "/tmp";
+    prepare(ROOT_TMP_PATH);
 
     it("parse file with function and trigger", () => {
         const body = `
