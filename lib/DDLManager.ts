@@ -1,15 +1,17 @@
-import { FileReader } from "./fs/FileReader";
 import fs from "fs";
 import pg from "pg";
 import path from "path";
+import { FileReader } from "./fs/FileReader";
+import { FSEvent } from "./fs/FSEvent";
+import { FilesState } from "./fs/FilesState";
 import { MainComparator } from "./Comparator/MainComparator";
 import { MainMigrator } from "./Migrator/MainMigrator";
+import { Migration } from "./Migrator/Migration";
 import { IDatabaseDriver } from "./database/interface";
 import { PostgresDriver } from "./database/PostgresDriver";
+import { Database } from "./database/schema/Database";
 import { getDbClient, IDBConfig } from "./database/getDbClient";
 import { DatabaseTrigger } from "./database/schema/DatabaseTrigger";
-import { Migration } from "./Migrator/Migration";
-import { FSEvent } from "./fs/FSEvent";
 
 const watchers: FileReader[] = [];
 
@@ -135,10 +137,10 @@ export class DDLManager {
         });
         
         const postgres = await this.postgres();
-        const databaseState = await postgres.load();
+        const database = await postgres.load();
 
-        const migration = MainComparator.compare(databaseState, fileReader.state);
-        return {migration, postgres, fileReader};
+        const migration = MainComparator.compare(database, fileReader.state);
+        return {migration, postgres, fileReader, database};
     }
 
     private onMigrate(
@@ -162,20 +164,45 @@ export class DDLManager {
     }
 
     private async watch() {
-        const filesState = await this.build();
+        const {
+            migration,
+            postgres,
+            fileReader,
+            database
+        } = await this.compareDbAndFs();
 
-        await filesState.watch();
+        const migrateErrors = await MainMigrator.migrate(postgres, migration);
+
+        this.onMigrate(
+            postgres,
+            migration,
+            migrateErrors
+        );
+
+        await fileReader.watch();
         
-        filesState.on("change", (fsEvent: FSEvent) => {
-            this.onChangeFS(fsEvent);
+        fileReader.on("change", (fsEvent: FSEvent) => {
+            this.onChangeFS(
+                database,
+                fileReader.state,
+                fsEvent
+            );
         });
 
-        watchers.push(filesState);
+        watchers.push(fileReader);
     }
 
-    private async onChangeFS(fsEvent: FSEvent) {
+    private async onChangeFS(
+        database: Database,
+        filesState: FilesState,
+        fsEvent: FSEvent
+    ) {
 
-        const migration = MainComparator.fsEventToMigration(fsEvent);
+        const migration = MainComparator.fsEventToMigration(
+            database,
+            filesState,
+            fsEvent
+        );
         const postgres = await this.postgres();
 
         const outputErrors = await MainMigrator.migrate(

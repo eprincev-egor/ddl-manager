@@ -74,6 +74,13 @@ export class CacheComparator extends AbstractComparator {
 
 
     create() {
+        const {sortedSelectsForEveryColumn} = this.createWithoutUpdates();
+        this.updateAllColumns(
+            sortedSelectsForEveryColumn
+        );
+    }
+
+    createWithoutUpdates() {
         const allCache = flatMap(this.fs.files, file => file.content.cache);
 
         for (const cache of allCache) {
@@ -98,9 +105,8 @@ export class CacheComparator extends AbstractComparator {
         this.createAllColumns(
             sortedSelectsForEveryColumn
         );
-        this.updateAllColumns(
-            sortedSelectsForEveryColumn
-        );
+
+        return {sortedSelectsForEveryColumn};
     }
 
     private createAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {

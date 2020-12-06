@@ -13,32 +13,19 @@ export class MainComparator {
         return comparator.compare();
     }
 
-    static fsEventToMigration(fsEvent: FSEvent) {
-        const migration = Migration.empty();
-        
-        for (const removedFile of fsEvent.removed) {
-            migration.drop({
-                functions: removedFile.content.functions,
-                triggers: removedFile.content.triggers
-            });
-        }
-
-        for (const createdFile of fsEvent.created) {
-            migration.create({
-                functions: createdFile.content.functions,
-                triggers: createdFile.content.triggers
-            });
-        }
-
-        return migration;
+    static fsEventToMigration(database: Database, fs: FilesState, fsEvent: FSEvent) {
+        const comparator = new MainComparator(database, fs);
+        return comparator.fsEventToMigration(fsEvent);
     }
 
+    private database: Database;
     private migration: Migration;
     private functions: FunctionsComparator;
     private triggers: TriggersComparator;
     private cache: CacheComparator;
 
     private constructor(database: Database, fs: FilesState) {
+        this.database = database;
         this.migration = Migration.empty();
 
         this.functions = new FunctionsComparator(
@@ -58,9 +45,41 @@ export class MainComparator {
         );
     }
 
-    compare() {
+    private compare() {
         this.dropOldObjects();
         this.createNewObjects();
+
+        return this.migration;
+    }
+
+    fsEventToMigration(fsEvent: FSEvent) {
+        for (const removedFile of fsEvent.removed) {
+            this.migration.drop({
+                functions: removedFile.content.functions,
+                triggers: removedFile.content.triggers
+            });
+        }
+
+        for (const createdFile of fsEvent.created) {
+            this.migration.create({
+                functions: createdFile.content.functions,
+                triggers: createdFile.content.triggers
+            });
+        }
+
+        // TODO: drop columns, triggers
+
+        const tmpFs = new FilesState();
+        for (const file of fsEvent.created) {
+            tmpFs.addFile(file);
+        }
+
+        const cacheComparator = new CacheComparator(
+            this.database,
+            tmpFs,
+            this.migration
+        );
+        cacheComparator.createWithoutUpdates();
 
         return this.migration;
     }
