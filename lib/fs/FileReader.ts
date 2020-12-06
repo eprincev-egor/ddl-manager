@@ -5,11 +5,8 @@ import watch from "node-watch";
 import path from "path";
 import { FileParser } from "../parser";
 import { File } from "./File";
-import { Cache } from "../ast";
 import { FSEvent } from "./FSEvent";
 import { FilesState } from "./FilesState";
-import { DatabaseFunction } from "../database/schema/DatabaseFunction";
-import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
 
 export class FileReader extends EventEmitter {
     static read(params: {folder: string | string[], onError?: any}) {
@@ -121,8 +118,8 @@ export class FileReader extends EventEmitter {
             try {
                 file = this.parseFile(folderPath, filePath);
 
-                if ( file && file.content ) {
-                    this.checkDuplicate( file );
+                if ( file ) {
+                    this.state.addFile(file);
                 }
             } catch(err) {
                 this.emitError({
@@ -130,83 +127,7 @@ export class FileReader extends EventEmitter {
                     err
                 });
             }
-            
-            if ( file ) {
-                this.state.addFile(file);
-            }
         });
-    }
-
-    private checkDuplicate(file: File) {
-        file.content.functions.forEach(func => 
-            this.checkDuplicateFunction( func )
-        );
-        file.content.triggers.forEach(trigger => {
-            this.checkDuplicateTrigger( trigger );
-        });
-        file.content.cache.forEach(cache => {
-            this.checkDuplicateCache( cache );
-        });
-    }
-
-    private checkDuplicateFunction(func: DatabaseFunction) {
-        const identify = func.getSignature();
-
-        const hasDuplicate = this.state.files.some(someFile => {
-            return someFile.content.functions.some((someFunc) => {
-                const someIdentify = someFunc.getSignature();
-                
-                return identify === someIdentify;
-            });
-        });
-
-        if ( hasDuplicate ) {
-            throw new Error(`duplicate function ${ identify }`);
-        }
-    }
-
-    private checkDuplicateTrigger(trigger: DatabaseTrigger) {
-        const identify = trigger.getSignature();
-
-        const hasDuplicate = this.state.files.some(someFile => {
-            const someTriggers = someFile.content.triggers;
-
-            if ( someTriggers ) {
-                return someTriggers.some((someTrigger) => {
-                    const someIdentify = someTrigger.getSignature();
-
-                    return identify === someIdentify;
-                });
-            }
-        });
-
-        if ( hasDuplicate ) {
-            throw new Error(`duplicate trigger ${ identify }`);
-        }
-    }
-
-    private checkDuplicateCache(cache: Cache) {
-        const identify = cache.getSignature();
-        const cacheColumns = cache.select.columns.map(col => col.name);;
-
-        for (const someFile of this.state.files) {
-            for (const someCache of someFile.content.cache) {
-                // duplicated cache name
-                if ( someCache.getSignature() === identify ) {
-                    throw new Error(`duplicate ${ identify }`);
-                }
-                // duplicate cache columns
-
-                if ( someCache.for.table.equal(cache.for.table) ) {
-                    const someCacheColumns = someCache.select.columns.map(col => col.name);
-                    const duplicatedColumns = someCacheColumns.filter(columnName =>
-                        cacheColumns.includes(columnName)
-                    );
-
-                    throw new Error(`duplicated columns: ${ duplicatedColumns } by cache: ${cache.name}, ${someCache.name}`);
-                }
-            }
-        }
     }
 
     private parseFile(rootFolderPath: string, filePath: string): File | undefined {
@@ -346,11 +267,8 @@ export class FileReader extends EventEmitter {
 
         try {
             if ( newFile ) {
-                this.checkDuplicate( newFile );
-
-                fsEvent = fsEvent.create(newFile);
-
                 this.state.addFile(newFile);
+                fsEvent = fsEvent.create(newFile);
             }
         } catch(err) {
             this.emitError({
@@ -371,8 +289,6 @@ export class FileReader extends EventEmitter {
         if ( !file ) {
             return;
         }
-
-        this.checkDuplicate( file );
 
         this.state.addFile( file );
         
