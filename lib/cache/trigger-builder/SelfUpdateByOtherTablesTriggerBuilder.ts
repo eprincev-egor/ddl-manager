@@ -1,6 +1,7 @@
 import { Expression } from "../../ast";
 import { TableReference } from "../../database/schema/TableReference";
 import { TableID } from "../../database/schema/TableID";
+import { Comment } from "../../database/schema/Comment";
 import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { buildSelfUpdateByOtherTablesBody } from "./body/buildSelfUpdateByOtherTablesBody";
@@ -53,7 +54,10 @@ export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilde
                 this.context.triggerTable.schema || "public",
                 this.context.triggerTable.name
             ),
-            cacheSignature: this.context.cache.getSignature()
+            comment: Comment.fromFs({
+                objectType: "trigger",
+                cacheSignature: this.context.cache.getSignature()
+            })
         });
 
         return trigger;

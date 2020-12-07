@@ -1,5 +1,6 @@
 import { DatabaseFunction, IDatabaseFunctionArgument } from "../../lib/database/schema/DatabaseFunction";
 import assert from "assert";
+import { Comment } from "../../lib/database/schema/Comment";
 
 describe("DatabaseFunction", () => {
 
@@ -133,7 +134,7 @@ describe("DatabaseFunction", () => {
         assert.ok( !func2.equal(func1), "func2 != func1" );
     });
 
-    it("equal with different frozen", () => {
+    it("equal with different returns type", () => {
         const func1 = new DatabaseFunction({
             schema: "public",
             name: "my_func",
@@ -161,7 +162,7 @@ describe("DatabaseFunction", () => {
             args: [],
             returns: {type: "bigint"},
             body: "body",
-            frozen: true
+            comment: Comment.frozen("function")
         });
 
         const func2 = new DatabaseFunction({
@@ -170,45 +171,12 @@ describe("DatabaseFunction", () => {
             args: [],
             returns: {type: "bigint"},
             body: "body",
-            frozen: false
+            comment: Comment.empty("function")
         });
         
         assert.ok( !func1.equal(func2), "func1 != func2" );
         assert.ok( !func2.equal(func1), "func2 != func1" );
     });
-
-    it("equal different: null == false == undefined", () => {
-        const func1 = new DatabaseFunction({
-            schema: "public",
-            name: "my_func",
-            args: [],
-            returns: {type: "bigint"},
-            body: "body",
-            frozen: null as any
-        });
-
-        const func2 = new DatabaseFunction({
-            schema: "public",
-            name: "my_func",
-            args: [],
-            returns: {type: "bigint"},
-            body: "body",
-            frozen: false
-        });
-        
-        const func3 = new DatabaseFunction({
-            schema: "public",
-            name: "my_func",
-            args: [],
-            returns: {type: "bigint"},
-            body: "body",
-            frozen: undefined as any
-        });
-
-        assert.ok( func1.equal(func2), "func1 == func2" );
-        assert.ok( func2.equal(func3), "func2 == func3" );
-    });
-
 
     it("equal args with similar default", () => {
         interface IArgCompare {
@@ -477,8 +445,7 @@ describe("DatabaseFunction", () => {
                 type: "numeric(14,2)"
             }],
             returns: {type: "numeric(14,2)"},
-            body: "body",
-            frozen: null as any
+            body: "body"
         });
 
         const func2 = new DatabaseFunction({
@@ -489,8 +456,7 @@ describe("DatabaseFunction", () => {
                 type: "numeric"
             }],
             returns: {type: "numeric"},
-            body: "body",
-            frozen: false
+            body: "body"
         });
         
         assert.ok( func1.equal(func2), "func1 == func2" );

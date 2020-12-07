@@ -8,6 +8,7 @@ import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
 import { Database } from "./schema/Database";
 import { Column } from "./schema/Column";
+import { Comment } from "./schema/Comment";
 import { DatabaseFunction } from "./schema/DatabaseFunction";
 import { DatabaseTrigger } from "./schema/DatabaseTrigger";
 import { TableReference } from "./schema/TableReference";
@@ -15,6 +16,7 @@ import { Table } from "./schema/Table";
 import { TableID } from "./schema/TableID";
 import { flatMap } from "lodash";
 import { wrapText } from "./postgres/wrapText";
+import { IFileContent } from "../fs/File";
 
 const selectAllFunctionsSQL = fs.readFileSync(__dirname + "/postgres/select-all-functions.sql")
     .toString();
@@ -70,14 +72,25 @@ implements IDatabaseDriver {
         const {rows} = await this.query(selectAllObjectsSQL);
         for (const row of rows) {
 
-            const fileContent = this.fileParser.parse(row.ddl) as any;
-            const json = fileContent.functions[0] || fileContent.triggers[0];
- 
-            json.frozen = isFrozen(row);
-            json.comment = parseComment(row);
-            json.cacheSignature = parseCacheSignature(row);
-        
-            objects.push(json);
+            const fileContent = this.fileParser.parse(row.ddl) as IFileContent;
+            
+            const funcJson = fileContent.functions[0];
+            if ( funcJson ) {
+                const func = new DatabaseFunction({
+                    ...funcJson,
+                    comment: Comment.fromTotalString( "function", row.comment )
+                });
+                objects.push(func);
+            }
+
+            const triggerJson = fileContent.triggers[0];
+            if ( triggerJson ) {
+                const trigger = new DatabaseTrigger({
+                    ...triggerJson,
+                    comment: Comment.fromTotalString( "trigger", row.comment )
+                });
+                objects.push(trigger);
+            }
         }
 
         return objects;
@@ -109,8 +122,7 @@ implements IDatabaseDriver {
                 columnRow.column_name,
                 columnType,
                 columnRow.column_default,
-                undefined,
-                parseCacheSignature(columnRow)
+                Comment.fromTotalString( "column", columnRow.comment )
             );
             // nulls: parseColumnNulls(columnRow)
             table.addColumn(column);
@@ -147,18 +159,10 @@ implements IDatabaseDriver {
         }
 
         let ddlSql = func.toSQL();
-        
-        ddlSql += ";";
 
-        // TODO: move this code to Comparator
-        let dbComment = "ddl-manager-sync";
-        if ( func.comment ) {
-            dbComment = func.comment + "\n" + "ddl-manager-sync";
+        if ( !func.comment.isEmpty() ) {
+            ddlSql += `;\ncomment on function ${func.getSignature()} is ${wrapText(func.comment.toString())}`
         }
-        if ( func.cacheSignature ) {
-            dbComment += ` ddl-cache-signature(${ func.cacheSignature })`;
-        }
-        ddlSql += `comment on function ${func.getSignature()} is ${wrapText(dbComment)}`
 
         await this.query(ddlSql);
     }
@@ -169,23 +173,13 @@ implements IDatabaseDriver {
     }
 
     async createOrReplaceTrigger(trigger: DatabaseTrigger) {
-        let ddlSql = `drop trigger if exists ${ trigger.getSignature() }`;
+        let ddlSql = `drop trigger if exists ${ trigger.getSignature() };\n`;
         
-        ddlSql += ";";
         ddlSql += trigger.toSQL();
 
-        ddlSql += ";";
-        
-        // TODO: move this code to Comparator
-        let dbComment = "ddl-manager-sync";
-        if ( trigger.comment ) {
-            dbComment = trigger.comment + "\n" + "ddl-manager-sync";
+        if ( !trigger.comment.isEmpty() ) {
+            ddlSql += `;\ncomment on trigger ${trigger.getSignature()} is ${wrapText(trigger.comment.toString())}`
         }
-        if ( trigger.cacheSignature ) {
-            dbComment += ` ddl-cache-signature(${ trigger.cacheSignature })`;
-        }
-        ddlSql += `comment on trigger ${trigger.getSignature()} is ${wrapText(dbComment)}`
-
 
         await this.query(ddlSql);
     }
@@ -225,9 +219,8 @@ implements IDatabaseDriver {
         let sql = `
             alter table ${column.table} add column if not exists ${column.name} ${column.type} default ${ column.default };
         `;
-        let dbComment = "ddl-manager-sync";
-        if ( column.comment ) {
-            sql += `comment on column ${ column.getSignature() } is ${wrapText( column.comment )}`;
+        if ( !column.comment.isEmpty() ) {
+            sql += `comment on column ${ column.getSignature() } is ${wrapText( column.comment.toString() )}`;
         }
 
         await this.query(sql);
@@ -322,30 +315,10 @@ implements IDatabaseDriver {
     }
 }
 
-function parseComment(row: {comment?: string}) {
-    const comment = (row.comment || "").replace(/ddl-manager-sync$/i, "").trim();
-    return comment || undefined;
-}
-
-function parseCacheSignature(row: {comment?: string}) {
-    const comment = (row.comment || "").trim();
-    const matchedResult = comment.match(/ddl-cache-signature\(([^\\)]+)\)/) || [];
-    const cacheSignature = matchedResult[1];
-    return cacheSignature;
-}
-
-function isFrozen(row: {comment?: string}) {
-    const createByDDLManager = (
-        row.comment &&
-        /ddl-manager-sync/i.test(row.comment)
-    );
-    return !createByDDLManager;
-}
-
-function parseColumnNulls(columnRow: any) {
-    if ( columnRow.is_nullable === "YES" ) {
-        return true;
-    } else {
-        return false;
-    }
-}
+// function parseColumnNulls(columnRow: any) {
+//     if ( columnRow.is_nullable === "YES" ) {
+//         return true;
+//     } else {
+//         return false;
+//     }
+// }

@@ -1,5 +1,6 @@
 import { wrapText } from "../postgres/wrapText";
 import { MAX_NAME_LENGTH } from "../postgres/constants";
+import { Comment } from "./Comment";
 
 export interface IDatabaseFunctionParams {
     schema: string;
@@ -14,9 +15,7 @@ export interface IDatabaseFunctionParams {
     strict?: boolean;
     parallel?: ("safe" | "unsafe" | "restricted")[];
     cost?: number;
-    frozen?: boolean;
-    comment?: string;
-    cacheSignature?: string;
+    comment?: Comment | string;
 }
 
 interface IDatabaseFunctionReturns {
@@ -34,23 +33,24 @@ export interface IDatabaseFunctionArgument {
 }
 
 export class DatabaseFunction  {
-    schema!: string;
-    name!: string;
-    returns!: IDatabaseFunctionReturns;
-    args!: IDatabaseFunctionArgument[];
-    body!: string;
-    language: "plpgsql" | "sql";    
-    
-    immutable?: boolean;
-    returnsNullOnNull?: boolean;
-    stable?: boolean;
-    strict?: boolean;
-    parallel?: ("safe" | "unsafe" | "restricted")[];
-    cost?: number;
+    readonly schema!: string;
+    readonly name!: string;
+    readonly returns!: IDatabaseFunctionReturns;
+    readonly args!: IDatabaseFunctionArgument[];
+    readonly body!: string;
+    readonly language: "plpgsql" | "sql";
 
-    frozen?: boolean;
-    comment?: string;
-    cacheSignature?: string;
+    readonly comment!: Comment;
+    readonly frozen: boolean;
+    readonly cacheSignature?: string;
+    
+    readonly immutable?: boolean;
+    readonly returnsNullOnNull?: boolean;
+    readonly stable?: boolean;
+    readonly strict?: boolean;
+    readonly parallel?: ("safe" | "unsafe" | "restricted")[];
+    readonly cost?: number;
+
 
     constructor(json: IDatabaseFunctionParams) {
         Object.assign(this, json);
@@ -61,6 +61,21 @@ export class DatabaseFunction  {
             console.error(`name "${this.name}" too long (> 64 symbols)`);
         }
         this.name = this.name.slice(0, MAX_NAME_LENGTH);
+
+        if ( !json.comment ) {
+            this.comment = Comment.fromFs({
+                objectType: "function"
+            });
+        }
+        else if ( typeof json.comment === "string" ) {
+            this.comment = Comment.fromFs({
+                objectType: "function",
+                dev: json.comment
+            });
+        }
+        
+        this.frozen = this.comment.frozen || false;
+        this.cacheSignature = this.comment.cacheSignature;
     }
 
     equal(otherFunc: DatabaseFunction) {
@@ -88,9 +103,7 @@ export class DatabaseFunction  {
             // tslint:disable-next-line: triple-equals
             this.parallel == otherFunc.parallel &&
 
-            // null == undefined
-            // tslint:disable-next-line: triple-equals
-            this.comment == otherFunc.comment
+            this.comment.equal(otherFunc.comment)
         );
     }
 
@@ -163,11 +176,11 @@ language ${this.language}
     toSQLWithComment() {
         let sql = this.toSQL();
 
-        if ( this.comment ) {
+        if ( this.comment.dev ) {
             sql += ";\n";
             sql += "\n";
 
-            sql += `comment on function ${this.getSignature()} is ${ wrapText(this.comment) }`;
+            sql += `comment on function ${this.getSignature()} is ${ wrapText(this.comment.dev) }`;
         }
 
         return sql;

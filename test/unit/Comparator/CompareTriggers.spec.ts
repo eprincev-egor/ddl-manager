@@ -1,4 +1,5 @@
 import { MainComparator } from "../../../lib/Comparator/MainComparator";
+import { Comment } from "../../../lib/database/schema/Comment";
 import { Database } from "../../../lib/database/schema/Database";
 import { DatabaseFunction } from "../../../lib/database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../../../lib/database/schema/DatabaseTrigger";
@@ -155,11 +156,11 @@ describe("Comparator: compare triggers", () => {
     it("empty migration on new frozen trigger", () => {
         const func = new DatabaseFunction({
             ...someTriggerFuncParams,
-            frozen: true
+            comment: Comment.frozen("function")
         });
         const trigger = new DatabaseTrigger({
             ...someTriggerParams,
-            frozen: true
+            comment: Comment.frozen("trigger")
         });
 
         database.addFunctions([func]);

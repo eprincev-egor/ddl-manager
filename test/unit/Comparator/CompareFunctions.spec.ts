@@ -1,5 +1,6 @@
 import _ from "lodash";
 import { MainComparator } from "../../../lib/Comparator/MainComparator";
+import { Comment } from "../../../lib/database/schema/Comment";
 import { Database } from "../../../lib/database/schema/Database";
 import { DatabaseFunction } from "../../../lib/database/schema/DatabaseFunction";
 import { FilesState } from "../../../lib/fs/FilesState";
@@ -211,7 +212,7 @@ describe("Comparator: compare functions", () => {
     it("empty migration on frozen function in db", () => {
         const func = new DatabaseFunction({
             ...someFuncParams,
-            frozen: true
+            comment: Comment.frozen("function")
         });
         database.addFunctions([func]);
 

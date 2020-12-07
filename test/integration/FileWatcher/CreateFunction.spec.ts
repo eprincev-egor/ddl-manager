@@ -184,14 +184,14 @@ describe("integration/FileWatcher watch create functions", () => {
             },
             toCreate: {
                 functions: [
-                    {...TEST_FUNC1, comment: "sweet"}
+                    {...TEST_FUNC1, comment: {dev: "sweet"}}
                 ],
                 triggers: []
             }
         });
         
         expect(flatMap(fsWatcher.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
-            {...TEST_FUNC1, comment: "sweet"}
+            {...TEST_FUNC1, comment: {dev: "sweet"}}
         ]);
     });
 });

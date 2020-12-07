@@ -342,7 +342,7 @@ describe("integration/FileReader parse functions", () => {
                 args: [],
                 returns: {type: "integer"},
                 body: "select 1",
-                comment: "yes"
+                comment: {dev: "yes"}
             }
         ]);
     });

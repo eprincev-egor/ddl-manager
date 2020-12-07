@@ -2,12 +2,13 @@ import {
     CreateFunction,
     CreateTrigger,
     GrapeQLCoach,
-    Comment,
+    Comment as CommentSyntax,
     CacheFor
 } from "grapeql-lang";
 import { IFileContent } from "../fs/File";
 import { Cache } from "../ast";
 import { CacheParser } from "./CacheParser";
+import { Comment } from "../database/schema/Comment";
 import { DatabaseFunction } from "../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
 import assert from "assert";
@@ -75,11 +76,18 @@ export class FileParser {
         }
 
         const funcJson = coach.parse(CreateFunction).toJSON() as any;
-        const func = new DatabaseFunction(funcJson);
-        if ( funcJson.comment ) {
-            func.comment = funcJson.comment.comment.content;
-        }
-        func.body = funcJson.body.content;
+        const func = new DatabaseFunction({
+            ...funcJson,
+            body: funcJson.body.content,
+            comment: Comment.fromFs({
+                objectType: "function",
+                dev: (
+                    funcJson.comment ?
+                        funcJson.comment.comment.content : 
+                        undefined
+                )
+            })
+        });
         
         // check duplicate
         const isDuplicate = state.functions.some((prevFunc) =>
@@ -126,10 +134,17 @@ export class FileParser {
         }
 
         const triggerJson = coach.parse(CreateTrigger).toJSON() as any;
-        const trigger = new DatabaseTrigger(triggerJson);
-        if ( triggerJson.comment ) {
-            trigger.comment = triggerJson.comment.comment.content;
-        }
+        const trigger = new DatabaseTrigger({
+            ...triggerJson,
+            comment: Comment.fromFs({
+                objectType: "trigger",
+                dev: (
+                    triggerJson.comment ?
+                    triggerJson.comment.comment.content : 
+                        undefined
+                )
+            })
+        });
 
         // validate function name and trigger procedure
         const firstFunc = state.functions[0];
@@ -211,8 +226,8 @@ function replaceComments(sql: string) {
             continue;
         }
 
-        if ( coach.is(Comment) ) {
-            coach.parse(Comment);
+        if ( coach.is(CommentSyntax) ) {
+            coach.parse(CommentSyntax);
 
             const length = coach.i - i;
             // safe \n\r

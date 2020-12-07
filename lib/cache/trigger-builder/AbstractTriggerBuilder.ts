@@ -1,6 +1,7 @@
 import {
     AbstractAstElement
 } from "../../ast";
+import { Comment } from "../../database/schema/Comment";
 import { DatabaseFunction } from "../../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
 import { TableID } from "../../database/schema/TableID";
@@ -34,10 +35,12 @@ export abstract class AbstractTriggerBuilder {
             schema: "public",
             name: this.generateTriggerName(),
             body: "\n" + this.createBody().toSQL() + "\n",
-            comment: "cache",
+            comment: Comment.fromFs({
+                objectType: "function",
+                cacheSignature: this.context.cache.getSignature()
+            }),
             args: [],
-            returns: {type: "trigger"},
-            cacheSignature: this.context.cache.getSignature()
+            returns: {type: "trigger"}
         });
         return func;
     }
@@ -64,7 +67,10 @@ export abstract class AbstractTriggerBuilder {
                 this.context.triggerTable.schema || "public",
                 this.context.triggerTable.name
             ),
-            cacheSignature: this.context.cache.getSignature()
+            comment: Comment.fromFs({
+                objectType: "trigger",
+                cacheSignature: this.context.cache.getSignature()
+            })
         });
 
         return trigger;

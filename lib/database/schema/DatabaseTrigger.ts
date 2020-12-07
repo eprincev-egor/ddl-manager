@@ -1,6 +1,7 @@
 import { wrapText } from "../postgres/wrapText";
 import { MAX_NAME_LENGTH } from "../postgres/constants";
 import { TableID } from "./TableID";
+import { Comment } from "./Comment";
 
 export interface IDatabaseTriggerParams {
     name: string;
@@ -25,45 +26,58 @@ export interface IDatabaseTriggerParams {
     statement?: boolean;
     initially?: "immediate" | "deferred";
 
-    comment?: string;
-    frozen?: boolean;
-    cacheSignature?: string;
+    comment?: Comment | string;
 }
 
 export class DatabaseTrigger {
-    name!: string;
-    procedure!: {
+    readonly name!: string;
+    readonly procedure!: {
         schema: string;
         name: string;
         args: string[];
     };
-    table!: TableID;
+    readonly table!: TableID;
 
-    before?: boolean;
-    after?: boolean;
-    insert?: boolean;
-    delete?: boolean;
-    update?: boolean;
-    updateOf?: string[];
-    when?: string;
+    readonly comment!: Comment;
+    readonly frozen?: boolean;
+    readonly cacheSignature?: string;
+
+    readonly before?: boolean;
+    readonly after?: boolean;
+    readonly insert?: boolean;
+    readonly delete?: boolean;
+    readonly update?: boolean;
+    readonly updateOf?: string[];
+    readonly when?: string;
     
-    constraint?: boolean;
-    deferrable?: boolean;
-    notDeferrable?: boolean;
-    statement?: boolean;
-    initially?: "immediate" | "deferred";
-
-    frozen?: boolean;
-    comment?: string;
-    cacheSignature?: string;
+    readonly constraint?: boolean;
+    readonly deferrable?: boolean;
+    readonly notDeferrable?: boolean;
+    readonly statement?: boolean;
+    readonly initially?: "immediate" | "deferred";
 
     constructor(json: IDatabaseTriggerParams) {
         Object.assign(this, json);
+        // tslint:disable-next-line: no-console
         if ( this.name.length > MAX_NAME_LENGTH ) {
-            // tslint:disable-next-line: no-console
             console.error(`name "${this.name}" too long (> 64 symbols)`);
         }
         this.name = this.name.slice(0, MAX_NAME_LENGTH);
+
+
+        if ( !json.comment ) {
+            this.comment = Comment.fromFs({
+                objectType: "trigger"
+            });
+        }
+        else if ( typeof json.comment === "string" ) {
+            this.comment = Comment.fromFs({
+                objectType: "trigger",
+                dev: json.comment
+            });
+        }
+        this.frozen = this.comment.frozen;
+        this.cacheSignature = this.comment.cacheSignature;
     }
 
     equal(otherTrigger: DatabaseTrigger) {
@@ -87,9 +101,7 @@ export class DatabaseTrigger {
                 // tslint:disable-next-line: triple-equals
                 this.updateOf == otherTrigger.updateOf
             ) &&
-            // null == undefined
-            // tslint:disable-next-line: triple-equals
-            this.comment == otherTrigger.comment &&
+            this.comment.equal(otherTrigger.comment) &&
             // null == undefined
             // tslint:disable-next-line: triple-equals
             this.when == otherTrigger.when &&
@@ -188,11 +200,11 @@ export class DatabaseTrigger {
     toSQLWithComment() {
         let sql = this.toSQL();
 
-        if ( this.comment ) {
+        if ( this.comment.dev ) {
             sql += ";\n";
             sql += "\n";
 
-            sql += `comment on trigger ${this.getSignature()} is ${ wrapText(this.comment) }`;
+            sql += `comment on trigger ${this.getSignature()} is ${ wrapText(this.comment.dev) }`;
         }
 
         return sql;

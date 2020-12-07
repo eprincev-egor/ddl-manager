@@ -1,5 +1,6 @@
 import { AbstractComparator } from "./AbstractComparator";
 import { Column } from "../database/schema/Column";
+import { Comment } from "../database/schema/Comment";
 import {
     Cache,
     Select,
@@ -117,9 +118,10 @@ export class CacheComparator extends AbstractComparator {
                 (select.columns[0] as SelectColumn).name,
                 this.getColumnType(cache, select),
                 this.getColumnDefault(select),
-
-                `ddl-cache-signature(${ cache.getSignature() })`,
-                cache.getSignature()
+                Comment.fromFs({
+                    objectType: "column",
+                    cacheSignature: cache.getSignature()
+                })
             );
 
             this.migration.create({

@@ -548,7 +548,7 @@ describe("integration/DDLManager.dump", () => {
                 language: "sql",
                 args: [],
                 body: "select 1",
-                comment: "test"
+                comment: {dev: "test"}
             }]
         });
     });
@@ -594,7 +594,7 @@ describe("integration/DDLManager.dump", () => {
                 language: "plpgsql",
                 args: [],
                 body,
-                comment: "func"
+                comment: {dev: "func"}
             }],
             triggers: [{
                 table: {
@@ -610,7 +610,7 @@ describe("integration/DDLManager.dump", () => {
                     schema: "public",
                     name: "some_func"
                 },
-                comment: "trigger"
+                comment: {dev: "trigger"}
             }]
         });
     });
@@ -748,7 +748,7 @@ describe("integration/DDLManager.dump", () => {
                 language: "sql",
                 args: [],
                 body: "select 1",
-                comment: "'$$nice\ncomment"
+                comment: {dev: "'$$nice\ncomment"}
             }]
         });
 
@@ -830,7 +830,7 @@ describe("integration/DDLManager.dump", () => {
                     schema: "public",
                     name: "some_func"
                 },
-                comment: "'$$nice\ncomment"
+                comment: {dev: "'$$nice\ncomment"}
             }]
         });
 
@@ -972,7 +972,7 @@ describe("integration/DDLManager.dump", () => {
                         }
                     ],
                     body,
-                    comment: "x"
+                    comment: {dev: "x"}
                 },
                 {
                     schema: "public",
@@ -988,7 +988,7 @@ describe("integration/DDLManager.dump", () => {
                         }
                     ],
                     body,
-                    comment: "y"
+                    comment: {dev: "y"}
                 }
             ]
         });

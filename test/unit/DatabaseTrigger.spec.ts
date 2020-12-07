@@ -1,6 +1,7 @@
 import { DatabaseTrigger } from "../../lib/database/schema/DatabaseTrigger";
 import { TableID } from "../../lib/database/schema/TableID";
 import assert from "assert";
+import { Comment } from "../../lib/database/schema/Comment";
 
 describe("DatabaseTrigger", () => {
 
@@ -278,7 +279,7 @@ describe("DatabaseTrigger", () => {
                 "public",
                 "my_table"
             ),
-            frozen: false
+            comment: Comment.empty("trigger")
         });
 
         const trigger2 = new DatabaseTrigger({
@@ -292,58 +293,11 @@ describe("DatabaseTrigger", () => {
                 "public",
                 "my_table"
             ),
-            frozen: true
+            comment: Comment.frozen("trigger")
         });
         
         assert.ok( !trigger1.equal(trigger2), "trigger1 != trigger2" );
         assert.ok( !trigger2.equal(trigger1), "trigger2 != trigger1" );
-    });
-
-    it("equal comment: null == undefined == false", () => {
-        const trigger1 = new DatabaseTrigger({
-            name: "my_trigger",
-            procedure: {
-                schema: "public",
-                name: "my_trigger_function",
-                args: []
-            },
-            table: new TableID(
-                "public",
-                "my_table"
-            ),
-            frozen: null as any
-        });
-
-        const trigger2 = new DatabaseTrigger({
-            name: "my_trigger",
-            procedure: {
-                schema: "public",
-                name: "my_trigger_function",
-                args: []
-            },
-            table: new TableID(
-                "public",
-                "my_table"
-            ),
-            frozen: undefined as any
-        });
-        
-        const trigger3 = new DatabaseTrigger({
-            name: "my_trigger",
-            procedure: {
-                schema: "public",
-                name: "my_trigger_function",
-                args: []
-            },
-            table: new TableID(
-                "public",
-                "my_table"
-            ),
-            frozen: false
-        });
-        
-        assert.ok( trigger1.equal(trigger2), "trigger1 == trigger2" );
-        assert.ok( trigger2.equal(trigger3), "trigger2 == trigger3" );
     });
 
 })

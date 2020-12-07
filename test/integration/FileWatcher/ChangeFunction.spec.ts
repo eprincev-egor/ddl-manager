@@ -201,7 +201,7 @@ describe("integration/FileWatcher watch change functions", () => {
             },
             toCreate: {
                 functions: [
-                    {...TEST_FUNC1, comment: "good"}
+                    {...TEST_FUNC1, comment: {dev: "good"}}
                 ],
                 triggers: []
             }
@@ -210,7 +210,7 @@ describe("integration/FileWatcher watch change functions", () => {
         
         expect(flatMap(fsWatcher.state.files, file => file.content.functions))
             .to.be.shallowDeepEqual([
-                {...TEST_FUNC1, comment: "good"}
+                {...TEST_FUNC1, comment: {dev: "good"}}
             ]);
     });
 });

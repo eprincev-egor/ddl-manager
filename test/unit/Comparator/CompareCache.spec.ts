@@ -54,7 +54,7 @@ describe("Comparator: compare cache", () => {
             type: "numeric",
             "default": "0",
             cacheSignature: "cache totals for companies",
-            comment: actualColumn.comment
+            comment: actualColumn.comment.toString()
         });
 
         assert.strictEqual(toCreate.updates.length, 1, "one update for columns");
@@ -106,7 +106,7 @@ describe("Comparator: compare cache", () => {
             type: "numeric",
             "default": "0",
             cacheSignature: "cache totals for companies",
-            comment: testCacheColumn.comment
+            comment: testCacheColumn.comment.toString()
         });
     });
 

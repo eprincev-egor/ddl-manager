@@ -1,12 +1,13 @@
 import { TableID } from "./TableID";
 import { Type } from "./Type";
+import { Comment } from "./Comment";
 
 export class Column {
     readonly table: TableID;
     readonly name: string;
     readonly type: Type;
     readonly default: string | null;
-    readonly comment?: string;
+    readonly comment: Comment;
     readonly cacheSignature?: string;
 
     constructor(
@@ -14,15 +15,14 @@ export class Column {
         name: string,
         type: string,
         defaultValue?: string,
-        comment?: string,
-        cacheSignature?: string
+        comment?: Comment
     ) {
         this.table = table;
         this.name = name;
         this.type = new Type(type);
         this.default = defaultValue || null;
-        this.comment = comment;
-        this.cacheSignature = cacheSignature;
+        this.comment = comment || Comment.frozen("column");
+        this.cacheSignature = this.comment.cacheSignature;
     }
 
     getSignature() {
@@ -39,7 +39,7 @@ export class Column {
             type: this.type.value,
             "default": this.default,
             cacheSignature: this.cacheSignature,
-            comment: this.comment
+            comment: this.comment.toString()
         };
     }
 }

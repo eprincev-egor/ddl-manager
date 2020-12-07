@@ -3,7 +3,7 @@ import { DatabaseFunction } from "../../../../lib/database/schema/DatabaseFuncti
 import { DatabaseTrigger } from "../../../../lib/database/schema/DatabaseTrigger";
 import { Table } from "../../../../lib/database/schema/Table";
 import { TableID } from "../../../../lib/database/schema/TableID";
-import { Type } from "../../../../lib/database/schema/Type";
+import { Comment } from "../../../../lib/database/schema/Comment";
 import { FileParser } from "../../../../lib/parser";
 
 export const someFileParams = {
@@ -72,8 +72,11 @@ export const testCacheColumn = new Column(
     "orders_profit",
     "numeric",
     "0",
-    "some comment",
-    "cache totals for companies"
+    Comment.fromFs({
+        objectType: "column",
+        dev: "some comment",
+        cacheSignature: "cache totals for companies"
+    })
 );
 
 export const testTableWithCache = new Table(
