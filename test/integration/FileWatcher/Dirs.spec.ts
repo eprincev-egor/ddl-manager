@@ -2,7 +2,7 @@ import fs from "fs";
 import fse from "fs-extra";
 import { flatMap } from "lodash";
 import assert from "assert";
-import { FileReader } from "../../../lib/fs/FileReader";
+import { FileWatcher } from "../../../lib/fs/FileWatcher";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { Migration } from "../../../lib/Migrator/Migration";
@@ -183,13 +183,10 @@ describe("integration/FileWatcher watch for directories", () => {
 
 
         // parse folder
-        const fsWatcher = FileReader.read({
-            folder: [
-                ROOT_TMP_PATH + "/root_1",
-                ROOT_TMP_PATH + "/root_2"
-            ]
-        });
-        await fsWatcher.watch();
+        const fsWatcher = await FileWatcher.watch([
+            ROOT_TMP_PATH + "/root_1",
+            ROOT_TMP_PATH + "/root_2"
+        ]);
 
         // create sql files
         fs.writeFileSync(ROOT_TMP_PATH + "/root_1/some.sql", VOID_FUNC1_SQL);
@@ -230,13 +227,10 @@ describe("integration/FileWatcher watch for directories", () => {
 
 
         // parse folder
-        const fsWatcher = FileReader.read({
-            folder: [
-                ROOT_TMP_PATH + "/root_1",
-                ROOT_TMP_PATH + "/root_2"
-            ]
-        });
-        await fsWatcher.watch();
+        const fsWatcher = await FileWatcher.watch([
+            ROOT_TMP_PATH + "/root_1",
+            ROOT_TMP_PATH + "/root_2"
+        ]);
 
         fs.unlinkSync(ROOT_TMP_PATH + "/root_2/some.sql");
         await sleep(50);
@@ -266,13 +260,10 @@ describe("integration/FileWatcher watch for directories", () => {
 
 
         // parse folder
-        const fsWatcher = FileReader.read({
-            folder: [
-                ROOT_TMP_PATH + "/root_1",
-                ROOT_TMP_PATH + "/root_2"
-            ]
-        });
-        await fsWatcher.watch();
+        const fsWatcher = await FileWatcher.watch([
+            ROOT_TMP_PATH + "/root_1",
+            ROOT_TMP_PATH + "/root_2"
+        ]);
         
 
         fs.writeFileSync(ROOT_TMP_PATH + "/root_2/some.sql", TEST_FUNC1_SQL);

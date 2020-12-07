@@ -16,9 +16,7 @@ describe("integration/FileReader parse functions", () => {
     it("parse nonexistent file", () => {
 
         try {
-            FileReader.read({
-                folder: "---"
-            });
+            FileReader.read(["---"]);
             
             assert.ok(false, "expected error for nonexistent file");
         } catch(err) {
@@ -28,11 +26,9 @@ describe("integration/FileReader parse functions", () => {
 
     it("parse empty folder", () => {
 
-        const filesReader = FileReader.read({
-            folder: ROOT_TMP_PATH
-        });
+        const state = FileReader.read([ROOT_TMP_PATH]);
 
-        const functions = flatMap(filesReader.state.files, file => file.content.functions);
+        const functions = flatMap(state.files, file => file.content.functions);
 
         expect(functions).to.be.shallowDeepEqual([]);
     });
@@ -77,11 +73,9 @@ describe("integration/FileReader parse functions", () => {
             }
         ];
 
-        const filesReader = FileReader.read({
-            folder: ROOT_TMP_PATH
-        });
+        const state = FileReader.read([ROOT_TMP_PATH]);
 
-        const actualResult = flatMap(filesReader.state.files, file => file.content.functions);
+        const actualResult = flatMap(state.files, file => file.content.functions);
 
         expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
@@ -108,11 +102,9 @@ describe("integration/FileReader parse functions", () => {
             }
         ];
         
-        const filesReader = FileReader.read({
-            folder: ROOT_TMP_PATH
-        });
+        const state = FileReader.read([ROOT_TMP_PATH]);
 
-        const actualResult = flatMap(filesReader.state.files, file => file.content.functions);
+        const actualResult = flatMap(state.files, file => file.content.functions);
 
         expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
@@ -159,11 +151,9 @@ describe("integration/FileReader parse functions", () => {
             }
         ];
         
-        const filesReader = FileReader.read({
-            folder: ROOT_TMP_PATH
-        });
+        const state = FileReader.read([ROOT_TMP_PATH]);
 
-        const actualResult = flatMap(filesReader.state.files, file => file.content.functions);
+        const actualResult = flatMap(state.files, file => file.content.functions);
 
         expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
@@ -188,11 +178,8 @@ describe("integration/FileReader parse functions", () => {
         fs.writeFileSync(filePath2, sql2);
 
         let err = {message: "expected error"};
-        FileReader.read({
-            folder: ROOT_TMP_PATH,
-            onError(_err: Error) {
-                err = _err;
-            }
+        FileReader.read([ROOT_TMP_PATH], (_err: Error) => {
+            err = _err;
         });
 
         assert.equal(err.message, "duplicate function public.func1()");
@@ -237,11 +224,9 @@ describe("integration/FileReader parse functions", () => {
         fs.writeFileSync(filePath1, sql1);
         fs.writeFileSync(filePath2, sql2);
 
-        const filesReader = FileReader.read({
-            folder: ROOT_TMP_PATH
-        });
+        const state = FileReader.read([ROOT_TMP_PATH]);
         
-        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
+        expect(flatMap(state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             func1,
             func2
         ]);
@@ -292,11 +277,9 @@ describe("integration/FileReader parse functions", () => {
             }
         ];
 
-        const filesReader = FileReader.read({
-            folder: ROOT_TMP_PATH
-        });
+        const state = FileReader.read([ROOT_TMP_PATH]);
 
-        const actualResult = flatMap(filesReader.state.files, file => file.content.functions);
+        const actualResult = flatMap(state.files, file => file.content.functions);
 
         expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
@@ -329,11 +312,9 @@ describe("integration/FileReader parse functions", () => {
             }
         ];
 
-        const filesReader = FileReader.read({
-            folder: ROOT_TMP_PATH
-        });
+        const state = FileReader.read([ROOT_TMP_PATH]);
 
-        const actualResult = flatMap(filesReader.state.files, file => file.content.functions);
+        const actualResult = flatMap(state.files, file => file.content.functions);
 
         expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
@@ -351,11 +332,9 @@ describe("integration/FileReader parse functions", () => {
         fs.writeFileSync(filePath, sql);
 
         
-        const filesReader = FileReader.read({
-            folder: ROOT_TMP_PATH
-        });
+        const state = FileReader.read([ROOT_TMP_PATH]);
 
-        expect(flatMap(filesReader.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
+        expect(flatMap(state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             {
                 language: "sql",
                 schema: "public",

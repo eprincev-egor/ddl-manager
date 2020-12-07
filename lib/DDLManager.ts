@@ -2,6 +2,7 @@ import fs from "fs";
 import pg from "pg";
 import path from "path";
 import { FileReader } from "./fs/FileReader";
+import { FileWatcher } from "./fs/FileWatcher";
 import { FSEvent } from "./fs/FSEvent";
 import { FilesState } from "./fs/FilesState";
 import { MainComparator } from "./Comparator/MainComparator";
@@ -13,7 +14,7 @@ import { Database } from "./database/schema/Database";
 import { getDbClient, IDBConfig } from "./database/getDbClient";
 import { DatabaseTrigger } from "./database/schema/DatabaseTrigger";
 
-const watchers: FileReader[] = [];
+const watchers: FileWatcher[] = [];
 
 export class DDLManager {
 
@@ -102,7 +103,7 @@ export class DDLManager {
     }
 
     private async build() {
-        const {migration, postgres, fileReader} = await this.compareDbAndFs();
+        const {migration, postgres} = await this.compareDbAndFs();
 
         const migrateErrors = await MainMigrator.migrate(postgres, migration);
 
@@ -111,8 +112,6 @@ export class DDLManager {
             migration,
             migrateErrors
         );
-        
-        return fileReader;
     }
 
     private async refreshCache() {
@@ -128,19 +127,19 @@ export class DDLManager {
     }
 
     private async compareDbAndFs() {
-        const fileReader = FileReader.read({
-            folder: this.folders,
-            onError(err: Error) {
+        const filesState = FileReader.read(
+            this.folders,
+            (err: Error) => {
                 // tslint:disable-next-line: no-console
                 console.error((err as any).subPath + ": " + err.message);
             }
-        });
+        );
         
         const postgres = await this.postgres();
         const database = await postgres.load();
 
-        const migration = MainComparator.compare(database, fileReader.state);
-        return {migration, postgres, fileReader, database};
+        const migration = MainComparator.compare(database, filesState);
+        return {migration, postgres, database};
     }
 
     private onMigrate(
@@ -164,13 +163,11 @@ export class DDLManager {
     }
 
     private async watch() {
-        const {
-            migration,
-            postgres,
-            fileReader,
-            database
-        } = await this.compareDbAndFs();
+        const postgres = await this.postgres();
+        const database = await postgres.load();
+        const watcher = await FileWatcher.watch(this.folders);
 
+        const migration = MainComparator.compare(database, watcher.state);
         const migrateErrors = await MainMigrator.migrate(postgres, migration);
 
         this.onMigrate(
@@ -179,17 +176,15 @@ export class DDLManager {
             migrateErrors
         );
 
-        await fileReader.watch();
-        
-        fileReader.on("change", (fsEvent: FSEvent) => {
+        watcher.on("change", (fsEvent: FSEvent) => {
             this.onChangeFS(
                 database,
-                fileReader.state,
+                watcher.state,
                 fsEvent
             );
         });
 
-        watchers.push(fileReader);
+        watchers.push(watcher);
     }
 
     private async onChangeFS(

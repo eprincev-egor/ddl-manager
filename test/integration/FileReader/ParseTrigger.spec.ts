@@ -64,12 +64,10 @@ describe("integration/FileReader parse functions and triggers", () => {
             }
         ];
         
-        const filesReader = FileReader.read({
-            folder: ROOT_TMP_PATH
-        });
+        const state = FileReader.read([ROOT_TMP_PATH]);
 
-        const actualFunctions = flatMap(filesReader.state.files, file => file.content.functions);
-        const actualTriggers = flatMap(filesReader.state.files, file => file.content.triggers);
+        const actualFunctions = flatMap(state.files, file => file.content.functions);
+        const actualTriggers = flatMap(state.files, file => file.content.triggers);
 
         expect(actualFunctions).to.be.shallowDeepEqual(expectedFunctions);
         expect(actualTriggers).to.be.shallowDeepEqual(expectedTriggers);
@@ -100,11 +98,8 @@ describe("integration/FileReader parse functions and triggers", () => {
         fs.writeFileSync(filePath, sql);
 
         let err = {message: "expected error"};
-        FileReader.read({
-            folder: ROOT_TMP_PATH,
-            onError(_err: Error) {
-                err = _err;
-            }
+        FileReader.read([ROOT_TMP_PATH], (_err: Error) => {
+            err = _err;
         });
 
         assert.equal(err.message, "wrong procedure name public.some_action_on_diu_company2");
@@ -134,11 +129,8 @@ describe("integration/FileReader parse functions and triggers", () => {
         fs.writeFileSync(filePath, sql);
 
         let err = {message: "expected error"};
-        FileReader.read({
-            folder: ROOT_TMP_PATH,
-            onError(_err: Error) {
-                err = _err;
-            }
+        FileReader.read([ROOT_TMP_PATH], (_err: Error) => {
+            err = _err;
         });
 
         assert.equal(err.message, "file must contain function with returns type trigger");
@@ -175,11 +167,8 @@ describe("integration/FileReader parse functions and triggers", () => {
 
 
         let err = {message: "expected error"};
-        FileReader.read({
-            folder: ROOT_TMP_PATH,
-            onError(_err: Error) {
-                err = _err;
-            }
+        FileReader.read([ROOT_TMP_PATH], (_err: Error) => {
+            err = _err;
         });
         
         assert.equal(err.message, "duplicate trigger some_trigger on public.company");
@@ -210,11 +199,9 @@ describe("integration/FileReader parse functions and triggers", () => {
         const filePath = ROOT_TMP_PATH + "/test-file.sql";
         fs.writeFileSync(filePath, sql);
 
-        const filesReader = FileReader.read({
-            folder: ROOT_TMP_PATH
-        });
+        const state = FileReader.read([ROOT_TMP_PATH]);
 
-        expect(flatMap(filesReader.state.files, file => file.content.triggers)).to.be.shallowDeepEqual([
+        expect(flatMap(state.files, file => file.content.triggers)).to.be.shallowDeepEqual([
             {
                 table: {
                     schema: "public",

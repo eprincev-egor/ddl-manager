@@ -28,11 +28,9 @@ describe("integration/FileReader parse cache", () => {
         const filePath = ROOT_TMP_PATH + "/test-file.sql";
         fs.writeFileSync(filePath, sql);
 
-        const filesReader = FileReader.read({
-            folder: ROOT_TMP_PATH
-        });
+        const state = FileReader.read([ROOT_TMP_PATH]);
 
-        expect(flatMap(filesReader.state.files, file => file.content.cache)).to.be.shallowDeepEqual([
+        expect(flatMap(state.files, file => file.content.cache)).to.be.shallowDeepEqual([
             {
                 name: "totals",
                 for: {
@@ -122,9 +120,7 @@ describe("integration/FileReader parse cache", () => {
         fs.writeFileSync(filePath2, sql2);
 
         assert.throws(() => {
-            FileReader.read({
-                folder: ROOT_TMP_PATH
-            });
+            FileReader.read([ROOT_TMP_PATH]);
         }, (err: Error) =>
             /duplicate cache totals for companies/
                 .test(err.message)
@@ -151,9 +147,7 @@ describe("integration/FileReader parse cache", () => {
         fs.writeFileSync(filePath, sql);
 
         assert.throws(() => {
-            FileReader.read({
-                folder: ROOT_TMP_PATH
-            });
+            FileReader.read([ROOT_TMP_PATH]);
         }, (err: Error) =>
             /SUB QUERIES are not supported/
                 .test(err.message)
@@ -179,9 +173,7 @@ describe("integration/FileReader parse cache", () => {
         fs.writeFileSync(filePath, sql);
 
         assert.throws(() => {
-            FileReader.read({
-                folder: ROOT_TMP_PATH
-            });
+            FileReader.read([ROOT_TMP_PATH]);
         }, (err: Error) =>
             /SUB QUERIES are not supported/
                 .test(err.message)
@@ -205,9 +197,7 @@ describe("integration/FileReader parse cache", () => {
         fs.writeFileSync(filePath, sql);
 
         assert.throws(() => {
-            FileReader.read({
-                folder: ROOT_TMP_PATH
-            });
+            FileReader.read([ROOT_TMP_PATH]);
         }, (err: Error) =>
             /GROUP BY are not supported/
                 .test(err.message)
@@ -231,9 +221,7 @@ describe("integration/FileReader parse cache", () => {
         fs.writeFileSync(filePath, sql);
 
         assert.throws(() => {
-            FileReader.read({
-                folder: ROOT_TMP_PATH
-            });
+            FileReader.read([ROOT_TMP_PATH]);
         }, (err: Error) =>
             /CTE \(with queries\) are not supported/
                 .test(err.message)
@@ -259,9 +247,7 @@ describe("integration/FileReader parse cache", () => {
         fs.writeFileSync(filePath, sql);
 
         assert.throws(() => {
-            FileReader.read({
-                folder: ROOT_TMP_PATH
-            });
+            FileReader.read([ROOT_TMP_PATH]);
         }, (err: Error) =>
             /UNION are not supported/
                 .test(err.message)
@@ -284,9 +270,7 @@ describe("integration/FileReader parse cache", () => {
         fs.writeFileSync(filePath, sql);
 
         assert.throws(() => {
-            FileReader.read({
-                folder: ROOT_TMP_PATH
-            });
+            FileReader.read([ROOT_TMP_PATH]);
         }, (err: Error) =>
             /required alias for every cache column: sum\(orders\.profit\)/
                 .test(err.message)
@@ -310,9 +294,7 @@ describe("integration/FileReader parse cache", () => {
         fs.writeFileSync(filePath, sql);
 
         assert.throws(() => {
-            FileReader.read({
-                folder: ROOT_TMP_PATH
-            });
+            FileReader.read([ROOT_TMP_PATH]);
         }, (err: Error) =>
             /duplicated cache column companies\.orders_profit/
                 .test(err.message)
@@ -348,9 +330,7 @@ describe("integration/FileReader parse cache", () => {
         fs.writeFileSync(filePath2, sql2);
 
         assert.throws(() => {
-            FileReader.read({
-                folder: ROOT_TMP_PATH
-            });
+            FileReader.read([ROOT_TMP_PATH]);
         }, (err: Error) =>
             /duplicated columns: orders_profit by cache: totals2, totals1/
                 .test(err.message)
@@ -372,9 +352,7 @@ describe("integration/FileReader parse cache", () => {
         fs.writeFileSync(filePath, sql);
 
         assert.throws(() => {
-            FileReader.read({
-                folder: ROOT_TMP_PATH
-            });
+            FileReader.read([ROOT_TMP_PATH]);
         }, (err: Error) =>
             /required select any columns or expressions/
                 .test(err.message)

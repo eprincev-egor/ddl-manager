@@ -1,4 +1,4 @@
-import { FileReader } from "../../../../lib/fs/FileReader";
+import { FileWatcher } from "../../../../lib/fs/FileWatcher";
 import { MainComparator } from "../../../../lib/Comparator/MainComparator";
 import { Migration } from "../../../../lib/Migrator/Migration";
 import { prepare } from "../../utils/prepare";
@@ -20,9 +20,7 @@ export function watcher(ROOT_TMP_PATH: string) {
     async function watch(
         onChange?: (migration: Migration) => void
     ) {
-        const fsWatcher = FileReader.read({
-            folder: ROOT_TMP_PATH
-        });
+        const fsWatcher = await FileWatcher.watch([ROOT_TMP_PATH]);
         WATCHERS_TO_STOP.push(fsWatcher);
 
         if ( onChange ) {
@@ -36,8 +34,6 @@ export function watcher(ROOT_TMP_PATH: string) {
             });
         }
         
-        await fsWatcher.watch();
-
         return fsWatcher;
     }
 

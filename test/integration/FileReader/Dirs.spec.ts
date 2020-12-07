@@ -34,15 +34,13 @@ describe("integration/FileReader read dirs", () => {
         fs.writeFileSync(ROOT_TMP_PATH + "/root_2/some.sql", VOID_FUNC2_SQL);
 
         // parse folder
-        const fsWatcher = FileReader.read({
-            folder: [
-                ROOT_TMP_PATH + "/root_1",
-                ROOT_TMP_PATH + "/root_2"
-            ]
-        });
+        const state = FileReader.read([
+            ROOT_TMP_PATH + "/root_1",
+            ROOT_TMP_PATH + "/root_2"
+        ]);
 
         // check
-        expect(fsWatcher.state.files).to.be.shallowDeepEqual([
+        expect(state.files).to.be.shallowDeepEqual([
             {
                 name: "some.sql",
                 path: "some.sql",
@@ -71,15 +69,13 @@ describe("integration/FileReader read dirs", () => {
         fs.writeFileSync(ROOT_TMP_PATH + "/some.md", VOID_FUNC1_SQL);
 
         // parse folder
-        const filesReader = FileReader.read({
-            folder: ROOT_TMP_PATH
-        });
+        const state = FileReader.read([ROOT_TMP_PATH]);
 
         // check
-        expect(filesReader.state.files).to.be.shallowDeepEqual([
+        expect(state.files).to.be.shallowDeepEqual([
             {
                 name: "some.sql",
-                folder: filesReader.rootFolders[0],
+                folder: ROOT_TMP_PATH,
                 path: "some.sql",
                 content: {
                     functions: [VOID_FUNC1]
@@ -87,7 +83,7 @@ describe("integration/FileReader read dirs", () => {
             }
         ]);
 
-        expect(flatMap(filesReader.state.files, file => file.content.functions))
+        expect(flatMap(state.files, file => file.content.functions))
             .to.be.shallowDeepEqual([
                 VOID_FUNC1
             ]);
@@ -105,16 +101,14 @@ describe("integration/FileReader read dirs", () => {
 
 
         // parse folder
-        const filesReader = FileReader.read({
-            folder: ROOT_TMP_PATH
-        });
+        const state = FileReader.read([ROOT_TMP_PATH]);
 
         // check
-        expect(filesReader.state.files).to.be.shallowDeepEqual([
+        expect(state.files).to.be.shallowDeepEqual([
             {
                 name: "some1.sql",
                 path: "some1.sql",
-                folder: filesReader.rootFolders[0],
+                folder: ROOT_TMP_PATH,
                 content: {
                     functions: [VOID_FUNC1]
                 }
@@ -122,7 +116,7 @@ describe("integration/FileReader read dirs", () => {
             {
                 name: "some2.sql",
                 path: "some2.sql",
-                folder: filesReader.rootFolders[0],
+                folder: ROOT_TMP_PATH,
                 content: {
                     functions: [VOID_FUNC2]
                 }
@@ -168,11 +162,9 @@ describe("integration/FileReader read dirs", () => {
 
 
         // parse folder
-        const filesReader = FileReader.read({
-            folder: ROOT_TMP_PATH
-        });
+        const state = FileReader.read([ROOT_TMP_PATH]);
 
-        let files = filesReader.state.files;
+        let files = state.files;
         
         // for test stability we sorting result
         files = files.sort((file1, file2) => 
@@ -185,7 +177,7 @@ describe("integration/FileReader read dirs", () => {
             {
                 name: "test1.sql",
                 path: "first/test1.sql",
-                folder: filesReader.rootFolders[0],
+                folder: ROOT_TMP_PATH,
                 content: {
                     functions: [TEST_FUNC1]
                 }
@@ -193,7 +185,7 @@ describe("integration/FileReader read dirs", () => {
             {
                 name: "test2.sql",
                 path: "first/second/test2.sql",
-                folder: filesReader.rootFolders[0],
+                folder: ROOT_TMP_PATH,
                 content: {
                     functions: [TEST_FUNC2]
                 }
@@ -201,7 +193,7 @@ describe("integration/FileReader read dirs", () => {
             {
                 name: "test3.sql",
                 path: "first/second/third/test3.sql",
-                folder: filesReader.rootFolders[0],
+                folder: ROOT_TMP_PATH,
                 content: {
                     functions: [TEST_FUNC3]
                 }
@@ -209,7 +201,7 @@ describe("integration/FileReader read dirs", () => {
             {
                 name: "void1.sql",
                 path: "first/void1.sql",
-                folder: filesReader.rootFolders[0],
+                folder: ROOT_TMP_PATH,
                 content: {
                     functions: [VOID_FUNC1]
                 }
@@ -217,7 +209,7 @@ describe("integration/FileReader read dirs", () => {
             {
                 name: "void2.sql",
                 path: "first/second/third/void2.sql",
-                folder: filesReader.rootFolders[0],
+                folder: ROOT_TMP_PATH,
                 content: {
                     functions: [VOID_FUNC2]
                 }
