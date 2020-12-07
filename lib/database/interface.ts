@@ -11,10 +11,8 @@ export interface IDatabaseDriver {
     unfreezeAll(dbState: Database): Promise<void>;
     createOrReplaceFunction(func: DatabaseFunction): Promise<void>;
     dropFunction(func: DatabaseFunction): Promise<void>;
-    forceDropFunction(func: DatabaseFunction): Promise<void>;
     createOrReplaceTrigger(trigger: DatabaseTrigger): Promise<void>;
     dropTrigger(trigger: DatabaseTrigger): Promise<void>;
-    forceDropTrigger(trigger: DatabaseTrigger): Promise<void>;
     getCacheColumnsTypes(select: Select, forTable: TableReference): Promise<{
         [columnName: string]: string
     }>;

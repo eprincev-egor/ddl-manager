@@ -76,10 +76,6 @@ implements IDatabaseDriver {
         }
     }
 
-    async forceDropFunction(func: DatabaseFunction): Promise<void> {
-        await this.dropFunction(func);
-    }
-
     async createOrReplaceTrigger(trigger: DatabaseTrigger): Promise<void> {
         const existentTriggerIndex = this.state.triggers.findIndex(someTrigger =>
             someTrigger.getSignature() === trigger.getSignature()
@@ -99,10 +95,6 @@ implements IDatabaseDriver {
         if ( existentTriggerIndex !== -1 ) {
             this.state.triggers.splice(existentTriggerIndex, 1);
         }
-    }
-
-    async forceDropTrigger(trigger: DatabaseTrigger): Promise<void> {
-        await this.dropTrigger(trigger);
     }
 
     async getCacheColumnsTypes(select: Select, forTable: TableReference): Promise<{ [columnName: string]: string; }> {

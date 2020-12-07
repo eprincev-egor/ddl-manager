@@ -4,10 +4,8 @@ import { IDatabaseDriver } from "./interface";
 import { FileParser } from "../parser";
 import { PGTypes } from "./PGTypes";
 import { Select } from "../ast";
-import { getCheckFrozenFunctionSql } from "./postgres/getCheckFrozenFunctionSql";
 import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
-import { getCheckFrozenTriggerSql } from "./postgres/getCheckFrozenTriggerSql";
 import { Database } from "./schema/Database";
 import { Column } from "./schema/Column";
 import { DatabaseFunction } from "./schema/DatabaseFunction";
@@ -143,7 +141,7 @@ implements IDatabaseDriver {
             // then need drop function before replace
             // 
             // but can exists triggers or views who dependent on this function
-            await this.forceDropFunction(func);
+            await this.dropFunction(func);
         } catch(err) {
             // 
         }
@@ -166,23 +164,6 @@ implements IDatabaseDriver {
     }
 
     async dropFunction(func: DatabaseFunction) {
-        let ddlSql = "";
-
-        // check frozen object
-        const checkFrozenSql = getCheckFrozenFunctionSql( 
-            func,
-            `cannot drop frozen function ${ func.getSignature() }`
-        );
-        
-        ddlSql = checkFrozenSql;
-
-        ddlSql += ";";
-        ddlSql += `drop function if exists ${ func.getSignature() }`;
-        
-        await this.query(ddlSql);
-    }
-
-    async forceDropFunction(func: DatabaseFunction) {
         const sql = `drop function if exists ${ func.getSignature() }`;
         await this.query(sql);
     }
@@ -210,22 +191,6 @@ implements IDatabaseDriver {
     }
 
     async dropTrigger(trigger: DatabaseTrigger) {
-        let ddlSql = "";
-        
-        // check frozen object
-        const checkFrozenSql = getCheckFrozenTriggerSql( 
-            trigger,
-            `cannot drop frozen trigger ${ trigger.getSignature() }`
-        );
-        ddlSql = checkFrozenSql;
-
-        ddlSql += ";";
-        ddlSql += `drop trigger if exists ${ trigger.getSignature() }`;
-
-        await this.query(ddlSql);
-    }
-
-    async forceDropTrigger(trigger: DatabaseTrigger) {
         const sql = `drop trigger if exists ${ trigger.getSignature() }`;
         await this.query(sql);
     }
