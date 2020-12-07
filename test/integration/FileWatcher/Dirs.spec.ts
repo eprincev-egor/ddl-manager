@@ -40,7 +40,7 @@ describe("integration/FileWatcher watch for directories", () => {
 
         assert.equal(counter, 0);
         expect(flatMap(fsWatcher.state.files, file => file.content.functions))
-            .to.be.shallowDeepEqual([]);
+            .to.deep.equal([]);
     });
 
     it("create empty dir", async() => {
@@ -58,7 +58,7 @@ describe("integration/FileWatcher watch for directories", () => {
 
         assert.equal(counter, 0);
         expect(flatMap(fsWatcher.state.files, file => file.content.functions))
-            .to.be.shallowDeepEqual([]);
+            .to.deep.equal([]);
     });
 
     it("create dir.sql", async() => {
@@ -76,7 +76,7 @@ describe("integration/FileWatcher watch for directories", () => {
 
         assert.equal(counter, 0);
         expect(flatMap(fsWatcher.state.files, file => file.content.functions))
-            .to.be.shallowDeepEqual([]);
+            .to.deep.equal([]);
     });
 
     it("remove dir.sql", async() => {
@@ -94,7 +94,7 @@ describe("integration/FileWatcher watch for directories", () => {
 
         assert.equal(counter, 0);
         expect(flatMap(fsWatcher.state.files, file => file.content.functions))
-            .to.be.shallowDeepEqual([]);
+            .to.deep.equal([]);
     });
 
 
@@ -159,7 +159,7 @@ describe("integration/FileWatcher watch for directories", () => {
 
         assert.equal(counter, 1);
         expect(flatMap(fsWatcher.state.files, file => file.content.functions))
-            .to.be.shallowDeepEqual([]);
+            .to.deep.equal([]);
 
         expect(migration).to.be.shallowDeepEqual({
             toDrop: {

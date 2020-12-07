@@ -267,7 +267,7 @@ describe("integration/FileWatcher watch change triggers", () => {
                 ONLY_FUNCTION
             ]);
         expect(flatMap(fsWatcher.state.files, file => file.content.triggers))
-            .to.be.shallowDeepEqual([]);
+            .to.deep.equal([]);
     });
     
     it("change function on trigger", async() => {

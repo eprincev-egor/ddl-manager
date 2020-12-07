@@ -30,7 +30,7 @@ describe("integration/FileReader parse functions", () => {
 
         const functions = flatMap(state.files, file => file.content.functions);
 
-        expect(functions).to.be.shallowDeepEqual([]);
+        expect(functions).to.deep.equal([]);
     });
 
     

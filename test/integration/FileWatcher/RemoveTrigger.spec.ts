@@ -51,9 +51,9 @@ describe("integration/FileWatcher watch remove triggers", () => {
         });
 
         expect(flatMap(fsWatcher.state.files, file => file.content.functions))
-            .to.be.shallowDeepEqual([]);
+            .to.deep.equal([]);
         expect(flatMap(fsWatcher.state.files, file => file.content.triggers))
-            .to.be.shallowDeepEqual([]);
+            .to.deep.equal([]);
     });
 
 
@@ -120,8 +120,8 @@ describe("integration/FileWatcher watch remove triggers", () => {
 
 
         expect(flatMap(fsWatcher.state.files, file => file.content.functions))
-            .to.be.shallowDeepEqual([]);
+            .to.deep.equal([]);
         expect(flatMap(fsWatcher.state.files, file => file.content.triggers))
-            .to.be.shallowDeepEqual([]);
+            .to.deep.equal([]);
     });
 });

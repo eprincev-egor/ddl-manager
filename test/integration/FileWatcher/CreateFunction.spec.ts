@@ -96,7 +96,7 @@ describe("integration/FileWatcher watch create functions", () => {
         
         assert.strictEqual(counter, 0);
         
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions)).to.be.shallowDeepEqual([]);
+        expect(flatMap(fsWatcher.state.files, file => file.content.functions)).to.deep.equal([]);
     });
 
 
