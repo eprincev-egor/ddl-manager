@@ -163,7 +163,7 @@ describe("integration/DDLManager.watch", () => {
         fs.writeFileSync(ROOT_TMP_PATH + "/test_errors.sql", `
             create or replace
         `);
-        await sleep(150);
+        await sleep(180);
 
         // file without syntax error
         fs.writeFileSync(ROOT_TMP_PATH + "/test_errors.sql", `
@@ -171,7 +171,7 @@ describe("integration/DDLManager.watch", () => {
             returns integer as $$select 1$$
             language sql;
         `);
-        await sleep(150);
+        await sleep(180);
 
         const result = await db.query("select test() as nice");
         const row = result.rows[0];
@@ -292,7 +292,7 @@ describe("integration/DDLManager.watch", () => {
             language plpgsql;
         `);
         
-        await sleep(100);
+        await sleep(150);
 
         result = await db.query("select some_func() as some_func");
         row = result.rows[0];
@@ -314,7 +314,7 @@ describe("integration/DDLManager.watch", () => {
             language plpgsql;
         `);
         
-        await sleep(100);
+        await sleep(150);
 
         result = await db.query("select some_func() as some_func");
         row = result.rows[0];
