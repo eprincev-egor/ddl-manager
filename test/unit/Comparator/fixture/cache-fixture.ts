@@ -29,6 +29,57 @@ export const testFileWithCache = {
     }
 };
 
+export const testCacheWithOtherName = FileParser.parseCache(`
+    cache another_name for companies (
+        select
+            sum(orders.profit) as orders_profit
+        from orders
+        where
+            orders.id_client = companies.id
+    )
+`);
+
+export const testFileWithCacheWithOtherName = {
+    ...someFileParams,
+    content: {
+        cache: [testCacheWithOtherName]
+    }
+};
+
+export const testCacheWithOtherCalc = FileParser.parseCache(`
+    cache totals for companies (
+        select
+            sum( orders.profit * 2 ) as orders_profit
+        from orders
+        where
+            orders.id_client = companies.id
+    )
+`);
+
+export const testFileWithCacheWithOtherCalc = {
+    ...someFileParams,
+    content: {
+        cache: [testCacheWithOtherCalc]
+    }
+};
+
+export const testCacheWithOtherColumnType = FileParser.parseCache(`
+    cache totals for companies (
+        select
+            array_agg( orders.profit ) as orders_profit
+        from orders
+        where
+            orders.id_client = companies.id
+    )
+`);
+
+export const testFileWithCacheWithOtherColumnType = {
+    ...someFileParams,
+    content: {
+        cache: [testCacheWithOtherColumnType]
+    }
+};
+
 export const someCacheFuncParams = {
     schema: "public",
     name: "cache_totals_for_companies_on_orders",
@@ -37,7 +88,10 @@ export const someCacheFuncParams = {
     body: `begin
         return new;
     end`,
-    cacheSignature: "cache totals for companies"
+    comment: Comment.fromFs({
+        objectType: "trigger",
+        cacheSignature: "cache totals for companies"
+    })
 };
 
 export const someCacheTriggerParams = {
@@ -56,6 +110,10 @@ export const someCacheTriggerParams = {
         name: "cache_totals_for_companies_on_orders",
         args: []
     },
+    comment: Comment.fromFs({
+        objectType: "trigger",
+        cacheSignature: "cache totals for companies"
+    })
 };
 
 export const testCacheFunc = new DatabaseFunction({
@@ -74,8 +132,13 @@ export const testCacheColumn = new Column(
     "0",
     Comment.fromFs({
         objectType: "column",
-        dev: "some comment",
-        cacheSignature: "cache totals for companies"
+        cacheSignature: "cache totals for companies",
+        cacheSelect: `
+select
+    coalesce(sum(orders.profit), 0) as orders_profit
+from orders
+where
+    orders.id_client = companies.id`.trim()
     })
 );
 

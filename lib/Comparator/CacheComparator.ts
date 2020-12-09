@@ -29,45 +29,83 @@ export class CacheComparator extends AbstractComparator {
             table => table.triggers
         ).filter(trigger => !!trigger.cacheSignature);
 
-        for (const cacheTrigger of allCacheTriggers) {
+        for (const dbCacheTrigger of allCacheTriggers) {
             const existsCache = this.fs.files.some(file => 
-                file.content.cache.some(cache =>
-                    cache.getSignature() === cacheTrigger.cacheSignature
-                )
+                file.content.cache.some(cache => {
+
+                    const cacheTriggerFactory = new CacheTriggersBuilder(
+                        cache,
+                        this.database
+                    );
+                    const triggersByTableName = cacheTriggerFactory.createTriggers();
+                
+                    const existsSameCacheFunc = Object.values(triggersByTableName).some(item => 
+                        item.trigger.equal( dbCacheTrigger )
+                    );
+                    return existsSameCacheFunc;
+                })
             );
             if ( !existsCache ) {
                 this.migration.drop({
-                    triggers: [cacheTrigger]
+                    triggers: [dbCacheTrigger]
                 });
             }
         }
 
-        for (const cacheFunc of allCacheFuncs) {
+        for (const dbCacheFunc of allCacheFuncs) {
             const existsCache = this.fs.files.some(file => 
-                file.content.cache.some(cache =>
-                    cache.getSignature() === cacheFunc.cacheSignature
-                )
+                file.content.cache.some(cache => {
+
+                    const cacheTriggerFactory = new CacheTriggersBuilder(
+                        cache,
+                        this.database
+                    );
+                    const triggersByTableName = cacheTriggerFactory.createTriggers();
+                
+                    const existsSameCacheFunc = Object.values(triggersByTableName).some(item => 
+                        item.function.equal( dbCacheFunc )
+                    );
+                    return existsSameCacheFunc;
+                })
             );
             if ( !existsCache ) {
                 this.migration.drop({
-                    functions: [cacheFunc]
+                    functions: [dbCacheFunc]
                 });
             }
         }
 
         for (const table of this.database.tables) {
             for (const column of table.columns) {
-                if ( column.cacheSignature ) {
-                    const existsCache = this.fs.files.some(file => 
-                        file.content.cache.some(cache =>
-                            cache.getSignature() === column.cacheSignature
-                        )
-                    );
-                    if ( !existsCache ) {
-                        this.migration.drop({
-                            columns: [column]
-                        });
-                    }
+                if ( !column.cacheSignature ) {
+                    continue;
+                }
+
+                const existsCacheWithSameColumn = this.fs.files.some(file => 
+                    file.content.cache.some(cache => {
+
+                        if ( !cache.for.table.equal(table) ) {
+                            return false;
+                        }
+
+                        const selectToUpdate = this.createSelectForUpdate(cache);
+                        const hasSameNameColumn = selectToUpdate.columns.some(selectColumn =>
+                            selectColumn.name === column.name
+                        );
+                        const newColumnType = this.getColumnType(
+                            cache,
+                            selectToUpdate
+                        );
+                        const hasSameType = newColumnType === column.type.toString();
+
+                        return hasSameNameColumn && hasSameType;
+                    })
+                );
+
+                if ( !existsCacheWithSameColumn ) {
+                    this.migration.drop({
+                        columns: [column]
+                    });
                 }
             }
         }
@@ -93,10 +131,18 @@ export class CacheComparator extends AbstractComparator {
     
             for (const tableName in triggersByTableName) {
                 const {trigger, function: func} = triggersByTableName[ tableName ];
+
+                const table = this.database.getTable( trigger.table );
+                const existsTrigger = table && table.triggers.some(existentTrigger =>
+                    existentTrigger.equal( trigger )
+                );
+                const existFunc = this.database.functions.some(existentFunc =>
+                    existentFunc.equal(func)
+                );
     
                 this.migration.create({
-                    triggers: [trigger],
-                    functions: [func]
+                    triggers: existsTrigger ? [] : [trigger],
+                    functions: existFunc ? [] : [func]
                 });
             }
         }
@@ -113,20 +159,38 @@ export class CacheComparator extends AbstractComparator {
     private createAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
 
         for (const {cache, select} of sortedSelectsForEveryColumn) {
-            const column = new Column(
+            const selectColumn = select.columns[0] as SelectColumn;
+            const columnName = selectColumn.name;
+
+            const selectToUpdate = this.createSelectForUpdate(cache)
+                .cloneWith({
+                    columns: [selectColumn]
+                });
+            
+            const columnToCreate = new Column(
                 cache.for.table,
-                (select.columns[0] as SelectColumn).name,
+                columnName,
                 this.getColumnType(cache, select),
                 this.getColumnDefault(select),
                 Comment.fromFs({
                     objectType: "column",
-                    cacheSignature: cache.getSignature()
+                    cacheSignature: cache.getSignature(),
+                    cacheSelect: selectToUpdate.toString()
                 })
             );
 
-            this.migration.create({
-                columns: [column]
-            });
+            const table = this.database.getTable( cache.for.table );
+            const existentColumn = table && table.getColumn(columnName);
+            const existsSameColumn = (
+                existentColumn && 
+                existentColumn.equal( columnToCreate )
+            );
+
+            if ( !existsSameColumn ) {
+                this.migration.create({
+                    columns: [columnToCreate]
+                });
+            }
         }
     }
 
@@ -134,32 +198,40 @@ export class CacheComparator extends AbstractComparator {
 
         for (let i = 0, n = sortedSelectsForEveryColumn.length; i < n; i++) {
             const {select, cache: cacheToCreate} = sortedSelectsForEveryColumn[ i ];
-            const columnsToUpdate: SelectColumn[] = [select.columns[0] as SelectColumn];
 
+            const selectToUpdateOneTable: Select[] = [select];
             for (let j = i + 1; j < n; j++) {
                 const nextItem = sortedSelectsForEveryColumn[ j ];
                 if ( nextItem.cache !== cacheToCreate ) {
                     break;
                 }
 
-                columnsToUpdate.push(nextItem.select.columns[0] as SelectColumn);
+                selectToUpdateOneTable.push(nextItem.select);
             }
 
-            const columnsToOnlyRequiredUpdate = columnsToUpdate.filter(columnToCreate => {
-                const cachesToDropOnThatTable = ([] as Cache[])/*this.migration.toDrop.cache*/.filter(cacheToDrop =>
-                    cacheToDrop.for.table.equal( cacheToCreate.for.table )
-                );
+            const columnsToOnlyRequiredUpdate = selectToUpdateOneTable
+                .map(select =>
+                    select.columns[0] as SelectColumn
+                )
+                .filter(selectColumn => {
+                    const existentTable = this.database.getTable(cacheToCreate.for.table);
+                    const existentColumn = existentTable && existentTable.getColumn(selectColumn.name);
 
-                const existsSameColumnToDrop = cachesToDropOnThatTable.some(cacheToDrop => {
-                    const selectToUpdateByDropCache = this.createSelectForUpdate(cacheToCreate);
-                    const existsSameColumn = selectToUpdateByDropCache.columns.some(columnNameToDrop => 
-                        columnToCreate.name === columnNameToDrop.name
+                    if ( !existentColumn ) {
+                        return true;
+                    }
+
+                    const selectToUpdate = this.createSelectForUpdate(cacheToCreate)
+                        .cloneWith({
+                            columns: [selectColumn]
+                        });
+                    
+                    const changedUpdateExpression = (
+                        existentColumn.comment.cacheSelect !== selectToUpdate.toString()
                     );
-                    return existsSameColumn;
+                    return changedUpdateExpression;
                 });
 
-                return !existsSameColumnToDrop;
-            });
 
             if ( !columnsToOnlyRequiredUpdate.length ) {
                 continue;
@@ -179,7 +251,10 @@ export class CacheComparator extends AbstractComparator {
         }
     }
 
+    // TODO: make async and execute expression in db
     private getColumnType(cache: Cache, select: Select) {
+
+
         // TODO: detect default by expression
         // const columnsTypes = await this.postgres.getCacheColumnsTypes(
         //     select,
@@ -213,6 +288,11 @@ export class CacheComparator extends AbstractComparator {
         if ( funcCall.name === "array_agg" ) {
             const firstArg = funcCall.args[0] as Expression;
             const columnRef = firstArg.getColumnReferences()[0] as ColumnReference;
+
+            if ( columnRef.name === "id" ) {
+                return "integer[]";
+            }
+
             const table = this.database.getTable(columnRef.tableReference.table);
             const column = table && table.getColumn(columnRef.name);
             

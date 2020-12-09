@@ -6,10 +6,15 @@ export class Table extends TableID {
     readonly columns: Column[];
     readonly triggers: DatabaseTrigger[];
 
-    constructor(schema: string, name: string, columns: Column[] = []) {
+    constructor(
+        schema: string,
+        name: string,
+        columns: Column[] = [],
+        triggers: DatabaseTrigger[] = []
+    ) {
         super(schema, name);
         this.columns = columns;
-        this.triggers = [];
+        this.triggers = triggers;
     }
 
     getColumn(name: string) {
@@ -22,5 +27,16 @@ export class Table extends TableID {
 
     addTrigger(trigger: DatabaseTrigger) {
         this.triggers.push(trigger);
+    }
+
+    clone() {
+        const clone = new Table(
+            this.schema,
+            this.name,
+            this.columns.map(column =>
+                column.clone()
+            )
+        );
+        return clone;
     }
 }

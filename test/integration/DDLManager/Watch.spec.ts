@@ -163,7 +163,7 @@ describe("integration/DDLManager.watch", () => {
         fs.writeFileSync(ROOT_TMP_PATH + "/test_errors.sql", `
             create or replace
         `);
-        await sleep(180);
+        await sleep(200);
 
         // file without syntax error
         fs.writeFileSync(ROOT_TMP_PATH + "/test_errors.sql", `
@@ -171,7 +171,7 @@ describe("integration/DDLManager.watch", () => {
             returns integer as $$select 1$$
             language sql;
         `);
-        await sleep(180);
+        await sleep(200);
 
         const result = await db.query("select test() as nice");
         const row = result.rows[0];

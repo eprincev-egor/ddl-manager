@@ -32,7 +32,7 @@ export class Database {
     setTable(table: Table) {
         const hasTable = this.getTable(table);
         if ( !hasTable ) {
-            this.tables.push(table);
+            this.tables.push( table.clone() );
         }
     }
 

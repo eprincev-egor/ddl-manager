@@ -42,4 +42,24 @@ export class Column {
             comment: this.comment.toString()
         };
     }
+
+    equal(otherColumn: Column) {
+        return (
+            this.name === otherColumn.name &&
+            this.table.equal( otherColumn.table ) &&
+            this.type.toString() === otherColumn.type.toString() &&
+            this.default === otherColumn.default &&
+            this.comment.equal( otherColumn.comment )
+        );
+    }
+
+    clone() {
+        return new Column(
+            this.table,
+            this.name,
+            this.type.toString(),
+            this.default || undefined,
+            this.comment
+        );
+    }
 }
