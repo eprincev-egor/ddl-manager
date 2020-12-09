@@ -25,14 +25,6 @@ export class ConditionBuilder {
         return this.getMutableColumns().length > 0;
     }
 
-    hasMutableColumnsDepsInAggregations() {
-        const mutableColumnsDepsInAggregations = this.getMutableColumns()
-            .filter(col => 
-                !this.context.referenceMeta.columns.includes(col)
-            );
-        return mutableColumnsDepsInAggregations.length > 0;
-    }
-
     getNoReferenceChanges() {
         return noReferenceChanges( this.context );
     }

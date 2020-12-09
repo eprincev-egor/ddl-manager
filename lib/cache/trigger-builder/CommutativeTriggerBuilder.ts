@@ -5,6 +5,13 @@ import { buildUpdate } from "../processor/buildUpdate";
 export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
     protected createBody() {
+        const deltaUpdate = buildUpdate(
+            this.context,
+            this.conditionBuilder.getSimpleWhere("new"),
+            [],
+            "delta"
+        );
+
         const body = buildCommutativeBody(
             this.conditionBuilder.hasMutableColumns(),
             this.conditionBuilder.getNoChanges(),
@@ -26,14 +33,9 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                     "plus"
                 )
             },
-            this.conditionBuilder.hasMutableColumnsDepsInAggregations() ? {
+            deltaUpdate.set.length > 0 ? {
                 needUpdate: this.conditionBuilder.getNoReferenceChanges(),
-                update: buildUpdate(
-                    this.context,
-                    this.conditionBuilder.getSimpleWhere("new"),
-                    [],
-                    "delta"
-                ),
+                update: deltaUpdate,
                 old: {
                     needUpdate: this.conditionBuilder.getNeedUpdateConditionOnUpdate("old"),
                     update: buildUpdate(
