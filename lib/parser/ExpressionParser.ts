@@ -12,7 +12,8 @@ import {
     Select,
     Operator,
     Expression,
-    UnknownExpressionElement
+    UnknownExpressionElement,
+    IOrderByItem
 } from "../ast";
 import { UnknownExpressionElementParser } from "./UnknownExpressionElementParser";
 import { ColumnReferenceParser } from "./ColumnReferenceParser";
@@ -97,6 +98,29 @@ export class ExpressionParser {
             );
         }
 
+        const orderBy: Partial<IOrderByItem>[] = [];
+        if ( funcCallSyntax.row.orderBy ) {
+            funcCallSyntax.row.orderBy.forEach(itemSyntax => {
+                const nulls = itemSyntax.row.nulls as ("first" | "last" | undefined);
+                const usingSyntax = itemSyntax.row.using;
+                const vector = itemSyntax.row.vector as ("asc" | "desc" | undefined);
+                const expressionSyntax = itemSyntax.row.expression as ExpressionSyntax;
+                const expression = this.parse(
+                    select,
+                    additionalTableReferences,
+                    expressionSyntax
+                );
+
+                const item: Partial<IOrderByItem> = {
+                    vector,
+                    expression,
+                    using: usingSyntax ? usingSyntax.toString() : undefined,
+                    nulls
+                };
+                orderBy.push(item);
+            })
+        }
+
         const funcCall = new FuncCall(
             funcName,
             args.map(argSql =>
@@ -108,7 +132,8 @@ export class ExpressionParser {
                 )
             ),
             where,
-            funcCallSyntax.row.distinct ? true : false
+            funcCallSyntax.row.distinct ? true : false,
+            orderBy
         );
         return funcCall;
     }

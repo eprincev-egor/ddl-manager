@@ -6,23 +6,34 @@ import { UnknownExpressionElement } from "./UnknownExpressionElement";
 import { AbstractExpressionElement } from "./AbstractExpressionElement";
 import { Spaces } from "../Spaces";
 
+// https://postgrespro.ru/docs/postgrespro/10/queries-order
+export interface IOrderByItem {
+    vector: "asc" | "desc";
+    expression: Expression;
+    using?: string;
+    nulls: "first" | "last";
+}
+
 export class FuncCall extends AbstractExpressionElement {
 
     readonly name: string;
     readonly args: Expression[];
     readonly where?: Expression;
     readonly distinct: boolean;
+    readonly orderBy: IOrderByItem[];
     constructor(
         name: string,
         args: Expression[],
         where?: Expression,
-        distinct?: boolean
+        distinct?: boolean,
+        orderBy: Partial<IOrderByItem>[] = []
     ) {
         super();
         this.name = name;
         this.args = args;
         this.where = where;
         this.distinct = distinct ? true : false;
+        this.orderBy = this.prepareOrderBy(orderBy);
     }
 
     protected children() {
@@ -72,7 +83,8 @@ export class FuncCall extends AbstractExpressionElement {
             this.where ?
                 this.where.clone() :
                 undefined,
-            this.distinct
+            this.distinct,
+            this.cloneOrderBy()
         );
     }
 
@@ -101,6 +113,10 @@ export class FuncCall extends AbstractExpressionElement {
             sql += this.args.join(", ");
         }
 
+        if ( this.orderBy.length ) {
+            sql += " " + this.toStringOrderBy() + " ";
+        }
+
         sql += ")";
 
         if ( this.where ) {
@@ -110,5 +126,48 @@ export class FuncCall extends AbstractExpressionElement {
         }
 
         return sql.split("\n");
+    }
+
+    // TODO: new abstraction
+    private prepareOrderBy(orderBy: Partial<IOrderByItem>[]): IOrderByItem[] {
+        const preparedOrderBy = orderBy.map(item => {
+            if ( !item.expression ) {
+                throw new Error("required orderBy expression")
+            }
+
+            const vector = item.vector || "asc";
+            const preparedItem = {
+                vector,
+                expression: item.expression,
+                using: item.using,
+                // https://postgrespro.ru/docs/postgrespro/10/queries-order
+                // По умолчанию значения NULL считаются больше любых других, 
+                nulls: (
+                    item.nulls || (
+                        // то есть подразумевается NULLS FIRST для порядка DESC и 
+                        vector === "desc" ? 
+                            "first" :
+                        // NULLS LAST в противном случае.
+                            "last"
+                    )
+                )
+            };
+            return preparedItem;
+        });
+        return preparedOrderBy;
+    }
+
+    private cloneOrderBy() {
+        const clone = this.orderBy.map(item => ({
+            ...item,
+            expression: item.expression.clone()
+        }));
+        return clone;
+    }
+
+    private toStringOrderBy() {
+        return "order by " + this.orderBy.map(item => 
+            `${item.expression} ${item.vector} nulls ${ item.nulls }`
+        ).join(", ");
     }
 }

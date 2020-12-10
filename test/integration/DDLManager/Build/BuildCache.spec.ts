@@ -655,4 +655,87 @@ describe("integration/DDLManager.build cache", () => {
         ], "after insert three orders");
     });
 
+    it("array_agg(value order by value asc/desc nulls last/first)", async() => {
+        const folderPath = ROOT_TMP_PATH + "/array_agg_order_by";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table companies (
+                id serial primary key
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer,
+                test_value smallint
+            );
+
+            insert into companies default values;
+        `);
+        
+        fs.writeFileSync(folderPath + "/array_agg.sql", `
+            cache totals for companies (
+                select
+                    array_agg(
+                        orders.test_value
+                            order by orders.test_value
+                            asc nulls first
+                    ) as orders_values_asc_nulls_first,
+
+                    array_agg(
+                        orders.test_value
+                            order by orders.test_value
+                            asc nulls last
+                    ) as orders_values_asc_nulls_last,
+
+                    array_agg(
+                        orders.test_value
+                            order by orders.test_value
+                            desc nulls first
+                    ) as orders_values_desc_nulls_first,
+
+                    array_agg(
+                        orders.test_value
+                            order by orders.test_value
+                            desc nulls last 
+                    ) as orders_values_desc_nulls_last
+
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        let result;
+
+
+        // test insert
+        await db.query(`
+            insert into orders (
+                id_client,
+                test_value
+            ) 
+            values 
+                (1, 1),
+                (1, 2),
+                (1, null)
+        `);
+        result = await db.query(`
+            select *
+            from companies
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            orders_values_asc_nulls_first: [null, 1, 2],
+            orders_values_asc_nulls_last: [1, 2, null],
+            orders_values_desc_nulls_first: [null, 2, 1],
+            orders_values_desc_nulls_last: [2, 1, null]
+        }]);
+    });
+
 });

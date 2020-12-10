@@ -11,6 +11,7 @@
       + group by
       + with
       + union
+      - no hard "order by" for aggregations
     + no column name in select
     - no columns
     + column name is not unique
@@ -52,8 +53,13 @@
 + when need drop function while trigger is frozen, but function not
 + when not all columns or trigger exists for cache, need rebuild cache
 - timeline
+- test triggers with: select limit 1 order by desc/asc
 + change sleep ms in tests
 - remove unfreeze command
 - PostgresDriver: add command: commentOn(obj, comment)
 - split PostgresDrivers
 - refactor: build database state from fs and compare two databases
+- test string_agg(distinct some order by some)
+- test string_agg(distinct some order by joined field)
+- test all combinations for commutative triggers
+- test array_agg with id as bigint
