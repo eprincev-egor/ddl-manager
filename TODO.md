@@ -61,5 +61,6 @@
 - refactor: build database state from fs and compare two databases
 - test string_agg(distinct some order by some)
 - test string_agg(distinct some order by joined field)
+- test string_agg(some) filter (where joined field)
 - test all combinations for commutative triggers
 - test array_agg with id as bigint
