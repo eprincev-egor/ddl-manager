@@ -74,7 +74,10 @@ export class AggFactory {
             updateColumn: this.updateColumn,
             call: new FuncCall(
                 "array_agg",
-                [aggCall.args[0]]
+                [aggCall.args[0]],
+                aggCall.where,
+                false,
+                aggCall.orderBy
             ),
             total: Expression.unknown(arrayAggAllColumnName)
         });
