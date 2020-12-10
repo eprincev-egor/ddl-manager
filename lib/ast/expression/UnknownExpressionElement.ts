@@ -91,7 +91,9 @@ export class UnknownExpressionElement extends AbstractExpressionElement {
         }
 
         const lines = sql.split("\n").map(line =>
-            spaces + line
+            line.trim() ?
+                spaces + line :
+                ""
         );
         if ( lines.length === 1 ) {
             return [lines[0].trim()];

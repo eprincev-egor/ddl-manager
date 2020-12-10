@@ -10,9 +10,9 @@ export interface IAggParams {
 export abstract class AbstractAgg {
 
     readonly call: FuncCall;
+    readonly total: Expression;
     protected readonly select: Select;
     protected readonly updateColumn: SelectColumn;
-    protected readonly total: Expression;
 
     constructor(params: IAggParams) {
         this.call = params.call;

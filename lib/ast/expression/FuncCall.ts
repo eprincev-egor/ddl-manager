@@ -38,9 +38,15 @@ export class FuncCall extends AbstractExpressionElement {
 
     protected children() {
         const children = this.args.slice();
+
         if ( this.where ) {
             children.push( this.where );
         }
+
+        this.orderBy.forEach(item => {
+            children.push( item.expression );
+        });
+        
         return children;
     }
 
@@ -51,6 +57,7 @@ export class FuncCall extends AbstractExpressionElement {
         ];
     }
 
+    // TODO: replace where
     replaceTable(
         replaceTable: TableReference | TableID,
         toTable: TableReference
@@ -58,9 +65,19 @@ export class FuncCall extends AbstractExpressionElement {
         const newArgs = this.args.map(arg =>
             arg.replaceTable(replaceTable, toTable)
         );
-        return this.clone(newArgs);
+
+        const orderBy = this.orderBy.map(item => ({
+            ...item,
+            expression: item.expression.replaceTable(replaceTable, toTable)
+        }));
+
+        return this.clone(
+            newArgs,
+            orderBy
+        );
     }
 
+    // TODO: replace orderBy
     replaceColumn(replaceColumn: string, toSql: string) {
         const newArgs = this.args.map(arg =>
             arg.replaceColumn(replaceColumn, toSql)
@@ -68,6 +85,7 @@ export class FuncCall extends AbstractExpressionElement {
         return this.clone(newArgs);
     }
 
+    // TODO: replace orderBy
     replaceFuncCall(replaceFunc: FuncCall, toSql: string) {
         if ( replaceFunc.equal(this) ) {
             return UnknownExpressionElement.fromSql(toSql);
@@ -76,7 +94,10 @@ export class FuncCall extends AbstractExpressionElement {
         return this.clone();
     }
 
-    clone(newArgs?: Expression[]) {
+    clone(
+        newArgs?: Expression[],
+        newOrderBy?: IOrderByItem[]
+    ) {
         return new FuncCall(
             this.name,
             newArgs || this.args.map(arg => arg.clone()),
@@ -84,7 +105,7 @@ export class FuncCall extends AbstractExpressionElement {
                 this.where.clone() :
                 undefined,
             this.distinct,
-            this.cloneOrderBy()
+            newOrderBy || this.cloneOrderBy()
         );
     }
 
@@ -93,7 +114,10 @@ export class FuncCall extends AbstractExpressionElement {
 
         sql += `${this.name}(`;
 
-        const isLongArgs = this.args.join(", ").trim().length > 25;
+        const isLongArgs = (
+            this.orderBy.length ||
+            this.args.join(", ").trim().length > 25
+        );
         if ( isLongArgs ) {
             sql += "\n";
 
@@ -114,7 +138,7 @@ export class FuncCall extends AbstractExpressionElement {
         }
 
         if ( this.orderBy.length ) {
-            sql += " " + this.toStringOrderBy() + " ";
+            sql += this.toStringOrderBy( spaces ) + "\n";
         }
 
         sql += ")";
@@ -165,9 +189,14 @@ export class FuncCall extends AbstractExpressionElement {
         return clone;
     }
 
-    private toStringOrderBy() {
-        return "order by " + this.orderBy.map(item => 
-            `${item.expression} ${item.vector} nulls ${ item.nulls }`
-        ).join(", ");
+    private toStringOrderBy(spaces: Spaces) {
+        return (
+            spaces.plusOneLevel() + "order by\n" + 
+            this.orderBy.map(item => 
+                spaces.plusOneLevel().plusOneLevel() + 
+                    `${item.expression} ${item.vector} nulls ${ item.nulls }`
+            )
+            .join(",\n")
+        );
     }
 }

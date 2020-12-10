@@ -107,6 +107,17 @@ function createSetItemsByColumn(
     for (const columnName in aggMap) {
         const agg = aggMap[ columnName ];
 
+        // can be helper aggregation array_agg(id) for universal agg
+        if ( aggType === "delta" ) {
+            const isNoEffect = (
+                !agg.call.where &&
+                isImmutableAggCall(agg.call)
+            );
+            if ( isNoEffect ) {
+                continue;
+            }
+        }
+
         const sql = aggregate(
             triggerTable,
             joins,

@@ -5,6 +5,7 @@ import { ArrayAgg } from "./ArrayAgg";
 import { ColumnNameGenerator } from "./ColumnNameGenerator";
 import { StringAgg } from "./StringAgg";
 import { DistinctArrayAgg } from "./DistinctArrayAgg";
+import { UniversalAgg } from "./UniversalAgg";
 
 interface IAggMap {
     [column: string]: AbstractAgg;
@@ -35,7 +36,11 @@ export class AggFactory {
     }
 
     private createAggregationsByAggCall(aggCall: FuncCall) {
-        if ( aggCall.name === "string_agg" ) {
+        
+        if ( isHardOrderBy(aggCall) ) {
+            return this.createUniversalAgg(aggCall);
+        }
+        else if ( aggCall.name === "string_agg" ) {
             return this.createStringAgg(aggCall);
         }
         else if ( aggCall.name === "array_agg" && aggCall.distinct ) {
@@ -123,4 +128,63 @@ export class AggFactory {
 
         return map;
     }
+
+    private createUniversalAgg(aggCall: FuncCall) {
+        const map: IAggMap = {};
+
+        const aggColumnName = this.columnNameGenerator.generateName(aggCall);
+        const childAggregations: ArrayAgg[] = [];
+
+        const depsColumns = aggCall.getColumnReferences();
+        for (const columnRef of depsColumns) {
+            const helperColumnName = aggColumnName + "_" + columnRef.name;
+
+            if ( helperColumnName in map ) {
+                continue;
+            }
+
+            const helperArrayAgg = new ArrayAgg({
+                select: this.select,
+                updateColumn: this.updateColumn,
+                call: new FuncCall(
+                    "array_agg", [
+                        new Expression([
+                            columnRef
+                        ])
+                    ]
+                ),
+                total: Expression.unknown(helperColumnName)
+            });
+            map[ helperColumnName ] = helperArrayAgg;
+
+            childAggregations.push(helperArrayAgg);
+        }
+
+        const universalAgg = new UniversalAgg({
+            select: this.select,
+            updateColumn: this.updateColumn,
+            call: aggCall,
+            total: Expression.unknown(aggColumnName)
+        }, childAggregations);
+        
+        map[ aggColumnName ] = universalAgg;
+
+        return map;
+    }
+}
+
+function isHardOrderBy(aggCall: FuncCall) {
+    if ( aggCall.orderBy.length === 0 ) {
+        return false;
+    }
+
+    if ( aggCall.orderBy.length > 1 ) {
+        return true;
+    }
+    
+    const firstArg = aggCall.args[0];
+    const firstOrderBy = aggCall.orderBy[0].expression;
+
+    const isAlienOrder = firstArg.toString() !== firstOrderBy.toString();
+    return isAlienOrder;
 }
