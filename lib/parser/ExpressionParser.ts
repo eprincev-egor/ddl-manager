@@ -129,12 +129,30 @@ export class ExpressionParser {
             })
         }
 
-        if ( funcName === "count" ) {
+        const funcsWithoutOrderBy = [
+            // 1 + 1 = 1 + 1
+            "count",
+            // a + b = b + a
+            "sum",
+            // Math.max(a, b) = Math.max(b, a)
+            "max",
+            // Math.min(a, b) = Math.max(b, a)
+            "min"
+        ];
+        if ( funcsWithoutOrderBy.includes(funcName) ) {
             orderBy = [];
-            if ( !funcCallSyntax.row.distinct ) {
-                args = [Expression.unknown("*")];
-            }
         }
+
+        if ( funcName === "sum" ) {
+            orderBy = [];
+        }
+
+        // count(id_client) = count(id_partner) = count(*)
+        // count(distinct id_client) != count(id_partner)
+        if ( funcName === "count" && !funcCallSyntax.row.distinct ) {
+            args = [Expression.unknown("*")];
+        }
+
 
         const funcCall = new FuncCall(
             funcName,
