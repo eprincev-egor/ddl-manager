@@ -15,41 +15,8 @@ export function findDependencies(cache: Cache) {
         dependencies[ tableRef.table.toString() ] = {columns: []};
     }
 
-    const columnsRefsFromCountArgsOrOrderBy: ColumnReference[] = [];
-
-    cache.select.columns.forEach(selectColumn => {
-        const countCalls = selectColumn.getAggregations().filter(funCall =>
-            funCall.name === "count"
-        );
-
-        countCalls.forEach(countCall => {
-
-            if ( !countCall.distinct ) {
-                countCall.args.forEach(arg => {
-                    columnsRefsFromCountArgsOrOrderBy.push(
-                        ...arg.getColumnReferences()
-                    );
-                });
-            }
-            
-            
-            countCall.orderBy.forEach(countOrderBy => {
-                columnsRefsFromCountArgsOrOrderBy.push(
-                    ...countOrderBy.expression.getColumnReferences()
-                );
-            })
-        });
-    });
-
     for (const columnRef of cache.select.getAllColumnReferences()) {
-        const fromCountArgsOrOrderBy = columnsRefsFromCountArgsOrOrderBy
-            .some(columnRefFromCount =>
-                columnRefFromCount === columnRef
-            );
-
-        if ( !fromCountArgsOrOrderBy ) {
-            addColumnReference(dependencies, columnRef);
-        }
+        addColumnReference(dependencies, columnRef);
     }
 
     return dependencies;

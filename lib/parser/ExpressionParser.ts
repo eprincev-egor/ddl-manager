@@ -87,7 +87,15 @@ export class ExpressionParser {
         const funcNameSyntax = funcCallSyntax.get("function") as FunctionLink;
         const funcName = funcNameSyntax.toString();
         
-        const args = (funcCallSyntax.get("arguments") || []);
+        const argsSyntaxes = (funcCallSyntax.get("arguments") || []);
+        let args = argsSyntaxes.map(argSql =>
+            this.parseFunctionCallArgument(
+                select,
+                additionalTableReferences,
+                funcName,
+                argSql
+            )
+        );
         
         let where: Expression | undefined;
         if ( funcCallSyntax.row.where ) {
@@ -98,7 +106,7 @@ export class ExpressionParser {
             );
         }
 
-        const orderBy: Partial<IOrderByItem>[] = [];
+        let orderBy: Partial<IOrderByItem>[] = [];
         if ( funcCallSyntax.row.orderBy ) {
             funcCallSyntax.row.orderBy.forEach(itemSyntax => {
                 const nulls = itemSyntax.row.nulls as ("first" | "last" | undefined);
@@ -121,16 +129,16 @@ export class ExpressionParser {
             })
         }
 
+        if ( funcName === "count" ) {
+            orderBy = [];
+            if ( !funcCallSyntax.row.distinct ) {
+                args = [Expression.unknown("*")];
+            }
+        }
+
         const funcCall = new FuncCall(
             funcName,
-            args.map(argSql =>
-                this.parseFunctionCallArgument(
-                    select,
-                    additionalTableReferences,
-                    funcName,
-                    argSql
-                )
-            ),
+            args,
             where,
             funcCallSyntax.row.distinct ? true : false,
             orderBy
