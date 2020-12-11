@@ -24,7 +24,7 @@
   + do not drop cache columns if no changes
   + do not drop cache columns if same columns exists in db
   + need REAL load schema
-  - universal agg
+  + universal agg
   - first agg
   - last agg
   - date_or_null_agg
@@ -64,3 +64,4 @@
 - test string_agg(some) filter (where joined field)
 - test all combinations for commutative triggers
 - test array_agg with id as bigint
+- replace all string_agg to UniversalAgg ?
