@@ -129,6 +129,8 @@ export class ExpressionParser {
             })
         }
 
+        let distinct = !!funcCallSyntax.row.distinct;
+
         const funcsWithoutOrderBy = [
             // 1 + 1 = 1 + 1
             "count",
@@ -147,9 +149,15 @@ export class ExpressionParser {
             orderBy = [];
         }
 
+        // min(distinct x) = min(x)
+        // max(distinct x) = max(x)
+        if ( funcName === "min" || funcName === "max" ) {
+            distinct = false;
+        }
+
         // count(id_client) = count(id_partner) = count(*)
         // count(distinct id_client) != count(id_partner)
-        if ( funcName === "count" && !funcCallSyntax.row.distinct ) {
+        if ( funcName === "count" && !distinct ) {
             args = [Expression.unknown("*")];
         }
 
@@ -158,7 +166,7 @@ export class ExpressionParser {
             funcName,
             args,
             where,
-            funcCallSyntax.row.distinct ? true : false,
+            distinct,
             orderBy
         );
         return funcCall;
