@@ -25,6 +25,148 @@ describe("CacheDependencies", () => {
     });
 
     testDependencies({
+        cache: `cache test for companies (
+            select 
+                count( orders.id_client ) as orders_count
+            from public.orders as orders
+            where
+                orders.id_partner = companies.id
+        )`,
+        dependencies: {
+            "public.companies": {
+                "columns": [
+                    "id"
+                ]
+            },
+            "public.orders": {
+                columns: [
+                    "id_partner"
+                ]
+            }
+        }
+    });
+
+    testDependencies({
+        cache: `cache test for companies (
+            select 
+                count(
+                    orders.id_client
+                    order by orders.doc_date
+                ) as orders_count
+            from public.orders as orders
+            where
+                orders.id_partner = companies.id
+        )`,
+        dependencies: {
+            "public.companies": {
+                "columns": [
+                    "id"
+                ]
+            },
+            "public.orders": {
+                columns: [
+                    "id_partner"
+                ]
+            }
+        }
+    });
+
+    testDependencies({
+        cache: `cache test for companies (
+            select 
+                count(
+                    orders.id_client
+                    order by orders.doc_date
+                ) as orders_count
+            from public.orders as orders
+            where
+                orders.id_partner = companies.id and
+                orders.doc_date > now_utc()
+        )`,
+        dependencies: {
+            "public.companies": {
+                "columns": [
+                    "id"
+                ]
+            },
+            "public.orders": {
+                columns: [
+                    "doc_date",
+                    "id_partner"
+                ]
+            }
+        }
+    });
+
+    testDependencies({
+        cache: `cache test for companies (
+            select 
+                count( orders.id_client ) + sum( orders.id_client ) as orders_count
+            from public.orders as orders
+            where
+                orders.id_partner = companies.id
+        )`,
+        dependencies: {
+            "public.companies": {
+                "columns": [
+                    "id"
+                ]
+            },
+            "public.orders": {
+                columns: [
+                    "id_client",
+                    "id_partner"
+                ]
+            }
+        }
+    });
+
+    testDependencies({
+        cache: `cache test for companies (
+            select 
+                count( orders.id_client ) + count( orders.id_client ) as orders_count
+            from public.orders as orders
+            where
+                orders.id_partner = companies.id
+        )`,
+        dependencies: {
+            "public.companies": {
+                "columns": [
+                    "id"
+                ]
+            },
+            "public.orders": {
+                columns: [
+                    "id_partner"
+                ]
+            }
+        }
+    });
+
+    testDependencies({
+        cache: `cache test for companies (
+            select 
+                count( distinct orders.id_client ) as orders_count
+            from public.orders as orders
+            where
+                orders.id_partner = companies.id
+        )`,
+        dependencies: {
+            "public.companies": {
+                "columns": [
+                    "id"
+                ]
+            },
+            "public.orders": {
+                columns: [
+                    "id_client",
+                    "id_partner"
+                ]
+            }
+        }
+    });
+
+    testDependencies({
         cache: `cache test for companies as cmp (
             select 
                 count( orders.id_client ) as orders_count

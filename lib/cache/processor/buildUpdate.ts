@@ -76,7 +76,8 @@ function prepareUpdateColumns(cache: Cache, aggType: AggType) {
         );
         const isOnlyCountAgg = (
             aggregations.length === 1 &&
-            aggregations[0].name === "count"
+            aggregations[0].name === "count" &&
+            !aggregations[0].distinct
         );
 
         return (

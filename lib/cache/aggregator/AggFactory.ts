@@ -37,7 +37,15 @@ export class AggFactory {
 
     private createAggregationsByAggCall(aggCall: FuncCall) {
         
-        if ( isHardOrderBy(aggCall) ) {
+        if ( aggCall.name === "count" ) {
+            if ( aggCall.distinct ) {
+                return this.createUniversalAgg(aggCall);
+            }
+            else {
+                return this.createDefaultAgg(aggCall);
+            }
+        }
+        else if ( isHardOrderBy(aggCall) ) {
             return this.createUniversalAgg(aggCall);
         }
         else if ( aggCall.name === "string_agg" ) {

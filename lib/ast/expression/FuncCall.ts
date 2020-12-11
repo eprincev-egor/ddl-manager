@@ -114,6 +114,10 @@ export class FuncCall extends AbstractExpressionElement {
 
         sql += `${this.name}(`;
 
+        if ( this.distinct ) {
+            sql += "distinct ";
+        }
+
         const isLongArgs = (
             this.orderBy.length ||
             this.args.join(", ").trim().length > 25
