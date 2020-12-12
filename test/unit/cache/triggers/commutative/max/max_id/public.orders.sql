@@ -6,20 +6,15 @@ begin
 
         if old.id_client is not null then
             update companies set
-                max_order_id = case
-                    when
-                        max_order_id > old.id
-                    then
-                        max_order_id
-                    else
-                        (
-                            select
-                                max(orders.id) as max_order_id
-                            from orders
-                            where
-                                orders.id_client = companies.id
-                        )
-                end
+                max_order_id_id = cm_array_remove_one_element(max_order_id_id, old.id),
+                max_order_id = (
+                    select
+                        max(item.id)
+
+                    from unnest(
+                        cm_array_remove_one_element(max_order_id_id, old.id)
+                    ) as item(id)
+                )
             where
                 old.id_client = companies.id;
         end if;
@@ -36,27 +31,30 @@ begin
 
         if old.id_client is not null then
             update companies set
-                max_order_id = case
-                    when
-                        max_order_id > old.id
-                    then
-                        max_order_id
-                    else
-                        (
-                            select
-                                max(orders.id) as max_order_id
-                            from orders
-                            where
-                                orders.id_client = companies.id
-                        )
-                end
+                max_order_id_id = cm_array_remove_one_element(max_order_id_id, old.id),
+                max_order_id = (
+                    select
+                        max(item.id)
+
+                    from unnest(
+                        cm_array_remove_one_element(max_order_id_id, old.id)
+                    ) as item(id)
+                )
             where
                 old.id_client = companies.id;
         end if;
 
         if new.id_client is not null then
             update companies set
-                max_order_id = greatest(max_order_id, new.id)
+                max_order_id_id = array_append(max_order_id_id, new.id),
+                max_order_id = (
+                    select
+                        max(item.id)
+
+                    from unnest(
+                        array_append(max_order_id_id, new.id)
+                    ) as item(id)
+                )
             where
                 new.id_client = companies.id;
         end if;
@@ -68,7 +66,15 @@ begin
 
         if new.id_client is not null then
             update companies set
-                max_order_id = greatest(max_order_id, new.id)
+                max_order_id_id = array_append(max_order_id_id, new.id),
+                max_order_id = (
+                    select
+                        max(item.id)
+
+                    from unnest(
+                        array_append(max_order_id_id, new.id)
+                    ) as item(id)
+                )
             where
                 new.id_client = companies.id;
         end if;

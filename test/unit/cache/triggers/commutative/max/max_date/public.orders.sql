@@ -10,20 +10,21 @@ begin
             old.order_date is not null
         then
             update companies set
-                max_order_date = case
-                    when
-                        max_order_date > old.order_date
-                    then
-                        max_order_date
-                    else
-                        (
-                            select
-                                max(orders.order_date) as max_order_date
-                            from orders
-                            where
-                                orders.id_client = companies.id
+                max_order_date_order_date = cm_array_remove_one_element(
+                    max_order_date_order_date,
+                    old.order_date
+                ),
+                max_order_date = (
+                    select
+                        max(item.order_date)
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            max_order_date_order_date,
+                            old.order_date
                         )
-                end
+                    ) as item(order_date)
+                )
             where
                 old.id_client = companies.id;
         end if;
@@ -42,24 +43,27 @@ begin
 
         if new.id_client is not distinct from old.id_client then
             update companies set
-                max_order_date = case
-                    when
-                        new.order_date > max_order_date
-                    then
-                        new.order_date
-                    when
-                        old.order_date < max_order_date
-                    then
-                        max_order_date
-                    else
-                        (
-                            select
-                                max(orders.order_date) as max_order_date
-                            from orders
-                            where
-                                orders.id_client = companies.id
+                max_order_date_order_date = array_append(
+                    cm_array_remove_one_element(
+                        max_order_date_order_date,
+                        old.order_date
+                    ),
+                    new.order_date
+                ),
+                max_order_date = (
+                    select
+                        max(item.order_date)
+
+                    from unnest(
+                        array_append(
+                            cm_array_remove_one_element(
+                                max_order_date_order_date,
+                                old.order_date
+                            ),
+                            new.order_date
                         )
-                end
+                    ) as item(order_date)
+                )
             where
                 new.id_client = companies.id;
 
@@ -72,20 +76,21 @@ begin
             old.order_date is not null
         then
             update companies set
-                max_order_date = case
-                    when
-                        max_order_date > old.order_date
-                    then
-                        max_order_date
-                    else
-                        (
-                            select
-                                max(orders.order_date) as max_order_date
-                            from orders
-                            where
-                                orders.id_client = companies.id
+                max_order_date_order_date = cm_array_remove_one_element(
+                    max_order_date_order_date,
+                    old.order_date
+                ),
+                max_order_date = (
+                    select
+                        max(item.order_date)
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            max_order_date_order_date,
+                            old.order_date
                         )
-                end
+                    ) as item(order_date)
+                )
             where
                 old.id_client = companies.id;
         end if;
@@ -96,9 +101,20 @@ begin
             new.order_date is not null
         then
             update companies set
-                max_order_date = greatest(
-                    max_order_date,
+                max_order_date_order_date = array_append(
+                    max_order_date_order_date,
                     new.order_date
+                ),
+                max_order_date = (
+                    select
+                        max(item.order_date)
+
+                    from unnest(
+                        array_append(
+                            max_order_date_order_date,
+                            new.order_date
+                        )
+                    ) as item(order_date)
                 )
             where
                 new.id_client = companies.id;
@@ -115,9 +131,20 @@ begin
             new.order_date is not null
         then
             update companies set
-                max_order_date = greatest(
-                    max_order_date,
+                max_order_date_order_date = array_append(
+                    max_order_date_order_date,
                     new.order_date
+                ),
+                max_order_date = (
+                    select
+                        max(item.order_date)
+
+                    from unnest(
+                        array_append(
+                            max_order_date_order_date,
+                            new.order_date
+                        )
+                    ) as item(order_date)
                 )
             where
                 new.id_client = companies.id;
