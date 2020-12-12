@@ -12,16 +12,20 @@ begin
             old.deleted = 0
         then
             update companies set
-                orders_numbers_array_agg = cm_array_remove_one_element(
-                    orders_numbers_array_agg,
+                orders_numbers_doc_number = cm_array_remove_one_element(
+                    orders_numbers_doc_number,
                     old.doc_number
                 ),
-                orders_numbers = cm_array_to_string_distinct(
-                    cm_array_remove_one_element(
-                        orders_numbers_array_agg,
-                        old.doc_number
-                    ),
-                    ', '
+                orders_numbers = (
+                    select
+                        string_agg(distinct item.doc_number, ', ')
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            orders_numbers_doc_number,
+                            old.doc_number
+                        )
+                    ) as item(doc_number)
                 )
             where
                 companies.id = any (old.companies_ids);
@@ -47,22 +51,26 @@ begin
             new.deleted is not distinct from old.deleted
         then
             update companies set
-                orders_numbers_array_agg = array_append(
+                orders_numbers_doc_number = array_append(
                     cm_array_remove_one_element(
-                        orders_numbers_array_agg,
+                        orders_numbers_doc_number,
                         old.doc_number
                     ),
                     new.doc_number
                 ),
-                orders_numbers = cm_array_to_string_distinct(
-                    array_append(
-                        cm_array_remove_one_element(
-                            orders_numbers_array_agg,
-                            old.doc_number
-                        ),
-                        new.doc_number
-                    ),
-                    ', '
+                orders_numbers = (
+                    select
+                        string_agg(distinct item.doc_number, ', ')
+
+                    from unnest(
+                        array_append(
+                            cm_array_remove_one_element(
+                                orders_numbers_doc_number,
+                                old.doc_number
+                            ),
+                            new.doc_number
+                        )
+                    ) as item(doc_number)
                 )
             where
                 companies.id = any (new.companies_ids);
@@ -78,16 +86,20 @@ begin
             old.deleted = 0
         then
             update companies set
-                orders_numbers_array_agg = cm_array_remove_one_element(
-                    orders_numbers_array_agg,
+                orders_numbers_doc_number = cm_array_remove_one_element(
+                    orders_numbers_doc_number,
                     old.doc_number
                 ),
-                orders_numbers = cm_array_to_string_distinct(
-                    cm_array_remove_one_element(
-                        orders_numbers_array_agg,
-                        old.doc_number
-                    ),
-                    ', '
+                orders_numbers = (
+                    select
+                        string_agg(distinct item.doc_number, ', ')
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            orders_numbers_doc_number,
+                            old.doc_number
+                        )
+                    ) as item(doc_number)
                 )
             where
                 companies.id = any (cm_get_deleted_elements(old.companies_ids, new.companies_ids));
@@ -101,16 +113,20 @@ begin
             new.deleted = 0
         then
             update companies set
-                orders_numbers_array_agg = array_append(
-                    orders_numbers_array_agg,
+                orders_numbers_doc_number = array_append(
+                    orders_numbers_doc_number,
                     new.doc_number
                 ),
-                orders_numbers = cm_array_to_string_distinct(
-                    array_append(
-                        orders_numbers_array_agg,
-                        new.doc_number
-                    ),
-                    ', '
+                orders_numbers = (
+                    select
+                        string_agg(distinct item.doc_number, ', ')
+
+                    from unnest(
+                        array_append(
+                            orders_numbers_doc_number,
+                            new.doc_number
+                        )
+                    ) as item(doc_number)
                 )
             where
                 companies.id = any (cm_get_inserted_elements(old.companies_ids, new.companies_ids));
@@ -129,16 +145,20 @@ begin
             new.deleted = 0
         then
             update companies set
-                orders_numbers_array_agg = array_append(
-                    orders_numbers_array_agg,
+                orders_numbers_doc_number = array_append(
+                    orders_numbers_doc_number,
                     new.doc_number
                 ),
-                orders_numbers = cm_array_to_string_distinct(
-                    array_append(
-                        orders_numbers_array_agg,
-                        new.doc_number
-                    ),
-                    ', '
+                orders_numbers = (
+                    select
+                        string_agg(distinct item.doc_number, ', ')
+
+                    from unnest(
+                        array_append(
+                            orders_numbers_doc_number,
+                            new.doc_number
+                        )
+                    ) as item(doc_number)
                 )
             where
                 companies.id = any (new.companies_ids);

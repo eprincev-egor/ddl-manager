@@ -6,15 +6,20 @@ begin
 
         if old.id_user_task is not null then
             update user_task set
-                watchers_users_ids_array_agg = cm_array_remove_one_element(
-                    watchers_users_ids_array_agg,
+                watchers_users_ids_id_user = cm_array_remove_one_element(
+                    watchers_users_ids_id_user,
                     old.id_user
                 ),
-                watchers_users_ids = cm_distinct_array(
-                    cm_array_remove_one_element(
-                        watchers_users_ids_array_agg,
-                        old.id_user
-                    )
+                watchers_users_ids = (
+                    select
+                        array_agg(distinct item.id_user)
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            watchers_users_ids_id_user,
+                            old.id_user
+                        )
+                    ) as item(id_user)
                 )
             where
                 old.id_user_task = user_task.id;
@@ -34,21 +39,26 @@ begin
 
         if new.id_user_task is not distinct from old.id_user_task then
             update user_task set
-                watchers_users_ids_array_agg = array_append(
+                watchers_users_ids_id_user = array_append(
                     cm_array_remove_one_element(
-                        watchers_users_ids_array_agg,
+                        watchers_users_ids_id_user,
                         old.id_user
                     ),
                     new.id_user
                 ),
-                watchers_users_ids = cm_distinct_array(
-                    array_append(
-                        cm_array_remove_one_element(
-                            watchers_users_ids_array_agg,
-                            old.id_user
-                        ),
-                        new.id_user
-                    )
+                watchers_users_ids = (
+                    select
+                        array_agg(distinct item.id_user)
+
+                    from unnest(
+                        array_append(
+                            cm_array_remove_one_element(
+                                watchers_users_ids_id_user,
+                                old.id_user
+                            ),
+                            new.id_user
+                        )
+                    ) as item(id_user)
                 )
             where
                 new.id_user_task = user_task.id;
@@ -58,15 +68,20 @@ begin
 
         if old.id_user_task is not null then
             update user_task set
-                watchers_users_ids_array_agg = cm_array_remove_one_element(
-                    watchers_users_ids_array_agg,
+                watchers_users_ids_id_user = cm_array_remove_one_element(
+                    watchers_users_ids_id_user,
                     old.id_user
                 ),
-                watchers_users_ids = cm_distinct_array(
-                    cm_array_remove_one_element(
-                        watchers_users_ids_array_agg,
-                        old.id_user
-                    )
+                watchers_users_ids = (
+                    select
+                        array_agg(distinct item.id_user)
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            watchers_users_ids_id_user,
+                            old.id_user
+                        )
+                    ) as item(id_user)
                 )
             where
                 old.id_user_task = user_task.id;
@@ -74,15 +89,20 @@ begin
 
         if new.id_user_task is not null then
             update user_task set
-                watchers_users_ids_array_agg = array_append(
-                    watchers_users_ids_array_agg,
+                watchers_users_ids_id_user = array_append(
+                    watchers_users_ids_id_user,
                     new.id_user
                 ),
-                watchers_users_ids = cm_distinct_array(
-                    array_append(
-                        watchers_users_ids_array_agg,
-                        new.id_user
-                    )
+                watchers_users_ids = (
+                    select
+                        array_agg(distinct item.id_user)
+
+                    from unnest(
+                        array_append(
+                            watchers_users_ids_id_user,
+                            new.id_user
+                        )
+                    ) as item(id_user)
                 )
             where
                 new.id_user_task = user_task.id;
@@ -95,15 +115,20 @@ begin
 
         if new.id_user_task is not null then
             update user_task set
-                watchers_users_ids_array_agg = array_append(
-                    watchers_users_ids_array_agg,
+                watchers_users_ids_id_user = array_append(
+                    watchers_users_ids_id_user,
                     new.id_user
                 ),
-                watchers_users_ids = cm_distinct_array(
-                    array_append(
-                        watchers_users_ids_array_agg,
-                        new.id_user
-                    )
+                watchers_users_ids = (
+                    select
+                        array_agg(distinct item.id_user)
+
+                    from unnest(
+                        array_append(
+                            watchers_users_ids_id_user,
+                            new.id_user
+                        )
+                    ) as item(id_user)
                 )
             where
                 new.id_user_task = user_task.id;

@@ -6,15 +6,24 @@ begin
 
         if old.id_client is not null then
             update companies set
-                orders_dates_array_agg = cm_array_remove_one_element(
-                    orders_dates_array_agg,
+                orders_dates_order_date = cm_array_remove_one_element(
+                    orders_dates_order_date,
                     old.order_date
                 ),
-                orders_dates = cm_distinct_array(
-                    cm_array_remove_one_element(
-                        orders_dates_array_agg,
-                        old.order_date
-                    )
+                orders_dates = (
+                    select
+                        array_agg(distinct 
+                            item.order_date
+                            order by
+                                item.order_date desc nulls first
+                        )
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            orders_dates_order_date,
+                            old.order_date
+                        )
+                    ) as item(order_date)
                 )
             where
                 old.id_client = companies.id;
@@ -34,21 +43,30 @@ begin
 
         if new.id_client is not distinct from old.id_client then
             update companies set
-                orders_dates_array_agg = cm_array_append_order_by_desc_nulls_first(
+                orders_dates_order_date = array_append(
                     cm_array_remove_one_element(
-                        orders_dates_array_agg,
+                        orders_dates_order_date,
                         old.order_date
                     ),
                     new.order_date
                 ),
-                orders_dates = cm_distinct_array(
-                    cm_array_append_order_by_desc_nulls_first(
-                        cm_array_remove_one_element(
-                            orders_dates_array_agg,
-                            old.order_date
-                        ),
-                        new.order_date
-                    )
+                orders_dates = (
+                    select
+                        array_agg(distinct 
+                            item.order_date
+                            order by
+                                item.order_date desc nulls first
+                        )
+
+                    from unnest(
+                        array_append(
+                            cm_array_remove_one_element(
+                                orders_dates_order_date,
+                                old.order_date
+                            ),
+                            new.order_date
+                        )
+                    ) as item(order_date)
                 )
             where
                 new.id_client = companies.id;
@@ -58,15 +76,24 @@ begin
 
         if old.id_client is not null then
             update companies set
-                orders_dates_array_agg = cm_array_remove_one_element(
-                    orders_dates_array_agg,
+                orders_dates_order_date = cm_array_remove_one_element(
+                    orders_dates_order_date,
                     old.order_date
                 ),
-                orders_dates = cm_distinct_array(
-                    cm_array_remove_one_element(
-                        orders_dates_array_agg,
-                        old.order_date
-                    )
+                orders_dates = (
+                    select
+                        array_agg(distinct 
+                            item.order_date
+                            order by
+                                item.order_date desc nulls first
+                        )
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            orders_dates_order_date,
+                            old.order_date
+                        )
+                    ) as item(order_date)
                 )
             where
                 old.id_client = companies.id;
@@ -74,15 +101,24 @@ begin
 
         if new.id_client is not null then
             update companies set
-                orders_dates_array_agg = cm_array_append_order_by_desc_nulls_first(
-                    orders_dates_array_agg,
+                orders_dates_order_date = array_append(
+                    orders_dates_order_date,
                     new.order_date
                 ),
-                orders_dates = cm_distinct_array(
-                    cm_array_append_order_by_desc_nulls_first(
-                        orders_dates_array_agg,
-                        new.order_date
-                    )
+                orders_dates = (
+                    select
+                        array_agg(distinct 
+                            item.order_date
+                            order by
+                                item.order_date desc nulls first
+                        )
+
+                    from unnest(
+                        array_append(
+                            orders_dates_order_date,
+                            new.order_date
+                        )
+                    ) as item(order_date)
                 )
             where
                 new.id_client = companies.id;
@@ -95,15 +131,24 @@ begin
 
         if new.id_client is not null then
             update companies set
-                orders_dates_array_agg = cm_array_append_order_by_desc_nulls_first(
-                    orders_dates_array_agg,
+                orders_dates_order_date = array_append(
+                    orders_dates_order_date,
                     new.order_date
                 ),
-                orders_dates = cm_distinct_array(
-                    cm_array_append_order_by_desc_nulls_first(
-                        orders_dates_array_agg,
-                        new.order_date
-                    )
+                orders_dates = (
+                    select
+                        array_agg(distinct 
+                            item.order_date
+                            order by
+                                item.order_date desc nulls first
+                        )
+
+                    from unnest(
+                        array_append(
+                            orders_dates_order_date,
+                            new.order_date
+                        )
+                    ) as item(order_date)
                 )
             where
                 new.id_client = companies.id;

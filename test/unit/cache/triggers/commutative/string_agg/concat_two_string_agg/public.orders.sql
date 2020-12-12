@@ -14,40 +14,56 @@ begin
             )
         then
             update companies set
-                orders_numbers_string_agg_doc_number_array_agg = cm_array_remove_one_element(
-                    orders_numbers_string_agg_doc_number_array_agg,
+                orders_numbers_string_agg_doc_number_doc_number = cm_array_remove_one_element(
+                    orders_numbers_string_agg_doc_number_doc_number,
                     old.doc_number
                 ),
-                orders_numbers_string_agg_doc_number = cm_array_to_string_distinct(
-                    cm_array_remove_one_element(
-                        orders_numbers_string_agg_doc_number_array_agg,
-                        old.doc_number
-                    ),
-                    ', '
+                orders_numbers_string_agg_doc_number = (
+                    select
+                        string_agg(distinct item.doc_number, ', ')
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            orders_numbers_string_agg_doc_number_doc_number,
+                            old.doc_number
+                        )
+                    ) as item(doc_number)
                 ),
-                orders_numbers_string_agg_note_array_agg = cm_array_remove_one_element(
-                    orders_numbers_string_agg_note_array_agg,
+                orders_numbers_string_agg_note_note = cm_array_remove_one_element(
+                    orders_numbers_string_agg_note_note,
                     old.note
                 ),
-                orders_numbers_string_agg_note = cm_array_to_string_distinct(
-                    cm_array_remove_one_element(
-                        orders_numbers_string_agg_note_array_agg,
-                        old.note
-                    ),
-                    ', '
+                orders_numbers_string_agg_note = (
+                    select
+                        string_agg(distinct item.note, ', ')
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            orders_numbers_string_agg_note_note,
+                            old.note
+                        )
+                    ) as item(note)
                 ),
-                orders_numbers = (cm_array_to_string_distinct(
-                    cm_array_remove_one_element(
-                        orders_numbers_string_agg_doc_number_array_agg,
-                        old.doc_number
-                    ),
-                    ', '
-                )) || ' : ' || (cm_array_to_string_distinct(
-                    cm_array_remove_one_element(
-                        orders_numbers_string_agg_note_array_agg,
-                        old.note
-                    ),
-                    ', '
+                orders_numbers = ((
+                    select
+                        string_agg(distinct item.doc_number, ', ')
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            orders_numbers_string_agg_doc_number_doc_number,
+                            old.doc_number
+                        )
+                    ) as item(doc_number)
+                )) || ' : ' || ((
+                    select
+                        string_agg(distinct item.note, ', ')
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            orders_numbers_string_agg_note_note,
+                            old.note
+                        )
+                    ) as item(note)
                 ))
             where
                 old.id_client = companies.id;
@@ -69,58 +85,74 @@ begin
 
         if new.id_client is not distinct from old.id_client then
             update companies set
-                orders_numbers_string_agg_doc_number_array_agg = array_append(
+                orders_numbers_string_agg_doc_number_doc_number = array_append(
                     cm_array_remove_one_element(
-                        orders_numbers_string_agg_doc_number_array_agg,
+                        orders_numbers_string_agg_doc_number_doc_number,
                         old.doc_number
                     ),
                     new.doc_number
                 ),
-                orders_numbers_string_agg_doc_number = cm_array_to_string_distinct(
-                    array_append(
-                        cm_array_remove_one_element(
-                            orders_numbers_string_agg_doc_number_array_agg,
-                            old.doc_number
-                        ),
-                        new.doc_number
-                    ),
-                    ', '
+                orders_numbers_string_agg_doc_number = (
+                    select
+                        string_agg(distinct item.doc_number, ', ')
+
+                    from unnest(
+                        array_append(
+                            cm_array_remove_one_element(
+                                orders_numbers_string_agg_doc_number_doc_number,
+                                old.doc_number
+                            ),
+                            new.doc_number
+                        )
+                    ) as item(doc_number)
                 ),
-                orders_numbers_string_agg_note_array_agg = array_append(
+                orders_numbers_string_agg_note_note = array_append(
                     cm_array_remove_one_element(
-                        orders_numbers_string_agg_note_array_agg,
+                        orders_numbers_string_agg_note_note,
                         old.note
                     ),
                     new.note
                 ),
-                orders_numbers_string_agg_note = cm_array_to_string_distinct(
-                    array_append(
-                        cm_array_remove_one_element(
-                            orders_numbers_string_agg_note_array_agg,
-                            old.note
-                        ),
-                        new.note
-                    ),
-                    ', '
+                orders_numbers_string_agg_note = (
+                    select
+                        string_agg(distinct item.note, ', ')
+
+                    from unnest(
+                        array_append(
+                            cm_array_remove_one_element(
+                                orders_numbers_string_agg_note_note,
+                                old.note
+                            ),
+                            new.note
+                        )
+                    ) as item(note)
                 ),
-                orders_numbers = (cm_array_to_string_distinct(
-                    array_append(
-                        cm_array_remove_one_element(
-                            orders_numbers_string_agg_doc_number_array_agg,
-                            old.doc_number
-                        ),
-                        new.doc_number
-                    ),
-                    ', '
-                )) || ' : ' || (cm_array_to_string_distinct(
-                    array_append(
-                        cm_array_remove_one_element(
-                            orders_numbers_string_agg_note_array_agg,
-                            old.note
-                        ),
-                        new.note
-                    ),
-                    ', '
+                orders_numbers = ((
+                    select
+                        string_agg(distinct item.doc_number, ', ')
+
+                    from unnest(
+                        array_append(
+                            cm_array_remove_one_element(
+                                orders_numbers_string_agg_doc_number_doc_number,
+                                old.doc_number
+                            ),
+                            new.doc_number
+                        )
+                    ) as item(doc_number)
+                )) || ' : ' || ((
+                    select
+                        string_agg(distinct item.note, ', ')
+
+                    from unnest(
+                        array_append(
+                            cm_array_remove_one_element(
+                                orders_numbers_string_agg_note_note,
+                                old.note
+                            ),
+                            new.note
+                        )
+                    ) as item(note)
                 ))
             where
                 new.id_client = companies.id;
@@ -138,40 +170,56 @@ begin
             )
         then
             update companies set
-                orders_numbers_string_agg_doc_number_array_agg = cm_array_remove_one_element(
-                    orders_numbers_string_agg_doc_number_array_agg,
+                orders_numbers_string_agg_doc_number_doc_number = cm_array_remove_one_element(
+                    orders_numbers_string_agg_doc_number_doc_number,
                     old.doc_number
                 ),
-                orders_numbers_string_agg_doc_number = cm_array_to_string_distinct(
-                    cm_array_remove_one_element(
-                        orders_numbers_string_agg_doc_number_array_agg,
-                        old.doc_number
-                    ),
-                    ', '
+                orders_numbers_string_agg_doc_number = (
+                    select
+                        string_agg(distinct item.doc_number, ', ')
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            orders_numbers_string_agg_doc_number_doc_number,
+                            old.doc_number
+                        )
+                    ) as item(doc_number)
                 ),
-                orders_numbers_string_agg_note_array_agg = cm_array_remove_one_element(
-                    orders_numbers_string_agg_note_array_agg,
+                orders_numbers_string_agg_note_note = cm_array_remove_one_element(
+                    orders_numbers_string_agg_note_note,
                     old.note
                 ),
-                orders_numbers_string_agg_note = cm_array_to_string_distinct(
-                    cm_array_remove_one_element(
-                        orders_numbers_string_agg_note_array_agg,
-                        old.note
-                    ),
-                    ', '
+                orders_numbers_string_agg_note = (
+                    select
+                        string_agg(distinct item.note, ', ')
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            orders_numbers_string_agg_note_note,
+                            old.note
+                        )
+                    ) as item(note)
                 ),
-                orders_numbers = (cm_array_to_string_distinct(
-                    cm_array_remove_one_element(
-                        orders_numbers_string_agg_doc_number_array_agg,
-                        old.doc_number
-                    ),
-                    ', '
-                )) || ' : ' || (cm_array_to_string_distinct(
-                    cm_array_remove_one_element(
-                        orders_numbers_string_agg_note_array_agg,
-                        old.note
-                    ),
-                    ', '
+                orders_numbers = ((
+                    select
+                        string_agg(distinct item.doc_number, ', ')
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            orders_numbers_string_agg_doc_number_doc_number,
+                            old.doc_number
+                        )
+                    ) as item(doc_number)
+                )) || ' : ' || ((
+                    select
+                        string_agg(distinct item.note, ', ')
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            orders_numbers_string_agg_note_note,
+                            old.note
+                        )
+                    ) as item(note)
                 ))
             where
                 old.id_client = companies.id;
@@ -187,40 +235,56 @@ begin
             )
         then
             update companies set
-                orders_numbers_string_agg_doc_number_array_agg = array_append(
-                    orders_numbers_string_agg_doc_number_array_agg,
+                orders_numbers_string_agg_doc_number_doc_number = array_append(
+                    orders_numbers_string_agg_doc_number_doc_number,
                     new.doc_number
                 ),
-                orders_numbers_string_agg_doc_number = cm_array_to_string_distinct(
-                    array_append(
-                        orders_numbers_string_agg_doc_number_array_agg,
-                        new.doc_number
-                    ),
-                    ', '
+                orders_numbers_string_agg_doc_number = (
+                    select
+                        string_agg(distinct item.doc_number, ', ')
+
+                    from unnest(
+                        array_append(
+                            orders_numbers_string_agg_doc_number_doc_number,
+                            new.doc_number
+                        )
+                    ) as item(doc_number)
                 ),
-                orders_numbers_string_agg_note_array_agg = array_append(
-                    orders_numbers_string_agg_note_array_agg,
+                orders_numbers_string_agg_note_note = array_append(
+                    orders_numbers_string_agg_note_note,
                     new.note
                 ),
-                orders_numbers_string_agg_note = cm_array_to_string_distinct(
-                    array_append(
-                        orders_numbers_string_agg_note_array_agg,
-                        new.note
-                    ),
-                    ', '
+                orders_numbers_string_agg_note = (
+                    select
+                        string_agg(distinct item.note, ', ')
+
+                    from unnest(
+                        array_append(
+                            orders_numbers_string_agg_note_note,
+                            new.note
+                        )
+                    ) as item(note)
                 ),
-                orders_numbers = (cm_array_to_string_distinct(
-                    array_append(
-                        orders_numbers_string_agg_doc_number_array_agg,
-                        new.doc_number
-                    ),
-                    ', '
-                )) || ' : ' || (cm_array_to_string_distinct(
-                    array_append(
-                        orders_numbers_string_agg_note_array_agg,
-                        new.note
-                    ),
-                    ', '
+                orders_numbers = ((
+                    select
+                        string_agg(distinct item.doc_number, ', ')
+
+                    from unnest(
+                        array_append(
+                            orders_numbers_string_agg_doc_number_doc_number,
+                            new.doc_number
+                        )
+                    ) as item(doc_number)
+                )) || ' : ' || ((
+                    select
+                        string_agg(distinct item.note, ', ')
+
+                    from unnest(
+                        array_append(
+                            orders_numbers_string_agg_note_note,
+                            new.note
+                        )
+                    ) as item(note)
                 ))
             where
                 new.id_client = companies.id;
@@ -241,40 +305,56 @@ begin
             )
         then
             update companies set
-                orders_numbers_string_agg_doc_number_array_agg = array_append(
-                    orders_numbers_string_agg_doc_number_array_agg,
+                orders_numbers_string_agg_doc_number_doc_number = array_append(
+                    orders_numbers_string_agg_doc_number_doc_number,
                     new.doc_number
                 ),
-                orders_numbers_string_agg_doc_number = cm_array_to_string_distinct(
-                    array_append(
-                        orders_numbers_string_agg_doc_number_array_agg,
-                        new.doc_number
-                    ),
-                    ', '
+                orders_numbers_string_agg_doc_number = (
+                    select
+                        string_agg(distinct item.doc_number, ', ')
+
+                    from unnest(
+                        array_append(
+                            orders_numbers_string_agg_doc_number_doc_number,
+                            new.doc_number
+                        )
+                    ) as item(doc_number)
                 ),
-                orders_numbers_string_agg_note_array_agg = array_append(
-                    orders_numbers_string_agg_note_array_agg,
+                orders_numbers_string_agg_note_note = array_append(
+                    orders_numbers_string_agg_note_note,
                     new.note
                 ),
-                orders_numbers_string_agg_note = cm_array_to_string_distinct(
-                    array_append(
-                        orders_numbers_string_agg_note_array_agg,
-                        new.note
-                    ),
-                    ', '
+                orders_numbers_string_agg_note = (
+                    select
+                        string_agg(distinct item.note, ', ')
+
+                    from unnest(
+                        array_append(
+                            orders_numbers_string_agg_note_note,
+                            new.note
+                        )
+                    ) as item(note)
                 ),
-                orders_numbers = (cm_array_to_string_distinct(
-                    array_append(
-                        orders_numbers_string_agg_doc_number_array_agg,
-                        new.doc_number
-                    ),
-                    ', '
-                )) || ' : ' || (cm_array_to_string_distinct(
-                    array_append(
-                        orders_numbers_string_agg_note_array_agg,
-                        new.note
-                    ),
-                    ', '
+                orders_numbers = ((
+                    select
+                        string_agg(distinct item.doc_number, ', ')
+
+                    from unnest(
+                        array_append(
+                            orders_numbers_string_agg_doc_number_doc_number,
+                            new.doc_number
+                        )
+                    ) as item(doc_number)
+                )) || ' : ' || ((
+                    select
+                        string_agg(distinct item.note, ', ')
+
+                    from unnest(
+                        array_append(
+                            orders_numbers_string_agg_note_note,
+                            new.note
+                        )
+                    ) as item(note)
                 ))
             where
                 new.id_client = companies.id;

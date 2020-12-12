@@ -10,16 +10,20 @@ begin
             old.doc_number is not null
         then
             update companies set
-                orders_numbers_array_agg = cm_array_remove_one_element(
-                    orders_numbers_array_agg,
+                orders_numbers_doc_number = cm_array_remove_one_element(
+                    orders_numbers_doc_number,
                     old.doc_number
                 ),
-                orders_numbers = array_to_string(
-                    cm_array_remove_one_element(
-                        orders_numbers_array_agg,
-                        old.doc_number
-                    ),
-                    ';'
+                orders_numbers = (
+                    select
+                        string_agg(item.doc_number, ';')
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            orders_numbers_doc_number,
+                            old.doc_number
+                        )
+                    ) as item(doc_number)
                 )
             where
                 old.id_client = companies.id;
@@ -39,22 +43,26 @@ begin
 
         if new.id_client is not distinct from old.id_client then
             update companies set
-                orders_numbers_array_agg = array_append(
+                orders_numbers_doc_number = array_append(
                     cm_array_remove_one_element(
-                        orders_numbers_array_agg,
+                        orders_numbers_doc_number,
                         old.doc_number
                     ),
                     new.doc_number
                 ),
-                orders_numbers = array_to_string(
-                    array_append(
-                        cm_array_remove_one_element(
-                            orders_numbers_array_agg,
-                            old.doc_number
-                        ),
-                        new.doc_number
-                    ),
-                    ';'
+                orders_numbers = (
+                    select
+                        string_agg(item.doc_number, ';')
+
+                    from unnest(
+                        array_append(
+                            cm_array_remove_one_element(
+                                orders_numbers_doc_number,
+                                old.doc_number
+                            ),
+                            new.doc_number
+                        )
+                    ) as item(doc_number)
                 )
             where
                 new.id_client = companies.id;
@@ -68,16 +76,20 @@ begin
             old.doc_number is not null
         then
             update companies set
-                orders_numbers_array_agg = cm_array_remove_one_element(
-                    orders_numbers_array_agg,
+                orders_numbers_doc_number = cm_array_remove_one_element(
+                    orders_numbers_doc_number,
                     old.doc_number
                 ),
-                orders_numbers = array_to_string(
-                    cm_array_remove_one_element(
-                        orders_numbers_array_agg,
-                        old.doc_number
-                    ),
-                    ';'
+                orders_numbers = (
+                    select
+                        string_agg(item.doc_number, ';')
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            orders_numbers_doc_number,
+                            old.doc_number
+                        )
+                    ) as item(doc_number)
                 )
             where
                 old.id_client = companies.id;
@@ -89,16 +101,20 @@ begin
             new.doc_number is not null
         then
             update companies set
-                orders_numbers_array_agg = array_append(
-                    orders_numbers_array_agg,
+                orders_numbers_doc_number = array_append(
+                    orders_numbers_doc_number,
                     new.doc_number
                 ),
-                orders_numbers = array_to_string(
-                    array_append(
-                        orders_numbers_array_agg,
-                        new.doc_number
-                    ),
-                    ';'
+                orders_numbers = (
+                    select
+                        string_agg(item.doc_number, ';')
+
+                    from unnest(
+                        array_append(
+                            orders_numbers_doc_number,
+                            new.doc_number
+                        )
+                    ) as item(doc_number)
                 )
             where
                 new.id_client = companies.id;
@@ -115,16 +131,20 @@ begin
             new.doc_number is not null
         then
             update companies set
-                orders_numbers_array_agg = array_append(
-                    orders_numbers_array_agg,
+                orders_numbers_doc_number = array_append(
+                    orders_numbers_doc_number,
                     new.doc_number
                 ),
-                orders_numbers = array_to_string(
-                    array_append(
-                        orders_numbers_array_agg,
-                        new.doc_number
-                    ),
-                    ';'
+                orders_numbers = (
+                    select
+                        string_agg(item.doc_number, ';')
+
+                    from unnest(
+                        array_append(
+                            orders_numbers_doc_number,
+                            new.doc_number
+                        )
+                    ) as item(doc_number)
                 )
             where
                 new.id_client = companies.id;

@@ -14,35 +14,35 @@ export class UniversalAgg extends AbstractAgg {
         this.childAggregations = childAggregations;
     }
 
-    minus(value: Expression) {
+    minus() {
         return Expression.unknown(`(
     select
 ${ this.printMainAgg() }
 
     from unnest(
-${ this.printChildrenAggregations("minus", value, null) }
+${ this.printChildrenAggregations("minus") }
     ) as ${ this.printAlias() }
 )`);
     }
 
-    plus(value: Expression) {
+    plus() {
         return Expression.unknown(`(
     select
 ${ this.printMainAgg() }
 
     from unnest(
-${ this.printChildrenAggregations("plus", null, value) }
+${ this.printChildrenAggregations("plus") }
     ) as ${ this.printAlias() }
 )`);
     }
 
-    delta(prevValue: Expression, nextValue: Expression) {
+    delta() {
         return Expression.unknown(`(
     select
 ${ this.printMainAgg() }
 
     from unnest(
-${ this.printChildrenAggregations("delta", prevValue, nextValue) }
+${ this.printChildrenAggregations("delta") }
     ) as ${ this.printAlias() }
 )`);
     }
@@ -68,20 +68,11 @@ ${ this.printChildrenAggregations("delta", prevValue, nextValue) }
         return lines.join("\n");
     }
 
-    private printChildrenAggregations(
-        aggType: AggType,
-        prevValue: Expression | null,
-        nextValue: Expression | null
-    ) {
+    private printChildrenAggregations(aggType: AggType) {
         let sql: string = "";
 
         for (const arrayAgg of this.childAggregations) {
-            const expression = this.callChildAgg(
-                arrayAgg,
-                aggType,
-                prevValue,
-                nextValue
-            );
+            const expression = this.callChildAgg(arrayAgg, aggType);
 
             if ( sql ) {
                 sql += ",\n";
@@ -98,34 +89,29 @@ ${ this.printChildrenAggregations("delta", prevValue, nextValue) }
         return lines.join("\n");
     }
 
-    private callChildAgg(
-        arrayAgg: ArrayAgg,
-        aggType: AggType,
-        minusValue: Expression | null,
-        plusValue: Expression | null
-    ) {
+    private callChildAgg(arrayAgg: ArrayAgg, aggType: AggType) {
         const columnRef = arrayAgg.call.getColumnReferences()[0] as ColumnReference;
         
         if ( aggType === "delta" && columnRef.name === "id" ) {
             return arrayAgg.total;
         }
 
-        // const minusValue = Expression.unknown(`old.${ columnRef.name }`);
-        // const plusValue = Expression.unknown(`new.${ columnRef.name }`);
+        const minusValue = Expression.unknown(`old.${ columnRef.name }`);
+        const plusValue = Expression.unknown(`new.${ columnRef.name }`);
 
         if ( aggType === "minus" ) {
-            const sql = arrayAgg.minus( minusValue as Expression );
+            const sql = arrayAgg.minus( minusValue );
             return sql;
         }
         if ( aggType === "plus" ) {
-            const sql = arrayAgg.plus( plusValue as Expression );
+            const sql = arrayAgg.plus( plusValue );
             return sql;
         }
 
         // delta
         const sql = arrayAgg.delta(
-            minusValue as Expression,
-            plusValue as Expression
+            minusValue,
+            plusValue
         );
         return sql;
     }
