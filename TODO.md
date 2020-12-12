@@ -63,5 +63,6 @@
 - test string_agg(distinct some order by joined field)
 - test string_agg(some) filter (where joined field)
 - test all combinations for commutative triggers
+  - create table with all variants
 - test array_agg with id as bigint
 - replace all string_agg to UniversalAgg ?

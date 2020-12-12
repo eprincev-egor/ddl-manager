@@ -54,10 +54,17 @@ begin
                     group_unit_volume = group_unit_volume - coalesce(old.volume, 0),
                     group_unit_ldm = group_unit_ldm - coalesce(old.ldm, 0),
                     group_unit_quantity_pallet = group_unit_quantity_pallet - coalesce(old.quantity_pallet, 0),
-                    group_unit_buyers_names_array_agg = cm_array_remove_one_element(
-                        group_unit_buyers_names_array_agg,
-                        old_company_buyer_list_company_name
-                    ),
+                    group_unit_buyers_names_array_agg = case
+                        when
+                            company_buyer.list_company_name is not null
+                        then
+                            cm_array_remove_one_element(
+                                group_unit_buyers_names_array_agg,
+                                old_company_buyer_list_company_name
+                            )
+                        else
+                            group_unit_buyers_names_array_agg
+                    end,
                     group_unit_buyers_names = case
                         when
                             company_buyer.list_company_name is not null
@@ -72,10 +79,17 @@ begin
                         else
                             group_unit_buyers_names
                     end,
-                    group_unit_delivery_names_array_agg = cm_array_remove_one_element(
-                        group_unit_delivery_names_array_agg,
-                        old_point_delivery_list_warehouse_name
-                    ),
+                    group_unit_delivery_names_array_agg = case
+                        when
+                            point_delivery.list_warehouse_name is not null
+                        then
+                            cm_array_remove_one_element(
+                                group_unit_delivery_names_array_agg,
+                                old_point_delivery_list_warehouse_name
+                            )
+                        else
+                            group_unit_delivery_names_array_agg
+                    end,
                     group_unit_delivery_names = case
                         when
                             point_delivery.list_warehouse_name is not null
@@ -185,13 +199,34 @@ begin
                 group_unit_volume = group_unit_volume - coalesce(old.volume, 0) + coalesce(new.volume, 0),
                 group_unit_ldm = group_unit_ldm - coalesce(old.ldm, 0) + coalesce(new.ldm, 0),
                 group_unit_quantity_pallet = group_unit_quantity_pallet - coalesce(old.quantity_pallet, 0) + coalesce(new.quantity_pallet, 0),
-                group_unit_buyers_names_array_agg = array_append(
-                    cm_array_remove_one_element(
-                        group_unit_buyers_names_array_agg,
-                        old_company_buyer_list_company_name
-                    ),
-                    new_company_buyer_list_company_name
-                ),
+                group_unit_buyers_names_array_agg = case
+                    when
+                        company_buyer.list_company_name is not null
+                        and
+                        not(company_buyer.list_company_name is not null)
+                    then
+                        array_append(
+                            group_unit_buyers_names_array_agg,
+                            new_company_buyer_list_company_name
+                        )
+                    when
+                        not(company_buyer.list_company_name is not null)
+                        and
+                        company_buyer.list_company_name is not null
+                    then
+                        cm_array_remove_one_element(
+                            group_unit_buyers_names_array_agg,
+                            old_company_buyer_list_company_name
+                        )
+                    else
+                        array_append(
+                            cm_array_remove_one_element(
+                                group_unit_buyers_names_array_agg,
+                                old_company_buyer_list_company_name
+                            ),
+                            new_company_buyer_list_company_name
+                        )
+                end,
                 group_unit_buyers_names = case
                     when
                         company_buyer.list_company_name is not null
@@ -229,13 +264,34 @@ begin
                             ', '
                         )
                 end,
-                group_unit_delivery_names_array_agg = array_append(
-                    cm_array_remove_one_element(
-                        group_unit_delivery_names_array_agg,
-                        old_point_delivery_list_warehouse_name
-                    ),
-                    new_point_delivery_list_warehouse_name
-                ),
+                group_unit_delivery_names_array_agg = case
+                    when
+                        point_delivery.list_warehouse_name is not null
+                        and
+                        not(point_delivery.list_warehouse_name is not null)
+                    then
+                        array_append(
+                            group_unit_delivery_names_array_agg,
+                            new_point_delivery_list_warehouse_name
+                        )
+                    when
+                        not(point_delivery.list_warehouse_name is not null)
+                        and
+                        point_delivery.list_warehouse_name is not null
+                    then
+                        cm_array_remove_one_element(
+                            group_unit_delivery_names_array_agg,
+                            old_point_delivery_list_warehouse_name
+                        )
+                    else
+                        array_append(
+                            cm_array_remove_one_element(
+                                group_unit_delivery_names_array_agg,
+                                old_point_delivery_list_warehouse_name
+                            ),
+                            new_point_delivery_list_warehouse_name
+                        )
+                end,
                 group_unit_delivery_names = case
                     when
                         point_delivery.list_warehouse_name is not null
@@ -308,10 +364,17 @@ begin
                 group_unit_volume = group_unit_volume - coalesce(old.volume, 0),
                 group_unit_ldm = group_unit_ldm - coalesce(old.ldm, 0),
                 group_unit_quantity_pallet = group_unit_quantity_pallet - coalesce(old.quantity_pallet, 0),
-                group_unit_buyers_names_array_agg = cm_array_remove_one_element(
-                    group_unit_buyers_names_array_agg,
-                    old_company_buyer_list_company_name
-                ),
+                group_unit_buyers_names_array_agg = case
+                    when
+                        company_buyer.list_company_name is not null
+                    then
+                        cm_array_remove_one_element(
+                            group_unit_buyers_names_array_agg,
+                            old_company_buyer_list_company_name
+                        )
+                    else
+                        group_unit_buyers_names_array_agg
+                end,
                 group_unit_buyers_names = case
                     when
                         company_buyer.list_company_name is not null
@@ -326,10 +389,17 @@ begin
                     else
                         group_unit_buyers_names
                 end,
-                group_unit_delivery_names_array_agg = cm_array_remove_one_element(
-                    group_unit_delivery_names_array_agg,
-                    old_point_delivery_list_warehouse_name
-                ),
+                group_unit_delivery_names_array_agg = case
+                    when
+                        point_delivery.list_warehouse_name is not null
+                    then
+                        cm_array_remove_one_element(
+                            group_unit_delivery_names_array_agg,
+                            old_point_delivery_list_warehouse_name
+                        )
+                    else
+                        group_unit_delivery_names_array_agg
+                end,
                 group_unit_delivery_names = case
                     when
                         point_delivery.list_warehouse_name is not null
@@ -376,10 +446,17 @@ begin
                 group_unit_volume = group_unit_volume + coalesce(new.volume, 0),
                 group_unit_ldm = group_unit_ldm + coalesce(new.ldm, 0),
                 group_unit_quantity_pallet = group_unit_quantity_pallet + coalesce(new.quantity_pallet, 0),
-                group_unit_buyers_names_array_agg = array_append(
-                    group_unit_buyers_names_array_agg,
-                    new_company_buyer_list_company_name
-                ),
+                group_unit_buyers_names_array_agg = case
+                    when
+                        company_buyer.list_company_name is not null
+                    then
+                        array_append(
+                            group_unit_buyers_names_array_agg,
+                            new_company_buyer_list_company_name
+                        )
+                    else
+                        group_unit_buyers_names_array_agg
+                end,
                 group_unit_buyers_names = case
                     when
                         company_buyer.list_company_name is not null
@@ -394,10 +471,17 @@ begin
                     else
                         group_unit_buyers_names
                 end,
-                group_unit_delivery_names_array_agg = array_append(
-                    group_unit_delivery_names_array_agg,
-                    new_point_delivery_list_warehouse_name
-                ),
+                group_unit_delivery_names_array_agg = case
+                    when
+                        point_delivery.list_warehouse_name is not null
+                    then
+                        array_append(
+                            group_unit_delivery_names_array_agg,
+                            new_point_delivery_list_warehouse_name
+                        )
+                    else
+                        group_unit_delivery_names_array_agg
+                end,
                 group_unit_delivery_names = case
                     when
                         point_delivery.list_warehouse_name is not null
@@ -467,10 +551,17 @@ begin
                     group_unit_volume = group_unit_volume + coalesce(new.volume, 0),
                     group_unit_ldm = group_unit_ldm + coalesce(new.ldm, 0),
                     group_unit_quantity_pallet = group_unit_quantity_pallet + coalesce(new.quantity_pallet, 0),
-                    group_unit_buyers_names_array_agg = array_append(
-                        group_unit_buyers_names_array_agg,
-                        new_company_buyer_list_company_name
-                    ),
+                    group_unit_buyers_names_array_agg = case
+                        when
+                            company_buyer.list_company_name is not null
+                        then
+                            array_append(
+                                group_unit_buyers_names_array_agg,
+                                new_company_buyer_list_company_name
+                            )
+                        else
+                            group_unit_buyers_names_array_agg
+                    end,
                     group_unit_buyers_names = case
                         when
                             company_buyer.list_company_name is not null
@@ -485,10 +576,17 @@ begin
                         else
                             group_unit_buyers_names
                     end,
-                    group_unit_delivery_names_array_agg = array_append(
-                        group_unit_delivery_names_array_agg,
-                        new_point_delivery_list_warehouse_name
-                    ),
+                    group_unit_delivery_names_array_agg = case
+                        when
+                            point_delivery.list_warehouse_name is not null
+                        then
+                            array_append(
+                                group_unit_delivery_names_array_agg,
+                                new_point_delivery_list_warehouse_name
+                            )
+                        else
+                            group_unit_delivery_names_array_agg
+                    end,
                     group_unit_delivery_names = case
                         when
                             point_delivery.list_warehouse_name is not null

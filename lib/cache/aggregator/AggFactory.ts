@@ -123,7 +123,7 @@ export class AggFactory {
             call: new FuncCall(
                 "array_agg",
                 [aggCall.args[0]],
-                undefined,
+                aggCall.where,
                 false,
                 aggCall.orderBy
             ),
