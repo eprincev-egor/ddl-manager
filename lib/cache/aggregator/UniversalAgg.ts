@@ -14,35 +14,35 @@ export class UniversalAgg extends AbstractAgg {
         this.childAggregations = childAggregations;
     }
 
-    minus() {
+    minus(value: Expression) {
         return Expression.unknown(`(
     select
 ${ this.printMainAgg() }
 
     from unnest(
-${ this.printChildrenAggregations("minus") }
+${ this.printChildrenAggregations("minus", value, null) }
     ) as ${ this.printAlias() }
 )`);
     }
 
-    plus() {
+    plus(value: Expression) {
         return Expression.unknown(`(
     select
 ${ this.printMainAgg() }
 
     from unnest(
-${ this.printChildrenAggregations("plus") }
+${ this.printChildrenAggregations("plus", null, value) }
     ) as ${ this.printAlias() }
 )`);
     }
 
-    delta() {
+    delta(prevValue: Expression, nextValue: Expression) {
         return Expression.unknown(`(
     select
 ${ this.printMainAgg() }
 
     from unnest(
-${ this.printChildrenAggregations("delta") }
+${ this.printChildrenAggregations("delta", prevValue, nextValue) }
     ) as ${ this.printAlias() }
 )`);
     }
@@ -68,11 +68,20 @@ ${ this.printChildrenAggregations("delta") }
         return lines.join("\n");
     }
 
-    private printChildrenAggregations(aggType: AggType) {
+    private printChildrenAggregations(
+        aggType: AggType,
+        prevValue: Expression | null,
+        nextValue: Expression | null
+    ) {
         let sql: string = "";
 
         for (const arrayAgg of this.childAggregations) {
-            const expression = this.callChildAgg(arrayAgg, aggType);
+            const expression = this.callChildAgg(
+                arrayAgg,
+                aggType,
+                prevValue,
+                nextValue
+            );
 
             if ( sql ) {
                 sql += ",\n";
@@ -89,29 +98,34 @@ ${ this.printChildrenAggregations("delta") }
         return lines.join("\n");
     }
 
-    private callChildAgg(arrayAgg: ArrayAgg, aggType: AggType) {
+    private callChildAgg(
+        arrayAgg: ArrayAgg,
+        aggType: AggType,
+        minusValue: Expression | null,
+        plusValue: Expression | null
+    ) {
         const columnRef = arrayAgg.call.getColumnReferences()[0] as ColumnReference;
         
         if ( aggType === "delta" && columnRef.name === "id" ) {
             return arrayAgg.total;
         }
 
-        const minusValue = Expression.unknown(`old.${ columnRef.name }`);
-        const plusValue = Expression.unknown(`new.${ columnRef.name }`);
+        // const minusValue = Expression.unknown(`old.${ columnRef.name }`);
+        // const plusValue = Expression.unknown(`new.${ columnRef.name }`);
 
         if ( aggType === "minus" ) {
-            const sql = arrayAgg.minus( minusValue );
+            const sql = arrayAgg.minus( minusValue as Expression );
             return sql;
         }
         if ( aggType === "plus" ) {
-            const sql = arrayAgg.plus( plusValue );
+            const sql = arrayAgg.plus( plusValue as Expression );
             return sql;
         }
 
         // delta
         const sql = arrayAgg.delta(
-            minusValue,
-            plusValue
+            minusValue as Expression,
+            plusValue as Expression
         );
         return sql;
     }

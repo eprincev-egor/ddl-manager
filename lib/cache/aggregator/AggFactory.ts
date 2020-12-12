@@ -1,10 +1,8 @@
-import { FuncCall, Expression, SelectColumn, Select } from "../../ast";
+import { FuncCall, Expression, SelectColumn } from "../../ast";
 import { AbstractAgg } from "./AbstractAgg";
 import { aggregatorsMap } from "./aggregatorsMap";
 import { ArrayAgg } from "./ArrayAgg";
 import { ColumnNameGenerator } from "./ColumnNameGenerator";
-import { StringAgg } from "./StringAgg";
-import { DistinctArrayAgg } from "./DistinctArrayAgg";
 import { UniversalAgg } from "./UniversalAgg";
 
 interface IAggMap {
@@ -14,11 +12,9 @@ interface IAggMap {
 export class AggFactory {
 
     private updateColumn: SelectColumn;
-    private select: Select;
     private columnNameGenerator: ColumnNameGenerator;
 
-    constructor(select: Select, updateColumn: SelectColumn) {
-        this.select = select;
+    constructor(updateColumn: SelectColumn) {
         this.updateColumn = updateColumn;
         this.columnNameGenerator = new ColumnNameGenerator(updateColumn);
     }
@@ -36,39 +32,29 @@ export class AggFactory {
     }
 
     private createAggregationsByAggCall(aggCall: FuncCall) {
+        const isSimpleOrderBy = !isHardOrderBy(aggCall);
+        
+        if ( aggCall.name === "count" && !aggCall.distinct ) {
+            return this.createSimpleAgg(aggCall);
+        }
 
-        if ( aggCall.name === "count" ) {
-            if ( aggCall.distinct ) {
-                return this.createUniversalAgg(aggCall);
-            }
-            else {
-                return this.createDefaultAgg(aggCall);
-            }
+        if ( aggCall.name === "sum" && !aggCall.distinct && isSimpleOrderBy ) {
+            return this.createSimpleAgg(aggCall);
         }
-        else if ( isHardOrderBy(aggCall) ) {
-            return this.createUniversalAgg(aggCall);
+
+        if ( aggCall.name === "array_agg" && !aggCall.distinct && isSimpleOrderBy ) {
+            return this.createSimpleAgg(aggCall);
         }
-        else if ( aggCall.name === "sum" && aggCall.distinct ) {
-            return this.createUniversalAgg(aggCall);
-        }
-        else if ( aggCall.name === "string_agg" ) {
-            return this.createStringAgg(aggCall);
-        }
-        else if ( aggCall.name === "array_agg" && aggCall.distinct ) {
-            return this.createDistinctArrayAgg(aggCall);
-        }
-        else {
-            return this.createDefaultAgg(aggCall);
-        }
+
+        return this.createUniversalAgg(aggCall);
     }
 
-    private createDefaultAgg(aggCall: FuncCall) {
+    private createSimpleAgg(aggCall: FuncCall) {
 
         const aggColumnName = this.columnNameGenerator.generateName(aggCall);
     
         const ConcreteAggregator = aggregatorsMap[ aggCall.name ];
         const agg = new ConcreteAggregator({
-            select: this.select,
             updateColumn: this.updateColumn,
             call: aggCall,
             total: Expression.unknown(aggColumnName)
@@ -77,70 +63,6 @@ export class AggFactory {
         return {
             [ aggColumnName ]: agg
         };
-    }
-
-    private createDistinctArrayAgg(aggCall: FuncCall) {
-        const map: IAggMap = {};
-
-        const aggColumnName = this.columnNameGenerator.generateName(aggCall);
-        const arrayAggAllColumnName = aggColumnName + "_array_agg";
-
-        const arrayAggAll = new ArrayAgg({
-            select: this.select,
-            updateColumn: this.updateColumn,
-            call: new FuncCall(
-                "array_agg",
-                [aggCall.args[0]],
-                aggCall.where,
-                false,
-                aggCall.orderBy
-            ),
-            total: Expression.unknown(arrayAggAllColumnName)
-        });
-    
-        const arrayAggDistinct = new DistinctArrayAgg({
-            select: this.select,
-            updateColumn: this.updateColumn,
-            call: aggCall,
-            total: Expression.unknown(aggColumnName)
-        }, arrayAggAll);
-
-        map[ arrayAggAllColumnName ] = arrayAggAll;
-        map[ aggColumnName ] = arrayAggDistinct;
-
-        return map;
-    }
-
-    private createStringAgg(aggCall: FuncCall) {
-        const map: IAggMap = {};
-
-        const aggColumnName = this.columnNameGenerator.generateName(aggCall);
-        const arrayAggColumnName = aggColumnName + "_array_agg";
-
-        const arrayAgg = new ArrayAgg({
-            select: this.select,
-            updateColumn: this.updateColumn,
-            call: new FuncCall(
-                "array_agg",
-                [aggCall.args[0]],
-                aggCall.where,
-                false,
-                aggCall.orderBy
-            ),
-            total: Expression.unknown(arrayAggColumnName)
-        });
-    
-        const stringAgg = new StringAgg({
-            select: this.select,
-            updateColumn: this.updateColumn,
-            call: aggCall,
-            total: Expression.unknown(aggColumnName)
-        }, arrayAgg);
-
-        map[ arrayAggColumnName ] = arrayAgg;
-        map[ aggColumnName ] = stringAgg;
-
-        return map;
     }
 
     private createUniversalAgg(aggCall: FuncCall) {
@@ -158,7 +80,6 @@ export class AggFactory {
             }
 
             const helperArrayAgg = new ArrayAgg({
-                select: this.select,
                 updateColumn: this.updateColumn,
                 call: new FuncCall(
                     "array_agg", [
@@ -175,7 +96,6 @@ export class AggFactory {
         }
 
         const universalAgg = new UniversalAgg({
-            select: this.select,
             updateColumn: this.updateColumn,
             call: aggCall,
             total: Expression.unknown(aggColumnName)

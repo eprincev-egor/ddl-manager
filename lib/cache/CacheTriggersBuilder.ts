@@ -35,7 +35,7 @@ export class CacheTriggersBuilder {
 
     createSelectForUpdate() {
         const columnsToUpdate = flatMap(this.cache.select.columns, selectColumn => {
-            const aggFactory = new AggFactory(this.cache.select, selectColumn);
+            const aggFactory = new AggFactory(selectColumn);
             const aggregations = aggFactory.createAggregations();
             
             const columns = Object.keys(aggregations).map(aggColumnName => {

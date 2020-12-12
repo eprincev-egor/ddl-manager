@@ -98,7 +98,7 @@ function createSetItemsByColumn(
     hasOtherColumns: boolean
 ): SetItem[] {
 
-    const aggFactory = new AggFactory(cache.select, updateColumn);
+    const aggFactory = new AggFactory(updateColumn);
     const aggMap = aggFactory.createAggregations();
 
     const setItems: SetItem[] = [];
