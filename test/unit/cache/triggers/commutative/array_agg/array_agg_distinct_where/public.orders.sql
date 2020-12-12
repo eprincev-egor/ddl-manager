@@ -43,13 +43,34 @@ begin
 
         if new.id_client is not distinct from old.id_client then
             update companies set
-                orders_dates_order_date = array_append(
-                    cm_array_remove_one_element(
-                        orders_dates_order_date,
-                        old.order_date
-                    ),
-                    new.order_date
-                ),
+                orders_dates_order_date = case
+                    when
+                        new.order_date is not null
+                        and
+                        not(old.order_date is not null)
+                    then
+                        array_append(
+                            orders_dates_order_date,
+                            new.order_date
+                        )
+                    when
+                        not(new.order_date is not null)
+                        and
+                        old.order_date is not null
+                    then
+                        cm_array_remove_one_element(
+                            orders_dates_order_date,
+                            old.order_date
+                        )
+                    else
+                        array_append(
+                            cm_array_remove_one_element(
+                                orders_dates_order_date,
+                                old.order_date
+                            ),
+                            new.order_date
+                        )
+                end,
                 orders_dates = case
                     when
                         new.order_date is not null
