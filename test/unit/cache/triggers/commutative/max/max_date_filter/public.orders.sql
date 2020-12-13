@@ -186,20 +186,9 @@ begin
                         and
                         not(old.id_order_type = any (array[1, 2, 3, 4] :: bigint[]))
                     then
-                        (
-                            select
-                                max(item.order_date) filter (where orders.id_order_type = any (array[1, 2, 3, 4] :: bigint[]))
-
-                            from unnest(
-                                array_append(
-                                    max_general_order_date_order_date,
-                                    new.order_date
-                                ),
-                                array_append(
-                                    max_general_order_date_id_order_type,
-                                    new.id_order_type
-                                )
-                            ) as item(order_date, id_order_type)
+                        greatest(
+                            max_general_order_date,
+                            new.order_date
                         )
                     when
                         not(new.id_order_type = any (array[1, 2, 3, 4] :: bigint[]))
@@ -306,20 +295,9 @@ begin
                         and
                         not(old.id_order_type = any (array[5, 6, 7, 8] :: bigint[]))
                     then
-                        (
-                            select
-                                max(item.order_date) filter (where orders.id_order_type = any (array[5, 6, 7, 8] :: bigint[]))
-
-                            from unnest(
-                                array_append(
-                                    max_combiner_order_date_order_date,
-                                    new.order_date
-                                ),
-                                array_append(
-                                    max_combiner_order_date_id_order_type,
-                                    new.id_order_type
-                                )
-                            ) as item(order_date, id_order_type)
+                        greatest(
+                            max_combiner_order_date,
+                            new.order_date
                         )
                     when
                         not(new.id_order_type = any (array[5, 6, 7, 8] :: bigint[]))
@@ -512,20 +490,9 @@ begin
                     when
                         new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
                     then
-                        (
-                            select
-                                max(item.order_date) filter (where orders.id_order_type = any (array[1, 2, 3, 4] :: bigint[]))
-
-                            from unnest(
-                                array_append(
-                                    max_general_order_date_order_date,
-                                    new.order_date
-                                ),
-                                array_append(
-                                    max_general_order_date_id_order_type,
-                                    new.id_order_type
-                                )
-                            ) as item(order_date, id_order_type)
+                        greatest(
+                            max_general_order_date,
+                            new.order_date
                         )
                     else
                         max_general_order_date
@@ -556,20 +523,9 @@ begin
                     when
                         new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
                     then
-                        (
-                            select
-                                max(item.order_date) filter (where orders.id_order_type = any (array[5, 6, 7, 8] :: bigint[]))
-
-                            from unnest(
-                                array_append(
-                                    max_combiner_order_date_order_date,
-                                    new.order_date
-                                ),
-                                array_append(
-                                    max_combiner_order_date_id_order_type,
-                                    new.id_order_type
-                                )
-                            ) as item(order_date, id_order_type)
+                        greatest(
+                            max_combiner_order_date,
+                            new.order_date
                         )
                     else
                         max_combiner_order_date
@@ -621,20 +577,9 @@ begin
                     when
                         new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
                     then
-                        (
-                            select
-                                max(item.order_date) filter (where orders.id_order_type = any (array[1, 2, 3, 4] :: bigint[]))
-
-                            from unnest(
-                                array_append(
-                                    max_general_order_date_order_date,
-                                    new.order_date
-                                ),
-                                array_append(
-                                    max_general_order_date_id_order_type,
-                                    new.id_order_type
-                                )
-                            ) as item(order_date, id_order_type)
+                        greatest(
+                            max_general_order_date,
+                            new.order_date
                         )
                     else
                         max_general_order_date
@@ -665,20 +610,9 @@ begin
                     when
                         new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
                     then
-                        (
-                            select
-                                max(item.order_date) filter (where orders.id_order_type = any (array[5, 6, 7, 8] :: bigint[]))
-
-                            from unnest(
-                                array_append(
-                                    max_combiner_order_date_order_date,
-                                    new.order_date
-                                ),
-                                array_append(
-                                    max_combiner_order_date_id_order_type,
-                                    new.id_order_type
-                                )
-                            ) as item(order_date, id_order_type)
+                        greatest(
+                            max_combiner_order_date,
+                            new.order_date
                         )
                     else
                         max_combiner_order_date

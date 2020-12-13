@@ -105,16 +105,9 @@ begin
                     max_order_date_order_date,
                     new.order_date
                 ),
-                max_order_date = (
-                    select
-                        max(item.order_date)
-
-                    from unnest(
-                        array_append(
-                            max_order_date_order_date,
-                            new.order_date
-                        )
-                    ) as item(order_date)
+                max_order_date = greatest(
+                    max_order_date,
+                    new.order_date
                 )
             where
                 new.id_client = companies.id;
@@ -135,16 +128,9 @@ begin
                     max_order_date_order_date,
                     new.order_date
                 ),
-                max_order_date = (
-                    select
-                        max(item.order_date)
-
-                    from unnest(
-                        array_append(
-                            max_order_date_order_date,
-                            new.order_date
-                        )
-                    ) as item(order_date)
+                max_order_date = greatest(
+                    max_order_date,
+                    new.order_date
                 )
             where
                 new.id_client = companies.id;

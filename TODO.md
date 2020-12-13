@@ -65,4 +65,5 @@
 - test all combinations for commutative triggers
   - create table with all variants
 - test array_agg with id as bigint
-- replace all string_agg to UniversalAgg ?
++ replace all string_agg to UniversalAgg ?
+- remove filter from UniversalAgg and don't aggregate filter values
