@@ -4,15 +4,7 @@ begin
 
     if TG_OP = 'DELETE' then
 
-        if
-            old.id_client is not null
-            and
-            (
-                coalesce(old.sales, 0) != 0
-                or
-                coalesce(old.buys, 0) != 0
-            )
-        then
+        if old.id_client is not null then
             update companies set
                 orders_profit_sum_sales = orders_profit_sum_sales - coalesce(old.sales, 0),
                 orders_profit_sum_buys = orders_profit_sum_buys - coalesce(old.buys, 0),
@@ -46,15 +38,7 @@ begin
             return new;
         end if;
 
-        if
-            old.id_client is not null
-            and
-            (
-                coalesce(old.sales, 0) != 0
-                or
-                coalesce(old.buys, 0) != 0
-            )
-        then
+        if old.id_client is not null then
             update companies set
                 orders_profit_sum_sales = orders_profit_sum_sales - coalesce(old.sales, 0),
                 orders_profit_sum_buys = orders_profit_sum_buys - coalesce(old.buys, 0),
@@ -63,15 +47,7 @@ begin
                 old.id_client = companies.id;
         end if;
 
-        if
-            new.id_client is not null
-            and
-            (
-                coalesce(new.sales, 0) != 0
-                or
-                coalesce(new.buys, 0) != 0
-            )
-        then
+        if new.id_client is not null then
             update companies set
                 orders_profit_sum_sales = orders_profit_sum_sales + coalesce(new.sales, 0),
                 orders_profit_sum_buys = orders_profit_sum_buys + coalesce(new.buys, 0),
@@ -85,15 +61,7 @@ begin
 
     if TG_OP = 'INSERT' then
 
-        if
-            new.id_client is not null
-            and
-            (
-                coalesce(new.sales, 0) != 0
-                or
-                coalesce(new.buys, 0) != 0
-            )
-        then
+        if new.id_client is not null then
             update companies set
                 orders_profit_sum_sales = orders_profit_sum_sales + coalesce(new.sales, 0),
                 orders_profit_sum_buys = orders_profit_sum_buys + coalesce(new.buys, 0),

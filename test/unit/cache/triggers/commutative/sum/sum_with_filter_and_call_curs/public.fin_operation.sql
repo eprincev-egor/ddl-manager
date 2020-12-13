@@ -7,11 +7,6 @@ begin
         if
             old.id_order is not null
             and
-            coalesce(old.sum * get_curs(
-                old.date,
-                old.id_currency
-            ), 0) != 0
-            and
             old.deleted = 0
             and
             (
@@ -168,11 +163,6 @@ begin
         if
             old.id_order is not null
             and
-            coalesce(old.sum * get_curs(
-                old.date,
-                old.id_currency
-            ), 0) != 0
-            and
             old.deleted = 0
             and
             (
@@ -216,11 +206,6 @@ begin
 
         if
             new.id_order is not null
-            and
-            coalesce(new.sum * get_curs(
-                new.date,
-                new.id_currency
-            ), 0) != 0
             and
             new.deleted = 0
             and
@@ -270,11 +255,6 @@ begin
 
         if
             new.id_order is not null
-            and
-            coalesce(new.sum * get_curs(
-                new.date,
-                new.id_currency
-            ), 0) != 0
             and
             new.deleted = 0
             and

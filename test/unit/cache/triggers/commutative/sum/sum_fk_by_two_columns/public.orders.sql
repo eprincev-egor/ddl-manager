@@ -10,8 +10,6 @@ begin
                 or
                 old.id_partner is not null
             )
-            and
-            coalesce(old.profit, 0) != 0
         then
             update companies set
                 orders_total = orders_total - coalesce(old.profit, 0)
@@ -56,8 +54,6 @@ begin
                 or
                 old.id_partner is not null
             )
-            and
-            coalesce(old.profit, 0) != 0
         then
             update companies set
                 orders_total = orders_total - coalesce(old.profit, 0)
@@ -73,8 +69,6 @@ begin
                 or
                 new.id_partner is not null
             )
-            and
-            coalesce(new.profit, 0) != 0
         then
             update companies set
                 orders_total = orders_total + coalesce(new.profit, 0)
@@ -95,8 +89,6 @@ begin
                 or
                 new.id_partner is not null
             )
-            and
-            coalesce(new.profit, 0) != 0
         then
             update companies set
                 orders_total = orders_total + coalesce(new.profit, 0)

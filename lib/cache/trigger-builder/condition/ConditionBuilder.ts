@@ -6,8 +6,6 @@ import { flatMap } from "lodash";
 import { noReferenceChanges } from "./noReferenceChanges";
 import { noChanges } from "./noChanges";
 import { hasNoReference, hasReference } from "./hasReference";
-import { hasEffect } from "./hasEffect";
-import { findJoinsMeta } from "../../processor/findJoinsMeta";
 import { replaceArrayNotNullOn } from "./replaceArrayNotNullOn";
 import { replaceOperatorAnyToIndexedOperator } from "./replaceOperatorAnyToIndexedOperator";
 import { replaceAmpArrayToAny } from "./replaceAmpArrayToAny";
@@ -33,16 +31,6 @@ export class ConditionBuilder {
         return noChanges(this.context);
     }
 
-    hasEffect(row: RowType) {
-        const joins = findJoinsMeta(this.context.cache.select);
-
-        return hasEffect(
-            this.context,
-            row,
-            joins
-        );
-    }
-
     hasReference(row: RowType) {
         const hasReferenceCondition = hasReference(this.context);
         const output = this.replaceTriggerTableRefsTo(
@@ -62,7 +50,7 @@ export class ConditionBuilder {
     }
 
     needUpdateCondition(row: RowType) {
-        const needUpdate = this.buildNeedUpdateCondition(row);
+        const needUpdate = this.buildNeedUpdateCondition();
         const output = this.replaceTriggerTableRefsTo(needUpdate, row);
         return output;
     }
@@ -70,7 +58,7 @@ export class ConditionBuilder {
     needUpdateConditionOnUpdate(row: RowType) {
         const needUpdate = replaceArrayNotNullOn(
             this.context,
-            this.buildNeedUpdateCondition(row),
+            this.buildNeedUpdateCondition(),
             arrayChangesFunc(row)
         );
         const output = this.replaceTriggerTableRefsTo(needUpdate, row);
@@ -120,10 +108,9 @@ export class ConditionBuilder {
         }
     }
 
-    private buildNeedUpdateCondition(row: RowType) {
+    private buildNeedUpdateCondition() {
         const conditions = [
             hasReference(this.context),
-            hasEffect(this.context, row, []),
             Expression.and(this.context.referenceMeta.filters),
             this.matchedAllAggFilters()
         ].filter(condition => 

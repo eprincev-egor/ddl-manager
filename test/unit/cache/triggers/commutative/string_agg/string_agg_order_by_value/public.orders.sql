@@ -4,11 +4,7 @@ begin
 
     if TG_OP = 'DELETE' then
 
-        if
-            old.id_client is not null
-            and
-            old.doc_number is not null
-        then
+        if old.id_client is not null then
             update companies set
                 orders_numbers_doc_number = cm_array_remove_one_element(
                     orders_numbers_doc_number,
@@ -80,11 +76,7 @@ begin
             return new;
         end if;
 
-        if
-            old.id_client is not null
-            and
-            old.doc_number is not null
-        then
+        if old.id_client is not null then
             update companies set
                 orders_numbers_doc_number = cm_array_remove_one_element(
                     orders_numbers_doc_number,
@@ -110,11 +102,7 @@ begin
                 old.id_client = companies.id;
         end if;
 
-        if
-            new.id_client is not null
-            and
-            new.doc_number is not null
-        then
+        if new.id_client is not null then
             update companies set
                 orders_numbers_doc_number = array_append(
                     orders_numbers_doc_number,
@@ -145,11 +133,7 @@ begin
 
     if TG_OP = 'INSERT' then
 
-        if
-            new.id_client is not null
-            and
-            new.doc_number is not null
-        then
+        if new.id_client is not null then
             update companies set
                 orders_numbers_doc_number = array_append(
                     orders_numbers_doc_number,

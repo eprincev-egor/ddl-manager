@@ -4,11 +4,7 @@ begin
 
     if TG_OP = 'DELETE' then
 
-        if
-            old.transfer_date is not null
-            and
-            coalesce(old.delta, 0) != 0
-        then
+        if old.transfer_date is not null then
             update capital.account_date_balance as date_balance set
                 transfers_sum = transfers_sum - coalesce(old.delta, 0)
             where
@@ -36,22 +32,14 @@ begin
             return new;
         end if;
 
-        if
-            old.transfer_date is not null
-            and
-            coalesce(old.delta, 0) != 0
-        then
+        if old.transfer_date is not null then
             update capital.account_date_balance as date_balance set
                 transfers_sum = transfers_sum - coalesce(old.delta, 0)
             where
                 old.transfer_date = date_balance.balance_date;
         end if;
 
-        if
-            new.transfer_date is not null
-            and
-            coalesce(new.delta, 0) != 0
-        then
+        if new.transfer_date is not null then
             update capital.account_date_balance as date_balance set
                 transfers_sum = transfers_sum + coalesce(new.delta, 0)
             where
@@ -63,11 +51,7 @@ begin
 
     if TG_OP = 'INSERT' then
 
-        if
-            new.transfer_date is not null
-            and
-            coalesce(new.delta, 0) != 0
-        then
+        if new.transfer_date is not null then
             update capital.account_date_balance as date_balance set
                 transfers_sum = transfers_sum + coalesce(new.delta, 0)
             where

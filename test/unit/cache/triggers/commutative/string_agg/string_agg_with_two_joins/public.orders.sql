@@ -30,45 +30,39 @@ begin
                 );
             end if;
 
-            if
-                old_country_from_name is not null
-                or
-                old_country_to_name is not null
-            then
-                update companies set
-                    from_countries_name = cm_array_remove_one_element(
-                        from_countries_name,
-                        old_country_from_name
-                    ),
-                    from_countries = (
-                        select
-                            string_agg(item.name, ', ')
+            update companies set
+                from_countries_name = cm_array_remove_one_element(
+                    from_countries_name,
+                    old_country_from_name
+                ),
+                from_countries = (
+                    select
+                        string_agg(item.name, ', ')
 
-                        from unnest(
-                            cm_array_remove_one_element(
-                                from_countries_name,
-                                old_country_from_name
-                            )
-                        ) as item(name)
-                    ),
-                    to_countries_name = cm_array_remove_one_element(
-                        to_countries_name,
-                        old_country_to_name
-                    ),
-                    to_countries = (
-                        select
-                            string_agg(item.name, ', ')
+                    from unnest(
+                        cm_array_remove_one_element(
+                            from_countries_name,
+                            old_country_from_name
+                        )
+                    ) as item(name)
+                ),
+                to_countries_name = cm_array_remove_one_element(
+                    to_countries_name,
+                    old_country_to_name
+                ),
+                to_countries = (
+                    select
+                        string_agg(item.name, ', ')
 
-                        from unnest(
-                            cm_array_remove_one_element(
-                                to_countries_name,
-                                old_country_to_name
-                            )
-                        ) as item(name)
-                    )
-                where
-                    old.id_client = companies.id;
-            end if;
+                    from unnest(
+                        cm_array_remove_one_element(
+                            to_countries_name,
+                            old_country_to_name
+                        )
+                    ) as item(name)
+                )
+            where
+                old.id_client = companies.id;
         end if;
 
         return old;
@@ -186,15 +180,7 @@ begin
         end if;
 
 
-        if
-            old.id_client is not null
-            and
-            (
-                old_country_from_name is not null
-                or
-                old_country_to_name is not null
-            )
-        then
+        if old.id_client is not null then
             update companies set
                 from_countries_name = cm_array_remove_one_element(
                     from_countries_name,
@@ -230,15 +216,7 @@ begin
                 old.id_client = companies.id;
         end if;
 
-        if
-            new.id_client is not null
-            and
-            (
-                new_country_from_name is not null
-                or
-                new_country_to_name is not null
-            )
-        then
+        if new.id_client is not null then
             update companies set
                 from_countries_name = array_append(
                     from_countries_name,
@@ -297,41 +275,35 @@ begin
                 );
             end if;
 
-            if
-                new_country_from_name is not null
-                or
-                new_country_to_name is not null
-            then
-                update companies set
-                    from_countries_name = array_append(
-                        from_countries_name,
-                        new_country_from_name
+            update companies set
+                from_countries_name = array_append(
+                    from_countries_name,
+                    new_country_from_name
+                ),
+                from_countries = coalesce(
+                    from_countries ||
+                    coalesce(
+                        ', '
+                        || new_country_from_name,
+                        ''
                     ),
-                    from_countries = coalesce(
-                        from_countries ||
-                        coalesce(
-                            ', '
-                            || new_country_from_name,
-                            ''
-                        ),
-                        new_country_from_name
+                    new_country_from_name
+                ),
+                to_countries_name = array_append(
+                    to_countries_name,
+                    new_country_to_name
+                ),
+                to_countries = coalesce(
+                    to_countries ||
+                    coalesce(
+                        ', '
+                        || new_country_to_name,
+                        ''
                     ),
-                    to_countries_name = array_append(
-                        to_countries_name,
-                        new_country_to_name
-                    ),
-                    to_countries = coalesce(
-                        to_countries ||
-                        coalesce(
-                            ', '
-                            || new_country_to_name,
-                            ''
-                        ),
-                        new_country_to_name
-                    )
-                where
-                    new.id_client = companies.id;
-            end if;
+                    new_country_to_name
+                )
+            where
+                new.id_client = companies.id;
         end if;
 
         return new;

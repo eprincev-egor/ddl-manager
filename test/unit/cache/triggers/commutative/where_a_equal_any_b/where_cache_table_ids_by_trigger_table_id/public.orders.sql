@@ -4,11 +4,7 @@ begin
 
     if TG_OP = 'DELETE' then
 
-        if
-            old.doc_number is not null
-            and
-            old.deleted = 0
-        then
+        if old.deleted = 0 then
             update companies set
                 orders_numbers_doc_number = cm_array_remove_one_element(
                     orders_numbers_doc_number,
@@ -70,11 +66,7 @@ begin
             return new;
         end if;
 
-        if
-            old.doc_number is not null
-            and
-            old.deleted = 0
-        then
+        if old.deleted = 0 then
             update companies set
                 orders_numbers_doc_number = cm_array_remove_one_element(
                     orders_numbers_doc_number,
@@ -95,11 +87,7 @@ begin
                 companies.order_ids && ARRAY[ old.id ];
         end if;
 
-        if
-            new.doc_number is not null
-            and
-            new.deleted = 0
-        then
+        if new.deleted = 0 then
             update companies set
                 orders_numbers_doc_number = array_append(
                     orders_numbers_doc_number,
@@ -134,11 +122,7 @@ begin
 
     if TG_OP = 'INSERT' then
 
-        if
-            new.doc_number is not null
-            and
-            new.deleted = 0
-        then
+        if new.deleted = 0 then
             update companies set
                 orders_numbers_doc_number = array_append(
                     orders_numbers_doc_number,

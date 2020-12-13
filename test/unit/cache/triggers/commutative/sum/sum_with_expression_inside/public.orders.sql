@@ -4,11 +4,7 @@ begin
 
     if TG_OP = 'DELETE' then
 
-        if
-            old.id_client is not null
-            and
-            coalesce((old.debet - old.credit) * old.quantity, 0) != 0
-        then
+        if old.id_client is not null then
             update companies set
                 orders_total = orders_total - coalesce(
                     (old.debet - old.credit) * old.quantity,
@@ -49,11 +45,7 @@ begin
             return new;
         end if;
 
-        if
-            old.id_client is not null
-            and
-            coalesce((old.debet - old.credit) * old.quantity, 0) != 0
-        then
+        if old.id_client is not null then
             update companies set
                 orders_total = orders_total - coalesce(
                     (old.debet - old.credit) * old.quantity,
@@ -63,11 +55,7 @@ begin
                 old.id_client = companies.id;
         end if;
 
-        if
-            new.id_client is not null
-            and
-            coalesce((new.debet - new.credit) * new.quantity, 0) != 0
-        then
+        if new.id_client is not null then
             update companies set
                 orders_total = orders_total + coalesce(
                     (new.debet - new.credit) * new.quantity,
@@ -82,11 +70,7 @@ begin
 
     if TG_OP = 'INSERT' then
 
-        if
-            new.id_client is not null
-            and
-            coalesce((new.debet - new.credit) * new.quantity, 0) != 0
-        then
+        if new.id_client is not null then
             update companies set
                 orders_total = orders_total + coalesce(
                     (new.debet - new.credit) * new.quantity,

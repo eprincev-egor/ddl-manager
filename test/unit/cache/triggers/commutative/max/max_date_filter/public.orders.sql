@@ -7,8 +7,6 @@ begin
         if
             old.id_client is not null
             and
-            old.order_date is not null
-            and
             (
                 old.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
                 or
@@ -351,8 +349,6 @@ begin
         if
             old.id_client is not null
             and
-            old.order_date is not null
-            and
             (
                 old.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
                 or
@@ -455,8 +451,6 @@ begin
         if
             new.id_client is not null
             and
-            new.order_date is not null
-            and
             (
                 new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
                 or
@@ -541,8 +535,6 @@ begin
 
         if
             new.id_client is not null
-            and
-            new.order_date is not null
             and
             (
                 new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])

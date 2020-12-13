@@ -7,8 +7,6 @@ begin
         if
             old.id_client is not null
             and
-            coalesce(old.profit, 0) != 0
-            and
             old.deleted = 0
         then
             update companies set
@@ -47,8 +45,6 @@ begin
         if
             old.id_client is not null
             and
-            coalesce(old.profit, 0) != 0
-            and
             old.deleted = 0
         then
             update companies set
@@ -59,8 +55,6 @@ begin
 
         if
             new.id_client is not null
-            and
-            coalesce(new.profit, 0) != 0
             and
             new.deleted = 0
         then
@@ -77,8 +71,6 @@ begin
 
         if
             new.id_client is not null
-            and
-            coalesce(new.profit, 0) != 0
             and
             new.deleted = 0
         then

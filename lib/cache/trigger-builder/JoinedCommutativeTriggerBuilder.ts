@@ -1,6 +1,4 @@
-import {
-    Expression, Update
-} from "../../ast";
+import { Update } from "../../ast";
 import { buildCommutativeBodyWithJoins } from "./body/buildCommutativeBodyWithJoins";
 import { buildJoins } from "../processor/buildJoins";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
@@ -13,7 +11,6 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
             this.conditions.noChanges(),
             {
                 hasReference: this.conditions.hasReference("old"),
-                needUpdate: this.conditions.hasEffect("old") as Expression,
                 update: new Update({
                     table: this.context.cache.for.toString(),
                     set: this.setItems.minus(),
@@ -23,7 +20,6 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
             },
             {
                 hasReference: this.conditions.hasReference("new"),
-                needUpdate: this.conditions.hasEffect("new") as Expression,
                 update: new Update({
                     table: this.context.cache.for.toString(),
                     set: this.setItems.plus(),

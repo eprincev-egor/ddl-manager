@@ -4,11 +4,7 @@ begin
 
     if TG_OP = 'DELETE' then
 
-        if
-            old.id_client is not null
-            and
-            coalesce(old.profit, 0) != 0
-        then
+        if old.id_client is not null then
             update companies set
                 orders_total_profit = cm_array_remove_one_element(
                     orders_total_profit,
@@ -70,11 +66,7 @@ begin
             return new;
         end if;
 
-        if
-            old.id_client is not null
-            and
-            coalesce(old.profit, 0) != 0
-        then
+        if old.id_client is not null then
             update companies set
                 orders_total_profit = cm_array_remove_one_element(
                     orders_total_profit,
@@ -95,11 +87,7 @@ begin
                 old.id_client = companies.id;
         end if;
 
-        if
-            new.id_client is not null
-            and
-            coalesce(new.profit, 0) != 0
-        then
+        if new.id_client is not null then
             update companies set
                 orders_total_profit = array_append(
                     orders_total_profit,
@@ -125,11 +113,7 @@ begin
 
     if TG_OP = 'INSERT' then
 
-        if
-            new.id_client is not null
-            and
-            coalesce(new.profit, 0) != 0
-        then
+        if new.id_client is not null then
             update companies set
                 orders_total_profit = array_append(
                     orders_total_profit,

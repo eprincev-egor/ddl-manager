@@ -4,10 +4,8 @@ begin
 
     if TG_OP = 'DELETE' then
 
-        if coalesce(old.profit, 0) != 0 then
-            update some_report_row set
-                orders_total = orders_total - coalesce(old.profit, 0);
-        end if;
+        update some_report_row set
+            orders_total = orders_total - coalesce(old.profit, 0);
 
         return old;
     end if;
@@ -19,25 +17,19 @@ begin
 
 
 
-        if coalesce(old.profit, 0) != 0 then
-            update some_report_row set
-                orders_total = orders_total - coalesce(old.profit, 0);
-        end if;
+        update some_report_row set
+            orders_total = orders_total - coalesce(old.profit, 0);
 
-        if coalesce(new.profit, 0) != 0 then
-            update some_report_row set
-                orders_total = orders_total + coalesce(new.profit, 0);
-        end if;
+        update some_report_row set
+            orders_total = orders_total + coalesce(new.profit, 0);
 
         return new;
     end if;
 
     if TG_OP = 'INSERT' then
 
-        if coalesce(new.profit, 0) != 0 then
-            update some_report_row set
-                orders_total = orders_total + coalesce(new.profit, 0);
-        end if;
+        update some_report_row set
+            orders_total = orders_total + coalesce(new.profit, 0);
 
         return new;
     end if;

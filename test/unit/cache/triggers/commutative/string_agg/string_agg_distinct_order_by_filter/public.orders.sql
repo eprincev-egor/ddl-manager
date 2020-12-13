@@ -7,8 +7,6 @@ begin
         if
             old.id_client is not null
             and
-            old.doc_number is not null
-            and
             old.profit > 0
         then
             update companies set
@@ -204,8 +202,6 @@ begin
         if
             old.id_client is not null
             and
-            old.doc_number is not null
-            and
             old.profit > 0
         then
             update companies set
@@ -243,8 +239,6 @@ begin
 
         if
             new.id_client is not null
-            and
-            new.doc_number is not null
             and
             new.profit > 0
         then
@@ -288,8 +282,6 @@ begin
 
         if
             new.id_client is not null
-            and
-            new.doc_number is not null
             and
             new.profit > 0
         then

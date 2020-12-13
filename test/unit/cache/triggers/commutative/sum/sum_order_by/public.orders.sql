@@ -4,11 +4,7 @@ begin
 
     if TG_OP = 'DELETE' then
 
-        if
-            old.id_client is not null
-            and
-            coalesce(old.profit, 0) != 0
-        then
+        if old.id_client is not null then
             update companies set
                 orders_total = orders_total - coalesce(old.profit, 0)
             where
@@ -36,22 +32,14 @@ begin
             return new;
         end if;
 
-        if
-            old.id_client is not null
-            and
-            coalesce(old.profit, 0) != 0
-        then
+        if old.id_client is not null then
             update companies set
                 orders_total = orders_total - coalesce(old.profit, 0)
             where
                 old.id_client = companies.id;
         end if;
 
-        if
-            new.id_client is not null
-            and
-            coalesce(new.profit, 0) != 0
-        then
+        if new.id_client is not null then
             update companies set
                 orders_total = orders_total + coalesce(new.profit, 0)
             where
@@ -63,11 +51,7 @@ begin
 
     if TG_OP = 'INSERT' then
 
-        if
-            new.id_client is not null
-            and
-            coalesce(new.profit, 0) != 0
-        then
+        if new.id_client is not null then
             update companies set
                 orders_total = orders_total + coalesce(new.profit, 0)
             where

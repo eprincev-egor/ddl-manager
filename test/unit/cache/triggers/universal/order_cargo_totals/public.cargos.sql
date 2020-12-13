@@ -18,31 +18,25 @@ begin
                 );
             end if;
 
-            if
-                coalesce(old.total_weight, 0) != 0
-                or
-                old_product_type_name is not null
-            then
-                update orders set
-                    cargos_weight = cargos_weight - coalesce(old.total_weight, 0),
-                    cargos_products_names_name = cm_array_remove_one_element(
-                        cargos_products_names_name,
-                        old_product_type_name
-                    ),
-                    cargos_products_names = (
-                        select
-                            string_agg(item.name, ', ')
+            update orders set
+                cargos_weight = cargos_weight - coalesce(old.total_weight, 0),
+                cargos_products_names_name = cm_array_remove_one_element(
+                    cargos_products_names_name,
+                    old_product_type_name
+                ),
+                cargos_products_names = (
+                    select
+                        string_agg(item.name, ', ')
 
-                        from unnest(
-                            cm_array_remove_one_element(
-                                cargos_products_names_name,
-                                old_product_type_name
-                            )
-                        ) as item(name)
-                    )
-                where
-                    old.id_order = orders.id;
-            end if;
+                    from unnest(
+                        cm_array_remove_one_element(
+                            cargos_products_names_name,
+                            old_product_type_name
+                        )
+                    ) as item(name)
+                )
+            where
+                old.id_order = orders.id;
         end if;
 
         return old;
@@ -116,15 +110,7 @@ begin
         end if;
 
 
-        if
-            old.id_order is not null
-            and
-            (
-                coalesce(old.total_weight, 0) != 0
-                or
-                old_product_type_name is not null
-            )
-        then
+        if old.id_order is not null then
             update orders set
                 cargos_weight = cargos_weight - coalesce(old.total_weight, 0),
                 cargos_products_names_name = cm_array_remove_one_element(
@@ -146,15 +132,7 @@ begin
                 old.id_order = orders.id;
         end if;
 
-        if
-            new.id_order is not null
-            and
-            (
-                coalesce(new.total_weight, 0) != 0
-                or
-                new_product_type_name is not null
-            )
-        then
+        if new.id_order is not null then
             update orders set
                 cargos_weight = cargos_weight + coalesce(new.total_weight, 0),
                 cargos_products_names_name = array_append(
@@ -191,29 +169,23 @@ begin
                 );
             end if;
 
-            if
-                coalesce(new.total_weight, 0) != 0
-                or
-                new_product_type_name is not null
-            then
-                update orders set
-                    cargos_weight = cargos_weight + coalesce(new.total_weight, 0),
-                    cargos_products_names_name = array_append(
-                        cargos_products_names_name,
-                        new_product_type_name
+            update orders set
+                cargos_weight = cargos_weight + coalesce(new.total_weight, 0),
+                cargos_products_names_name = array_append(
+                    cargos_products_names_name,
+                    new_product_type_name
+                ),
+                cargos_products_names = coalesce(
+                    cargos_products_names ||
+                    coalesce(
+                        ', '
+                        || new_product_type_name,
+                        ''
                     ),
-                    cargos_products_names = coalesce(
-                        cargos_products_names ||
-                        coalesce(
-                            ', '
-                            || new_product_type_name,
-                            ''
-                        ),
-                        new_product_type_name
-                    )
-                where
-                    new.id_order = orders.id;
-            end if;
+                    new_product_type_name
+                )
+            where
+                new.id_order = orders.id;
         end if;
 
         return new;

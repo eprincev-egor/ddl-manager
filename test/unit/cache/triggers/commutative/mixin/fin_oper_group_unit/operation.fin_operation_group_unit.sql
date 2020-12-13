@@ -30,97 +30,79 @@ begin
                 );
             end if;
 
-            if
-                coalesce(old.quantity, 0) != 0
-                or
-                coalesce(old.netto_weight, 0) != 0
-                or
-                coalesce(old.gross_weight, 0) != 0
-                or
-                coalesce(old.volume, 0) != 0
-                or
-                coalesce(old.ldm, 0) != 0
-                or
-                coalesce(old.quantity_pallet, 0) != 0
-                or
-                old_company_buyer_list_company_name is not null
-                or
-                old_point_delivery_list_warehouse_name is not null
-            then
-                update operation.unit set
-                    group_unit_quantity = group_unit_quantity - coalesce(old.quantity, 0),
-                    group_unit_netto_weight = group_unit_netto_weight - coalesce(old.netto_weight, 0),
-                    group_unit_gross_weight = group_unit_gross_weight - coalesce(old.gross_weight, 0),
-                    group_unit_volume = group_unit_volume - coalesce(old.volume, 0),
-                    group_unit_ldm = group_unit_ldm - coalesce(old.ldm, 0),
-                    group_unit_quantity_pallet = group_unit_quantity_pallet - coalesce(old.quantity_pallet, 0),
-                    group_unit_buyers_names_list_company_name = case
-                        when
-                            company_buyer.list_company_name is not null
-                        then
-                            cm_array_remove_one_element(
-                                group_unit_buyers_names_list_company_name,
-                                old_company_buyer_list_company_name
-                            )
-                        else
-                            group_unit_buyers_names_list_company_name
-                    end,
-                    group_unit_buyers_names = case
-                        when
-                            company_buyer.list_company_name is not null
-                        then
-                            (
-                                select
-                                    string_agg(distinct 
-                                        item.list_company_name,
-                                        ', '
-                                    ) filter (where company_buyer.list_company_name is not null)
+            update operation.unit set
+                group_unit_quantity = group_unit_quantity - coalesce(old.quantity, 0),
+                group_unit_netto_weight = group_unit_netto_weight - coalesce(old.netto_weight, 0),
+                group_unit_gross_weight = group_unit_gross_weight - coalesce(old.gross_weight, 0),
+                group_unit_volume = group_unit_volume - coalesce(old.volume, 0),
+                group_unit_ldm = group_unit_ldm - coalesce(old.ldm, 0),
+                group_unit_quantity_pallet = group_unit_quantity_pallet - coalesce(old.quantity_pallet, 0),
+                group_unit_buyers_names_list_company_name = case
+                    when
+                        company_buyer.list_company_name is not null
+                    then
+                        cm_array_remove_one_element(
+                            group_unit_buyers_names_list_company_name,
+                            old_company_buyer_list_company_name
+                        )
+                    else
+                        group_unit_buyers_names_list_company_name
+                end,
+                group_unit_buyers_names = case
+                    when
+                        company_buyer.list_company_name is not null
+                    then
+                        (
+                            select
+                                string_agg(distinct 
+                                    item.list_company_name,
+                                    ', '
+                                ) filter (where company_buyer.list_company_name is not null)
 
-                                from unnest(
-                                    cm_array_remove_one_element(
-                                        group_unit_buyers_names_list_company_name,
-                                        old_company_buyer_list_company_name
-                                    )
-                                ) as item(list_company_name)
-                            )
-                        else
-                            group_unit_buyers_names
-                    end,
-                    group_unit_delivery_names_list_warehouse_name = case
-                        when
-                            point_delivery.list_warehouse_name is not null
-                        then
-                            cm_array_remove_one_element(
-                                group_unit_delivery_names_list_warehouse_name,
-                                old_point_delivery_list_warehouse_name
-                            )
-                        else
-                            group_unit_delivery_names_list_warehouse_name
-                    end,
-                    group_unit_delivery_names = case
-                        when
-                            point_delivery.list_warehouse_name is not null
-                        then
-                            (
-                                select
-                                    string_agg(distinct 
-                                        item.list_warehouse_name,
-                                        ', '
-                                    ) filter (where point_delivery.list_warehouse_name is not null)
+                            from unnest(
+                                cm_array_remove_one_element(
+                                    group_unit_buyers_names_list_company_name,
+                                    old_company_buyer_list_company_name
+                                )
+                            ) as item(list_company_name)
+                        )
+                    else
+                        group_unit_buyers_names
+                end,
+                group_unit_delivery_names_list_warehouse_name = case
+                    when
+                        point_delivery.list_warehouse_name is not null
+                    then
+                        cm_array_remove_one_element(
+                            group_unit_delivery_names_list_warehouse_name,
+                            old_point_delivery_list_warehouse_name
+                        )
+                    else
+                        group_unit_delivery_names_list_warehouse_name
+                end,
+                group_unit_delivery_names = case
+                    when
+                        point_delivery.list_warehouse_name is not null
+                    then
+                        (
+                            select
+                                string_agg(distinct 
+                                    item.list_warehouse_name,
+                                    ', '
+                                ) filter (where point_delivery.list_warehouse_name is not null)
 
-                                from unnest(
-                                    cm_array_remove_one_element(
-                                        group_unit_delivery_names_list_warehouse_name,
-                                        old_point_delivery_list_warehouse_name
-                                    )
-                                ) as item(list_warehouse_name)
-                            )
-                        else
-                            group_unit_delivery_names
-                    end
-                where
-                    old.id_operation_unit = operation.unit.id;
-            end if;
+                            from unnest(
+                                cm_array_remove_one_element(
+                                    group_unit_delivery_names_list_warehouse_name,
+                                    old_point_delivery_list_warehouse_name
+                                )
+                            ) as item(list_warehouse_name)
+                        )
+                    else
+                        group_unit_delivery_names
+                end
+            where
+                old.id_operation_unit = operation.unit.id;
         end if;
 
         return old;
@@ -404,27 +386,7 @@ begin
         end if;
 
 
-        if
-            old.id_operation_unit is not null
-            and
-            (
-                coalesce(old.quantity, 0) != 0
-                or
-                coalesce(old.netto_weight, 0) != 0
-                or
-                coalesce(old.gross_weight, 0) != 0
-                or
-                coalesce(old.volume, 0) != 0
-                or
-                coalesce(old.ldm, 0) != 0
-                or
-                coalesce(old.quantity_pallet, 0) != 0
-                or
-                old_company_buyer_list_company_name is not null
-                or
-                old_point_delivery_list_warehouse_name is not null
-            )
-        then
+        if old.id_operation_unit is not null then
             update operation.unit set
                 group_unit_quantity = group_unit_quantity - coalesce(old.quantity, 0),
                 group_unit_netto_weight = group_unit_netto_weight - coalesce(old.netto_weight, 0),
@@ -500,27 +462,7 @@ begin
                 old.id_operation_unit = operation.unit.id;
         end if;
 
-        if
-            new.id_operation_unit is not null
-            and
-            (
-                coalesce(new.quantity, 0) != 0
-                or
-                coalesce(new.netto_weight, 0) != 0
-                or
-                coalesce(new.gross_weight, 0) != 0
-                or
-                coalesce(new.volume, 0) != 0
-                or
-                coalesce(new.ldm, 0) != 0
-                or
-                coalesce(new.quantity_pallet, 0) != 0
-                or
-                new_company_buyer_list_company_name is not null
-                or
-                new_point_delivery_list_warehouse_name is not null
-            )
-        then
+        if new.id_operation_unit is not null then
             update operation.unit set
                 group_unit_quantity = group_unit_quantity + coalesce(new.quantity, 0),
                 group_unit_netto_weight = group_unit_netto_weight + coalesce(new.netto_weight, 0),
@@ -635,109 +577,91 @@ begin
                 );
             end if;
 
-            if
-                coalesce(new.quantity, 0) != 0
-                or
-                coalesce(new.netto_weight, 0) != 0
-                or
-                coalesce(new.gross_weight, 0) != 0
-                or
-                coalesce(new.volume, 0) != 0
-                or
-                coalesce(new.ldm, 0) != 0
-                or
-                coalesce(new.quantity_pallet, 0) != 0
-                or
-                new_company_buyer_list_company_name is not null
-                or
-                new_point_delivery_list_warehouse_name is not null
-            then
-                update operation.unit set
-                    group_unit_quantity = group_unit_quantity + coalesce(new.quantity, 0),
-                    group_unit_netto_weight = group_unit_netto_weight + coalesce(new.netto_weight, 0),
-                    group_unit_gross_weight = group_unit_gross_weight + coalesce(new.gross_weight, 0),
-                    group_unit_volume = group_unit_volume + coalesce(new.volume, 0),
-                    group_unit_ldm = group_unit_ldm + coalesce(new.ldm, 0),
-                    group_unit_quantity_pallet = group_unit_quantity_pallet + coalesce(new.quantity_pallet, 0),
-                    group_unit_buyers_names_list_company_name = case
-                        when
-                            company_buyer.list_company_name is not null
-                        then
-                            array_append(
-                                group_unit_buyers_names_list_company_name,
-                                new_company_buyer_list_company_name
-                            )
-                        else
-                            group_unit_buyers_names_list_company_name
-                    end,
-                    group_unit_buyers_names = case
-                        when
-                            company_buyer.list_company_name is not null
-                        then
-                            case
-                                when
-                                    array_position(
-                                        group_unit_buyers_names_list_company_name,
-                                        new_company_buyer_list_company_name
-                                    )
-                                    is null
-                                then
+            update operation.unit set
+                group_unit_quantity = group_unit_quantity + coalesce(new.quantity, 0),
+                group_unit_netto_weight = group_unit_netto_weight + coalesce(new.netto_weight, 0),
+                group_unit_gross_weight = group_unit_gross_weight + coalesce(new.gross_weight, 0),
+                group_unit_volume = group_unit_volume + coalesce(new.volume, 0),
+                group_unit_ldm = group_unit_ldm + coalesce(new.ldm, 0),
+                group_unit_quantity_pallet = group_unit_quantity_pallet + coalesce(new.quantity_pallet, 0),
+                group_unit_buyers_names_list_company_name = case
+                    when
+                        company_buyer.list_company_name is not null
+                    then
+                        array_append(
+                            group_unit_buyers_names_list_company_name,
+                            new_company_buyer_list_company_name
+                        )
+                    else
+                        group_unit_buyers_names_list_company_name
+                end,
+                group_unit_buyers_names = case
+                    when
+                        company_buyer.list_company_name is not null
+                    then
+                        case
+                            when
+                                array_position(
+                                    group_unit_buyers_names_list_company_name,
+                                    new_company_buyer_list_company_name
+                                )
+                                is null
+                            then
+                                coalesce(
+                                    group_unit_buyers_names ||
                                     coalesce(
-                                        group_unit_buyers_names ||
-                                        coalesce(
-                                            ', '
-                                            || new_company_buyer_list_company_name,
-                                            ''
-                                        ),
-                                        new_company_buyer_list_company_name
-                                    )
-                                else
-                                    group_unit_buyers_names
-                            end
-                        else
-                            group_unit_buyers_names
-                    end,
-                    group_unit_delivery_names_list_warehouse_name = case
-                        when
-                            point_delivery.list_warehouse_name is not null
-                        then
-                            array_append(
-                                group_unit_delivery_names_list_warehouse_name,
-                                new_point_delivery_list_warehouse_name
-                            )
-                        else
-                            group_unit_delivery_names_list_warehouse_name
-                    end,
-                    group_unit_delivery_names = case
-                        when
-                            point_delivery.list_warehouse_name is not null
-                        then
-                            case
-                                when
-                                    array_position(
-                                        group_unit_delivery_names_list_warehouse_name,
-                                        new_point_delivery_list_warehouse_name
-                                    )
-                                    is null
-                                then
+                                        ', '
+                                        || new_company_buyer_list_company_name,
+                                        ''
+                                    ),
+                                    new_company_buyer_list_company_name
+                                )
+                            else
+                                group_unit_buyers_names
+                        end
+                    else
+                        group_unit_buyers_names
+                end,
+                group_unit_delivery_names_list_warehouse_name = case
+                    when
+                        point_delivery.list_warehouse_name is not null
+                    then
+                        array_append(
+                            group_unit_delivery_names_list_warehouse_name,
+                            new_point_delivery_list_warehouse_name
+                        )
+                    else
+                        group_unit_delivery_names_list_warehouse_name
+                end,
+                group_unit_delivery_names = case
+                    when
+                        point_delivery.list_warehouse_name is not null
+                    then
+                        case
+                            when
+                                array_position(
+                                    group_unit_delivery_names_list_warehouse_name,
+                                    new_point_delivery_list_warehouse_name
+                                )
+                                is null
+                            then
+                                coalesce(
+                                    group_unit_delivery_names ||
                                     coalesce(
-                                        group_unit_delivery_names ||
-                                        coalesce(
-                                            ', '
-                                            || new_point_delivery_list_warehouse_name,
-                                            ''
-                                        ),
-                                        new_point_delivery_list_warehouse_name
-                                    )
-                                else
-                                    group_unit_delivery_names
-                            end
-                        else
-                            group_unit_delivery_names
-                    end
-                where
-                    new.id_operation_unit = operation.unit.id;
-            end if;
+                                        ', '
+                                        || new_point_delivery_list_warehouse_name,
+                                        ''
+                                    ),
+                                    new_point_delivery_list_warehouse_name
+                                )
+                            else
+                                group_unit_delivery_names
+                        end
+                    else
+                        group_unit_delivery_names
+                end
+            where
+                new.id_operation_unit = operation.unit.id;
         end if;
 
         return new;

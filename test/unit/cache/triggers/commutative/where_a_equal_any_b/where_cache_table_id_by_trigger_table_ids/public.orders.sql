@@ -7,8 +7,6 @@ begin
         if
             old.companies_ids is not null
             and
-            old.doc_number is not null
-            and
             old.deleted = 0
         then
             update companies set
@@ -81,8 +79,6 @@ begin
         if
             cm_get_deleted_elements(old.companies_ids, new.companies_ids) is not null
             and
-            old.doc_number is not null
-            and
             old.deleted = 0
         then
             update companies set
@@ -107,8 +103,6 @@ begin
 
         if
             cm_get_inserted_elements(old.companies_ids, new.companies_ids) is not null
-            and
-            new.doc_number is not null
             and
             new.deleted = 0
         then
@@ -148,8 +142,6 @@ begin
 
         if
             new.companies_ids is not null
-            and
-            new.doc_number is not null
             and
             new.deleted = 0
         then

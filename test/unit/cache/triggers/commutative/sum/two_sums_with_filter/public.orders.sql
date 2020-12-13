@@ -7,8 +7,6 @@ begin
         if
             old.id_client is not null
             and
-            coalesce(old.total, 0) != 0
-            and
             (
                 old.is_sale
                 or
@@ -141,8 +139,6 @@ begin
         if
             old.id_client is not null
             and
-            coalesce(old.total, 0) != 0
-            and
             (
                 old.is_sale
                 or
@@ -187,8 +183,6 @@ begin
 
         if
             new.id_client is not null
-            and
-            coalesce(new.total, 0) != 0
             and
             (
                 new.is_sale
@@ -239,8 +233,6 @@ begin
 
         if
             new.id_client is not null
-            and
-            coalesce(new.total, 0) != 0
             and
             (
                 new.is_sale

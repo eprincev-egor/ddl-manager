@@ -4,11 +4,7 @@ begin
 
     if TG_OP = 'DELETE' then
 
-        if
-            old.id_client is not null
-            and
-            old.order_date is not null
-        then
+        if old.id_client is not null then
             update companies set
                 min_order_date_order_date = cm_array_remove_one_element(
                     min_order_date_order_date,
@@ -70,11 +66,7 @@ begin
             return new;
         end if;
 
-        if
-            old.id_client is not null
-            and
-            old.order_date is not null
-        then
+        if old.id_client is not null then
             update companies set
                 min_order_date_order_date = cm_array_remove_one_element(
                     min_order_date_order_date,
@@ -95,11 +87,7 @@ begin
                 old.id_client = companies.id;
         end if;
 
-        if
-            new.id_client is not null
-            and
-            new.order_date is not null
-        then
+        if new.id_client is not null then
             update companies set
                 min_order_date_order_date = array_append(
                     min_order_date_order_date,
@@ -118,11 +106,7 @@ begin
 
     if TG_OP = 'INSERT' then
 
-        if
-            new.id_client is not null
-            and
-            new.order_date is not null
-        then
+        if new.id_client is not null then
             update companies set
                 min_order_date_order_date = array_append(
                     min_order_date_order_date,
