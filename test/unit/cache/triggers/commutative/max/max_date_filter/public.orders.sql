@@ -25,17 +25,6 @@ begin
                     else
                         max_general_order_date_order_date
                 end,
-                max_general_order_date_id_order_type = case
-                    when
-                        old.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                    then
-                        cm_array_remove_one_element(
-                            max_general_order_date_id_order_type,
-                            old.id_order_type
-                        )
-                    else
-                        max_general_order_date_id_order_type
-                end,
                 max_general_order_date = case
                     when
                         old.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
@@ -48,12 +37,8 @@ begin
                                 cm_array_remove_one_element(
                                     max_general_order_date_order_date,
                                     old.order_date
-                                ),
-                                cm_array_remove_one_element(
-                                    max_general_order_date_id_order_type,
-                                    old.id_order_type
                                 )
-                            ) as item(order_date, id_order_type)
+                            ) as item(order_date)
                         )
                     else
                         max_general_order_date
@@ -69,17 +54,6 @@ begin
                     else
                         max_combiner_order_date_order_date
                 end,
-                max_combiner_order_date_id_order_type = case
-                    when
-                        old.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                    then
-                        cm_array_remove_one_element(
-                            max_combiner_order_date_id_order_type,
-                            old.id_order_type
-                        )
-                    else
-                        max_combiner_order_date_id_order_type
-                end,
                 max_combiner_order_date = case
                     when
                         old.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
@@ -92,12 +66,8 @@ begin
                                 cm_array_remove_one_element(
                                     max_combiner_order_date_order_date,
                                     old.order_date
-                                ),
-                                cm_array_remove_one_element(
-                                    max_combiner_order_date_id_order_type,
-                                    old.id_order_type
                                 )
-                            ) as item(order_date, id_order_type)
+                            ) as item(order_date)
                         )
                     else
                         max_combiner_order_date
@@ -150,34 +120,6 @@ begin
                             new.order_date
                         )
                 end,
-                max_general_order_date_id_order_type = case
-                    when
-                        new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                        and
-                        not(old.id_order_type = any (array[1, 2, 3, 4] :: bigint[]))
-                    then
-                        array_append(
-                            max_general_order_date_id_order_type,
-                            new.id_order_type
-                        )
-                    when
-                        not(new.id_order_type = any (array[1, 2, 3, 4] :: bigint[]))
-                        and
-                        old.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                    then
-                        cm_array_remove_one_element(
-                            max_general_order_date_id_order_type,
-                            old.id_order_type
-                        )
-                    else
-                        array_append(
-                            cm_array_remove_one_element(
-                                max_general_order_date_id_order_type,
-                                old.id_order_type
-                            ),
-                            new.id_order_type
-                        )
-                end,
                 max_general_order_date = case
                     when
                         new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
@@ -201,12 +143,8 @@ begin
                                 cm_array_remove_one_element(
                                     max_general_order_date_order_date,
                                     old.order_date
-                                ),
-                                cm_array_remove_one_element(
-                                    max_general_order_date_id_order_type,
-                                    old.id_order_type
                                 )
-                            ) as item(order_date, id_order_type)
+                            ) as item(order_date)
                         )
                     else
                         (
@@ -220,15 +158,8 @@ begin
                                         old.order_date
                                     ),
                                     new.order_date
-                                ),
-                                array_append(
-                                    cm_array_remove_one_element(
-                                        max_general_order_date_id_order_type,
-                                        old.id_order_type
-                                    ),
-                                    new.id_order_type
                                 )
-                            ) as item(order_date, id_order_type)
+                            ) as item(order_date)
                         )
                 end,
                 max_combiner_order_date_order_date = case
@@ -259,34 +190,6 @@ begin
                             new.order_date
                         )
                 end,
-                max_combiner_order_date_id_order_type = case
-                    when
-                        new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                        and
-                        not(old.id_order_type = any (array[5, 6, 7, 8] :: bigint[]))
-                    then
-                        array_append(
-                            max_combiner_order_date_id_order_type,
-                            new.id_order_type
-                        )
-                    when
-                        not(new.id_order_type = any (array[5, 6, 7, 8] :: bigint[]))
-                        and
-                        old.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                    then
-                        cm_array_remove_one_element(
-                            max_combiner_order_date_id_order_type,
-                            old.id_order_type
-                        )
-                    else
-                        array_append(
-                            cm_array_remove_one_element(
-                                max_combiner_order_date_id_order_type,
-                                old.id_order_type
-                            ),
-                            new.id_order_type
-                        )
-                end,
                 max_combiner_order_date = case
                     when
                         new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
@@ -310,12 +213,8 @@ begin
                                 cm_array_remove_one_element(
                                     max_combiner_order_date_order_date,
                                     old.order_date
-                                ),
-                                cm_array_remove_one_element(
-                                    max_combiner_order_date_id_order_type,
-                                    old.id_order_type
                                 )
-                            ) as item(order_date, id_order_type)
+                            ) as item(order_date)
                         )
                     else
                         (
@@ -329,15 +228,8 @@ begin
                                         old.order_date
                                     ),
                                     new.order_date
-                                ),
-                                array_append(
-                                    cm_array_remove_one_element(
-                                        max_combiner_order_date_id_order_type,
-                                        old.id_order_type
-                                    ),
-                                    new.id_order_type
                                 )
-                            ) as item(order_date, id_order_type)
+                            ) as item(order_date)
                         )
                 end
             where
@@ -367,17 +259,6 @@ begin
                     else
                         max_general_order_date_order_date
                 end,
-                max_general_order_date_id_order_type = case
-                    when
-                        old.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                    then
-                        cm_array_remove_one_element(
-                            max_general_order_date_id_order_type,
-                            old.id_order_type
-                        )
-                    else
-                        max_general_order_date_id_order_type
-                end,
                 max_general_order_date = case
                     when
                         old.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
@@ -390,12 +271,8 @@ begin
                                 cm_array_remove_one_element(
                                     max_general_order_date_order_date,
                                     old.order_date
-                                ),
-                                cm_array_remove_one_element(
-                                    max_general_order_date_id_order_type,
-                                    old.id_order_type
                                 )
-                            ) as item(order_date, id_order_type)
+                            ) as item(order_date)
                         )
                     else
                         max_general_order_date
@@ -411,17 +288,6 @@ begin
                     else
                         max_combiner_order_date_order_date
                 end,
-                max_combiner_order_date_id_order_type = case
-                    when
-                        old.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                    then
-                        cm_array_remove_one_element(
-                            max_combiner_order_date_id_order_type,
-                            old.id_order_type
-                        )
-                    else
-                        max_combiner_order_date_id_order_type
-                end,
                 max_combiner_order_date = case
                     when
                         old.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
@@ -434,12 +300,8 @@ begin
                                 cm_array_remove_one_element(
                                     max_combiner_order_date_order_date,
                                     old.order_date
-                                ),
-                                cm_array_remove_one_element(
-                                    max_combiner_order_date_id_order_type,
-                                    old.id_order_type
                                 )
-                            ) as item(order_date, id_order_type)
+                            ) as item(order_date)
                         )
                     else
                         max_combiner_order_date
@@ -469,17 +331,6 @@ begin
                     else
                         max_general_order_date_order_date
                 end,
-                max_general_order_date_id_order_type = case
-                    when
-                        new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                    then
-                        array_append(
-                            max_general_order_date_id_order_type,
-                            new.id_order_type
-                        )
-                    else
-                        max_general_order_date_id_order_type
-                end,
                 max_general_order_date = case
                     when
                         new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
@@ -501,17 +352,6 @@ begin
                         )
                     else
                         max_combiner_order_date_order_date
-                end,
-                max_combiner_order_date_id_order_type = case
-                    when
-                        new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                    then
-                        array_append(
-                            max_combiner_order_date_id_order_type,
-                            new.id_order_type
-                        )
-                    else
-                        max_combiner_order_date_id_order_type
                 end,
                 max_combiner_order_date = case
                     when
@@ -554,17 +394,6 @@ begin
                     else
                         max_general_order_date_order_date
                 end,
-                max_general_order_date_id_order_type = case
-                    when
-                        new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                    then
-                        array_append(
-                            max_general_order_date_id_order_type,
-                            new.id_order_type
-                        )
-                    else
-                        max_general_order_date_id_order_type
-                end,
                 max_general_order_date = case
                     when
                         new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
@@ -586,17 +415,6 @@ begin
                         )
                     else
                         max_combiner_order_date_order_date
-                end,
-                max_combiner_order_date_id_order_type = case
-                    when
-                        new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                    then
-                        array_append(
-                            max_combiner_order_date_id_order_type,
-                            new.id_order_type
-                        )
-                    else
-                        max_combiner_order_date_id_order_type
                 end,
                 max_combiner_order_date = case
                     when

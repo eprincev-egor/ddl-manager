@@ -73,7 +73,7 @@ export class AggFactory {
         const aggColumnName = this.columnNameGenerator.generateName(aggCall);
         const childAggregations: ArrayAgg[] = [];
 
-        const depsColumns = aggCall.getColumnReferences();
+        const depsColumns = aggCall.withoutWhere().getColumnReferences();
         for (const columnRef of depsColumns) {
             const helperColumnName = aggColumnName + "_" + columnRef.name;
 
