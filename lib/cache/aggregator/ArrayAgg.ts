@@ -6,7 +6,7 @@ export class ArrayAgg extends AbstractAgg {
     minus(value: Expression) {
         return Expression.funcCall(
             "cm_array_remove_one_element", [
-                this.total,
+                new Expression([this.total]),
                 value
             ]
         );
@@ -15,22 +15,8 @@ export class ArrayAgg extends AbstractAgg {
     plus(value: Expression) {
         return Expression.funcCall(
             this.chooseAppendFunction(), [
-                this.total,
+                new Expression([this.total]),
                 value
-            ]
-        );
-    }
-
-    delta(prevValue: Expression, nextValue: Expression) {
-        return Expression.funcCall(
-            this.chooseAppendFunction(), [
-                Expression.funcCall(
-                    "cm_array_remove_one_element", [
-                        this.total,
-                        prevValue
-                    ]
-                ),
-                nextValue
             ]
         );
     }

@@ -1,26 +1,24 @@
-import { FuncCall, Expression, IExpressionElement, SelectColumn } from "../../ast";
+import { FuncCall, Expression, SelectColumn, IExpressionElement } from "../../ast";
 
 export interface IAggParams {
     updateColumn: SelectColumn;
     call: FuncCall;
-    total: Expression;
+    total: IExpressionElement;
 }
 
 export abstract class AbstractAgg {
 
     readonly call: FuncCall;
-    readonly total: Expression;
-    protected readonly updateColumn: SelectColumn;
+    readonly total: IExpressionElement;
+    readonly helpersAgg?: AbstractAgg[];
 
     constructor(params: IAggParams) {
         this.call = params.call;
         this.total = params.total;
-        this.updateColumn = params.updateColumn;
     }
 
-    abstract minus(value: Expression): IExpressionElement;
-    abstract plus(value: Expression): IExpressionElement;
-    abstract delta(prevValue: Expression, nextValue: Expression): IExpressionElement;
+    abstract minus(value: Expression): Expression;
+    abstract plus(value: Expression): Expression;
 
     default(): string {
         return "null";

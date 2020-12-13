@@ -43,6 +43,10 @@ export class ColumnReference extends AbstractExpressionElement {
         if ( this.tableReference.alias ) {
             return [`${this.tableReference.alias}.${this.name}`];
         }
+
+        if ( this.tableReference.table.toStringWithoutPublic() === "." ) {
+            return [this.name];
+        }
         return [`${this.tableReference.table.toStringWithoutPublic()}.${this.name}`];
     }
 }

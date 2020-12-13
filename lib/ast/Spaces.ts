@@ -5,6 +5,10 @@ export class Spaces {
     static empty() {
         return new Spaces();
     }
+
+    static level(level: number) {
+        return new Spaces(level);
+    }
     
     private constructor(private readonly level: number = 0) {}
 

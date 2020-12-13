@@ -9,7 +9,8 @@ import {
     SetItem,
     Update,
     NotExpression,
-    CaseWhen
+    CaseWhen,
+    Spaces
 } from "../../ast";
 import { flatMap } from "lodash";
 import { createAggValue } from "./createAggValue";
@@ -48,7 +49,6 @@ function createSetItems(
     const updateColumns = prepareUpdateColumns(cache, aggType);
     const setItems = flatMap(updateColumns, updateColumn => 
         createSetItemsByColumn(
-            cache,
             triggerTable, 
             joins,
             updateColumn,
@@ -90,7 +90,6 @@ function prepareUpdateColumns(cache: Cache, aggType: AggType) {
 }
 
 function createSetItemsByColumn(
-    cache: Cache,
     triggerTable: TableID,
     joins: IJoinMeta[],
     updateColumn: SelectColumn,
@@ -164,11 +163,19 @@ function aggregate(
     aggColumnName: string,
     hasOtherUpdates: boolean
 ) {
-    let sql!: AbstractAstElement;
+    let sql!: Expression;
 
     if ( aggType === "delta" ) {
         const prevValue = createAggValue(triggerTable, joins, aggCall.args, "old");
         const nextValue = createAggValue(triggerTable, joins, aggCall.args, "new");
+
+        sql = delta(
+            triggerTable,
+            joins,
+            agg,
+            prevValue,
+            nextValue
+        );
 
         if ( aggCall.where ) {
             const matchedOld = aggCall.where.replaceTable(
@@ -199,21 +206,35 @@ function aggregate(
                 cases: [
                     {
                         when: needPlus,
-                        then: agg.plus(nextValue) as any
+                        then: aggregate(
+                            triggerTable,
+                            joins,
+                            aggCall,
+                            "plus",
+                            agg,
+                            aggColumnName,
+                            false
+                        )
                     },
                     {
                         when: needMinus,
-                        then: agg.minus(prevValue)
+                        then: aggregate(
+                            triggerTable,
+                            joins,
+                            aggCall,
+                            "minus",
+                            agg,
+                            aggColumnName,
+                            false
+                        )
                     }
                 ], 
                 else: isImmutableAggCall(aggCall) ? 
                     Expression.unknown(aggColumnName) :
-                    agg.delta(prevValue, nextValue) as any
+                    sql as any
             });
             
-            sql = caseWhen;
-        } else {
-            sql = agg.delta(prevValue, nextValue);
+            sql = caseWhen as any;
         }
     }
     else {
@@ -224,6 +245,27 @@ function aggregate(
             aggType2row(aggType)
         );
         sql = agg[aggType](value);
+
+        const helpersAgg = agg.helpersAgg || [];
+        for (const helperAgg of helpersAgg) {
+
+            const helperPrevValue = createAggValue(
+                triggerTable,
+                joins,
+                helperAgg.call.args,
+                aggType2row(aggType)
+            );
+
+            const helperSpaces = Spaces.level(2);
+            const helperValue = helperAgg[aggType](helperPrevValue)
+                .toSQL(helperSpaces)
+                .trim();
+
+            sql = sql.replaceColumn(
+                helperAgg.total.toString(),
+                helperValue
+            );
+        }
 
         if ( aggCall.where && hasOtherUpdates ) {
             const whenNeedUpdate = aggCall.where.replaceTable(
@@ -242,12 +284,65 @@ function aggregate(
                     }
                 ],
                 else: Expression.unknown(aggColumnName)
-            });
+            }) as any;
         }
     
     }
 
     return sql;
+}
+
+function delta(
+    triggerTable: TableID,
+    joins: IJoinMeta[],
+    agg: AbstractAgg,
+    prevValue: Expression,
+    nextValue: Expression
+) {
+    const minus = agg.minus(prevValue);
+    const plus = agg.plus(nextValue);
+    let delta = plus.replaceColumn(
+        agg.total.toString(),
+        minus.toString()
+    );
+
+    const helpersAgg = agg.helpersAgg || [];
+    for (const helperAgg of helpersAgg ) {
+        
+        if ( isImmutableAggCall(helperAgg.call) ) {
+            continue;
+        }
+
+        const helperPrevValue = createAggValue(
+            triggerTable,
+            joins,
+            helperAgg.call.args,
+            "old"
+        );
+        const helperNextValue = createAggValue(
+            triggerTable,
+            joins,
+            helperAgg.call.args,
+            "new"
+        );
+
+        const helperMinus = helperAgg.minus(helperPrevValue);
+        const helperPlus = helperAgg.plus(helperNextValue);
+        const helperDelta = helperPlus.replaceColumn(
+            helperAgg.total.toString(),
+            helperMinus.toString()
+        );
+        const helperDeltaSQL = helperDelta
+            .toSQL( Spaces.level(2) )
+            .trim();
+
+        delta = delta.replaceColumn(
+            helperAgg.total.toString(),
+            helperDeltaSQL
+        );
+    }
+
+    return delta;
 }
 
 function aggType2row(aggType: AggType) {

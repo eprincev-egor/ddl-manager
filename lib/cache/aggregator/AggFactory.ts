@@ -1,4 +1,6 @@
-import { FuncCall, Expression, SelectColumn } from "../../ast";
+import { FuncCall, Expression, SelectColumn, ColumnReference, UnknownExpressionElement } from "../../ast";
+import { TableID } from "../../database/schema/TableID";
+import { TableReference } from "../../database/schema/TableReference";
 import { AbstractAgg } from "./AbstractAgg";
 import { aggregatorsMap } from "./aggregatorsMap";
 import { ArrayAgg } from "./ArrayAgg";
@@ -57,7 +59,15 @@ export class AggFactory {
         const agg = new ConcreteAggregator({
             updateColumn: this.updateColumn,
             call: aggCall,
-            total: Expression.unknown(aggColumnName)
+            total: UnknownExpressionElement.fromSql(aggColumnName, {
+                [aggColumnName]: new ColumnReference(
+                    new TableReference(new TableID(
+                        "",
+                        ""
+                    )),
+                    aggColumnName
+                )
+            })
         });
 
         return {
@@ -86,9 +96,18 @@ export class AggFactory {
                         new Expression([
                             columnRef
                         ])
-                    ]
+                    ],
+                    aggCall.where
                 ),
-                total: Expression.unknown(helperColumnName)
+                total: UnknownExpressionElement.fromSql(helperColumnName, {
+                    [helperColumnName]: new ColumnReference(
+                        new TableReference(new TableID(
+                            "",
+                            ""
+                        )),
+                        helperColumnName
+                    )
+                })
             });
             map[ helperColumnName ] = helperArrayAgg;
 
@@ -98,7 +117,7 @@ export class AggFactory {
         const universalAgg = new UniversalAgg({
             updateColumn: this.updateColumn,
             call: aggCall,
-            total: Expression.unknown(aggColumnName)
+            total: UnknownExpressionElement.fromSql(aggColumnName)
         }, childAggregations);
         
         map[ aggColumnName ] = universalAgg;

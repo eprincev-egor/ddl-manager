@@ -36,27 +36,35 @@ begin
                 old_country_to_name is not null
             then
                 update companies set
-                    from_countries_array_agg = cm_array_remove_one_element(
-                        from_countries_array_agg,
+                    from_countries_name = cm_array_remove_one_element(
+                        from_countries_name,
                         old_country_from_name
                     ),
-                    from_countries = array_to_string(
-                        cm_array_remove_one_element(
-                            from_countries_array_agg,
-                            old_country_from_name
-                        ),
-                        ', '
+                    from_countries = (
+                        select
+                            string_agg(item.name, ', ')
+
+                        from unnest(
+                            cm_array_remove_one_element(
+                                from_countries_name,
+                                old_country_from_name
+                            )
+                        ) as item(name)
                     ),
-                    to_countries_array_agg = cm_array_remove_one_element(
-                        to_countries_array_agg,
+                    to_countries_name = cm_array_remove_one_element(
+                        to_countries_name,
                         old_country_to_name
                     ),
-                    to_countries = array_to_string(
-                        cm_array_remove_one_element(
-                            to_countries_array_agg,
-                            old_country_to_name
-                        ),
-                        ', '
+                    to_countries = (
+                        select
+                            string_agg(item.name, ', ')
+
+                        from unnest(
+                            cm_array_remove_one_element(
+                                to_countries_name,
+                                old_country_to_name
+                            )
+                        ) as item(name)
                     )
                 where
                     old.id_client = companies.id;
@@ -129,39 +137,47 @@ begin
         if new.id_client is not distinct from old.id_client then
 
             update companies set
-                from_countries_array_agg = array_append(
+                from_countries_name = array_append(
                     cm_array_remove_one_element(
-                        from_countries_array_agg,
+                        from_countries_name,
                         old_country_from_name
                     ),
                     new_country_from_name
                 ),
-                from_countries = array_to_string(
-                    array_append(
-                        cm_array_remove_one_element(
-                            from_countries_array_agg,
-                            old_country_from_name
-                        ),
-                        new_country_from_name
-                    ),
-                    ', '
+                from_countries = (
+                    select
+                        string_agg(item.name, ', ')
+
+                    from unnest(
+                        array_append(
+                            cm_array_remove_one_element(
+                                from_countries_name,
+                                old_country_from_name
+                            ),
+                            new_country_from_name
+                        )
+                    ) as item(name)
                 ),
-                to_countries_array_agg = array_append(
+                to_countries_name = array_append(
                     cm_array_remove_one_element(
-                        to_countries_array_agg,
+                        to_countries_name,
                         old_country_to_name
                     ),
                     new_country_to_name
                 ),
-                to_countries = array_to_string(
-                    array_append(
-                        cm_array_remove_one_element(
-                            to_countries_array_agg,
-                            old_country_to_name
-                        ),
-                        new_country_to_name
-                    ),
-                    ', '
+                to_countries = (
+                    select
+                        string_agg(item.name, ', ')
+
+                    from unnest(
+                        array_append(
+                            cm_array_remove_one_element(
+                                to_countries_name,
+                                old_country_to_name
+                            ),
+                            new_country_to_name
+                        )
+                    ) as item(name)
                 )
             where
                 new.id_client = companies.id;
@@ -180,27 +196,35 @@ begin
             )
         then
             update companies set
-                from_countries_array_agg = cm_array_remove_one_element(
-                    from_countries_array_agg,
+                from_countries_name = cm_array_remove_one_element(
+                    from_countries_name,
                     old_country_from_name
                 ),
-                from_countries = array_to_string(
-                    cm_array_remove_one_element(
-                        from_countries_array_agg,
-                        old_country_from_name
-                    ),
-                    ', '
+                from_countries = (
+                    select
+                        string_agg(item.name, ', ')
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            from_countries_name,
+                            old_country_from_name
+                        )
+                    ) as item(name)
                 ),
-                to_countries_array_agg = cm_array_remove_one_element(
-                    to_countries_array_agg,
+                to_countries_name = cm_array_remove_one_element(
+                    to_countries_name,
                     old_country_to_name
                 ),
-                to_countries = array_to_string(
-                    cm_array_remove_one_element(
-                        to_countries_array_agg,
-                        old_country_to_name
-                    ),
-                    ', '
+                to_countries = (
+                    select
+                        string_agg(item.name, ', ')
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            to_countries_name,
+                            old_country_to_name
+                        )
+                    ) as item(name)
                 )
             where
                 old.id_client = companies.id;
@@ -216,27 +240,35 @@ begin
             )
         then
             update companies set
-                from_countries_array_agg = array_append(
-                    from_countries_array_agg,
+                from_countries_name = array_append(
+                    from_countries_name,
                     new_country_from_name
                 ),
-                from_countries = array_to_string(
-                    array_append(
-                        from_countries_array_agg,
-                        new_country_from_name
-                    ),
-                    ', '
+                from_countries = (
+                    select
+                        string_agg(item.name, ', ')
+
+                    from unnest(
+                        array_append(
+                            from_countries_name,
+                            new_country_from_name
+                        )
+                    ) as item(name)
                 ),
-                to_countries_array_agg = array_append(
-                    to_countries_array_agg,
+                to_countries_name = array_append(
+                    to_countries_name,
                     new_country_to_name
                 ),
-                to_countries = array_to_string(
-                    array_append(
-                        to_countries_array_agg,
-                        new_country_to_name
-                    ),
-                    ', '
+                to_countries = (
+                    select
+                        string_agg(item.name, ', ')
+
+                    from unnest(
+                        array_append(
+                            to_countries_name,
+                            new_country_to_name
+                        )
+                    ) as item(name)
                 )
             where
                 new.id_client = companies.id;
@@ -275,27 +307,35 @@ begin
                 new_country_to_name is not null
             then
                 update companies set
-                    from_countries_array_agg = array_append(
-                        from_countries_array_agg,
+                    from_countries_name = array_append(
+                        from_countries_name,
                         new_country_from_name
                     ),
-                    from_countries = array_to_string(
-                        array_append(
-                            from_countries_array_agg,
-                            new_country_from_name
-                        ),
-                        ', '
+                    from_countries = (
+                        select
+                            string_agg(item.name, ', ')
+
+                        from unnest(
+                            array_append(
+                                from_countries_name,
+                                new_country_from_name
+                            )
+                        ) as item(name)
                     ),
-                    to_countries_array_agg = array_append(
-                        to_countries_array_agg,
+                    to_countries_name = array_append(
+                        to_countries_name,
                         new_country_to_name
                     ),
-                    to_countries = array_to_string(
-                        array_append(
-                            to_countries_array_agg,
-                            new_country_to_name
-                        ),
-                        ', '
+                    to_countries = (
+                        select
+                            string_agg(item.name, ', ')
+
+                        from unnest(
+                            array_append(
+                                to_countries_name,
+                                new_country_to_name
+                            )
+                        ) as item(name)
                     )
                 where
                     new.id_client = companies.id;

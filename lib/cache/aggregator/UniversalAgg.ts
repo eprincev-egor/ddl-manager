@@ -1,17 +1,16 @@
-import { Expression, ColumnReference, Spaces } from "../../ast";
+import { Expression, ColumnReference, Spaces, IColumnsMap } from "../../ast";
+import { TableID } from "../../database/schema/TableID";
 import { TableReference } from "../../database/schema/TableReference";
 import { AbstractAgg, IAggParams } from "./AbstractAgg";
 import { ArrayAgg } from "./ArrayAgg";
 
-type AggType = "minus" | "plus" | "delta";
-
 export class UniversalAgg extends AbstractAgg {
 
-    private childAggregations: ArrayAgg[];
+    readonly helpersAgg: ArrayAgg[];
 
     constructor(params: IAggParams, childAggregations: ArrayAgg[]) {
         super(params);
-        this.childAggregations = childAggregations;
+        this.helpersAgg = childAggregations;
     }
 
     minus() {
@@ -20,9 +19,9 @@ export class UniversalAgg extends AbstractAgg {
 ${ this.printMainAgg() }
 
     from unnest(
-${ this.printChildrenAggregations("minus") }
+${ this.printChildrenAggregations() }
     ) as ${ this.printAlias() }
-)`);
+)`, this.buildColumnsMap());
     }
 
     plus() {
@@ -31,20 +30,9 @@ ${ this.printChildrenAggregations("minus") }
 ${ this.printMainAgg() }
 
     from unnest(
-${ this.printChildrenAggregations("plus") }
+${ this.printChildrenAggregations() }
     ) as ${ this.printAlias() }
-)`);
-    }
-
-    delta() {
-        return Expression.unknown(`(
-    select
-${ this.printMainAgg() }
-
-    from unnest(
-${ this.printChildrenAggregations("delta") }
-    ) as ${ this.printAlias() }
-)`);
+)`, this.buildColumnsMap());
     }
 
     private printMainAgg() {
@@ -68,16 +56,14 @@ ${ this.printChildrenAggregations("delta") }
         return lines.join("\n");
     }
 
-    private printChildrenAggregations(aggType: AggType) {
+    private printChildrenAggregations() {
         let sql: string = "";
 
-        for (const arrayAgg of this.childAggregations) {
-            const expression = this.callChildAgg(arrayAgg, aggType);
-
+        for (const arrayAgg of this.helpersAgg) {
             if ( sql ) {
                 sql += ",\n";
             }
-            sql += expression.toString();
+            sql += arrayAgg.total.toString();
         }
 
         const spaces = Spaces.empty()
@@ -89,38 +75,29 @@ ${ this.printChildrenAggregations("delta") }
         return lines.join("\n");
     }
 
-    private callChildAgg(arrayAgg: ArrayAgg, aggType: AggType) {
-        const columnRef = arrayAgg.call.getColumnReferences()[0] as ColumnReference;
-        
-        if ( aggType === "delta" && columnRef.name === "id" ) {
-            return arrayAgg.total;
-        }
-
-        const minusValue = Expression.unknown(`old.${ columnRef.name }`);
-        const plusValue = Expression.unknown(`new.${ columnRef.name }`);
-
-        if ( aggType === "minus" ) {
-            const sql = arrayAgg.minus( minusValue );
-            return sql;
-        }
-        if ( aggType === "plus" ) {
-            const sql = arrayAgg.plus( plusValue );
-            return sql;
-        }
-
-        // delta
-        const sql = arrayAgg.delta(
-            minusValue,
-            plusValue
-        );
-        return sql;
-    }
-
     private printAlias() {
-        const columns = this.childAggregations.map(arrayAgg => {
+        const columns = this.helpersAgg.map(arrayAgg => {
             const columnRef = arrayAgg.call.getColumnReferences()[0] as ColumnReference;
             return columnRef.name;
         });
         return `item(${ columns.join(", ") })`
+    }
+
+    private buildColumnsMap() {
+        const columnsMap: IColumnsMap = {};
+
+        for (const helperAgg of this.helpersAgg) {
+            const aggColumnName = helperAgg.total.toString();
+
+            columnsMap[ aggColumnName ] = new ColumnReference(
+                new TableReference(new TableID(
+                    "",
+                    ""
+                )),
+                aggColumnName
+            );
+        }
+
+        return columnsMap;
     }
 }

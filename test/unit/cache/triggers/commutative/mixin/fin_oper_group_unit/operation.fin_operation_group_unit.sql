@@ -54,52 +54,66 @@ begin
                     group_unit_volume = group_unit_volume - coalesce(old.volume, 0),
                     group_unit_ldm = group_unit_ldm - coalesce(old.ldm, 0),
                     group_unit_quantity_pallet = group_unit_quantity_pallet - coalesce(old.quantity_pallet, 0),
-                    group_unit_buyers_names_array_agg = case
+                    group_unit_buyers_names_list_company_name = case
                         when
                             company_buyer.list_company_name is not null
                         then
                             cm_array_remove_one_element(
-                                group_unit_buyers_names_array_agg,
+                                group_unit_buyers_names_list_company_name,
                                 old_company_buyer_list_company_name
                             )
                         else
-                            group_unit_buyers_names_array_agg
+                            group_unit_buyers_names_list_company_name
                     end,
                     group_unit_buyers_names = case
                         when
                             company_buyer.list_company_name is not null
                         then
-                            cm_array_to_string_distinct(
-                                cm_array_remove_one_element(
-                                    group_unit_buyers_names_array_agg,
-                                    old_company_buyer_list_company_name
-                                ),
-                                ', '
+                            (
+                                select
+                                    string_agg(distinct 
+                                        item.list_company_name,
+                                        ', '
+                                    ) filter (where company_buyer.list_company_name is not null)
+
+                                from unnest(
+                                    cm_array_remove_one_element(
+                                        group_unit_buyers_names_list_company_name,
+                                        old_company_buyer_list_company_name
+                                    )
+                                ) as item(list_company_name)
                             )
                         else
                             group_unit_buyers_names
                     end,
-                    group_unit_delivery_names_array_agg = case
+                    group_unit_delivery_names_list_warehouse_name = case
                         when
                             point_delivery.list_warehouse_name is not null
                         then
                             cm_array_remove_one_element(
-                                group_unit_delivery_names_array_agg,
+                                group_unit_delivery_names_list_warehouse_name,
                                 old_point_delivery_list_warehouse_name
                             )
                         else
-                            group_unit_delivery_names_array_agg
+                            group_unit_delivery_names_list_warehouse_name
                     end,
                     group_unit_delivery_names = case
                         when
                             point_delivery.list_warehouse_name is not null
                         then
-                            cm_array_to_string_distinct(
-                                cm_array_remove_one_element(
-                                    group_unit_delivery_names_array_agg,
-                                    old_point_delivery_list_warehouse_name
-                                ),
-                                ', '
+                            (
+                                select
+                                    string_agg(distinct 
+                                        item.list_warehouse_name,
+                                        ', '
+                                    ) filter (where point_delivery.list_warehouse_name is not null)
+
+                                from unnest(
+                                    cm_array_remove_one_element(
+                                        group_unit_delivery_names_list_warehouse_name,
+                                        old_point_delivery_list_warehouse_name
+                                    )
+                                ) as item(list_warehouse_name)
                             )
                         else
                             group_unit_delivery_names
@@ -199,14 +213,14 @@ begin
                 group_unit_volume = group_unit_volume - coalesce(old.volume, 0) + coalesce(new.volume, 0),
                 group_unit_ldm = group_unit_ldm - coalesce(old.ldm, 0) + coalesce(new.ldm, 0),
                 group_unit_quantity_pallet = group_unit_quantity_pallet - coalesce(old.quantity_pallet, 0) + coalesce(new.quantity_pallet, 0),
-                group_unit_buyers_names_array_agg = case
+                group_unit_buyers_names_list_company_name = case
                     when
                         company_buyer.list_company_name is not null
                         and
                         not(company_buyer.list_company_name is not null)
                     then
                         array_append(
-                            group_unit_buyers_names_array_agg,
+                            group_unit_buyers_names_list_company_name,
                             new_company_buyer_list_company_name
                         )
                     when
@@ -215,13 +229,13 @@ begin
                         company_buyer.list_company_name is not null
                     then
                         cm_array_remove_one_element(
-                            group_unit_buyers_names_array_agg,
+                            group_unit_buyers_names_list_company_name,
                             old_company_buyer_list_company_name
                         )
                     else
                         array_append(
                             cm_array_remove_one_element(
-                                group_unit_buyers_names_array_agg,
+                                group_unit_buyers_names_list_company_name,
                                 old_company_buyer_list_company_name
                             ),
                             new_company_buyer_list_company_name
@@ -233,45 +247,66 @@ begin
                         and
                         not(company_buyer.list_company_name is not null)
                     then
-                        cm_array_to_string_distinct(
-                            array_append(
-                                group_unit_buyers_names_array_agg,
-                                new_company_buyer_list_company_name
-                            ),
-                            ', '
+                        (
+                            select
+                                string_agg(distinct 
+                                    item.list_company_name,
+                                    ', '
+                                ) filter (where company_buyer.list_company_name is not null)
+
+                            from unnest(
+                                array_append(
+                                    group_unit_buyers_names_list_company_name,
+                                    new_company_buyer_list_company_name
+                                )
+                            ) as item(list_company_name)
                         )
                     when
                         not(company_buyer.list_company_name is not null)
                         and
                         company_buyer.list_company_name is not null
                     then
-                        cm_array_to_string_distinct(
-                            cm_array_remove_one_element(
-                                group_unit_buyers_names_array_agg,
-                                old_company_buyer_list_company_name
-                            ),
-                            ', '
+                        (
+                            select
+                                string_agg(distinct 
+                                    item.list_company_name,
+                                    ', '
+                                ) filter (where company_buyer.list_company_name is not null)
+
+                            from unnest(
+                                cm_array_remove_one_element(
+                                    group_unit_buyers_names_list_company_name,
+                                    old_company_buyer_list_company_name
+                                )
+                            ) as item(list_company_name)
                         )
                     else
-                        cm_array_to_string_distinct(
-                            array_append(
-                                cm_array_remove_one_element(
-                                    group_unit_buyers_names_array_agg,
-                                    old_company_buyer_list_company_name
-                                ),
-                                new_company_buyer_list_company_name
-                            ),
-                            ', '
+                        (
+                            select
+                                string_agg(distinct 
+                                    item.list_company_name,
+                                    ', '
+                                ) filter (where company_buyer.list_company_name is not null)
+
+                            from unnest(
+                                array_append(
+                                    cm_array_remove_one_element(
+                                        group_unit_buyers_names_list_company_name,
+                                        old_company_buyer_list_company_name
+                                    ),
+                                    new_company_buyer_list_company_name
+                                )
+                            ) as item(list_company_name)
                         )
                 end,
-                group_unit_delivery_names_array_agg = case
+                group_unit_delivery_names_list_warehouse_name = case
                     when
                         point_delivery.list_warehouse_name is not null
                         and
                         not(point_delivery.list_warehouse_name is not null)
                     then
                         array_append(
-                            group_unit_delivery_names_array_agg,
+                            group_unit_delivery_names_list_warehouse_name,
                             new_point_delivery_list_warehouse_name
                         )
                     when
@@ -280,13 +315,13 @@ begin
                         point_delivery.list_warehouse_name is not null
                     then
                         cm_array_remove_one_element(
-                            group_unit_delivery_names_array_agg,
+                            group_unit_delivery_names_list_warehouse_name,
                             old_point_delivery_list_warehouse_name
                         )
                     else
                         array_append(
                             cm_array_remove_one_element(
-                                group_unit_delivery_names_array_agg,
+                                group_unit_delivery_names_list_warehouse_name,
                                 old_point_delivery_list_warehouse_name
                             ),
                             new_point_delivery_list_warehouse_name
@@ -298,35 +333,56 @@ begin
                         and
                         not(point_delivery.list_warehouse_name is not null)
                     then
-                        cm_array_to_string_distinct(
-                            array_append(
-                                group_unit_delivery_names_array_agg,
-                                new_point_delivery_list_warehouse_name
-                            ),
-                            ', '
+                        (
+                            select
+                                string_agg(distinct 
+                                    item.list_warehouse_name,
+                                    ', '
+                                ) filter (where point_delivery.list_warehouse_name is not null)
+
+                            from unnest(
+                                array_append(
+                                    group_unit_delivery_names_list_warehouse_name,
+                                    new_point_delivery_list_warehouse_name
+                                )
+                            ) as item(list_warehouse_name)
                         )
                     when
                         not(point_delivery.list_warehouse_name is not null)
                         and
                         point_delivery.list_warehouse_name is not null
                     then
-                        cm_array_to_string_distinct(
-                            cm_array_remove_one_element(
-                                group_unit_delivery_names_array_agg,
-                                old_point_delivery_list_warehouse_name
-                            ),
-                            ', '
+                        (
+                            select
+                                string_agg(distinct 
+                                    item.list_warehouse_name,
+                                    ', '
+                                ) filter (where point_delivery.list_warehouse_name is not null)
+
+                            from unnest(
+                                cm_array_remove_one_element(
+                                    group_unit_delivery_names_list_warehouse_name,
+                                    old_point_delivery_list_warehouse_name
+                                )
+                            ) as item(list_warehouse_name)
                         )
                     else
-                        cm_array_to_string_distinct(
-                            array_append(
-                                cm_array_remove_one_element(
-                                    group_unit_delivery_names_array_agg,
-                                    old_point_delivery_list_warehouse_name
-                                ),
-                                new_point_delivery_list_warehouse_name
-                            ),
-                            ', '
+                        (
+                            select
+                                string_agg(distinct 
+                                    item.list_warehouse_name,
+                                    ', '
+                                ) filter (where point_delivery.list_warehouse_name is not null)
+
+                            from unnest(
+                                array_append(
+                                    cm_array_remove_one_element(
+                                        group_unit_delivery_names_list_warehouse_name,
+                                        old_point_delivery_list_warehouse_name
+                                    ),
+                                    new_point_delivery_list_warehouse_name
+                                )
+                            ) as item(list_warehouse_name)
                         )
                 end
             where
@@ -364,52 +420,66 @@ begin
                 group_unit_volume = group_unit_volume - coalesce(old.volume, 0),
                 group_unit_ldm = group_unit_ldm - coalesce(old.ldm, 0),
                 group_unit_quantity_pallet = group_unit_quantity_pallet - coalesce(old.quantity_pallet, 0),
-                group_unit_buyers_names_array_agg = case
+                group_unit_buyers_names_list_company_name = case
                     when
                         company_buyer.list_company_name is not null
                     then
                         cm_array_remove_one_element(
-                            group_unit_buyers_names_array_agg,
+                            group_unit_buyers_names_list_company_name,
                             old_company_buyer_list_company_name
                         )
                     else
-                        group_unit_buyers_names_array_agg
+                        group_unit_buyers_names_list_company_name
                 end,
                 group_unit_buyers_names = case
                     when
                         company_buyer.list_company_name is not null
                     then
-                        cm_array_to_string_distinct(
-                            cm_array_remove_one_element(
-                                group_unit_buyers_names_array_agg,
-                                old_company_buyer_list_company_name
-                            ),
-                            ', '
+                        (
+                            select
+                                string_agg(distinct 
+                                    item.list_company_name,
+                                    ', '
+                                ) filter (where company_buyer.list_company_name is not null)
+
+                            from unnest(
+                                cm_array_remove_one_element(
+                                    group_unit_buyers_names_list_company_name,
+                                    old_company_buyer_list_company_name
+                                )
+                            ) as item(list_company_name)
                         )
                     else
                         group_unit_buyers_names
                 end,
-                group_unit_delivery_names_array_agg = case
+                group_unit_delivery_names_list_warehouse_name = case
                     when
                         point_delivery.list_warehouse_name is not null
                     then
                         cm_array_remove_one_element(
-                            group_unit_delivery_names_array_agg,
+                            group_unit_delivery_names_list_warehouse_name,
                             old_point_delivery_list_warehouse_name
                         )
                     else
-                        group_unit_delivery_names_array_agg
+                        group_unit_delivery_names_list_warehouse_name
                 end,
                 group_unit_delivery_names = case
                     when
                         point_delivery.list_warehouse_name is not null
                     then
-                        cm_array_to_string_distinct(
-                            cm_array_remove_one_element(
-                                group_unit_delivery_names_array_agg,
-                                old_point_delivery_list_warehouse_name
-                            ),
-                            ', '
+                        (
+                            select
+                                string_agg(distinct 
+                                    item.list_warehouse_name,
+                                    ', '
+                                ) filter (where point_delivery.list_warehouse_name is not null)
+
+                            from unnest(
+                                cm_array_remove_one_element(
+                                    group_unit_delivery_names_list_warehouse_name,
+                                    old_point_delivery_list_warehouse_name
+                                )
+                            ) as item(list_warehouse_name)
                         )
                     else
                         group_unit_delivery_names
@@ -446,52 +516,66 @@ begin
                 group_unit_volume = group_unit_volume + coalesce(new.volume, 0),
                 group_unit_ldm = group_unit_ldm + coalesce(new.ldm, 0),
                 group_unit_quantity_pallet = group_unit_quantity_pallet + coalesce(new.quantity_pallet, 0),
-                group_unit_buyers_names_array_agg = case
+                group_unit_buyers_names_list_company_name = case
                     when
                         company_buyer.list_company_name is not null
                     then
                         array_append(
-                            group_unit_buyers_names_array_agg,
+                            group_unit_buyers_names_list_company_name,
                             new_company_buyer_list_company_name
                         )
                     else
-                        group_unit_buyers_names_array_agg
+                        group_unit_buyers_names_list_company_name
                 end,
                 group_unit_buyers_names = case
                     when
                         company_buyer.list_company_name is not null
                     then
-                        cm_array_to_string_distinct(
-                            array_append(
-                                group_unit_buyers_names_array_agg,
-                                new_company_buyer_list_company_name
-                            ),
-                            ', '
+                        (
+                            select
+                                string_agg(distinct 
+                                    item.list_company_name,
+                                    ', '
+                                ) filter (where company_buyer.list_company_name is not null)
+
+                            from unnest(
+                                array_append(
+                                    group_unit_buyers_names_list_company_name,
+                                    new_company_buyer_list_company_name
+                                )
+                            ) as item(list_company_name)
                         )
                     else
                         group_unit_buyers_names
                 end,
-                group_unit_delivery_names_array_agg = case
+                group_unit_delivery_names_list_warehouse_name = case
                     when
                         point_delivery.list_warehouse_name is not null
                     then
                         array_append(
-                            group_unit_delivery_names_array_agg,
+                            group_unit_delivery_names_list_warehouse_name,
                             new_point_delivery_list_warehouse_name
                         )
                     else
-                        group_unit_delivery_names_array_agg
+                        group_unit_delivery_names_list_warehouse_name
                 end,
                 group_unit_delivery_names = case
                     when
                         point_delivery.list_warehouse_name is not null
                     then
-                        cm_array_to_string_distinct(
-                            array_append(
-                                group_unit_delivery_names_array_agg,
-                                new_point_delivery_list_warehouse_name
-                            ),
-                            ', '
+                        (
+                            select
+                                string_agg(distinct 
+                                    item.list_warehouse_name,
+                                    ', '
+                                ) filter (where point_delivery.list_warehouse_name is not null)
+
+                            from unnest(
+                                array_append(
+                                    group_unit_delivery_names_list_warehouse_name,
+                                    new_point_delivery_list_warehouse_name
+                                )
+                            ) as item(list_warehouse_name)
                         )
                     else
                         group_unit_delivery_names
@@ -551,52 +635,66 @@ begin
                     group_unit_volume = group_unit_volume + coalesce(new.volume, 0),
                     group_unit_ldm = group_unit_ldm + coalesce(new.ldm, 0),
                     group_unit_quantity_pallet = group_unit_quantity_pallet + coalesce(new.quantity_pallet, 0),
-                    group_unit_buyers_names_array_agg = case
+                    group_unit_buyers_names_list_company_name = case
                         when
                             company_buyer.list_company_name is not null
                         then
                             array_append(
-                                group_unit_buyers_names_array_agg,
+                                group_unit_buyers_names_list_company_name,
                                 new_company_buyer_list_company_name
                             )
                         else
-                            group_unit_buyers_names_array_agg
+                            group_unit_buyers_names_list_company_name
                     end,
                     group_unit_buyers_names = case
                         when
                             company_buyer.list_company_name is not null
                         then
-                            cm_array_to_string_distinct(
-                                array_append(
-                                    group_unit_buyers_names_array_agg,
-                                    new_company_buyer_list_company_name
-                                ),
-                                ', '
+                            (
+                                select
+                                    string_agg(distinct 
+                                        item.list_company_name,
+                                        ', '
+                                    ) filter (where company_buyer.list_company_name is not null)
+
+                                from unnest(
+                                    array_append(
+                                        group_unit_buyers_names_list_company_name,
+                                        new_company_buyer_list_company_name
+                                    )
+                                ) as item(list_company_name)
                             )
                         else
                             group_unit_buyers_names
                     end,
-                    group_unit_delivery_names_array_agg = case
+                    group_unit_delivery_names_list_warehouse_name = case
                         when
                             point_delivery.list_warehouse_name is not null
                         then
                             array_append(
-                                group_unit_delivery_names_array_agg,
+                                group_unit_delivery_names_list_warehouse_name,
                                 new_point_delivery_list_warehouse_name
                             )
                         else
-                            group_unit_delivery_names_array_agg
+                            group_unit_delivery_names_list_warehouse_name
                     end,
                     group_unit_delivery_names = case
                         when
                             point_delivery.list_warehouse_name is not null
                         then
-                            cm_array_to_string_distinct(
-                                array_append(
-                                    group_unit_delivery_names_array_agg,
-                                    new_point_delivery_list_warehouse_name
-                                ),
-                                ', '
+                            (
+                                select
+                                    string_agg(distinct 
+                                        item.list_warehouse_name,
+                                        ', '
+                                    ) filter (where point_delivery.list_warehouse_name is not null)
+
+                                from unnest(
+                                    array_append(
+                                        group_unit_delivery_names_list_warehouse_name,
+                                        new_point_delivery_list_warehouse_name
+                                    )
+                                ) as item(list_warehouse_name)
                             )
                         else
                             group_unit_delivery_names

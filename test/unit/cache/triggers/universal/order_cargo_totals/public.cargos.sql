@@ -25,16 +25,20 @@ begin
             then
                 update orders set
                     cargos_weight = cargos_weight - coalesce(old.total_weight, 0),
-                    cargos_products_names_array_agg = cm_array_remove_one_element(
-                        cargos_products_names_array_agg,
+                    cargos_products_names_name = cm_array_remove_one_element(
+                        cargos_products_names_name,
                         old_product_type_name
                     ),
-                    cargos_products_names = array_to_string(
-                        cm_array_remove_one_element(
-                            cargos_products_names_array_agg,
-                            old_product_type_name
-                        ),
-                        ', '
+                    cargos_products_names = (
+                        select
+                            string_agg(item.name, ', ')
+
+                        from unnest(
+                            cm_array_remove_one_element(
+                                cargos_products_names_name,
+                                old_product_type_name
+                            )
+                        ) as item(name)
                     )
                 where
                     old.id_order = orders.id;
@@ -84,22 +88,26 @@ begin
 
             update orders set
                 cargos_weight = cargos_weight - coalesce(old.total_weight, 0) + coalesce(new.total_weight, 0),
-                cargos_products_names_array_agg = array_append(
+                cargos_products_names_name = array_append(
                     cm_array_remove_one_element(
-                        cargos_products_names_array_agg,
+                        cargos_products_names_name,
                         old_product_type_name
                     ),
                     new_product_type_name
                 ),
-                cargos_products_names = array_to_string(
-                    array_append(
-                        cm_array_remove_one_element(
-                            cargos_products_names_array_agg,
-                            old_product_type_name
-                        ),
-                        new_product_type_name
-                    ),
-                    ', '
+                cargos_products_names = (
+                    select
+                        string_agg(item.name, ', ')
+
+                    from unnest(
+                        array_append(
+                            cm_array_remove_one_element(
+                                cargos_products_names_name,
+                                old_product_type_name
+                            ),
+                            new_product_type_name
+                        )
+                    ) as item(name)
                 )
             where
                 new.id_order = orders.id;
@@ -119,16 +127,20 @@ begin
         then
             update orders set
                 cargos_weight = cargos_weight - coalesce(old.total_weight, 0),
-                cargos_products_names_array_agg = cm_array_remove_one_element(
-                    cargos_products_names_array_agg,
+                cargos_products_names_name = cm_array_remove_one_element(
+                    cargos_products_names_name,
                     old_product_type_name
                 ),
-                cargos_products_names = array_to_string(
-                    cm_array_remove_one_element(
-                        cargos_products_names_array_agg,
-                        old_product_type_name
-                    ),
-                    ', '
+                cargos_products_names = (
+                    select
+                        string_agg(item.name, ', ')
+
+                    from unnest(
+                        cm_array_remove_one_element(
+                            cargos_products_names_name,
+                            old_product_type_name
+                        )
+                    ) as item(name)
                 )
             where
                 old.id_order = orders.id;
@@ -145,16 +157,20 @@ begin
         then
             update orders set
                 cargos_weight = cargos_weight + coalesce(new.total_weight, 0),
-                cargos_products_names_array_agg = array_append(
-                    cargos_products_names_array_agg,
+                cargos_products_names_name = array_append(
+                    cargos_products_names_name,
                     new_product_type_name
                 ),
-                cargos_products_names = array_to_string(
-                    array_append(
-                        cargos_products_names_array_agg,
-                        new_product_type_name
-                    ),
-                    ', '
+                cargos_products_names = (
+                    select
+                        string_agg(item.name, ', ')
+
+                    from unnest(
+                        array_append(
+                            cargos_products_names_name,
+                            new_product_type_name
+                        )
+                    ) as item(name)
                 )
             where
                 new.id_order = orders.id;
@@ -184,16 +200,20 @@ begin
             then
                 update orders set
                     cargos_weight = cargos_weight + coalesce(new.total_weight, 0),
-                    cargos_products_names_array_agg = array_append(
-                        cargos_products_names_array_agg,
+                    cargos_products_names_name = array_append(
+                        cargos_products_names_name,
                         new_product_type_name
                     ),
-                    cargos_products_names = array_to_string(
-                        array_append(
-                            cargos_products_names_array_agg,
-                            new_product_type_name
-                        ),
-                        ', '
+                    cargos_products_names = (
+                        select
+                            string_agg(item.name, ', ')
+
+                        from unnest(
+                            array_append(
+                                cargos_products_names_name,
+                                new_product_type_name
+                            )
+                        ) as item(name)
                     )
                 where
                     new.id_order = orders.id;

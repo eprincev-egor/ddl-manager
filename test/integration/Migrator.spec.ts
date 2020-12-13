@@ -1073,13 +1073,17 @@ describe("integration/MainMigrator", () => {
 
         await MainMigrator.migrate(postgres, migration);
 
-        const {rows} = await db.query("select * from companies");
+        const {rows} = await db.query(`
+            select
+                id,
+                doc_numbers,
+                some_profit,
+                max_profit
+            from companies
+        `);
         assert.deepStrictEqual(rows[0], {
             id: 1,
-            doc_numbers_array_agg: ["o1", "o2"] ,
             doc_numbers: "o1, o2",
-            some_profit_sum_profit: "300",
-            some_profit_sum_xxx: "30",
             some_profit: "630",
             max_profit: "200"
         });

@@ -25,22 +25,6 @@ export class SumAgg extends AbstractAgg {
         ]);
     }
 
-    delta(prevValue: Expression, nextValue: Expression) {
-        return new Expression([
-            this.total,
-            new Operator("-"),
-            new FuncCall("coalesce", [
-                prevValue,
-                Expression.unknown("0")
-            ]),
-            new Operator("+"),
-            new FuncCall("coalesce", [
-                nextValue,
-                Expression.unknown("0")
-            ])
-        ]);
-    }
-
     default() {
         return "0";
     }

@@ -5,7 +5,7 @@ import { TableReference } from "../../database/schema/TableReference";
 import { TableID } from "../../database/schema/TableID";
 import { AbstractExpressionElement } from "./AbstractExpressionElement";
 import { Spaces } from "../Spaces";
-import { UnknownExpressionElement } from "./UnknownExpressionElement";
+import { IColumnsMap, UnknownExpressionElement } from "./UnknownExpressionElement";
 
 type ConditionElementType = string | IExpressionElement;
 
@@ -19,8 +19,8 @@ export class Expression extends AbstractExpressionElement {
         return Expression.condition("or", conditions);
     }
 
-    static unknown(sql: string) {
-        const unknownElement = UnknownExpressionElement.fromSql(sql);
+    static unknown(sql: string, columnsMap: IColumnsMap = {}) {
+        const unknownElement = UnknownExpressionElement.fromSql(sql, columnsMap);
         return new Expression([unknownElement]);
     }
 
@@ -180,9 +180,9 @@ export class Expression extends AbstractExpressionElement {
         return conditions;
     }
 
-    clone() {
+    clone(newElements?: IExpressionElement[]) {
         return new Expression(
-            this.elements.map(elem => elem.clone())
+            newElements || this.elements.map(elem => elem.clone())
         );
     }
 
