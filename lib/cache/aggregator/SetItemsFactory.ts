@@ -16,7 +16,7 @@ import { CacheContext } from "../trigger-builder/CacheContext";
 import { TableReference } from "../../database/schema/TableReference";
 import { TableID } from "../../database/schema/TableID";
 
-type AggType = "minus" | "plus" | "delta";
+type AggType = "minus" | "plus";
 
 export class SetItemsFactory {
 
@@ -70,17 +70,6 @@ export class SetItemsFactory {
         for (const columnName in aggMap) {
             const agg = aggMap[ columnName ];
 
-            // can be helper aggregation array_agg(id) for universal agg
-            if ( aggType === "delta" ) {
-                const isNoEffect = (
-                    !agg.call.where &&
-                    isImmutableAggCall(agg.call)
-                );
-                if ( isNoEffect ) {
-                    continue;
-                }
-            }
-
             const sql = aggregate(
                 triggerTable,
                 joins,
@@ -130,132 +119,58 @@ function aggregate(
 ) {
     let sql!: Expression;
 
-    if ( aggType === "delta" ) {
-        const prevValue = createAggValue(triggerTable, joins, aggCall.args, "old");
-        const nextValue = createAggValue(triggerTable, joins, aggCall.args, "new");
+    const value = createAggValue(
+        triggerTable,
+        joins,
+        aggCall.args,
+        aggType2row(aggType)
+    );
+    sql = agg[aggType](Expression.unknown(agg.columnName), value);
 
-        sql = delta(
+    const helpersAgg = agg.helpersAgg || [];
+    for (const helperAgg of helpersAgg) {
+
+        const helperPrevValue = createAggValue(
             triggerTable,
             joins,
-            agg,
-            prevValue,
-            nextValue
-        );
-
-        if ( aggCall.where ) {
-            const matchedOld = aggCall.where.replaceTable(
-                triggerTable,
-                new TableReference(
-                    triggerTable,
-                    "old"
-                )
-            );
-            const matchedNew = aggCall.where.replaceTable(
-                triggerTable,
-                new TableReference(
-                    triggerTable,
-                    "new"
-                )
-            );
-            
-            ;
-            const needPlus = Expression.and([
-                matchedNew,
-                new NotExpression(matchedOld)
-            ]);
-            const needMinus = Expression.and([
-                new NotExpression(matchedNew),
-                matchedOld
-            ]);
-            const caseWhen = new CaseWhen({
-                cases: [
-                    {
-                        when: needPlus,
-                        then: aggregate(
-                            triggerTable,
-                            joins,
-                            aggCall,
-                            "plus",
-                            agg,
-                            aggColumnName,
-                            false
-                        )
-                    },
-                    {
-                        when: needMinus,
-                        then: aggregate(
-                            triggerTable,
-                            joins,
-                            aggCall,
-                            "minus",
-                            agg,
-                            aggColumnName,
-                            false
-                        )
-                    }
-                ], 
-                else: isImmutableAggCall(aggCall) ? 
-                    Expression.unknown(aggColumnName) :
-                    sql as any
-            });
-            
-            sql = caseWhen as any;
-        }
-    }
-    else {
-        const value = createAggValue(
-            triggerTable,
-            joins,
-            aggCall.args,
+            helperAgg.call.args,
             aggType2row(aggType)
         );
-        sql = agg[aggType](Expression.unknown(agg.columnName), value);
 
-        const helpersAgg = agg.helpersAgg || [];
-        for (const helperAgg of helpersAgg) {
+        const helperSpaces = Spaces.level(2);
+        const helperValue = helperAgg[aggType](
+            Expression.unknown(helperAgg.columnName),
+            helperPrevValue
+        )
+            .toSQL(helperSpaces)
+            .trim();
 
-            const helperPrevValue = createAggValue(
-                triggerTable,
-                joins,
-                helperAgg.call.args,
-                aggType2row(aggType)
-            );
-
-            const helperSpaces = Spaces.level(2);
-            const helperValue = helperAgg[aggType](
-                Expression.unknown(helperAgg.columnName),
-                helperPrevValue
-            )
-                .toSQL(helperSpaces)
-                .trim();
-
-            sql = sql.replaceColumn(
-                helperAgg.columnName.toString(),
-                helperValue
-            );
-        }
-
-        if ( aggCall.where && hasOtherUpdates ) {
-            const whenNeedUpdate = aggCall.where.replaceTable(
-                triggerTable,
-                new TableReference(
-                    triggerTable,
-                    aggType2row(aggType)
-                )
-            );
-
-            sql = new CaseWhen({
-                cases: [
-                    {
-                        when: whenNeedUpdate,
-                        then: sql as any
-                    }
-                ],
-                else: Expression.unknown(aggColumnName)
-            }) as any;
-        }
-    
+        sql = sql.replaceColumn(
+            helperAgg.columnName.toString(),
+            helperValue
+        );
     }
+
+    if ( aggCall.where && hasOtherUpdates ) {
+        const whenNeedUpdate = aggCall.where.replaceTable(
+            triggerTable,
+            new TableReference(
+                triggerTable,
+                aggType2row(aggType)
+            )
+        );
+
+        sql = new CaseWhen({
+            cases: [
+                {
+                    when: whenNeedUpdate,
+                    then: sql as any
+                }
+            ],
+            else: Expression.unknown(aggColumnName)
+        }) as any;
+    }
+
 
     return sql;
 }
