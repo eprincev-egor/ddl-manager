@@ -105,16 +105,9 @@ begin
                     min_order_date_order_date,
                     new.order_date
                 ),
-                min_order_date = (
-                    select
-                        min(item.order_date)
-
-                    from unnest(
-                        array_append(
-                            min_order_date_order_date,
-                            new.order_date
-                        )
-                    ) as item(order_date)
+                min_order_date = least(
+                    min_order_date,
+                    new.order_date
                 )
             where
                 new.id_client = companies.id;
@@ -135,16 +128,9 @@ begin
                     min_order_date_order_date,
                     new.order_date
                 ),
-                min_order_date = (
-                    select
-                        min(item.order_date)
-
-                    from unnest(
-                        array_append(
-                            min_order_date_order_date,
-                            new.order_date
-                        )
-                    ) as item(order_date)
+                min_order_date = least(
+                    min_order_date,
+                    new.order_date
                 )
             where
                 new.id_client = companies.id;

@@ -47,14 +47,7 @@ begin
         if new.id_client is not null then
             update companies set
                 min_order_id_id = array_append(min_order_id_id, new.id),
-                min_order_id = (
-                    select
-                        min(item.id)
-
-                    from unnest(
-                        array_append(min_order_id_id, new.id)
-                    ) as item(id)
-                )
+                min_order_id = least(min_order_id, new.id)
             where
                 new.id_client = companies.id;
         end if;
@@ -67,14 +60,7 @@ begin
         if new.id_client is not null then
             update companies set
                 min_order_id_id = array_append(min_order_id_id, new.id),
-                min_order_id = (
-                    select
-                        min(item.id)
-
-                    from unnest(
-                        array_append(min_order_id_id, new.id)
-                    ) as item(id)
-                )
+                min_order_id = least(min_order_id, new.id)
             where
                 new.id_client = companies.id;
         end if;

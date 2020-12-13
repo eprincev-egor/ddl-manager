@@ -6,6 +6,7 @@ import { ColumnNameGenerator } from "./ColumnNameGenerator";
 import { UniversalAgg } from "./UniversalAgg";
 import { StringAgg } from "./StringAgg";
 import { MaxAgg } from "./MaxAgg";
+import { MinAgg } from "./MinAgg";
 
 interface IAggMap {
     [column: string]: AbstractAgg;
@@ -102,6 +103,9 @@ export class AggFactory {
         }
         else if ( aggCall.name === "max" ) {
             AggConstructor = MaxAgg;
+        }
+        else if ( aggCall.name === "min" ) {
+            AggConstructor = MinAgg;
         }
 
         const universalAgg = new AggConstructor({
