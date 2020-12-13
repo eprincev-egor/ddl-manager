@@ -55,7 +55,7 @@ export class Expression extends AbstractExpressionElement {
         return new Expression(elements);
     }
 
-    private elements: IExpressionElement[];
+    readonly elements: IExpressionElement[];
     constructor(elements: IExpressionElement[] = []) {
         super();
         this.elements = elements;

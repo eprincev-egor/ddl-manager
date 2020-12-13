@@ -63,7 +63,7 @@ ${ this.printChildrenAggregations() }
             if ( sql ) {
                 sql += ",\n";
             }
-            sql += arrayAgg.total.toString();
+            sql += arrayAgg.columnName.toString();
         }
 
         const spaces = Spaces.empty()
@@ -87,7 +87,7 @@ ${ this.printChildrenAggregations() }
         const columnsMap: IColumnsMap = {};
 
         for (const helperAgg of this.helpersAgg) {
-            const aggColumnName = helperAgg.total.toString();
+            const aggColumnName = helperAgg.columnName.toString();
 
             columnsMap[ aggColumnName ] = new ColumnReference(
                 new TableReference(new TableID(

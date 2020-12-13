@@ -1,21 +1,21 @@
-import { Expression } from "../../ast";
+import { Expression, IExpressionElement } from "../../ast";
 import { AbstractAgg } from "./AbstractAgg";
 
 export class ArrayAgg extends AbstractAgg {
 
-    minus(value: Expression) {
+    minus(total: IExpressionElement, value: Expression) {
         return Expression.funcCall(
             "cm_array_remove_one_element", [
-                new Expression([this.total]),
+                new Expression([total]),
                 value
             ]
         );
     }
 
-    plus(value: Expression) {
+    plus(total: IExpressionElement, value: Expression) {
         return Expression.funcCall(
             this.chooseAppendFunction(), [
-                new Expression([this.total]),
+                new Expression([total]),
                 value
             ]
         );

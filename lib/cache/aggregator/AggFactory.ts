@@ -57,17 +57,8 @@ export class AggFactory {
     
         const ConcreteAggregator = aggregatorsMap[ aggCall.name ];
         const agg = new ConcreteAggregator({
-            updateColumn: this.updateColumn,
             call: aggCall,
-            total: UnknownExpressionElement.fromSql(aggColumnName, {
-                [aggColumnName]: new ColumnReference(
-                    new TableReference(new TableID(
-                        "",
-                        ""
-                    )),
-                    aggColumnName
-                )
-            })
+            columnName: aggColumnName
         });
 
         return {
@@ -90,7 +81,6 @@ export class AggFactory {
             }
 
             const helperArrayAgg = new ArrayAgg({
-                updateColumn: this.updateColumn,
                 call: new FuncCall(
                     "array_agg", [
                         new Expression([
@@ -99,15 +89,7 @@ export class AggFactory {
                     ],
                     aggCall.where
                 ),
-                total: UnknownExpressionElement.fromSql(helperColumnName, {
-                    [helperColumnName]: new ColumnReference(
-                        new TableReference(new TableID(
-                            "",
-                            ""
-                        )),
-                        helperColumnName
-                    )
-                })
+                columnName: helperColumnName
             });
             map[ helperColumnName ] = helperArrayAgg;
 
@@ -115,9 +97,8 @@ export class AggFactory {
         }
 
         const universalAgg = new UniversalAgg({
-            updateColumn: this.updateColumn,
             call: aggCall,
-            total: UnknownExpressionElement.fromSql(aggColumnName)
+            columnName: aggColumnName
         }, childAggregations);
         
         map[ aggColumnName ] = universalAgg;

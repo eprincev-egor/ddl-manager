@@ -1,6 +1,5 @@
 import { AbstractAgg, AggFactory } from "../aggregator";
 import {
-    AbstractAstElement,
     Cache,
     Expression,
     FuncCall,
@@ -244,7 +243,7 @@ function aggregate(
             aggCall.args,
             aggType2row(aggType)
         );
-        sql = agg[aggType](value);
+        sql = agg[aggType](Expression.unknown(agg.columnName), value);
 
         const helpersAgg = agg.helpersAgg || [];
         for (const helperAgg of helpersAgg) {
@@ -257,12 +256,15 @@ function aggregate(
             );
 
             const helperSpaces = Spaces.level(2);
-            const helperValue = helperAgg[aggType](helperPrevValue)
+            const helperValue = helperAgg[aggType](
+                Expression.unknown(helperAgg.columnName),
+                helperPrevValue
+            )
                 .toSQL(helperSpaces)
                 .trim();
 
             sql = sql.replaceColumn(
-                helperAgg.total.toString(),
+                helperAgg.columnName.toString(),
                 helperValue
             );
         }
@@ -299,12 +301,11 @@ function delta(
     prevValue: Expression,
     nextValue: Expression
 ) {
-    const minus = agg.minus(prevValue);
-    const plus = agg.plus(nextValue);
-    let delta = plus.replaceColumn(
-        agg.total.toString(),
-        minus.toString()
+    const minus = agg.minus(
+        Expression.unknown(agg.columnName),
+        prevValue
     );
+    let delta = agg.plus(minus, nextValue);
 
     const helpersAgg = agg.helpersAgg || [];
     for (const helperAgg of helpersAgg ) {
@@ -326,18 +327,17 @@ function delta(
             "new"
         );
 
-        const helperMinus = helperAgg.minus(helperPrevValue);
-        const helperPlus = helperAgg.plus(helperNextValue);
-        const helperDelta = helperPlus.replaceColumn(
-            helperAgg.total.toString(),
-            helperMinus.toString()
+        const helperMinus = helperAgg.minus(
+            Expression.unknown(helperAgg.columnName),
+            helperPrevValue
         );
+        const helperDelta = helperAgg.plus(helperMinus, helperNextValue);
         const helperDeltaSQL = helperDelta
             .toSQL( Spaces.level(2) )
             .trim();
 
         delta = delta.replaceColumn(
-            helperAgg.total.toString(),
+            helperAgg.columnName.toString(),
             helperDeltaSQL
         );
     }

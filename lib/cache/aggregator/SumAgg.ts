@@ -1,11 +1,11 @@
-import { Expression, FuncCall, Operator } from "../../ast";
+import { Expression, IExpressionElement, FuncCall, Operator } from "../../ast";
 import { AbstractAgg } from "./AbstractAgg";
 
 export class SumAgg extends AbstractAgg {
 
-    minus(value: Expression) {
+    minus(total: IExpressionElement, value: Expression) {
         return new Expression([
-            this.total,
+            ...this.extrudeExpression(total),
             new Operator("-"),
             new FuncCall("coalesce", [
                 value,
@@ -14,9 +14,9 @@ export class SumAgg extends AbstractAgg {
         ]);
     }
 
-    plus(value: Expression) {
+    plus(total: IExpressionElement, value: Expression) {
         return new Expression([
-            this.total,
+            ...this.extrudeExpression(total),
             new Operator("+"),
             new FuncCall("coalesce", [
                 value,
@@ -27,5 +27,16 @@ export class SumAgg extends AbstractAgg {
 
     default() {
         return "0";
+    }
+    
+    // fix delta case:
+    // column = (column - old) + new
+    // =>
+    // column = column - old + new
+    private extrudeExpression(total: IExpressionElement) {
+        if ( total instanceof Expression ) {
+            return total.elements;
+        }
+        return [total];
     }
 }
