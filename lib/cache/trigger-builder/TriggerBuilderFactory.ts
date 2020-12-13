@@ -84,7 +84,7 @@ export class TriggerBuilderFactory {
                 return;
             }
 
-
+            // TODO: use only JoinedCommutativeTriggerBuilder
             if ( joins.length ) {
                 return JoinedCommutativeTriggerBuilder;
             }

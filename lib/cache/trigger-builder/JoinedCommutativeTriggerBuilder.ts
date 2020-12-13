@@ -43,6 +43,6 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
     private buildJoins(row: "new" | "old") {
         const joins = findJoinsMeta(this.context.cache.select);
-        return buildJoins(joins, row);
+        return buildJoins(this.context.database, joins, row);
     }
 }

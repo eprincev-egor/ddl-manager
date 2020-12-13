@@ -1,5 +1,18 @@
 
 export class TableID {
+    static fromString(schemaTable: string) {
+        const [schema, table] = schemaTable.split(".");
+
+        if ( !table ) {
+            return new TableID(
+                "public",
+                schema
+            );
+        }
+
+        return new TableID(schema, table);
+    }
+
     readonly schema: string;
     readonly name: string;
 

@@ -17,24 +17,40 @@ export function testTriggers(test: ITest) {
     const cacheFilePath = path.join(test.testDir, "cache.sql");
     const cacheSQL = fs.readFileSync(cacheFilePath).toString();
 
+    const testDatabase = new Database([
+        new Table(
+            "public",
+            "orders",
+            [
+                new Column(
+                    new TableID(
+                        "public",
+                        "orders",
+                    ),
+                    "companies_ids",
+                    "integer[]"
+                )
+            ]
+        ),
+        new Table(
+            "public",
+            "vats",
+            [
+                new Column(
+                    new TableID(
+                        "public",
+                        "vats",
+                    ),
+                    "vat_value",
+                    "numeric"
+                )
+            ]
+        )
+    ]);
+
     const builder = new CacheTriggersBuilder(
         cacheSQL,
-        new Database([
-            new Table(
-                "public",
-                "orders",
-                [
-                    new Column(
-                        new TableID(
-                            "public",
-                            "orders",
-                        ),
-                        "companies_ids",
-                        "integer[]"
-                    )
-                ]
-            )
-        ])
+        testDatabase
     );
     const triggers = builder.createTriggers();
 

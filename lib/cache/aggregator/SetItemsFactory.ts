@@ -166,7 +166,11 @@ export class SetItemsFactory {
         const joinsMeta = findJoinsMeta(this.context.cache.select);
 
         if ( joinsMeta.length ) {
-            const joins = buildJoins(joinsMeta, row);
+            const joins = buildJoins(
+                this.context.database,
+                joinsMeta,
+                row
+            );
             
             joins.forEach((join) => {
                 valueExpression = valueExpression.replaceColumn(
