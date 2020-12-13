@@ -239,53 +239,83 @@ begin
                     orders_numbers_string_agg_doc_number_doc_number,
                     new.doc_number
                 ),
-                orders_numbers_string_agg_doc_number = (
-                    select
-                        string_agg(distinct item.doc_number, ', ')
-
-                    from unnest(
-                        array_append(
+                orders_numbers_string_agg_doc_number = case
+                    when
+                        array_position(
                             orders_numbers_string_agg_doc_number_doc_number,
                             new.doc_number
                         )
-                    ) as item(doc_number)
-                ),
+                        is null
+                    then
+                        coalesce(
+                            orders_numbers_string_agg_doc_number ||
+                            coalesce(
+                                ', '
+                                || new.doc_number,
+                                ''
+                            ),
+                            new.doc_number
+                        )
+                    else
+                        orders_numbers_string_agg_doc_number
+                end,
                 orders_numbers_string_agg_note_note = array_append(
                     orders_numbers_string_agg_note_note,
                     new.note
                 ),
-                orders_numbers_string_agg_note = (
-                    select
-                        string_agg(distinct item.note, ', ')
-
-                    from unnest(
-                        array_append(
+                orders_numbers_string_agg_note = case
+                    when
+                        array_position(
                             orders_numbers_string_agg_note_note,
                             new.note
                         )
-                    ) as item(note)
-                ),
-                orders_numbers = ((
-                    select
-                        string_agg(distinct item.doc_number, ', ')
-
-                    from unnest(
-                        array_append(
+                        is null
+                    then
+                        coalesce(
+                            orders_numbers_string_agg_note ||
+                            coalesce(', '
+|| new.note, ''),
+                            new.note
+                        )
+                    else
+                        orders_numbers_string_agg_note
+                end,
+                orders_numbers = (case
+                    when
+                        array_position(
                             orders_numbers_string_agg_doc_number_doc_number,
                             new.doc_number
                         )
-                    ) as item(doc_number)
-                )) || ' : ' || ((
-                    select
-                        string_agg(distinct item.note, ', ')
-
-                    from unnest(
-                        array_append(
+                        is null
+                    then
+                        coalesce(
+                            orders_numbers_string_agg_doc_number ||
+                            coalesce(
+                                ', '
+                                || new.doc_number,
+                                ''
+                            ),
+                            new.doc_number
+                        )
+                    else
+                        orders_numbers_string_agg_doc_number
+                end) || ' : ' || (case
+                    when
+                        array_position(
                             orders_numbers_string_agg_note_note,
                             new.note
                         )
-                    ) as item(note)
-                ))
+                        is null
+                    then
+                        coalesce(
+                            orders_numbers_string_agg_note ||
+                            coalesce(', '
+                || new.note, ''),
+                            new.note
+                        )
+                    else
+                        orders_numbers_string_agg_note
+                end)
             where
                 new.id_client = companies.id;
         end if;
@@ -309,53 +339,83 @@ begin
                     orders_numbers_string_agg_doc_number_doc_number,
                     new.doc_number
                 ),
-                orders_numbers_string_agg_doc_number = (
-                    select
-                        string_agg(distinct item.doc_number, ', ')
-
-                    from unnest(
-                        array_append(
+                orders_numbers_string_agg_doc_number = case
+                    when
+                        array_position(
                             orders_numbers_string_agg_doc_number_doc_number,
                             new.doc_number
                         )
-                    ) as item(doc_number)
-                ),
+                        is null
+                    then
+                        coalesce(
+                            orders_numbers_string_agg_doc_number ||
+                            coalesce(
+                                ', '
+                                || new.doc_number,
+                                ''
+                            ),
+                            new.doc_number
+                        )
+                    else
+                        orders_numbers_string_agg_doc_number
+                end,
                 orders_numbers_string_agg_note_note = array_append(
                     orders_numbers_string_agg_note_note,
                     new.note
                 ),
-                orders_numbers_string_agg_note = (
-                    select
-                        string_agg(distinct item.note, ', ')
-
-                    from unnest(
-                        array_append(
+                orders_numbers_string_agg_note = case
+                    when
+                        array_position(
                             orders_numbers_string_agg_note_note,
                             new.note
                         )
-                    ) as item(note)
-                ),
-                orders_numbers = ((
-                    select
-                        string_agg(distinct item.doc_number, ', ')
-
-                    from unnest(
-                        array_append(
+                        is null
+                    then
+                        coalesce(
+                            orders_numbers_string_agg_note ||
+                            coalesce(', '
+|| new.note, ''),
+                            new.note
+                        )
+                    else
+                        orders_numbers_string_agg_note
+                end,
+                orders_numbers = (case
+                    when
+                        array_position(
                             orders_numbers_string_agg_doc_number_doc_number,
                             new.doc_number
                         )
-                    ) as item(doc_number)
-                )) || ' : ' || ((
-                    select
-                        string_agg(distinct item.note, ', ')
-
-                    from unnest(
-                        array_append(
+                        is null
+                    then
+                        coalesce(
+                            orders_numbers_string_agg_doc_number ||
+                            coalesce(
+                                ', '
+                                || new.doc_number,
+                                ''
+                            ),
+                            new.doc_number
+                        )
+                    else
+                        orders_numbers_string_agg_doc_number
+                end) || ' : ' || (case
+                    when
+                        array_position(
                             orders_numbers_string_agg_note_note,
                             new.note
                         )
-                    ) as item(note)
-                ))
+                        is null
+                    then
+                        coalesce(
+                            orders_numbers_string_agg_note ||
+                            coalesce(', '
+                || new.note, ''),
+                            new.note
+                        )
+                    else
+                        orders_numbers_string_agg_note
+                end)
             where
                 new.id_client = companies.id;
         end if;

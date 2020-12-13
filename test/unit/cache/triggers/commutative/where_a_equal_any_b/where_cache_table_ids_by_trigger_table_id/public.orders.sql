@@ -105,17 +105,26 @@ begin
                     orders_numbers_doc_number,
                     new.doc_number
                 ),
-                orders_numbers = (
-                    select
-                        string_agg(distinct item.doc_number, ', ')
-
-                    from unnest(
-                        array_append(
+                orders_numbers = case
+                    when
+                        array_position(
                             orders_numbers_doc_number,
                             new.doc_number
                         )
-                    ) as item(doc_number)
-                )
+                        is null
+                    then
+                        coalesce(
+                            orders_numbers ||
+                            coalesce(
+                                ', '
+                                || new.doc_number,
+                                ''
+                            ),
+                            new.doc_number
+                        )
+                    else
+                        orders_numbers
+                end
             where
                 companies.order_ids && ARRAY[ new.id ];
         end if;
@@ -135,17 +144,26 @@ begin
                     orders_numbers_doc_number,
                     new.doc_number
                 ),
-                orders_numbers = (
-                    select
-                        string_agg(distinct item.doc_number, ', ')
-
-                    from unnest(
-                        array_append(
+                orders_numbers = case
+                    when
+                        array_position(
                             orders_numbers_doc_number,
                             new.doc_number
                         )
-                    ) as item(doc_number)
-                )
+                        is null
+                    then
+                        coalesce(
+                            orders_numbers ||
+                            coalesce(
+                                ', '
+                                || new.doc_number,
+                                ''
+                            ),
+                            new.doc_number
+                        )
+                    else
+                        orders_numbers
+                end
             where
                 companies.order_ids && ARRAY[ new.id ];
         end if;

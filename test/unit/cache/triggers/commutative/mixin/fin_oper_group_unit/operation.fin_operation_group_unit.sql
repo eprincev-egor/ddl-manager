@@ -247,20 +247,26 @@ begin
                         and
                         not(company_buyer.list_company_name is not null)
                     then
-                        (
-                            select
-                                string_agg(distinct 
-                                    item.list_company_name,
-                                    ', '
-                                ) filter (where company_buyer.list_company_name is not null)
-
-                            from unnest(
-                                array_append(
+                        case
+                            when
+                                array_position(
                                     group_unit_buyers_names_list_company_name,
                                     new_company_buyer_list_company_name
                                 )
-                            ) as item(list_company_name)
-                        )
+                                is null
+                            then
+                                coalesce(
+                                    group_unit_buyers_names ||
+                                    coalesce(
+                                        ', '
+                                        || new_company_buyer_list_company_name,
+                                        ''
+                                    ),
+                                    new_company_buyer_list_company_name
+                                )
+                            else
+                                group_unit_buyers_names
+                        end
                     when
                         not(company_buyer.list_company_name is not null)
                         and
@@ -333,20 +339,26 @@ begin
                         and
                         not(point_delivery.list_warehouse_name is not null)
                     then
-                        (
-                            select
-                                string_agg(distinct 
-                                    item.list_warehouse_name,
-                                    ', '
-                                ) filter (where point_delivery.list_warehouse_name is not null)
-
-                            from unnest(
-                                array_append(
+                        case
+                            when
+                                array_position(
                                     group_unit_delivery_names_list_warehouse_name,
                                     new_point_delivery_list_warehouse_name
                                 )
-                            ) as item(list_warehouse_name)
-                        )
+                                is null
+                            then
+                                coalesce(
+                                    group_unit_delivery_names ||
+                                    coalesce(
+                                        ', '
+                                        || new_point_delivery_list_warehouse_name,
+                                        ''
+                                    ),
+                                    new_point_delivery_list_warehouse_name
+                                )
+                            else
+                                group_unit_delivery_names
+                        end
                     when
                         not(point_delivery.list_warehouse_name is not null)
                         and
@@ -531,20 +543,26 @@ begin
                     when
                         company_buyer.list_company_name is not null
                     then
-                        (
-                            select
-                                string_agg(distinct 
-                                    item.list_company_name,
-                                    ', '
-                                ) filter (where company_buyer.list_company_name is not null)
-
-                            from unnest(
-                                array_append(
+                        case
+                            when
+                                array_position(
                                     group_unit_buyers_names_list_company_name,
                                     new_company_buyer_list_company_name
                                 )
-                            ) as item(list_company_name)
-                        )
+                                is null
+                            then
+                                coalesce(
+                                    group_unit_buyers_names ||
+                                    coalesce(
+                                        ', '
+                                        || new_company_buyer_list_company_name,
+                                        ''
+                                    ),
+                                    new_company_buyer_list_company_name
+                                )
+                            else
+                                group_unit_buyers_names
+                        end
                     else
                         group_unit_buyers_names
                 end,
@@ -563,20 +581,26 @@ begin
                     when
                         point_delivery.list_warehouse_name is not null
                     then
-                        (
-                            select
-                                string_agg(distinct 
-                                    item.list_warehouse_name,
-                                    ', '
-                                ) filter (where point_delivery.list_warehouse_name is not null)
-
-                            from unnest(
-                                array_append(
+                        case
+                            when
+                                array_position(
                                     group_unit_delivery_names_list_warehouse_name,
                                     new_point_delivery_list_warehouse_name
                                 )
-                            ) as item(list_warehouse_name)
-                        )
+                                is null
+                            then
+                                coalesce(
+                                    group_unit_delivery_names ||
+                                    coalesce(
+                                        ', '
+                                        || new_point_delivery_list_warehouse_name,
+                                        ''
+                                    ),
+                                    new_point_delivery_list_warehouse_name
+                                )
+                            else
+                                group_unit_delivery_names
+                        end
                     else
                         group_unit_delivery_names
                 end
@@ -650,20 +674,26 @@ begin
                         when
                             company_buyer.list_company_name is not null
                         then
-                            (
-                                select
-                                    string_agg(distinct 
-                                        item.list_company_name,
-                                        ', '
-                                    ) filter (where company_buyer.list_company_name is not null)
-
-                                from unnest(
-                                    array_append(
+                            case
+                                when
+                                    array_position(
                                         group_unit_buyers_names_list_company_name,
                                         new_company_buyer_list_company_name
                                     )
-                                ) as item(list_company_name)
-                            )
+                                    is null
+                                then
+                                    coalesce(
+                                        group_unit_buyers_names ||
+                                        coalesce(
+                                            ', '
+                                            || new_company_buyer_list_company_name,
+                                            ''
+                                        ),
+                                        new_company_buyer_list_company_name
+                                    )
+                                else
+                                    group_unit_buyers_names
+                            end
                         else
                             group_unit_buyers_names
                     end,
@@ -682,20 +712,26 @@ begin
                         when
                             point_delivery.list_warehouse_name is not null
                         then
-                            (
-                                select
-                                    string_agg(distinct 
-                                        item.list_warehouse_name,
-                                        ', '
-                                    ) filter (where point_delivery.list_warehouse_name is not null)
-
-                                from unnest(
-                                    array_append(
+                            case
+                                when
+                                    array_position(
                                         group_unit_delivery_names_list_warehouse_name,
                                         new_point_delivery_list_warehouse_name
                                     )
-                                ) as item(list_warehouse_name)
-                            )
+                                    is null
+                                then
+                                    coalesce(
+                                        group_unit_delivery_names ||
+                                        coalesce(
+                                            ', '
+                                            || new_point_delivery_list_warehouse_name,
+                                            ''
+                                        ),
+                                        new_point_delivery_list_warehouse_name
+                                    )
+                                else
+                                    group_unit_delivery_names
+                            end
                         else
                             group_unit_delivery_names
                     end

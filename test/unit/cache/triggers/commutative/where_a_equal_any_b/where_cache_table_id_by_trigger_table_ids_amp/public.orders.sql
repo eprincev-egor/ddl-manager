@@ -117,17 +117,26 @@ begin
                     orders_numbers_doc_number,
                     new.doc_number
                 ),
-                orders_numbers = (
-                    select
-                        string_agg(distinct item.doc_number, ', ')
-
-                    from unnest(
-                        array_append(
+                orders_numbers = case
+                    when
+                        array_position(
                             orders_numbers_doc_number,
                             new.doc_number
                         )
-                    ) as item(doc_number)
-                )
+                        is null
+                    then
+                        coalesce(
+                            orders_numbers ||
+                            coalesce(
+                                ', '
+                                || new.doc_number,
+                                ''
+                            ),
+                            new.doc_number
+                        )
+                    else
+                        orders_numbers
+                end
             where
                 companies.id = any( cm_get_inserted_elements(old.companies_ids, new.companies_ids) );
         end if;
@@ -149,17 +158,26 @@ begin
                     orders_numbers_doc_number,
                     new.doc_number
                 ),
-                orders_numbers = (
-                    select
-                        string_agg(distinct item.doc_number, ', ')
-
-                    from unnest(
-                        array_append(
+                orders_numbers = case
+                    when
+                        array_position(
                             orders_numbers_doc_number,
                             new.doc_number
                         )
-                    ) as item(doc_number)
-                )
+                        is null
+                    then
+                        coalesce(
+                            orders_numbers ||
+                            coalesce(
+                                ', '
+                                || new.doc_number,
+                                ''
+                            ),
+                            new.doc_number
+                        )
+                    else
+                        orders_numbers
+                end
             where
                 companies.id = any( new.companies_ids );
         end if;
