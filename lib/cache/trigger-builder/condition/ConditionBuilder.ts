@@ -25,15 +25,15 @@ export class ConditionBuilder {
         return this.getMutableColumns().length > 0;
     }
 
-    getNoReferenceChanges() {
+    noReferenceChanges() {
         return noReferenceChanges( this.context );
     }
 
-    getNoChanges() {
+    noChanges() {
         return noChanges(this.context);
     }
 
-    getHasEffect(row: RowType) {
+    hasEffect(row: RowType) {
         const joins = findJoinsMeta(this.context.cache.select);
 
         return hasEffect(
@@ -43,7 +43,7 @@ export class ConditionBuilder {
         );
     }
 
-    getHasReference(row: RowType) {
+    hasReference(row: RowType) {
         const hasReferenceCondition = hasReference(this.context);
         const output = this.replaceTriggerTableRefsTo(
             hasReferenceCondition,
@@ -52,7 +52,7 @@ export class ConditionBuilder {
         return output;
     }
 
-    getHasNoReference(row: RowType) {
+    hasNoReference(row: RowType) {
         const hasReferenceCondition = hasNoReference(this.context);
         const output = this.replaceTriggerTableRefsTo(
             hasReferenceCondition,
@@ -61,13 +61,13 @@ export class ConditionBuilder {
         return output;
     }
 
-    getNeedUpdateCondition(row: RowType) {
+    needUpdateCondition(row: RowType) {
         const needUpdate = this.buildNeedUpdateCondition(row);
         const output = this.replaceTriggerTableRefsTo(needUpdate, row);
         return output;
     }
 
-    getNeedUpdateConditionOnUpdate(row: RowType) {
+    needUpdateConditionOnUpdate(row: RowType) {
         const needUpdate = replaceArrayNotNullOn(
             this.context,
             this.buildNeedUpdateCondition(row),
@@ -77,13 +77,13 @@ export class ConditionBuilder {
         return output;
     }
 
-    getSimpleWhere(row: RowType) {
+    simpleWhere(row: RowType) {
         const simpleWhere = this.buildSimpleWhere();
         const output = this.replaceTriggerTableRefsTo(simpleWhere, row);
         return output;
     }
 
-    getSimpleWhereOnUpdate(row: RowType) {
+    simpleWhereOnUpdate(row: RowType) {
         const simpleWhere = this.buildSimpleWhere();
         const output = replaceArrayNotNullOn(
             this.context,

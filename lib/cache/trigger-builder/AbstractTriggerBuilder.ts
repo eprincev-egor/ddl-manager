@@ -12,15 +12,15 @@ import { ConditionBuilder } from "./condition/ConditionBuilder";
 
 export abstract class AbstractTriggerBuilder {
     protected readonly context: CacheContext;
-    protected readonly conditionBuilder: ConditionBuilder;
-    protected readonly setItemsFactory: SetItemsFactory;
-    protected readonly deltaSetItemsFactory: DeltaSetItemsFactory;
+    protected readonly conditions: ConditionBuilder;
+    protected readonly setItems: SetItemsFactory;
+    protected readonly deltaSetItems: DeltaSetItemsFactory;
 
     constructor(context: CacheContext) {
         this.context = context;
-        this.conditionBuilder = new ConditionBuilder(context);
-        this.setItemsFactory = new SetItemsFactory(context);
-        this.deltaSetItemsFactory = new DeltaSetItemsFactory(context);
+        this.conditions = new ConditionBuilder(context);
+        this.setItems = new SetItemsFactory(context);
+        this.deltaSetItems = new DeltaSetItemsFactory(context);
     }
 
     createTrigger(): {

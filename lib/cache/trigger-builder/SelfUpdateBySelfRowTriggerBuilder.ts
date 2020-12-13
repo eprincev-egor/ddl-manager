@@ -10,7 +10,7 @@ export class SelfUpdateBySelfRowTriggerBuilder extends AbstractTriggerBuilder {
     createBody() {
         return buildSelfUpdateBySelfRowBody(
             this.context.cache.for,
-            this.conditionBuilder.getNoChanges(),
+            this.conditions.noChanges(),
             this.buildSelectValues()
         );
     }

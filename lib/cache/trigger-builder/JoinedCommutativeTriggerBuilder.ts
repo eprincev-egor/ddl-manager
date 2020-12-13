@@ -10,34 +10,34 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
     protected createBody() {
         const bodyWithJoins = buildCommutativeBodyWithJoins(
-            this.conditionBuilder.getNoChanges(),
+            this.conditions.noChanges(),
             {
-                hasReference: this.conditionBuilder.getHasReference("old"),
-                needUpdate: this.conditionBuilder.getHasEffect("old") as Expression,
+                hasReference: this.conditions.hasReference("old"),
+                needUpdate: this.conditions.hasEffect("old") as Expression,
                 update: new Update({
                     table: this.context.cache.for.toString(),
-                    set: this.setItemsFactory.minus(),
-                    where: this.conditionBuilder.getSimpleWhere("old")
+                    set: this.setItems.minus(),
+                    where: this.conditions.simpleWhere("old")
                 }),
                 joins: this.buildJoins("old")
             },
             {
-                hasReference: this.conditionBuilder.getHasReference("new"),
-                needUpdate: this.conditionBuilder.getHasEffect("new") as Expression,
+                hasReference: this.conditions.hasReference("new"),
+                needUpdate: this.conditions.hasEffect("new") as Expression,
                 update: new Update({
                     table: this.context.cache.for.toString(),
-                    set: this.setItemsFactory.plus(),
-                    where: this.conditionBuilder.getSimpleWhere("new")
+                    set: this.setItems.plus(),
+                    where: this.conditions.simpleWhere("new")
                 }),
                 joins: this.buildJoins("new")
             },
             {
-                hasReference: this.conditionBuilder.getHasReference("new"),
-                needUpdate: this.conditionBuilder.getNoReferenceChanges(),
+                hasReference: this.conditions.hasReference("new"),
+                needUpdate: this.conditions.noReferenceChanges(),
                 update: new Update({
                     table: this.context.cache.for.toString(),
-                    set: this.deltaSetItemsFactory.delta(),
-                    where: this.conditionBuilder.getSimpleWhere("new")
+                    set: this.deltaSetItems.delta(),
+                    where: this.conditions.simpleWhere("new")
                 }),
                 joins: this.buildJoins("new")
             }

@@ -7,46 +7,46 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
     protected createBody() {
         const deltaUpdate = new Update({
             table: this.context.cache.for.toString(),
-            set: this.deltaSetItemsFactory.delta(),
-            where: this.conditionBuilder.getSimpleWhere("new")
+            set: this.deltaSetItems.delta(),
+            where: this.conditions.simpleWhere("new")
         });
 
         const body = buildCommutativeBody(
-            this.conditionBuilder.hasMutableColumns(),
-            this.conditionBuilder.getNoChanges(),
+            this.conditions.hasMutableColumns(),
+            this.conditions.noChanges(),
             {
-                needUpdate: this.conditionBuilder.getNeedUpdateCondition("old"),
+                needUpdate: this.conditions.needUpdateCondition("old"),
                 update: new Update({
                     table: this.context.cache.for.toString(),
-                    set: this.setItemsFactory.minus(),
-                    where: this.conditionBuilder.getSimpleWhere("old")
+                    set: this.setItems.minus(),
+                    where: this.conditions.simpleWhere("old")
                 })
             },
             {
-                needUpdate: this.conditionBuilder.getNeedUpdateCondition("new"),
+                needUpdate: this.conditions.needUpdateCondition("new"),
                 update: new Update({
                     table: this.context.cache.for.toString(),
-                    set: this.setItemsFactory.plus(),
-                    where: this.conditionBuilder.getSimpleWhere("new")
+                    set: this.setItems.plus(),
+                    where: this.conditions.simpleWhere("new")
                 })
             },
             deltaUpdate.set.length > 0 ? {
-                needUpdate: this.conditionBuilder.getNoReferenceChanges(),
+                needUpdate: this.conditions.noReferenceChanges(),
                 update: deltaUpdate,
                 old: {
-                    needUpdate: this.conditionBuilder.getNeedUpdateConditionOnUpdate("old"),
+                    needUpdate: this.conditions.needUpdateConditionOnUpdate("old"),
                     update: new Update({
                         table: this.context.cache.for.toString(),
-                        set: this.setItemsFactory.minus(),
-                        where: this.conditionBuilder.getSimpleWhereOnUpdate("old")
+                        set: this.setItems.minus(),
+                        where: this.conditions.simpleWhereOnUpdate("old")
                     })
                 },
                 new: {
-                    needUpdate: this.conditionBuilder.getNeedUpdateConditionOnUpdate("new"),
+                    needUpdate: this.conditions.needUpdateConditionOnUpdate("new"),
                     update: new Update({
                         table: this.context.cache.for.toString(),
-                        set: this.setItemsFactory.plus(),
-                        where: this.conditionBuilder.getSimpleWhereOnUpdate("new")
+                        set: this.setItems.plus(),
+                        where: this.conditions.simpleWhereOnUpdate("new")
                     })
                 }
             } : undefined

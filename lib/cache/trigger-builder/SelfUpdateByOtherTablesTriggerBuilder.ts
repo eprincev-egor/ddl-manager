@@ -9,7 +9,7 @@ import { buildSelfUpdateByOtherTablesBody } from "./body/buildSelfUpdateByOtherT
 export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilder {
 
     createBody() {
-        let hasReference = this.conditionBuilder.getHasNoReference("new") as Expression;
+        let hasReference = this.conditions.hasNoReference("new") as Expression;
         hasReference = hasReference.replaceTable(
             this.context.cache.for,
             new TableReference(
@@ -22,7 +22,7 @@ export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilde
 
         return buildSelfUpdateByOtherTablesBody(
             this.context.cache.for,
-            this.conditionBuilder.getNoReferenceChanges(),
+            this.conditions.noReferenceChanges(),
             hasReference,
             this.context.cache.select.columns.map(col => col.name),
             this.context.cache.select.toString()
