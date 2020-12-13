@@ -36,10 +36,12 @@ ${ this.printChildrenAggregations() }
     }
 
     private printMainAgg() {
-        const columnRef = this.call.getColumnReferences()[0] as ColumnReference;
+        const mainAggCall = this.call.withoutWhere();
+
+        const columnRef = mainAggCall.getColumnReferences()[0] as ColumnReference;
         const tableRef = columnRef.tableReference;
 
-        const preparedCall = this.call.replaceTable(tableRef, new TableReference(
+        const preparedCall = mainAggCall.replaceTable(tableRef, new TableReference(
             tableRef.table,
             "item"
         ));

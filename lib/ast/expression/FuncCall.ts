@@ -109,6 +109,16 @@ export class FuncCall extends AbstractExpressionElement {
         );
     }
 
+    withoutWhere() {
+        return new FuncCall(
+            this.name,
+            this.args.map(arg => arg.clone()),
+            undefined,
+            this.distinct,
+            this.cloneOrderBy()
+        );
+    }
+
     template(spaces: Spaces) {
         let sql = "";
 

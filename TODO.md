@@ -66,4 +66,5 @@
   - create table with all variants
 - test array_agg with id as bigint
 + replace all string_agg to UniversalAgg ?
-- remove filter from UniversalAgg and don't aggregate filter values
++ remove filter from UniversalAgg 
+  - and don't aggregate filter values

@@ -57,7 +57,7 @@ begin
                                 string_agg(distinct 
                                     item.list_company_name,
                                     ', '
-                                ) filter (where company_buyer.list_company_name is not null)
+                                )
 
                             from unnest(
                                 cm_array_remove_one_element(
@@ -89,7 +89,7 @@ begin
                                 string_agg(distinct 
                                     item.list_warehouse_name,
                                     ', '
-                                ) filter (where point_delivery.list_warehouse_name is not null)
+                                )
 
                             from unnest(
                                 cm_array_remove_one_element(
@@ -259,7 +259,7 @@ begin
                                 string_agg(distinct 
                                     item.list_company_name,
                                     ', '
-                                ) filter (where company_buyer.list_company_name is not null)
+                                )
 
                             from unnest(
                                 cm_array_remove_one_element(
@@ -274,7 +274,7 @@ begin
                                 string_agg(distinct 
                                     item.list_company_name,
                                     ', '
-                                ) filter (where company_buyer.list_company_name is not null)
+                                )
 
                             from unnest(
                                 array_append(
@@ -351,7 +351,7 @@ begin
                                 string_agg(distinct 
                                     item.list_warehouse_name,
                                     ', '
-                                ) filter (where point_delivery.list_warehouse_name is not null)
+                                )
 
                             from unnest(
                                 cm_array_remove_one_element(
@@ -366,7 +366,7 @@ begin
                                 string_agg(distinct 
                                     item.list_warehouse_name,
                                     ', '
-                                ) filter (where point_delivery.list_warehouse_name is not null)
+                                )
 
                             from unnest(
                                 array_append(
@@ -414,7 +414,7 @@ begin
                                 string_agg(distinct 
                                     item.list_company_name,
                                     ', '
-                                ) filter (where company_buyer.list_company_name is not null)
+                                )
 
                             from unnest(
                                 cm_array_remove_one_element(
@@ -446,7 +446,7 @@ begin
                                 string_agg(distinct 
                                     item.list_warehouse_name,
                                     ', '
-                                ) filter (where point_delivery.list_warehouse_name is not null)
+                                )
 
                             from unnest(
                                 cm_array_remove_one_element(

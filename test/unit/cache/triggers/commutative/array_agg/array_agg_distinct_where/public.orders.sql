@@ -16,7 +16,7 @@ begin
                 ),
                 orders_dates = (
                     select
-                        array_agg(distinct item.order_date) filter (where orders.order_date is not null)
+                        array_agg(distinct item.order_date)
 
                     from unnest(
                         cm_array_remove_one_element(
@@ -79,7 +79,7 @@ begin
                     then
                         (
                             select
-                                array_agg(distinct item.order_date) filter (where orders.order_date is not null)
+                                array_agg(distinct item.order_date)
 
                             from unnest(
                                 array_append(
@@ -95,7 +95,7 @@ begin
                     then
                         (
                             select
-                                array_agg(distinct item.order_date) filter (where orders.order_date is not null)
+                                array_agg(distinct item.order_date)
 
                             from unnest(
                                 cm_array_remove_one_element(
@@ -107,7 +107,7 @@ begin
                     else
                         (
                             select
-                                array_agg(distinct item.order_date) filter (where orders.order_date is not null)
+                                array_agg(distinct item.order_date)
 
                             from unnest(
                                 array_append(
@@ -138,7 +138,7 @@ begin
                 ),
                 orders_dates = (
                     select
-                        array_agg(distinct item.order_date) filter (where orders.order_date is not null)
+                        array_agg(distinct item.order_date)
 
                     from unnest(
                         cm_array_remove_one_element(
@@ -163,7 +163,7 @@ begin
                 ),
                 orders_dates = (
                     select
-                        array_agg(distinct item.order_date) filter (where orders.order_date is not null)
+                        array_agg(distinct item.order_date)
 
                     from unnest(
                         array_append(
@@ -193,7 +193,7 @@ begin
                 ),
                 orders_dates = (
                     select
-                        array_agg(distinct item.order_date) filter (where orders.order_date is not null)
+                        array_agg(distinct item.order_date)
 
                     from unnest(
                         array_append(

@@ -25,7 +25,7 @@ begin
                             ', '
                             order by
                                 item.doc_number asc nulls last
-                        ) filter (where orders.profit > 0)
+                        )
 
                     from unnest(
                         cm_array_remove_one_element(
@@ -127,7 +127,7 @@ begin
                                     ', '
                                     order by
                                         item.doc_number asc nulls last
-                                ) filter (where orders.profit > 0)
+                                )
 
                             from unnest(
                                 array_append(
@@ -152,7 +152,7 @@ begin
                                     ', '
                                     order by
                                         item.doc_number asc nulls last
-                                ) filter (where orders.profit > 0)
+                                )
 
                             from unnest(
                                 cm_array_remove_one_element(
@@ -173,7 +173,7 @@ begin
                                     ', '
                                     order by
                                         item.doc_number asc nulls last
-                                ) filter (where orders.profit > 0)
+                                )
 
                             from unnest(
                                 array_append(
@@ -220,7 +220,7 @@ begin
                             ', '
                             order by
                                 item.doc_number asc nulls last
-                        ) filter (where orders.profit > 0)
+                        )
 
                     from unnest(
                         cm_array_remove_one_element(
@@ -258,7 +258,7 @@ begin
                             ', '
                             order by
                                 item.doc_number asc nulls last
-                        ) filter (where orders.profit > 0)
+                        )
 
                     from unnest(
                         array_append(
@@ -301,7 +301,7 @@ begin
                             ', '
                             order by
                                 item.doc_number asc nulls last
-                        ) filter (where orders.profit > 0)
+                        )
 
                     from unnest(
                         array_append(

@@ -42,7 +42,7 @@ begin
                     then
                         (
                             select
-                                max(item.order_date) filter (where orders.id_order_type = any (array[1, 2, 3, 4] :: bigint[]))
+                                max(item.order_date)
 
                             from unnest(
                                 cm_array_remove_one_element(
@@ -86,7 +86,7 @@ begin
                     then
                         (
                             select
-                                max(item.order_date) filter (where orders.id_order_type = any (array[5, 6, 7, 8] :: bigint[]))
+                                max(item.order_date)
 
                             from unnest(
                                 cm_array_remove_one_element(
@@ -195,7 +195,7 @@ begin
                     then
                         (
                             select
-                                max(item.order_date) filter (where orders.id_order_type = any (array[1, 2, 3, 4] :: bigint[]))
+                                max(item.order_date)
 
                             from unnest(
                                 cm_array_remove_one_element(
@@ -211,7 +211,7 @@ begin
                     else
                         (
                             select
-                                max(item.order_date) filter (where orders.id_order_type = any (array[1, 2, 3, 4] :: bigint[]))
+                                max(item.order_date)
 
                             from unnest(
                                 array_append(
@@ -304,7 +304,7 @@ begin
                     then
                         (
                             select
-                                max(item.order_date) filter (where orders.id_order_type = any (array[5, 6, 7, 8] :: bigint[]))
+                                max(item.order_date)
 
                             from unnest(
                                 cm_array_remove_one_element(
@@ -320,7 +320,7 @@ begin
                     else
                         (
                             select
-                                max(item.order_date) filter (where orders.id_order_type = any (array[5, 6, 7, 8] :: bigint[]))
+                                max(item.order_date)
 
                             from unnest(
                                 array_append(
@@ -384,7 +384,7 @@ begin
                     then
                         (
                             select
-                                max(item.order_date) filter (where orders.id_order_type = any (array[1, 2, 3, 4] :: bigint[]))
+                                max(item.order_date)
 
                             from unnest(
                                 cm_array_remove_one_element(
@@ -428,7 +428,7 @@ begin
                     then
                         (
                             select
-                                max(item.order_date) filter (where orders.id_order_type = any (array[5, 6, 7, 8] :: bigint[]))
+                                max(item.order_date)
 
                             from unnest(
                                 cm_array_remove_one_element(
