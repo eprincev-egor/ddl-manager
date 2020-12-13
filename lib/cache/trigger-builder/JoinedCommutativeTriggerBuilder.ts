@@ -2,7 +2,6 @@ import {
     Expression, Update
 } from "../../ast";
 import { buildCommutativeBodyWithJoins } from "./body/buildCommutativeBodyWithJoins";
-import { buildUpdate } from "../processor/buildUpdate";
 import { buildJoins } from "../processor/buildJoins";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
@@ -10,8 +9,6 @@ import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
     protected createBody() {
-        const joins = findJoinsMeta(this.context.cache.select);
-
         const bodyWithJoins = buildCommutativeBodyWithJoins(
             this.conditionBuilder.getNoChanges(),
             {
@@ -37,16 +34,14 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
             {
                 hasReference: this.conditionBuilder.getHasReference("new"),
                 needUpdate: this.conditionBuilder.getNoReferenceChanges(),
-                update: buildUpdate(
-                    this.context,
-                    this.conditionBuilder.getSimpleWhere("new"),
-                    joins,
-                    "delta"
-                ),
+                update: new Update({
+                    table: this.context.cache.for.toString(),
+                    set: this.deltaSetItemsFactory.delta(),
+                    where: this.conditionBuilder.getSimpleWhere("new")
+                }),
                 joins: this.buildJoins("new")
             }
         );
-
         return bodyWithJoins;
     }
 

@@ -17,7 +17,7 @@ type AggType = "minus" | "plus";
 
 export class SetItemsFactory {
 
-    private context: CacheContext;
+    protected context: CacheContext;
     constructor(context: CacheContext) {
         this.context = context;
     }
@@ -96,10 +96,10 @@ export class SetItemsFactory {
         return setItems;
     }
 
-    private aggregate(
+    protected aggregate(
         aggType: AggType,
         agg: AbstractAgg,
-        hasOtherUpdates: boolean
+        hasOtherUpdates: boolean = false
     ) {
         const triggerTable = this.context.triggerTable;
         const joins = findJoinsMeta(this.context.cache.select);
