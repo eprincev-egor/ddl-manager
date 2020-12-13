@@ -8,10 +8,10 @@ import {
     Spaces
 } from "../../ast";
 import { flatMap } from "lodash";
-import { createAggValue } from "../processor/createAggValue";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
 import { CacheContext } from "../trigger-builder/CacheContext";
 import { TableReference } from "../../database/schema/TableReference";
+import { buildJoins } from "../processor/buildJoins";
 
 type AggType = "minus" | "plus";
 
@@ -101,15 +101,10 @@ export class SetItemsFactory {
         agg: AbstractAgg,
         hasOtherUpdates: boolean = false
     ) {
-        const triggerTable = this.context.triggerTable;
-        const joins = findJoinsMeta(this.context.cache.select);
-
         let sql!: Expression;
     
-        const value = createAggValue(
-            triggerTable,
-            joins,
-            agg.call.args,
+        const value = this.replaceTriggerTableToRow(
+            agg.call.args[0],
             aggType2row(aggType)
         );
         sql = agg[aggType](Expression.unknown(agg.columnName), value);
@@ -117,10 +112,8 @@ export class SetItemsFactory {
         const helpersAgg = agg.helpersAgg || [];
         for (const helperAgg of helpersAgg) {
     
-            const helperPrevValue = createAggValue(
-                triggerTable,
-                joins,
-                helperAgg.call.args,
+            const helperPrevValue = this.replaceTriggerTableToRow(
+                helperAgg.call.args[0],
                 aggType2row(aggType)
             );
     
@@ -139,6 +132,9 @@ export class SetItemsFactory {
         }
     
         if ( agg.call.where && hasOtherUpdates ) {
+            const triggerTable = this.context.triggerTable;
+
+            // TODO: replace also and joins
             const whenNeedUpdate = agg.call.where.replaceTable(
                 triggerTable,
                 new TableReference(
@@ -161,7 +157,35 @@ export class SetItemsFactory {
     
         return sql;
     }
-    
+
+    protected replaceTriggerTableToRow(
+        valueExpression: Expression,
+        row: "new" | "old"
+    ): Expression {
+        const triggerTable = this.context.triggerTable;
+        const joinsMeta = findJoinsMeta(this.context.cache.select);
+
+        if ( joinsMeta.length ) {
+            const joins = buildJoins(joinsMeta, row);
+            
+            joins.forEach((join) => {
+                valueExpression = valueExpression.replaceColumn(
+                    (join.table.alias || join.table.name) + "." + join.table.column,
+                    join.variable.name
+                );
+            });
+        }
+
+        valueExpression = valueExpression.replaceTable(
+            triggerTable,
+            new TableReference(
+                triggerTable,
+                row
+            )
+        );
+        return valueExpression;
+    }
+
 }
 
 function aggType2row(aggType: AggType) {

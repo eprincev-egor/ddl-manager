@@ -10,7 +10,6 @@ import {
     Spaces
 } from "../../ast";
 import { flatMap } from "lodash";
-import { createAggValue } from "../processor/createAggValue";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
 import { TableReference } from "../../database/schema/TableReference";
 import { SetItemsFactory } from "./SetItemsFactory";
@@ -95,12 +94,17 @@ export class DeltaSetItemsFactory extends SetItemsFactory {
 
     private deltaAggregate(agg: AbstractAgg) {
         const triggerTable = this.context.triggerTable;
-        const joins = findJoinsMeta(this.context.cache.select);
 
         let sql!: Expression;
 
-        const prevValue = createAggValue(triggerTable, joins, agg.call.args, "old");
-        const nextValue = createAggValue(triggerTable, joins, agg.call.args, "new");
+        const prevValue = this.replaceTriggerTableToRow(
+            agg.call.args[0],
+            "old"
+        );
+        const nextValue = this.replaceTriggerTableToRow(
+            agg.call.args[0],
+            "new"
+        );
 
         sql = this.aggDelta(
             agg,
@@ -176,16 +180,12 @@ export class DeltaSetItemsFactory extends SetItemsFactory {
                 continue;
             }
 
-            const helperPrevValue = createAggValue(
-                triggerTable,
-                joins,
-                helperAgg.call.args,
+            const helperPrevValue = this.replaceTriggerTableToRow(
+                helperAgg.call.args[0],
                 "old"
             );
-            const helperNextValue = createAggValue(
-                triggerTable,
-                joins,
-                helperAgg.call.args,
+            const helperNextValue = this.replaceTriggerTableToRow(
+                helperAgg.call.args[0],
                 "new"
             );
 
