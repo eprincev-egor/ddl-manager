@@ -5,6 +5,7 @@ import { DatabaseFunction } from "../../../lib/database/schema/DatabaseFunction"
 import { DatabaseTrigger } from "../../../lib/database/schema/DatabaseTrigger";
 import { Table } from "../../../lib/database/schema/Table";
 import { FilesState } from "../../../lib/fs/FilesState";
+import { FakeDatabaseDriver } from "../FakeDatabaseDriver";
 import { deepStrictEqualMigration } from "./deepStrictEqualMigration";
 import {
     someFileParams,
@@ -15,17 +16,19 @@ import {
     someTriggerParams
 } from "./fixture/trigger-fixture";
 
-describe("Comparator: compare triggers", () => {
+describe("Comparator: compare triggers", async() => {
 
+    let postgres!: FakeDatabaseDriver;
     let database!: Database;
     let fs!: FilesState;
     beforeEach(() => {
         database = new Database();
         fs = new FilesState();
+        postgres = new FakeDatabaseDriver();
     });
 
-    it("sync empty state", () => {
-        const migration = MainComparator.compare(database, fs);
+    it("sync empty state", async() => {
+        const migration = await MainComparator.compare(postgres, database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -39,11 +42,11 @@ describe("Comparator: compare triggers", () => {
         });
     });
 
-    it("create trigger", () => {
+    it("create trigger", async() => {
 
         fs.addFile(testFileWithTrigger);
 
-        const migration = MainComparator.compare(database, fs);
+        const migration = await MainComparator.compare(postgres, database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -61,13 +64,13 @@ describe("Comparator: compare triggers", () => {
         });
     });
 
-    it("drop trigger", () => {
+    it("drop trigger", async() => {
 
         database.addFunctions([testTriggerFunc]);
         database.setTable(new Table(testTrigger.table.schema, testTrigger.table.name));
         database.addTrigger(testTrigger);
 
-        const migration = MainComparator.compare(database, fs);
+        const migration = await MainComparator.compare(postgres, database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -85,7 +88,7 @@ describe("Comparator: compare triggers", () => {
         });
     });
 
-    it("change trigger event type", () => {
+    it("change trigger event type", async() => {
         const fileTrigger = new DatabaseTrigger({
             ...someTriggerParams,
             before: false,
@@ -111,7 +114,7 @@ describe("Comparator: compare triggers", () => {
             }
         });
 
-        const migration = MainComparator.compare(database, fs);
+        const migration = await MainComparator.compare(postgres, database, fs);
 
 
         deepStrictEqualMigration(migration, {
@@ -131,7 +134,7 @@ describe("Comparator: compare triggers", () => {
     });
 
 
-    it("no changes, same states, empty migration (triggers)", () => {
+    it("no changes, same states, empty migration (triggers)", async() => {
         
         database.addFunctions([testTriggerFunc]);
         database.setTable(new Table(testTrigger.table.schema, testTrigger.table.name));
@@ -139,7 +142,7 @@ describe("Comparator: compare triggers", () => {
 
         fs.addFile(testFileWithTrigger);
 
-        const migration = MainComparator.compare(database, fs);
+        const migration = await MainComparator.compare(postgres, database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -153,7 +156,7 @@ describe("Comparator: compare triggers", () => {
         });
     });
 
-    it("empty migration on new frozen trigger", () => {
+    it("empty migration on new frozen trigger", async() => {
         const func = new DatabaseFunction({
             ...someTriggerFuncParams,
             comment: Comment.frozen("function")
@@ -168,7 +171,7 @@ describe("Comparator: compare triggers", () => {
         database.addTrigger(trigger);
 
 
-        const migration = MainComparator.compare(database, fs);
+        const migration = await MainComparator.compare(postgres, database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -183,7 +186,7 @@ describe("Comparator: compare triggers", () => {
     });
 
 
-    it("drop trigger, if function has change, but trigger not", () => {
+    it("drop trigger, if function has change, but trigger not", async() => {
         const func1 = new DatabaseFunction({
             ...someTriggerFuncParams,
             body: `begin
@@ -210,7 +213,7 @@ describe("Comparator: compare triggers", () => {
             }
         });
 
-        const migration = MainComparator.compare(database, fs);
+        const migration = await MainComparator.compare(postgres, database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -232,7 +235,7 @@ describe("Comparator: compare triggers", () => {
         });
     });
 
-    it("trigger with long name inside fs and db", () => {
+    it("trigger with long name inside fs and db", async() => {
         const longName = "long_name_0123456789012345678901234567890123456789012345678901234567890123456789";
 
         const triggerInFS = new DatabaseTrigger({
@@ -256,7 +259,7 @@ describe("Comparator: compare triggers", () => {
             }
         });
 
-        const migration = MainComparator.compare(database, fs);
+        const migration = await MainComparator.compare(postgres, database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {

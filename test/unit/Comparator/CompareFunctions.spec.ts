@@ -4,6 +4,7 @@ import { Comment } from "../../../lib/database/schema/Comment";
 import { Database } from "../../../lib/database/schema/Database";
 import { DatabaseFunction } from "../../../lib/database/schema/DatabaseFunction";
 import { FilesState } from "../../../lib/fs/FilesState";
+import { FakeDatabaseDriver } from "../FakeDatabaseDriver";
 import { deepStrictEqualMigration } from "./deepStrictEqualMigration";
 import {
     someFileParams,
@@ -12,17 +13,19 @@ import {
     testFileWithFunc
 } from "./fixture/func-fixture";
 
-describe("Comparator: compare functions", () => {
+describe("Comparator: compare functions", async() => {
     
+    let postgres!: FakeDatabaseDriver;
     let database!: Database;
     let fs!: FilesState;
     beforeEach(() => {
         database = new Database();
         fs = new FilesState();
+        postgres = new FakeDatabaseDriver();
     });
 
-    it("sync empty state", () => {
-        const migration = MainComparator.compare(database, fs);
+    it("sync empty state", async() => {
+        const migration = await MainComparator.compare(postgres, database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -34,11 +37,11 @@ describe("Comparator: compare functions", () => {
         });
     });
 
-    it("create simple function", () => {
+    it("create simple function", async() => {
         
         fs.addFile(testFileWithFunc);
 
-        const migration = MainComparator.compare(database, fs);
+        const migration = await MainComparator.compare(postgres, database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -52,10 +55,10 @@ describe("Comparator: compare functions", () => {
         });
     });
 
-    it("drop function", () => {
+    it("drop function", async() => {
         database.addFunctions([ testFunc ]);
 
-        const migration = MainComparator.compare(database, fs);
+        const migration = await MainComparator.compare(postgres, database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -69,7 +72,7 @@ describe("Comparator: compare functions", () => {
         });
     });
 
-    it("replace function", () => {
+    it("replace function", async() => {
         const fileFunc = new DatabaseFunction({
             ...someFuncParams,
             body: `begin
@@ -92,7 +95,7 @@ describe("Comparator: compare functions", () => {
             }
         });
 
-        const migration = MainComparator.compare(database, fs);
+        const migration = await MainComparator.compare(postgres, database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -108,7 +111,7 @@ describe("Comparator: compare functions", () => {
         });
     });
 
-    it("replace function, change arguments length", () => {
+    it("replace function, change arguments length", async() => {
         const fileFunc = new DatabaseFunction({
             ...someFuncParams,
             args: [
@@ -150,7 +153,7 @@ describe("Comparator: compare functions", () => {
             }
         });
 
-        const migration = MainComparator.compare(database, fs);
+        const migration = await MainComparator.compare(postgres, database, fs);
         
         deepStrictEqualMigration(migration, {
             drop: {
@@ -166,12 +169,12 @@ describe("Comparator: compare functions", () => {
         });
     });
 
-    it("no changes, same states, empty migration", () => {
+    it("no changes, same states, empty migration", async() => {
 
         database.addFunctions([testFunc]);
         fs.addFile(testFileWithFunc);
 
-        const migration = MainComparator.compare(database, fs);
+        const migration = await MainComparator.compare(postgres, database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -183,7 +186,7 @@ describe("Comparator: compare functions", () => {
         });
     });
 
-    it("create function with comment", () => {
+    it("create function with comment", async() => {
         const func = new DatabaseFunction({
             ...someFuncParams,
             comment: "test"
@@ -195,7 +198,7 @@ describe("Comparator: compare functions", () => {
             }
         });
 
-        const migration = MainComparator.compare(database, fs);
+        const migration = await MainComparator.compare(postgres, database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -209,14 +212,14 @@ describe("Comparator: compare functions", () => {
         });
     });
 
-    it("empty migration on frozen function in db", () => {
+    it("empty migration on frozen function in db", async() => {
         const func = new DatabaseFunction({
             ...someFuncParams,
             comment: Comment.frozen("function")
         });
         database.addFunctions([func]);
 
-        const migration = MainComparator.compare(database, fs);
+        const migration = await MainComparator.compare(postgres, database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {
@@ -228,7 +231,7 @@ describe("Comparator: compare functions", () => {
         });
     });
 
-    it("function with long name inside fs and db", () => {
+    it("function with long name inside fs and db", async() => {
         const longName = "long_name_0123456789012345678901234567890123456789012345678901234567890123456789";
 
         const funcInFS = new DatabaseFunction({
@@ -248,7 +251,7 @@ describe("Comparator: compare functions", () => {
             }
         });
 
-        const migration = MainComparator.compare(database, fs);
+        const migration = await MainComparator.compare(postgres, database, fs);
 
         deepStrictEqualMigration(migration, {
             drop: {

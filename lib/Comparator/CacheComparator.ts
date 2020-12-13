@@ -7,8 +7,7 @@ import {
     From,
     SelectColumn,
     FuncCall,
-    Expression,
-    ColumnReference 
+    Expression
 } from "../ast";
 import { CacheTriggersBuilder } from "../cache/CacheTriggersBuilder";
 import { AbstractAgg, AggFactory } from "../cache/aggregator";
@@ -17,10 +16,11 @@ import {
     ISortSelectItem,
     sortSelectsByDependencies
 } from "./graph-util";
+import { TableID } from "../database/schema/TableID";
 
 export class CacheComparator extends AbstractComparator {
 
-    drop() {
+    async drop() {
 
         const allCacheFuncs = this.database.functions.filter(func =>
             !!func.cacheSignature
@@ -81,27 +81,10 @@ export class CacheComparator extends AbstractComparator {
                     continue;
                 }
 
-                const existsCacheWithSameColumn = this.fs.files.some(file => 
-                    file.content.cache.some(cache => {
-
-                        if ( !cache.for.table.equal(table) ) {
-                            return false;
-                        }
-
-                        const selectToUpdate = this.createSelectForUpdate(cache);
-                        const hasSameNameColumn = selectToUpdate.columns.some(selectColumn =>
-                            selectColumn.name === column.name
-                        );
-                        const newColumnType = this.getColumnType(
-                            cache,
-                            selectToUpdate
-                        );
-                        const hasSameType = newColumnType === column.type.toString();
-
-                        return hasSameNameColumn && hasSameType;
-                    })
+                const existsCacheWithSameColumn = await this.existsCacheWithSameColumn(
+                    table,
+                    column
                 );
-
                 if ( !existsCacheWithSameColumn ) {
                     this.migration.drop({
                         columns: [column]
@@ -111,15 +94,41 @@ export class CacheComparator extends AbstractComparator {
         }
     }
 
+    private async existsCacheWithSameColumn(table: TableID, column: Column) {
+        for (const file of this.fs.files) {
+            for (const cache of file.content.cache) {
 
-    create() {
-        const {sortedSelectsForEveryColumn} = this.createWithoutUpdates();
+                if ( !cache.for.table.equal(table) ) {
+                    continue;
+                }
+
+                const selectToUpdate = this.createSelectForUpdate(cache);
+                const hasSameNameColumn = selectToUpdate.columns.some(selectColumn =>
+                    selectColumn.name === column.name
+                );
+                const newColumnType = await this.getColumnType(
+                    cache,
+                    selectToUpdate
+                );
+                const hasSameType = newColumnType === column.type.toString();
+
+                if ( hasSameNameColumn && hasSameType ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    async create() {
+        const {sortedSelectsForEveryColumn} = await this.createWithoutUpdates();
         this.updateAllColumns(
             sortedSelectsForEveryColumn
         );
     }
 
-    createWithoutUpdates() {
+    async createWithoutUpdates() {
         const allCache = flatMap(this.fs.files, file => file.content.cache);
 
         for (const cache of allCache) {
@@ -149,14 +158,14 @@ export class CacheComparator extends AbstractComparator {
 
         const sortedSelectsForEveryColumn = this.sortSelectsByDependencies(allCache);
         
-        this.createAllColumns(
+        await this.createAllColumns(
             sortedSelectsForEveryColumn
         );
 
         return {sortedSelectsForEveryColumn};
     }
 
-    private createAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
+    private async createAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
 
         for (const {cache, select} of sortedSelectsForEveryColumn) {
             const selectColumn = select.columns[0] as SelectColumn;
@@ -170,7 +179,7 @@ export class CacheComparator extends AbstractComparator {
             const columnToCreate = new Column(
                 cache.for.table,
                 columnName,
-                this.getColumnType(cache, select),
+                await this.getColumnType(cache, select),
                 this.getColumnDefault(select),
                 Comment.fromFs({
                     objectType: "column",
@@ -206,6 +215,7 @@ export class CacheComparator extends AbstractComparator {
                     break;
                 }
 
+                i++;
                 selectToUpdateOneTable.push(nextItem.select);
             }
 
@@ -251,70 +261,76 @@ export class CacheComparator extends AbstractComparator {
         }
     }
 
-    // TODO: make async and execute expression in db
-    private getColumnType(cache: Cache, select: Select) {
+    private async getColumnType(cache: Cache, select: Select) {
 
-
-        // TODO: detect default by expression
-        // const columnsTypes = await this.postgres.getCacheColumnsTypes(
-        //     select,
-        //     cache.for
-        // );
-
-        // const columnType = Object.values(columnsTypes)[0];
-        // return columnType;
-        
         let {expression} = select.columns[0] as SelectColumn;
-        let funcCall = expression.getFuncCalls()[0] as FuncCall;
 
-        if ( funcCall.name === "coalesce" ) {
-            expression = funcCall.args[0] as Expression;
-            funcCall = expression.getFuncCalls()[0] as FuncCall;
-            
-            if ( !funcCall ) {
+        if ( expression.isFuncCall() ) {
+            const funcCall = expression.getFuncCalls()[0] as FuncCall;
+            if ( funcCall.name === "coalesce" ) {
+                expression = funcCall.args[0] as Expression;
+            }
+        }
+
+        if ( expression.isFuncCall() ) {
+            const funcCall = expression.getFuncCalls()[0] as FuncCall;
+
+            if ( funcCall.name === "count" ) {
+                return "bigint";
+            }
+
+            if ( funcCall.name === "string_agg" ) {
                 return "text";
             }
-        }
 
-        if ( funcCall.name === "count" ) {
-            return "bigint";
-        }
-        if ( funcCall.name === "string_agg" ) {
-            return "text";
-        }
-        if ( funcCall.name === "sum" ) {
-            return "numeric";
-        }
-        if ( funcCall.name === "array_agg" ) {
-            const firstArg = funcCall.args[0] as Expression;
-            const columnRef = firstArg.getColumnReferences()[0] as ColumnReference;
-
-            if ( columnRef.name === "id" ) {
-                return "integer[]";
+            if ( funcCall.name === "sum" ) {
+                return "numeric";
             }
 
-            const table = this.database.getTable(columnRef.tableReference.table);
-            const column = table && table.getColumn(columnRef.name);
-            
-            if ( column ) {
-                return column.type + "[]";
+            if ( funcCall.name === "array_agg" ) {
+                const firstArg = funcCall.args[0] as Expression;
+                const columnRef = firstArg.getColumnReferences()[0];
+    
+                if ( columnRef && firstArg.elements.length === 1 ) {        
+                    const table = this.database.getTable(
+                        columnRef.tableReference.table
+                    );
+                    const column = table && table.getColumn(columnRef.name);
+                    
+                    if ( column ) {
+                        return column.type + "[]";
+                    }
+
+                    if ( columnRef.name === "id" ) {
+                        return "integer[]";
+                    }
+                }
             }
 
-            return "text[]";
-        }
-        if ( funcCall.name === "max" || funcCall.name === "min" ) {
+            if ( funcCall.name === "max" || funcCall.name === "min" ) {
+    
+                const firstArg = funcCall.args[0] as Expression;
+                const columnRef = firstArg.getColumnReferences()[0];
 
-            const firstArg = funcCall.args[0] as Expression;
-            const columnRef = firstArg.getColumnReferences()[0] as ColumnReference;
-            const table = this.database.getTable(columnRef.tableReference.table);
-            const column = table && table.getColumn(columnRef.name);
-            
-            if ( column ) {
-                return column.type.toString();
+                if ( columnRef && firstArg.elements.length === 1 ) {
+                    const table = this.database.getTable(columnRef.tableReference.table);
+                    const column = table && table.getColumn(columnRef.name);
+                    
+                    if ( column ) {
+                        return column.type.toString();
+                    }
+                }
             }
         }
 
-        return "text";
+
+        const columnsTypes = await this.driver.getCacheColumnsTypes(
+            select,
+            cache.for
+        );
+
+        const columnType = Object.values(columnsTypes)[0];
+        return columnType;
     }
 
     private getColumnDefault(select: Select) {

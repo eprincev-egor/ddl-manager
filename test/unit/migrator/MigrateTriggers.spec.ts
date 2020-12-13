@@ -1,5 +1,5 @@
 import assert from "assert";
-import { FakeDatabaseDriver } from "./FakeDatabaseDriver";
+import { FakeDatabaseDriver } from "../FakeDatabaseDriver";
 import { MainMigrator } from "../../../lib/Migrator/MainMigrator";
 import { Migration } from "../../../lib/Migrator/Migration";
 import { DatabaseTrigger } from "../../../lib/database/schema/DatabaseTrigger";

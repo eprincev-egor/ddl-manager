@@ -1,12 +1,12 @@
-import { Select } from "../../../lib/ast";
-import { IDatabaseDriver } from "../../../lib/database/interface";
-import { Database } from "../../../lib/database/schema/Database";
-import { Table } from "../../../lib/database/schema/Table";
-import { DatabaseFunction } from "../../../lib/database/schema/DatabaseFunction";
-import { TableReference } from "../../../lib/database/schema/TableReference";
-import { DatabaseTrigger } from "../../../lib/database/schema/DatabaseTrigger";
-import { Column } from "../../../lib/database/schema/Column";
-import { IFileContent } from "../../../lib/fs/File";
+import { Select } from "../../lib/ast";
+import { IDatabaseDriver } from "../../lib/database/interface";
+import { Database } from "../../lib/database/schema/Database";
+import { Table } from "../../lib/database/schema/Table";
+import { DatabaseFunction } from "../../lib/database/schema/DatabaseFunction";
+import { TableReference } from "../../lib/database/schema/TableReference";
+import { DatabaseTrigger } from "../../lib/database/schema/DatabaseTrigger";
+import { Column } from "../../lib/database/schema/Column";
+import { IFileContent } from "../../lib/fs/File";
 
 export class FakeDatabaseDriver
 implements IDatabaseDriver {

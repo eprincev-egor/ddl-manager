@@ -5,54 +5,73 @@ import { FSEvent } from "../fs/FSEvent";
 import { CacheComparator } from "./CacheComparator";
 import { TriggersComparator } from "./TriggersComparator";
 import { FunctionsComparator } from "./FunctionsComparator";
+import { IDatabaseDriver } from "../database/interface";
 
 export class MainComparator {
 
-    static compare(database: Database, fs: FilesState) {
-        const comparator = new MainComparator(database, fs);
-        return comparator.compare();
+    static async compare(
+        driver: IDatabaseDriver,
+        database: Database,
+        fs: FilesState
+    ) {
+        const comparator = new MainComparator(driver, database, fs);
+        return await comparator.compare();
     }
 
-    static fsEventToMigration(database: Database, fs: FilesState, fsEvent: FSEvent) {
-        const comparator = new MainComparator(database, fs);
-        return comparator.fsEventToMigration(fsEvent);
+    static async fsEventToMigration(
+        driver: IDatabaseDriver,
+        database: Database,
+        fs: FilesState,
+        fsEvent: FSEvent
+    ) {
+        const comparator = new MainComparator(driver, database, fs);
+        return await comparator.fsEventToMigration(fsEvent);
     }
 
+    private driver: IDatabaseDriver;
     private database: Database;
     private migration: Migration;
     private functions: FunctionsComparator;
     private triggers: TriggersComparator;
     private cache: CacheComparator;
 
-    private constructor(database: Database, fs: FilesState) {
+    private constructor(
+        driver: IDatabaseDriver,
+        database: Database,
+        fs: FilesState
+    ) {
+        this.driver = driver;
         this.database = database;
         this.migration = Migration.empty();
 
         this.functions = new FunctionsComparator(
+            driver,
             database,
             fs,
             this.migration
         );
         this.triggers = new TriggersComparator(
+            driver,
             database,
             fs,
             this.migration
         );
         this.cache = new CacheComparator(
+            driver,
             database,
             fs,
             this.migration
         );
     }
 
-    private compare() {
-        this.dropOldObjects();
-        this.createNewObjects();
+    private async compare() {
+        await this.dropOldObjects();
+        await this.createNewObjects();
 
         return this.migration;
     }
 
-    fsEventToMigration(fsEvent: FSEvent) {
+    async fsEventToMigration(fsEvent: FSEvent) {
         for (const removedFile of fsEvent.removed) {
             this.migration.drop({
                 functions: removedFile.content.functions,
@@ -75,25 +94,26 @@ export class MainComparator {
         }
 
         const cacheComparator = new CacheComparator(
+            this.driver,
             this.database,
             tmpFs,
             this.migration
         );
-        cacheComparator.createWithoutUpdates();
+        await cacheComparator.createWithoutUpdates();
 
         return this.migration;
     }
 
-    private dropOldObjects() {
+    private async dropOldObjects() {
         this.functions.drop();
         this.triggers.drop();
-        this.cache.drop();
+        await this.cache.drop();
     }
 
-    private createNewObjects() {
+    private async createNewObjects() {
         this.functions.create();
         this.triggers.create();
-        this.cache.create();
+        await this.cache.create();
     }
 
 }

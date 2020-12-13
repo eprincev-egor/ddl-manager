@@ -1066,7 +1066,8 @@ describe("integration/MainMigrator", () => {
             }
         });
 
-        const migration = MainComparator.compare(
+        const migration = await MainComparator.compare(
+            postgres,
             databaseStructure,
             fs
         );

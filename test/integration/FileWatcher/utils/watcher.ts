@@ -4,6 +4,7 @@ import { Migration } from "../../../../lib/Migrator/Migration";
 import { prepare } from "../../utils/prepare";
 import { FilesState } from "../../../../lib/fs/FilesState";
 import { Database } from "../../../../lib/database/schema/Database";
+import { FakeDatabaseDriver } from "../../../unit/FakeDatabaseDriver";
 
 export function watcher(ROOT_TMP_PATH: string) {
     
@@ -24,8 +25,9 @@ export function watcher(ROOT_TMP_PATH: string) {
         WATCHERS_TO_STOP.push(fsWatcher);
 
         if ( onChange ) {
-            fsWatcher.on("change", (fsEvent) => {
-                const migration = MainComparator.fsEventToMigration(
+            fsWatcher.on("change", async(fsEvent) => {
+                const migration = await MainComparator.fsEventToMigration(
+                    new FakeDatabaseDriver(),
                     new Database(),
                     new FilesState(),
                     fsEvent

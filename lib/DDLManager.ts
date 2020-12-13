@@ -138,7 +138,11 @@ export class DDLManager {
         const postgres = await this.postgres();
         const database = await postgres.load();
 
-        const migration = MainComparator.compare(database, filesState);
+        const migration = await MainComparator.compare(
+            postgres,
+            database,
+            filesState
+        );
         return {migration, postgres, database};
     }
 
@@ -167,7 +171,11 @@ export class DDLManager {
         const database = await postgres.load();
         const watcher = await FileWatcher.watch(this.folders);
 
-        const migration = MainComparator.compare(database, watcher.state);
+        const migration = await MainComparator.compare(
+            postgres,
+            database,
+            watcher.state
+        );
         const migrateErrors = await MainMigrator.migrate(postgres, migration);
 
         this.onMigrate(
@@ -193,12 +201,13 @@ export class DDLManager {
         fsEvent: FSEvent
     ) {
 
-        const migration = MainComparator.fsEventToMigration(
+        const postgres = await this.postgres();
+        const migration = await MainComparator.fsEventToMigration(
+            postgres,
             database,
             filesState,
             fsEvent
         );
-        const postgres = await this.postgres();
 
         const outputErrors = await MainMigrator.migrate(
             postgres, migration
