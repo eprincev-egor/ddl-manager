@@ -5,16 +5,21 @@ import { Comment } from "../../database/schema/Comment";
 import { DatabaseFunction } from "../../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
 import { TableID } from "../../database/schema/TableID";
+import { SetItemsFactory } from "../aggregator/SetItemsFactory";
 import { CacheContext } from "./CacheContext";
 import { ConditionBuilder } from "./condition/ConditionBuilder";
 
 export abstract class AbstractTriggerBuilder {
     protected readonly context: CacheContext;
     protected readonly conditionBuilder: ConditionBuilder;
+    protected readonly setItemsFactory: SetItemsFactory;
 
     constructor(context: CacheContext) {
         this.context = context;
         this.conditionBuilder = new ConditionBuilder(
+            context
+        );
+        this.setItemsFactory = new SetItemsFactory(
             context
         );
     }
