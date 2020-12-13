@@ -244,31 +244,27 @@ begin
                     from_countries_name,
                     new_country_from_name
                 ),
-                from_countries = (
-                    select
-                        string_agg(item.name, ', ')
-
-                    from unnest(
-                        array_append(
-                            from_countries_name,
-                            new_country_from_name
-                        )
-                    ) as item(name)
+                from_countries = coalesce(
+                    from_countries ||
+                    coalesce(
+                        ', '
+                        || new_country_from_name,
+                        ''
+                    ),
+                    new_country_from_name
                 ),
                 to_countries_name = array_append(
                     to_countries_name,
                     new_country_to_name
                 ),
-                to_countries = (
-                    select
-                        string_agg(item.name, ', ')
-
-                    from unnest(
-                        array_append(
-                            to_countries_name,
-                            new_country_to_name
-                        )
-                    ) as item(name)
+                to_countries = coalesce(
+                    to_countries ||
+                    coalesce(
+                        ', '
+                        || new_country_to_name,
+                        ''
+                    ),
+                    new_country_to_name
                 )
             where
                 new.id_client = companies.id;
@@ -311,31 +307,27 @@ begin
                         from_countries_name,
                         new_country_from_name
                     ),
-                    from_countries = (
-                        select
-                            string_agg(item.name, ', ')
-
-                        from unnest(
-                            array_append(
-                                from_countries_name,
-                                new_country_from_name
-                            )
-                        ) as item(name)
+                    from_countries = coalesce(
+                        from_countries ||
+                        coalesce(
+                            ', '
+                            || new_country_from_name,
+                            ''
+                        ),
+                        new_country_from_name
                     ),
                     to_countries_name = array_append(
                         to_countries_name,
                         new_country_to_name
                     ),
-                    to_countries = (
-                        select
-                            string_agg(item.name, ', ')
-
-                        from unnest(
-                            array_append(
-                                to_countries_name,
-                                new_country_to_name
-                            )
-                        ) as item(name)
+                    to_countries = coalesce(
+                        to_countries ||
+                        coalesce(
+                            ', '
+                            || new_country_to_name,
+                            ''
+                        ),
+                        new_country_to_name
                     )
                 where
                     new.id_client = companies.id;

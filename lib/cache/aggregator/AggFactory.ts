@@ -1,11 +1,10 @@
-import { FuncCall, Expression, SelectColumn, ColumnReference, UnknownExpressionElement } from "../../ast";
-import { TableID } from "../../database/schema/TableID";
-import { TableReference } from "../../database/schema/TableReference";
+import { FuncCall, Expression, SelectColumn } from "../../ast";
 import { AbstractAgg } from "./AbstractAgg";
 import { aggregatorsMap } from "./aggregatorsMap";
 import { ArrayAgg } from "./ArrayAgg";
 import { ColumnNameGenerator } from "./ColumnNameGenerator";
 import { UniversalAgg } from "./UniversalAgg";
+import { StringAgg } from "./StringAgg";
 
 interface IAggMap {
     [column: string]: AbstractAgg;
@@ -96,7 +95,12 @@ export class AggFactory {
             childAggregations.push(helperArrayAgg);
         }
 
-        const universalAgg = new UniversalAgg({
+        let AggConstructor = UniversalAgg;
+        if ( aggCall.name === "string_agg" ) {
+            AggConstructor = StringAgg;
+        }
+
+        const universalAgg = new AggConstructor({
             call: aggCall,
             columnName: aggColumnName
         }, childAggregations);

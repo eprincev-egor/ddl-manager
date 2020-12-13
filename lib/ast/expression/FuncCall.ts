@@ -120,7 +120,7 @@ export class FuncCall extends AbstractExpressionElement {
 
         const isLongArgs = (
             this.orderBy.length ||
-            this.args.join(", ").trim().length > 25
+            this.args.join(", ").trim().length > 24
         );
         if ( isLongArgs ) {
             sql += "\n";

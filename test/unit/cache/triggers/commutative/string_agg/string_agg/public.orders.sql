@@ -105,16 +105,14 @@ begin
                     orders_numbers_doc_number,
                     new.doc_number
                 ),
-                orders_numbers = (
-                    select
-                        string_agg(item.doc_number, ', ')
-
-                    from unnest(
-                        array_append(
-                            orders_numbers_doc_number,
-                            new.doc_number
-                        )
-                    ) as item(doc_number)
+                orders_numbers = coalesce(
+                    orders_numbers ||
+                    coalesce(
+                        ', '
+                        || new.doc_number,
+                        ''
+                    ),
+                    new.doc_number
                 )
             where
                 new.id_client = companies.id;
@@ -135,16 +133,14 @@ begin
                     orders_numbers_doc_number,
                     new.doc_number
                 ),
-                orders_numbers = (
-                    select
-                        string_agg(item.doc_number, ', ')
-
-                    from unnest(
-                        array_append(
-                            orders_numbers_doc_number,
-                            new.doc_number
-                        )
-                    ) as item(doc_number)
+                orders_numbers = coalesce(
+                    orders_numbers ||
+                    coalesce(
+                        ', '
+                        || new.doc_number,
+                        ''
+                    ),
+                    new.doc_number
                 )
             where
                 new.id_client = companies.id;

@@ -14,7 +14,10 @@ begin
                     orders_numbers_doc_number,
                     old.doc_number
                 ),
-                orders_numbers_id = cm_array_remove_one_element(orders_numbers_id, old.id),
+                orders_numbers_id = cm_array_remove_one_element(
+                    orders_numbers_id,
+                    old.id
+                ),
                 orders_numbers = (
                     select
                         string_agg(
@@ -29,7 +32,10 @@ begin
                             orders_numbers_doc_number,
                             old.doc_number
                         ),
-                        cm_array_remove_one_element(orders_numbers_id, old.id)
+                        cm_array_remove_one_element(
+                            orders_numbers_id,
+                            old.id
+                        )
                     ) as item(doc_number, id)
                 )
             where
@@ -93,7 +99,10 @@ begin
                     orders_numbers_doc_number,
                     old.doc_number
                 ),
-                orders_numbers_id = cm_array_remove_one_element(orders_numbers_id, old.id),
+                orders_numbers_id = cm_array_remove_one_element(
+                    orders_numbers_id,
+                    old.id
+                ),
                 orders_numbers = (
                     select
                         string_agg(
@@ -108,7 +117,10 @@ begin
                             orders_numbers_doc_number,
                             old.doc_number
                         ),
-                        cm_array_remove_one_element(orders_numbers_id, old.id)
+                        cm_array_remove_one_element(
+                            orders_numbers_id,
+                            old.id
+                        )
                     ) as item(doc_number, id)
                 )
             where
@@ -125,7 +137,10 @@ begin
                     orders_numbers_doc_number,
                     new.doc_number
                 ),
-                orders_numbers_id = array_append(orders_numbers_id, new.id),
+                orders_numbers_id = array_append(
+                    orders_numbers_id,
+                    new.id
+                ),
                 orders_numbers = (
                     select
                         string_agg(
@@ -140,7 +155,10 @@ begin
                             orders_numbers_doc_number,
                             new.doc_number
                         ),
-                        array_append(orders_numbers_id, new.id)
+                        array_append(
+                            orders_numbers_id,
+                            new.id
+                        )
                     ) as item(doc_number, id)
                 )
             where
@@ -162,7 +180,10 @@ begin
                     orders_numbers_doc_number,
                     new.doc_number
                 ),
-                orders_numbers_id = array_append(orders_numbers_id, new.id),
+                orders_numbers_id = array_append(
+                    orders_numbers_id,
+                    new.id
+                ),
                 orders_numbers = (
                     select
                         string_agg(
@@ -177,7 +198,10 @@ begin
                             orders_numbers_doc_number,
                             new.doc_number
                         ),
-                        array_append(orders_numbers_id, new.id)
+                        array_append(
+                            orders_numbers_id,
+                            new.id
+                        )
                     ) as item(doc_number, id)
                 )
             where

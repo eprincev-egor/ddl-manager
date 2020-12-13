@@ -161,16 +161,14 @@ begin
                     cargos_products_names_name,
                     new_product_type_name
                 ),
-                cargos_products_names = (
-                    select
-                        string_agg(item.name, ', ')
-
-                    from unnest(
-                        array_append(
-                            cargos_products_names_name,
-                            new_product_type_name
-                        )
-                    ) as item(name)
+                cargos_products_names = coalesce(
+                    cargos_products_names ||
+                    coalesce(
+                        ', '
+                        || new_product_type_name,
+                        ''
+                    ),
+                    new_product_type_name
                 )
             where
                 new.id_order = orders.id;
@@ -204,16 +202,14 @@ begin
                         cargos_products_names_name,
                         new_product_type_name
                     ),
-                    cargos_products_names = (
-                        select
-                            string_agg(item.name, ', ')
-
-                        from unnest(
-                            array_append(
-                                cargos_products_names_name,
-                                new_product_type_name
-                            )
-                        ) as item(name)
+                    cargos_products_names = coalesce(
+                        cargos_products_names ||
+                        coalesce(
+                            ', '
+                            || new_product_type_name,
+                            ''
+                        ),
+                        new_product_type_name
                     )
                 where
                     new.id_order = orders.id;

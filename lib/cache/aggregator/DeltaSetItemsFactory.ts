@@ -137,7 +137,6 @@ export class DeltaSetItemsFactory extends SetItemsFactory {
                 cases: [
                     {
                         when: needPlus,
-                        // plus
                         then: this.aggregate("plus", agg)
                     },
                     {

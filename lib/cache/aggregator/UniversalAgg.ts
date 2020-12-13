@@ -1,4 +1,4 @@
-import { Expression, ColumnReference, Spaces, IColumnsMap } from "../../ast";
+import { Expression, ColumnReference, Spaces, IColumnsMap, IExpressionElement } from "../../ast";
 import { TableID } from "../../database/schema/TableID";
 import { TableReference } from "../../database/schema/TableReference";
 import { AbstractAgg, IAggParams } from "./AbstractAgg";
@@ -24,7 +24,7 @@ ${ this.printChildrenAggregations() }
 )`, this.buildColumnsMap());
     }
 
-    plus() {
+    plus(total: IExpressionElement, value: Expression) {
         return Expression.unknown(`(
     select
 ${ this.printMainAgg() }
