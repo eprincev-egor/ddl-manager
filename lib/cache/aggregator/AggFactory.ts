@@ -7,6 +7,7 @@ import { UniversalAgg } from "./UniversalAgg";
 import { StringAgg } from "./StringAgg";
 import { MaxAgg } from "./MaxAgg";
 import { MinAgg } from "./MinAgg";
+import { Database } from "../../database/schema/Database";
 
 interface IAggMap {
     [column: string]: AbstractAgg;
@@ -14,10 +15,12 @@ interface IAggMap {
 
 export class AggFactory {
 
+    private database: Database;
     private updateColumn: SelectColumn;
     private columnNameGenerator: ColumnNameGenerator;
 
-    constructor(updateColumn: SelectColumn) {
+    constructor(database: Database, updateColumn: SelectColumn) {
+        this.database = database;
         this.updateColumn = updateColumn;
         this.columnNameGenerator = new ColumnNameGenerator(updateColumn);
     }
@@ -26,7 +29,7 @@ export class AggFactory {
         
         const map: IAggMap = {};
 
-        for (const aggCall of this.updateColumn.getAggregations()) {
+        for (const aggCall of this.updateColumn.getAggregations(this.database)) {
             const subMap = this.createAggregationsByAggCall(aggCall);
             Object.assign(map, subMap);
         }

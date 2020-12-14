@@ -5,11 +5,15 @@ import {
 } from "../../ast";
 import { AggFactory } from "../aggregator";
 import { flatMap } from "lodash";
+import { Database } from "../../database/schema/Database";
 
-export function createSelectForUpdate(cache: Cache) {
+export function createSelectForUpdate(
+    database: Database,
+    cache: Cache
+) {
 
     const columnsToUpdate = flatMap(cache.select.columns, selectColumn => {
-        const aggFactory = new AggFactory(selectColumn);
+        const aggFactory = new AggFactory(database, selectColumn);
         const aggregations = aggFactory.createAggregations();
         
         const columns = Object.keys(aggregations).map(aggColumnName => {

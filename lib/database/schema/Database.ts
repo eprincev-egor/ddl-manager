@@ -8,10 +8,22 @@ import { Migration } from "../../Migrator/Migration";
 export class Database {
     readonly tables: Table[];
     readonly functions: DatabaseFunction[];
+    readonly aggregators: string[];
     
     constructor(tables: Table[] = []) {
         this.tables = tables;
         this.functions = [];
+        this.aggregators = [
+            "count",
+            "max",
+            "min",
+            "sum",
+            "avg",
+            "array_agg",
+            "string_agg",
+            "bool_or",
+            "bool_and"
+        ];
     }
 
     getTable(tableId: TableID) {
@@ -87,6 +99,14 @@ export class Database {
             const table = this.getTable(column.table);
             if ( table ) {
                 table.removeColumn(column);
+            }
+        }
+    }
+
+    addAggregators(newAggregators: string[]) {
+        for (const aggName of newAggregators) {
+            if ( !this.aggregators.includes(aggName) )     {
+                this.aggregators.push(aggName);
             }
         }
     }

@@ -738,4 +738,117 @@ describe("integration/DDLManager.build cache", () => {
         }]);
     });
 
+    it("build cache with custom aggregation", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+
+            create or replace function max_or_null_date(
+                prev_date timestamp with time zone,
+                next_date timestamp with time zone
+            ) returns timestamp with time zone as $body$
+            begin
+                if prev_date = '0001-01-01 00:00:00' then
+                    return next_date;
+                end if;
+            
+                if prev_date is null then
+                    return null;
+                end if;
+            
+                if next_date is null then
+                    return null;
+                end if;
+            
+                return greatest(prev_date, next_date);
+            end
+            $body$
+            language plpgsql;
+                    
+            create or replace function max_or_null_date_final(
+                final_date timestamp with time zone
+            ) returns timestamp with time zone as $body$
+            begin
+                if final_date = '0001-01-01 00:00:00' then
+                    return null;
+                end if;
+
+                return final_date;
+            end
+            $body$
+            language plpgsql;
+
+
+            CREATE AGGREGATE max_or_null_date_agg (timestamp with time zone)
+            (
+                sfunc = max_or_null_date,
+                finalfunc = max_or_null_date_final,
+                stype = timestamp with time zone,
+                initcond = '0001-01-01T00:00:00.000Z'
+            );
+              
+            create table companies (
+                id serial primary key
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer,
+                customs_date timestamp with time zone
+            );
+
+            insert into companies default values;
+        `);
+        
+        fs.writeFileSync(folderPath + "/set_note_trigger.sql", `
+            cache totals for companies (
+                select
+                    max_or_null_date_agg( orders.customs_date ) as orders_customs_date
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        let result, row;
+        const date = new Date();
+
+
+        // create one date
+        await db.query(`
+            insert into orders (id_client, customs_date)
+            values (1, '${date.toISOString()}'::timestamp with time zone);
+        `);
+        result = await db.query(`
+            select orders_customs_date
+            from companies
+        `);
+        row = result.rows[0];
+        assert.strictEqual(
+            row.orders_customs_date && row.orders_customs_date.toISOString(),
+            date.toISOString()
+        );
+
+        // add null
+        await db.query(`
+            insert into orders (id_client, customs_date)
+            values (1, null);
+        `);
+        result = await db.query(`
+            select orders_customs_date
+            from companies
+        `);
+        row = result.rows[0];
+        assert.strictEqual(
+            row.orders_customs_date,
+            null
+        );
+    });
 });

@@ -128,7 +128,7 @@ export class ConditionBuilder {
     
         const allAggCalls = flatMap(
             this.context.cache.select.columns, 
-            column => column.getAggregations()
+            column => column.getAggregations(this.context.database)
         );
         const everyAggCallHaveFilter = allAggCalls.every(aggCall => aggCall.where != null);
         if ( !everyAggCallHaveFilter ) {

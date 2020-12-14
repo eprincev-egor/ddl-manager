@@ -89,7 +89,7 @@ export class ColumnNameGenerator {
     private groupFuncsByName() {
         const funcsByName: IFuncsByName = {};
 
-        for (const funcCall of this.updateColumn.getAggregations()) {
+        for (const funcCall of this.updateColumn.expression.getFuncCalls()) {
             if ( !funcsByName[ funcCall.name ] ) {
                 funcsByName[ funcCall.name ] = [];
             }

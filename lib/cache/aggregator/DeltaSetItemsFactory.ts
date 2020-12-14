@@ -18,7 +18,7 @@ export class DeltaSetItemsFactory extends SetItemsFactory {
 
     delta() {
         const updateColumns = this.context.cache.select.columns.filter(updateColumn => {
-            const aggregations = updateColumn.getAggregations();
+            const aggregations = updateColumn.getAggregations(this.context.database);
 
             const isImmutable = aggregations.every(aggCall =>
                 !aggCall.where &&
@@ -45,7 +45,7 @@ export class DeltaSetItemsFactory extends SetItemsFactory {
 
     private createDeltaSetItemsByColumn(updateColumn: SelectColumn): SetItem[] {
 
-        const aggFactory = new AggFactory(updateColumn);
+        const aggFactory = new AggFactory(this.context.database, updateColumn);
         const aggMap = aggFactory.createAggregations();
 
         const setItems: SetItem[] = [];

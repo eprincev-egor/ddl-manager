@@ -355,6 +355,7 @@ export class CacheComparator extends AbstractComparator {
 
     private getColumnDefault(select: Select) {
         const aggFactory = new AggFactory(
+            this.database,
             select.columns[0] as SelectColumn
         );
         const aggregations = aggFactory.createAggregations();

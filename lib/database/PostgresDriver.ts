@@ -24,6 +24,8 @@ const selectAllTriggersSQL = fs.readFileSync(__dirname + "/postgres/select-all-t
     .toString();
 const selectAllColumnsSQL = fs.readFileSync(__dirname + "/postgres/select-all-columns.sql")
     .toString();
+const selectAllAggregatorsSQL = fs.readFileSync(__dirname + "/postgres/select-all-aggregators.sql")
+    .toString();
 
 export class PostgresDriver
 implements IDatabaseDriver {
@@ -48,6 +50,9 @@ implements IDatabaseDriver {
         for (const trigger of triggers) {
             database.addTrigger(trigger);
         }
+
+        const aggregators = await this.loadAggregators();
+        database.addAggregators(aggregators);
 
         return database;
     }
@@ -129,6 +134,12 @@ implements IDatabaseDriver {
         }
 
         return database;
+    }
+
+    private async loadAggregators(): Promise<string[]> {
+        const {rows} = await this.query(selectAllAggregatorsSQL);
+        const aggregators = rows.map(row => row.agg_func_name) as string[];
+        return aggregators;
     }
 
     async unfreezeAll(dbState: Database) {

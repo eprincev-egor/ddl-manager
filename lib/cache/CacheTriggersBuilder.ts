@@ -14,6 +14,7 @@ export class CacheTriggersBuilder {
 
     private readonly cache: Cache;
     private readonly builderFactory: TriggerBuilderFactory;
+    private readonly database: Database;
 
     constructor(
         cacheOrSQL: string | Cache,
@@ -23,6 +24,7 @@ export class CacheTriggersBuilder {
         if ( typeof cacheOrSQL === "string" ) {
             cache = CacheParser.parse(cacheOrSQL);
         }
+        this.database = database;
         this.cache = cache;
         this.builderFactory = new TriggerBuilderFactory(
             cache,
@@ -31,7 +33,7 @@ export class CacheTriggersBuilder {
     }
 
     createSelectForUpdate() {
-        const select = createSelectForUpdate(this.cache);
+        const select = createSelectForUpdate(this.database, this.cache);
         return select;
     }
 

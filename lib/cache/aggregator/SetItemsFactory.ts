@@ -54,7 +54,10 @@ export class SetItemsFactory {
         aggType: AggType,
         hasOtherColumns: boolean
     ): SetItem[] {
-        const aggFactory = new AggFactory(updateColumn);
+        const aggFactory = new AggFactory(
+            this.context.database,
+            updateColumn
+        );
         const aggMap = aggFactory.createAggregations();
 
         const setItems: SetItem[] = [];

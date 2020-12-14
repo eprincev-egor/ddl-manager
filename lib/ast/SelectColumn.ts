@@ -1,16 +1,7 @@
+import { Database } from "../database/schema/Database";
 import { AbstractAstElement } from "./AbstractAstElement";
 import { Expression } from "./expression/Expression";
 import { Spaces } from "./Spaces";
-
-// TODO: load from db
-const aggFuncsNames = [
-    "count",
-    "max",
-    "min",
-    "sum",
-    "array_agg",
-    "string_agg"
-];
 
 interface ISelectColumnParams {
     name: string;
@@ -44,10 +35,10 @@ export class SelectColumn extends AbstractAstElement {
         return [`${this.expression.toSQL(spaces.plusOneLevel() )} as ${this.name}`];
     }
 
-    getAggregations() {
+    getAggregations(database: Database) {
         const funcs = this.expression.getFuncCalls();
         const aggFuncs = funcs.filter(funcCall =>
-            aggFuncsNames.includes(funcCall.name)
+            database.aggregators.includes(funcCall.name)
         );
         return aggFuncs;
     }

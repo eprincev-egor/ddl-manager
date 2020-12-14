@@ -19,7 +19,10 @@ export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilde
             )
         );
 
-        const selectToUpdate = createSelectForUpdate(this.context.cache);
+        const selectToUpdate = createSelectForUpdate(
+            this.context.database,
+            this.context.cache
+        );
 
         return buildSelfUpdateByOtherTablesBody(
             this.context.cache.for,
