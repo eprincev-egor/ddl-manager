@@ -19,7 +19,10 @@ begin
             transfers_sum
         ) = (
             select
-                sum(capital.transfer.delta) as transfers_sum
+                coalesce(
+        sum(capital.transfer.delta),
+        0
+    ) as transfers_sum
 
             from capital.transfer
 

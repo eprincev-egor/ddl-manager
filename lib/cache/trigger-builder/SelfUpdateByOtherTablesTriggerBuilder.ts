@@ -5,6 +5,7 @@ import { Comment } from "../../database/schema/Comment";
 import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { buildSelfUpdateByOtherTablesBody } from "./body/buildSelfUpdateByOtherTablesBody";
+import { createSelectForUpdate } from "../processor/createSelectForUpdate";
 
 export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilder {
 
@@ -18,14 +19,14 @@ export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilde
             )
         );
 
-        // TODO: update also helper columns
+        const selectToUpdate = createSelectForUpdate(this.context.cache);
 
         return buildSelfUpdateByOtherTablesBody(
             this.context.cache.for,
             this.conditions.noReferenceChanges(),
             hasReference,
-            this.context.cache.select.columns.map(col => col.name),
-            this.context.cache.select.toString()
+            selectToUpdate.columns.map(col => col.name),
+            selectToUpdate.toString()
         );
     }
 
