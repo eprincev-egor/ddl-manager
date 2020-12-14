@@ -76,26 +76,30 @@ export function buildCommutativeBodyWithJoins(
                     new BlankLine(),
 
                     ...(
-                        deltaCase.needUpdate ? [
-                            new If({
-                                if: deltaCase.needUpdate,
-                                then: [
-                                    new BlankLine(),
-                                    deltaCase.update,
-                                    new BlankLine(),
-                                    new HardCode({sql: "return new;"})
-                                ]
-                            })
-                        ] : [
-                            new BlankLine(),
-                            deltaCase.update,
-                            new BlankLine(),
-                            new HardCode({sql: "return new;"})
-                        ]
+                        deltaCase.update.set.length ?
+                        (
+                            deltaCase.needUpdate ? [
+                                new If({
+                                    if: deltaCase.needUpdate,
+                                    then: [
+                                        new BlankLine(),
+                                        deltaCase.update,
+                                        new BlankLine(),
+                                        new HardCode({sql: "return new;"})
+                                    ]
+                                }),
+                                new BlankLine(),
+                                new BlankLine()
+                            ] : [
+                                new BlankLine(),
+                                deltaCase.update,
+                                new BlankLine(),
+                                new HardCode({sql: "return new;"}),
+                                new BlankLine(),
+                                new BlankLine()
+                            ]
+                        ) : []
                     ),
-
-                    new BlankLine(),
-                    new BlankLine(),
 
                     updateIf(
                         oldCase.hasReference ?

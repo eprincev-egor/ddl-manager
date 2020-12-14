@@ -9,6 +9,8 @@ import { hasNoReference, hasReference } from "./hasReference";
 import { replaceArrayNotNullOn } from "./replaceArrayNotNullOn";
 import { replaceOperatorAnyToIndexedOperator } from "./replaceOperatorAnyToIndexedOperator";
 import { replaceAmpArrayToAny } from "./replaceAmpArrayToAny";
+import { findJoinsMeta } from "../../processor/findJoinsMeta";
+import { buildJoins } from "../../processor/buildJoins";
 
 
 export type RowType = "new" | "old";
@@ -62,6 +64,14 @@ export class ConditionBuilder {
             arrayChangesFunc(row)
         );
         const output = this.replaceTriggerTableRefsTo(needUpdate, row);
+        return output;
+    }
+
+    mathOneFilter(row: RowType) {
+        const matchedAllAggFilters = this.matchedAllAggFilters();
+        const output = this.replaceTriggerTableRefsTo(
+            matchedAllAggFilters, row
+        );
         return output;
     }
 
@@ -153,6 +163,23 @@ export class ConditionBuilder {
         let outputExpression = expression as Expression;
 
         const refsToTriggerTable = this.context.getTableReferencesToTriggerTable();
+
+        const joinsMeta = findJoinsMeta(this.context.cache.select);
+
+        if ( joinsMeta.length ) {
+            const joins = buildJoins(
+                this.context.database,
+                joinsMeta,
+                row
+            );
+            
+            joins.forEach((join) => {
+                outputExpression = outputExpression.replaceColumn(
+                    (join.table.alias || join.table.name) + "." + join.table.column,
+                    join.variable.name
+                );
+            });
+        }
 
         refsToTriggerTable.forEach((triggerTableRef) => {
 

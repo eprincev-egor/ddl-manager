@@ -11,6 +11,7 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
             this.conditions.noChanges(),
             {
                 hasReference: this.conditions.hasReference("old"),
+                needUpdate: this.conditions.mathOneFilter("old"),
                 update: new Update({
                     table: this.context.cache.for.toString(),
                     set: this.setItems.minus(),
@@ -20,6 +21,7 @@ export class JoinedCommutativeTriggerBuilder extends AbstractTriggerBuilder {
             },
             {
                 hasReference: this.conditions.hasReference("new"),
+                needUpdate: this.conditions.mathOneFilter("new"),
                 update: new Update({
                     table: this.context.cache.for.toString(),
                     set: this.setItems.plus(),
