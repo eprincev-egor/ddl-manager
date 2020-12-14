@@ -39,7 +39,7 @@ begin
                 group_unit_quantity_pallet = group_unit_quantity_pallet - coalesce(old.quantity_pallet, 0),
                 group_unit_buyers_names_list_company_name = case
                     when
-                        company_buyer.list_company_name is not null
+                        old_company_buyer_list_company_name is not null
                     then
                         cm_array_remove_one_element(
                             group_unit_buyers_names_list_company_name,
@@ -50,7 +50,7 @@ begin
                 end,
                 group_unit_buyers_names = case
                     when
-                        company_buyer.list_company_name is not null
+                        old_company_buyer_list_company_name is not null
                     then
                         (
                             select
@@ -71,7 +71,7 @@ begin
                 end,
                 group_unit_delivery_names_list_warehouse_name = case
                     when
-                        point_delivery.list_warehouse_name is not null
+                        old_point_delivery_list_warehouse_name is not null
                     then
                         cm_array_remove_one_element(
                             group_unit_delivery_names_list_warehouse_name,
@@ -82,7 +82,7 @@ begin
                 end,
                 group_unit_delivery_names = case
                     when
-                        point_delivery.list_warehouse_name is not null
+                        old_point_delivery_list_warehouse_name is not null
                     then
                         (
                             select
@@ -197,18 +197,18 @@ begin
                 group_unit_quantity_pallet = group_unit_quantity_pallet - coalesce(old.quantity_pallet, 0) + coalesce(new.quantity_pallet, 0),
                 group_unit_buyers_names_list_company_name = case
                     when
-                        company_buyer.list_company_name is not null
+                        new_company_buyer_list_company_name is not null
                         and
-                        not(company_buyer.list_company_name is not null)
+                        not(old_company_buyer_list_company_name is not null)
                     then
                         array_append(
                             group_unit_buyers_names_list_company_name,
                             new_company_buyer_list_company_name
                         )
                     when
-                        not(company_buyer.list_company_name is not null)
+                        not(new_company_buyer_list_company_name is not null)
                         and
-                        company_buyer.list_company_name is not null
+                        old_company_buyer_list_company_name is not null
                     then
                         cm_array_remove_one_element(
                             group_unit_buyers_names_list_company_name,
@@ -225,9 +225,9 @@ begin
                 end,
                 group_unit_buyers_names = case
                     when
-                        company_buyer.list_company_name is not null
+                        new_company_buyer_list_company_name is not null
                         and
-                        not(company_buyer.list_company_name is not null)
+                        not(old_company_buyer_list_company_name is not null)
                     then
                         case
                             when
@@ -250,9 +250,9 @@ begin
                                 group_unit_buyers_names
                         end
                     when
-                        not(company_buyer.list_company_name is not null)
+                        not(new_company_buyer_list_company_name is not null)
                         and
-                        company_buyer.list_company_name is not null
+                        old_company_buyer_list_company_name is not null
                     then
                         (
                             select
@@ -289,18 +289,18 @@ begin
                 end,
                 group_unit_delivery_names_list_warehouse_name = case
                     when
-                        point_delivery.list_warehouse_name is not null
+                        new_point_delivery_list_warehouse_name is not null
                         and
-                        not(point_delivery.list_warehouse_name is not null)
+                        not(old_point_delivery_list_warehouse_name is not null)
                     then
                         array_append(
                             group_unit_delivery_names_list_warehouse_name,
                             new_point_delivery_list_warehouse_name
                         )
                     when
-                        not(point_delivery.list_warehouse_name is not null)
+                        not(new_point_delivery_list_warehouse_name is not null)
                         and
-                        point_delivery.list_warehouse_name is not null
+                        old_point_delivery_list_warehouse_name is not null
                     then
                         cm_array_remove_one_element(
                             group_unit_delivery_names_list_warehouse_name,
@@ -317,9 +317,9 @@ begin
                 end,
                 group_unit_delivery_names = case
                     when
-                        point_delivery.list_warehouse_name is not null
+                        new_point_delivery_list_warehouse_name is not null
                         and
-                        not(point_delivery.list_warehouse_name is not null)
+                        not(old_point_delivery_list_warehouse_name is not null)
                     then
                         case
                             when
@@ -342,9 +342,9 @@ begin
                                 group_unit_delivery_names
                         end
                     when
-                        not(point_delivery.list_warehouse_name is not null)
+                        not(new_point_delivery_list_warehouse_name is not null)
                         and
-                        point_delivery.list_warehouse_name is not null
+                        old_point_delivery_list_warehouse_name is not null
                     then
                         (
                             select
@@ -396,7 +396,7 @@ begin
                 group_unit_quantity_pallet = group_unit_quantity_pallet - coalesce(old.quantity_pallet, 0),
                 group_unit_buyers_names_list_company_name = case
                     when
-                        company_buyer.list_company_name is not null
+                        old_company_buyer_list_company_name is not null
                     then
                         cm_array_remove_one_element(
                             group_unit_buyers_names_list_company_name,
@@ -407,7 +407,7 @@ begin
                 end,
                 group_unit_buyers_names = case
                     when
-                        company_buyer.list_company_name is not null
+                        old_company_buyer_list_company_name is not null
                     then
                         (
                             select
@@ -428,7 +428,7 @@ begin
                 end,
                 group_unit_delivery_names_list_warehouse_name = case
                     when
-                        point_delivery.list_warehouse_name is not null
+                        old_point_delivery_list_warehouse_name is not null
                     then
                         cm_array_remove_one_element(
                             group_unit_delivery_names_list_warehouse_name,
@@ -439,7 +439,7 @@ begin
                 end,
                 group_unit_delivery_names = case
                     when
-                        point_delivery.list_warehouse_name is not null
+                        old_point_delivery_list_warehouse_name is not null
                     then
                         (
                             select
@@ -472,7 +472,7 @@ begin
                 group_unit_quantity_pallet = group_unit_quantity_pallet + coalesce(new.quantity_pallet, 0),
                 group_unit_buyers_names_list_company_name = case
                     when
-                        company_buyer.list_company_name is not null
+                        new_company_buyer_list_company_name is not null
                     then
                         array_append(
                             group_unit_buyers_names_list_company_name,
@@ -483,7 +483,7 @@ begin
                 end,
                 group_unit_buyers_names = case
                     when
-                        company_buyer.list_company_name is not null
+                        new_company_buyer_list_company_name is not null
                     then
                         case
                             when
@@ -510,7 +510,7 @@ begin
                 end,
                 group_unit_delivery_names_list_warehouse_name = case
                     when
-                        point_delivery.list_warehouse_name is not null
+                        new_point_delivery_list_warehouse_name is not null
                     then
                         array_append(
                             group_unit_delivery_names_list_warehouse_name,
@@ -521,7 +521,7 @@ begin
                 end,
                 group_unit_delivery_names = case
                     when
-                        point_delivery.list_warehouse_name is not null
+                        new_point_delivery_list_warehouse_name is not null
                     then
                         case
                             when
@@ -586,7 +586,7 @@ begin
                 group_unit_quantity_pallet = group_unit_quantity_pallet + coalesce(new.quantity_pallet, 0),
                 group_unit_buyers_names_list_company_name = case
                     when
-                        company_buyer.list_company_name is not null
+                        new_company_buyer_list_company_name is not null
                     then
                         array_append(
                             group_unit_buyers_names_list_company_name,
@@ -597,7 +597,7 @@ begin
                 end,
                 group_unit_buyers_names = case
                     when
-                        company_buyer.list_company_name is not null
+                        new_company_buyer_list_company_name is not null
                     then
                         case
                             when
@@ -624,7 +624,7 @@ begin
                 end,
                 group_unit_delivery_names_list_warehouse_name = case
                     when
-                        point_delivery.list_warehouse_name is not null
+                        new_point_delivery_list_warehouse_name is not null
                     then
                         array_append(
                             group_unit_delivery_names_list_warehouse_name,
@@ -635,7 +635,7 @@ begin
                 end,
                 group_unit_delivery_names = case
                     when
-                        point_delivery.list_warehouse_name is not null
+                        new_point_delivery_list_warehouse_name is not null
                     then
                         case
                             when

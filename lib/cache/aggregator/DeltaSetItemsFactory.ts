@@ -93,8 +93,6 @@ export class DeltaSetItemsFactory extends SetItemsFactory {
     }
 
     private deltaAggregate(agg: AbstractAgg) {
-        const triggerTable = this.context.triggerTable;
-
         let sql!: Expression;
 
         const prevValue = this.replaceTriggerTableToRow(
@@ -113,22 +111,10 @@ export class DeltaSetItemsFactory extends SetItemsFactory {
         );
 
         if ( agg.call.where ) {
-            const matchedOld = agg.call.where.replaceTable(
-                triggerTable,
-                new TableReference(
-                    triggerTable,
-                    "old"
-                )
-            );
-            const matchedNew = agg.call.where.replaceTable(
-                triggerTable,
-                new TableReference(
-                    triggerTable,
-                    "new"
-                )
-            );
-            
-            ;
+            // replace also and joins
+            const matchedOld = this.replaceTriggerTableToRow(agg.call.where, "old");
+            const matchedNew = this.replaceTriggerTableToRow(agg.call.where, "new");
+
             const needPlus = Expression.and([
                 matchedNew,
                 new NotExpression(matchedOld)

@@ -135,15 +135,9 @@ export class SetItemsFactory {
         }
     
         if ( agg.call.where && hasOtherUpdates ) {
-            const triggerTable = this.context.triggerTable;
-
-            // TODO: replace also and joins
-            const whenNeedUpdate = agg.call.where.replaceTable(
-                triggerTable,
-                new TableReference(
-                    triggerTable,
-                    aggType2row(aggType)
-                )
+            const whenNeedUpdate = this.replaceTriggerTableToRow(
+                agg.call.where,
+                aggType2row(aggType)
             );
     
             sql = new CaseWhen({
