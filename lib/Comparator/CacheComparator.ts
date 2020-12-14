@@ -17,64 +17,38 @@ import {
     sortSelectsByDependencies
 } from "./graph-util";
 import { TableID } from "../database/schema/TableID";
+import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
+import { DatabaseFunction } from "../database/schema/DatabaseFunction";
 
 export class CacheComparator extends AbstractComparator {
 
     async drop() {
+        this.dropTrashTriggers();
+        this.dropTrashFuncs();
+        await this.dropTrashColumns();
+    }
 
-        const allCacheFuncs = this.database.functions.filter(func =>
-            !!func.cacheSignature
-        );
+    private dropTrashTriggers() {
         const allCacheTriggers = flatMap(this.database.tables, 
             table => table.triggers
         ).filter(trigger => !!trigger.cacheSignature);
 
         for (const dbCacheTrigger of allCacheTriggers) {
-            const existsCache = this.fs.files.some(file => 
-                file.content.cache.some(cache => {
-
-                    const cacheTriggerFactory = new CacheTriggersBuilder(
-                        cache,
-                        this.database
-                    );
-                    const triggersByTableName = cacheTriggerFactory.createTriggers();
-                
-                    const existsSameCacheFunc = Object.values(triggersByTableName).some(item => 
-                        item.trigger.equal( dbCacheTrigger )
-                    );
-                    return existsSameCacheFunc;
-                })
-            );
-            if ( !existsCache ) {
-                this.migration.drop({
-                    triggers: [dbCacheTrigger]
-                });
-            }
+            this.dropTriggerIfNotExistsCache(dbCacheTrigger);
         }
+    }
 
+    private dropTrashFuncs() {
+        const allCacheFuncs = this.database.functions.filter(func =>
+            !!func.cacheSignature
+        );
         for (const dbCacheFunc of allCacheFuncs) {
-            const existsCache = this.fs.files.some(file => 
-                file.content.cache.some(cache => {
-
-                    const cacheTriggerFactory = new CacheTriggersBuilder(
-                        cache,
-                        this.database
-                    );
-                    const triggersByTableName = cacheTriggerFactory.createTriggers();
-                
-                    const existsSameCacheFunc = Object.values(triggersByTableName).some(item => 
-                        item.function.equal( dbCacheFunc )
-                    );
-                    return existsSameCacheFunc;
-                })
-            );
-            if ( !existsCache ) {
-                this.migration.drop({
-                    functions: [dbCacheFunc]
-                });
-            }
+            this.dropFuncIfNotExistsCache(dbCacheFunc);
         }
 
+    }
+
+    private async dropTrashColumns() {
         for (const table of this.database.tables) {
             for (const column of table.columns) {
                 if ( !column.cacheSignature ) {
@@ -91,6 +65,52 @@ export class CacheComparator extends AbstractComparator {
                     });
                 }
             }
+        }
+    }
+
+    private dropTriggerIfNotExistsCache(dbCacheTrigger: DatabaseTrigger) {
+        const existsCache = this.fs.files.some(file => 
+            file.content.cache.some(cache => {
+
+                const cacheTriggerFactory = new CacheTriggersBuilder(
+                    cache,
+                    this.database
+                );
+                const triggersByTableName = cacheTriggerFactory.createTriggers();
+            
+                const existsSameCacheFunc = Object.values(triggersByTableName).some(item => 
+                    item.trigger.equal( dbCacheTrigger )
+                );
+                return existsSameCacheFunc;
+            })
+        );
+        if ( !existsCache ) {
+            this.migration.drop({
+                triggers: [dbCacheTrigger]
+            });
+        }
+    }
+
+    private dropFuncIfNotExistsCache(dbCacheFunc: DatabaseFunction) {
+        const existsCache = this.fs.files.some(file => 
+            file.content.cache.some(cache => {
+
+                const cacheTriggerFactory = new CacheTriggersBuilder(
+                    cache,
+                    this.database
+                );
+                const triggersByTableName = cacheTriggerFactory.createTriggers();
+            
+                const existsSameCacheFunc = Object.values(triggersByTableName).some(item => 
+                    item.function.equal( dbCacheFunc )
+                );
+                return existsSameCacheFunc;
+            })
+        );
+        if ( !existsCache ) {
+            this.migration.drop({
+                functions: [dbCacheFunc]
+            });
         }
     }
 
