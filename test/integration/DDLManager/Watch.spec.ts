@@ -451,4 +451,85 @@ describe("integration/DDLManager.watch", () => {
         ]);
     });
 
+    it("change cache triggers", async() => {
+        const folderPath = ROOT_TMP_PATH + "/watch-cache";
+    
+        
+        await db.query(`
+            create table companies (
+                id serial primary key
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer,
+                profit numeric(14, 2)
+            );
+
+            insert into companies default values;
+        `);
+
+        fs.mkdirSync(folderPath);
+        fs.writeFileSync(folderPath + "/watch_cache.sql", `
+            cache totals for companies (
+                select
+                    sum( orders.profit ) as orders_profit
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+        await DDLManager.watch({
+            db, 
+            folder: folderPath
+        });
+
+        let result;
+
+        // check first logic
+        await db.query(`
+            insert into orders (id_client, profit) values (1, 100);
+        `);
+        result = await db.query(`
+            select id, orders_profit 
+            from companies 
+            order by id
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, orders_profit: "100.00"}
+        ]);
+
+        // clear cache
+        await db.query(`
+            delete from orders;
+        `);
+        await db.query(`
+            update companies set
+                orders_profit = 0;
+        `);
+
+        // change cache
+        fs.writeFileSync(folderPath + "/watch_cache.sql", `
+            cache totals for companies (
+                select
+                    sum( orders.profit * 2 ) as orders_profit
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+        await sleep(300);
+
+
+        await db.query(`
+            insert into orders (id_client, profit) values (1, 100);
+        `);
+        result = await db.query(`
+            select id, orders_profit 
+            from companies 
+            order by id
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, orders_profit: "200.00"}
+        ]);
+    });
 });

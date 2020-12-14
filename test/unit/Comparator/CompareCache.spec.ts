@@ -133,14 +133,12 @@ describe("Comparator: compare cache", async() => {
 
         assert.strictEqual(toCreate.updates.length, 0, "no updates");
         assert.strictEqual(toCreate.columns.length, 0, "no columns to create");
-        assert.strictEqual(toCreate.triggers.length, 0, "not triggers to create");
-        // cache fixture has wrong function body
-        // assert.strictEqual(toCreate.functions.length, 0, "no funcs to create");
+        assert.strictEqual(toCreate.functions.length, 0, "no funcs to create");
+        assert.strictEqual(toCreate.triggers.length, 0, "no triggers to create");
 
         assert.strictEqual(toDrop.columns.length, 0, "no columns to drop");
+        assert.strictEqual(toDrop.functions.length, 0, "no funcs to drop");
         assert.strictEqual(toDrop.triggers.length, 0, "no triggers to drop");
-        // cache fixture has wrong function body
-        // assert.strictEqual(toDrop.functions.length, 0, "no funcs to drop");
     });
 
     it("don't update column if was just cache renaming, but recreate triggers and funcs", async() => {
@@ -189,10 +187,10 @@ describe("Comparator: compare cache", async() => {
 
         const {toDrop, toCreate} = await MainComparator.compare(postgres, database, fs);
 
-        assert.strictEqual(toCreate.updates.length, 1, "one update");
-        assert.strictEqual(toCreate.triggers.length, 0, "no triggers to create");
-        assert.strictEqual(toCreate.functions.length, 1, "one func to create");
         assert.strictEqual(toCreate.columns.length, 1, "one column to recreate comment");
+        assert.strictEqual(toCreate.updates.length, 1, "one update");
+        assert.strictEqual(toCreate.functions.length, 1, "one func to create");
+        assert.strictEqual(toCreate.triggers.length, 1, "one trigger to create");
         assert.deepStrictEqual(toCreate.columns[0].toJSON(), {
             table: {
                 schema: "public",
@@ -207,9 +205,9 @@ describe("Comparator: compare cache", async() => {
             comment: toCreate.columns[0].comment.toString()
         });
 
-        assert.strictEqual(toDrop.triggers.length, 0, "no triggers to drop");
-        assert.strictEqual(toDrop.functions.length, 1, "one func to drop");
         assert.strictEqual(toDrop.columns.length, 1, "one column to drop");
+        assert.strictEqual(toDrop.functions.length, 1, "one func to drop");
+        assert.strictEqual(toDrop.triggers.length, 1, "one trigger to drop");
 
     });
 
@@ -224,14 +222,14 @@ describe("Comparator: compare cache", async() => {
 
         const {toDrop, toCreate} = await MainComparator.compare(postgres, database, fs);
 
-        assert.strictEqual(toCreate.updates.length, 1, "one update");
-        assert.strictEqual(toCreate.triggers.length, 0, "no triggers to create");
-        assert.strictEqual(toCreate.functions.length, 1, "one func to create");
         assert.strictEqual(toCreate.columns.length, 1, "one column to recreate comment");
+        assert.strictEqual(toCreate.updates.length, 1, "one update");
+        assert.strictEqual(toCreate.functions.length, 1, "one func to create");
+        assert.strictEqual(toCreate.triggers.length, 1, "one trigger to create");
         
-        assert.strictEqual(toDrop.triggers.length, 0, "no triggers to drop");
-        assert.strictEqual(toDrop.functions.length, 1, "one func to drop");
         assert.strictEqual(toDrop.columns.length, 0, "no columns to drop");
+        assert.strictEqual(toDrop.functions.length, 1, "one func to drop");
+        assert.strictEqual(toDrop.triggers.length, 1, "one trigger to drop");
     });
 
     it("create cache columns with hard expression", async() => {

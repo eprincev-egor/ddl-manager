@@ -11,7 +11,9 @@ export class Database {
     readonly aggregators: string[];
     
     constructor(tables: Table[] = []) {
-        this.tables = tables;
+        this.tables = tables.map(table => 
+            table.clone()
+        );
         this.functions = [];
         this.aggregators = [
             "count",

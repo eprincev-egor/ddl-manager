@@ -108,7 +108,14 @@ export class CacheComparator extends AbstractComparator {
             })
         );
         if ( !existsCache ) {
+            const needDropTrigger = flatMap(this.database.tables, table => table.triggers)
+                .find(trigger => trigger.procedure.name === dbCacheFunc.name);
+            const alreadyDropped = needDropTrigger && this.migration.toDrop.triggers.some(trigger =>
+                trigger.equal(needDropTrigger)
+            );
+
             this.migration.drop({
+                triggers: needDropTrigger && !alreadyDropped ? [needDropTrigger] : [],
                 functions: [dbCacheFunc]
             });
         }
@@ -170,7 +177,7 @@ export class CacheComparator extends AbstractComparator {
                 );
     
                 this.migration.create({
-                    triggers: existsTrigger ? [] : [trigger],
+                    triggers: existFunc && existsTrigger ? [] : [trigger],
                     functions: existFunc ? [] : [func]
                 });
             }
