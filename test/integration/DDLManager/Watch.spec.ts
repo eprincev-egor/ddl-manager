@@ -137,7 +137,7 @@ describe("integration/DDLManager.watch", () => {
             language plpgsql;
         `);
 
-        await sleep(150);
+        await sleep(180);
 
         const result = await db.query("select nice() as nice");
         const row = result.rows[0];

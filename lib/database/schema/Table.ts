@@ -29,6 +29,26 @@ export class Table extends TableID {
         this.triggers.push(trigger);
     }
 
+    removeTrigger(dropTrigger: DatabaseTrigger) {
+        const triggerIndex = this.triggers.findIndex(existentTrigger => 
+            existentTrigger.equal(dropTrigger)
+        );
+        
+        if ( triggerIndex !== -1 ) {
+            this.triggers.splice(triggerIndex, 1);
+        }
+    }
+
+    removeColumn(dropColumn: Column) {
+        const columnIndex = this.columns.findIndex(existentColumn => 
+            existentColumn.name === dropColumn.name
+        );
+        
+        if ( columnIndex !== -1 ) {
+            this.columns.splice(columnIndex, 1);
+        }
+    }
+
     clone() {
         const clone = new Table(
             this.schema,

@@ -6,14 +6,17 @@ import { Column } from "../../../lib/database/schema/Column";
 import { TableID } from "../../../lib/database/schema/TableID";
 import { Select } from "../../../lib/ast";
 import { TableReference } from "../../../lib/database/schema/TableReference";
+import { Database } from "../../../lib/database/schema/Database";
 
 describe("Migrator", () => {
 
     let databaseDriver!: FakeDatabaseDriver;
     let migration!: Migration;
+    let database!: Database;
     beforeEach(() => {
         databaseDriver = new FakeDatabaseDriver();
         migration = Migration.empty();
+        database = new Database();
     });
 
     const testColumn = new Column(
@@ -33,7 +36,7 @@ describe("Migrator", () => {
             ]
         });
 
-        await MainMigrator.migrate(databaseDriver, migration);
+        await MainMigrator.migrate(databaseDriver, database, migration);
 
         assert.deepStrictEqual(databaseDriver.columns, {
             "public.some_table.new_col": {
@@ -53,7 +56,7 @@ describe("Migrator", () => {
             ]
         });
 
-        await MainMigrator.migrate(databaseDriver, migration);
+        await MainMigrator.migrate(databaseDriver, database, migration);
         
         assert.deepStrictEqual(Object.values(databaseDriver.columns), []);
     });
@@ -68,7 +71,7 @@ describe("Migrator", () => {
             }]
         });
 
-        await MainMigrator.migrate(databaseDriver, migration);
+        await MainMigrator.migrate(databaseDriver, database, migration);
 
         assert.deepStrictEqual(
             databaseDriver.getUpdatedPackages("public.some_table"),

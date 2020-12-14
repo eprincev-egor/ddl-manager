@@ -3,6 +3,7 @@ import { Table } from "./Table";
 import { TableID } from "./TableID";
 import { DatabaseTrigger } from "./DatabaseTrigger";
 import { DatabaseFunction } from "./DatabaseFunction";
+import { Migration } from "../../Migrator/Migration";
 
 export class Database {
     readonly tables: Table[];
@@ -49,5 +50,44 @@ export class Database {
         }
 
         table.addTrigger(trigger);
+    }
+
+    applyMigration(migration: Migration) {
+        this.addFunctions(migration.toCreate.functions);
+
+        for (const trigger of migration.toCreate.triggers) {
+            this.addTrigger(trigger);
+        }
+
+        for (const column of migration.toCreate.columns) {
+            const table = this.getTable(column.table);
+            if ( table ) {
+                table.addColumn(column);
+            }
+        }
+
+        for (const dropFunc of migration.toDrop.functions) {
+            const funcIndex = this.functions.findIndex(existentFunc => 
+                existentFunc.equal(dropFunc)
+            );
+
+            if ( funcIndex !== -1 ) {
+                this.functions.splice(funcIndex, 1);
+            }
+        }
+
+        for (const trigger of migration.toDrop.triggers) {
+            const table = this.getTable(trigger.table);
+            if ( table ) {
+                table.removeTrigger(trigger);
+            }
+        }
+
+        for (const column of migration.toDrop.columns) {
+            const table = this.getTable(column.table);
+            if ( table ) {
+                table.removeColumn(column);
+            }
+        }
     }
 }

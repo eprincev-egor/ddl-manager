@@ -2,9 +2,11 @@ import { FileWatcher } from "../../../../lib/fs/FileWatcher";
 import { MainComparator } from "../../../../lib/Comparator/MainComparator";
 import { Migration } from "../../../../lib/Migrator/Migration";
 import { prepare } from "../../utils/prepare";
-import { FilesState } from "../../../../lib/fs/FilesState";
 import { Database } from "../../../../lib/database/schema/Database";
 import { FakeDatabaseDriver } from "../../../unit/FakeDatabaseDriver";
+import {
+    TEST_TABLE_1
+} from "../../fixture/triggers";
 
 export function watcher(ROOT_TMP_PATH: string) {
     
@@ -19,20 +21,36 @@ export function watcher(ROOT_TMP_PATH: string) {
     });
 
     async function watch(
-        onChange?: (migration: Migration) => void
+        onChange?: (migration: Migration) => void,
+        testDatabase?: Database
     ) {
+        const postgres = new FakeDatabaseDriver();
+        const database = testDatabase || new Database();
+
+        if ( !testDatabase ) {
+            database.setTable(TEST_TABLE_1);
+        }
+
         const fsWatcher = await FileWatcher.watch([ROOT_TMP_PATH]);
         WATCHERS_TO_STOP.push(fsWatcher);
 
+        const migration = await MainComparator.compare(
+            postgres,
+            database,
+            fsWatcher.state
+        );
+        database.applyMigration(migration);
+
         if ( onChange ) {
-            fsWatcher.on("change", async(fsEvent) => {
-                const migration = await MainComparator.fsEventToMigration(
-                    new FakeDatabaseDriver(),
-                    new Database(),
-                    new FilesState(),
-                    fsEvent
+            fsWatcher.on("change", async() => {
+                const migration = await MainComparator.compareWithoutUpdates(
+                    postgres,
+                    database,
+                    fsWatcher.state
                 );
                 onChange(migration);
+
+                database.applyMigration(migration);
             });
         }
         

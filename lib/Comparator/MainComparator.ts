@@ -1,7 +1,6 @@
 import { Database } from "../database/schema/Database";
 import { FilesState } from "../fs/FilesState";
 import { Migration } from "../Migrator/Migration";
-import { FSEvent } from "../fs/FSEvent";
 import { CacheComparator } from "./CacheComparator";
 import { TriggersComparator } from "./TriggersComparator";
 import { FunctionsComparator } from "./FunctionsComparator";
@@ -18,18 +17,15 @@ export class MainComparator {
         return await comparator.compare();
     }
 
-    static async fsEventToMigration(
+    static async compareWithoutUpdates(
         driver: IDatabaseDriver,
         database: Database,
-        fs: FilesState,
-        fsEvent: FSEvent
+        fs: FilesState
     ) {
         const comparator = new MainComparator(driver, database, fs);
-        return await comparator.fsEventToMigration(fsEvent);
+        return await comparator.compareWithoutUpdates();
     }
 
-    private driver: IDatabaseDriver;
-    private database: Database;
     private migration: Migration;
     private functions: FunctionsComparator;
     private triggers: TriggersComparator;
@@ -40,8 +36,6 @@ export class MainComparator {
         database: Database,
         fs: FilesState
     ) {
-        this.driver = driver;
-        this.database = database;
         this.migration = Migration.empty();
 
         this.functions = new FunctionsComparator(
@@ -71,35 +65,12 @@ export class MainComparator {
         return this.migration;
     }
 
-    async fsEventToMigration(fsEvent: FSEvent) {
-        for (const removedFile of fsEvent.removed) {
-            this.migration.drop({
-                functions: removedFile.content.functions,
-                triggers: removedFile.content.triggers
-            });
-        }
+    private async compareWithoutUpdates() {
+        await this.dropOldObjects();
 
-        for (const createdFile of fsEvent.created) {
-            this.migration.create({
-                functions: createdFile.content.functions,
-                triggers: createdFile.content.triggers
-            });
-        }
-
-        // TODO: drop columns, triggers
-
-        const tmpFs = new FilesState();
-        for (const file of fsEvent.created) {
-            tmpFs.addFile(file);
-        }
-
-        const cacheComparator = new CacheComparator(
-            this.driver,
-            this.database,
-            tmpFs,
-            this.migration
-        );
-        await cacheComparator.createWithoutUpdates();
+        this.functions.create();
+        this.triggers.create();
+        await this.cache.createWithoutUpdates();
 
         return this.migration;
     }
@@ -115,5 +86,4 @@ export class MainComparator {
         this.triggers.create();
         await this.cache.create();
     }
-
 }

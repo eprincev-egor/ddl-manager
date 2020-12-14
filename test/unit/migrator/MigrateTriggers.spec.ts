@@ -4,15 +4,18 @@ import { MainMigrator } from "../../../lib/Migrator/MainMigrator";
 import { Migration } from "../../../lib/Migrator/Migration";
 import { DatabaseTrigger } from "../../../lib/database/schema/DatabaseTrigger";
 import { TableID } from "../../../lib/database/schema/TableID";
+import { Database } from "../../../lib/database/schema/Database";
 
 
 describe("Migrator", () => {
 
     let databaseDriver!: FakeDatabaseDriver;
     let migration!: Migration;
+    let database!: Database;
     beforeEach(() => {
         databaseDriver = new FakeDatabaseDriver();
         migration = Migration.empty();
+        database = new Database();
     });
 
     const testTrigger = new DatabaseTrigger({
@@ -36,7 +39,7 @@ describe("Migrator", () => {
             ]
         });
 
-        await MainMigrator.migrate(databaseDriver, migration);
+        await MainMigrator.migrate(databaseDriver, database, migration);
 
         assert.strictEqual(
             databaseDriver.state.triggers.length,
@@ -58,7 +61,7 @@ describe("Migrator", () => {
             ]
         });
 
-        await MainMigrator.migrate(databaseDriver, migration);
+        await MainMigrator.migrate(databaseDriver, database, migration);
 
         assert.strictEqual(
             databaseDriver.state.triggers.length,

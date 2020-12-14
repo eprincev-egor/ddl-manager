@@ -50,7 +50,12 @@ describe("integration/MainMigrator", () => {
         createTriggers(migration, params.migration.create.triggers);
 
         const postgres = new PostgresDriver(db);
-        await MainMigrator.migrate(postgres, migration);
+        const database = await postgres.load();
+        await MainMigrator.migrate(
+            postgres,
+            database,
+            migration
+        );
     }
 
     function dropFunctions(migration: Migration, functions: IDatabaseFunctionParams[]) {
@@ -1054,7 +1059,7 @@ describe("integration/MainMigrator", () => {
         `);
 
         const postgres = new PostgresDriver(db);
-        const databaseStructure = await postgres.load();
+        const database = await postgres.load();
         const fs = new FilesState();
         
         fs.addFile({
@@ -1068,11 +1073,15 @@ describe("integration/MainMigrator", () => {
 
         const migration = await MainComparator.compare(
             postgres,
-            databaseStructure,
+            database,
             fs
         );
 
-        await MainMigrator.migrate(postgres, migration);
+        await MainMigrator.migrate(
+            postgres,
+            database,
+            migration
+        );
 
         const {rows} = await db.query(`
             select

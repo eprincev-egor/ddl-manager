@@ -3,14 +3,17 @@ import { FakeDatabaseDriver } from "../FakeDatabaseDriver";
 import { MainMigrator } from "../../../lib/Migrator/MainMigrator";
 import { Migration } from "../../../lib/Migrator/Migration";
 import { DatabaseFunction } from "../../../lib/database/schema/DatabaseFunction";
+import { Database } from "../../../lib/database/schema/Database";
 
 describe("Migrator", () => {
 
     let databaseDriver!: FakeDatabaseDriver;
     let migration!: Migration;
+    let database!: Database;
     beforeEach(() => {
         databaseDriver = new FakeDatabaseDriver();
         migration = Migration.empty();
+        database = new Database();
     });
 
     const testFunc = new DatabaseFunction({
@@ -28,7 +31,7 @@ describe("Migrator", () => {
             ]
         });
 
-        await MainMigrator.migrate(databaseDriver, migration);
+        await MainMigrator.migrate(databaseDriver, database, migration);
 
         assert.strictEqual(
             databaseDriver.state.functions.length,
@@ -50,7 +53,7 @@ describe("Migrator", () => {
             ]
         });
 
-        await MainMigrator.migrate(databaseDriver, migration);
+        await MainMigrator.migrate(databaseDriver, database, migration);
 
         assert.strictEqual(
             databaseDriver.state.functions.length,

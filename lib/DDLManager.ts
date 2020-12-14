@@ -3,7 +3,6 @@ import pg from "pg";
 import path from "path";
 import { FileReader } from "./fs/FileReader";
 import { FileWatcher } from "./fs/FileWatcher";
-import { FSEvent } from "./fs/FSEvent";
 import { FilesState } from "./fs/FilesState";
 import { MainComparator } from "./Comparator/MainComparator";
 import { MainMigrator } from "./Migrator/MainMigrator";
@@ -103,9 +102,13 @@ export class DDLManager {
     }
 
     private async build() {
-        const {migration, postgres} = await this.compareDbAndFs();
+        const {migration, database, postgres} = await this.compareDbAndFs();
 
-        const migrateErrors = await MainMigrator.migrate(postgres, migration);
+        const migrateErrors = await MainMigrator.migrate(
+            postgres,
+            database,
+            migration
+        );
 
         this.onMigrate(
             postgres,
@@ -115,9 +118,13 @@ export class DDLManager {
     }
 
     private async refreshCache() {
-        const {migration, postgres} = await this.compareDbAndFs();
+        const {migration, database, postgres} = await this.compareDbAndFs();
 
-        const migrateErrors = await MainMigrator.refreshCache(postgres, migration);
+        const migrateErrors = await MainMigrator.refreshCache(
+            postgres,
+            database,
+            migration
+        );
         
         this.onMigrate(
             postgres,
@@ -176,19 +183,25 @@ export class DDLManager {
             database,
             watcher.state
         );
-        const migrateErrors = await MainMigrator.migrate(postgres, migration);
-
-        this.onMigrate(
+        const migrateErrors = await MainMigrator.migrate(
             postgres,
-            migration,
-            migrateErrors
+            database,
+            migration
         );
 
-        watcher.on("change", (fsEvent: FSEvent) => {
+        migration.log();
+        
+        if ( migrateErrors.length ) {
+            console.error(migrateErrors);
+        }
+
+        database.applyMigration(migration);
+
+        watcher.on("change", () => {
             this.onChangeFS(
+                postgres,
                 database,
-                watcher.state,
-                fsEvent
+                watcher.state
             );
         });
 
@@ -196,22 +209,24 @@ export class DDLManager {
     }
 
     private async onChangeFS(
+        postgres: IDatabaseDriver,
         database: Database,
-        filesState: FilesState,
-        fsEvent: FSEvent
+        filesState: FilesState
     ) {
-
-        const postgres = await this.postgres();
-        const migration = await MainComparator.fsEventToMigration(
+        const migration = await MainComparator.compareWithoutUpdates(
             postgres,
             database,
-            filesState,
-            fsEvent
+            filesState
         );
 
         const outputErrors = await MainMigrator.migrate(
-            postgres, migration
+            postgres,
+            database,
+            migration
         );
+
+        database.applyMigration(migration);
+
         if ( outputErrors.length ) {
             for (const error of outputErrors) {
                 console.error(error);

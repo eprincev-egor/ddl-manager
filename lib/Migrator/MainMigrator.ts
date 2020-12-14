@@ -4,23 +4,46 @@ import { FunctionsMigrator } from "./FunctionsMigrator";
 import { TriggersMigrator } from "./TriggersMigrator";
 import { ColumnsMigrator } from "./ColumnsMigrator";
 import { UpdateMigrator } from "./UpdateMigrator";
+import { Database } from "../database/schema/Database";
 
 export class MainMigrator {
     private migration: Migration;
     private postgres: IDatabaseDriver;
+    private database: Database;
 
-    static async migrate(postgres: IDatabaseDriver, migration: Migration) {
-        const migrator = new MainMigrator(postgres, migration);
+    static async migrate(
+        postgres: IDatabaseDriver,
+        database: Database,
+        migration: Migration
+    ) {
+        const migrator = new MainMigrator(
+            postgres,
+            database,
+            migration
+        );
         return await migrator.migrate();
     }
 
-    static async refreshCache(postgres: IDatabaseDriver, migration: Migration) {
-        const migrator = new MainMigrator(postgres, migration);
+    static async refreshCache(
+        postgres: IDatabaseDriver,
+        database: Database,
+        migration: Migration
+    ) {
+        const migrator = new MainMigrator(
+            postgres,
+            database,
+            migration
+        );
         return await migrator.refreshCache();
     }
     
-    private constructor(postgres: IDatabaseDriver, migration: Migration) {
+    private constructor(
+        postgres: IDatabaseDriver,
+        database: Database,
+        migration: Migration
+    ) {
         this.postgres = postgres;
+        this.database = database;
         this.migration = migration;
     }
 
@@ -60,31 +83,30 @@ export class MainMigrator {
 
     private async createMigrators() {
 
-        const databaseStructure = await this.postgres.load();
         const outputErrors: Error[] = [];
 
         const functions = new FunctionsMigrator(
             this.postgres,
             this.migration,
-            databaseStructure,
+            this.database,
             outputErrors
         );
         const triggers = new TriggersMigrator(
             this.postgres,
             this.migration,
-            databaseStructure,
+            this.database,
             outputErrors
         );
         const columns = new ColumnsMigrator(
             this.postgres,
             this.migration,
-            databaseStructure,
+            this.database,
             outputErrors
         );
         const updates = new UpdateMigrator(
             this.postgres,
             this.migration,
-            databaseStructure,
+            this.database,
             outputErrors
         );
 

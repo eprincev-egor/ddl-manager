@@ -1,3 +1,4 @@
+import { Table } from "../../../lib/database/schema/Table";
 
 export const TEST_FUNC1_SQL = `
     create or replace function test_func1()
@@ -33,6 +34,12 @@ export const TEST_TRIGGER1 = {
         name: "test_func1"
     }
 };
+
+export const TEST_TABLE_1 = new Table(
+    "operation",
+    "company",
+    []
+);
 
 export const ONLY_FUNCTION_SQL = `
     create or replace function nice()
