@@ -27,12 +27,45 @@ export class UpdateMigrator extends AbstractMigrator {
             // tslint:disable-next-line: no-console
             console.log(`updating ${forTableRef} #${ ++packageIndex }`);
 
-            // TODO: try/catch
-            updatedCount = await this.postgres.updateCachePackage(
+            updatedCount = await this.tryUpdateCachePackage(
                 selectToUpdate,
                 forTableRef,
                 limit
             );
         } while( updatedCount >= limit );
     }
+
+    private async tryUpdateCachePackage(
+        selectToUpdate: Select,
+        forTableRef: TableReference,
+        limit: number,
+        tryCount = 3
+    ): Promise<number> {
+        try {
+            return await this.postgres.updateCachePackage(
+                selectToUpdate,
+                forTableRef,
+                limit
+            );
+        } catch(err) {
+            // error can be are deadlock
+            if ( tryCount <= 0 ) {
+                return 0;
+            }
+
+            await sleep(5000);
+            return await this.tryUpdateCachePackage(
+                selectToUpdate,
+                forTableRef,
+                limit,
+                tryCount - 1
+            );
+        }
+    }
+}
+
+async function sleep(ms: number) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
 }
