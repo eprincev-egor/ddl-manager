@@ -128,8 +128,31 @@ function parseCacheSignature(totalComment: string) {
 
 function parseCacheSelect(totalComment: string) {
     const comment = (totalComment || "").trim();
-    const matchedResult = comment.match(/ddl-manager-select\(([^\\)]+)\)/) || [];
-    const cacheSelect = matchedResult[1];
+
+    const codePhrase = "ddl-manager-select";
+    const startParsing = comment.indexOf(codePhrase + "(");
+    if ( startParsing === -1 ) {
+        return undefined;
+    }
+
+    let cacheSelect = "";
+    let openedBracketsCount = 1;
+    for (let i = startParsing + codePhrase.length + 1; i < comment.length; i++) {
+        const symbol = comment[i];
+
+        if ( symbol === "(" ) {
+            openedBracketsCount++;
+        }
+        if ( symbol === ")" ) {
+            openedBracketsCount--;
+            if ( openedBracketsCount === 0 ) {
+                break;
+            }
+        }
+
+        cacheSelect += symbol;
+    }
+
     return cacheSelect;
 }
 
