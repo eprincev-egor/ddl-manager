@@ -135,5 +135,5 @@ function parseCacheSelect(totalComment: string) {
 
 function parseDev(totalComment: string) {
     const devComment = (totalComment || "").trim().split("ddl-manager-sync")[0];
-    return devComment;
+    return devComment.trim();
 }

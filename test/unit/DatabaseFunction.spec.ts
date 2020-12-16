@@ -463,4 +463,30 @@ describe("DatabaseFunction", () => {
         assert.ok( func2.equal(func1), "func2 == func1" );
     });
 
+    it("equal two functions similar comments", () => {
+        const func1 = new DatabaseFunction({
+            schema: "public",
+            name: "my_func",
+            args: [],
+            returns: {type: "bigint"},
+            body: "begin\nend",
+            comment: Comment.fromFs({
+                objectType: "function",
+                dev: "hello"
+            })
+        });
+
+        const func2 = new DatabaseFunction({
+            schema: "public",
+            name: "my_func",
+            args: [],
+            returns: {type: "bigint"},
+            body: "begin\nend",
+            comment: Comment.fromTotalString("function", "hello\nddl-manager-sync")
+        });
+        
+        assert.ok( func1.equal(func2), "func1 == func2" );
+        assert.ok( func2.equal(func1), "func2 == func1" );
+    });
+
 })
