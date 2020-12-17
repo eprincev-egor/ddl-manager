@@ -1075,4 +1075,32 @@ describe("integration/PostgresDriver.loadState", () => {
         );
     });
 
+    it("check correct error code", async() => {
+        const funcSQL = `
+        create or replace function nice()
+            returns integer as $body$
+                begin
+                    return 1;
+                end
+            $body$
+            language plpgsql;
+        `;
+        await db.query(`
+            ${ funcSQL };
+            create view test_view as
+                select nice() as numb
+        `);
+        const func = FileParser.parseFunction(funcSQL);
+
+        const driver = new PostgresDriver(db);
+
+        let err: Error = new Error("expected error");
+        try {
+            await driver.dropFunction(func);
+        } catch(_err) {
+            err = _err;
+        }
+
+        assert.strictEqual((err as any).code, "2BP01");
+    });
 });

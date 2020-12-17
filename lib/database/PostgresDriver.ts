@@ -320,6 +320,7 @@ implements IDatabaseDriver {
             // redefine call stack
             const err = new Error(originalErr.message);
             (err as any).sql = sql;
+            (err as any).code = originalErr.code;
             (err as any).originalError = originalErr;
             throw err;
         }

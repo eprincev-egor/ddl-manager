@@ -885,4 +885,46 @@ language plpgsql;
         });
     });
 
+    it("build function when exists view with call that function", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-func";
+        fs.mkdirSync(folderPath);
+
+
+        await db.query(`
+            create or replace function nice()
+            returns integer as $body$
+                begin
+                    return 1;
+                end
+            $body$
+            language plpgsql;
+
+            create view test_view as
+                select nice() as numb
+        `);
+
+        fs.writeFileSync(folderPath + "/nice.sql", `
+            create or replace function nice()
+            returns integer as $body$
+                begin
+                    return 2;
+                end
+            $body$
+            language plpgsql;
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const result = await db.query("select numb from test_view");
+        const row = result.rows[0];
+
+        expect(row).to.be.shallowDeepEqual({
+            numb: 2
+        });
+    });
 });
