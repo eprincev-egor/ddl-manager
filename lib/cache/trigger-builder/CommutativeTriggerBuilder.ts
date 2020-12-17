@@ -1,6 +1,8 @@
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { buildCommutativeBody } from "./body/buildCommutativeBody";
 import { Update } from "../../ast";
+import { buildJoins } from "../processor/buildJoins";
+import { findJoinsMeta } from "../processor/findJoinsMeta";
 
 export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
@@ -14,8 +16,11 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
         const body = buildCommutativeBody(
             this.conditions.hasMutableColumns(),
             this.conditions.noChanges(),
+            this.buildJoins("old"),
+            this.buildJoins("new"),
             {
-                needUpdate: this.conditions.needUpdateCondition("old"),
+                hasReferenceWithoutJoins: this.conditions.hasReferenceWithoutJoins("old"),
+                needUpdate: this.conditions.filtersWithJoins("old"),
                 update: new Update({
                     table: this.context.cache.for.toString(),
                     set: this.setItems.minus(),
@@ -23,14 +28,15 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 })
             },
             {
-                needUpdate: this.conditions.needUpdateCondition("new"),
+                hasReferenceWithoutJoins: this.conditions.hasReferenceWithoutJoins("new"),
+                needUpdate: this.conditions.filtersWithJoins("new"),
                 update: new Update({
                     table: this.context.cache.for.toString(),
                     set: this.setItems.plus(),
                     where: this.conditions.simpleWhere("new")
                 })
             },
-            deltaUpdate.set.length > 0 ? {
+            {
                 needUpdate: this.conditions.noReferenceChanges(),
                 update: deltaUpdate,
                 old: {
@@ -49,9 +55,14 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                         where: this.conditions.simpleWhereOnUpdate("new")
                     })
                 }
-            } : undefined
+            }
         );
         
         return body;
+    }
+
+    private buildJoins(row: "new" | "old") {
+        const joins = findJoinsMeta(this.context.cache.select);
+        return buildJoins(this.context.database, joins, row);
     }
 }

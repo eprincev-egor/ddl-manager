@@ -68,3 +68,4 @@
 + replace all string_agg to UniversalAgg ?
 + remove filter from UniversalAgg 
   + and don't aggregate filter values
+- TODO: filter by companies

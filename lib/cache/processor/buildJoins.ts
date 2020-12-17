@@ -1,5 +1,5 @@
 import { IJoinMeta } from "./findJoinsMeta";
-import { IJoin } from "../trigger-builder/body/buildCommutativeBodyWithJoins";
+import { IJoin } from "../trigger-builder/body/buildCommutativeBody";
 import { Database } from "../../database/schema/Database";
 import { TableID } from "../../database/schema/TableID";
 

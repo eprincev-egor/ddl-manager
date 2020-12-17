@@ -8,8 +8,11 @@ begin
 
     if TG_OP = 'DELETE' then
 
-        if old.id_operation_unit is not null then
-
+        if
+            old.id_operation_unit is not null
+            and
+            old.deleted = 0
+        then
             if old.id_company_buyer is not null then
                 old_company_buyer_list_company_name = (
                     select
@@ -181,13 +184,11 @@ begin
             end if;
         end if;
 
-
         if
             new.id_operation_unit is not distinct from old.id_operation_unit
             and
             new.deleted is not distinct from old.deleted
         then
-
             update operation.unit set
                 group_unit_quantity = group_unit_quantity - coalesce(old.quantity, 0) + coalesce(new.quantity, 0),
                 group_unit_netto_weight = group_unit_netto_weight - coalesce(old.netto_weight, 0) + coalesce(new.netto_weight, 0),
@@ -385,8 +386,11 @@ begin
             return new;
         end if;
 
-
-        if old.id_operation_unit is not null then
+        if
+            old.id_operation_unit is not null
+            and
+            old.deleted = 0
+        then
             update operation.unit set
                 group_unit_quantity = group_unit_quantity - coalesce(old.quantity, 0),
                 group_unit_netto_weight = group_unit_netto_weight - coalesce(old.netto_weight, 0),
@@ -462,7 +466,11 @@ begin
                 old.id_operation_unit = operation.unit.id;
         end if;
 
-        if new.id_operation_unit is not null then
+        if
+            new.id_operation_unit is not null
+            and
+            new.deleted = 0
+        then
             update operation.unit set
                 group_unit_quantity = group_unit_quantity + coalesce(new.quantity, 0),
                 group_unit_netto_weight = group_unit_netto_weight + coalesce(new.netto_weight, 0),
@@ -555,8 +563,11 @@ begin
 
     if TG_OP = 'INSERT' then
 
-        if new.id_operation_unit is not null then
-
+        if
+            new.id_operation_unit is not null
+            and
+            new.deleted = 0
+        then
             if new.id_company_buyer is not null then
                 new_company_buyer_list_company_name = (
                     select

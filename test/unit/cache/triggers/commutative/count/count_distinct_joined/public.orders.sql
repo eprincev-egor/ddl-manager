@@ -7,7 +7,6 @@ begin
     if TG_OP = 'DELETE' then
 
         if old.id_client is not null then
-
             if old.id_order_type is not null then
                 old_order_type_name = (
                     select
@@ -74,9 +73,7 @@ begin
             end if;
         end if;
 
-
         if new.id_client is not distinct from old.id_client then
-
             update companies set
                 orders_count_name = array_append(
                     cm_array_remove_one_element(
@@ -104,7 +101,6 @@ begin
 
             return new;
         end if;
-
 
         if old.id_client is not null then
             update companies set
@@ -154,7 +150,6 @@ begin
     if TG_OP = 'INSERT' then
 
         if new.id_client is not null then
-
             if new.id_order_type is not null then
                 new_order_type_name = (
                     select

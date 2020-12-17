@@ -5,8 +5,6 @@ import { Database } from "../../database/schema/Database";
 import { TableID } from "../../database/schema/TableID";
 import { buildFrom } from "../processor/buildFrom";
 import { UniversalTriggerBuilder } from "./UniversalTriggerBuilder";
-import { findJoinsMeta } from "../processor/findJoinsMeta";
-import { JoinedCommutativeTriggerBuilder } from "./JoinedCommutativeTriggerBuilder";
 import { CacheContext } from "./CacheContext";
 import { SelfUpdateByOtherTablesTriggerBuilder } from "./SelfUpdateByOtherTablesTriggerBuilder";
 import { SelfUpdateBySelfRowTriggerBuilder } from "./SelfUpdateBySelfRowTriggerBuilder";
@@ -67,7 +65,6 @@ export class TriggerBuilderFactory {
         }
 
         const from = buildFrom(context);
-        const joins = findJoinsMeta(this.cache.select);
 
         if ( from.length > 1 ) {
             return UniversalTriggerBuilder;
@@ -84,13 +81,7 @@ export class TriggerBuilderFactory {
                 return;
             }
 
-            // TODO: use only JoinedCommutativeTriggerBuilder
-            if ( joins.length ) {
-                return JoinedCommutativeTriggerBuilder;
-            }
-            else {
-                return CommutativeTriggerBuilder;
-            }
+            return CommutativeTriggerBuilder;
         }
     }
 }

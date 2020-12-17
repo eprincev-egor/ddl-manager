@@ -3,12 +3,34 @@ import {
     If,
     HardCode,
     BlankLine,
-    Expression
+    Expression,
+    Declare,
+    AssignVariable,
+    SimpleSelect,
+    AbstractAstElement
 } from "../../../ast";
 import { updateIf } from "./util/updateIf";
 import { Update } from "../../../ast/Update";
 
+export interface IVariable {
+    name: string;
+    type: string;
+}
+
+export interface IJoin {
+    variable: IVariable;
+    table: {
+        alias?: string;
+        name: string;
+        column: string;
+    };
+    on: {
+        column: string;
+    }
+}
+
 export interface ICase {
+    hasReferenceWithoutJoins?: Expression,
     needUpdate?: Expression;
     update: Update;
 }
@@ -21,16 +43,32 @@ export interface IDeltaCase extends ICase {
 export function buildCommutativeBody(
     hasMutableColumns: boolean,
     noChanges: Expression,
+    oldJoins: IJoin[],
+    newJoins: IJoin[],
     oldCase: ICase,
     newCase: ICase,
-    deltaCase?: IDeltaCase
+    deltaCase: IDeltaCase
 ) {
     const body = new Body({
+        declares: [
+            ...oldJoins.map(join =>
+                new Declare({
+                    name: join.variable.name,
+                    type: join.variable.type
+                })
+            ),
+            ...newJoins.map(join => 
+                new Declare({
+                    name: join.variable.name,
+                    type: join.variable.type
+                })
+            )
+        ],
         statements: [
             ...buildInsertOrDeleteCase(
                 "DELETE",
-                oldCase.needUpdate,
-                oldCase.update,
+                oldCase,
+                oldJoins,
                 "old"
             ),
 
@@ -39,8 +77,8 @@ export function buildCommutativeBody(
                     if: new HardCode({sql: "TG_OP = 'UPDATE'"}),
                     then: buildUpdateCaseBody(
                         noChanges,
-                        oldCase,
-                        newCase,
+                        oldJoins,
+                        newJoins,
                         deltaCase
                     )
                 })
@@ -48,8 +86,8 @@ export function buildCommutativeBody(
 
             ...buildInsertOrDeleteCase(
                 "INSERT",
-                newCase.needUpdate,
-                newCase.update,
+                newCase,
+                newJoins,
                 "new"
             )
         ]
@@ -60,8 +98,8 @@ export function buildCommutativeBody(
 
 function buildInsertOrDeleteCase(
     caseName: "INSERT" | "DELETE",
-    needUpdate: Expression | undefined,
-    update: Update,
+    simpleCase: ICase,
+    joins: IJoin[],
     returnRow: "new" | "old"
 ) {
     return [
@@ -72,10 +110,15 @@ function buildInsertOrDeleteCase(
             }),
             then: [
                 new BlankLine(),
-                updateIf(
-                    needUpdate,
-                    update
-                ),
+
+                ...doIf(simpleCase.hasReferenceWithoutJoins, [
+                    ...assignVariables(joins, returnRow),
+                    updateIf(
+                        simpleCase.needUpdate,
+                        simpleCase.update
+                    )
+                ]),
+
                 new BlankLine(),
                 new HardCode({
                     sql: `return ${returnRow};`
@@ -88,10 +131,15 @@ function buildInsertOrDeleteCase(
 
 function buildUpdateCaseBody(
     noChanges: Expression,
-    oldCase: ICase,
-    newCase: ICase,
-    deltaCase?: IDeltaCase
+    oldJoins: IJoin[],
+    newJoins: IJoin[],
+    deltaCase: IDeltaCase
 ) {
+    const oldUpdate = deltaCase.old.update;
+    const newUpdate = deltaCase.new.update;
+    const oldCaseCondition = deltaCase.old.needUpdate;
+    const newCaseCondition = deltaCase.new.needUpdate;
+
     return [
         new If({
             if: noChanges,
@@ -101,20 +149,26 @@ function buildUpdateCaseBody(
         }),
         new BlankLine(),
 
+        ...assignVariables(oldJoins, "old"),
+        ...reassignVariables(
+            newJoins,
+            oldJoins
+        ),
+
         ...buildDeltaUpdate(deltaCase),
         
         new BlankLine(),
 
         updateIf(
-            (deltaCase && deltaCase.old || oldCase).needUpdate,
-            (deltaCase && deltaCase.old || oldCase).update
+            oldCaseCondition,
+            oldUpdate
         ),
 
         new BlankLine(),
 
         updateIf(
-            (deltaCase && deltaCase.new || newCase).needUpdate,
-            (deltaCase && deltaCase.new || newCase).update
+            newCaseCondition,
+            newUpdate
         ),
         new BlankLine(),
         new HardCode({sql: "return new;"})
@@ -126,6 +180,9 @@ function buildDeltaUpdate(deltaCase?: IDeltaCase) {
         return [new BlankLine()];
     }
     if ( deltaCase.needUpdate && deltaCase.needUpdate.isEmpty() ) {
+        return [new BlankLine()];
+    }
+    if ( !deltaCase.update.set.length ) {
         return [new BlankLine()];
     }
 
@@ -146,4 +203,100 @@ function buildDeltaUpdate(deltaCase?: IDeltaCase) {
             new HardCode({sql: "return new;"})
         ]
     }
+}
+
+function doIf(
+    condition: Expression | undefined,
+    doBlock: AbstractAstElement[]
+) {
+    if ( !condition ) {
+        return doBlock;
+    }
+
+    return [new If({
+        if: condition,
+        then: [
+            ...doBlock
+        ]
+    })];
+}
+
+
+function assignVariables(joins: IJoin[], row: "new" | "old") {
+    const lines: AbstractAstElement[] = [];
+
+    for (const join of joins) {
+        lines.push(
+            new If({
+                if: Expression.and([
+                    `${row}.${join.on.column} is not null`
+                ]),
+                then: [
+                    new AssignVariable({
+                        variable: join.variable.name,
+                        value: new SimpleSelect({
+                            column: join.table.column,
+                            from: join.table.name,
+                            where: `${row}.${join.on.column}`
+                        })
+                    })
+                ]
+            })
+        );
+
+        lines.push( new BlankLine() );
+    }
+
+    return lines;
+}
+
+function reassignVariables(newJoins: IJoin[], oldJoins: IJoin[]) {
+    const lines: AbstractAstElement[] = [];
+
+    for (let i = 0, n = newJoins.length; i < n; i++) {
+        const newJoin = newJoins[i];
+        const oldJoin = oldJoins[i];
+        
+        lines.push(new If({
+            if: isNotDistinctFrom([
+                newJoin.on.column
+            ]),
+            then: [
+                new AssignVariable({
+                    variable: newJoin.variable.name,
+                    value: new HardCode({
+                        sql: oldJoin.variable.name
+                    })
+                })
+            ],
+            else: [
+                new If({
+                    if: Expression.and([
+                        `new.${newJoin.on.column} is not null`
+                    ]),
+                    then: [
+                        new AssignVariable({
+                            variable: newJoin.variable.name,
+                            value: new SimpleSelect({
+                                column: newJoin.table.column,
+                                from: newJoin.table.name,
+                                where: "new." + newJoin.on.column
+                            })
+                        })
+                    ]
+                })
+            ]
+        }));
+        
+        lines.push( new BlankLine() );
+    }
+    
+    return lines;
+}
+
+function isNotDistinctFrom(columns: string[]) {
+    const conditions = columns.map(column =>
+        `new.${ column } is not distinct from old.${ column }`
+    );
+    return Expression.and(conditions);
 }

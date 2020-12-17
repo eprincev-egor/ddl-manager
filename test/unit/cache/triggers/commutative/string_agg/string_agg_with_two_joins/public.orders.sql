@@ -9,7 +9,6 @@ begin
     if TG_OP = 'DELETE' then
 
         if old.id_client is not null then
-
             if old.id_country_from is not null then
                 old_country_from_name = (
                     select
@@ -127,9 +126,7 @@ begin
             end if;
         end if;
 
-
         if new.id_client is not distinct from old.id_client then
-
             update companies set
                 from_countries_name = array_append(
                     cm_array_remove_one_element(
@@ -178,7 +175,6 @@ begin
 
             return new;
         end if;
-
 
         if old.id_client is not null then
             update companies set
@@ -254,7 +250,6 @@ begin
     if TG_OP = 'INSERT' then
 
         if new.id_client is not null then
-
             if new.id_country_from is not null then
                 new_country_from_name = (
                     select

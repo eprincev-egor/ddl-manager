@@ -7,7 +7,6 @@ begin
     if TG_OP = 'DELETE' then
 
         if old.id_client is not null then
-
             if old.id_country is not null then
                 old_country_code = (
                     select
@@ -82,6 +81,7 @@ begin
         end if;
 
 
+
         if
             old.id_client is not null
             and
@@ -148,7 +148,6 @@ begin
     if TG_OP = 'INSERT' then
 
         if new.id_client is not null then
-
             if new.id_country is not null then
                 new_country_code = (
                     select

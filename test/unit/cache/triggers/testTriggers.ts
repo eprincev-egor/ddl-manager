@@ -29,6 +29,14 @@ export function testTriggers(test: ITest) {
                     ),
                     "companies_ids",
                     "integer[]"
+                ),
+                new Column(
+                    new TableID(
+                        "public",
+                        "orders",
+                    ),
+                    "clients_ids",
+                    "integer[]"
                 )
             ]
         ),

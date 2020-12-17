@@ -7,7 +7,6 @@ begin
     if TG_OP = 'DELETE' then
 
         if old.id_client is not null then
-
             if old.id_vat is not null then
                 old_vat_vat_value = (
                     select
@@ -65,9 +64,7 @@ begin
             end if;
         end if;
 
-
         if new.id_client is not distinct from old.id_client then
-
             update companies set
                 orders_total = orders_total - coalesce(
                     old.profit * old_vat_vat_value,
@@ -81,7 +78,6 @@ begin
 
             return new;
         end if;
-
 
         if old.id_client is not null then
             update companies set
@@ -109,7 +105,6 @@ begin
     if TG_OP = 'INSERT' then
 
         if new.id_client is not null then
-
             if new.id_vat is not null then
                 new_vat_vat_value = (
                     select

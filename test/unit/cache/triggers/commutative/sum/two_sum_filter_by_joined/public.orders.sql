@@ -7,7 +7,6 @@ begin
     if TG_OP = 'DELETE' then
 
         if old.id_client is not null then
-
             if old.id_order_type is not null then
                 old_order_type_name = (
                     select
@@ -83,9 +82,7 @@ begin
             end if;
         end if;
 
-
         if new.id_client is not distinct from old.id_client then
-
             update companies set
                 ltl_profit = case
                     when
@@ -124,7 +121,6 @@ begin
 
             return new;
         end if;
-
 
         if
             old.id_client is not null
@@ -192,7 +188,6 @@ begin
     if TG_OP = 'INSERT' then
 
         if new.id_client is not null then
-
             if new.id_order_type is not null then
                 new_order_type_name = (
                     select

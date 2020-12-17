@@ -7,7 +7,6 @@ begin
     if TG_OP = 'DELETE' then
 
         if old.id_order is not null then
-
             if old.id_product_type is not null then
                 old_product_type_name = (
                     select
@@ -77,9 +76,7 @@ begin
             end if;
         end if;
 
-
         if new.id_order is not distinct from old.id_order then
-
             update orders set
                 cargos_weight = cargos_weight - coalesce(old.total_weight, 0) + coalesce(new.total_weight, 0),
                 cargos_products_names_name = array_append(
@@ -108,7 +105,6 @@ begin
 
             return new;
         end if;
-
 
         if old.id_order is not null then
             update orders set
@@ -158,7 +154,6 @@ begin
     if TG_OP = 'INSERT' then
 
         if new.id_order is not null then
-
             if new.id_product_type is not null then
                 new_product_type_name = (
                     select

@@ -1,7 +1,7 @@
 import { Expression } from "../../../ast";
 import { CacheContext } from "../CacheContext";
 import { TableReference } from "../../../database/schema/TableReference";
-import { flatMap } from "lodash";
+import { cond, flatMap } from "lodash";
 
 import { noReferenceChanges } from "./noReferenceChanges";
 import { noChanges } from "./noChanges";
@@ -33,15 +33,6 @@ export class ConditionBuilder {
         return noChanges(this.context);
     }
 
-    hasReference(row: RowType) {
-        const hasReferenceCondition = hasReference(this.context);
-        const output = this.replaceTriggerTableRefsTo(
-            hasReferenceCondition,
-            row
-        );
-        return output;
-    }
-
     hasNoReference(row: RowType) {
         const hasReferenceCondition = hasNoReference(this.context);
         const output = this.replaceTriggerTableRefsTo(
@@ -51,27 +42,27 @@ export class ConditionBuilder {
         return output;
     }
 
-    needUpdateCondition(row: RowType) {
-        const needUpdate = this.buildNeedUpdateCondition();
+    hasReferenceWithoutJoins(row: RowType) {
+        const needUpdate = this.buildHasReferenceWithoutJoins();
         const output = this.replaceTriggerTableRefsTo(needUpdate, row);
         return output;
+    }
+
+    filtersWithJoins(row: RowType) {
+        const aggFilters = this.matchedAllAggFilters();
+        if ( aggFilters && this.hasJoinsInside(aggFilters) ) {
+            const output = this.replaceTriggerTableRefsTo(aggFilters, row);
+            return output;
+        }
     }
 
     needUpdateConditionOnUpdate(row: RowType) {
         const needUpdate = replaceArrayNotNullOn(
             this.context,
-            this.buildNeedUpdateCondition(),
+            this.buildNeedUpdateConditionOnUpdate(),
             arrayChangesFunc(row)
         );
         const output = this.replaceTriggerTableRefsTo(needUpdate, row);
-        return output;
-    }
-
-    mathOneFilter(row: RowType) {
-        const matchedAllAggFilters = this.matchedAllAggFilters();
-        const output = this.replaceTriggerTableRefsTo(
-            matchedAllAggFilters, row
-        );
         return output;
     }
 
@@ -118,7 +109,7 @@ export class ConditionBuilder {
         }
     }
 
-    private buildNeedUpdateCondition() {
+    private buildNeedUpdateConditionOnUpdate() {
         const conditions = [
             hasReference(this.context),
             Expression.and(this.context.referenceMeta.filters),
@@ -133,7 +124,31 @@ export class ConditionBuilder {
             return needUpdate;
         }
     }
+
+    private buildHasReferenceWithoutJoins() {
+        let conditions = [
+            hasReference(this.context),
+            Expression.and(this.context.referenceMeta.filters)
+        ] as Expression[];
+
+        const aggFilters = this.matchedAllAggFilters();
+        if ( aggFilters && !this.hasJoinsInside(aggFilters) ) {
+            conditions.push(
+                aggFilters
+            );
+        }
+
+        conditions = conditions.filter(condition => 
+            condition != null &&
+            !condition.isEmpty()
+        );
     
+        const needUpdate = Expression.and(conditions);
+        if ( !needUpdate.isEmpty() ) {
+            return needUpdate;
+        }
+    }
+
     private matchedAllAggFilters() {
     
         const allAggCalls = flatMap(
@@ -193,6 +208,19 @@ export class ConditionBuilder {
         });
 
         return outputExpression;
+    }
+
+    private hasJoinsInside(condition: Expression) {
+        const joinsMeta = findJoinsMeta(this.context.cache.select);
+        if ( !joinsMeta.length ) {
+            return false;
+        }
+
+        const columnsRefs = condition.getColumnReferences();
+        const hasJoins = columnsRefs.some(columnRef =>
+            !columnRef.tableReference.table.equal(this.context.triggerTable)
+        );
+        return hasJoins;
     }
 }
 
