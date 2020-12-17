@@ -118,9 +118,17 @@ export class DDLManager {
     }
 
     private async refreshCache() {
-        const {migration, database, postgres} = await this.compareDbAndFs();
+        const filesState = this.readFS();
+        const postgres = await this.postgres();
+        const database = await postgres.load();
 
-        const migrateErrors = await MainMigrator.refreshCache(
+        const migration = await MainComparator.refreshCache(
+            postgres,
+            database,
+            filesState
+        );
+
+        const migrateErrors = await MainMigrator.migrate(
             postgres,
             database,
             migration
@@ -134,14 +142,7 @@ export class DDLManager {
     }
 
     private async compareDbAndFs() {
-        const filesState = FileReader.read(
-            this.folders,
-            (err: Error) => {
-                // tslint:disable-next-line: no-console
-                console.error((err as any).subPath + ": " + err.message);
-            }
-        );
-        
+        const filesState = this.readFS();
         const postgres = await this.postgres();
         const database = await postgres.load();
 
@@ -151,6 +152,17 @@ export class DDLManager {
             filesState
         );
         return {migration, postgres, database};
+    }
+
+    private readFS() {
+        const filesState = FileReader.read(
+            this.folders,
+            (err: Error) => {
+                // tslint:disable-next-line: no-console
+                console.error((err as any).subPath + ": " + err.message);
+            }
+        );
+        return filesState;
     }
 
     private onMigrate(

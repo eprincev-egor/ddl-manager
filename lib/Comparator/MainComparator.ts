@@ -26,6 +26,15 @@ export class MainComparator {
         return await comparator.compareWithoutUpdates();
     }
 
+    static async refreshCache(
+        driver: IDatabaseDriver,
+        database: Database,
+        fs: FilesState
+    ) {
+        const comparator = new MainComparator(driver, database, fs);
+        return await comparator.refreshCache();
+    }
+
     private migration: Migration;
     private functions: FunctionsComparator;
     private triggers: TriggersComparator;
@@ -72,6 +81,11 @@ export class MainComparator {
         this.triggers.create();
         await this.cache.createWithoutUpdates();
 
+        return this.migration;
+    }
+
+    private async refreshCache() {
+        await this.cache.refreshCache();
         return this.migration;
     }
 

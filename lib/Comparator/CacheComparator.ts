@@ -19,6 +19,7 @@ import {
 import { TableID } from "../database/schema/TableID";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
 import { DatabaseFunction } from "../database/schema/DatabaseFunction";
+import { IUpdate } from "../Migrator/Migration";
 
 export class CacheComparator extends AbstractComparator {
 
@@ -192,6 +193,14 @@ export class CacheComparator extends AbstractComparator {
         return {sortedSelectsForEveryColumn};
     }
 
+    async refreshCache() {
+        const allCache = flatMap(this.fs.files, file => file.content.cache);
+        const sortedSelectsForEveryColumn = this.sortSelectsByDependencies(allCache);
+
+        await this.createAllColumns(sortedSelectsForEveryColumn);
+        this.forceUpdateAllColumns(sortedSelectsForEveryColumn);
+    }
+
     private async createAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
 
         for (const {cache, select} of sortedSelectsForEveryColumn) {
@@ -231,11 +240,69 @@ export class CacheComparator extends AbstractComparator {
     }
 
     private updateAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
+        const allUpdates = this.generateAllUpdates(sortedSelectsForEveryColumn);
+        const requiredUpdates: IUpdate[] = allUpdates
+            .map((update) => {
+                const {cache: cacheToCreate, select} = update;
+
+                const selectWithRequiredColumns = select.cloneWith({
+                    columns: select.columns.filter(selectColumn => {
+                        const existentTable = this.database.getTable(cacheToCreate.for.table);
+                        const existentColumn = existentTable && existentTable.getColumn(selectColumn.name);
+        
+                        if ( !existentColumn ) {
+                            return true;
+                        }
+        
+                        const selectToUpdate = this.createSelectForUpdate(cacheToCreate)
+                            .cloneWith({
+                                columns: [selectColumn]
+                            });
+                        
+                        const changedUpdateExpression = (
+                            existentColumn.comment.cacheSelect !== selectToUpdate.toString()
+                        );
+                        return changedUpdateExpression;
+                    })
+                });
+                
+                const requiredUpdate: IUpdate = {
+                    select: selectWithRequiredColumns,
+                    forTable: cacheToCreate.for
+                };
+                return requiredUpdate;
+            })
+            .filter(update =>
+                update.select.columns.length > 0
+            );
+        
+        this.migration.create({
+            updates: requiredUpdates
+        });
+    }
+
+    private forceUpdateAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
+        const allUpdates: IUpdate[] = this.generateAllUpdates(sortedSelectsForEveryColumn)
+            .map(inputUpdate => {
+                const update: IUpdate = {
+                    select: inputUpdate.select,
+                    forTable: inputUpdate.cache.for
+                };
+                return update;
+            });
+        
+        this.migration.create({
+            updates: allUpdates
+        });
+    }
+
+    private generateAllUpdates(sortedSelectsForEveryColumn: ISortSelectItem[]) {
+        const updates: ISortSelectItem[] = [];
 
         for (let i = 0, n = sortedSelectsForEveryColumn.length; i < n; i++) {
             const {select, cache: cacheToCreate} = sortedSelectsForEveryColumn[ i ];
 
-            const selectToUpdateOneTable: Select[] = [select];
+            const selectsToUpdateOneTable: Select[] = [select];
             for (let j = i + 1; j < n; j++) {
                 const nextItem = sortedSelectsForEveryColumn[ j ];
                 if ( nextItem.cache !== cacheToCreate ) {
@@ -243,49 +310,25 @@ export class CacheComparator extends AbstractComparator {
                 }
 
                 i++;
-                selectToUpdateOneTable.push(nextItem.select);
+                selectsToUpdateOneTable.push(nextItem.select);
             }
 
-            const columnsToOnlyRequiredUpdate = selectToUpdateOneTable
-                .map(select =>
-                    select.columns[0] as SelectColumn
-                )
-                .filter(selectColumn => {
-                    const existentTable = this.database.getTable(cacheToCreate.for.table);
-                    const existentColumn = existentTable && existentTable.getColumn(selectColumn.name);
-
-                    if ( !existentColumn ) {
-                        return true;
-                    }
-
-                    const selectToUpdate = this.createSelectForUpdate(cacheToCreate)
-                        .cloneWith({
-                            columns: [selectColumn]
-                        });
-                    
-                    const changedUpdateExpression = (
-                        existentColumn.comment.cacheSelect !== selectToUpdate.toString()
-                    );
-                    return changedUpdateExpression;
-                });
-
-
-            if ( !columnsToOnlyRequiredUpdate.length ) {
-                continue;
-            }
+            const columnsToOnlyRequiredUpdate = selectsToUpdateOneTable.map(selectToUpdateOneTable =>
+                selectToUpdateOneTable.columns[0] as SelectColumn
+            );
 
             const selectToUpdate = this.createSelectForUpdate(cacheToCreate)
                 .cloneWith({
                     columns: columnsToOnlyRequiredUpdate
                 });
             
-            this.migration.create({
-                updates: [{
-                    select: selectToUpdate,
-                    forTable: cacheToCreate.for
-                }]
+            updates.push({
+                select: selectToUpdate,
+                cache: cacheToCreate
             });
         }
+
+        return updates;
     }
 
     private async getColumnType(cache: Cache, select: Select) {

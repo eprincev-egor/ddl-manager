@@ -24,19 +24,6 @@ export class MainMigrator {
         return await migrator.migrate();
     }
 
-    static async refreshCache(
-        postgres: IDatabaseDriver,
-        database: Database,
-        migration: Migration
-    ) {
-        const migrator = new MainMigrator(
-            postgres,
-            database,
-            migration
-        );
-        return await migrator.refreshCache();
-    }
-    
     private constructor(
         postgres: IDatabaseDriver,
         database: Database,
@@ -64,19 +51,6 @@ export class MainMigrator {
         await updates.create();
         await functions.create();
         await triggers.create();
-
-        return outputErrors;
-    }
-
-    private async refreshCache() {
-        const {
-            updates,
-            columns,
-            outputErrors
-        } = await this.createMigrators();
-
-        await columns.create();
-        await updates.create();
 
         return outputErrors;
     }
