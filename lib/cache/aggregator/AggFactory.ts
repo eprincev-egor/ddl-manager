@@ -8,6 +8,7 @@ import { StringAgg } from "./StringAgg";
 import { MaxAgg } from "./MaxAgg";
 import { MinAgg } from "./MinAgg";
 import { BoolOrAgg } from "./BoolOrAgg";
+import { BoolAndAgg } from "./BoolAndAgg";
 import { Database } from "../../database/schema/Database";
 
 interface IAggMap {
@@ -113,6 +114,9 @@ export class AggFactory {
         }
         else if ( aggCall.name === "bool_or" ) {
             AggConstructor = BoolOrAgg;
+        }
+        else if ( aggCall.name === "bool_and" ) {
+            AggConstructor = BoolAndAgg;
         }
 
         const universalAgg = new AggConstructor({
