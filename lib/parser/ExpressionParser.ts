@@ -139,7 +139,9 @@ export class ExpressionParser {
             // Math.max(a, b) = Math.max(b, a)
             "max",
             // Math.min(a, b) = Math.max(b, a)
-            "min"
+            "min",
+            // x || y = y || x
+            "bool_or"
         ];
         if ( funcsWithoutOrderBy.includes(funcName) ) {
             orderBy = [];
@@ -151,7 +153,13 @@ export class ExpressionParser {
 
         // min(distinct x) = min(x)
         // max(distinct x) = max(x)
-        if ( funcName === "min" || funcName === "max" ) {
+        // bool_or(distinct x) = bool_or(x)
+        const funcsWithoutDistinct = [
+            "max",
+            "min",
+            "bool_or"
+        ];
+        if ( funcsWithoutDistinct.includes(funcName) ) {
             distinct = false;
         }
 
