@@ -9,6 +9,7 @@ import { MaxAgg } from "./MaxAgg";
 import { MinAgg } from "./MinAgg";
 import { BoolOrAgg } from "./BoolOrAgg";
 import { BoolAndAgg } from "./BoolAndAgg";
+import { DistinctArrayAgg } from "./DistinctArrayAgg";
 import { Database } from "../../database/schema/Database";
 
 interface IAggMap {
@@ -117,6 +118,13 @@ export class AggFactory {
         }
         else if ( aggCall.name === "bool_and" ) {
             AggConstructor = BoolAndAgg;
+        }
+        else if (
+            aggCall.name === "array_agg" &&
+            aggCall.distinct &&
+            !aggCall.orderBy.length 
+        ) {
+            AggConstructor = DistinctArrayAgg;
         }
 
         const universalAgg = new AggConstructor({

@@ -77,17 +77,21 @@ begin
                         and
                         not(old.order_date is not null)
                     then
-                        (
-                            select
-                                array_agg(distinct item.order_date)
-
-                            from unnest(
-                                array_append(
-                                    orders_dates_order_date,
+                        case
+                            when
+                                array_position(
+                                    orders_dates,
                                     new.order_date
                                 )
-                            ) as item(order_date)
-                        )
+                                is null
+                            then
+                                array_append(
+                                    orders_dates,
+                                    new.order_date
+                                )
+                            else
+                                orders_dates
+                        end
                     when
                         not(new.order_date is not null)
                         and
@@ -161,17 +165,21 @@ begin
                     orders_dates_order_date,
                     new.order_date
                 ),
-                orders_dates = (
-                    select
-                        array_agg(distinct item.order_date)
-
-                    from unnest(
-                        array_append(
-                            orders_dates_order_date,
+                orders_dates = case
+                    when
+                        array_position(
+                            orders_dates,
                             new.order_date
                         )
-                    ) as item(order_date)
-                )
+                        is null
+                    then
+                        array_append(
+                            orders_dates,
+                            new.order_date
+                        )
+                    else
+                        orders_dates
+                end
             where
                 new.id_client = companies.id;
         end if;
@@ -191,17 +199,21 @@ begin
                     orders_dates_order_date,
                     new.order_date
                 ),
-                orders_dates = (
-                    select
-                        array_agg(distinct item.order_date)
-
-                    from unnest(
-                        array_append(
-                            orders_dates_order_date,
+                orders_dates = case
+                    when
+                        array_position(
+                            orders_dates,
                             new.order_date
                         )
-                    ) as item(order_date)
-                )
+                        is null
+                    then
+                        array_append(
+                            orders_dates,
+                            new.order_date
+                        )
+                    else
+                        orders_dates
+                end
             where
                 new.id_client = companies.id;
         end if;

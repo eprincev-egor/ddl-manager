@@ -93,17 +93,21 @@ begin
                     watchers_users_ids_id_user,
                     new.id_user
                 ),
-                watchers_users_ids = (
-                    select
-                        array_agg(distinct item.id_user)
-
-                    from unnest(
-                        array_append(
-                            watchers_users_ids_id_user,
+                watchers_users_ids = case
+                    when
+                        array_position(
+                            watchers_users_ids,
                             new.id_user
                         )
-                    ) as item(id_user)
-                )
+                        is null
+                    then
+                        array_append(
+                            watchers_users_ids,
+                            new.id_user
+                        )
+                    else
+                        watchers_users_ids
+                end
             where
                 new.id_user_task = user_task.id;
         end if;
@@ -119,17 +123,21 @@ begin
                     watchers_users_ids_id_user,
                     new.id_user
                 ),
-                watchers_users_ids = (
-                    select
-                        array_agg(distinct item.id_user)
-
-                    from unnest(
-                        array_append(
-                            watchers_users_ids_id_user,
+                watchers_users_ids = case
+                    when
+                        array_position(
+                            watchers_users_ids,
                             new.id_user
                         )
-                    ) as item(id_user)
-                )
+                        is null
+                    then
+                        array_append(
+                            watchers_users_ids,
+                            new.id_user
+                        )
+                    else
+                        watchers_users_ids
+                end
             where
                 new.id_user_task = user_task.id;
         end if;
