@@ -70,6 +70,6 @@
   + and don't aggregate filter values
 - filter by companies
 + fix condition: unit.operations && array[ operation.id ]::bigint[]
-- log cache migration
++ log migration in watcher mode
 - test recreating cache after syntax error
 - test not( null::text in ('car', 'truck') )

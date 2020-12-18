@@ -60,6 +60,8 @@ export class Migration {
     }
 
     log() {
+        console.log( new Date().toLocaleTimeString() );
+
         this.toDrop.triggers.forEach((trigger) => {
             console.log("drop trigger " + trigger.getSignature());
         });

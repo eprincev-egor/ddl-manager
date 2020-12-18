@@ -202,7 +202,6 @@ export class DDLManager {
         );
 
         migration.log();
-        
         if ( migrateErrors.length ) {
             console.error(migrateErrors);
         }
@@ -231,7 +230,7 @@ export class DDLManager {
             filesState
         );
 
-        const outputErrors = await MainMigrator.migrate(
+        const migrateErrors = await MainMigrator.migrate(
             postgres,
             database,
             migration
@@ -239,10 +238,9 @@ export class DDLManager {
 
         database.applyMigration(migration);
 
-        if ( outputErrors.length ) {
-            for (const error of outputErrors) {
-                console.error(error);
-            }
+        migration.log();
+        if ( migrateErrors.length ) {
+            console.error(migrateErrors);
         }
     }
 
