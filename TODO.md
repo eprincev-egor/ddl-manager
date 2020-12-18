@@ -68,4 +68,8 @@
 + replace all string_agg to UniversalAgg ?
 + remove filter from UniversalAgg 
   + and don't aggregate filter values
-- TODO: filter by companies
+- filter by companies
++ fix condition: unit.operations && array[ operation.id ]::bigint[]
+- log cache migration
+- test recreating cache after syntax error
+- test not( null::text in ('car', 'truck') )

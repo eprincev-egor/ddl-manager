@@ -97,18 +97,66 @@ export class Expression extends AbstractExpressionElement {
     }
 
     isBinary(operator: string) {
+        const elems = (
+            operator === "::" ? 
+                this.elements :
+                this.getElementsWithoutCasts()
+        );
+
         const isBinaryExpression = (
-            this.elements.length === 3 &&
-            this.elements[1] instanceof Operator &&
-            this.elements[1].toString() === operator
+            elems.length === 3 &&
+            elems[1] instanceof Operator &&
+            elems[1].toString() === operator
         );
         return isBinaryExpression;
     }
 
     getOperands() {
-        return this.elements.filter(elem =>
-            !(elem instanceof Operator)
-        );
+        const operands: IExpressionElement[] = [];
+
+        for (let i = 0, n = this.elements.length; i < n; i++) {
+            const elem = this.elements[i];
+            const nextElem = this.elements[i + 1];
+
+            if ( nextElem && nextElem.toString() === "::" ) {
+                const castOperator = nextElem;
+                const castType = this.elements[i + 2];
+
+                const elemWithCasting = new Expression([
+                    elem,
+                    castOperator,
+                    castType
+                ]);
+                operands.push(elemWithCasting);
+
+                i += 2;
+                continue;
+            }
+
+            if ( elem instanceof Operator ) {
+                continue;
+            }
+
+            operands.push(elem);
+        }
+
+        return operands;
+    }
+
+    private getElementsWithoutCasts() {
+        const expressionElementsWithoutCasts = this.elements.slice();
+
+        for (let i = 0, n = expressionElementsWithoutCasts.length; i < n; i++) {
+            const elem = expressionElementsWithoutCasts[i];
+
+            if ( elem.toString() === "::" ) {
+                expressionElementsWithoutCasts.splice(i, 2);
+                n -= 2;
+                i--;
+            }
+        }
+
+        return expressionElementsWithoutCasts;
     }
 
     isEmpty(): boolean {

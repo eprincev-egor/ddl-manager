@@ -1,10 +1,12 @@
+import assert from "assert";
 import {
     Cache,
     Expression,
     Operator,
     ColumnReference,
     IExpressionElement,
-    UnknownExpressionElement
+    UnknownExpressionElement,
+    IColumnsMap
 } from "../../../ast";
 
 // try using btree-index scan
@@ -27,9 +29,8 @@ export function replaceAmpArrayToAny(
     if ( !columnOperand || !arrOperand ) {
         return input;
     }
-    const arrContent = executeArrayContent( arrOperand as UnknownExpressionElement );
 
-    const columnRefs = arrContent.getColumnReferences();
+    const columnRefs = arrOperand.getColumnReferences();
     const isCacheId = (
         columnRefs.length === 1 &&
         columnRefs[0].name === "id" &&
@@ -39,12 +40,15 @@ export function replaceAmpArrayToAny(
         return input;
     }
 
+    const arrContent = executeArrayContent( arrOperand );
+    const castingSQL = executeArrayCasting( arrOperand );
+
     const output = new Expression([
         arrContent,
         new Operator("="),
         // TODO: cast bigint to same type with array
         UnknownExpressionElement.fromSql(
-            `any( ${ columnOperand } )`,
+            `any( ${ columnOperand }${ castingSQL } )`,
             {[columnOperand.toString()]: columnOperand}
         )
     ]);
@@ -70,20 +74,44 @@ function detectArrOperand(leftOperand: IExpressionElement, rightOperand: IExpres
 }
 
 function isArrayExpression(operand: IExpressionElement) {
+    const operandSQL = operand.toString().trim().toLowerCase();
     return (
-        /^array\s*\[.*\]$/.test( operand.toString().trim().toLowerCase() )
+        /^array\s*\[.*\](\s*::\s*(\w+)\[\])?$/.test( operandSQL )
     );
 }
 
-function executeArrayContent(anyOperand: UnknownExpressionElement): IExpressionElement {
-    const sql = anyOperand.toString()
-        .trim()
-        .replace(/^array\s*\[/, "")
-        .replace(/\]$/, "");
-    
-    const arrOperand = UnknownExpressionElement.fromSql(
-        sql,
-        anyOperand.columnsMap
+function executeArrayContent(anyOperand: IExpressionElement): IExpressionElement {
+    const matchResult = anyOperand.toString().match(/\[([^\]]+)\]/) as string[];
+    assert.ok(matchResult && matchResult[1]);
+
+    const columnsMap: IColumnsMap = {};
+    if ( anyOperand instanceof UnknownExpressionElement ) {
+        Object.assign(columnsMap, anyOperand.columnsMap);
+    }
+    else if ( anyOperand instanceof Expression ) {
+        for (const subElem of anyOperand.elements) {
+            const subMap = (subElem as any).columnsMap || {};
+            Object.assign(columnsMap, subMap);
+        }
+    }
+
+    const arrContentSQL = matchResult[1].trim();
+    const arrContentElem = UnknownExpressionElement.fromSql(
+        arrContentSQL,
+        columnsMap
     );
-    return arrOperand;
+    return arrContentElem;
+}
+
+function executeArrayCasting(anyOperand: IExpressionElement): string {
+    if ( !(anyOperand instanceof Expression) ) {
+        return "";
+    }
+
+    if ( anyOperand.isBinary("::") ) {
+        const castType = anyOperand.elements[2] as any;
+        return `::${ castType }`;
+    }
+
+    return "";
 }
