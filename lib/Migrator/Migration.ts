@@ -67,6 +67,10 @@ export class Migration {
         this.toDrop.functions.forEach((func) => {
             console.log("drop function " + func.getSignature());
         });
+
+        this.toDrop.columns.forEach((column) => {
+            console.log("drop column " + column.getSignature());
+        });
         
 
         this.toCreate.functions.forEach((func) => {
@@ -75,6 +79,10 @@ export class Migration {
     
         this.toCreate.triggers.forEach((trigger) => {
             console.log("create trigger " + trigger.getSignature());
+        });
+
+        this.toCreate.columns.forEach((column) => {
+            console.log("create column " + column.getSignature());
         });
     }
     
