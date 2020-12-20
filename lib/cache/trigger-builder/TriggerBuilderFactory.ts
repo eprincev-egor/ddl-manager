@@ -8,6 +8,7 @@ import { UniversalTriggerBuilder } from "./UniversalTriggerBuilder";
 import { CacheContext } from "./CacheContext";
 import { SelfUpdateByOtherTablesTriggerBuilder } from "./SelfUpdateByOtherTablesTriggerBuilder";
 import { SelfUpdateBySelfRowTriggerBuilder } from "./SelfUpdateBySelfRowTriggerBuilder";
+import { flatMap } from "lodash";
 
 export class TriggerBuilderFactory {
     private readonly cache: Cache;
@@ -65,8 +66,12 @@ export class TriggerBuilderFactory {
         }
 
         const from = buildFrom(context);
+        const joins = flatMap(context.cache.select.from, fromItem => fromItem.joins);
+        const isFromJoin = joins.some(join =>
+            join.table.table.equal(context.triggerTable)
+        );
 
-        if ( from.length > 1 ) {
+        if ( from.length > 1 || from.length === 1 && isFromJoin ) {
             return UniversalTriggerBuilder;
         }
         else {
