@@ -31,7 +31,10 @@ begin
             invoice_positions_cost
         ) = (
             select
-                sum(invoice_positions.cost) as invoice_positions_cost
+                coalesce(
+        sum(invoice_positions.cost),
+        0
+    ) as invoice_positions_cost
 
             from invoice_positions
 

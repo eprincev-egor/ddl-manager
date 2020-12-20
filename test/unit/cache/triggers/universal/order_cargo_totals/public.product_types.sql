@@ -29,11 +29,16 @@ begin
     update orders set
         (
             cargos_weight,
+            cargos_products_names_name,
             cargos_products_names
         ) = (
             select
-                sum(cargos.total_weight) as cargos_weight,
-                string_agg(product_types.name, ', ') as cargos_products_names
+                coalesce(
+        sum(cargos.total_weight),
+        0
+    ) as cargos_weight,
+                array_agg(product_types.name) as cargos_products_names_name,
+    string_agg(product_types.name, ', ') as cargos_products_names
 
             from cargos
 

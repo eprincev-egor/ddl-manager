@@ -28,9 +28,11 @@ begin
         )
     update orders set
         (
+            cars_numbers_car_number,
             cars_numbers
         ) = (
             select
+                array_agg(cars.car_number) as cars_numbers_car_number,
                 string_agg(cars.car_number, ', ') as cars_numbers
 
             from cargos
