@@ -10,7 +10,7 @@ import { replaceArrayNotNullOn } from "./replaceArrayNotNullOn";
 import { replaceOperatorAnyToIndexedOperator } from "./replaceOperatorAnyToIndexedOperator";
 import { replaceAmpArrayToAny } from "./replaceAmpArrayToAny";
 import { findJoinsMeta } from "../../processor/findJoinsMeta";
-import { buildJoins } from "../../processor/buildJoins";
+import { buildJoinVariables } from "../../processor/buildJoinVariables";
 
 
 export type RowType = "new" | "old";
@@ -182,7 +182,7 @@ export class ConditionBuilder {
         const joinsMeta = findJoinsMeta(this.context.cache.select);
 
         if ( joinsMeta.length ) {
-            const joins = buildJoins(
+            const joins = buildJoinVariables(
                 this.context.database,
                 joinsMeta,
                 row

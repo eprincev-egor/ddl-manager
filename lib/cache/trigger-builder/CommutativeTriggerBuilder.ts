@@ -1,7 +1,7 @@
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { buildCommutativeBody } from "./body/buildCommutativeBody";
 import { Update } from "../../ast";
-import { buildJoins } from "../processor/buildJoins";
+import { buildJoinVariables } from "../processor/buildJoinVariables";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
 
 export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
@@ -63,6 +63,6 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
     private buildJoins(row: "new" | "old") {
         const joins = findJoinsMeta(this.context.cache.select);
-        return buildJoins(this.context.database, joins, row);
+        return buildJoinVariables(this.context.database, joins, row);
     }
 }

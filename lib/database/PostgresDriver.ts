@@ -256,7 +256,7 @@ implements IDatabaseDriver {
 
         const whereRowIsBroken = columnsToUpdate.map(columnName =>
             `${forTable.getIdentifier()}.${columnName} is distinct from ddl_manager_tmp.${columnName}`
-        ).join(" or ");
+        ).join("\nor\n");
 
         const selectBrokenRowsWithLimit = `
             select

@@ -225,22 +225,18 @@ function doIf(
 function assignVariables(joins: IJoin[], row: "new" | "old") {
     const lines: AbstractAstElement[] = [];
 
-    for (const join of joins) {
+    const combinedJoins = groupJoinsByTableAndFilter(joins);
+
+    for (const combinedJoin of combinedJoins) {
         lines.push(
             new If({
                 if: Expression.and([
-                    `${row}.${join.on.column} is not null`
+                    `${row}.${combinedJoin.byColumn} is not null`
                 ]),
-                then: [
-                    new AssignVariable({
-                        variable: join.variable.name,
-                        value: new SimpleSelect({
-                            column: join.table.column,
-                            from: join.table.name,
-                            where: `${row}.${join.on.column}`
-                        })
-                    })
-                ]
+                then: assignCombinedJoinVariables(
+                    combinedJoin,
+                    row
+                )
             })
         );
 
@@ -250,40 +246,96 @@ function assignVariables(joins: IJoin[], row: "new" | "old") {
     return lines;
 }
 
+function assignCombinedJoinVariables(
+    combinedJoin: ICombinedJoin,
+    row: "new" | "old"
+) {
+    if ( combinedJoin.variables.length === 1 ) {
+        return [
+            new AssignVariable({
+                variable: combinedJoin.variables[0],
+                value: new SimpleSelect({
+                    columns: combinedJoin.joinedColumns,
+                    from: combinedJoin.joinedTable,
+                    where: `${row}.${combinedJoin.byColumn}`
+                })
+            })
+        ]
+    }
+    
+    return [
+        new SimpleSelect({
+            columns: combinedJoin.joinedColumns,
+            into: combinedJoin.variables,
+            from: combinedJoin.joinedTable,
+            where: `${row}.${combinedJoin.byColumn}`
+        })
+    ];
+}
+
+interface ICombinedJoin {
+    variables: string[];
+    joinedColumns: string[];
+    joinedTable: string;
+    byColumn: string;
+}
+function groupJoinsByTableAndFilter(joins: IJoin[]) {
+    const combinedJoinByKey: {[key: string]: ICombinedJoin} = {};
+
+    for (const join of joins) {
+        const key = join.table.name + ":" + join.on.column;
+
+        const combinedJoin: ICombinedJoin = combinedJoinByKey[ key ] || {
+            variables: [],
+            joinedColumns: [],
+            joinedTable: join.table.name,
+            byColumn: join.on.column
+        };
+
+        combinedJoin.variables.push(
+            join.variable.name
+        );
+        combinedJoin.joinedColumns.push(
+            join.table.column
+        );
+        combinedJoinByKey[ key ] = combinedJoin;
+    }
+
+    const combinedJoins = Object.values(combinedJoinByKey);
+    return combinedJoins;
+}
+
 function reassignVariables(newJoins: IJoin[], oldJoins: IJoin[]) {
     const lines: AbstractAstElement[] = [];
 
-    for (let i = 0, n = newJoins.length; i < n; i++) {
-        const newJoin = newJoins[i];
-        const oldJoin = oldJoins[i];
+    const oldCombinedJoins = groupJoinsByTableAndFilter(oldJoins);
+    const newCombinedJoins = groupJoinsByTableAndFilter(newJoins);
+
+    for (let i = 0, n = newCombinedJoins.length; i < n; i++) {
+        const newCombinedJoin = newCombinedJoins[i];
+        const oldCombinedJoin = oldCombinedJoins[i];
         
         lines.push(new If({
             if: isNotDistinctFrom([
-                newJoin.on.column
+                newCombinedJoin.byColumn
             ]),
-            then: [
+            then: newCombinedJoin.variables.map((newVarName, j) => 
                 new AssignVariable({
-                    variable: newJoin.variable.name,
+                    variable: newVarName,
                     value: new HardCode({
-                        sql: oldJoin.variable.name
+                        sql: oldCombinedJoin.variables[j]
                     })
                 })
-            ],
+            ),
             else: [
                 new If({
                     if: Expression.and([
-                        `new.${newJoin.on.column} is not null`
+                        `new.${newCombinedJoin.byColumn} is not null`
                     ]),
-                    then: [
-                        new AssignVariable({
-                            variable: newJoin.variable.name,
-                            value: new SimpleSelect({
-                                column: newJoin.table.column,
-                                from: newJoin.table.name,
-                                where: "new." + newJoin.on.column
-                            })
-                        })
-                    ]
+                    then: assignCombinedJoinVariables(
+                        newCombinedJoin,
+                        "new"
+                    )
                 })
             ]
         }));

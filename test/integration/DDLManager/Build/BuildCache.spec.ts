@@ -817,7 +817,8 @@ describe("integration/DDLManager.build cache", () => {
             throwError: true
         });
 
-        let result, row;
+        let result;
+        let row;
         const date = new Date();
 
 
@@ -850,5 +851,90 @@ describe("integration/DDLManager.build cache", () => {
             row.orders_customs_date,
             null
         );
+    });
+
+    it("test cache universal triggers working", async() => {
+        const folderPath = ROOT_TMP_PATH + "/universal_cache_test";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table companies (
+                id serial primary key
+            );
+            create table orders (
+                id serial primary key,
+                order_number text,
+                order_date date
+            );
+            create table order_company_link (
+                id_order integer,
+                id_company integer
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/orders.sql", `
+            cache totals for companies (
+                select
+                    max( orders.order_date ) as max_order_date,
+                    string_agg( distinct orders.order_number, ', ' ) as orders_numbers
+                
+                from order_company_link as link
+                
+                left join orders on
+                    orders.id = link.id_order
+                
+                where
+                    link.id_company = companies.id
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        let result;
+
+
+        // test insert
+        await db.query(`
+            insert into companies default values;
+
+            insert into orders (
+                order_date,
+                order_number
+            ) 
+            values 
+                ('2020-12-26'::date, 'order-26'),
+                ('2020-12-27'::date, 'order-27');
+
+            insert into order_company_link (
+                id_order, id_company
+            )
+            values 
+                (1, 1),
+                (2, 1);
+        `);
+        result = await db.query(`
+            select *
+            from companies
+        `);
+
+        const date26 = new Date(2020, 11, 26);
+        const date27 = new Date(2020, 11, 27);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            max_order_date_order_date: [
+                date26,
+                date27
+            ],
+            max_order_date: date27,
+            orders_numbers: "order-26, order-27",
+            orders_numbers_order_number: [
+                "order-26",
+                "order-27"
+            ]
+        }]);
     });
 });

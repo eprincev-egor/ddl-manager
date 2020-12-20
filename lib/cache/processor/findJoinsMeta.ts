@@ -1,4 +1,5 @@
-import { Select, ColumnReference } from "../../ast";
+import { flatMap } from "lodash";
+import { Select } from "../../ast";
 
 const SIMPLE_JOIN_TYPES = [
     "left join",
@@ -7,80 +8,54 @@ const SIMPLE_JOIN_TYPES = [
 
 export interface IJoinMeta {
     joinAlias?: string;
-    joinedColumn: string;
+    joinedColumns: string[];
     joinedTable: string;
     joinByColumn: string;
 }
 
 export function findJoinsMeta(select: Select) {
-    const joins: IJoinMeta[] = [];
+    const outputJoins: IJoinMeta[] = [];
+    const allColumnsRefs = flatMap(select.columns, selectColumn => 
+        selectColumn.expression.getColumnReferences()
+    );
+    const simpleJoins = flatMap(select.from, fromItem => fromItem.joins)
+        .filter(join => 
+            SIMPLE_JOIN_TYPES.includes(join.type)
+        );
 
-    for (const column of select.columns) {
-        for (const columnReference of column.expression.getColumnReferences()) {
+    for (const join of simpleJoins) {
 
-            const joinMeta = findSimpleJoinMetaForColumn({
-                select,
-                columnReference
-            });
-            if ( !joinMeta ) {
+        const joinByColumn = join.on.getColumnReferences().find(joinConditionColumn =>
+            !joinConditionColumn.tableReference.equal(join.table)
+        );
+        if ( !joinByColumn ) {
+            continue;
+        }
+
+        const joinMeta: IJoinMeta = {
+            joinAlias: join.table.alias,
+            joinedTable: join.table.table.toStringWithoutPublic(),
+            joinedColumns: [],
+            joinByColumn: joinByColumn.toString()
+        };
+
+        const columnRefsToJoin = allColumnsRefs.filter(columnRef =>
+            columnRef.tableReference.equal(join.table)
+        );
+        for (const columnRef of columnRefsToJoin) {
+            if ( joinMeta.joinedColumns.includes(columnRef.name) ) {
                 continue;
             }
 
-            const existsSimilarJoin = joins.find(someMeta =>
-                someMeta.joinAlias === joinMeta.joinAlias &&
-                someMeta.joinedTable === joinMeta.joinedTable
+            joinMeta.joinedColumns.push(
+                columnRef.name
             );
-            if ( !existsSimilarJoin ) {
-                joins.push(joinMeta);
-            }
+        }
+
+        if ( joinMeta.joinedColumns.length ) {
+            outputJoins.push( joinMeta );
         }
     }
 
-    return joins;
-}
-
-function findSimpleJoinMetaForColumn(params: {
-    select: Select;
-    columnReference: ColumnReference;
-}): IJoinMeta | undefined {
-    const {select, columnReference} = params;
-
-    const sourceJoin = findSourceJoin(
-        select,
-        columnReference
-    );
-
-    if ( !sourceJoin ) {
-        return;
-    }
-    
-    const isSimpleJoinType = SIMPLE_JOIN_TYPES.includes(sourceJoin.type);
-    if ( !isSimpleJoinType ) {
-        return;
-    }
-
-    const joinByColumn = sourceJoin.on.getColumnReferences().find(joinConditionColumn =>
-        !joinConditionColumn.tableReference.equal(sourceJoin.table)
-    );
-    if ( !joinByColumn ) {
-        return;
-    }
-    
-    const meta: IJoinMeta = {
-        joinAlias: sourceJoin.table.alias,
-        joinedTable: columnReference.tableReference.table.toStringWithoutPublic(),
-        joinedColumn: columnReference.name,
-        joinByColumn: joinByColumn.toString()
-    };
-    return meta;
-}
-
-function findSourceJoin(select: Select, columnReference: ColumnReference) {
-    for (const from of select.from) {
-        for (const join of from.joins) {
-            if ( join.table.equal(columnReference.tableReference) ) {
-                return join;
-            }
-        }
-    }
+    return outputJoins;
 }

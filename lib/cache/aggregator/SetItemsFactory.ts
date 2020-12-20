@@ -11,7 +11,7 @@ import { flatMap } from "lodash";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
 import { CacheContext } from "../trigger-builder/CacheContext";
 import { TableReference } from "../../database/schema/TableReference";
-import { buildJoins } from "../processor/buildJoins";
+import { buildJoinVariables } from "../processor/buildJoinVariables";
 
 type AggType = "minus" | "plus";
 
@@ -163,7 +163,7 @@ export class SetItemsFactory {
         const joinsMeta = findJoinsMeta(this.context.cache.select);
 
         if ( joinsMeta.length ) {
-            const joins = buildJoins(
+            const joins = buildJoinVariables(
                 this.context.database,
                 joinsMeta,
                 row
