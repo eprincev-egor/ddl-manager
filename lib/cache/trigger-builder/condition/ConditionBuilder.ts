@@ -1,16 +1,15 @@
-import { Expression, UnknownExpressionElement } from "../../../ast";
+import { ColumnReference, Expression, UnknownExpressionElement } from "../../../ast";
 import { CacheContext } from "../CacheContext";
 import { TableReference } from "../../../database/schema/TableReference";
-import { cond, flatMap } from "lodash";
-
-import { noReferenceChanges } from "./noReferenceChanges";
-import { noChanges } from "./noChanges";
+import { flatMap } from "lodash";
 import { hasNoReference, hasReference } from "./hasReference";
 import { replaceArrayNotNullOn } from "./replaceArrayNotNullOn";
 import { replaceOperatorAnyToIndexedOperator } from "./replaceOperatorAnyToIndexedOperator";
 import { replaceAmpArrayToAny } from "./replaceAmpArrayToAny";
 import { findJoinsMeta } from "../../processor/findJoinsMeta";
 import { buildJoinVariables } from "../../processor/buildJoinVariables";
+import { Table } from "../../../database/schema/Table";
+import { Column } from "../../../database/schema/Column";
 
 
 export type RowType = "new" | "old";
@@ -26,11 +25,24 @@ export class ConditionBuilder {
     }
 
     noReferenceChanges() {
-        return noReferenceChanges( this.context );
+        const importantColumnsRefs = this.triggerTableColumnsToRefs(
+            this.context.referenceMeta.columns
+        );
+
+        for (const filter of this.context.referenceMeta.filters) {
+            const filterColumnsRefs = filter.getColumnReferences();
+            importantColumnsRefs.push( ...filterColumnsRefs );
+        }
+
+        return this.buildNoChanges( importantColumnsRefs );
     }
 
     noChanges() {
-        return noChanges(this.context);
+        const triggerTableColumnsRefs = this.triggerTableColumnsToRefs(
+            this.context.triggerTableColumns
+        );
+
+        return this.buildNoChanges( triggerTableColumnsRefs );
     }
 
     hasNoReference(row: RowType) {
@@ -49,9 +61,23 @@ export class ConditionBuilder {
     }
 
     filtersWithJoins(row: RowType) {
+        let conditions: Expression[] = this.context.referenceMeta.filters.slice();
+
         const aggFilters = this.matchedAllAggFilters();
-        if ( aggFilters && this.hasJoinsInside(aggFilters) ) {
-            const output = this.replaceTriggerTableRefsTo(aggFilters, row);
+        if ( aggFilters ) {
+            conditions.push(aggFilters);
+        }
+        
+        conditions = conditions.filter(condition =>
+            this.hasJoinsInside(condition)
+        );
+
+        conditions = conditions.map(condition =>
+            this.replaceTriggerTableRefsTo(condition, row) as Expression
+        );
+
+        const output = conditions.length === 1 ? conditions[0] : Expression.and(conditions);
+        if ( !output.isEmpty() ) {
             return output;
         }
     }
@@ -80,6 +106,60 @@ export class ConditionBuilder {
             arrayChangesFunc(row)
         );
         return output;
+    }
+
+    private buildNoChanges(columns: ColumnReference[]) {
+        const mutableColumns = columns.filter(column =>
+            column.name !== "id"
+        );
+
+        const conditions: string[] = [];
+        for (const columnRef of mutableColumns) {
+
+            const tableStructure = this.context.database.getTable(
+                columnRef.tableReference.table
+            ) as Table;
+        
+            const column = (
+                tableStructure &&
+                tableStructure.getColumn(columnRef.name)
+            ) as Column;
+
+            const columnRefExpression = new Expression([ columnRef ]);
+            let oldColumn = this.replaceTriggerTableRefsTo(
+                columnRefExpression,
+                "old"
+            ) as Expression;
+            let newColumn = this.replaceTriggerTableRefsTo(
+                columnRefExpression,
+                "new"
+            ) as Expression;
+
+            oldColumn = oldColumn.replaceTable(
+                this.context.triggerTable,
+                new TableReference(
+                    this.context.triggerTable,
+                    "old"
+                )
+            );
+            newColumn = newColumn.replaceTable(
+                this.context.triggerTable,
+                new TableReference(
+                    this.context.triggerTable,
+                    "new"
+                )
+            );
+    
+            if ( column && column.type.isArray() ) {
+                conditions.push(`cm_equal_arrays(${newColumn}, ${oldColumn})`);
+            }
+            else {
+                conditions.push(`${ newColumn } is not distinct from ${ oldColumn }`);
+            }
+        }
+        
+        const noChangesCondition = Expression.and(conditions);
+        return noChangesCondition;
     }
 
     private getMutableColumns() {
@@ -127,9 +207,16 @@ export class ConditionBuilder {
 
     private buildHasReferenceWithoutJoins() {
         let conditions = [
-            hasReference(this.context),
-            Expression.and(this.context.referenceMeta.filters)
+            hasReference(this.context)
         ] as Expression[];
+
+        for (const where of this.context.referenceMeta.filters) {
+            if ( !this.hasJoinsInside(where) ) {
+                conditions.push(
+                    where
+                );
+            }
+        }
 
         const aggFilters = this.matchedAllAggFilters();
         if ( aggFilters && !this.hasJoinsInside(aggFilters) ) {
@@ -221,6 +308,14 @@ export class ConditionBuilder {
             !columnRef.tableReference.table.equal(this.context.triggerTable)
         );
         return hasJoins;
+    }
+
+    private triggerTableColumnsToRefs(columnsNames: string[]) {
+        const triggerTableRef = new TableReference( this.context.triggerTable );
+        const triggerTableColumnsRefs = columnsNames.map(columnName =>
+            new ColumnReference( triggerTableRef, columnName )
+        );
+        return triggerTableColumnsRefs;
     }
 }
 
