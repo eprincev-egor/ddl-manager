@@ -1,180 +1,56 @@
 create or replace function cache_totals_for_orders_on_cargos()
 returns trigger as $body$
-declare old_car_car_number text;
-declare new_car_car_number text;
+declare new_row record;
+declare old_row record;
+declare return_row record;
 begin
-
     if TG_OP = 'DELETE' then
-
-        if old.id_order is not null then
-            if old.id_car is not null then
-                old_car_car_number = (
-                    select
-                        cars.car_number
-                    from cars
-                    where
-                        cars.id = old.id_car
-                );
-            end if;
-
-            update orders set
-                cars_numbers_car_number = cm_array_remove_one_element(
-                    cars_numbers_car_number,
-                    old_car_car_number
-                ),
-                cars_numbers = (
-                    select
-                        string_agg(item.car_number, ', ')
-
-                    from unnest(
-                        cm_array_remove_one_element(
-                            cars_numbers_car_number,
-                            old_car_car_number
-                        )
-                    ) as item(car_number)
-                )
-            where
-                old.id_order = orders.id;
-        end if;
-
-        return old;
+        return_row = old;
+    else
+        return_row = new;
     end if;
 
-    if TG_OP = 'UPDATE' then
-        if new.id_order is not distinct from old.id_order then
-            return new;
-        end if;
+    new_row = return_row;
+    old_row = return_row;
 
-        if old.id_car is not null then
-            old_car_car_number = (
-                select
-                    cars.car_number
-                from cars
-                where
-                    cars.id = old.id_car
-            );
-        end if;
-
-        if new.id_car is not distinct from old.id_car then
-            new_car_car_number = old_car_car_number;
-        else
-            if new.id_car is not null then
-                new_car_car_number = (
-                    select
-                        cars.car_number
-                    from cars
-                    where
-                        cars.id = new.id_car
-                );
-            end if;
-        end if;
-
-        if new.id_order is not distinct from old.id_order then
-            update orders set
-                cars_numbers_car_number = array_append(
-                    cm_array_remove_one_element(
-                        cars_numbers_car_number,
-                        old_car_car_number
-                    ),
-                    new_car_car_number
-                ),
-                cars_numbers = (
-                    select
-                        string_agg(item.car_number, ', ')
-
-                    from unnest(
-                        array_append(
-                            cm_array_remove_one_element(
-                                cars_numbers_car_number,
-                                old_car_car_number
-                            ),
-                            new_car_car_number
-                        )
-                    ) as item(car_number)
-                )
-            where
-                new.id_order = orders.id;
-
-            return new;
-        end if;
-
-        if old.id_order is not null then
-            update orders set
-                cars_numbers_car_number = cm_array_remove_one_element(
-                    cars_numbers_car_number,
-                    old_car_car_number
-                ),
-                cars_numbers = (
-                    select
-                        string_agg(item.car_number, ', ')
-
-                    from unnest(
-                        cm_array_remove_one_element(
-                            cars_numbers_car_number,
-                            old_car_car_number
-                        )
-                    ) as item(car_number)
-                )
-            where
-                old.id_order = orders.id;
-        end if;
-
-        if new.id_order is not null then
-            update orders set
-                cars_numbers_car_number = array_append(
-                    cars_numbers_car_number,
-                    new_car_car_number
-                ),
-                cars_numbers = coalesce(
-                    cars_numbers ||
-                    coalesce(
-                        ', '
-                        || new_car_car_number,
-                        ''
-                    ),
-                    new_car_car_number
-                )
-            where
-                new.id_order = orders.id;
-        end if;
-
-        return new;
+    if TG_OP in ('INSERT', 'UPDATE') then
+        new_row = new;
+    end if;
+    if TG_OP in ('UPDATE', 'DELETE') then
+        old_row = old;
     end if;
 
-    if TG_OP = 'INSERT' then
+    with
+        changed_rows as (
+            select old_row.id, old_row.id_order
+            union
+            select new_row.id, new_row.id_order
+        )
+    update orders set
+        (
+            cars_numbers_car_number,
+            cars_numbers
+        ) = (
+            select
+                array_agg(cars.car_number) as cars_numbers_car_number,
+                string_agg(cars.car_number, ', ') as cars_numbers
 
-        if new.id_order is not null then
-            if new.id_car is not null then
-                new_car_car_number = (
-                    select
-                        cars.car_number
-                    from cars
-                    where
-                        cars.id = new.id_car
-                );
-            end if;
+            from cargos
 
-            update orders set
-                cars_numbers_car_number = array_append(
-                    cars_numbers_car_number,
-                    new_car_car_number
-                ),
-                cars_numbers = coalesce(
-                    cars_numbers ||
-                    coalesce(
-                        ', '
-                        || new_car_car_number,
-                        ''
-                    ),
-                    new_car_car_number
-                )
+            inner join cargo_unit_link as link on
+                link.id_cargo = cargos.id
+
+            inner join cars on
+                cars.id = link.id_car
+
             where
-                new.id_order = orders.id;
-        end if;
+                cargos.id_order = orders.id
+        )
+    from changed_rows
+    where
+        changed_rows.id_order = orders.id;
 
-        return new;
-    end if;
-
+    return return_row;
 end
 $body$
 language plpgsql;

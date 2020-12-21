@@ -5,6 +5,8 @@ import { TableID } from "../../database/schema/TableID";
 import { UnknownExpressionElement } from "./UnknownExpressionElement";
 import { AbstractExpressionElement } from "./AbstractExpressionElement";
 import { Spaces } from "../Spaces";
+import { ColumnReference } from "./ColumnReference";
+import { IExpressionElement } from "./interface";
 
 // https://postgrespro.ru/docs/postgrespro/10/queries-order
 export interface IOrderByItem {
@@ -78,7 +80,7 @@ export class FuncCall extends AbstractExpressionElement {
     }
 
     // TODO: replace orderBy
-    replaceColumn(replaceColumn: string, toSql: string) {
+    replaceColumn(replaceColumn: ColumnReference, toSql: IExpressionElement) {
         const newArgs = this.args.map(arg =>
             arg.replaceColumn(replaceColumn, toSql)
         );

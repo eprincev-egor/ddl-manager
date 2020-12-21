@@ -1,17 +1,18 @@
+import { TableID } from "../database/schema/TableID";
 import { AbstractAstElement } from "./AbstractAstElement";
 import { Spaces } from "./Spaces";
 
 interface SimpleSelectRow {
     columns: string[];
     into?: string[];
-    from: string;
+    from: TableID;
     where: string;
 }
 
 export class SimpleSelect extends AbstractAstElement {
 
     readonly columns!: string[];
-    readonly from!: string;
+    readonly from!: TableID;
     readonly where!: string;
     readonly into!: string[];
 
@@ -34,9 +35,9 @@ export class SimpleSelect extends AbstractAstElement {
 
             ...this.intoTemplate(spaces),
             
-            spaces + `from ${this.from}`,
+            spaces + `from ${this.from.toStringWithoutPublic()}`,
             spaces + "where",
-            spaces.plusOneLevel() + `${this.from}.id = ${this.where}`
+            spaces.plusOneLevel() + `${this.from.toStringWithoutPublic()}.id = ${this.where}`
         ];
 
         if ( !this.into.length ) {
@@ -54,7 +55,7 @@ export class SimpleSelect extends AbstractAstElement {
         const selectColumnsTemplate: string[] = [];
 
         this.columns.forEach((columnName, i) => {
-            const selectColumn = `${this.from}.${columnName}`;
+            const selectColumn = `${this.from.toStringWithoutPublic()}.${columnName}`;
             const comma = i === this.columns.length - 1 ? "" : ",";
 
             selectColumnsTemplate.push(

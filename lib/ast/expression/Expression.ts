@@ -6,6 +6,7 @@ import { TableID } from "../../database/schema/TableID";
 import { AbstractExpressionElement } from "./AbstractExpressionElement";
 import { Spaces } from "../Spaces";
 import { IColumnsMap, UnknownExpressionElement } from "./UnknownExpressionElement";
+import { ColumnReference } from "./ColumnReference";
 
 type ConditionElementType = string | IExpressionElement;
 
@@ -191,7 +192,7 @@ export class Expression extends AbstractExpressionElement {
         return new Expression(newElements);
     }
 
-    replaceColumn(replaceColumn: string, toSql: string): Expression {
+    replaceColumn(replaceColumn: ColumnReference, toSql: IExpressionElement): Expression {
         const newElements = this.elements.map(elem => 
             elem.replaceColumn(replaceColumn, toSql)
         );

@@ -5,13 +5,16 @@ import {
     HardCode,
     SetItem,
     CaseWhen,
-    Spaces
+    Spaces,
+    UnknownExpressionElement,
+    ColumnReference
 } from "../../ast";
 import { flatMap } from "lodash";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
 import { CacheContext } from "../trigger-builder/CacheContext";
 import { TableReference } from "../../database/schema/TableReference";
 import { buildJoinVariables } from "../processor/buildJoinVariables";
+import { TableID } from "../../database/schema/TableID";
 
 type AggType = "minus" | "plus";
 
@@ -120,17 +123,21 @@ export class SetItemsFactory {
                 aggType2row(aggType)
             );
     
-            const helperSpaces = Spaces.level(2);
             const helperValue = helperAgg[aggType](
                 Expression.unknown(helperAgg.columnName),
                 helperPrevValue
-            )
-                .toSQL(helperSpaces)
-                .trim();
+            );
+            const helperSpaces = Spaces.level(2);
+            const helperValueSQL = helperValue.toSQL(helperSpaces).trim();
     
             sql = sql.replaceColumn(
-                helperAgg.columnName.toString(),
-                helperValue
+                new ColumnReference(
+                    new TableReference(
+                        new TableID("", "")
+                    ),
+                    helperAgg.columnName
+                ),
+                UnknownExpressionElement.fromSql(helperValueSQL)
             );
         }
     
@@ -171,8 +178,8 @@ export class SetItemsFactory {
             
             joins.forEach((join) => {
                 valueExpression = valueExpression.replaceColumn(
-                    (join.table.alias || join.table.name) + "." + join.table.column,
-                    join.variable.name
+                    join.table.column,
+                    UnknownExpressionElement.fromSql(join.variable.name)
                 );
             });
         }

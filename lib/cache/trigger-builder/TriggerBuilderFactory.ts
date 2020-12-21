@@ -70,8 +70,17 @@ export class TriggerBuilderFactory {
         const isFromJoin = joins.some(join =>
             join.table.table.equal(context.triggerTable)
         );
+        const hasNotLeftJoin = joins.some(join => 
+            join.type !== "left join"
+        );
 
-        if ( from.length > 1 || from.length === 1 && isFromJoin ) {
+        const needUniversalTrigger = (
+            hasNotLeftJoin || 
+            from.length > 1 || 
+            from.length === 1 && isFromJoin
+        );
+
+        if ( needUniversalTrigger ) {
             return UniversalTriggerBuilder;
         }
         else {

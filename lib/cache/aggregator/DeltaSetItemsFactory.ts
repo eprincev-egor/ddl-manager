@@ -7,12 +7,15 @@ import {
     SetItem,
     NotExpression,
     CaseWhen,
-    Spaces
+    Spaces,
+    ColumnReference,
+    UnknownExpressionElement
 } from "../../ast";
 import { flatMap } from "lodash";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
 import { TableReference } from "../../database/schema/TableReference";
 import { SetItemsFactory } from "./SetItemsFactory";
+import { TableID } from "../../database/schema/TableID";
 
 export class DeltaSetItemsFactory extends SetItemsFactory {
 
@@ -150,9 +153,6 @@ export class DeltaSetItemsFactory extends SetItemsFactory {
         prevValue: Expression,
         nextValue: Expression
     ) {
-        const triggerTable = this.context.triggerTable;
-        const joins = findJoinsMeta(this.context.cache.select);
-
         const minus = agg.minus(
             Expression.unknown(agg.columnName),
             prevValue
@@ -185,8 +185,13 @@ export class DeltaSetItemsFactory extends SetItemsFactory {
                 .trim();
 
             delta = delta.replaceColumn(
-                helperAgg.columnName.toString(),
-                helperDeltaSQL
+                new ColumnReference(
+                    new TableReference(
+                        new TableID("", "")
+                    ),
+                    helperAgg.columnName
+                ),
+                UnknownExpressionElement.fromSql(helperDeltaSQL)
             );
         }
 

@@ -1,30 +1,29 @@
 import { flatMap } from "lodash";
-import { Select } from "../../ast";
-
-const SIMPLE_JOIN_TYPES = [
-    "left join",
-    "inner join"
-];
+import { ColumnReference, Select } from "../../ast";
+import { TableReference } from "../../database/schema/TableReference";
 
 export interface IJoinMeta {
-    joinAlias?: string;
-    joinedColumns: string[];
-    joinedTable: string;
-    joinByColumn: string;
+    joinedColumns: ColumnReference[];
+    joinedTable: TableReference;
+    joinByColumn: ColumnReference;
 }
 
 export function findJoinsMeta(select: Select) {
     const outputJoins: IJoinMeta[] = [];
-    const allColumnsRefs = flatMap(select.columns, selectColumn => 
-        selectColumn.expression.getColumnReferences()
-    );
+    // const selectColumnsRefs = flatMap(select.columns, selectColumn => 
+    //     selectColumn.expression.getColumnReferences()
+    // );
+    const allColumnsRefs = select.getAllColumnReferences();
+
     const simpleJoins = flatMap(select.from, fromItem => fromItem.joins)
         .filter(join => 
-            SIMPLE_JOIN_TYPES.includes(join.type)
+            join.type === "left join"
         );
 
     for (const join of simpleJoins) {
 
+        // TODO: join by two columns?
+        // example: documents.table_name && documents.table_id
         const joinByColumn = join.on.getColumnReferences().find(joinConditionColumn =>
             !joinConditionColumn.tableReference.equal(join.table)
         );
@@ -33,22 +32,26 @@ export function findJoinsMeta(select: Select) {
         }
 
         const joinMeta: IJoinMeta = {
-            joinAlias: join.table.alias,
-            joinedTable: join.table.table.toStringWithoutPublic(),
+            joinedTable: join.table,
             joinedColumns: [],
-            joinByColumn: joinByColumn.toString()
+            joinByColumn
         };
 
+        // TODO: need More test
         const columnRefsToJoin = allColumnsRefs.filter(columnRef =>
+            columnRef.name !== "id" &&
             columnRef.tableReference.equal(join.table)
         );
         for (const columnRef of columnRefsToJoin) {
-            if ( joinMeta.joinedColumns.includes(columnRef.name) ) {
+            const alreadyExists = joinMeta.joinedColumns.some(existentColumn => 
+                existentColumn.name === columnRef.name
+            );
+            if ( alreadyExists ) {
                 continue;
             }
 
             joinMeta.joinedColumns.push(
-                columnRef.name
+                columnRef
             );
         }
 

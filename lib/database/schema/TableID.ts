@@ -32,6 +32,7 @@ export class TableID {
         return `${this.schema}.${this.name}`;
     }
 
+    // TODO: use it as default toString
     toStringWithoutPublic() {
         if ( this.schema === "public" ) {
             return this.name;

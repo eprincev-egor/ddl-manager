@@ -1,4 +1,4 @@
-import { Expression } from "../../../ast";
+import { Expression, UnknownExpressionElement } from "../../../ast";
 import { CacheContext } from "../CacheContext";
 import { TableReference } from "../../../database/schema/TableReference";
 import { cond, flatMap } from "lodash";
@@ -190,8 +190,8 @@ export class ConditionBuilder {
             
             joins.forEach((join) => {
                 outputExpression = outputExpression.replaceColumn(
-                    (join.table.alias || join.table.name) + "." + join.table.column,
-                    join.variable.name
+                    join.table.column,
+                    UnknownExpressionElement.fromSql(join.variable.name)
                 );
             });
         }

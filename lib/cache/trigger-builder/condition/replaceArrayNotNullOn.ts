@@ -1,5 +1,5 @@
 import {
-    Expression
+    Expression, UnknownExpressionElement
 } from "../../../ast";
 import { CacheContext } from "../CacheContext";
 
@@ -23,8 +23,10 @@ export function replaceArrayNotNullOn(
         const column = tableStructure && tableStructure.getColumn(columnRef.name);
         if ( column && column.type.isArray() ) {
             outputExpression = outputExpression.replaceColumn(
-                columnRef.toString(),
-                `${funcName}(old.${column.name}, new.${column.name})`
+                columnRef,
+                UnknownExpressionElement.fromSql(
+                    `${funcName}(old.${column.name}, new.${column.name})`
+                )
             );
         }
     }

@@ -3,6 +3,7 @@ import { ColumnReference } from "./ColumnReference";
 import { TableID } from "../../database/schema/TableID";
 import { TableReference } from "../../database/schema/TableReference";
 import { Spaces } from "../Spaces";
+import { IExpressionElement } from "./interface";
 
 export interface IUnknownSyntax {
     toString(): string;
@@ -10,7 +11,7 @@ export interface IUnknownSyntax {
 }
 
 export interface IColumnsMap {
-    [column: string]: ColumnReference | string;
+    [column: string]: IExpressionElement;
 }
 
 export class UnknownExpressionElement extends AbstractExpressionElement {
@@ -57,15 +58,17 @@ export class UnknownExpressionElement extends AbstractExpressionElement {
         return this.clone(newColumnsMap);
     }
 
-    replaceColumn(replaceColumn: string, toSql: string) {
+    replaceColumn(replaceColumn: ColumnReference, toSql: IExpressionElement) {
         
         const newColumnsMap = {...this.columnsMap};
 
         for (const column in this.columnsMap) {
             const columnReference = this.columnsMap[ column ];
 
-            if ( columnReference.toString() === replaceColumn ) {
-                newColumnsMap[ column ] = toSql;
+            if ( columnReference instanceof ColumnReference ) {
+                if ( columnReference.equal(replaceColumn) ) {
+                    newColumnsMap[ column ] = toSql;
+                }
             }
         }
 

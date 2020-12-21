@@ -7,10 +7,12 @@ import {
     Declare,
     AssignVariable,
     SimpleSelect,
-    AbstractAstElement
+    AbstractAstElement,
+    ColumnReference
 } from "../../../ast";
 import { updateIf } from "./util/updateIf";
 import { Update } from "../../../ast/Update";
+import { TableReference } from "../../../database/schema/TableReference";
 
 export interface IVariable {
     name: string;
@@ -20,12 +22,11 @@ export interface IVariable {
 export interface IJoin {
     variable: IVariable;
     table: {
-        alias?: string;
-        name: string;
-        column: string;
+        ref: TableReference;
+        column: ColumnReference;
     };
     on: {
-        column: string;
+        column: ColumnReference;
     }
 }
 
@@ -231,10 +232,15 @@ function assignVariables(joins: IJoin[], row: "new" | "old") {
         lines.push(
             new If({
                 if: Expression.and([
-                    `${row}.${combinedJoin.byColumn} is not null`
+                    replaceTableToVariableOrRow(
+                        combinedJoin.byColumn,
+                        joins,
+                        row
+                    ) + " is not null"
                 ]),
                 then: assignCombinedJoinVariables(
                     combinedJoin,
+                    joins,
                     row
                 )
             })
@@ -246,8 +252,25 @@ function assignVariables(joins: IJoin[], row: "new" | "old") {
     return lines;
 }
 
+function replaceTableToVariableOrRow(
+    columnRef: ColumnReference,
+    joins: IJoin[],
+    row: "new" | "old"
+) {
+    const sourceJoin = joins.find(join =>
+        join.table.ref.equal(columnRef.tableReference) &&
+        join.table.column.name === columnRef.name
+    );
+    if ( sourceJoin ) {
+        return sourceJoin.variable.name;
+    }
+
+    return `${row}.${columnRef.name}`
+}
+
 function assignCombinedJoinVariables(
     combinedJoin: ICombinedJoin,
+    joins: IJoin[],
     row: "new" | "old"
 ) {
     if ( combinedJoin.variables.length === 1 ) {
@@ -256,8 +279,12 @@ function assignCombinedJoinVariables(
                 variable: combinedJoin.variables[0],
                 value: new SimpleSelect({
                     columns: combinedJoin.joinedColumns,
-                    from: combinedJoin.joinedTable,
-                    where: `${row}.${combinedJoin.byColumn}`
+                    from: combinedJoin.joinedTable.table,
+                    where: replaceTableToVariableOrRow(
+                        combinedJoin.byColumn,
+                        joins,
+                        row
+                    )
                 })
             })
         ]
@@ -267,8 +294,12 @@ function assignCombinedJoinVariables(
         new SimpleSelect({
             columns: combinedJoin.joinedColumns,
             into: combinedJoin.variables,
-            from: combinedJoin.joinedTable,
-            where: `${row}.${combinedJoin.byColumn}`
+            from: combinedJoin.joinedTable.table,
+            where: replaceTableToVariableOrRow(
+                combinedJoin.byColumn,
+                joins,
+                row
+            )
         })
     ];
 }
@@ -276,27 +307,28 @@ function assignCombinedJoinVariables(
 interface ICombinedJoin {
     variables: string[];
     joinedColumns: string[];
-    joinedTable: string;
-    byColumn: string;
+    joinedTable: TableReference;
+    byColumn: ColumnReference;
 }
 function groupJoinsByTableAndFilter(joins: IJoin[]) {
     const combinedJoinByKey: {[key: string]: ICombinedJoin} = {};
 
     for (const join of joins) {
-        const key = join.table.name + ":" + join.on.column;
+        const key = join.on.column.toString();
 
-        const combinedJoin: ICombinedJoin = combinedJoinByKey[ key ] || {
+        const defaultCombinedJoin: ICombinedJoin = {
             variables: [],
             joinedColumns: [],
-            joinedTable: join.table.name,
+            joinedTable: join.table.ref,
             byColumn: join.on.column
         };
+        const combinedJoin: ICombinedJoin = combinedJoinByKey[ key ] || defaultCombinedJoin;
 
         combinedJoin.variables.push(
             join.variable.name
         );
         combinedJoin.joinedColumns.push(
-            join.table.column
+            join.table.column.name
         );
         combinedJoinByKey[ key ] = combinedJoin;
     }
@@ -317,7 +349,7 @@ function reassignVariables(newJoins: IJoin[], oldJoins: IJoin[]) {
         
         lines.push(new If({
             if: isNotDistinctFrom([
-                newCombinedJoin.byColumn
+                newCombinedJoin.byColumn.name
             ]),
             then: newCombinedJoin.variables.map((newVarName, j) => 
                 new AssignVariable({
@@ -330,10 +362,11 @@ function reassignVariables(newJoins: IJoin[], oldJoins: IJoin[]) {
             else: [
                 new If({
                     if: Expression.and([
-                        `new.${newCombinedJoin.byColumn} is not null`
+                        `new.${newCombinedJoin.byColumn.name} is not null`
                     ]),
                     then: assignCombinedJoinVariables(
                         newCombinedJoin,
+                        newJoins,
                         "new"
                     )
                 })

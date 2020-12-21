@@ -8,7 +8,7 @@ export interface IExpressionElement extends AbstractAstElement {
     clone(): IExpressionElement;
     getColumnReferences(): ColumnReference[];
     getFuncCalls(): FuncCall[];
-    replaceColumn(replaceColumn: string, toSql: string): IExpressionElement;
+    replaceColumn(replaceColumn: ColumnReference, toSql: IExpressionElement): IExpressionElement;
     replaceTable(
         replaceTable: TableReference | TableID,
         toTable: TableReference

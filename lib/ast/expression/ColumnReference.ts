@@ -2,7 +2,7 @@ import { Spaces } from "../Spaces";
 import { AbstractExpressionElement } from "./AbstractExpressionElement";
 import { TableID } from "../../database/schema/TableID";
 import { TableReference } from "../../database/schema/TableReference";
-import { UnknownExpressionElement } from "./UnknownExpressionElement";
+import { IExpressionElement } from "./interface";
 
 export class ColumnReference extends AbstractExpressionElement {
     readonly tableReference: TableReference;
@@ -24,11 +24,18 @@ export class ColumnReference extends AbstractExpressionElement {
         return this.clone();
     }
 
-    replaceColumn(replaceColumn: string, toSql: string) {
-        if ( this.toString() === replaceColumn ) {
-            return UnknownExpressionElement.fromSql(toSql);
+    replaceColumn(replaceColumn: ColumnReference, toSql: IExpressionElement) {
+        if ( this.equal(replaceColumn) ) {
+            return toSql;
         }
         return this.clone();
+    }
+
+    equal(otherColumnRef: ColumnReference) {
+        return (
+            this.name === otherColumnRef.name &&
+            this.tableReference.equal(otherColumnRef.tableReference)
+        );
     }
 
     getColumnReferences() {

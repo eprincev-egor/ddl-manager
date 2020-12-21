@@ -61,6 +61,36 @@ export function testTriggers(test: ITest) {
                     "numeric"
                 )
             ]
+        ),
+        new Table(
+            "public",
+            "unit_type",
+            [
+                new Column(
+                    new TableID(
+                        "public",
+                        "unit_types",
+                    ),
+                    "id",
+                    "integer"
+                ),
+                new Column(
+                    new TableID(
+                        "public",
+                        "unit_types",
+                    ),
+                    "id_category",
+                    "integer"
+                ),
+                new Column(
+                    new TableID(
+                        "public",
+                        "unit_types",
+                    ),
+                    "name",
+                    "text"
+                )
+            ]
         )
     ]);
 

@@ -16,7 +16,7 @@ implements IExpressionElement {
         return [];
     }
 
-    equal(otherElem: IExpressionElement) {
+    equal(otherElem: this) {
         return this.toString() === otherElem.toString();
     }
 
@@ -39,7 +39,7 @@ implements IExpressionElement {
         return this.clone();
     }
 
-    replaceColumn(replaceColumn: string, toSql: string) {
+    replaceColumn(replaceColumn: ColumnReference, toSql: IExpressionElement) {
         return this.clone();
     }
 

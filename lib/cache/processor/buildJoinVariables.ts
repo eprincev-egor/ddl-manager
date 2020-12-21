@@ -1,7 +1,6 @@
 import { IJoinMeta } from "./findJoinsMeta";
 import { IJoin } from "../trigger-builder/body/buildCommutativeBody";
 import { Database } from "../../database/schema/Database";
-import { TableID } from "../../database/schema/TableID";
 
 export function buildJoinVariables(
     database: Database,
@@ -11,28 +10,27 @@ export function buildJoinVariables(
     const variables: IJoin[] = [];
 
     for (const meta of joins) {
-        const byColumn = meta.joinByColumn.split(".")[1];
+        const byColumn = meta.joinByColumn;
 
-        const tableId = TableID.fromString(meta.joinedTable);
-        const table = database.getTable( tableId );
+        const tableRef = meta.joinedTable;
+        const table = database.getTable( tableRef.table );
 
-        for (const columnName of meta.joinedColumns) {
-            const column = table && table.getColumn(columnName);
+        for (const columnRef of meta.joinedColumns) {
+            const column = table && table.getColumn(columnRef.name);
 
             const joinVariable: IJoin = {
                 variable: {
                     name: [
                         row,
-                        byColumn.replace("id_", ""),
-                        columnName
+                        byColumn.name.replace("id_", ""),
+                        columnRef.name
                     ].join("_"),
         
                     type: column && column.type.toString() || "text"
                 },
                 table: {
-                    alias: meta.joinAlias,
-                    name: meta.joinedTable,
-                    column: columnName
+                    ref: meta.joinedTable,
+                    column: columnRef
                 },
                 on: {
                     column: byColumn
