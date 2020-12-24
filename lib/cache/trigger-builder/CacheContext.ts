@@ -71,7 +71,7 @@ export class CacheContext {
 
             if ( isReference ) {
                 referenceMeta.expressions.push(
-                    andCondition
+                    andCondition.extrude()
                 );
                 referenceMeta.columns.push(
                     ...columnsFromTriggerTable.map(columnRef =>

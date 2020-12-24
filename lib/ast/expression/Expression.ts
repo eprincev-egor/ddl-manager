@@ -33,7 +33,7 @@ export class Expression extends AbstractExpressionElement {
         return new Expression([funcElem]);
     }
 
-    private static condition(operator: string, conditions: ConditionElementType[]) {
+    private static condition(operator: string, conditions: ConditionElementType[]): Expression {
 
         const elements: IExpressionElement[] = [];
         for (let i = 0, n = conditions.length; i < n; i++) {
@@ -53,7 +53,7 @@ export class Expression extends AbstractExpressionElement {
             }
         }
 
-        return new Expression(elements);
+        return new Expression(elements).extrude();
     }
 
     readonly elements: IExpressionElement[];
@@ -227,6 +227,15 @@ export class Expression extends AbstractExpressionElement {
         }
 
         return conditions;
+    }
+
+    extrude(): Expression {
+        const singleElement = this.elements[0];
+        if ( this.elements.length === 1 && singleElement instanceof Expression )  {
+            return singleElement.extrude();
+        }
+
+        return this;
     }
 
     clone(newElements?: IExpressionElement[]) {

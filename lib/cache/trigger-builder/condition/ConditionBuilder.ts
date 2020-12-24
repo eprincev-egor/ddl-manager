@@ -171,17 +171,24 @@ export class ConditionBuilder {
     private buildSimpleWhere() {
         const conditions = this.context.referenceMeta.expressions.map(expression => {
 
-            expression = replaceOperatorAnyToIndexedOperator(
-                this.context.cache,
-                this.context.database,
-                expression
-            );
-            expression = replaceAmpArrayToAny(
-                this.context.cache,
-                expression
-            );
+            // TODO: recursive
+            const orExpressions = expression.extrude().splitBy("or").map(subExpression => {
+                subExpression = subExpression.extrude();
 
-            return expression;
+                subExpression = replaceOperatorAnyToIndexedOperator(
+                    this.context.cache,
+                    this.context.database,
+                    subExpression
+                );
+                subExpression = replaceAmpArrayToAny(
+                    this.context.cache,
+                    subExpression
+                );
+
+                return subExpression;
+            });
+
+            return Expression.or(orExpressions);
         });
 
         const where = Expression.and(conditions);
