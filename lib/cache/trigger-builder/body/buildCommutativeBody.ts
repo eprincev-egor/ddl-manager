@@ -37,8 +37,14 @@ export interface ICase {
 }
 
 export interface IDeltaCase extends ICase {
-    old: ICase;
-    new: ICase;
+    old: {
+        needUpdate?: Expression;
+        update?: Update;
+    };
+    new: {
+        needUpdate?: Expression;
+        update?: Update;
+    };
 }
 
 export function buildCommutativeBody(
@@ -114,7 +120,7 @@ function buildInsertOrDeleteCase(
 
                 ...doIf(simpleCase.hasReferenceWithoutJoins, [
                     ...assignVariables(joins, returnRow),
-                    updateIf(
+                    ...updateIf(
                         simpleCase.needUpdate,
                         simpleCase.update
                     )
@@ -160,14 +166,14 @@ function buildUpdateCaseBody(
         
         new BlankLine(),
 
-        updateIf(
+        ...updateIf(
             oldCaseCondition,
             oldUpdate
         ),
 
         new BlankLine(),
 
-        updateIf(
+        ...updateIf(
             newCaseCondition,
             newUpdate
         ),
@@ -176,18 +182,12 @@ function buildUpdateCaseBody(
     ];
 }
 
-function buildDeltaUpdate(deltaCase?: IDeltaCase) {
-    if ( !deltaCase ) {
-        return [new BlankLine()];
-    }
-    if ( deltaCase.needUpdate && deltaCase.needUpdate.isEmpty() ) {
-        return [new BlankLine()];
-    }
+function buildDeltaUpdate(deltaCase: IDeltaCase) {
     if ( !deltaCase.update.set.length ) {
         return [new BlankLine()];
     }
 
-    if ( deltaCase.needUpdate ) {
+    if ( deltaCase.needUpdate && !deltaCase.needUpdate.isEmpty() ) {
         return [new If({
             if: deltaCase.needUpdate,
             then: [
@@ -199,9 +199,7 @@ function buildDeltaUpdate(deltaCase?: IDeltaCase) {
     }
     else {
         return [
-            deltaCase.update,
-            new BlankLine(),
-            new HardCode({sql: "return new;"})
+            deltaCase.update
         ]
     }
 }

@@ -15,13 +15,10 @@ begin
             return new;
         end if;
 
-
-
         update some_report_row set
-            orders_total = orders_total - coalesce(old.profit, 0);
+            orders_total = orders_total - coalesce(old.profit, 0) + coalesce(new.profit, 0);
 
-        update some_report_row set
-            orders_total = orders_total + coalesce(new.profit, 0);
+
 
         return new;
     end if;

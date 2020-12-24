@@ -49,9 +49,7 @@ ${ this.printChildrenAggregations() }
             Spaces.empty()
         );
 
-        const spaces = Spaces.empty()
-            .plusOneLevel()
-            .plusOneLevel();
+        const spaces = Spaces.level(2);
         const lines = sql.split("\n").map(line =>
             spaces + line
         );
@@ -68,9 +66,7 @@ ${ this.printChildrenAggregations() }
             sql += arrayAgg.columnName.toString();
         }
 
-        const spaces = Spaces.empty()
-            .plusOneLevel()
-            .plusOneLevel();
+        const spaces = Spaces.level(2);
         const lines = sql.split("\n").map(line =>
             spaces + line
         );

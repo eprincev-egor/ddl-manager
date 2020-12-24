@@ -12,7 +12,6 @@ import {
     UnknownExpressionElement
 } from "../../ast";
 import { flatMap } from "lodash";
-import { findJoinsMeta } from "../processor/findJoinsMeta";
 import { TableReference } from "../../database/schema/TableReference";
 import { SetItemsFactory } from "./SetItemsFactory";
 import { TableID } from "../../database/schema/TableID";

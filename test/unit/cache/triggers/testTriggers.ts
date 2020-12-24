@@ -17,76 +17,83 @@ export function testTriggers(test: ITest) {
     const cacheFilePath = path.join(test.testDir, "cache.sql");
     const cacheSQL = fs.readFileSync(cacheFilePath).toString();
 
+    const companiesID = new TableID(
+        "public",
+        "companies",
+    );
+    const ordersID = new TableID(
+        "public",
+        "orders",
+    );
+    const vatsID = new TableID(
+        "public",
+        "vats",
+    );
+    const unitTypesID = new TableID(
+        "public",
+        "unit_type",
+    );
+
     const testDatabase = new Database([
         new Table(
-            "public",
-            "orders",
+            companiesID.schema,
+            companiesID.name,
             [
                 new Column(
-                    new TableID(
-                        "public",
-                        "orders",
-                    ),
+                    companiesID,
+                    "bigint_orders_ids",
+                    "bigint[]"
+                )
+            ]
+        ),
+        new Table(
+            ordersID.schema,
+            ordersID.name,
+            [
+                new Column(
+                    ordersID,
                     "companies_ids",
                     "integer[]"
                 ),
                 new Column(
-                    new TableID(
-                        "public",
-                        "orders",
-                    ),
+                    ordersID,
                     "clients_ids",
                     "integer[]"
                 ),
                 new Column(
-                    new TableID(
-                        "public",
-                        "orders",
-                    ),
+                    ordersID,
                     "order_date",
                     "date"
                 )
             ]
         ),
         new Table(
-            "public",
-            "vats",
+            vatsID.schema,
+            vatsID.name,
             [
                 new Column(
-                    new TableID(
-                        "public",
-                        "vats",
-                    ),
+                    vatsID,
                     "vat_value",
                     "numeric"
                 )
             ]
         ),
         new Table(
-            "public",
-            "unit_type",
+            unitTypesID.schema,
+            unitTypesID.name,
             [
                 new Column(
-                    new TableID(
-                        "public",
-                        "unit_types",
-                    ),
+                    unitTypesID,
                     "id",
                     "integer"
                 ),
                 new Column(
-                    new TableID(
-                        "public",
-                        "unit_types",
-                    ),
+                    unitTypesID,
                     "id_category",
                     "integer"
                 ),
                 new Column(
-                    new TableID(
-                        "public",
-                        "unit_types",
-                    ),
+                    unitTypesID,
                     "name",
                     "text"
                 )

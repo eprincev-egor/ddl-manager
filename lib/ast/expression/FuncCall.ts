@@ -59,7 +59,6 @@ export class FuncCall extends AbstractExpressionElement {
         ];
     }
 
-    // TODO: replace where
     replaceTable(
         replaceTable: TableReference | TableID,
         toTable: TableReference
@@ -73,21 +72,39 @@ export class FuncCall extends AbstractExpressionElement {
             expression: item.expression.replaceTable(replaceTable, toTable)
         }));
 
+        let newWhere = this.where;
+        if ( newWhere ) {
+            newWhere = newWhere.replaceTable(replaceTable, toTable);
+        }
+
+        return this.clone(
+            newArgs,
+            orderBy,
+            newWhere
+        );
+    }
+
+    replaceColumn(replaceColumn: ColumnReference, toSql: IExpressionElement) {
+        const newArgs = this.args.map(arg =>
+            arg.replaceColumn(replaceColumn, toSql)
+        );
+
+        const orderBy = this.orderBy.map(item => ({
+            ...item,
+            expression: item.expression.replaceColumn(replaceColumn, toSql)
+        }));
+
+        let newWhere = this.where;
+        if ( newWhere ) {
+            newWhere = newWhere.replaceColumn(replaceColumn, toSql);
+        }
+
         return this.clone(
             newArgs,
             orderBy
         );
     }
 
-    // TODO: replace orderBy
-    replaceColumn(replaceColumn: ColumnReference, toSql: IExpressionElement) {
-        const newArgs = this.args.map(arg =>
-            arg.replaceColumn(replaceColumn, toSql)
-        );
-        return this.clone(newArgs);
-    }
-
-    // TODO: replace orderBy
     replaceFuncCall(replaceFunc: FuncCall, toSql: string) {
         if ( replaceFunc.equal(this) ) {
             return UnknownExpressionElement.fromSql(toSql);
@@ -98,14 +115,15 @@ export class FuncCall extends AbstractExpressionElement {
 
     clone(
         newArgs?: Expression[],
-        newOrderBy?: IOrderByItem[]
+        newOrderBy?: IOrderByItem[],
+        newWhere?: Expression
     ) {
         return new FuncCall(
             this.name,
             newArgs || this.args.map(arg => arg.clone()),
-            this.where ?
+            newWhere || (this.where ?
                 this.where.clone() :
-                undefined,
+                undefined),
             this.distinct,
             newOrderBy || this.cloneOrderBy()
         );

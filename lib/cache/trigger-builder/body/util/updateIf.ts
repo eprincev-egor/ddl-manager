@@ -6,16 +6,20 @@ import {
 
 export function updateIf(
     condition: Expression | undefined,
-    update: Update
+    update: Update | undefined
 ) {
-    if ( !condition ) {
-        return update;
+    if ( !update ) {
+        return [];
     }
 
-    return new If({
+    if ( !condition ) {
+        return [update];
+    }
+
+    return [new If({
         if: condition,
         then: [
             update
         ]
-    });
+    })];
 }

@@ -6,6 +6,7 @@ import {
     IExpressionElement,
     UnknownExpressionElement
 } from "../../../ast";
+import { Database } from "../../../database/schema/Database";
 
 // try using gin-index scan
 // input (cannot use gin-index):
@@ -14,6 +15,7 @@ import {
 //     array[ orders.id_client ] && companies.order_ids
 export function replaceOperatorAnyToIndexedOperator(
     cache: Cache,
+    database: Database,
     input: Expression
 ): Expression {
     if ( !input.isBinary("=") ) {
@@ -34,13 +36,26 @@ export function replaceOperatorAnyToIndexedOperator(
 
     const arrOperand = executeAnyContent( anyOperand as UnknownExpressionElement );
 
+    let castingSQL = "";
+
+    const arrOperandColumnRefs = arrOperand.getColumnReferences();
+    if ( arrOperandColumnRefs.length === 1 ) {
+        const arrColumnRef = arrOperandColumnRefs[0];
+        const table = database.getTable( arrColumnRef.tableReference.table );
+        const arrColumn = table && table.getColumn( arrColumnRef.name );
+
+        if ( arrColumn ) {
+            castingSQL = "::" + arrColumn.type;
+        }
+    }
+
     const output = new Expression([
         arrOperand,
         new Operator("&&"),
         // TODO: cast bigint to same type with array
         // array[]::bigint[] && some_bigint_ids
         UnknownExpressionElement.fromSql(
-            `ARRAY[ ${ columnOperand } ]`,
+            `ARRAY[ ${ columnOperand } ]${ castingSQL }`,
             {[columnOperand.toString()]: columnOperand}
         )
     ]);

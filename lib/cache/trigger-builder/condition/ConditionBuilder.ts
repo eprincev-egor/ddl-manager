@@ -173,6 +173,7 @@ export class ConditionBuilder {
 
             expression = replaceOperatorAnyToIndexedOperator(
                 this.context.cache,
+                this.context.database,
                 expression
             );
             expression = replaceAmpArrayToAny(

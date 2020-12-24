@@ -41,19 +41,19 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 update: deltaUpdate,
                 old: {
                     needUpdate: this.conditions.needUpdateConditionOnUpdate("old"),
-                    update: new Update({
+                    update: this.conditions.needUpdateConditionOnUpdate("old") ? new Update({
                         table: this.context.cache.for.toString(),
                         set: this.setItems.minus(),
                         where: this.conditions.simpleWhereOnUpdate("old")
-                    })
+                    }) : undefined
                 },
                 new: {
                     needUpdate: this.conditions.needUpdateConditionOnUpdate("new"),
-                    update: new Update({
+                    update: this.conditions.needUpdateConditionOnUpdate("new") ? new Update({
                         table: this.context.cache.for.toString(),
                         set: this.setItems.plus(),
                         where: this.conditions.simpleWhereOnUpdate("new")
-                    })
+                    }) : undefined
                 }
             }
         );

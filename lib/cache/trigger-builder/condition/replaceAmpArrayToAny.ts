@@ -46,7 +46,6 @@ export function replaceAmpArrayToAny(
     const output = new Expression([
         arrContent,
         new Operator("="),
-        // TODO: cast bigint to same type with array
         UnknownExpressionElement.fromSql(
             `any( ${ columnOperand }${ castingSQL } )`,
             {[columnOperand.toString()]: columnOperand}
