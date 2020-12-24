@@ -62,6 +62,11 @@ export function testTriggers(test: ITest) {
                 ),
                 new Column(
                     ordersID,
+                    "partners_ids",
+                    "integer[]"
+                ),
+                new Column(
+                    ordersID,
                     "order_date",
                     "date"
                 )

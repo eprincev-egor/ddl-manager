@@ -12,13 +12,14 @@ import {
 // try using btree-index scan
 // input (cannot use btree-index):
 //     new.companies_ids && array[ companies.id ]
+//     new.companies_ids @> array[ companies.id ]
 // output (can use btree-index):
 //     companies.id = any( new.companies_ids )
 export function replaceAmpArrayToAny(
     cache: Cache,
     input: Expression
 ): Expression {
-    if ( !input.isBinary("&&") ) {
+    if ( !input.isBinary("&&") && !input.isBinary("@>") && !input.isBinary("<@") ) {
         return input;
     }
 
@@ -38,6 +39,18 @@ export function replaceAmpArrayToAny(
     )
     if ( !isCacheId ) {
         return input;
+    }
+
+    // cannot optimize
+    if ( input.isBinary("<@") ) {
+        if ( columnOperand === leftOperand ) {
+            return input;
+        }
+    }
+    if ( input.isBinary("@>") ) {
+        if ( columnOperand === rightOperand ) {
+            return input;
+        }
     }
 
     const arrContent = executeArrayContent( arrOperand );
