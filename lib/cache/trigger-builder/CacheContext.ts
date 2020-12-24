@@ -8,6 +8,7 @@ import { TableID } from "../../database/schema/TableID";
 export interface IReferenceMeta {
     columns: string[];
     expressions: Expression[];
+    unknownExpressions: Expression[];
     filters: Expression[];
 }
 
@@ -45,7 +46,8 @@ export class CacheContext {
         const referenceMeta: IReferenceMeta = {
             columns: [],
             filters: [],
-            expressions: []
+            expressions: [],
+            unknownExpressions: []
         };
 
         const where = this.cache.select.where;
@@ -53,7 +55,9 @@ export class CacheContext {
             return referenceMeta;
         }
 
-        for (const andCondition of where.splitBy("and")) {
+        for (let andCondition of where.splitBy("and")) {
+            andCondition = andCondition.extrude();
+
             const conditionColumns = andCondition.getColumnReferences();
 
             const columnsFromCacheTable = conditionColumns.filter(columnRef =>
@@ -70,9 +74,17 @@ export class CacheContext {
             );
 
             if ( isReference ) {
-                referenceMeta.expressions.push(
-                    andCondition.extrude()
-                );
+                if ( isUnknownExpression(andCondition) ) {
+                    referenceMeta.unknownExpressions.push(
+                        andCondition
+                    );
+                }
+                else {
+                    referenceMeta.expressions.push(
+                        andCondition
+                    );
+                }
+
                 referenceMeta.columns.push(
                     ...columnsFromTriggerTable.map(columnRef =>
                         columnRef.name
@@ -86,4 +98,40 @@ export class CacheContext {
 
         return referenceMeta;
     }
+}
+
+function isUnknownExpression(expression: Expression): boolean {
+    expression = expression.extrude();
+
+    if ( expression.isBinary("=") ) {
+        return false;
+    }
+    if ( expression.isBinary("&&") ) {
+        return false;
+    }
+    if ( expression.isBinary("@>") ) {
+        return false;
+    }
+    if ( expression.isBinary("<@") ) {
+        return false;
+    }
+    if ( expression.isIn() ) {
+        return false;
+    }
+
+    const orConditions = expression.splitBy("or");
+    if ( orConditions.length > 1 ) {
+        return orConditions.some(subExpression => 
+            isUnknownExpression(subExpression)
+        );
+    }
+
+    const andConditions = expression.splitBy("and");
+    if ( andConditions.length > 1 ) {
+        return andConditions.some(subExpression => 
+            isUnknownExpression(subExpression)
+        );
+    }
+
+    return true;
 }

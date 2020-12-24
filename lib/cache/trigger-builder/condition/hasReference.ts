@@ -1,4 +1,4 @@
-import { Expression, UnknownExpressionElement } from "../../../ast";
+import { ColumnReference, Expression, IExpressionElement, UnknownExpressionElement } from "../../../ast";
 import { TableID } from "../../../database/schema/TableID";
 import { CacheContext } from "../CacheContext";
 
@@ -63,19 +63,82 @@ function replaceSimpleExpressionToNotNulls(
     triggerTable: TableID,
     check: CheckType
 ) {
-    const notNullTriggerColumns = expression.getColumnReferences()
+    const triggerColumnsRefs = expression.getColumnReferences()
         .filter(columnRef =>
             columnRef.tableReference.table.equal(triggerTable)
         )
         .filter(columnRef =>
             columnRef.name !== "id"
-        )
-        .map(columnRef =>
-            UnknownExpressionElement.fromSql(
-                `${ columnRef } ${check}`,
-                { [`${columnRef}`]: columnRef }
-            )
         );
     
+    const notNullTriggerColumns = triggerColumnsRefs.map(columnRef =>
+        UnknownExpressionElement.fromSql(
+            `${ columnRef } ${check}`,
+            { [`${columnRef}`]: columnRef }
+        )
+    );
+    
+    // companies.id = any( orders.clients_ids || orders.partners_ids )
+    // =>
+    // new.clients_ids or new.partners_ids
+    if ( expression.isBinary("=") ) {
+        const [leftOperand, rightOperand] = expression.getOperands();
+        const columnOperand = detectColumnOperand(leftOperand, rightOperand);
+        const anyOperand = detectAnyOperand(leftOperand, rightOperand);
+
+        if ( columnOperand && anyOperand ) {
+            const arrOperand = executeAnyContent( anyOperand as UnknownExpressionElement );
+            if ( /^\s*\w+\.\w+\s*\|\|\s*\w+\.\w+\s*$/.test(arrOperand.toString()) ) {
+                return Expression.or(notNullTriggerColumns);
+            }
+        }
+    }
+
+    // companies.id in ( orders.id_client, orders.id_partner )
+    // =>
+    // new.id_client or new.id_partner
+    if ( expression.isIn() ) {
+        return Expression.or(notNullTriggerColumns);
+    }
+
     return Expression.and(notNullTriggerColumns);
+}
+
+
+
+function detectColumnOperand(leftOperand: IExpressionElement, rightOperand: IExpressionElement) {
+    if ( leftOperand instanceof ColumnReference ) {
+        return leftOperand;
+    }
+    if ( rightOperand instanceof ColumnReference ) {
+        return rightOperand;
+    }
+}
+
+function detectAnyOperand(leftOperand: IExpressionElement, rightOperand: IExpressionElement) {
+    if ( isAny(leftOperand) ) {
+        return leftOperand;
+    }
+    if ( isAny(rightOperand) ) {
+        return rightOperand;
+    }
+}
+
+function isAny(operand: IExpressionElement) {
+    return (
+        /^any\s*\(.*\)$/.test( operand.toString().trim().toLowerCase() )
+    );
+}
+
+function executeAnyContent(anyOperand: UnknownExpressionElement): IExpressionElement {
+    const sql = anyOperand.toString()
+        .trim()
+        .replace(/^any\s*\(/, "")
+        .replace(/\)$/, "");
+    
+    const arrOperand = UnknownExpressionElement.fromSql(
+        sql,
+        anyOperand.columnsMap
+    );
+    return arrOperand;
 }

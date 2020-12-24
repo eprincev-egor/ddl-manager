@@ -191,6 +191,10 @@ export class ConditionBuilder {
             return Expression.or(orExpressions);
         });
 
+        conditions.push(
+            ...this.context.referenceMeta.unknownExpressions
+        );
+
         const where = Expression.and(conditions);
         if ( !where.isEmpty() ) {
             return where;

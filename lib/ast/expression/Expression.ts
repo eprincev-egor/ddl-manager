@@ -97,6 +97,13 @@ export class Expression extends AbstractExpressionElement {
         );
     }
 
+    isIn() {
+        return (
+            this.elements.length === 2 &&
+            /^\s*in\s*\([^\)]+\)\s*$/.test(this.elements[1].toString())
+        );
+    }
+
     isBinary(operator: string) {
         const elems = (
             operator === "::" ? 

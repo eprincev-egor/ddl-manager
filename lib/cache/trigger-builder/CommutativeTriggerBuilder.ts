@@ -41,7 +41,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 update: deltaUpdate,
                 old: {
                     needUpdate: this.conditions.needUpdateConditionOnUpdate("old"),
-                    update: this.conditions.needUpdateConditionOnUpdate("old") ? new Update({
+                    update: this.needUpdateInDelta() ? new Update({
                         table: this.context.cache.for.toString(),
                         set: this.setItems.minus(),
                         where: this.conditions.simpleWhereOnUpdate("old")
@@ -49,7 +49,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 },
                 new: {
                     needUpdate: this.conditions.needUpdateConditionOnUpdate("new"),
-                    update: this.conditions.needUpdateConditionOnUpdate("new") ? new Update({
+                    update: this.needUpdateInDelta() ? new Update({
                         table: this.context.cache.for.toString(),
                         set: this.setItems.plus(),
                         where: this.conditions.simpleWhereOnUpdate("new")
@@ -59,6 +59,16 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
         );
         
         return body;
+    }
+
+    private needUpdateInDelta() {
+        const hasCondition = !!this.conditions.needUpdateConditionOnUpdate("new");
+        const hasUnknownReferenceExpressions = this.context.referenceMeta.unknownExpressions.length;
+
+        return (
+            hasCondition ||
+            hasUnknownReferenceExpressions
+        );
     }
 
     private buildJoins(row: "new" | "old") {
