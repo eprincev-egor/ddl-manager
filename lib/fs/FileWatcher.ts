@@ -42,7 +42,7 @@ export class FileWatcher extends EventEmitter {
         };
 
         const promise = Promise.all(this.rootFolders.map(rootFolder =>
-            new Promise((resolve) => {
+            new Promise<void>((resolve) => {
                 this.fsWatcher = watch(rootFolder, {
                     recursive: true,
                     delay: 5

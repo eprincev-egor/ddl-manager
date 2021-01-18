@@ -527,4 +527,46 @@ describe("integration/DDLManager.build triggers", () => {
         });
     });
 
+    it("build trigger with pg12 syntax: 'execute function' instead of 'execute procedure'", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-trigger";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table company (
+                name text primary key,
+                note text
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/set_note_trigger.sql", `
+            create or replace function set_note_before_insert_or_update_name()
+            returns trigger as $body$
+                begin
+                    new.note = 'name: ' || new.name;
+                    return new;
+                end
+            $body$
+            language plpgsql;
+
+            create trigger set_note_before_insert_or_update_name_trigger
+            before insert or update of name
+            on company
+            for each row
+            execute function set_note_before_insert_or_update_name();
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        const result = await db.query("insert into company (name) values ('super') returning note");
+        const row = result.rows[0];
+
+        expect(row).to.be.shallowDeepEqual({
+            note: "name: super"
+        });
+    });
+
 });
