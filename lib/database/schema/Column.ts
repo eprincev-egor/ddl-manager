@@ -14,7 +14,7 @@ export class Column {
         table: TableID,
         name: string,
         type: string,
-        defaultValue?: string,
+        defaultValue?: string | null,
         comment?: Comment
     ) {
         this.table = table;
@@ -48,7 +48,7 @@ export class Column {
             this.name === otherColumn.name &&
             this.table.equal( otherColumn.table ) &&
             this.type.toString() === otherColumn.type.toString() &&
-            this.default === otherColumn.default &&
+            equalDefaultValues(this.default, otherColumn.default) &&
             this.comment.equal( otherColumn.comment )
         );
     }
@@ -62,4 +62,14 @@ export class Column {
             this.comment
         );
     }
+}
+
+function equalDefaultValues(default1: string | null, default2: string | null) {
+    if ( default1 == null ) {
+        default1 = "null";
+    }
+    if ( default2 == null ) {
+        default2 = "null";
+    }
+    return default1 === default2;
 }
