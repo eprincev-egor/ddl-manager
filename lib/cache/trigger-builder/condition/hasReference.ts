@@ -48,7 +48,10 @@ function buildReferenceExpression(
             triggerTable,
             check
         )
-    });
+    })
+    .filter(expression =>
+        !expression.isEmpty()
+    );
 
     if ( operator === "and" ) {
         return Expression.and(referenceExpressions);
