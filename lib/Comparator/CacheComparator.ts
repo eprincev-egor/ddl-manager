@@ -131,16 +131,22 @@ export class CacheComparator extends AbstractComparator {
                 }
 
                 const selectToUpdate = this.createSelectForUpdate(cache);
-                const hasSameNameColumn = selectToUpdate.columns.some(selectColumn =>
+                const sameNameSelectColumn = selectToUpdate.columns.find(selectColumn =>
                     selectColumn.name === column.name
                 );
+                if ( !sameNameSelectColumn ) {
+                    continue;
+                }
+
                 const newColumnType = await this.getColumnType(
                     cache,
-                    selectToUpdate
+                    selectToUpdate.cloneWith({
+                        columns: [sameNameSelectColumn]
+                    })
                 );
                 const hasSameType = newColumnType === column.type.toString();
 
-                if ( hasSameNameColumn && hasSameType ) {
+                if ( sameNameSelectColumn && hasSameType ) {
                     return true;
                 }
             }

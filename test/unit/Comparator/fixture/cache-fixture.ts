@@ -185,7 +185,7 @@ export const testCacheTrigger = new DatabaseTrigger({
     ...someCacheTriggerParams
 });
 
-const companiesId = new TableID("public", "companies");
+export const companiesId = new TableID("public", "companies");
 export const testCacheColumn = new Column(
     companiesId,
     "orders_profit",
@@ -216,7 +216,7 @@ export const testTableWithCache = new Table(
 );
 
 
-const ordersId = new TableID("public", "orders");
+export const ordersId = new TableID("public", "orders");
 export const testTableSource = new Table(
     "public", "orders",
     [

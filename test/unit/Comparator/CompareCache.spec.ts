@@ -1,5 +1,10 @@
 import { MainComparator } from "../../../lib/Comparator/MainComparator";
 import { Database } from "../../../lib/database/schema/Database";
+import { Column } from "../../../lib/database/schema/Column";
+import { TableID } from "../../../lib/database/schema/TableID";
+import { Table } from "../../../lib/database/schema/Table";
+import { Comment } from "../../../lib/database/schema/Comment";
+import { DatabaseTrigger } from "../../../lib/database/schema/DatabaseTrigger";
 import { FilesState } from "../../../lib/fs/FilesState";
 import { deepStrictEqualMigration } from "./deepStrictEqualMigration";
 import assert from "assert";
@@ -15,7 +20,10 @@ import {
     testFileWithCacheWithOtherName,
     testFileWithCacheWithOtherCalc,
     testCacheWithOtherColumnType,
-    testFileWithCacheWithOtherColumnType
+    testFileWithCacheWithOtherColumnType,
+    companiesId,
+    ordersId,
+    someCacheTriggerParams
 } from "./fixture/cache-fixture";
 import { FakeDatabaseDriver } from "../FakeDatabaseDriver";
 import { FileParser } from "../../../lib/parser";
@@ -331,6 +339,130 @@ describe("Comparator: compare cache", async() => {
             "refresh cache per one update"
         );
 
+    });
+
+    it("no changes with cache with two columns => migration with drop columns", async() => {
+        const dbColumn1 = new Column(
+            new TableID("public", "companies"),
+            "orders_profit",
+            "numeric",
+            "0",
+            Comment.fromFs({
+                objectType: "column",
+                cacheSignature: "cache totals for companies",
+                cacheSelect: `
+select
+    coalesce(sum(orders.profit), 0) as orders_profit
+from orders
+where
+    orders.id_client = companies.id`.trim()
+            })
+        );
+        const dbColumn2 = new Column(
+            new TableID("public", "companies"),
+            "orders_names",
+            "text",
+            "null",
+            Comment.fromFs({
+                objectType: "column",
+                cacheSignature: "cache totals for companies",
+                cacheSelect: `
+select
+    string_agg(orders.name, ', ') as orders_names
+from orders
+where
+    orders.id_client = companies.id`.trim()
+            })
+        );
+        const dbColumn3 = new Column(
+            new TableID("public", "companies"),
+            "orders_names_name",
+            "text[]",
+            "null",
+            Comment.fromFs({
+                objectType: "column",
+                cacheSignature: "cache totals for companies",
+                cacheSelect: `
+select
+    array_agg(orders.name) as orders_names_name
+from orders
+where
+    orders.id_client = companies.id`.trim()
+            })
+        );
+
+        const companiesTable = new Table(
+            "public", "companies",
+            [
+                new Column(
+                    companiesId,
+                    "id",
+                    "integer"
+                ),
+                dbColumn1,
+                dbColumn2,
+                dbColumn3
+            ]
+        );
+
+        const ordersTable = new Table(
+            "public", "orders",
+            [
+                new Column(
+                    ordersId,
+                    "id",
+                    "integer"
+                ),
+                new Column(
+                    ordersId,
+                    "profit",
+                    "integer"
+                ),
+                new Column(
+                    ordersId,
+                    "name",
+                    "text"
+                )
+            ]
+        );
+        const testCacheTrigger = new DatabaseTrigger({
+            ...someCacheTriggerParams,
+            updateOf: ["id_client", "name", "profit"],
+        });
+
+
+        const testCache = FileParser.parseCache(`
+            cache totals for companies (
+                select
+                    sum(orders.profit) as orders_profit,
+                    string_agg(orders.name, ', ') as orders_names
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+
+        const testFileWithCache = {
+            ...someFileParams,
+            content: {
+                cache: [testCache]
+            }
+        };
+
+
+        database.addFunctions([ testCacheFunc ]);
+        database.setTable(companiesTable);
+        database.setTable(ordersTable);
+        database.addTrigger(testCacheTrigger);
+
+        fs.addFile(testFileWithCache);
+
+        const {toDrop, toCreate} = await MainComparator.compare(postgres, database, fs);
+
+        assert.strictEqual(toCreate.updates.length, 0, "no updates");
+        assert.strictEqual(toCreate.columns.length, 0, "no columns to create");
+
+        assert.strictEqual(toDrop.columns.length, 0, "no columns to drop");
     });
 
 });
