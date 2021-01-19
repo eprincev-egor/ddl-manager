@@ -2,6 +2,8 @@ create or replace function cache_totals_for_companies_on_orders()
 returns trigger as $body$
 declare old_country_name text;
 declare new_country_name text;
+declare inserted_clients_ids integer[];
+declare deleted_clients_ids integer[];
 begin
 
     if TG_OP = 'DELETE' then
@@ -54,6 +56,9 @@ begin
         then
             return new;
         end if;
+
+        inserted_clients_ids = cm_get_inserted_elements(old.clients_ids, new.clients_ids);
+        deleted_clients_ids = cm_get_deleted_elements(old.clients_ids, new.clients_ids);
 
         if old.id_country is not null then
             old_country_name = (
@@ -113,7 +118,7 @@ begin
         end if;
 
         if
-            cm_get_deleted_elements(old.clients_ids, new.clients_ids) is not null
+            deleted_clients_ids is not null
             and
             old.deleted = 0
         then
@@ -134,11 +139,11 @@ begin
                     ) as item(name)
                 )
             where
-                companies.id = any( cm_get_deleted_elements(old.clients_ids, new.clients_ids) );
+                companies.id = any( deleted_clients_ids );
         end if;
 
         if
-            cm_get_inserted_elements(old.clients_ids, new.clients_ids) is not null
+            inserted_clients_ids is not null
             and
             new.deleted = 0
         then
@@ -157,7 +162,7 @@ begin
                     new_country_name
                 )
             where
-                companies.id = any( cm_get_inserted_elements(old.clients_ids, new.clients_ids) );
+                companies.id = any( inserted_clients_ids );
         end if;
 
         return new;

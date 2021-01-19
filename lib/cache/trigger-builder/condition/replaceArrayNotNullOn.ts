@@ -1,12 +1,13 @@
 import {
     Expression, UnknownExpressionElement
 } from "../../../ast";
+import { IArrVar } from "../body/buildCommutativeBody";
 import { CacheContext } from "../CacheContext";
 
 export function replaceArrayNotNullOn(
     context: CacheContext,
     sourceExpression: Expression | undefined,
-    funcName: string
+    arrVars: IArrVar[]
 ): Expression | undefined {
     if ( !sourceExpression ) {
         return;
@@ -22,10 +23,14 @@ export function replaceArrayNotNullOn(
 
         const column = tableStructure && tableStructure.getColumn(columnRef.name);
         if ( column && column.type.isArray() ) {
+            const arrVar = arrVars.find(someVar =>
+                someVar.triggerColumn === columnRef.name
+            ) as IArrVar;
+
             outputExpression = outputExpression.replaceColumn(
                 columnRef,
                 UnknownExpressionElement.fromSql(
-                    `${funcName}(old.${column.name}, new.${column.name})`
+                    `${arrVar.name}`
                 )
             );
         }

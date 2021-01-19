@@ -10,6 +10,7 @@ import { findJoinsMeta } from "../../processor/findJoinsMeta";
 import { buildJoinVariables } from "../../processor/buildJoinVariables";
 import { Table } from "../../../database/schema/Table";
 import { Column } from "../../../database/schema/Column";
+import { buildArrVars } from "../../processor/buildArrVars";
 
 
 export type RowType = "new" | "old";
@@ -86,7 +87,7 @@ export class ConditionBuilder {
         const needUpdate = replaceArrayNotNullOn(
             this.context,
             this.buildNeedUpdateConditionOnUpdate(),
-            arrayChangesFunc(row)
+            buildArrVars(this.context, row)
         );
         const output = this.replaceTriggerTableRefsTo(needUpdate, row);
         return output;
@@ -103,7 +104,7 @@ export class ConditionBuilder {
         const output = replaceArrayNotNullOn(
             this.context,
             this.replaceTriggerTableRefsTo(simpleWhere, row),
-            arrayChangesFunc(row)
+            buildArrVars(this.context, row)
         );
         return output;
     }
@@ -329,8 +330,4 @@ export class ConditionBuilder {
         );
         return triggerTableColumnsRefs;
     }
-}
-
-function arrayChangesFunc(row: RowType) {
-    return row === "old" ? "cm_get_deleted_elements" : "cm_get_inserted_elements";
 }

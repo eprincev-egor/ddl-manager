@@ -1,5 +1,9 @@
 create or replace function cache_totals_for_companies_on_orders()
 returns trigger as $body$
+declare inserted_clients_ids integer[];
+declare inserted_partners_ids integer[];
+declare deleted_clients_ids integer[];
+declare deleted_partners_ids integer[];
 begin
 
     if TG_OP = 'DELETE' then
@@ -35,6 +39,11 @@ begin
             return new;
         end if;
 
+        inserted_clients_ids = cm_get_inserted_elements(old.clients_ids, new.clients_ids);
+        inserted_partners_ids = cm_get_inserted_elements(old.partners_ids, new.partners_ids);
+        deleted_clients_ids = cm_get_deleted_elements(old.clients_ids, new.clients_ids);
+        deleted_partners_ids = cm_get_deleted_elements(old.partners_ids, new.partners_ids);
+
         if
             cm_equal_arrays(new.clients_ids, old.clients_ids)
             and
@@ -53,33 +62,33 @@ begin
         end if;
 
         if
-            cm_get_deleted_elements(old.clients_ids, new.clients_ids) is not null
+            deleted_clients_ids is not null
             and
-            cm_get_deleted_elements(old.partners_ids, new.partners_ids) is not null
+            deleted_partners_ids is not null
             and
             old.deleted = 0
         then
             update companies set
                 orders_total = orders_total - coalesce(old.profit, 0)
             where
-                companies.id = any( cm_get_deleted_elements(old.clients_ids, new.clients_ids) )
+                companies.id = any( deleted_clients_ids )
                 and
-                companies.id = any( cm_get_deleted_elements(old.partners_ids, new.partners_ids) );
+                companies.id = any( deleted_partners_ids );
         end if;
 
         if
-            cm_get_inserted_elements(old.clients_ids, new.clients_ids) is not null
+            inserted_clients_ids is not null
             and
-            cm_get_inserted_elements(old.partners_ids, new.partners_ids) is not null
+            inserted_partners_ids is not null
             and
             new.deleted = 0
         then
             update companies set
                 orders_total = orders_total + coalesce(new.profit, 0)
             where
-                companies.id = any( cm_get_inserted_elements(old.clients_ids, new.clients_ids) )
+                companies.id = any( inserted_clients_ids )
                 and
-                companies.id = any( cm_get_inserted_elements(old.partners_ids, new.partners_ids) );
+                companies.id = any( inserted_partners_ids );
         end if;
 
         return new;

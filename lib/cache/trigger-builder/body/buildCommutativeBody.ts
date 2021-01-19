@@ -47,6 +47,12 @@ export interface IDeltaCase extends ICase {
     };
 }
 
+export interface IArrVar {
+    name: string;
+    type: string;
+    triggerColumn: string;
+}
+
 export function buildCommutativeBody(
     hasMutableColumns: boolean,
     noChanges: Expression,
@@ -54,7 +60,9 @@ export function buildCommutativeBody(
     newJoins: IJoin[],
     oldCase: ICase,
     newCase: ICase,
-    deltaCase: IDeltaCase
+    deltaCase: IDeltaCase,
+    insertedArrElements: IArrVar[],
+    deletedArrElements: IArrVar[]
 ) {
     const body = new Body({
         declares: [
@@ -69,7 +77,19 @@ export function buildCommutativeBody(
                     name: join.variable.name,
                     type: join.variable.type
                 })
-            )
+            ),
+            ...insertedArrElements.map(insertedVar =>
+                new Declare({
+                    name: insertedVar.name,
+                    type: insertedVar.type
+                })
+            ),
+            ...deletedArrElements.map(deletedVar =>
+                new Declare({
+                    name: deletedVar.name,
+                    type: deletedVar.type
+                })
+            ),
         ],
         statements: [
             ...buildInsertOrDeleteCase(
@@ -86,7 +106,9 @@ export function buildCommutativeBody(
                         noChanges,
                         oldJoins,
                         newJoins,
-                        deltaCase
+                        deltaCase,
+                        insertedArrElements,
+                        deletedArrElements
                     )
                 })
             ] : []),
@@ -140,7 +162,9 @@ function buildUpdateCaseBody(
     noChanges: Expression,
     oldJoins: IJoin[],
     newJoins: IJoin[],
-    deltaCase: IDeltaCase
+    deltaCase: IDeltaCase,
+    insertedArrElements: IArrVar[],
+    deletedArrElements: IArrVar[]
 ) {
     const oldUpdate = deltaCase.old.update;
     const newUpdate = deltaCase.new.update;
@@ -155,6 +179,11 @@ function buildUpdateCaseBody(
             ]
         }),
         new BlankLine(),
+
+        ...assignArrVars(
+            insertedArrElements,
+            deletedArrElements
+        ),
 
         ...assignVariables(oldJoins, "old"),
         ...reassignVariables(
@@ -382,4 +411,37 @@ function isNotDistinctFrom(columns: string[]) {
         `new.${ column } is not distinct from old.${ column }`
     );
     return Expression.and(conditions);
+}
+
+function assignArrVars(
+    insertedArrElements: IArrVar[],
+    deletedArrElements: IArrVar[]
+) {
+    const output: AbstractAstElement[] = [];
+
+    for (const insertedVar of insertedArrElements) {
+        const assign = new AssignVariable({
+            variable: insertedVar.name,
+            value: new HardCode({
+                sql: `cm_get_inserted_elements(old.${insertedVar.triggerColumn}, new.${insertedVar.triggerColumn})`
+            })
+        });
+        output.push(assign);
+    }
+
+    for (const deletedVar of deletedArrElements) {
+        const assign = new AssignVariable({
+            variable: deletedVar.name,
+            value: new HardCode({
+                sql: `cm_get_deleted_elements(old.${deletedVar.triggerColumn}, new.${deletedVar.triggerColumn})`
+            })
+        });
+        output.push(assign);
+    }
+
+    if ( output.length ) {
+        output.push(new BlankLine());
+    }
+
+    return output;
 }

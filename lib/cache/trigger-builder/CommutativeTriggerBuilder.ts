@@ -1,8 +1,9 @@
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
-import { buildCommutativeBody } from "./body/buildCommutativeBody";
+import { buildCommutativeBody, IArrVar } from "./body/buildCommutativeBody";
 import { Update } from "../../ast";
 import { buildJoinVariables } from "../processor/buildJoinVariables";
 import { findJoinsMeta } from "../processor/findJoinsMeta";
+import { buildArrVars } from "../processor/buildArrVars";
 
 export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
@@ -55,7 +56,9 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                         where: this.conditions.simpleWhereOnUpdate("new")
                     }) : undefined
                 }
-            }
+            },
+            buildArrVars(this.context, "new"),
+            buildArrVars(this.context, "old")
         );
         
         return body;

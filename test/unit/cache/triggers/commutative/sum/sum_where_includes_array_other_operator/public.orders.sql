@@ -1,5 +1,7 @@
 create or replace function cache_totals_for_companies_on_orders()
 returns trigger as $body$
+declare inserted_companies_ids integer[];
+declare deleted_companies_ids integer[];
 begin
 
     if TG_OP = 'DELETE' then
@@ -29,6 +31,9 @@ begin
             return new;
         end if;
 
+        inserted_companies_ids = cm_get_inserted_elements(old.companies_ids, new.companies_ids);
+        deleted_companies_ids = cm_get_deleted_elements(old.companies_ids, new.companies_ids);
+
         if
             cm_equal_arrays(new.companies_ids, old.companies_ids)
             and
@@ -43,25 +48,25 @@ begin
         end if;
 
         if
-            cm_get_deleted_elements(old.companies_ids, new.companies_ids) is not null
+            deleted_companies_ids is not null
             and
             old.deleted = 0
         then
             update companies set
                 orders_total = orders_total - coalesce(old.profit, 0)
             where
-                companies.id = any( cm_get_deleted_elements(old.companies_ids, new.companies_ids) );
+                companies.id = any( deleted_companies_ids );
         end if;
 
         if
-            cm_get_inserted_elements(old.companies_ids, new.companies_ids) is not null
+            inserted_companies_ids is not null
             and
             new.deleted = 0
         then
             update companies set
                 orders_total = orders_total + coalesce(new.profit, 0)
             where
-                companies.id = any( cm_get_inserted_elements(old.companies_ids, new.companies_ids) );
+                companies.id = any( inserted_companies_ids );
         end if;
 
         return new;
