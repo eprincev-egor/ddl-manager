@@ -1,4 +1,11 @@
-
+const keywords = [
+    "order",
+    "where",
+    "from",
+    "join",
+    "on",
+    "select"
+];
 export class TableID {
     static fromString(schemaTable: string) {
         const [schema, table] = schemaTable.split(".");
@@ -34,7 +41,9 @@ export class TableID {
 
     // TODO: use it as default toString
     toStringWithoutPublic() {
-        if ( this.schema === "public" ) {
+        const nameIsKeyWord = keywords.includes(this.name);
+
+        if ( !nameIsKeyWord && this.schema === "public" ) {
             return this.name;
         }
         else {

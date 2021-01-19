@@ -25,7 +25,7 @@ begin
 
             from invoice_positions
 
-            left join order as orders on
+            left join public.order as orders on
                 orders.id = invoice_positions.id_order
 
             where
