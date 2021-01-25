@@ -301,6 +301,72 @@ describe("integration/FileReader parse cache", () => {
         );
     });
 
+    it("duplicated cache column name inside two files", () => {
+
+        const sql1 = `
+            cache totals1 for companies (
+                select
+                    sum( orders.debet ) as my_column
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `.trim();
+        const sql2 = `
+            cache totals2 for companies (
+                select
+                    sum( orders.credit ) as my_column
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `.trim();
+
+        const filePath1 = ROOT_TMP_PATH + "/test-file-1.sql";
+        fs.writeFileSync(filePath1, sql1);
+
+        const filePath2 = ROOT_TMP_PATH + "/test-file-2.sql";
+        fs.writeFileSync(filePath2, sql2);
+
+        assert.throws(() => {
+            FileReader.read([ROOT_TMP_PATH]);
+        }, (err: Error) =>
+            /duplicated columns: my_column by cache: totals2, totals1/
+                .test(err.message)
+        );
+    });
+
+    it("parsing without errors two files with cache", () => {
+
+        const sql1 = `
+            cache totals1 for companies (
+                select
+                    sum( orders.debet ) as my_column1
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `.trim();
+        const sql2 = `
+            cache totals2 for companies (
+                select
+                    sum( orders.credit ) as my_column2
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `.trim();
+
+        const filePath1 = ROOT_TMP_PATH + "/test-file-1.sql";
+        fs.writeFileSync(filePath1, sql1);
+
+        const filePath2 = ROOT_TMP_PATH + "/test-file-2.sql";
+        fs.writeFileSync(filePath2, sql2);
+
+        const state = FileReader.read([ROOT_TMP_PATH]);
+        assert.strictEqual(state.files.length, 2);
+    });
+
     it("duplicated cache column name inside one files", () => {
 
         const sql1 = `

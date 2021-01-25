@@ -97,7 +97,9 @@ export class FilesState {
                         cacheColumns.includes(columnName)
                     );
 
-                    throw new Error(`duplicated columns: ${ duplicatedColumns } by cache: ${cache.name}, ${someCache.name}`);
+                    if ( duplicatedColumns.length > 0 ) {
+                        throw new Error(`duplicated columns: ${ duplicatedColumns } by cache: ${cache.name}, ${someCache.name}`);
+                    }
                 }
             }
         }
