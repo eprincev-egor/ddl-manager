@@ -5,6 +5,7 @@ import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import assert from "assert";
 import { prepare } from "../utils/prepare";
+import { CacheIndex } from "../../../lib/ast/CacheIndex";
 
 use(chaiShallowDeepEqualPlugin);
 
@@ -422,6 +423,42 @@ describe("integration/FileReader parse cache", () => {
         }, (err: Error) =>
             /required select any columns or expressions/
                 .test(err.message)
+        );
+    });
+
+    it("parse cache with index", () => {
+
+        const sql = `
+            cache totals for companies (
+                select
+                    max( orders.id ) as last_order_id
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+            index btree on (last_order_id)
+            index btree on (( last_order_id + 1 ))
+        `.trim();
+        
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
+        fs.writeFileSync(filePath, sql);
+
+        const state = FileReader.read([ROOT_TMP_PATH]);
+        const actualCache = state.files[0].content.cache[0];
+
+        assert.strictEqual(actualCache.indexes.length, 2, "should be two indexes");
+        assert.ok( actualCache.indexes[0] instanceof CacheIndex, "first index instance is correct" );
+        assert.ok( actualCache.indexes[1] instanceof CacheIndex, "second index instance is correct" );
+
+        assert.deepStrictEqual(
+            actualCache.indexes[0].on,
+            ["last_order_id"],
+            "first index.on is [string]"
+        );
+        assert.strictEqual(
+            actualCache.indexes[1].on.toString(),
+            "orders.last_order_id + 1",
+            "second index.on is [expression]"
         );
     });
 

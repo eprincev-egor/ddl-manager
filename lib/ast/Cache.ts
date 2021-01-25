@@ -1,22 +1,26 @@
 import { Select } from "./Select";
 import { TableReference } from "../database/schema/TableReference";
+import { CacheIndex } from "./CacheIndex";
 
 export class Cache {
     readonly name: string;
     readonly for: TableReference;
     readonly select: Select;
     readonly withoutTriggers: string[];
+    readonly indexes: CacheIndex[];
 
     constructor(
         name: string,
         forTable: TableReference,
         select: Select,
-        withoutTriggers: string[] = []
+        withoutTriggers: string[] = [],
+        indexes: CacheIndex[] = []
     ) {
         this.name = name;
         this.for = forTable;
         this.select = select;
         this.withoutTriggers = withoutTriggers;
+        this.indexes = indexes;
     }
 
     equal(otherCache: Cache) {

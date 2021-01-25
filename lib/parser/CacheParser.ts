@@ -7,8 +7,11 @@ import {
 } from "grapeql-lang";
 import { TableReferenceParser } from "./TableReferenceParser";
 import { SelectParser } from "./SelectParser";
-import { Cache } from "../ast";
+import { Cache, Select } from "../ast";
 import { TableReference } from "../database/schema/TableReference";
+import { Expression as ExpressionSyntax } from "grapeql-lang";
+import { CacheIndex } from "../ast/CacheIndex";
+import { ExpressionParser } from "./ExpressionParser";
 
 export class CacheParser {
 
@@ -19,6 +22,7 @@ export class CacheParser {
 
     private syntax: CacheFor;
     private selectParser: SelectParser;
+    private expressionParser: ExpressionParser;
     private tableParser: TableReferenceParser;
     private constructor(cacheSQLOrCoach: string | GrapeQLCoach) {
 
@@ -31,6 +35,7 @@ export class CacheParser {
         this.syntax = coach.parse(CacheFor);
         this.selectParser = new SelectParser();
         this.tableParser = new TableReferenceParser();
+        this.expressionParser = new ExpressionParser();
     }
 
     parse() {
@@ -38,11 +43,14 @@ export class CacheParser {
             this.syntax.get("for") as TableLink,
             this.syntax.get("as")
         );
+        const select = this.parseSelect(forTable);
+
         const cache = new Cache(
             this.parseCacheName(),
             forTable,
-            this.parseSelect(forTable),
-            this.parseWithoutTriggers()
+            select,
+            this.parseWithoutTriggers(),
+            this.parseIndexes(select, forTable)
         );
         return cache;
     }
@@ -65,5 +73,35 @@ export class CacheParser {
             this.tableParser.parse(onTableSyntax).table.toString()
         );
         return withoutTriggers;
+    }
+
+    private parseIndexes(select: Select, cacheFor: TableReference) {
+        const indexesSyntaxes = this.syntax.get("indexes") || [];
+        const indexes = indexesSyntaxes.map(cacheIndexSyntax => {
+            const index = cacheIndexSyntax.get("index") as string;
+            const onSyntaxes = cacheIndexSyntax.get("on") || [];
+
+            const on = onSyntaxes.map(onSyntax => {
+                if ( onSyntax instanceof ObjectName ) {
+                    return onSyntax.toString();
+                }
+
+                const expressionSyntax = onSyntax as ExpressionSyntax;
+                const expression = this.expressionParser.parse(
+                    select,
+                    [cacheFor],
+                    expressionSyntax
+                );
+                return expression;
+            });
+
+            const cacheIndex = new CacheIndex(
+                index,
+                on
+            );
+            return cacheIndex;
+        });
+
+        return indexes;
     }
 }
