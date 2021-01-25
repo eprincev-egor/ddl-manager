@@ -7,10 +7,12 @@ import {
     From,
     SelectColumn,
     FuncCall,
-    Expression
+    Expression,
+    ColumnReference,
+    UnknownExpressionElement
 } from "../ast";
 import { CacheTriggersBuilder } from "../cache/CacheTriggersBuilder";
-import { AbstractAgg, AggFactory } from "../cache/aggregator";
+import { AggFactory } from "../cache/aggregator";
 import { flatMap } from "lodash";
 import {
     ISortSelectItem,
@@ -20,6 +22,7 @@ import { TableID } from "../database/schema/TableID";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
 import { DatabaseFunction } from "../database/schema/DatabaseFunction";
 import { IUpdate } from "../Migrator/Migration";
+import { TableReference } from "../database/schema/TableReference";
 
 export class CacheComparator extends AbstractComparator {
 
@@ -156,13 +159,25 @@ export class CacheComparator extends AbstractComparator {
     }
 
     async create() {
-        const {sortedSelectsForEveryColumn} = await this.createWithoutUpdates();
+        const {sortedSelectsForEveryColumn} = await this.createColumnsAndTriggers();
         this.updateAllColumns(
             sortedSelectsForEveryColumn
         );
     }
 
     async createWithoutUpdates() {
+        await this.createColumnsAndTriggers();
+    }
+
+    async refreshCache() {
+        const allCache = flatMap(this.fs.files, file => file.content.cache);
+        const sortedSelectsForEveryColumn = this.sortSelectsByDependencies(allCache);
+
+        await this.createAllColumns(sortedSelectsForEveryColumn);
+        this.forceUpdateAllColumns(sortedSelectsForEveryColumn);
+    }
+
+    private async createColumnsAndTriggers() {
         const allCache = flatMap(this.fs.files, file => file.content.cache);
 
         for (const cache of allCache) {
@@ -197,14 +212,6 @@ export class CacheComparator extends AbstractComparator {
         );
 
         return {sortedSelectsForEveryColumn};
-    }
-
-    async refreshCache() {
-        const allCache = flatMap(this.fs.files, file => file.content.cache);
-        const sortedSelectsForEveryColumn = this.sortSelectsByDependencies(allCache);
-
-        await this.createAllColumns(sortedSelectsForEveryColumn);
-        this.forceUpdateAllColumns(sortedSelectsForEveryColumn);
     }
 
     private async createAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
@@ -399,9 +406,32 @@ export class CacheComparator extends AbstractComparator {
             }
         }
 
+        // TODO: refactor it
+        let selectWithReplacedColumns: Select = select;
+        this.migration.toCreate.columns.forEach(someNewColumn => {
+            const someNewColumnRef = new ColumnReference(
+                // TODO: change signature of replaceColumn
+                someNewColumn.table as any,
+                someNewColumn.name
+            )
+            const selectColumn = selectWithReplacedColumns.columns[0];
+
+            selectWithReplacedColumns = selectWithReplacedColumns.cloneWith({
+                columns: [
+                    selectColumn.replaceExpression(
+                        selectColumn.expression.replaceColumn(
+                            someNewColumnRef,
+                            UnknownExpressionElement.fromSql(
+                                `null::${ someNewColumn.type.toString() }`
+                            )
+                        )
+                    )
+                ]
+            })
+        });
 
         const columnsTypes = await this.driver.getCacheColumnsTypes(
-            select,
+            selectWithReplacedColumns,
             cache.for
         );
 
@@ -415,10 +445,16 @@ export class CacheComparator extends AbstractComparator {
             select.columns[0] as SelectColumn
         );
         const aggregations = aggFactory.createAggregations();
-        const agg = Object.values(aggregations)[0] as AbstractAgg;
+        const agg = Object.values(aggregations)[0];
 
-        const defaultExpression = agg.default();
-        return defaultExpression;
+        if ( agg ) {
+            const defaultExpression = agg.default();
+            return defaultExpression;
+        }
+        else {
+            // TODO: detect coalesce(x, some)
+            return "null";
+        }
     }
 
 

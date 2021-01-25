@@ -937,4 +937,144 @@ describe("integration/DDLManager.build cache", () => {
             ]
         }]);
     });
+
+
+    it("build cache with self update", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                a integer,
+                b integer
+            );
+
+            insert into companies (a, b) values (10, 25);
+        `);
+
+        fs.writeFileSync(folderPath + "/self_update.sql", `
+            cache totals for companies (
+                select
+                    companies.a + companies.b as c
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        let result;
+
+        
+        await db.query(`
+            insert into companies (a, b)
+            values (5, 100);
+        `);
+        result = await db.query(`
+            select id, c
+            from companies
+            order by id
+        `);
+        expect(result.rows).to.be.shallowDeepEqual([
+            {id: 1, c: 35},
+            {id: 2, c: 105}
+        ]);
+
+
+        await db.query(`
+            update companies set
+                b = 26
+            where id = 1;
+        `);
+        result = await db.query(`
+            select id, c
+            from companies
+            order by id
+        `);
+        expect(result.rows).to.be.shallowDeepEqual([
+            {id: 1, c: 36},
+            {id: 2, c: 105}
+        ]);
+    });
+
+
+    it("build two cache, with the second dependent on the first (self update and commutative)", async() => {
+        const folderPath = ROOT_TMP_PATH + "/two-caches-with-self-row";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table tasks (
+                id serial primary key,
+                id_order integer
+            );
+            create table users (
+                id serial primary key
+            );
+            create table user_task_watcher (
+                id_watcher integer not null,
+                id_task integer not null
+            );
+            create table orders (
+                id serial primary key,
+                id_manager integer not null
+            );
+
+            insert into users default values;
+            insert into users default values;
+            insert into tasks (id_order) values (1);
+            insert into user_task_watcher (id_task, id_watcher) values (1, 1);
+            insert into orders (id_manager) values (2);
+        `);
+        
+        fs.writeFileSync(folderPath + "/watchers.sql", `
+            cache watchers for tasks (
+                select
+                    array_agg( link.id_watcher ) as watchers_ids
+                from user_task_watcher as link
+                where
+                    link.id_task = tasks.id
+            )
+        `);
+        fs.writeFileSync(folderPath + "/order_manager.sql", `
+            cache order_manager for tasks (
+                select
+                    array_agg( orders.id_manager ) as orders_managers_ids
+                from orders
+                where
+                    orders.id = tasks.id_order
+            )
+        `);
+        fs.writeFileSync(folderPath + "/managers_and_watchers.sql", `
+            cache managers_and_watchers for tasks (
+                select
+                    tasks.watchers_ids ||
+                    tasks.orders_managers_ids as watchers_or_managers
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            select *
+            from tasks
+            where id = 1
+        `);
+        const row = result.rows[0];
+
+        expect(row).to.be.shallowDeepEqual({
+            watchers_ids: [1],
+            orders_managers_ids: [2],
+            watchers_or_managers: [1,2]
+        });
+    });
+
 });
