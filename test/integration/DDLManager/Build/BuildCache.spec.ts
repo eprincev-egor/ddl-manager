@@ -1084,12 +1084,30 @@ describe("integration/DDLManager.build cache", () => {
         await db.query(`
             create table companies (
                 id serial primary key,
-                orders_profit numeric default 0
+                orders_profit numeric default 0,
+                event jsonb,
+                name text
             );
+
             CREATE INDEX companies_fresh_rows_idx
               ON public.companies
               USING btree
               (id DESC NULLS LAST);
+
+            CREATE INDEX companies_id_desc_idx
+                ON public.companies
+                USING btree
+                (orders_profit, id nulls first);
+            
+            CREATE INDEX companies_lower_name_idx
+                ON public.companies
+                USING btree
+                (lower(name));
+            
+            CREATE INDEX companies_event_idx
+                ON public.companies
+                USING gin
+                (event jsonb_path_ops);
             
             create table orders (
                 id serial primary key,
