@@ -1086,6 +1086,11 @@ describe("integration/DDLManager.build cache", () => {
                 id serial primary key,
                 orders_profit numeric default 0
             );
+            CREATE INDEX companies_fresh_rows_idx
+              ON public.companies
+              USING btree
+              (id DESC NULLS LAST);
+            
             create table orders (
                 id serial primary key,
                 id_client integer,
