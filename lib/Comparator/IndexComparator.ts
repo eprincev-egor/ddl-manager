@@ -57,9 +57,11 @@ export class IndexComparator extends AbstractComparator {
 
     private createNewIndexes(caches: Cache[]) {
         for (const cache of caches) {
-            const cacheIndexes = cache.indexes || [];
-            const indexes = cacheIndexes
-                .map(cacheIndexToDbIndex.bind(null, cache))
+            const cacheIndexes: CacheIndex[] = cache.indexes || [];
+            const indexes: Index[] = cacheIndexes
+                .map((cacheIndex) => 
+                    cacheIndexToDbIndex(cache, cacheIndex)
+                )
                 .filter((fsIndex) => 
                     !this.existsSameIndexInDB(fsIndex)
                 );
@@ -84,7 +86,7 @@ export class IndexComparator extends AbstractComparator {
     }
 }
 
-function cacheIndexToDbIndex(cache: Cache, cacheIndex: CacheIndex) {
+function cacheIndexToDbIndex(cache: Cache, cacheIndex: CacheIndex): Index {
     return new Index({
         name: `${ cache.for.table.name }_${ cacheIndex.on.join("_") }_cidx`,
         table: cache.for.table,
