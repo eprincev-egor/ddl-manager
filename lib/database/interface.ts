@@ -4,6 +4,7 @@ import { Column } from "./schema/Column";
 import { TableReference } from "./schema/TableReference";
 import { DatabaseTrigger } from "./schema/DatabaseTrigger";
 import { DatabaseFunction  } from "./schema/DatabaseFunction";
+import { Index } from "./schema/Index";
 
 // TODO: apply I from SOLID
 export interface IDatabaseDriver {
@@ -20,5 +21,7 @@ export interface IDatabaseDriver {
     dropColumn(column: Column): Promise<void>;
     updateCachePackage(select: Select, forTable: TableReference, limit: number): Promise<number>;
     createOrReplaceHelperFunc(func: DatabaseFunction): Promise<void>;
+    dropIndex(index: Index): Promise<void>;
+    createOrReplaceIndex(index: Index): Promise<void>;
     end(): void;
 }

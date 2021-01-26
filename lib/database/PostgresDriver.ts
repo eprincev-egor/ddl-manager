@@ -17,6 +17,7 @@ import { TableID } from "./schema/TableID";
 import { flatMap } from "lodash";
 import { wrapText } from "./postgres/wrapText";
 import { IFileContent } from "../fs/File";
+import { Index } from "./schema/Index";
 
 const selectAllFunctionsSQL = fs.readFileSync(__dirname + "/postgres/select-all-functions.sql")
     .toString();
@@ -307,6 +308,14 @@ implements IDatabaseDriver {
         `;
 
         await this.query(sql);
+    }
+
+    async dropIndex(index: Index) {
+
+    }
+
+    async createOrReplaceIndex(index: Index) {
+
     }
 
     end() {

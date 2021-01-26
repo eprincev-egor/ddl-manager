@@ -22,7 +22,6 @@ import { TableID } from "../database/schema/TableID";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
 import { DatabaseFunction } from "../database/schema/DatabaseFunction";
 import { IUpdate } from "../Migrator/Migration";
-import { TableReference } from "../database/schema/TableReference";
 
 export class CacheComparator extends AbstractComparator {
 

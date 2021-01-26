@@ -7,6 +7,7 @@ import { TableReference } from "../../lib/database/schema/TableReference";
 import { DatabaseTrigger } from "../../lib/database/schema/DatabaseTrigger";
 import { Column } from "../../lib/database/schema/Column";
 import { IFileContent } from "../../lib/fs/File";
+import { Index } from "../../lib/database/schema/Index";
 
 export class FakeDatabaseDriver
 implements IDatabaseDriver {
@@ -19,6 +20,8 @@ implements IDatabaseDriver {
             default: string | null;
         };
     };
+    readonly indexes: {[table: string]: Index[]};
+
     private columnsTypes: {[column: string]: string};
     private rowsCountByTable: {[table: string]: number};
     private updatedPackages: {[table: string]: {
@@ -37,6 +40,7 @@ implements IDatabaseDriver {
         this.rowsCountByTable = {};
         this.updatedPackages = {};
         this.columnsDrops = {};
+        this.indexes = {};
     }
 
     async load() {
@@ -144,8 +148,27 @@ implements IDatabaseDriver {
         throw new Error("Method not implemented.");
     }
 
-    async createOrReplaceHelperFunc(func: DatabaseFunction) {
-        
+    async createOrReplaceHelperFunc() {
+
+    }
+
+    async dropIndex(index: Index) {
+        const table = index.table.toString();
+        const tableIndexes = this.indexes[ table ] || [];
+        const i = tableIndexes.findIndex(someIndex =>
+            someIndex.getSignature() === index.getSignature()
+        );
+        if ( i !== -1 ) {
+            tableIndexes.splice(i, 1);
+        }
+        this.indexes[ table ] = tableIndexes;
+    }
+
+    async createOrReplaceIndex(index: Index) {
+        const table = index.table.toString();
+        const tableIndexes = this.indexes[ table ] || [];
+        tableIndexes.push(index);
+        this.indexes[ table ] = tableIndexes;
     }
 
     end() {

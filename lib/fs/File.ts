@@ -1,6 +1,7 @@
 import { Cache } from "../ast";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
 import { DatabaseFunction } from "../database/schema/DatabaseFunction";
+import { CacheIndex } from "../ast/CacheIndex";
 
 export interface IFileParams {
     name: string;

@@ -1,20 +1,24 @@
 import { Column } from "./Column";
 import { TableID } from "./TableID";
 import { DatabaseTrigger } from "./DatabaseTrigger";
+import { Index } from "./Index";
 
 export class Table extends TableID {
     readonly columns: Column[];
     readonly triggers: DatabaseTrigger[];
+    readonly indexes: Index[];
 
     constructor(
         schema: string,
         name: string,
         columns: Column[] = [],
-        triggers: DatabaseTrigger[] = []
+        triggers: DatabaseTrigger[] = [],
+        indexes: Index[] = []
     ) {
         super(schema, name);
         this.columns = columns;
         this.triggers = triggers;
+        this.indexes = indexes;
     }
 
     getColumn(name: string) {
@@ -27,6 +31,10 @@ export class Table extends TableID {
 
     addTrigger(trigger: DatabaseTrigger) {
         this.triggers.push(trigger);
+    }
+
+    addIndex(index: Index) {
+        this.indexes.push(index);
     }
 
     removeTrigger(dropTrigger: DatabaseTrigger) {

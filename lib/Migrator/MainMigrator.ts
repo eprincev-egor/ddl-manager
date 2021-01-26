@@ -5,6 +5,7 @@ import { TriggersMigrator } from "./TriggersMigrator";
 import { ColumnsMigrator } from "./ColumnsMigrator";
 import { UpdateMigrator } from "./UpdateMigrator";
 import { Database } from "../database/schema/Database";
+import { IndexesMigrator } from "./IndexesMigrator";
 
 export class MainMigrator {
     private migration: Migration;
@@ -40,17 +41,20 @@ export class MainMigrator {
             triggers,
             columns,
             updates,
+            indexes,
             outputErrors
         } = await this.createMigrators();
 
         await triggers.drop();
         await functions.drop();
         await columns.drop();
+        await indexes.drop();
 
         await columns.create();
         await updates.create();
         await functions.create();
         await triggers.create();
+        await indexes.create();
 
         return outputErrors;
     }
@@ -83,12 +87,19 @@ export class MainMigrator {
             this.database,
             outputErrors
         );
+        const indexes = new IndexesMigrator(
+            this.postgres,
+            this.migration,
+            this.database,
+            outputErrors
+        );
 
         return {
             functions,
             triggers,
             columns,
             updates,
+            indexes,
             outputErrors
         };
     }

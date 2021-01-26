@@ -4,6 +4,7 @@ import { TableID } from "./TableID";
 import { DatabaseTrigger } from "./DatabaseTrigger";
 import { DatabaseFunction } from "./DatabaseFunction";
 import { Migration } from "../../Migrator/Migration";
+import { Index } from "./Index";
 
 export class Database {
     readonly tables: Table[];
@@ -60,10 +61,19 @@ export class Database {
     addTrigger(trigger: DatabaseTrigger) {
         const table = this.getTable(trigger.table);
         if ( !table ) {
-            throw new Error(`unknown table "${ trigger.table.schema }.${ trigger.table.name }" for trigger "${ trigger.name }"`)
+            throw new Error(`unknown table "${ trigger.table }" for trigger "${ trigger.name }"`)
         }
 
         table.addTrigger(trigger);
+    }
+
+    addIndex(index: Index) {
+        const table = this.getTable(index.table);
+        if ( !table ) {
+            throw new Error(`unknown table "${ index.table }" for index "${ index.name }"`)
+        }
+
+        table.addIndex(index);
     }
 
     applyMigration(migration: Migration) {

@@ -1,5 +1,5 @@
 
-type CommentObjectType = "function" | "trigger" | "column";
+type CommentObjectType = "function" | "trigger" | "column" | "index";
 
 export class Comment {
 

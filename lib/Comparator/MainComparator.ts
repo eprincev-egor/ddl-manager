@@ -4,6 +4,7 @@ import { Migration } from "../Migrator/Migration";
 import { CacheComparator } from "./CacheComparator";
 import { TriggersComparator } from "./TriggersComparator";
 import { FunctionsComparator } from "./FunctionsComparator";
+import { IndexComparator } from "./IndexComparator";
 import { IDatabaseDriver } from "../database/interface";
 
 export class MainComparator {
@@ -39,6 +40,7 @@ export class MainComparator {
     private functions: FunctionsComparator;
     private triggers: TriggersComparator;
     private cache: CacheComparator;
+    private indexes: IndexComparator;
 
     private constructor(
         driver: IDatabaseDriver,
@@ -65,6 +67,12 @@ export class MainComparator {
             fs,
             this.migration
         );
+        this.indexes = new IndexComparator(
+            driver,
+            database,
+            fs,
+            this.migration
+        );
     }
 
     private async compare() {
@@ -80,6 +88,7 @@ export class MainComparator {
         this.functions.create();
         this.triggers.create();
         await this.cache.createWithoutUpdates();
+        this.indexes.create();
 
         return this.migration;
     }
@@ -93,11 +102,13 @@ export class MainComparator {
         this.functions.drop();
         this.triggers.drop();
         await this.cache.drop();
+        this.indexes.drop();
     }
 
     private async createNewObjects() {
         this.functions.create();
         this.triggers.create();
         await this.cache.create();
+        this.indexes.create();
     }
 }

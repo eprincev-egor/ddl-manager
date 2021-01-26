@@ -2,6 +2,7 @@ import { DatabaseFunction } from "../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
 import { Column } from "../database/schema/Column";
 import { TableReference } from "../database/schema/TableReference";
+import { Index } from "../database/schema/Index";
 import { Select } from "../ast";
 
 export interface IUpdate {
@@ -14,6 +15,7 @@ export interface IChanges {
     triggers: DatabaseTrigger[];
     columns: Column[];
     updates: IUpdate[];
+    indexes: Index[];
 }
 
 // tslint:disable: no-console
@@ -26,8 +28,14 @@ export class Migration {
     }
 
     private constructor() {
-        this.toDrop = {functions: [], triggers: [], columns: [], updates: []};
-        this.toCreate = {functions: [], triggers: [], columns: [], updates: []};
+        this.toDrop = {
+            functions: [], triggers: [], columns: [],
+            updates: [], indexes: []
+        };
+        this.toCreate = {
+            functions: [], triggers: [], columns: [],
+            updates: [], indexes: []
+        };
     }
 
     drop(state: Partial<IChanges>) {
@@ -39,6 +47,9 @@ export class Migration {
         );
         this.toDrop.columns.push(
             ...(state.columns || [])
+        );
+        this.toDrop.indexes.push(
+            ...(state.indexes || [])
         );
         return this;
     }
@@ -55,6 +66,9 @@ export class Migration {
         );
         this.toCreate.updates.push(
             ...(state.updates || [])
+        );
+        this.toCreate.indexes.push(
+            ...(state.indexes || [])
         );
         return this;
     }
@@ -74,6 +88,10 @@ export class Migration {
             console.log("drop column " + column.getSignature());
         });
         
+        this.toDrop.indexes.forEach((index) => {
+            console.log("drop index " + index.getSignature());
+        });
+
 
         this.toCreate.functions.forEach((func) => {
             console.log("create function " + func.getSignature());
@@ -85,6 +103,10 @@ export class Migration {
 
         this.toCreate.columns.forEach((column) => {
             console.log("create column " + column.getSignature());
+        });
+
+        this.toCreate.indexes.forEach((index) => {
+            console.log("create index " + index.getSignature());
         });
     }
     
