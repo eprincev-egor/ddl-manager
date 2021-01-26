@@ -1077,4 +1077,67 @@ describe("integration/DDLManager.build cache", () => {
         });
     });
 
+    it("build cache with index", async() => {
+        const folderPath = ROOT_TMP_PATH + "/cache-with-index";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                orders_profit numeric default 0
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer,
+                profit numeric
+            );
+
+            insert into companies default values;
+        `);
+        
+        fs.writeFileSync(folderPath + "/set_note_trigger.sql", `
+            cache totals for companies (
+                select
+                    max( orders.id ) as last_order_id
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+            index btree on (last_order_id)
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        const result = await db.query(`
+            SELECT
+                pg_get_indexdef(i.oid) AS indexdef,
+                obj_description(i.oid) as comment
+            FROM pg_index x
+                JOIN pg_class c ON c.oid = x.indrelid
+                JOIN pg_class i ON i.oid = x.indexrelid
+                LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
+                LEFT JOIN pg_tablespace t ON t.oid = i.reltablespace
+            WHERE
+                (c.relkind = ANY (ARRAY['r'::"char", 'm'::"char"])) AND
+                i.relkind = 'i'::"char" and
+                
+                c.relname = 'companies'
+        `);
+        const row = result.rows.find((someRow: {comment?: string}) => 
+            someRow.comment &&
+            someRow.comment.includes("ddl-manager")
+        );
+
+        assert.ok(
+            /using\s+btree\s+\(\s*last_order_id\s*\)/i.test(row.indexdef),
+            "created valid index"
+        );
+    });
+
 });

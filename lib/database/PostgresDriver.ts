@@ -352,11 +352,24 @@ implements IDatabaseDriver {
     }
 
     async dropIndex(index: Index) {
+        const sql = `
+            drop index if exists ${ index.getSignature() };
+        `;
+        await this.query(sql);
 
     }
 
     async createOrReplaceIndex(index: Index) {
+        const sql = `
+            drop index if exists ${ index.getSignature() };
 
+            ${ index.toSQL() };
+
+            comment on index ${ index.getSignature() }
+            is ${ wrapText( index.comment.toString() ) };
+        `;
+
+        await this.query(sql);
     }
 
     end() {

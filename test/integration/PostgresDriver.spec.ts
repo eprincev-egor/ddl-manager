@@ -1136,4 +1136,67 @@ describe("integration/PostgresDriver.loadState", () => {
         );
         assert.deepStrictEqual(actualIndex, expectedIndex);
     });
+
+    it("create index", async() => {
+        const sql = `
+            create table some_events (
+                id serial primary key,
+                event_type text
+            );
+        `;
+        await db.query(sql);
+
+        const expectedIndex = new Index({
+            name: "some_events_idx",
+            index: "btree",
+            table: new TableID("public", "some_events"),
+            columns: ["event_type"],
+            comment: Comment.frozen("index", "my index")
+        });
+        const driver = new PostgresDriver(db);
+
+        await driver.createOrReplaceIndex(expectedIndex);
+
+        const driver2 = new PostgresDriver(db);
+        const database = await driver2.load();
+        const companies = database.getTable(expectedIndex.table);
+        const actualIndex = companies && companies.indexes.find(someIndex =>
+            someIndex.name === "some_events_idx"
+        );
+        assert.deepStrictEqual(actualIndex, expectedIndex);
+    });
+    
+    it("drop index", async() => {
+        const sql = `
+            create table some_events (
+                id serial primary key,
+                event_type text
+            );
+            create index some_events_idx
+            on some_events 
+            using btree
+            (event_type);
+            comment on index some_events_idx is 'my index';
+        `;
+        await db.query(sql);
+
+        const expectedIndex = new Index({
+            name: "some_events_idx",
+            index: "btree",
+            table: new TableID("public", "some_events"),
+            columns: ["event_type"],
+            comment: Comment.frozen("index", "my index")
+        });
+        const driver = new PostgresDriver(db);
+
+        await driver.dropIndex(expectedIndex);
+
+        const driver2 = new PostgresDriver(db);
+        const database = await driver2.load();
+        const companies = database.getTable(expectedIndex.table);
+        const actualIndex = companies && companies.indexes.find(someIndex =>
+            someIndex.name === "some_events_idx"
+        );
+        assert.strictEqual(actualIndex, undefined);
+    });
 });

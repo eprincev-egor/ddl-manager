@@ -35,6 +35,15 @@ export class Index {
     }
 
     getSignature() {
-        return `index ${this.name} on ${ this.table } using ${ this.index } (${ this.columns })`;
+        return this.table.schema + "." + this.name;
+    }
+
+    toSQL() {
+        return `
+            create index ${ this.name }
+            on ${ this.table }
+            using ${ this.index }
+            ( ${ this.columns.join(", ") } )
+        `;
     }
 }
