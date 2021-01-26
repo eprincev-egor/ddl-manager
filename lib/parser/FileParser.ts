@@ -3,7 +3,8 @@ import {
     CreateTrigger,
     GrapeQLCoach,
     Comment as CommentSyntax,
-    CacheFor
+    CacheFor,
+    CacheIndex as CacheIndexSyntax
 } from "grapeql-lang";
 import { IFileContent } from "../fs/File";
 import { Cache } from "../ast";
@@ -38,6 +39,16 @@ export class FileParser {
         assert.ok( cache instanceof Cache, "sql should contain cache" );
 
         return cache;
+    }
+
+    static parseIndexColumns(columnsStr: string) {
+        const sql = `index some_type on (${columnsStr})`;
+        const coach = new GrapeQLCoach(sql);
+        const cacheIndex = coach.parse(CacheIndexSyntax);
+        const columns = (cacheIndex.get("on") || []).map(elem => 
+            elem.toString()
+        );
+        return columns;
     }
 
     parse(sql: string): IFileContent | undefined {

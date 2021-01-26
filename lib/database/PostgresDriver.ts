@@ -27,6 +27,8 @@ const selectAllColumnsSQL = fs.readFileSync(__dirname + "/postgres/select-all-co
     .toString();
 const selectAllAggregatorsSQL = fs.readFileSync(__dirname + "/postgres/select-all-aggregators.sql")
     .toString();
+const selectAllIndexesSQL = fs.readFileSync(__dirname + "/postgres/select-all-indexes.sql")
+    .toString();
 
 export class PostgresDriver
 implements IDatabaseDriver {
@@ -51,6 +53,10 @@ implements IDatabaseDriver {
         for (const trigger of triggers) {
             database.addTrigger(trigger);
         }
+        const indexes = await this.loadIndexes();
+        for (const index of indexes) {
+            database.addIndex(index);
+        }
 
         const aggregators = await this.loadAggregators();
         database.addAggregators(aggregators);
@@ -70,6 +76,41 @@ implements IDatabaseDriver {
             selectAllTriggersSQL
         );
         return triggers;
+    }
+
+    private async loadIndexes(): Promise<Index[]> {
+        const {rows} = await this.query(selectAllIndexesSQL);
+        const indexes = rows.map(row => {
+
+            const usingMatch = row.indexdef.match(/using\s+(\w+)\s+\(/i) || [];
+            const indexType = usingMatch[1] || "unknown";
+
+            // "lala USING btree ( col, (expr), ... )"
+            // =>
+            // " col, (expr), ... "
+            const columnsStr = row.indexdef
+                .split("(").slice(1).join("(")
+                .split(")").slice(0, -1).join(")");
+            const columns = FileParser.parseIndexColumns(columnsStr);
+
+            const index = new Index({
+                name: row.indexname,
+                table: new TableID(
+                    row.schemaname,
+                    row.tablename
+                ),
+                index: indexType,
+                columns,
+                comment: Comment.fromTotalString(
+                    "index",
+                    row.comment
+                )
+            });
+
+            return index;
+        });
+
+        return indexes;
     }
 
     private async loadObjects<T>(selectAllObjectsSQL: string): Promise<T[]> {

@@ -6,11 +6,13 @@ import { DDLManager } from "../../lib/DDLManager";
 import { PostgresDriver } from "../../lib/database/PostgresDriver";
 import { TableID } from "../../lib/database/schema/TableID";
 import { TableReference } from "../../lib/database/schema/TableReference";
+import { Index } from "../../lib/database/schema/Index";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { From, Select, SelectColumn, Expression, ColumnReference, Operator } from "../../lib/ast";
 import { FileParser } from "../../lib/parser";
 import { flatMap } from "lodash";
+import { Comment } from "../../lib/database/schema/Comment";
 
 use(chaiShallowDeepEqualPlugin);
 
@@ -1102,5 +1104,36 @@ describe("integration/PostgresDriver.loadState", () => {
         }
 
         assert.strictEqual((err as any).code, "2BP01");
+    });
+
+    it("load indexes", async() => {
+        const sql = `
+            create table some_events (
+                id serial primary key,
+                event_type text
+            );
+            create index some_events_idx
+            on some_events 
+            using btree
+            (event_type);
+            comment on index some_events_idx is 'my index';
+        `;
+        await db.query(sql);
+
+        const expectedIndex = new Index({
+            name: "some_events_idx",
+            index: "btree",
+            table: new TableID("public", "some_events"),
+            columns: ["event_type"],
+            comment: Comment.frozen("index", "my index")
+        });
+        const driver = new PostgresDriver(db);
+
+        const database = await driver.load();
+        const companies = database.getTable(expectedIndex.table);
+        const actualIndex = companies && companies.indexes.find(someIndex =>
+            someIndex.name === "some_events_idx"
+        );
+        assert.deepStrictEqual(actualIndex, expectedIndex);
     });
 });

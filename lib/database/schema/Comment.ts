@@ -10,10 +10,11 @@ export class Comment {
         });
     }
 
-    static frozen(objectType: CommentObjectType) {
+    static frozen(objectType: CommentObjectType, dev?: string) {
         return new Comment({
             objectType,
-            frozen: true
+            frozen: true,
+            dev
         });
     }
 
