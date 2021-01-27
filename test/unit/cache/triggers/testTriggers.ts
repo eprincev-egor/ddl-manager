@@ -121,6 +121,11 @@ export function testTriggers(test: ITest) {
                     invoiceID,
                     "renomination_invoices",
                     "int8[]"
+                ),
+                new Column(
+                    invoiceID,
+                    "payments_ids",
+                    "int8[]"
                 )
             ]
         )

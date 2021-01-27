@@ -1,3 +1,4 @@
+import { flatMap } from "lodash";
 import {
     Expression,
     Cache,
@@ -95,6 +96,23 @@ export class CacheContext {
                 this.isColumnRefToTriggerTable(columnRef)
             );
 
+            const fromTriggerTable = this.cache.select.from.find(from =>
+                from.table.equal(this.triggerTable)
+            );
+            const leftJoinsOverTriggerTable = (fromTriggerTable || {joins: []}).joins
+                .filter(join => 
+                    join.on.getColumnReferences()
+                        .some(columnRef =>
+                            columnRef.tableReference.table.equal(this.triggerTable)
+                        )
+                );
+            
+            const columnsFromTriggerTableOverLeftJoin = conditionColumns.filter(columnRef =>
+                leftJoinsOverTriggerTable.some(join =>
+                    join.table.equal(columnRef.tableReference.table)
+                )
+            );
+
             const isReference = (
                 columnsFromCacheTable.length
                 &&
@@ -119,7 +137,10 @@ export class CacheContext {
                     )
                 );
             }
-            else {
+            else if (
+                columnsFromTriggerTableOverLeftJoin.length ||
+                columnsFromTriggerTable.length 
+            ) {
                 referenceMeta.filters.push( andCondition );
             }
         }
