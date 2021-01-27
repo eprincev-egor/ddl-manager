@@ -1109,6 +1109,11 @@ describe("integration/DDLManager.build cache", () => {
                 USING gin
                 (event jsonb_path_ops);
             
+            CREATE INDEX companies_lower_name_sp2_idx
+                ON public.companies
+                USING btree
+                (lower(name) varchar_pattern_ops);
+            
             create table orders (
                 id serial primary key,
                 id_client integer,
