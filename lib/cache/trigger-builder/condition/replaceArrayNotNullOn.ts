@@ -12,6 +12,9 @@ export function replaceArrayNotNullOn(
     if ( !sourceExpression ) {
         return;
     }
+    if ( !arrVars.length ) {
+        return sourceExpression;
+    }
 
     let outputExpression = sourceExpression;
     const tableStructure = context.database.getTable(context.triggerTable);
@@ -25,14 +28,16 @@ export function replaceArrayNotNullOn(
         if ( column && column.type.isArray() ) {
             const arrVar = arrVars.find(someVar =>
                 someVar.triggerColumn === columnRef.name
-            ) as IArrVar;
-
-            outputExpression = outputExpression.replaceColumn(
-                columnRef,
-                UnknownExpressionElement.fromSql(
-                    `${arrVar.name}`
-                )
             );
+
+            if ( arrVar ) {
+                outputExpression = outputExpression.replaceColumn(
+                    columnRef,
+                    UnknownExpressionElement.fromSql(
+                        `${arrVar.name}`
+                    )
+                );
+            }
         }
     }
 

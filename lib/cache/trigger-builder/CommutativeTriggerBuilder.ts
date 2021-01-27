@@ -1,5 +1,5 @@
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
-import { buildCommutativeBody, IArrVar } from "./body/buildCommutativeBody";
+import { buildCommutativeBody } from "./body/buildCommutativeBody";
 import { Update } from "../../ast";
 import { buildJoinVariables } from "../processor/buildJoinVariables";
 import { findJoinsMeta } from "../processor/findJoinsMeta";

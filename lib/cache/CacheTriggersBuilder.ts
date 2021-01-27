@@ -2,7 +2,10 @@ import { CacheParser } from "../parser";
 import {
     Cache
 } from "../ast";
-import { findDependencies } from "./processor/findDependencies";
+import {
+    findDependencies,
+    findDependenciesToCacheTable
+} from "./processor/findDependencies";
 import { Database } from "../database/schema/Database";
 import { DatabaseFunction } from "../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
@@ -38,18 +41,41 @@ export class CacheTriggersBuilder {
     }
 
     createTriggers() {
-        const output: {
-            [tableName: string]: {
-                trigger: DatabaseTrigger,
-                function: DatabaseFunction
-            };
-        } = {};
+        interface IOutputTrigger {
+            name: string;
+            table: TableID;
+            trigger: DatabaseTrigger;
+            function: DatabaseFunction;
+        };
+        const output: IOutputTrigger[] = [];
 
         const allDeps = findDependencies(this.cache);
 
         for (const schemaTable of this.cache.withoutTriggers) {
             if ( !(schemaTable in allDeps) ) {
                 throw new Error(`unknown table to ignore triggers: ${schemaTable}`);
+            }
+        }
+
+        const needIgnoreTriggerOnCacheTable = this.cache.withoutTriggers.includes(
+            this.cache.for.table.toString()
+        );
+        if ( !needIgnoreTriggerOnCacheTable ) {
+            const cacheTableDeps = findDependenciesToCacheTable(this.cache);
+
+            const triggerBuilder = this.builderFactory.tryCreateBuilder(
+                this.cache.for.table,
+                cacheTableDeps.columns
+            );
+
+            if ( triggerBuilder ) {
+                const {trigger, function: func} = triggerBuilder.createTrigger();
+                output.push({
+                    name: trigger.name,
+                    table: this.cache.for.table,
+                    trigger,
+                    function: func
+                });
             }
         }
 
@@ -70,8 +96,13 @@ export class CacheTriggersBuilder {
             );
 
             if ( triggerBuilder ) {
-                const trigger = triggerBuilder.createTrigger();
-                output[ schemaTable ] = trigger;
+                const {trigger, function: func} = triggerBuilder.createTrigger();
+                output.push({
+                    name: trigger.name,
+                    table: triggerTable,
+                    trigger: trigger,
+                    function: func
+                });
             }
         }
 

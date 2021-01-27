@@ -79,9 +79,9 @@ export class CacheComparator extends AbstractComparator {
                     cache,
                     this.database
                 );
-                const triggersByTableName = cacheTriggerFactory.createTriggers();
+                const triggers = cacheTriggerFactory.createTriggers();
             
-                const existsSameCacheFunc = Object.values(triggersByTableName).some(item => 
+                const existsSameCacheFunc = triggers.some(item => 
                     item.trigger.equal( dbCacheTrigger )
                 );
                 return existsSameCacheFunc;
@@ -102,9 +102,9 @@ export class CacheComparator extends AbstractComparator {
                     cache,
                     this.database
                 );
-                const triggersByTableName = cacheTriggerFactory.createTriggers();
+                const triggers = cacheTriggerFactory.createTriggers();
             
-                const existsSameCacheFunc = Object.values(triggersByTableName).some(item => 
+                const existsSameCacheFunc = triggers.some(item => 
                     item.function.equal( dbCacheFunc )
                 );
                 return existsSameCacheFunc;
@@ -184,10 +184,9 @@ export class CacheComparator extends AbstractComparator {
                 cache,
                 this.database
             );
-            const triggersByTableName = cacheTriggerFactory.createTriggers();
+            const cacheTriggers = cacheTriggerFactory.createTriggers();
     
-            for (const tableName in triggersByTableName) {
-                const {trigger, function: func} = triggersByTableName[ tableName ];
+            for (const {trigger, function: func} of cacheTriggers) {
 
                 const table = this.database.getTable( trigger.table );
                 const existsTrigger = table && table.triggers.some(existentTrigger =>

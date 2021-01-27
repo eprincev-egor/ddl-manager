@@ -24,10 +24,12 @@ describe("TriggerFabric, no triggers for some table", () => {
         );
 
         const triggers = builder.createTriggers();
+        const orderTypeTrigger = triggers.find(trigger =>
+            trigger.table.name === "order_type"
+        );
 
         assert.ok(
-            !triggers["public.order_type"] &&
-            !triggers.order_type,
+            !orderTypeTrigger,
 
             "no triggers on order_type"
         );
@@ -59,16 +61,20 @@ describe("TriggerFabric, no triggers for some table", () => {
         );
 
         const triggers = builder.createTriggers();
+        const orderTypeTrigger = triggers.find(trigger =>
+            trigger.table.name === "order_type"
+        );
+        const countriesTrigger = triggers.find(trigger =>
+            trigger.table.name === "countries"
+        );
 
         assert.ok(
-            !triggers["public.order_type"] &&
-            !triggers.order_type,
+            !orderTypeTrigger,
             
             "no triggers on order_type"
         );
         assert.ok(
-            !triggers["public.countries"] &&
-            !triggers.countries,
+            !countriesTrigger,
             
             "no triggers on countries"
         );

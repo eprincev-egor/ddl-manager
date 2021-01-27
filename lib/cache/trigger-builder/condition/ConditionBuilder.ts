@@ -219,9 +219,12 @@ export class ConditionBuilder {
     }
 
     private buildHasReferenceWithoutJoins() {
-        let conditions = [
-            hasReference(this.context)
-        ] as Expression[];
+        let conditions: Expression[] = [];
+
+        const refCondition = hasReference(this.context);
+        if ( refCondition ) {
+            conditions.push(refCondition);
+        }
 
         for (const where of this.context.referenceMeta.filters) {
             if ( !this.hasJoinsInside(where) ) {

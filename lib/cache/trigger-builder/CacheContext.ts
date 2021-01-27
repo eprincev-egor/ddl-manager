@@ -64,7 +64,8 @@ export class CacheContext {
                 columnRef.tableReference.equal(this.cache.for)
             );
             const columnsFromTriggerTable = conditionColumns.filter(columnRef =>
-                columnRef.tableReference.table.equal(this.triggerTable)
+                columnRef.tableReference.table.equal(this.triggerTable) &&
+                !columnRef.tableReference.equal(this.cache.for)
             );
 
             const isReference = (

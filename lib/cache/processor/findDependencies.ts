@@ -1,9 +1,11 @@
 import { Cache, ColumnReference } from "../../ast";
 
 export interface IDependencies {
-    [table: string]: {
-        columns: string[]
-    };
+    [table: string]: ITableDependencies;
+}
+
+export interface ITableDependencies {
+    columns: string[];
 }
 
 export function findDependencies(cache: Cache) {
@@ -16,10 +18,28 @@ export function findDependencies(cache: Cache) {
     }
 
     for (const columnRef of cache.select.getAllColumnReferences()) {
+        if ( columnRef.tableReference.equal(cache.for) ) {
+            continue;
+        }
         addColumnReference(dependencies, columnRef);
     }
 
     return dependencies;
+}
+
+export function findDependenciesToCacheTable(cache: Cache): ITableDependencies {
+    const tableDependencies: ITableDependencies = {columns: []};
+
+    for (const columnRef of cache.select.getAllColumnReferences()) {
+        if ( !columnRef.tableReference.equal(cache.for) ) {
+            continue;
+        }
+
+        tableDependencies.columns.push(columnRef.name);
+        tableDependencies.columns.sort();
+    }
+
+    return tableDependencies;
 }
 
 function addColumnReference(

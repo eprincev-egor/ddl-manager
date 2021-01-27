@@ -33,6 +33,10 @@ export function testTriggers(test: ITest) {
         "public",
         "unit_type",
     );
+    const invoiceID = new TableID(
+        "public",
+        "invoice",
+    );
 
     const testDatabase = new Database([
         new Table(
@@ -103,6 +107,22 @@ export function testTriggers(test: ITest) {
                     "text"
                 )
             ]
+        ),
+        new Table(
+            invoiceID.schema,
+            invoiceID.name,
+            [
+                new Column(
+                    invoiceID,
+                    "id",
+                    "integer"
+                ),
+                new Column(
+                    invoiceID,
+                    "renomination_invoices",
+                    "int8[]"
+                )
+            ]
         )
     ]);
 
@@ -117,7 +137,11 @@ export function testTriggers(test: ITest) {
         const triggerFilePath = path.join(test.testDir, schemaTable + ".sql");
         const expectedTriggerDDL = fs.readFileSync(triggerFilePath).toString();
 
-        const output = triggers[schemaTable];
+        const output = triggers.find(trigger =>
+            trigger.table.toString() === schemaTable
+        );
+        assert.ok(output, "should be trigger for table: " + schemaTable);
+
         const actualTriggerDDL = (
             output.function.toSQL() + 
             ";\n\n" + 
