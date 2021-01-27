@@ -1,9 +1,11 @@
 import {
     Expression,
-    Cache
+    Cache,
+    ColumnReference
 } from "../../ast";
 import { Database } from "../../database/schema/Database";
 import { TableID } from "../../database/schema/TableID";
+import { TableReference } from "../../database/schema/TableReference";
 
 export interface IReferenceMeta {
     columns: string[];
@@ -18,17 +20,21 @@ export class CacheContext {
     readonly triggerTableColumns: string[];
     readonly database: Database;
     readonly referenceMeta: IReferenceMeta;
+    readonly excludeRef: TableReference | false
     
     constructor(
         cache: Cache,
         triggerTable: TableID,
         triggerTableColumns: string[],
-        database: Database
+        database: Database,
+        // TODO: split to two classes
+        excludeRef: boolean = true
     ) {
         this.cache = cache;
         this.triggerTable = triggerTable;
         this.triggerTableColumns = triggerTableColumns;
         this.database = database;
+        this.excludeRef = excludeRef ? cache.for : false;
         this.referenceMeta = this.buildReferenceMeta();
     }
 
@@ -39,6 +45,28 @@ export class CacheContext {
             );
 
         return tableReferences;
+    }
+
+    isColumnRefToTriggerTable(columnRef: ColumnReference) {
+        return columnRef.tableReference.table.equal(this.triggerTable) && (
+            !this.excludeRef
+            ||
+            !columnRef.tableReference.equal(this.excludeRef)
+        );
+    }
+
+    generateTriggerName() {
+        const triggerName = [
+            "cache",
+            this.cache.name,
+            "for",
+            this.excludeRef ?
+                this.cache.for.table.name :
+                "self",
+            "on",
+            this.triggerTable.name
+        ].join("_");
+        return triggerName;
     }
 
     private buildReferenceMeta(): IReferenceMeta {
@@ -64,8 +92,7 @@ export class CacheContext {
                 columnRef.tableReference.equal(this.cache.for)
             );
             const columnsFromTriggerTable = conditionColumns.filter(columnRef =>
-                columnRef.tableReference.table.equal(this.triggerTable) &&
-                !columnRef.tableReference.equal(this.cache.for)
+                this.isColumnRefToTriggerTable(columnRef)
             );
 
             const isReference = (

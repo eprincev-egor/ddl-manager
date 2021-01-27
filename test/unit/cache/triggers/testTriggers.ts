@@ -132,13 +132,14 @@ export function testTriggers(test: ITest) {
     );
     const triggers = builder.createTriggers();
 
-    for (const schemaTable of test.tables) {
-
+    for (let schemaTable of test.tables) {
         const triggerFilePath = path.join(test.testDir, schemaTable + ".sql");
         const expectedTriggerDDL = fs.readFileSync(triggerFilePath).toString();
 
-        const output = triggers.find(trigger =>
-            trigger.table.toString() === schemaTable
+        schemaTable = schemaTable.split(".").slice(0, 2).join(".");
+
+        const output = triggers.find(trigger => 
+            expectedTriggerDDL.includes(trigger.name)
         );
         assert.ok(output, "should be trigger for table: " + schemaTable);
 

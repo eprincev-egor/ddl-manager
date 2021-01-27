@@ -8,7 +8,8 @@ export interface ITableDependencies {
     columns: string[];
 }
 
-export function findDependencies(cache: Cache) {
+// TODO: split to two functions and fix tests
+export function findDependencies(cache: Cache, addCacheRefDeps = true) {
     const dependencies: IDependencies = {
         [cache.for.table.toString()]: {columns: []}
     };
@@ -18,7 +19,7 @@ export function findDependencies(cache: Cache) {
     }
 
     for (const columnRef of cache.select.getAllColumnReferences()) {
-        if ( columnRef.tableReference.equal(cache.for) ) {
+        if ( !addCacheRefDeps && columnRef.tableReference.equal(cache.for) ) {
             continue;
         }
         addColumnReference(dependencies, columnRef);

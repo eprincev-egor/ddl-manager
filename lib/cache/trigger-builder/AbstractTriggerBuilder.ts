@@ -81,15 +81,7 @@ export abstract class AbstractTriggerBuilder {
     }
 
     protected generateTriggerName() {
-        const triggerName = [
-            "cache",
-            this.context.cache.name,
-            "for",
-            this.context.cache.for.table.name,
-            "on",
-            this.context.triggerTable.name
-        ].join("_");
-        return triggerName;
+        return this.context.generateTriggerName();
     }
 
     protected abstract createBody(): AbstractAstElement;

@@ -1,4 +1,4 @@
-create or replace function cache_totals_for_account_date_balance_on_account_date_balance()
+create or replace function cache_totals_for_self_on_account_date_balance()
 returns trigger as $body$
 begin
     if TG_OP = 'INSERT' then
@@ -38,8 +38,8 @@ end
 $body$
 language plpgsql;
 
-create trigger cache_totals_for_account_date_balance_on_account_date_balance
+create trigger cache_totals_for_self_on_account_date_balance
 after insert or update of balance_date
 on capital.account_date_balance
 for each row
-execute procedure cache_totals_for_account_date_balance_on_account_date_balance();
+execute procedure cache_totals_for_self_on_account_date_balance();

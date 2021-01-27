@@ -4,4 +4,4 @@
 --recursive
 --timeout 5000
 --exit
-test/**/trigger.spec.ts
+test/**/*.spec.ts

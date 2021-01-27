@@ -12,6 +12,9 @@ import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
 import { TableID } from "../database/schema/TableID";
 import { TriggerBuilderFactory } from "./trigger-builder/TriggerBuilderFactory";
 import { createSelectForUpdate } from "./processor/createSelectForUpdate";
+import { SelfUpdateByOtherTablesTriggerBuilder } from "./trigger-builder/SelfUpdateByOtherTablesTriggerBuilder";
+import { CacheContext } from "./trigger-builder/CacheContext";
+import { SelfUpdateBySelfRowTriggerBuilder } from "./trigger-builder/SelfUpdateBySelfRowTriggerBuilder";
 
 export class CacheTriggersBuilder {
 
@@ -49,7 +52,7 @@ export class CacheTriggersBuilder {
         };
         const output: IOutputTrigger[] = [];
 
-        const allDeps = findDependencies(this.cache);
+        const allDeps = findDependencies(this.cache, false);
 
         for (const schemaTable of this.cache.withoutTriggers) {
             if ( !(schemaTable in allDeps) ) {
@@ -62,14 +65,33 @@ export class CacheTriggersBuilder {
         );
         if ( !needIgnoreTriggerOnCacheTable ) {
             const cacheTableDeps = findDependenciesToCacheTable(this.cache);
-
-            const triggerBuilder = this.builderFactory.tryCreateBuilder(
+            const mutableColumns = cacheTableDeps.columns.filter(col =>
+                col != "id"
+            );
+            const context = new CacheContext(
+                this.cache,
                 this.cache.for.table,
-                cacheTableDeps.columns
+                mutableColumns,
+                this.database,
+                false
             );
 
-            if ( triggerBuilder ) {
-                const {trigger, function: func} = triggerBuilder.createTrigger();
+            let TriggerBuilderConstructor: (
+                typeof SelfUpdateBySelfRowTriggerBuilder |
+                typeof SelfUpdateByOtherTablesTriggerBuilder |
+                undefined
+            );
+            if ( this.cache.select.from.length === 0 ) {
+                TriggerBuilderConstructor = SelfUpdateBySelfRowTriggerBuilder;
+            }
+            else if ( mutableColumns.length ) {
+                TriggerBuilderConstructor = SelfUpdateByOtherTablesTriggerBuilder;
+            }
+
+            if ( TriggerBuilderConstructor ) {
+                const builder = new TriggerBuilderConstructor(context);
+                const {trigger, function: func} = builder.createTrigger();
+    
                 output.push({
                     name: trigger.name,
                     table: this.cache.for.table,

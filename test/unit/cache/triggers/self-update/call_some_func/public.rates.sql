@@ -1,4 +1,4 @@
-create or replace function cache_totals_for_rates_on_rates()
+create or replace function cache_totals_for_self_on_rates()
 returns trigger as $body$
 declare new_totals record;
 begin
@@ -39,8 +39,8 @@ end
 $body$
 language plpgsql;
 
-create trigger cache_totals_for_rates_on_rates
+create trigger cache_totals_for_self_on_rates
 after insert or update of price, quantity, vat_type, vat_value
 on public.rates
 for each row
-execute procedure cache_totals_for_rates_on_rates();
+execute procedure cache_totals_for_self_on_rates();

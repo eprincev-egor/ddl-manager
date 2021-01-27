@@ -1,4 +1,4 @@
-create or replace function cache_totals_for_log_oper_on_log_oper()
+create or replace function cache_totals_for_self_on_log_oper()
 returns trigger as $body$
 declare new_totals record;
 begin
@@ -48,8 +48,8 @@ end
 $body$
 language plpgsql;
 
-create trigger cache_totals_for_log_oper_on_log_oper
+create trigger cache_totals_for_self_on_log_oper
 after insert or update of buy_vat_type, buy_vat_value, sale_vat_type, sale_vat_value
 on public.log_oper
 for each row
-execute procedure cache_totals_for_log_oper_on_log_oper();
+execute procedure cache_totals_for_self_on_log_oper();

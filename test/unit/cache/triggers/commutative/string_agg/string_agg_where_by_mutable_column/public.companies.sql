@@ -1,4 +1,4 @@
-create or replace function cache_totals_for_companies_on_companies()
+create or replace function cache_totals_for_self_on_companies()
 returns trigger as $body$
 begin
     if TG_OP = 'INSERT' then
@@ -37,8 +37,8 @@ end
 $body$
 language plpgsql;
 
-create trigger cache_totals_for_companies_on_companies
+create trigger cache_totals_for_self_on_companies
 after insert or update of id_country
 on public.companies
 for each row
-execute procedure cache_totals_for_companies_on_companies();
+execute procedure cache_totals_for_self_on_companies();

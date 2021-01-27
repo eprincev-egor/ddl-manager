@@ -1,4 +1,4 @@
-create or replace function cache_orders_agg_data_for_invoice_on_invoice()
+create or replace function cache_orders_agg_data_for_self_on_invoice()
 returns trigger as $body$
 begin
     if TG_OP = 'INSERT' then
@@ -42,8 +42,8 @@ end
 $body$
 language plpgsql;
 
-create trigger cache_orders_agg_data_for_invoice_on_invoice
+create trigger cache_orders_agg_data_for_self_on_invoice
 after insert or update of id_invoice_type
 on public.invoice
 for each row
-execute procedure cache_orders_agg_data_for_invoice_on_invoice();
+execute procedure cache_orders_agg_data_for_self_on_invoice();

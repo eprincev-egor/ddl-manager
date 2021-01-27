@@ -1,6 +1,4 @@
 import { ColumnReference, Expression, IExpressionElement, UnknownExpressionElement } from "../../../ast";
-import { TableID } from "../../../database/schema/TableID";
-import { TableReference } from "../../../database/schema/TableReference";
 import { CacheContext } from "../CacheContext";
 
 export function hasReference(context: CacheContext) {
@@ -20,8 +18,7 @@ function hasReferenceCondition(context: CacheContext, check: CheckType) {
     return buildReferenceExpression(
         context.referenceMeta.expressions,
         "and",
-        context.cache.for,
-        context.triggerTable,
+        context,
         check
     );
 }
@@ -29,8 +26,7 @@ function hasReferenceCondition(context: CacheContext, check: CheckType) {
 function buildReferenceExpression(
     expressions: Expression[],
     operator: "and" | "or",
-    cacheFor: TableReference,
-    triggerTable: TableID,
+    context: CacheContext,
     check: CheckType
 ): Expression {
 
@@ -41,16 +37,14 @@ function buildReferenceExpression(
             return buildReferenceExpression(
                 orConditions,
                 "or",
-                cacheFor,
-                triggerTable,
+                context,
                 check
             );
         }
 
         return replaceSimpleExpressionToNotNulls(
             expression,
-            cacheFor,
-            triggerTable,
+            context,
             check
         )
     })
@@ -68,14 +62,12 @@ function buildReferenceExpression(
 
 function replaceSimpleExpressionToNotNulls(
     expression: Expression,
-    cacheFor: TableReference,
-    triggerTable: TableID,
+    context: CacheContext,
     check: CheckType
 ) {
     const triggerColumnsRefs = expression.getColumnReferences()
         .filter(columnRef =>
-            columnRef.tableReference.table.equal(triggerTable) &&
-            !columnRef.tableReference.equal(cacheFor)
+            context.isColumnRefToTriggerTable(columnRef)
         )
         .filter(columnRef =>
             columnRef.name !== "id"
