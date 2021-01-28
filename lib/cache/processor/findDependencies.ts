@@ -36,8 +36,10 @@ export function findDependenciesToCacheTable(cache: Cache): ITableDependencies {
             continue;
         }
 
-        tableDependencies.columns.push(columnRef.name);
-        tableDependencies.columns.sort();
+        if ( !tableDependencies.columns.includes(columnRef.name) ) {
+            tableDependencies.columns.push(columnRef.name);
+            tableDependencies.columns.sort();
+        }
     }
 
     return tableDependencies;
