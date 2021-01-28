@@ -296,6 +296,7 @@ export class CacheComparator extends AbstractComparator {
                 });
                 
                 const requiredUpdate: IUpdate = {
+                    cacheName: cacheToCreate.name,
                     select: selectWithRequiredColumns,
                     forTable: cacheToCreate.for
                 };
@@ -314,6 +315,7 @@ export class CacheComparator extends AbstractComparator {
         const allUpdates: IUpdate[] = this.generateAllUpdates(sortedSelectsForEveryColumn)
             .map(inputUpdate => {
                 const update: IUpdate = {
+                    cacheName: inputUpdate.cache.name,
                     select: inputUpdate.select,
                     forTable: inputUpdate.cache.for
                 };

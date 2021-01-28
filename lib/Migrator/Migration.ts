@@ -6,6 +6,7 @@ import { Index } from "../database/schema/Index";
 import { Select } from "../ast";
 
 export interface IUpdate {
+    cacheName: string;
     select: Select;
     forTable: TableReference;
 }

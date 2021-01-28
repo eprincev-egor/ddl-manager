@@ -284,7 +284,7 @@ export class Expression extends AbstractExpressionElement {
 
                 const subExpression = elem;
 
-                if ( subExpression.onlyOperators("or") ) {
+                if ( subExpression.hasOperator("or") ) {
                     
                     lines.push(spaces + "(");
                     lines.push(

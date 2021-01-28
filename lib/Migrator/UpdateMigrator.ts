@@ -1,6 +1,7 @@
 import { AbstractMigrator } from "./AbstractMigrator";
 import { Select } from "../ast";
 import { TableReference } from "../database/schema/TableReference";
+import { IUpdate } from "./Migration";
 
 export class UpdateMigrator extends AbstractMigrator {
     async drop() {}
@@ -8,28 +9,32 @@ export class UpdateMigrator extends AbstractMigrator {
     async create() {
 
         for (const update of this.migration.toCreate.updates) {
-            await this.updateCachePackage(
-                update.select,
-                update.forTable
-            );
+            await this.updateCachePackage(update);
         }
     }
 
     private async updateCachePackage(
-        selectToUpdate: Select,
-        forTableRef: TableReference,
+        update: IUpdate,
         packageIndex = 0
     ) {
         const limit = 500;
         let updatedCount = 0;
+        const columnsToUpdate = update.select.columns.map(col =>
+            col.name
+        );
 
         do {
             // tslint:disable-next-line: no-console
-            console.log(`updating ${forTableRef} #${ ++packageIndex }`);
+            console.log([
+                `updating #${ ++packageIndex }`,
+                `table: ${update.forTable}`,
+                `columns: ${columnsToUpdate.join(", ")}`,
+                `cache: ${update.cacheName} `
+            ].join("\n"));
 
             updatedCount = await this.tryUpdateCachePackage(
-                selectToUpdate,
-                forTableRef,
+                update.select,
+                update.forTable,
                 limit
             );
         } while( updatedCount >= limit );

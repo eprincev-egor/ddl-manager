@@ -66,6 +66,7 @@ describe("Migrator", () => {
 
         migration.create({
             updates: [{
+                cacheName: "my_cache",
                 select: new Select(),
                 forTable: new TableReference(new TableID("public", "some_table"))
             }]
