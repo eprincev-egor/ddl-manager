@@ -119,10 +119,10 @@ begin
             end if;
         end if;
 
-        if new.id_category is not distinct from old.id_category then
+        if new_unit_type_id_category is not distinct from old_unit_type_id_category then
             new_category_name = old_category_name;
         else
-            if new.id_category is not null then
+            if new_unit_type_id_category is not null then
                 new_category_name = (
                     select
                         unit_category.name

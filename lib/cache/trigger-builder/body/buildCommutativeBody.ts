@@ -374,9 +374,20 @@ function reassignVariables(newJoins: IJoin[], oldJoins: IJoin[]) {
         const newCombinedJoin = newCombinedJoins[i];
         const oldCombinedJoin = oldCombinedJoins[i];
         
+        const newByColumn = replaceTableToVariableOrRow(
+            newCombinedJoin.byColumn,
+            newJoins,
+            "new"
+        );
+        const oldByColumn = replaceTableToVariableOrRow(
+            oldCombinedJoin.byColumn,
+            oldJoins,
+            "old"
+        );
+
         lines.push(new If({
-            if: isNotDistinctFrom([
-                newCombinedJoin.byColumn.name
+            if: Expression.and([
+                newByColumn + " is not distinct from " + oldByColumn
             ]),
             then: newCombinedJoin.variables.map((newVarName, j) => 
                 new AssignVariable({
@@ -389,7 +400,7 @@ function reassignVariables(newJoins: IJoin[], oldJoins: IJoin[]) {
             else: [
                 new If({
                     if: Expression.and([
-                        `new.${newCombinedJoin.byColumn.name} is not null`
+                        `${newByColumn} is not null`
                     ]),
                     then: assignCombinedJoinVariables(
                         newCombinedJoin,
