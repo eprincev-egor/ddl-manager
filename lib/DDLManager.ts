@@ -25,6 +25,7 @@ interface IParams {
 }
 
 interface ITimelineParams extends IParams {
+    runOnlyScenario?: string;
     scenariosPath: string;
     outputPath: string;
 }
@@ -118,6 +119,20 @@ export class DDLManager {
 
     // TODO: need tests and refactor
     private async timeline(params: ITimelineParams) {
+
+        console.log("reading scenarios");
+        let scenarios = readScenarios(params.scenariosPath);
+        if ( params.runOnlyScenario ) {
+            console.log("run only " + params.runOnlyScenario);
+            scenarios = scenarios.filter(scenario =>
+                scenario.name === params.runOnlyScenario
+            );
+        }
+        if ( !scenarios.length ) {
+            throw new Error("scenarios not found");
+        }
+
+
         const db = await getDbClient(this.dbConfig);
         const filesState = this.readFS();
         const postgres = await this.postgres();
@@ -142,8 +157,6 @@ export class DDLManager {
         await functionsMigrator.createLogFuncs();
 
 
-        console.log("reading scenarios");
-        const scenarios = readScenarios(params.scenariosPath);
         for (const scenario of scenarios) {
 
             console.log("try run scenario " + scenario.name);
