@@ -121,7 +121,7 @@ export class DDLManager {
         const db = await getDbClient(this.dbConfig);
         const filesState = this.readFS();
         const postgres = await this.postgres();
-        const database = await postgres.load();
+        let database = await postgres.load();
 
         const migration = await MainComparator.logAllFuncsMigration(
             postgres,
@@ -161,12 +161,19 @@ export class DDLManager {
         }
 
         console.log("unlogging all funcs");
-        await this.build();
-        await MainComparator.compareWithoutUpdates(
+        database = await postgres.load();
+        const unlogMigration = await MainComparator.compareWithoutUpdates(
             postgres,
             database,
             filesState
         );
+        await MainMigrator.migrate(
+            postgres,
+            database,
+            unlogMigration
+        );
+
+        console.log("success");
     }
 
     private async refreshCache() {
