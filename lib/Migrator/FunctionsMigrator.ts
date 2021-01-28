@@ -13,6 +13,18 @@ export class FunctionsMigrator extends AbstractMigrator {
         await this.createFunctions();
     }
 
+    async createLogFuncs() {
+        await this.createCacheHelpersFunctions();
+        
+        for (const func of this.migration.toCreate.functions) {
+            try {
+                await this.postgres.createOrReplaceLogFunction(func);
+            } catch(err) {
+                this.onError(func, err);
+            }
+        }
+    }
+
     private async createCacheHelpersFunctions() {
 
         for (const helperFunctionSQL of Object.values(helperFunctions)) {

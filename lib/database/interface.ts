@@ -11,6 +11,7 @@ export interface IDatabaseDriver {
     load(): Promise<Database>;
     unfreezeAll(dbState: Database): Promise<void>;
     createOrReplaceFunction(func: DatabaseFunction): Promise<void>;
+    createOrReplaceLogFunction(func: DatabaseFunction): Promise<void>;
     dropFunction(func: DatabaseFunction): Promise<void>;
     createOrReplaceTrigger(trigger: DatabaseTrigger): Promise<void>;
     dropTrigger(trigger: DatabaseTrigger): Promise<void>;

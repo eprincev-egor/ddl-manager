@@ -72,6 +72,16 @@ export class FunctionsComparator extends AbstractComparator {
         }
     }
 
+    createLogFuncs() {
+        for (const file of this.fs.files) {
+            for (const func of file.content.functions) {
+                this.migration.create({
+                    functions: [func]
+                });
+            }
+        }
+    }
+
     private createNewFunctions(functions: DatabaseFunction[]) {
         for (const func of functions) {
             const existsSameFuncFromDb = this.database.functions.find(dbFunc =>

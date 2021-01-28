@@ -71,6 +71,18 @@ implements IDatabaseDriver {
         }
     }
 
+    async createOrReplaceLogFunction(func: DatabaseFunction): Promise<void> {
+        const existentFuncIndex = this.state.functions.findIndex(someFunc =>
+            someFunc.getSignature() === func.getSignature()
+        );
+        if ( existentFuncIndex !== -1 ) {
+            this.state.functions[ existentFuncIndex ] = func;
+        }
+        else {
+            this.state.functions.push( func );
+        }
+    }
+
     async dropFunction(func: DatabaseFunction): Promise<void> {
         const existentFuncIndex = this.state.functions.findIndex(someFunc =>
             someFunc.getSignature() === func.getSignature()

@@ -31,6 +31,43 @@ export class CacheComparator extends AbstractComparator {
         await this.dropTrashColumns();
     }
 
+    async create() {
+        const {sortedSelectsForEveryColumn} = await this.createColumnsAndTriggers();
+        this.updateAllColumns(
+            sortedSelectsForEveryColumn
+        );
+    }
+
+    async createLogFuncs() {
+        const allCache = flatMap(this.fs.files, file => file.content.cache);
+
+        for (const cache of allCache) {
+            const cacheTriggerFactory = new CacheTriggersBuilder(
+                cache,
+                this.database
+            );
+            const cacheTriggers = cacheTriggerFactory.createTriggers();
+    
+            for (const trigger of cacheTriggers) {
+                this.migration.create({
+                    functions: [trigger.function]
+                });
+            }
+        }
+    }
+
+    async createWithoutUpdates() {
+        await this.createColumnsAndTriggers();
+    }
+
+    async refreshCache() {
+        const allCache = flatMap(this.fs.files, file => file.content.cache);
+        const sortedSelectsForEveryColumn = this.sortSelectsByDependencies(allCache);
+
+        await this.createAllColumns(sortedSelectsForEveryColumn);
+        this.forceUpdateAllColumns(sortedSelectsForEveryColumn);
+    }
+
     private dropTrashTriggers() {
         const allCacheTriggers = flatMap(this.database.tables, 
             table => table.triggers
@@ -155,25 +192,6 @@ export class CacheComparator extends AbstractComparator {
         }
 
         return false;
-    }
-
-    async create() {
-        const {sortedSelectsForEveryColumn} = await this.createColumnsAndTriggers();
-        this.updateAllColumns(
-            sortedSelectsForEveryColumn
-        );
-    }
-
-    async createWithoutUpdates() {
-        await this.createColumnsAndTriggers();
-    }
-
-    async refreshCache() {
-        const allCache = flatMap(this.fs.files, file => file.content.cache);
-        const sortedSelectsForEveryColumn = this.sortSelectsByDependencies(allCache);
-
-        await this.createAllColumns(sortedSelectsForEveryColumn);
-        this.forceUpdateAllColumns(sortedSelectsForEveryColumn);
     }
 
     private async createColumnsAndTriggers() {

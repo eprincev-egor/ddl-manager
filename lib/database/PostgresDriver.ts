@@ -220,6 +220,16 @@ implements IDatabaseDriver {
         await this.query(ddlSql);
     }
 
+    async createOrReplaceLogFunction(func: DatabaseFunction) {
+        let ddlSql = func.toSQLWithLog();
+
+        if ( !func.comment.isEmpty() ) {
+            ddlSql += `;\ncomment on function ${func.getSignature()} is ${wrapText(func.comment.toString())}`
+        }
+
+        await this.query(ddlSql);
+    }
+
     async dropFunction(func: DatabaseFunction) {
         const sql = `drop function if exists ${ func.getSignature() }`;
         await this.query(sql);

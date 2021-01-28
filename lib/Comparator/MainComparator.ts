@@ -18,6 +18,15 @@ export class MainComparator {
         return await comparator.compare();
     }
 
+    static async logAllFuncsMigration(
+        driver: IDatabaseDriver,
+        database: Database,
+        fs: FilesState
+    ) {
+        const comparator = new MainComparator(driver, database, fs);
+        return await comparator.logAllFuncsMigration();
+    }
+
     static async compareWithoutUpdates(
         driver: IDatabaseDriver,
         database: Database,
@@ -78,6 +87,13 @@ export class MainComparator {
     private async compare() {
         await this.dropOldObjects();
         await this.createNewObjects();
+
+        return this.migration;
+    }
+
+    private async logAllFuncsMigration() {
+        this.functions.createLogFuncs();
+        await this.cache.createLogFuncs();
 
         return this.migration;
     }

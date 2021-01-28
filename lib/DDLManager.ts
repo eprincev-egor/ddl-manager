@@ -12,34 +12,37 @@ import { PostgresDriver } from "./database/PostgresDriver";
 import { Database } from "./database/schema/Database";
 import { getDbClient, IDBConfig } from "./database/getDbClient";
 import { DatabaseTrigger } from "./database/schema/DatabaseTrigger";
+import { FunctionsMigrator } from "./Migrator/FunctionsMigrator";
+import { createCallsTable, clearCallsLogs, downloadLogs } from "./timeline/callsTable";
+import { parseCalls } from "./timeline/Coach";
+import { createTimelineFile } from "./timeline/createTimelineFile";
 
 const watchers: FileWatcher[] = [];
+interface IParams {
+    db: IDBConfig | pg.Client;
+    folder: string | string[];
+    throwError?: boolean;
+}
+
+interface ITimelineParams extends IParams {
+    scenariosPath: string;
+    outputPath: string;
+}
 
 export class DDLManager {
 
-    static async build(params: {
-        db: IDBConfig | pg.Client;
-        folder: string | string[];
-        throwError?: boolean;
-    }) {
-        const ddlManager = new DDLManager({
-            db: params.db,
-            folder: params.folder,
-            throwError: params.throwError
-        });
+    static async build(params: IParams) {
+        const ddlManager = new DDLManager(params);
         return await ddlManager.build();
     }
 
-    static async refreshCache(params: {
-        db: IDBConfig | pg.Client;
-        folder: string | string[];
-        throwError?: boolean;
-    }) {
-        const ddlManager = new DDLManager({
-            db: params.db,
-            folder: params.folder,
-            throwError: params.throwError
-        });
+    static async timeline(params: ITimelineParams) {
+        const ddlManager = new DDLManager(params);
+        return await ddlManager.timeline(params);
+    }
+
+    static async refreshCache(params: IParams) {
+        const ddlManager = new DDLManager(params);
         return await ddlManager.refreshCache();
     }
 
@@ -79,11 +82,7 @@ export class DDLManager {
     private needCloseConnect: boolean;
     private dbConfig: IDBConfig | pg.Client;
 
-    private constructor(params: {
-        db: IDBConfig | pg.Client;
-        folder: string | string[];
-        throwError?: boolean;
-    }) {
+    private constructor(params: IParams) {
 
         if ( typeof params.folder === "string" ) {
             this.folders = [params.folder];
@@ -114,6 +113,59 @@ export class DDLManager {
             postgres,
             migration,
             migrateErrors
+        );
+    }
+
+    // TODO: need tests and refactor
+    private async timeline(params: ITimelineParams) {
+        const db = await getDbClient(this.dbConfig);
+        const filesState = this.readFS();
+        const postgres = await this.postgres();
+        const database = await postgres.load();
+
+        const migration = await MainComparator.logAllFuncsMigration(
+            postgres,
+            database,
+            filesState
+        );
+
+        await createCallsTable(db);
+
+        console.log("logging all funcs");
+        const migrationErrors: Error[] = [];
+        const functionsMigrator = new FunctionsMigrator(
+            postgres,
+            migration,
+            database,
+            migrationErrors
+        );
+        await functionsMigrator.createLogFuncs();
+
+
+        console.log("reading scenarios");
+        const scenarios = readScenarios(params.scenariosPath);
+        for (const scenario of scenarios) {
+
+            console.log("try run scenario " + scenario.name);
+            try {
+                await testTimelineScenario(
+                    params.outputPath,
+                    db,
+                    scenario
+                );
+            }
+            catch(err) {
+                console.error(err);
+                throw new Error("failed scenario " + scenario.name + " with error: " + err.message);
+            }
+        }
+
+        console.log("unlogging all funcs");
+        await this.build();
+        await MainComparator.compareWithoutUpdates(
+            postgres,
+            database,
+            filesState
         );
     }
 
@@ -379,4 +431,58 @@ export class DDLManager {
         const postgres = new PostgresDriver(db);
         return postgres;
     }
+}
+
+function readScenarios(scenariosPath: string) {
+    const scenarios = [];
+
+    const dirs = fs.readdirSync(scenariosPath);
+    for (const scenarioDirName of dirs) {
+        const scenario = readScenario(scenariosPath, scenarioDirName);
+        scenarios.push(scenario);
+    }
+    
+    return scenarios;
+}
+
+function readScenario(
+    scenariosPath: string,
+    scenarioDirName: string
+) {
+    const beforeSQLPath = path.join(scenariosPath, scenarioDirName, "before.sql");
+    const sqlPath = path.join(scenariosPath, scenarioDirName, "test.sql");
+
+    const beforeSQL = fs.readFileSync(beforeSQLPath).toString();
+    const sql = fs.readFileSync(sqlPath).toString();
+
+    return {
+        name: scenarioDirName,
+        beforeSQL, 
+        sql
+    };
+}
+
+async function testTimelineScenario(
+    outputPath: string,
+    db: pg.Client,
+    scenario = {
+        name: "test",
+        beforeSQL: "select 1",
+        sql: "select 1"
+    }
+) {
+
+    await db.query(scenario.beforeSQL);
+    await clearCallsLogs(db);
+
+    await db.query(scenario.sql);
+    
+    const logs = await downloadLogs(db);
+    let rootCalls = parseCalls(logs);
+
+    createTimelineFile({
+        rootCalls,
+        outputPath,
+        name: scenario.name
+    });
 }
