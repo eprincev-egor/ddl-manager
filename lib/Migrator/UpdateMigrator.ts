@@ -4,6 +4,9 @@ import { TableReference } from "../database/schema/TableReference";
 import { IUpdate } from "./Migration";
 
 export class UpdateMigrator extends AbstractMigrator {
+
+    static timeoutOnDeadlock = 5000;
+
     async drop() {}
 
     async create() {
@@ -53,18 +56,21 @@ export class UpdateMigrator extends AbstractMigrator {
                 limit
             );
         } catch(err) {
-            // error can be are deadlock
-            if ( tryCount <= 0 ) {
-                return 0;
+            if ( /deadlock/.test(err.message) ) {
+                if ( tryCount <= 0 ) {
+                    throw err;
+                }
+
+                await sleep( UpdateMigrator.timeoutOnDeadlock );
+                return await this.tryUpdateCachePackage(
+                    selectToUpdate,
+                    forTableRef,
+                    limit,
+                    tryCount - 1
+                );
             }
 
-            await sleep(5000);
-            return await this.tryUpdateCachePackage(
-                selectToUpdate,
-                forTableRef,
-                limit,
-                tryCount - 1
-            );
+            throw err;
         }
     }
 }
