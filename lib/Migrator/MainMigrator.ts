@@ -51,10 +51,10 @@ export class MainMigrator {
         await indexes.drop();
 
         await columns.create();
-        await updates.create();
         await functions.create();
         await triggers.create();
         await indexes.create();
+        await updates.create();
 
         return outputErrors;
     }

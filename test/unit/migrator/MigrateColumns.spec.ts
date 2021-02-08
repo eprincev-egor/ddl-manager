@@ -116,7 +116,7 @@ describe("Migrator", () => {
     });
 
     it("retry update on deadlock", async() => {
-        UpdateMigrator.timeoutOnDeadlock = 50;
+        UpdateMigrator.timeoutOnDeadlock = 1;
         databaseDriver.setRowsCount("public.some_table", 1499);
 
         const originalUpdate = databaseDriver.updateCachePackage;
@@ -142,6 +142,7 @@ describe("Migrator", () => {
     });
 
     it("throw deadlock error, if cannot update many times", async() => {
+        UpdateMigrator.timeoutOnDeadlock = 1;
         
         databaseDriver.setRowsCount("public.some_table", 1499);
 

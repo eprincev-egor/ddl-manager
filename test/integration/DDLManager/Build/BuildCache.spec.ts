@@ -1174,4 +1174,65 @@ describe("integration/DDLManager.build cache", () => {
         );
     });
 
+    it("build functions/triggers before build cache", async() => {
+        const folderPath = ROOT_TMP_PATH + "/cache-with-func-and-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                orders_profit numeric default 0
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer,
+                note text
+            );
+
+            insert into companies default values;
+            insert into orders (id_client, note)
+            values (1, 'test');
+        `);
+        
+        fs.writeFileSync(folderPath + "/prepare_note.sql", `
+            create or replace function prepare_note(note text)
+            returns text as $body$
+            begin
+                return note || ': prepared';
+            end
+            $body$
+            language plpgsql;
+        `);
+        fs.writeFileSync(folderPath + "/set_note_trigger.sql", `
+            cache totals for companies (
+                select
+                    string_agg(
+                        prepare_note( orders.note ),
+                        ', '
+                    ) as orders_notes
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            select orders_notes
+            from companies
+            where id = 1
+        `);
+        const row = result.rows[0];
+
+        expect(row).to.be.shallowDeepEqual({
+            orders_notes: "test: prepared"
+        });
+    });
+
 });
