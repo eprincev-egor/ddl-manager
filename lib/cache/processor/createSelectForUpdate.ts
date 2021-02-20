@@ -36,7 +36,12 @@ export function createSelectForUpdate(
             return column;
         });
 
-        if ( !selectColumn.expression.isFuncCall() ) {
+        const needCreateMainColumn = (
+            Object.keys(aggregations).length === 0
+            ||
+            !selectColumn.expression.isFuncCall()
+        )
+        if ( needCreateMainColumn ) {
             columns.push(selectColumn);
         }
 

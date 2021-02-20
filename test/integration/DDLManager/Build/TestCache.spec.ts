@@ -344,4 +344,57 @@ describe("integration/DDLManager.build cache", () => {
         }
     });
 
+    it("test cache with self update", async() => {
+        const folderPath = ROOT_TMP_PATH + "/gtd_dates";
+        fs.mkdirSync(folderPath);
+
+        const someDate = "2021-02-20 10:10:10";
+
+        await db.query(`
+            create table list_gtd (
+                id serial primary key,
+                date_clear timestamp without time zone,
+                date_conditional_clear timestamp without time zone,
+                date_release_for_procuring timestamp without time zone
+            );
+
+            insert into list_gtd (
+                date_release_for_procuring
+            ) values (
+                '${someDate}'
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/gtd.sql", `
+            cache self_dates for list_gtd (
+                select
+                    coalesce(
+                        list_gtd.date_clear,
+                        list_gtd.date_conditional_clear,
+                        list_gtd.date_release_for_procuring
+                    ) as clear_date_total
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        // check default values
+        const result = await db.query(`
+            select
+                id,
+                clear_date_total::text as clear_date_total
+
+            from list_gtd
+        `);
+
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            clear_date_total: someDate
+        }]);
+    });
+
 });
