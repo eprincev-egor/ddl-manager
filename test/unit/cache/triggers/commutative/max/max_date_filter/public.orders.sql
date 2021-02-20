@@ -8,9 +8,9 @@ begin
             old.id_client is not null
             and
             (
-                old.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
+                coalesce(old.id_order_type = any (array[1, 2, 3, 4] :: bigint[]), false)
                 or
-                old.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
+                coalesce(old.id_order_type = any (array[5, 6, 7, 8] :: bigint[]), false)
             )
         then
             update companies set
@@ -96,14 +96,14 @@ begin
                     when
                         new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
                         and
-                        not(old.id_order_type = any (array[1, 2, 3, 4] :: bigint[]))
+                        not coalesce(old.id_order_type = any (array[1, 2, 3, 4] :: bigint[]), false)
                     then
                         array_append(
                             max_general_order_date_order_date,
                             new.order_date
                         )
                     when
-                        not(new.id_order_type = any (array[1, 2, 3, 4] :: bigint[]))
+                        not coalesce(new.id_order_type = any (array[1, 2, 3, 4] :: bigint[]), false)
                         and
                         old.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
                     then
@@ -124,14 +124,14 @@ begin
                     when
                         new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
                         and
-                        not(old.id_order_type = any (array[1, 2, 3, 4] :: bigint[]))
+                        not coalesce(old.id_order_type = any (array[1, 2, 3, 4] :: bigint[]), false)
                     then
                         greatest(
                             max_general_order_date,
                             new.order_date
                         )
                     when
-                        not(new.id_order_type = any (array[1, 2, 3, 4] :: bigint[]))
+                        not coalesce(new.id_order_type = any (array[1, 2, 3, 4] :: bigint[]), false)
                         and
                         old.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
                     then
@@ -166,14 +166,14 @@ begin
                     when
                         new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
                         and
-                        not(old.id_order_type = any (array[5, 6, 7, 8] :: bigint[]))
+                        not coalesce(old.id_order_type = any (array[5, 6, 7, 8] :: bigint[]), false)
                     then
                         array_append(
                             max_combiner_order_date_order_date,
                             new.order_date
                         )
                     when
-                        not(new.id_order_type = any (array[5, 6, 7, 8] :: bigint[]))
+                        not coalesce(new.id_order_type = any (array[5, 6, 7, 8] :: bigint[]), false)
                         and
                         old.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
                     then
@@ -194,14 +194,14 @@ begin
                     when
                         new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
                         and
-                        not(old.id_order_type = any (array[5, 6, 7, 8] :: bigint[]))
+                        not coalesce(old.id_order_type = any (array[5, 6, 7, 8] :: bigint[]), false)
                     then
                         greatest(
                             max_combiner_order_date,
                             new.order_date
                         )
                     when
-                        not(new.id_order_type = any (array[5, 6, 7, 8] :: bigint[]))
+                        not coalesce(new.id_order_type = any (array[5, 6, 7, 8] :: bigint[]), false)
                         and
                         old.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
                     then
@@ -242,9 +242,9 @@ begin
             old.id_client is not null
             and
             (
-                old.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
+                coalesce(old.id_order_type = any (array[1, 2, 3, 4] :: bigint[]), false)
                 or
-                old.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
+                coalesce(old.id_order_type = any (array[5, 6, 7, 8] :: bigint[]), false)
             )
         then
             update companies set
@@ -314,9 +314,9 @@ begin
             new.id_client is not null
             and
             (
-                new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
+                coalesce(new.id_order_type = any (array[1, 2, 3, 4] :: bigint[]), false)
                 or
-                new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
+                coalesce(new.id_order_type = any (array[5, 6, 7, 8] :: bigint[]), false)
             )
         then
             update companies set
@@ -377,9 +377,9 @@ begin
             new.id_client is not null
             and
             (
-                new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
+                coalesce(new.id_order_type = any (array[1, 2, 3, 4] :: bigint[]), false)
                 or
-                new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
+                coalesce(new.id_order_type = any (array[5, 6, 7, 8] :: bigint[]), false)
             )
         then
             update companies set

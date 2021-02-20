@@ -37,6 +37,7 @@ export interface ICase {
 }
 
 export interface IDeltaCase extends ICase {
+    exitIf?: Expression;
     old: {
         needUpdate?: Expression;
         update?: Update;
@@ -220,6 +221,8 @@ function buildDeltaUpdate(deltaCase: IDeltaCase) {
         return [new If({
             if: deltaCase.needUpdate,
             then: [
+                ...exitIf(deltaCase.exitIf),
+
                 deltaCase.update,
                 new BlankLine(),
                 new HardCode({sql: "return new;"})
@@ -417,11 +420,20 @@ function reassignVariables(newJoins: IJoin[], oldJoins: IJoin[]) {
     return lines;
 }
 
-function isNotDistinctFrom(columns: string[]) {
-    const conditions = columns.map(column =>
-        `new.${ column } is not distinct from old.${ column }`
-    );
-    return Expression.and(conditions);
+function exitIf(condition?: Expression) {
+    if ( !condition ) {
+        return [];
+    }
+
+    return [
+        new If({
+            if: condition,
+            then: [
+                new HardCode({sql: "return new;"})
+            ]
+        }),
+        new BlankLine()
+    ];
 }
 
 function assignArrVars(

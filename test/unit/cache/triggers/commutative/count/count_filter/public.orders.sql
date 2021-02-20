@@ -7,7 +7,7 @@ begin
         if
             old.id_client is not null
             and
-            old.id_order_type in (1, 2, 3)
+            coalesce(old.id_order_type in (1, 2, 3), false)
         then
             update companies set
                 orders_count = orders_count - 1
@@ -32,7 +32,7 @@ begin
         if
             old.id_client is not null
             and
-            old.id_order_type in (1, 2, 3)
+            coalesce(old.id_order_type in (1, 2, 3), false)
         then
             update companies set
                 orders_count = orders_count - 1
@@ -43,7 +43,7 @@ begin
         if
             new.id_client is not null
             and
-            new.id_order_type in (1, 2, 3)
+            coalesce(new.id_order_type in (1, 2, 3), false)
         then
             update companies set
                 orders_count = orders_count + 1
@@ -59,7 +59,7 @@ begin
         if
             new.id_client is not null
             and
-            new.id_order_type in (1, 2, 3)
+            coalesce(new.id_order_type in (1, 2, 3), false)
         then
             update companies set
                 orders_count = orders_count + 1

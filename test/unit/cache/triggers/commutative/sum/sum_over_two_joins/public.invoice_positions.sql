@@ -109,6 +109,10 @@ begin
             and
             new.deleted is not distinct from old.deleted
         then
+            if not coalesce(new.deleted = 0, false) then
+                return new;
+            end if;
+
             update invoice set
                 total_base_cost = total_base_cost - coalesce(
                     old_rate_expense_category_base_cost,

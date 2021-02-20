@@ -8,9 +8,9 @@ begin
             old.id_client is not null
             and
             (
-                old.is_sale
+                coalesce(old.is_sale, false)
                 or
-                old.is_buy
+                coalesce(old.is_buy, false)
             )
         then
             update companies set
@@ -71,11 +71,11 @@ begin
                     when
                         new.is_sale
                         and
-                        not(old.is_sale)
+                        not coalesce(old.is_sale, false)
                     then
                         orders_profit_sum_total_is_sale + coalesce(new.total, 0)
                     when
-                        not(new.is_sale)
+                        not coalesce(new.is_sale, false)
                         and
                         old.is_sale
                     then
@@ -87,11 +87,11 @@ begin
                     when
                         new.is_buy
                         and
-                        not(old.is_buy)
+                        not coalesce(old.is_buy, false)
                     then
                         orders_profit_sum_total_is_buy + coalesce(new.total, 0)
                     when
-                        not(new.is_buy)
+                        not coalesce(new.is_buy, false)
                         and
                         old.is_buy
                     then
@@ -103,11 +103,11 @@ begin
                     when
                         new.is_sale
                         and
-                        not(old.is_sale)
+                        not coalesce(old.is_sale, false)
                     then
                         orders_profit_sum_total_is_sale + coalesce(new.total, 0)
                     when
-                        not(new.is_sale)
+                        not coalesce(new.is_sale, false)
                         and
                         old.is_sale
                     then
@@ -118,11 +118,11 @@ begin
                     when
                         new.is_buy
                         and
-                        not(old.is_buy)
+                        not coalesce(old.is_buy, false)
                     then
                         orders_profit_sum_total_is_buy + coalesce(new.total, 0)
                     when
-                        not(new.is_buy)
+                        not coalesce(new.is_buy, false)
                         and
                         old.is_buy
                     then
@@ -140,9 +140,9 @@ begin
             old.id_client is not null
             and
             (
-                old.is_sale
+                coalesce(old.is_sale, false)
                 or
-                old.is_buy
+                coalesce(old.is_buy, false)
             )
         then
             update companies set
@@ -185,9 +185,9 @@ begin
             new.id_client is not null
             and
             (
-                new.is_sale
+                coalesce(new.is_sale, false)
                 or
-                new.is_buy
+                coalesce(new.is_buy, false)
             )
         then
             update companies set
@@ -235,9 +235,9 @@ begin
             new.id_client is not null
             and
             (
-                new.is_sale
+                coalesce(new.is_sale, false)
                 or
-                new.is_buy
+                coalesce(new.is_buy, false)
             )
         then
             update companies set

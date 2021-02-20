@@ -40,14 +40,14 @@ begin
                     when
                         new.id_order_type in (1, 2, 3)
                         and
-                        not(old.id_order_type in (1, 2, 3))
+                        not coalesce(old.id_order_type in (1, 2, 3), false)
                     then
                         array_append(
                             general_orders_ids,
                             new.id
                         )
                     when
-                        not(new.id_order_type in (1, 2, 3))
+                        not coalesce(new.id_order_type in (1, 2, 3), false)
                         and
                         old.id_order_type in (1, 2, 3)
                     then

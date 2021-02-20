@@ -1,4 +1,4 @@
-import { ColumnReference, Expression, UnknownExpressionElement } from "../../../ast";
+import { ColumnReference, Expression, NotExpression, UnknownExpressionElement } from "../../../ast";
 import { CacheContext } from "../CacheContext";
 import { TableReference } from "../../../database/schema/TableReference";
 import { flatMap } from "lodash";
@@ -11,6 +11,7 @@ import { buildJoinVariables } from "../../processor/buildJoinVariables";
 import { Table } from "../../../database/schema/Table";
 import { Column } from "../../../database/schema/Column";
 import { buildArrVars } from "../../processor/buildArrVars";
+import { CoalesceFalseExpression } from "../../../ast/expression/CoalesceFalseExpression";
 
 
 export type RowType = "new" | "old";
@@ -107,6 +108,19 @@ export class ConditionBuilder {
             buildArrVars(this.context, row)
         );
         return output;
+    }
+
+    exitFromDeltaUpdateIf(): Expression | undefined {
+        const conditions = this.context.referenceMeta.filters.map(filter =>
+            new NotExpression(
+                this.replaceTriggerTableRefsTo(filter, "new")!
+            )
+        );
+        if ( !conditions.length ) {
+            return;
+        }
+
+        return Expression.or(conditions);
     }
 
     private buildNoChanges(columns: ColumnReference[]) {
@@ -265,7 +279,7 @@ export class ConditionBuilder {
     
         const filterConditions = allAggCalls.map(aggCall => {
             const expression = aggCall.where as Expression;
-            return expression;
+            return new CoalesceFalseExpression(expression);
         });
     
         return Expression.or(filterConditions);
@@ -333,4 +347,8 @@ export class ConditionBuilder {
         );
         return triggerTableColumnsRefs;
     }
+}
+
+function inversion(expression: Expression) {
+    return `not coalesce(${expression.toString()}, false)`;
 }

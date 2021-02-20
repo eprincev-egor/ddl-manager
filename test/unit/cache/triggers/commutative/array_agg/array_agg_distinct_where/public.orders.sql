@@ -7,7 +7,7 @@ begin
         if
             old.id_client is not null
             and
-            old.order_date is not null
+            coalesce(old.order_date is not null, false)
         then
             update companies set
                 orders_dates_order_date = cm_array_remove_one_element(
@@ -47,14 +47,14 @@ begin
                     when
                         new.order_date is not null
                         and
-                        not(old.order_date is not null)
+                        not coalesce(old.order_date is not null, false)
                     then
                         array_append(
                             orders_dates_order_date,
                             new.order_date
                         )
                     when
-                        not(new.order_date is not null)
+                        not coalesce(new.order_date is not null, false)
                         and
                         old.order_date is not null
                     then
@@ -75,7 +75,7 @@ begin
                     when
                         new.order_date is not null
                         and
-                        not(old.order_date is not null)
+                        not coalesce(old.order_date is not null, false)
                     then
                         case
                             when
@@ -93,7 +93,7 @@ begin
                                 orders_dates
                         end
                     when
-                        not(new.order_date is not null)
+                        not coalesce(new.order_date is not null, false)
                         and
                         old.order_date is not null
                     then
@@ -133,7 +133,7 @@ begin
         if
             old.id_client is not null
             and
-            old.order_date is not null
+            coalesce(old.order_date is not null, false)
         then
             update companies set
                 orders_dates_order_date = cm_array_remove_one_element(
@@ -158,7 +158,7 @@ begin
         if
             new.id_client is not null
             and
-            new.order_date is not null
+            coalesce(new.order_date is not null, false)
         then
             update companies set
                 orders_dates_order_date = array_append(
@@ -192,7 +192,7 @@ begin
         if
             new.id_client is not null
             and
-            new.order_date is not null
+            coalesce(new.order_date is not null, false)
         then
             update companies set
                 orders_dates_order_date = array_append(

@@ -7,7 +7,7 @@ begin
         if
             old.id_client is not null
             and
-            old.profit > 0
+            coalesce(old.profit > 0, false)
         then
             update companies set
                 orders_numbers_doc_number = cm_array_remove_one_element(
@@ -54,14 +54,14 @@ begin
                     when
                         new.profit > 0
                         and
-                        not(old.profit > 0)
+                        not coalesce(old.profit > 0, false)
                     then
                         array_append(
                             orders_numbers_doc_number,
                             new.doc_number
                         )
                     when
-                        not(new.profit > 0)
+                        not coalesce(new.profit > 0, false)
                         and
                         old.profit > 0
                     then
@@ -82,7 +82,7 @@ begin
                     when
                         new.profit > 0
                         and
-                        not(old.profit > 0)
+                        not coalesce(old.profit > 0, false)
                     then
                         (
                             select
@@ -101,7 +101,7 @@ begin
                             ) as item(doc_number)
                         )
                     when
-                        not(new.profit > 0)
+                        not coalesce(new.profit > 0, false)
                         and
                         old.profit > 0
                     then
@@ -151,7 +151,7 @@ begin
         if
             old.id_client is not null
             and
-            old.profit > 0
+            coalesce(old.profit > 0, false)
         then
             update companies set
                 orders_numbers_doc_number = cm_array_remove_one_element(
@@ -181,7 +181,7 @@ begin
         if
             new.id_client is not null
             and
-            new.profit > 0
+            coalesce(new.profit > 0, false)
         then
             update companies set
                 orders_numbers_doc_number = array_append(
@@ -216,7 +216,7 @@ begin
         if
             new.id_client is not null
             and
-            new.profit > 0
+            coalesce(new.profit > 0, false)
         then
             update companies set
                 orders_numbers_doc_number = array_append(

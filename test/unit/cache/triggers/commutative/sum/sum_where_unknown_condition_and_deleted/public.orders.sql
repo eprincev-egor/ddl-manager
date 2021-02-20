@@ -33,6 +33,10 @@ begin
             and
             new.deleted is not distinct from old.deleted
         then
+            if not coalesce(new.deleted = 0, false) then
+                return new;
+            end if;
+
             update companies set
                 orders_total = orders_total - coalesce(old.profit, 0) + coalesce(new.profit, 0)
             where

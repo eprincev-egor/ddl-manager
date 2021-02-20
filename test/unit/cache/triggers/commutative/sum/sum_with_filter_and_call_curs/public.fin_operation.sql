@@ -10,9 +10,9 @@ begin
             old.deleted = 0
             and
             (
-                old.id_fin_operation_type = 1
+                coalesce(old.id_fin_operation_type = 1, false)
                 or
-                old.id_fin_operation_type = 2
+                coalesce(old.id_fin_operation_type = 2, false)
             )
         then
             update orders set
@@ -73,12 +73,16 @@ begin
             and
             new.deleted is not distinct from old.deleted
         then
+            if not coalesce(new.deleted = 0, false) then
+                return new;
+            end if;
+
             update orders set
                 fin_operation_buys = case
                     when
                         new.id_fin_operation_type = 1
                         and
-                        not(old.id_fin_operation_type = 1)
+                        not coalesce(old.id_fin_operation_type = 1, false)
                     then
                         fin_operation_buys + coalesce(
                             new.sum * get_curs(
@@ -88,7 +92,7 @@ begin
                             0
                         )
                     when
-                        not(new.id_fin_operation_type = 1)
+                        not coalesce(new.id_fin_operation_type = 1, false)
                         and
                         old.id_fin_operation_type = 1
                     then
@@ -118,7 +122,7 @@ begin
                     when
                         new.id_fin_operation_type = 2
                         and
-                        not(old.id_fin_operation_type = 2)
+                        not coalesce(old.id_fin_operation_type = 2, false)
                     then
                         fin_operation_sales + coalesce(
                             new.sum * get_curs(
@@ -128,7 +132,7 @@ begin
                             0
                         )
                     when
-                        not(new.id_fin_operation_type = 2)
+                        not coalesce(new.id_fin_operation_type = 2, false)
                         and
                         old.id_fin_operation_type = 2
                     then
@@ -166,9 +170,9 @@ begin
             old.deleted = 0
             and
             (
-                old.id_fin_operation_type = 1
+                coalesce(old.id_fin_operation_type = 1, false)
                 or
-                old.id_fin_operation_type = 2
+                coalesce(old.id_fin_operation_type = 2, false)
             )
         then
             update orders set
@@ -210,9 +214,9 @@ begin
             new.deleted = 0
             and
             (
-                new.id_fin_operation_type = 1
+                coalesce(new.id_fin_operation_type = 1, false)
                 or
-                new.id_fin_operation_type = 2
+                coalesce(new.id_fin_operation_type = 2, false)
             )
         then
             update orders set
@@ -259,9 +263,9 @@ begin
             new.deleted = 0
             and
             (
-                new.id_fin_operation_type = 1
+                coalesce(new.id_fin_operation_type = 1, false)
                 or
-                new.id_fin_operation_type = 2
+                coalesce(new.id_fin_operation_type = 2, false)
             )
         then
             update orders set

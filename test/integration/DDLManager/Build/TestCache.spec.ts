@@ -144,4 +144,204 @@ describe("integration/DDLManager.build cache", () => {
         }]);
     });
 
+    it("test cache with custom agg", async() => {
+        const folderPath = ROOT_TMP_PATH + "/max_or_null";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create or replace function max_or_null_date(
+                prev_date timestamp without time zone,
+                next_date timestamp without time zone
+            ) returns timestamp without time zone as $body$
+            begin
+                if prev_date = '0001-01-01 00:00:00' then
+                    return next_date;
+                end if;
+
+                if prev_date is null then
+                    return null;
+                end if;
+
+                if next_date is null then
+                    return null;
+                end if;
+
+                return greatest(prev_date, next_date);
+            end
+            $body$
+            language plpgsql;
+
+            create or replace function max_or_null_date_final(
+                final_date timestamp without time zone
+            ) returns timestamp without time zone as $body$
+            begin
+                if final_date = '0001-01-01 00:00:00' then
+                    return null;
+                end if;
+            
+                return final_date;
+            end
+            $body$
+            language plpgsql;
+
+            CREATE AGGREGATE max_or_null_date_agg (timestamp without time zone)
+            (
+                sfunc = max_or_null_date,
+                finalfunc = max_or_null_date_final,
+                stype = timestamp without time zone,
+                initcond = '0001-01-01T00:00:00.000Z'
+            );
+
+            create table public.order (
+                id serial primary key
+            );
+
+            drop schema if exists operation cascade;
+            create schema operation;
+            create table operation.unit (
+                id serial primary key,
+                id_order bigint,
+                sea_date timestamp without time zone,
+                deleted smallint default 0
+            );
+
+            insert into public.order default values;
+            insert into operation.unit (id_order)
+            values (1);
+        `);
+
+        fs.writeFileSync(folderPath + "/orders.sql", `
+            cache unit_dates for public.order (
+                select
+                    max_or_null_date_agg( unit.sea_date ) as max_or_null_sea_date
+                from operation.unit
+                where
+                    unit.id_order = public.order.id and
+                    unit.deleted = 0
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        let result;
+
+
+        // test default values
+        await testOrder({
+            id: 1,
+            max_or_null_sea_date_sea_date: [null],
+            max_or_null_sea_date: null
+        });
+
+        // test set deleted = 1
+        await db.query(`
+            update operation.unit set
+                deleted = 1
+        `);
+        await testOrder({
+            id: 1,
+            max_or_null_sea_date_sea_date: [],
+            max_or_null_sea_date: null
+        });
+
+        // test insert two units
+        await db.query(`
+            insert into operation.unit (id_order)
+            values (1), (1);
+        `);
+        await testOrder({
+            id: 1,
+            max_or_null_sea_date_sea_date: [null, null],
+            max_or_null_sea_date: null
+        });
+
+
+        const someDate = "2021-02-20 10:10:10";
+
+        // test update first unit
+        await db.query(`
+            update operation.unit set
+                sea_date = '${someDate}'
+            where
+                id = 2
+        `);
+        result = await db.query(`
+            select
+                id,
+                max_or_null_sea_date_sea_date::text[],
+                max_or_null_sea_date
+            from public.order
+        `);
+        await testOrder({
+            id: 1,
+            max_or_null_sea_date_sea_date: [null, someDate],
+            max_or_null_sea_date: null
+        });
+
+
+        // test update second unit
+        await db.query(`
+            update operation.unit set
+                sea_date = '${someDate}'
+            where
+                id = 3
+        `);
+        await testOrder({
+            id: 1,
+            max_or_null_sea_date_sea_date: [someDate, someDate],
+            max_or_null_sea_date: someDate
+        });
+
+        // test insert third unit
+        await db.query(`
+            insert into operation.unit (id_order)
+            values (1)
+        `);
+        await testOrder({
+            id: 1,
+            max_or_null_sea_date_sea_date: [someDate, someDate, null],
+            max_or_null_sea_date: null
+        });
+            
+        // test trash and update second unit
+        const otherDate = "2021-03-10 20:20:20";
+        await db.query(`
+            update operation.unit set
+                deleted = 1
+            where
+                id = 3
+        `);
+        await db.query(`
+            update operation.unit set
+                sea_date = '${otherDate}'
+            where
+                id = 3
+        `);
+        await testOrder({
+            id: 1,
+            max_or_null_sea_date_sea_date: [someDate, null],
+            max_or_null_sea_date: null
+        });
+
+
+        async function testOrder(expectedRow: {
+            id: number,
+            max_or_null_sea_date_sea_date: (string | null)[],
+            max_or_null_sea_date: string | null
+        }) {
+            result = await db.query(`
+                select
+                    id,
+                    max_or_null_sea_date_sea_date::text[],
+                    max_or_null_sea_date::text
+                from public.order
+            `);
+            assert.deepStrictEqual(result.rows, [expectedRow]);
+        }
+    });
+
 });

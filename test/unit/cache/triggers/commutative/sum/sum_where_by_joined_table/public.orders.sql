@@ -76,6 +76,14 @@ begin
             and
             new_order_type_name is not distinct from old_order_type_name
         then
+            if
+                not coalesce(new.deleted = 0, false)
+                or
+                not coalesce(new_order_type_name in ('LCL', 'LTL'), false)
+            then
+                return new;
+            end if;
+
             update companies set
                 orders_total = orders_total - coalesce(old.profit, 0) + coalesce(new.profit, 0)
             where

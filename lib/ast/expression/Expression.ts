@@ -62,7 +62,7 @@ export class Expression extends AbstractExpressionElement {
         this.elements = elements;
     }
 
-    protected children() {
+    children() {
         return this.elements;
     }
 

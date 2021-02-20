@@ -7,7 +7,7 @@ begin
         if
             old.id_client is not null
             and
-            old.id_order_type in (1, 2, 3)
+            coalesce(old.id_order_type in (1, 2, 3), false)
         then
             update companies set
                 general_orders_dates = cm_array_remove_one_element(
@@ -38,14 +38,14 @@ begin
                     when
                         new.id_order_type in (1, 2, 3)
                         and
-                        not(old.id_order_type in (1, 2, 3))
+                        not coalesce(old.id_order_type in (1, 2, 3), false)
                     then
                         array_append(
                             general_orders_dates,
                             new.date
                         )
                     when
-                        not(new.id_order_type in (1, 2, 3))
+                        not coalesce(new.id_order_type in (1, 2, 3), false)
                         and
                         old.id_order_type in (1, 2, 3)
                     then
@@ -71,7 +71,7 @@ begin
         if
             old.id_client is not null
             and
-            old.id_order_type in (1, 2, 3)
+            coalesce(old.id_order_type in (1, 2, 3), false)
         then
             update companies set
                 general_orders_dates = cm_array_remove_one_element(
@@ -85,7 +85,7 @@ begin
         if
             new.id_client is not null
             and
-            new.id_order_type in (1, 2, 3)
+            coalesce(new.id_order_type in (1, 2, 3), false)
         then
             update companies set
                 general_orders_dates = array_append(
@@ -104,7 +104,7 @@ begin
         if
             new.id_client is not null
             and
-            new.id_order_type in (1, 2, 3)
+            coalesce(new.id_order_type in (1, 2, 3), false)
         then
             update companies set
                 general_orders_dates = array_append(

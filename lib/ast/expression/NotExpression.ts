@@ -10,7 +10,7 @@ export class NotExpression extends AbstractExpressionElement {
     }
 
     template() {
-        return [`not(${ this.not })`];
+        return [`not coalesce(${ this.not }, false)`];
     }
 
     clone() {

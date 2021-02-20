@@ -189,6 +189,10 @@ begin
             and
             new.deleted is not distinct from old.deleted
         then
+            if not coalesce(new.deleted = 0, false) then
+                return new;
+            end if;
+
             update operation.unit set
                 group_unit_quantity = group_unit_quantity - coalesce(old.quantity, 0) + coalesce(new.quantity, 0),
                 group_unit_netto_weight = group_unit_netto_weight - coalesce(old.netto_weight, 0) + coalesce(new.netto_weight, 0),
@@ -200,14 +204,14 @@ begin
                     when
                         new_company_buyer_list_company_name is not null
                         and
-                        not(old_company_buyer_list_company_name is not null)
+                        not coalesce(old_company_buyer_list_company_name is not null, false)
                     then
                         array_append(
                             group_unit_buyers_names_list_company_name,
                             new_company_buyer_list_company_name
                         )
                     when
-                        not(new_company_buyer_list_company_name is not null)
+                        not coalesce(new_company_buyer_list_company_name is not null, false)
                         and
                         old_company_buyer_list_company_name is not null
                     then
@@ -228,7 +232,7 @@ begin
                     when
                         new_company_buyer_list_company_name is not null
                         and
-                        not(old_company_buyer_list_company_name is not null)
+                        not coalesce(old_company_buyer_list_company_name is not null, false)
                     then
                         case
                             when
@@ -251,7 +255,7 @@ begin
                                 group_unit_buyers_names
                         end
                     when
-                        not(new_company_buyer_list_company_name is not null)
+                        not coalesce(new_company_buyer_list_company_name is not null, false)
                         and
                         old_company_buyer_list_company_name is not null
                     then
@@ -292,14 +296,14 @@ begin
                     when
                         new_point_delivery_list_warehouse_name is not null
                         and
-                        not(old_point_delivery_list_warehouse_name is not null)
+                        not coalesce(old_point_delivery_list_warehouse_name is not null, false)
                     then
                         array_append(
                             group_unit_delivery_names_list_warehouse_name,
                             new_point_delivery_list_warehouse_name
                         )
                     when
-                        not(new_point_delivery_list_warehouse_name is not null)
+                        not coalesce(new_point_delivery_list_warehouse_name is not null, false)
                         and
                         old_point_delivery_list_warehouse_name is not null
                     then
@@ -320,7 +324,7 @@ begin
                     when
                         new_point_delivery_list_warehouse_name is not null
                         and
-                        not(old_point_delivery_list_warehouse_name is not null)
+                        not coalesce(old_point_delivery_list_warehouse_name is not null, false)
                     then
                         case
                             when
@@ -343,7 +347,7 @@ begin
                                 group_unit_delivery_names
                         end
                     when
-                        not(new_point_delivery_list_warehouse_name is not null)
+                        not coalesce(new_point_delivery_list_warehouse_name is not null, false)
                         and
                         old_point_delivery_list_warehouse_name is not null
                     then

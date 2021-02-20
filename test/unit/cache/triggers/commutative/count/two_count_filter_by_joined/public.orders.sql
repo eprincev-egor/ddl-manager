@@ -18,9 +18,9 @@ begin
             end if;
 
             if
-                old_country_code = 'RUS'
+                coalesce(old_country_code = 'RUS', false)
                 or
-                old_country_code = 'ENG'
+                coalesce(old_country_code = 'ENG', false)
             then
                 update companies set
                     rus_orders_count = case
@@ -86,9 +86,9 @@ begin
             old.id_client is not null
             and
             (
-                old_country_code = 'RUS'
+                coalesce(old_country_code = 'RUS', false)
                 or
-                old_country_code = 'ENG'
+                coalesce(old_country_code = 'ENG', false)
             )
         then
             update companies set
@@ -116,9 +116,9 @@ begin
             new.id_client is not null
             and
             (
-                new_country_code = 'RUS'
+                coalesce(new_country_code = 'RUS', false)
                 or
-                new_country_code = 'ENG'
+                coalesce(new_country_code = 'ENG', false)
             )
         then
             update companies set
@@ -159,9 +159,9 @@ begin
             end if;
 
             if
-                new_country_code = 'RUS'
+                coalesce(new_country_code = 'RUS', false)
                 or
-                new_country_code = 'ENG'
+                coalesce(new_country_code = 'ENG', false)
             then
                 update companies set
                     rus_orders_count = case

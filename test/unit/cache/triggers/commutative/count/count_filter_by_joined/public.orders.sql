@@ -17,7 +17,7 @@ begin
                 );
             end if;
 
-            if old_country_code = 'RUS' then
+            if coalesce(old_country_code = 'RUS', false) then
                 update companies set
                     orders_count = orders_count - 1
                 where
@@ -66,7 +66,7 @@ begin
         if
             old.id_client is not null
             and
-            old_country_code = 'RUS'
+            coalesce(old_country_code = 'RUS', false)
         then
             update companies set
                 orders_count = orders_count - 1
@@ -77,7 +77,7 @@ begin
         if
             new.id_client is not null
             and
-            new_country_code = 'RUS'
+            coalesce(new_country_code = 'RUS', false)
         then
             update companies set
                 orders_count = orders_count + 1
@@ -101,7 +101,7 @@ begin
                 );
             end if;
 
-            if new_country_code = 'RUS' then
+            if coalesce(new_country_code = 'RUS', false) then
                 update companies set
                     orders_count = orders_count + 1
                 where

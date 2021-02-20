@@ -40,6 +40,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
             {
                 needUpdate: this.conditions.noReferenceChanges(),
                 update: deltaUpdate,
+                exitIf: this.conditions.exitFromDeltaUpdateIf(),
                 old: {
                     needUpdate: this.conditions.needUpdateConditionOnUpdate("old"),
                     update: this.needUpdateInDelta() ? new Update({

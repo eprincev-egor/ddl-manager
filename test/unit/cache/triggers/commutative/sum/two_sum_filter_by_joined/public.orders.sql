@@ -18,9 +18,9 @@ begin
             end if;
 
             if
-                old_order_type_name = 'LTL'
+                coalesce(old_order_type_name = 'LTL', false)
                 or
-                old_order_type_name = 'FTL'
+                coalesce(old_order_type_name = 'FTL', false)
             then
                 update companies set
                     ltl_profit = case
@@ -88,11 +88,11 @@ begin
                     when
                         new_order_type_name = 'LTL'
                         and
-                        not(old_order_type_name = 'LTL')
+                        not coalesce(old_order_type_name = 'LTL', false)
                     then
                         ltl_profit + coalesce(new.profit, 0)
                     when
-                        not(new_order_type_name = 'LTL')
+                        not coalesce(new_order_type_name = 'LTL', false)
                         and
                         old_order_type_name = 'LTL'
                     then
@@ -104,11 +104,11 @@ begin
                     when
                         new_order_type_name = 'FTL'
                         and
-                        not(old_order_type_name = 'FTL')
+                        not coalesce(old_order_type_name = 'FTL', false)
                     then
                         ftl_orders_profit + coalesce(new.profit, 0)
                     when
-                        not(new_order_type_name = 'FTL')
+                        not coalesce(new_order_type_name = 'FTL', false)
                         and
                         old_order_type_name = 'FTL'
                     then
@@ -126,9 +126,9 @@ begin
             old.id_client is not null
             and
             (
-                old_order_type_name = 'LTL'
+                coalesce(old_order_type_name = 'LTL', false)
                 or
-                old_order_type_name = 'FTL'
+                coalesce(old_order_type_name = 'FTL', false)
             )
         then
             update companies set
@@ -156,9 +156,9 @@ begin
             new.id_client is not null
             and
             (
-                new_order_type_name = 'LTL'
+                coalesce(new_order_type_name = 'LTL', false)
                 or
-                new_order_type_name = 'FTL'
+                coalesce(new_order_type_name = 'FTL', false)
             )
         then
             update companies set
@@ -199,9 +199,9 @@ begin
             end if;
 
             if
-                new_order_type_name = 'LTL'
+                coalesce(new_order_type_name = 'LTL', false)
                 or
-                new_order_type_name = 'FTL'
+                coalesce(new_order_type_name = 'FTL', false)
             then
                 update companies set
                     ltl_profit = case

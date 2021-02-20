@@ -8,9 +8,9 @@ begin
             old.id_client is not null
             and
             (
-                old.id_order_type = 1
+                coalesce(old.id_order_type = 1, false)
                 or
-                old.id_order_type = 2
+                coalesce(old.id_order_type = 2, false)
             )
         then
             update companies set
@@ -52,11 +52,11 @@ begin
                     when
                         new.id_order_type = 1
                         and
-                        not(old.id_order_type = 1)
+                        not coalesce(old.id_order_type = 1, false)
                     then
                         array_append(fcl_orders_ids, new.id)
                     when
-                        not(new.id_order_type = 1)
+                        not coalesce(new.id_order_type = 1, false)
                         and
                         old.id_order_type = 1
                     then
@@ -68,11 +68,11 @@ begin
                     when
                         new.id_order_type = 2
                         and
-                        not(old.id_order_type = 2)
+                        not coalesce(old.id_order_type = 2, false)
                     then
                         array_append(ltl_orders_ids, new.id)
                     when
-                        not(new.id_order_type = 2)
+                        not coalesce(new.id_order_type = 2, false)
                         and
                         old.id_order_type = 2
                     then
@@ -90,9 +90,9 @@ begin
             old.id_client is not null
             and
             (
-                old.id_order_type = 1
+                coalesce(old.id_order_type = 1, false)
                 or
-                old.id_order_type = 2
+                coalesce(old.id_order_type = 2, false)
             )
         then
             update companies set
@@ -120,9 +120,9 @@ begin
             new.id_client is not null
             and
             (
-                new.id_order_type = 1
+                coalesce(new.id_order_type = 1, false)
                 or
-                new.id_order_type = 2
+                coalesce(new.id_order_type = 2, false)
             )
         then
             update companies set
@@ -155,9 +155,9 @@ begin
             new.id_client is not null
             and
             (
-                new.id_order_type = 1
+                coalesce(new.id_order_type = 1, false)
                 or
-                new.id_order_type = 2
+                coalesce(new.id_order_type = 2, false)
             )
         then
             update companies set
