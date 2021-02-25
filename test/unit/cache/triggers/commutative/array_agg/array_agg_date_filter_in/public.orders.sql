@@ -53,7 +53,9 @@ begin
                             general_orders_dates,
                             old.date
                         )
-                    else
+                    when
+                        new.id_order_type in (1, 2, 3)
+                    then
                         array_append(
                             cm_array_remove_one_element(
                                 general_orders_dates,
@@ -61,6 +63,8 @@ begin
                             ),
                             new.date
                         )
+                    else
+                        general_orders_dates
                 end
             where
                 new.id_client = companies.id;

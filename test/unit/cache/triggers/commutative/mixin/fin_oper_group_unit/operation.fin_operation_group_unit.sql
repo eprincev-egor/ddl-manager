@@ -219,7 +219,9 @@ begin
                             group_unit_buyers_names_list_company_name,
                             old_company_buyer_list_company_name
                         )
-                    else
+                    when
+                        new_company_buyer_list_company_name is not null
+                    then
                         array_append(
                             cm_array_remove_one_element(
                                 group_unit_buyers_names_list_company_name,
@@ -227,6 +229,8 @@ begin
                             ),
                             new_company_buyer_list_company_name
                         )
+                    else
+                        group_unit_buyers_names_list_company_name
                 end,
                 group_unit_buyers_names = case
                     when
@@ -273,7 +277,9 @@ begin
                                 )
                             ) as item(list_company_name)
                         )
-                    else
+                    when
+                        new_company_buyer_list_company_name is not null
+                    then
                         (
                             select
                                 string_agg(distinct 
@@ -291,6 +297,8 @@ begin
                                 )
                             ) as item(list_company_name)
                         )
+                    else
+                        group_unit_buyers_names
                 end,
                 group_unit_delivery_names_list_warehouse_name = case
                     when
@@ -311,7 +319,9 @@ begin
                             group_unit_delivery_names_list_warehouse_name,
                             old_point_delivery_list_warehouse_name
                         )
-                    else
+                    when
+                        new_point_delivery_list_warehouse_name is not null
+                    then
                         array_append(
                             cm_array_remove_one_element(
                                 group_unit_delivery_names_list_warehouse_name,
@@ -319,6 +329,8 @@ begin
                             ),
                             new_point_delivery_list_warehouse_name
                         )
+                    else
+                        group_unit_delivery_names_list_warehouse_name
                 end,
                 group_unit_delivery_names = case
                     when
@@ -365,7 +377,9 @@ begin
                                 )
                             ) as item(list_warehouse_name)
                         )
-                    else
+                    when
+                        new_point_delivery_list_warehouse_name is not null
+                    then
                         (
                             select
                                 string_agg(distinct 
@@ -383,6 +397,8 @@ begin
                                 )
                             ) as item(list_warehouse_name)
                         )
+                    else
+                        group_unit_delivery_names
                 end
             where
                 new.id_operation_unit = operation.unit.id;

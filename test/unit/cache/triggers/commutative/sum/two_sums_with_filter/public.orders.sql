@@ -80,8 +80,12 @@ begin
                         old.is_sale
                     then
                         orders_profit_sum_total_is_sale - coalesce(old.total, 0)
-                    else
+                    when
+                        new.is_sale
+                    then
                         orders_profit_sum_total_is_sale - coalesce(old.total, 0) + coalesce(new.total, 0)
+                    else
+                        orders_profit_sum_total_is_sale
                 end,
                 orders_profit_sum_total_is_buy = case
                     when
@@ -96,8 +100,12 @@ begin
                         old.is_buy
                     then
                         orders_profit_sum_total_is_buy - coalesce(old.total, 0)
-                    else
+                    when
+                        new.is_buy
+                    then
                         orders_profit_sum_total_is_buy - coalesce(old.total, 0) + coalesce(new.total, 0)
+                    else
+                        orders_profit_sum_total_is_buy
                 end,
                 orders_profit = (case
                     when
@@ -112,8 +120,12 @@ begin
                         old.is_sale
                     then
                         orders_profit_sum_total_is_sale - coalesce(old.total, 0)
-                    else
+                    when
+                        new.is_sale
+                    then
                         orders_profit_sum_total_is_sale - coalesce(old.total, 0) + coalesce(new.total, 0)
+                    else
+                        orders_profit_sum_total_is_sale
                 end) - (case
                     when
                         new.is_buy
@@ -127,8 +139,12 @@ begin
                         old.is_buy
                     then
                         orders_profit_sum_total_is_buy - coalesce(old.total, 0)
-                    else
+                    when
+                        new.is_buy
+                    then
                         orders_profit_sum_total_is_buy - coalesce(old.total, 0) + coalesce(new.total, 0)
+                    else
+                        orders_profit_sum_total_is_buy
                 end)
             where
                 new.id_client = companies.id;

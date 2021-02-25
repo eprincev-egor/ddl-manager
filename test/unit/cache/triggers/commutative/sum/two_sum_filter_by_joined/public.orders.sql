@@ -97,8 +97,12 @@ begin
                         old_order_type_name = 'LTL'
                     then
                         ltl_profit - coalesce(old.profit, 0)
-                    else
+                    when
+                        new_order_type_name = 'LTL'
+                    then
                         ltl_profit - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+                    else
+                        ltl_profit
                 end,
                 ftl_orders_profit = case
                     when
@@ -113,8 +117,12 @@ begin
                         old_order_type_name = 'FTL'
                     then
                         ftl_orders_profit - coalesce(old.profit, 0)
-                    else
+                    when
+                        new_order_type_name = 'FTL'
+                    then
                         ftl_orders_profit - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+                    else
+                        ftl_orders_profit
                 end
             where
                 new.id_client = companies.id;

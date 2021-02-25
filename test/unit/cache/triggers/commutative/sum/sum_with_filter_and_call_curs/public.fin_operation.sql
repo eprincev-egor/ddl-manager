@@ -103,7 +103,9 @@ begin
                             ),
                             0
                         )
-                    else
+                    when
+                        new.id_fin_operation_type = 1
+                    then
                         fin_operation_buys - coalesce(
                             old.sum * get_curs(
                                 old.date,
@@ -117,6 +119,8 @@ begin
                             ),
                             0
                         )
+                    else
+                        fin_operation_buys
                 end,
                 fin_operation_sales = case
                     when
@@ -143,7 +147,9 @@ begin
                             ),
                             0
                         )
-                    else
+                    when
+                        new.id_fin_operation_type = 2
+                    then
                         fin_operation_sales - coalesce(
                             old.sum * get_curs(
                                 old.date,
@@ -157,6 +163,8 @@ begin
                             ),
                             0
                         )
+                    else
+                        fin_operation_sales
                 end
             where
                 new.id_order = orders.id;

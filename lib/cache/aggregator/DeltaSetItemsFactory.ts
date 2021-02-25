@@ -134,11 +134,15 @@ export class DeltaSetItemsFactory extends SetItemsFactory {
                     {
                         when: needMinus,
                         then: this.aggregate("minus", agg)
-                    }
-                ], 
-                else: isImmutableAggCall(agg.call) ? 
-                    Expression.unknown(agg.columnName) :
-                    sql as any
+                    },
+                    ...(
+                        isImmutableAggCall(agg.call) ? [] : [{
+                            when: matchedNew,
+                            then: sql as any
+                        }]
+                    )
+                ],
+                else: Expression.unknown(agg.columnName)
             });
             
             sql = caseWhen as any;

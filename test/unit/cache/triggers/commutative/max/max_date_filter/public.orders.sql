@@ -111,7 +111,9 @@ begin
                             max_general_order_date_order_date,
                             old.order_date
                         )
-                    else
+                    when
+                        new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
+                    then
                         array_append(
                             cm_array_remove_one_element(
                                 max_general_order_date_order_date,
@@ -119,6 +121,8 @@ begin
                             ),
                             new.order_date
                         )
+                    else
+                        max_general_order_date_order_date
                 end,
                 max_general_order_date = case
                     when
@@ -146,7 +150,9 @@ begin
                                 )
                             ) as item(order_date)
                         )
-                    else
+                    when
+                        new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
+                    then
                         (
                             select
                                 max(item.order_date)
@@ -161,6 +167,8 @@ begin
                                 )
                             ) as item(order_date)
                         )
+                    else
+                        max_general_order_date
                 end,
                 max_combiner_order_date_order_date = case
                     when
@@ -181,7 +189,9 @@ begin
                             max_combiner_order_date_order_date,
                             old.order_date
                         )
-                    else
+                    when
+                        new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
+                    then
                         array_append(
                             cm_array_remove_one_element(
                                 max_combiner_order_date_order_date,
@@ -189,6 +199,8 @@ begin
                             ),
                             new.order_date
                         )
+                    else
+                        max_combiner_order_date_order_date
                 end,
                 max_combiner_order_date = case
                     when
@@ -216,7 +228,9 @@ begin
                                 )
                             ) as item(order_date)
                         )
-                    else
+                    when
+                        new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
+                    then
                         (
                             select
                                 max(item.order_date)
@@ -231,6 +245,8 @@ begin
                                 )
                             ) as item(order_date)
                         )
+                    else
+                        max_combiner_order_date
                 end
             where
                 new.id_client = companies.id;

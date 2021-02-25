@@ -397,4 +397,96 @@ describe("integration/DDLManager.build cache", () => {
         }]);
     });
 
+    it("test cache with custom agg", async() => {
+        const folderPath = ROOT_TMP_PATH + "/max_or_null";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table public.order (
+                id serial primary key
+            );
+
+            create table fin_operation (
+                id serial primary key,
+                id_order bigint,
+                fin_type text,
+                profit numeric,
+                deleted smallint default 0
+            );
+
+            insert into public.order default values;
+        `);
+
+        fs.writeFileSync(folderPath + "/orders.sql", `
+            cache fin_totals for public.order (
+                select
+                    sum( fin_operation.profit ) filter (where
+                        fin_operation.fin_type = 'red'
+                    ) as sum_red,
+                    sum( fin_operation.profit ) filter (where
+                        fin_operation.fin_type = 'green'
+                    ) as sum_green
+
+                from fin_operation
+                where
+                    fin_operation.id_order = public.order.id and
+                    fin_operation.deleted = 0
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        // test create 3 operations
+        await db.query(`
+            insert into fin_operation (
+                id_order, fin_type, profit
+            ) 
+            values 
+                (1, null, 1000),
+                (1, 'red', 100),
+                (1, 'green', 10)
+        `);
+        await testOrder({
+            id: 1,
+            sum_red: "100",
+            sum_green: "10"
+        });
+
+
+        // test set second fin_operation type to null
+        await db.query(`
+            update fin_operation set
+                fin_type = null,
+                profit = 2000
+            where
+                id = 2
+        `);
+        await testOrder({
+            id: 1,
+            sum_red: "0",
+            sum_green: "10"
+        });
+
+
+        async function testOrder(expectedRow: {
+            id: number,
+            sum_red: string | null,
+            sum_green: string | null
+        }) {
+            const result = await db.query(`
+                select
+                    id,
+                    sum_red,
+                    sum_green
+                from public.order
+            `);
+            assert.deepStrictEqual(result.rows, [expectedRow]);
+        }
+    });
+
 });

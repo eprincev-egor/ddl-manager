@@ -69,7 +69,9 @@ begin
                             orders_numbers_doc_number,
                             old.doc_number
                         )
-                    else
+                    when
+                        new.profit > 0
+                    then
                         array_append(
                             cm_array_remove_one_element(
                                 orders_numbers_doc_number,
@@ -77,6 +79,8 @@ begin
                             ),
                             new.doc_number
                         )
+                    else
+                        orders_numbers_doc_number
                 end,
                 orders_numbers = case
                     when
@@ -121,7 +125,9 @@ begin
                                 )
                             ) as item(doc_number)
                         )
-                    else
+                    when
+                        new.profit > 0
+                    then
                         (
                             select
                                 string_agg(distinct 
@@ -141,6 +147,8 @@ begin
                                 )
                             ) as item(doc_number)
                         )
+                    else
+                        orders_numbers
                 end
             where
                 new.id_client = companies.id;

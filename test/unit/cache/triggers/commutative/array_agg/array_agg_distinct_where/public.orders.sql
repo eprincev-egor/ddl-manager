@@ -62,7 +62,9 @@ begin
                             orders_dates_order_date,
                             old.order_date
                         )
-                    else
+                    when
+                        new.order_date is not null
+                    then
                         array_append(
                             cm_array_remove_one_element(
                                 orders_dates_order_date,
@@ -70,6 +72,8 @@ begin
                             ),
                             new.order_date
                         )
+                    else
+                        orders_dates_order_date
                 end,
                 orders_dates = case
                     when
@@ -108,7 +112,9 @@ begin
                                 )
                             ) as item(order_date)
                         )
-                    else
+                    when
+                        new.order_date is not null
+                    then
                         (
                             select
                                 array_agg(distinct item.order_date)
@@ -123,6 +129,8 @@ begin
                                 )
                             ) as item(order_date)
                         )
+                    else
+                        orders_dates
                 end
             where
                 new.id_client = companies.id;
