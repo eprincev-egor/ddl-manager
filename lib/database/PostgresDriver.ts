@@ -395,6 +395,8 @@ implements IDatabaseDriver {
             (err as any).sql = sql;
             (err as any).code = originalErr.code;
             (err as any).originalError = originalErr;
+            console.error(originalErr);
+            console.error(sql);
             throw err;
         }
     }

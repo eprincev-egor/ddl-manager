@@ -58,7 +58,6 @@ export class UpdateMigrator extends AbstractMigrator {
         } catch(err) {
             if ( /deadlock/.test(err.message) ) {
                 if ( tryCount <= 0 ) {
-                    console.log(err.sql);
                     throw err;
                 }
 
