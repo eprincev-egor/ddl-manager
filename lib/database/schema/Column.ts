@@ -1,6 +1,7 @@
 import { TableID } from "./TableID";
 import { Type } from "./Type";
 import { Comment } from "./Comment";
+import { MAX_NAME_LENGTH } from "../postgres/constants";
 
 export class Column {
     readonly table: TableID;
@@ -18,7 +19,14 @@ export class Column {
         comment?: Comment
     ) {
         this.table = table;
+
+        // if ( name.length > MAX_NAME_LENGTH ) {
+        //     // tslint:disable-next-line: no-console
+        //     console.error(`name "${name}" too long (> 64 symbols)`);
+        // }
+        // this.name = name.slice(0, MAX_NAME_LENGTH);
         this.name = name;
+
         this.type = new Type(type);
         this.default = defaultValue || null;
         this.comment = comment || Comment.frozen("column");

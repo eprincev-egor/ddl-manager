@@ -1,5 +1,6 @@
 import { FuncCall, SelectColumn, ColumnReference, Expression } from "../../ast";
 import assert from "assert";
+import { MAX_NAME_LENGTH } from "../../database/postgres/constants";
 
 interface IFuncsByName {
     [funcName: string]: FuncCall[]
@@ -15,6 +16,12 @@ export class ColumnNameGenerator {
     }
 
     generateName(aggCall: FuncCall) {
+        const longName = this.generateFullName(aggCall);
+        const slicedName = longName.slice(0, MAX_NAME_LENGTH);
+        return slicedName;
+    }
+
+    private generateFullName(aggCall: FuncCall) {
         if ( this.updateColumn.expression.isFuncCall() ) {
             return this.updateColumn.name;
         }

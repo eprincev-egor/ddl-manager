@@ -1235,4 +1235,80 @@ describe("integration/DDLManager.build cache", () => {
         });
     });
 
+    it("don't update twice, if column has long name", async() => {
+        const folderPath = ROOT_TMP_PATH + "/cache-with-long-column-name";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table companies (
+                id serial primary key
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer,
+                this_is_some_source_column_name_with_order_note text
+            );
+
+            insert into companies default values;
+            insert into orders (
+                id_client, 
+                this_is_some_source_column_name_with_order_note
+            )
+            values (1, 'test');
+        `);
+        
+        fs.writeFileSync(folderPath + "/set_note_trigger.sql", `
+            cache totals for companies (
+                select
+                    string_agg(
+                        distinct
+                            orders.this_is_some_source_column_name_with_order_note,
+                        ', '
+                    ) as string_agg_this_is_some_source_column_name_with_order_note
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+        
+        // first update
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+        const result = await db.query(`
+            select string_agg_this_is_some_source_column_name_with_order_note
+            from companies
+            where id = 1
+        `);
+        const row = result.rows[0];
+
+        expect(row).to.be.shallowDeepEqual({
+            string_agg_this_is_some_source_column_name_with_order_note: "test"
+        });
+
+        // second update
+        await db.query(`
+            create or replace function stop_update_companies()
+            returns trigger as $body$
+            begin
+                raise exception 'twice update error';
+            end
+            $body$
+            language plpgsql;
+
+            create trigger stop_update_companies
+            after insert or update or delete
+            on companies
+            for each row
+            execute procedure stop_update_companies();
+        `);
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+    });
 });

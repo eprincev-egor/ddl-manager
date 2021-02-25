@@ -11,6 +11,7 @@ import { BoolOrAgg } from "./BoolOrAgg";
 import { BoolAndAgg } from "./BoolAndAgg";
 import { DistinctArrayAgg } from "./DistinctArrayAgg";
 import { Database } from "../../database/schema/Database";
+import { MAX_NAME_LENGTH } from "../../database/postgres/constants";
 
 interface IAggMap {
     [column: string]: AbstractAgg;
@@ -81,7 +82,8 @@ export class AggFactory {
 
         const depsColumns = aggCall.withoutWhere().getColumnReferences();
         for (const columnRef of depsColumns) {
-            const helperColumnName = aggColumnName + "_" + columnRef.name;
+            const helperColumnName = (aggColumnName + "_" + columnRef.name)
+                .slice(0, MAX_NAME_LENGTH);
 
             if ( helperColumnName in map ) {
                 continue;
