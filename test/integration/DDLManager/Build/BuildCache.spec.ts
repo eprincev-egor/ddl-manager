@@ -1311,4 +1311,69 @@ describe("integration/DDLManager.build cache", () => {
         });
 
     });
+
+    it("rebuild cache column if exists trigger dependency", async() => {
+        const folderPath = ROOT_TMP_PATH + "/rebuild-column-with-cache-deps";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                orders_profit bigint
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer,
+                profit numeric
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/dep_trigger.sql", `
+            create or replace function test()
+            returns trigger as $body$
+            begin
+                return new;
+            end
+            $body$
+            language plpgsql;
+
+            create trigger test
+            after update of orders_profit
+            on companies
+            for each row 
+            execute procedure test();
+        `);
+        fs.writeFileSync(folderPath + "/profit.sql", `
+            cache totals for companies (
+                select
+                    sum( orders.profit ) as orders_profit
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        fs.writeFileSync(folderPath + "/profit.sql", `
+            cache totals for companies (
+                select
+                    string_agg( orders.profit::text, ',' ) as orders_profit
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+    });
+
 });

@@ -183,9 +183,8 @@ export class CacheComparator extends AbstractComparator {
                         columns: [sameNameSelectColumn]
                     })
                 );
-                const hasSameType = newColumnType === column.type.toString();
 
-                if ( sameNameSelectColumn && hasSameType ) {
+                if ( sameNameSelectColumn && column.type.equal(newColumnType) ) {
                     return true;
                 }
             }
@@ -227,7 +226,40 @@ export class CacheComparator extends AbstractComparator {
             sortedSelectsForEveryColumn
         );
 
+        this.recreateDepsTriggers();
+
         return {sortedSelectsForEveryColumn};
+    }
+
+    // fix: cannot drop column because other objects depend on it
+    private recreateDepsTriggers() {
+        for (const table of this.database.tables) {
+            for (const dbTrigger of table.triggers) {
+                if ( dbTrigger.frozen ) {
+                    continue;
+                }
+
+                const table = dbTrigger.table;
+                const hasDepsToCacheColumn = (dbTrigger.updateOf || [])
+                    .some(triggerDepsColumnName => {
+                        const thisColumnNeedDrop = this.migration.toDrop.columns
+                            .some(columnToDrop =>
+                                triggerDepsColumnName === columnToDrop.name &&
+                                columnToDrop.table.equal(table)
+                            );
+                        return thisColumnNeedDrop;
+                    });
+                
+                if ( hasDepsToCacheColumn ) {
+                    this.migration.drop({
+                        triggers: [dbTrigger]
+                    });
+                    this.migration.create({
+                        triggers: [dbTrigger]
+                    });
+                }
+            }
+        }
     }
 
     private async createAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {

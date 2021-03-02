@@ -20,11 +20,11 @@ export class Column {
     ) {
         this.table = table;
 
-        // if ( name.length > MAX_NAME_LENGTH ) {
-        //     // tslint:disable-next-line: no-console
-        //     console.error(`name "${name}" too long (> 64 symbols)`);
-        // }
-        // this.name = name.slice(0, MAX_NAME_LENGTH);
+        if ( name.length > MAX_NAME_LENGTH ) {
+            // tslint:disable-next-line: no-console
+            console.error(`name "${name}" too long (> 64 symbols)`);
+        }
+        this.name = name.slice(0, MAX_NAME_LENGTH);
         this.name = name;
 
         this.type = new Type(type);
@@ -55,7 +55,7 @@ export class Column {
         return (
             this.name === otherColumn.name &&
             this.table.equal( otherColumn.table ) &&
-            this.type.toString() === otherColumn.type.toString() &&
+            this.type.equal(otherColumn.type) &&
             equalDefaultValues(this.default, otherColumn.default) &&
             this.comment.equal( otherColumn.comment )
         );

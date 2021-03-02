@@ -1,6 +1,6 @@
 {
   "name": "ddl-manager",
-  "version": "2.0.57-alpha",
+  "version": "2.0.58-alpha",
   "description": "store postgres procedures and triggers in files",
   "main": "dist/DDLManager.js",
   "bin": {
@@ -17,6 +17,7 @@
     "copy-files": "npm run clear-dist && mkdir dist && cp -r ./lib/* ./dist",
     "build": "npm run copy-files && tsc --project publish-tsconfig.json",
     "test": "nyc --reporter=html --reporter=text-summary mocha",
+    "mocha": "mocha",
     "prepublishOnly": "npm run build"
   },
   "repository": {
