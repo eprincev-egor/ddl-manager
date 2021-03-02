@@ -37,6 +37,10 @@ export function testTriggers(test: ITest) {
         "public",
         "invoice",
     );
+    const trainID = new TableID(
+        "public",
+        "train",
+    );
 
     const testDatabase = new Database([
         new Table(
@@ -125,6 +129,22 @@ export function testTriggers(test: ITest) {
                 new Column(
                     invoiceID,
                     "payments_ids",
+                    "int8[]"
+                )
+            ]
+        ),
+        new Table(
+            trainID.schema,
+            trainID.name,
+            [
+                new Column(
+                    trainID,
+                    "id",
+                    "integer"
+                ),
+                new Column(
+                    trainID,
+                    "units_ids",
                     "int8[]"
                 )
             ]

@@ -4,7 +4,8 @@ import {
     FunctionCall,
     ColumnLink,
     Operator as OperatorSyntax,
-    FunctionLink
+    FunctionLink,
+    PgArray
 } from "grapeql-lang";
 import { 
     IExpressionElement,
@@ -19,6 +20,7 @@ import { UnknownExpressionElementParser } from "./UnknownExpressionElementParser
 import { ColumnReferenceParser } from "./ColumnReferenceParser";
 import { TableReference } from "../database/schema/TableReference";
 import assert from "assert";
+import { ArrayElement } from "../ast/expression/ArrayElement";
 
 export class ExpressionParser {
 
@@ -49,6 +51,17 @@ export class ExpressionParser {
                     additionalTableReferences, 
                     elemSyntax
                 );
+            }
+            else if ( elemSyntax instanceof PgArray ) {
+                const content = (elemSyntax.get("array") || [])
+                    .map(expressionSyntax =>
+                        this.parse(
+                            select,
+                            additionalTableReferences, 
+                            expressionSyntax.toString()
+                        )
+                    );
+                elem = new ArrayElement(content);
             }
             else if ( elemSyntax instanceof ExpressionSyntax ) {
                 elem = this.parse(

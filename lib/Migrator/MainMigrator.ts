@@ -47,8 +47,8 @@ export class MainMigrator {
 
         await triggers.drop();
         await functions.drop();
-        await columns.drop();
         await indexes.drop();
+        await columns.drop();
 
         await columns.create();
         await functions.create();
