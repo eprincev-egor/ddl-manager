@@ -1199,4 +1199,29 @@ describe("integration/PostgresDriver.loadState", () => {
         );
         assert.strictEqual(actualIndex, undefined);
     });
+
+    it("load table with inherits", async() => {
+        const sql = `
+            create table parent_table (
+                deleted smallint default 0
+            );
+            create table child_table (
+                name text not null unique
+            )
+            inherits(parent_table);
+        `;
+        await db.query(sql);
+
+        const driver = new PostgresDriver(db);
+        const database = await driver.load();
+
+        const table = database.getTable(
+            new TableID("public", "child_table")
+        );
+        assert.ok(table);
+        assert.strictEqual(table.columns.length, 2);
+        assert.strictEqual(table.columns[0].name, "deleted");
+        assert.strictEqual(table.columns[1].name, "name");
+    });
+
 });

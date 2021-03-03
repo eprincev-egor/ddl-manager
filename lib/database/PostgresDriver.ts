@@ -155,12 +155,15 @@ implements IDatabaseDriver {
                 columnRow.table_schema,
                 columnRow.table_name
             );
-            const table = database.getTable(tableId) || new Table(
-                columnRow.table_schema,
-                columnRow.table_name
-            );
-            database.setTable(table);
-            
+            let table = database.getTable(tableId);
+            if ( !table ) {
+                database.setTable(new Table(
+                    columnRow.table_schema,
+                    columnRow.table_name
+                ));
+                table = database.getTable(tableId)!;
+            }
+
             const columnType = this.types.getTypeById(
                 columnRow.column_type_oid
             ) as string;
