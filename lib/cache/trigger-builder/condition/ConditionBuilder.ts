@@ -348,7 +348,3 @@ export class ConditionBuilder {
         return triggerTableColumnsRefs;
     }
 }
-
-function inversion(expression: Expression) {
-    return `not coalesce(${expression.toString()}, false)`;
-}

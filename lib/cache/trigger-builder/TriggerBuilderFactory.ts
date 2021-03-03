@@ -7,6 +7,7 @@ import { buildFrom } from "../processor/buildFrom";
 import { UniversalTriggerBuilder } from "./UniversalTriggerBuilder";
 import { CacheContext } from "./CacheContext";
 import { flatMap } from "lodash";
+import { OneRowTriggerBuilder } from "./OneRowTriggerBuilder";
 
 export class TriggerBuilderFactory {
     private readonly cache: Cache;
@@ -43,6 +44,10 @@ export class TriggerBuilderFactory {
 
     private chooseConstructor(context: CacheContext) {
         const from = buildFrom(context);
+        const isTriggerOnCacheTable = context.triggerTable.equal(context.cache.for.table);
+        const hasAgg = context.cache.select.columns.some(column => 
+            column.getAggregations(context.database).length > 0
+        );
         const joins = flatMap(context.cache.select.from, fromItem => fromItem.joins);
         const isFromJoin = joins.some(join =>
             join.table.table.equal(context.triggerTable)
@@ -56,12 +61,19 @@ export class TriggerBuilderFactory {
             from.length > 1 || 
             from.length === 1 && isFromJoin
         );
+        const needOneRowTrigger = (
+            from.length === 1 &&
+            !hasAgg &&
+            !isTriggerOnCacheTable
+        );
 
         if ( needUniversalTrigger ) {
             return UniversalTriggerBuilder;
         }
+        else if ( needOneRowTrigger ) {
+            return OneRowTriggerBuilder;
+        }
         else {
-            const isTriggerOnCacheTable = context.triggerTable.equal(context.cache.for.table);
             const noDepsToCacheTable = context.cache.select
                 .getAllTableReferences()
                 .every(tableRef =>
