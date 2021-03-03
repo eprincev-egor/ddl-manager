@@ -13,6 +13,7 @@ export interface IReferenceMeta {
     expressions: Expression[];
     unknownExpressions: Expression[];
     filters: Expression[];
+    cacheTableFilters: Expression[];
 }
 
 export class CacheContext {
@@ -76,7 +77,8 @@ export class CacheContext {
             columns: [],
             filters: [],
             expressions: [],
-            unknownExpressions: []
+            unknownExpressions: [],
+            cacheTableFilters: []
         };
 
         const where = this.cache.select.where;
@@ -112,6 +114,10 @@ export class CacheContext {
                     join.table.equal(columnRef.tableReference.table)
                 )
             );
+
+            if ( columnsFromCacheTable.length === conditionColumns.length ) {
+                referenceMeta.cacheTableFilters.push( andCondition );
+            }
 
             const isReference = (
                 columnsFromCacheTable.length

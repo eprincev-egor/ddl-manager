@@ -11,6 +11,7 @@ import {
     ColumnReference
 } from "../../../ast";
 import { updateIf } from "./util/updateIf";
+import { exitIf } from "./util/exitIf";
 import { Update } from "../../../ast/Update";
 import { TableReference } from "../../../database/schema/TableReference";
 
@@ -221,7 +222,10 @@ function buildDeltaUpdate(deltaCase: IDeltaCase) {
         return [new If({
             if: deltaCase.needUpdate,
             then: [
-                ...exitIf(deltaCase.exitIf),
+                ...exitIf({
+                    if: deltaCase.exitIf,
+                    blanksAfter: [new BlankLine()]
+                }),
 
                 deltaCase.update,
                 new BlankLine(),
@@ -418,22 +422,6 @@ function reassignVariables(newJoins: IJoin[], oldJoins: IJoin[]) {
     }
     
     return lines;
-}
-
-function exitIf(condition?: Expression) {
-    if ( !condition ) {
-        return [];
-    }
-
-    return [
-        new If({
-            if: condition,
-            then: [
-                new HardCode({sql: "return new;"})
-            ]
-        }),
-        new BlankLine()
-    ];
 }
 
 function assignArrVars(

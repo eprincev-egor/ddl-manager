@@ -5,10 +5,22 @@ begin
         if new.id_invoice_type is null then
             return new;
         end if;
+
+        if not coalesce(new.id_invoice_type = 4, false) then
+            return new;
+        end if;
     end if;
 
     if TG_OP = 'UPDATE' then
         if new.id_invoice_type is not distinct from old.id_invoice_type then
+            return new;
+        end if;
+
+        if
+            not coalesce(old.id_invoice_type = 4, false)
+            and
+            not coalesce(new.id_invoice_type = 4, false)
+        then
             return new;
         end if;
     end if;

@@ -1,4 +1,4 @@
-import { Expression } from "../../ast";
+import { Expression, NotExpression } from "../../ast";
 import { TableReference } from "../../database/schema/TableReference";
 import { TableID } from "../../database/schema/TableID";
 import { Comment } from "../../database/schema/Comment";
@@ -19,6 +19,30 @@ export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilde
             )
         );
 
+        let notMatchedFilterOnInsert: Expression | undefined;
+        let notMatchedFilterOnUpdate: Expression | undefined;
+
+        if ( this.context.referenceMeta.cacheTableFilters.length ) {
+            const notMatchedNew: NotExpression[] = [];
+            const notMatchedOld: NotExpression[] = [];
+            for (const filter of this.context.referenceMeta.cacheTableFilters) {
+                const notFilterNew = new NotExpression(
+                    this.replaceTriggerTableToRow("new", filter)
+                );
+                const notFilterOld = new NotExpression(
+                    this.replaceTriggerTableToRow("old", filter)
+                );
+                notMatchedNew.push(notFilterNew);
+                notMatchedOld.push(notFilterOld);
+            }
+
+            notMatchedFilterOnInsert = Expression.or(notMatchedNew);
+            notMatchedFilterOnUpdate = Expression.and([
+                Expression.or(notMatchedOld),
+                Expression.or(notMatchedNew)
+            ])
+        }
+
         const selectToUpdate = createSelectForUpdate(
             this.context.database,
             this.context.cache
@@ -29,7 +53,9 @@ export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilde
             this.conditions.noReferenceChanges(),
             hasReference,
             selectToUpdate.columns.map(col => col.name),
-            selectToUpdate.toString()
+            selectToUpdate.toString(),
+            notMatchedFilterOnInsert,
+            notMatchedFilterOnUpdate
         );
     }
 

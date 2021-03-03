@@ -1,4 +1,5 @@
 import { Update, Expression, SetItem } from "../../ast";
+import { CoalesceFalseExpression } from "../../ast/expression/CoalesceFalseExpression";
 import { TableReference } from "../../database/schema/TableReference";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { buildOneRowBody } from "./body/buildOneRowBody";
@@ -20,6 +21,7 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
                 update: updateNew
             },
             onUpdate: {
+                needUpdate: this.needUpdateOnUpdate(),
                 noChanges: this.conditions.noChanges(),
                 update: updateNew
             },
@@ -33,6 +35,31 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
             }
         });
         return body;
+    }
+
+    private needUpdateOnUpdate() {
+        if ( !this.context.referenceMeta.filters.length ) {
+            return;
+        }
+
+        const matchedOld: CoalesceFalseExpression[] = [];
+        const matchedNew: CoalesceFalseExpression[] = [];
+        this.context.referenceMeta.filters.forEach(filter => {
+            const filterOld = this.replaceTriggerTableToRow("old", filter);
+            const filterNew = this.replaceTriggerTableToRow("new", filter);
+
+            matchedNew.push(
+                new CoalesceFalseExpression(filterNew)
+            );
+            matchedOld.push(
+                new CoalesceFalseExpression(filterOld)
+            );
+        });
+
+        return Expression.or([
+            Expression.and(matchedOld),
+            Expression.and(matchedNew)
+        ]);
     }
 
     private setNewItems() {
@@ -67,16 +94,17 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
             return expression.toString() + " is not null";
         });
 
-        return Expression.or(conditions);
-    }
+        if ( this.context.referenceMeta.filters.length ) {
+            const filters = this.context.referenceMeta.filters.map(filter =>
+                this.replaceTriggerTableToRow(row, filter)
+            );
+            const hasEffectAndFilters = Expression.and([
+                Expression.or(conditions),
+                Expression.and(filters)
+            ]);
+            return hasEffectAndFilters;
+        }
 
-    private replaceTriggerTableToRow(row: Row, expression: Expression) {
-        return expression.replaceTable(
-            this.context.triggerTable,
-            new TableReference(
-                this.context.triggerTable,
-                row
-            )
-        );
+        return Expression.or(conditions);
     }
 }

@@ -1,10 +1,12 @@
 import {
-    AbstractAstElement
+    AbstractAstElement,
+    Expression
 } from "../../ast";
 import { Comment } from "../../database/schema/Comment";
 import { DatabaseFunction } from "../../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
 import { TableID } from "../../database/schema/TableID";
+import { TableReference } from "../../database/schema/TableReference";
 import { DeltaSetItemsFactory } from "../aggregator/DeltaSetItemsFactory";
 import { SetItemsFactory } from "../aggregator/SetItemsFactory";
 import { CacheContext } from "./CacheContext";
@@ -78,6 +80,19 @@ export abstract class AbstractTriggerBuilder {
         });
 
         return trigger;
+    }
+
+    protected replaceTriggerTableToRow(
+        row: "new" | "old",
+        expression: Expression
+    ) {
+        return expression.replaceTable(
+            this.context.triggerTable,
+            new TableReference(
+                this.context.triggerTable,
+                row
+            )
+        );
     }
 
     protected generateTriggerName() {

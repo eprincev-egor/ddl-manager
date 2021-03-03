@@ -8,13 +8,16 @@ import {
     Expression
 } from "../../../ast";
 import { TableReference } from "../../../database/schema/TableReference";
+import { exitIf } from "./util/exitIf";
 
 export function buildSelfUpdateByOtherTablesBody(
     updateTable: TableReference,
     noReferenceChanges: Expression,
     hasReference: Expression,
     columnsToUpdate: string[],
-    selectNewValues: string
+    selectNewValues: string,
+    notMatchedFilterOnInsert?: Expression,
+    notMatchedFilterOnUpdate?: Expression,
 ) {
     const body = new Body({
         statements: [
@@ -30,6 +33,10 @@ export function buildSelfUpdateByOtherTablesBody(
                                 sql: `return new;`
                             })
                         ]
+                    }),
+                    ...exitIf({
+                        if: notMatchedFilterOnInsert,
+                        blanksBefore: [new BlankLine()]
                     })
                 ]
             }),
@@ -47,6 +54,10 @@ export function buildSelfUpdateByOtherTablesBody(
                             })
                         ]
                     }),
+                    ...exitIf({
+                        if: notMatchedFilterOnUpdate,
+                        blanksBefore: [new BlankLine()]
+                    })
                 ]
             }),
             new BlankLine(),

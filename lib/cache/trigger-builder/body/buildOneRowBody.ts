@@ -3,6 +3,7 @@ import {
     Body, If,
     HardCode, BlankLine
 } from "../../../ast";
+import { updateIf } from "./util/updateIf";
 
 export interface IUpdateCase {
     needUpdate: Expression;
@@ -12,6 +13,7 @@ export interface IUpdateCase {
 export interface IOneAst {
     onDelete: IUpdateCase;
     onUpdate: {
+        needUpdate?: Expression;
         noChanges: Expression;
         update: Update;
     };
@@ -54,7 +56,10 @@ export function buildOneRowBody(ast: IOneAst) {
                         ]
                     }),
                     new BlankLine(),
-                    ast.onUpdate.update,
+                    ...updateIf(
+                        ast.onUpdate.needUpdate,
+                        ast.onUpdate.update
+                    ),
                     new BlankLine(),
                     new HardCode({
                         sql: `return new;`

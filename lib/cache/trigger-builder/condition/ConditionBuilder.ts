@@ -210,6 +210,10 @@ export class ConditionBuilder {
             ...this.context.referenceMeta.unknownExpressions
         );
 
+        conditions.push(
+            ...this.context.referenceMeta.cacheTableFilters
+        );
+
         const where = Expression.and(conditions);
         if ( !where.isEmpty() ) {
             return where;
