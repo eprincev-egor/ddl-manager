@@ -1441,4 +1441,65 @@ describe("integration/DDLManager.build cache", () => {
         });
     });
 
+    it("build cache when exists dependency to function", async() => {
+        const folderPath = ROOT_TMP_PATH + "/cache-with-func-and-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table documents (
+                id serial primary key,
+                invoice_orders_ids bigint[],
+                gtd_orders_ids bigint[]
+            );
+            
+            insert into documents (invoice_orders_ids, gtd_orders_ids)
+            values (
+                array[1, null, 2]::bigint[],
+                array[2, null, 3]::bigint[]
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/distinct_array_without_nulls.sql", `
+            create or replace function distinct_array_without_nulls(
+                input_arr_ids bigint[]
+            )
+            returns bigint[] as $body$
+            begin
+                return (
+                    select array_agg( distinct some_id )
+                    from unnest( input_arr_ids ) as some_id
+                    where
+                        some_id is not null
+                );
+            end
+            $body$
+            language plpgsql;
+        `);
+        fs.writeFileSync(folderPath + "/arr_concat.sql", `
+            cache arr_concat for documents (
+                select
+                    distinct_array_without_nulls(
+                        documents.invoice_orders_ids ||
+                        documents.gtd_orders_ids
+                    ) as orders_ids
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            select orders_ids
+            from documents
+        `);
+        const row = result.rows[0];
+
+        expect(row).to.be.shallowDeepEqual({
+            orders_ids: [1,2,3]
+        });
+    });
 });
