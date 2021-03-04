@@ -78,8 +78,15 @@ export class TriggerBuilderFactory {
 
             return CommutativeTriggerBuilder;
         }
-        else if ( context.cache.select.from.length === 1 ) {
+        else if ( this.oneRowFromTable(context) ) {
             return OneRowTriggerBuilder;
         }
+    }
+
+    private oneRowFromTable(context: CacheContext) {
+        return (
+            context.cache.select.from.length === 1 &&
+            context.referenceMeta.expressions.length > 0
+        );
     }
 }

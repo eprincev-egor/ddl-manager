@@ -1376,4 +1376,69 @@ describe("integration/DDLManager.build cache", () => {
         });
     });
 
+    it("build one row cache trigger", async() => {
+        const folderPath = ROOT_TMP_PATH + "/one-row-trigger";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table invoice (
+                id serial primary key,
+                id_list_contracts bigint
+            );
+            create table list_contracts (
+                id serial primary key,
+                date_contract date,
+                contract_number text
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/contract.sql", `
+            cache one_row_contract for invoice (
+                select
+                    contract.date_contract as date_contract,
+                    contract.contract_number as contract_number
+
+                from list_contracts as contract
+                where
+                    contract.id = invoice.id_list_contracts
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        
+        await db.query(`
+            insert into list_contracts (contract_number) 
+            values ('hello');
+
+            insert into invoice (id_list_contracts)
+            values (1);
+        `);
+
+        let result = await db.query(`
+            select contract_number
+            from invoice
+        `);
+        assert.deepStrictEqual(result.rows[0], {
+            contract_number: "hello"
+        });
+
+
+        await db.query(`
+            update list_contracts set
+                contract_number = 'world'
+        `);
+        result = await db.query(`
+            select contract_number
+            from invoice
+        `);
+        assert.deepStrictEqual(result.rows[0], {
+            contract_number: "world"
+        });
+    });
+
 });
