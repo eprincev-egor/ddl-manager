@@ -78,7 +78,7 @@ export class TriggerBuilderFactory {
 
             return CommutativeTriggerBuilder;
         }
-        else if ( from.length === 1 ) {
+        else if ( context.cache.select.from.length === 1 ) {
             return OneRowTriggerBuilder;
         }
     }
