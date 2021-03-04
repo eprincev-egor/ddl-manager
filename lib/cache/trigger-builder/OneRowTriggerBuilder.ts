@@ -77,10 +77,18 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
     private setNulls() {
         const setItems = this.context.cache.select.columns.map(selectColumn => {
 
-            const nullSql = UnknownExpressionElement.fromSql("null");
             let nullExpression = selectColumn.expression;
             const columnRefs = selectColumn.expression.getColumnReferences();
             for (const columnRef of columnRefs) {
+                const dbTable = this.context.database.getTable(
+                    columnRef.tableReference.table
+                );
+                const dbColumn = dbTable && dbTable.getColumn( columnRef.name );
+                
+                const nullSql = dbColumn && dbColumn.type.isArray() ? 
+                    UnknownExpressionElement.fromSql(`(null::${ dbColumn.type })`) :
+                    UnknownExpressionElement.fromSql("null");
+
                 nullExpression = nullExpression.replaceColumn(columnRef, nullSql);
             }
 

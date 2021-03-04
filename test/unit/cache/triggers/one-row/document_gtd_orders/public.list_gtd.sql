@@ -9,7 +9,7 @@ begin
             old.deleted = 0
         then
             update list_documents set
-                gtd_orders_ids = null
+                gtd_orders_ids = (null::bigint[])
             where
                 old.id = list_documents.table_id
                 and
