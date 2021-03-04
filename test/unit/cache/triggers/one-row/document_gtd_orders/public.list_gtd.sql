@@ -23,7 +23,7 @@ begin
         if
             new.deleted is not distinct from old.deleted
             and
-            new.orders_ids is not distinct from old.orders_ids
+            cm_equal_arrays(new.orders_ids, old.orders_ids)
         then
             return new;
         end if;

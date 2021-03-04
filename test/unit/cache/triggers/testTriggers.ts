@@ -41,6 +41,10 @@ export function testTriggers(test: ITest) {
         "public",
         "train",
     );
+    const gtdID = new TableID(
+        "public",
+        "list_gtd",
+    );
 
     const testDatabase = new Database([
         new Table(
@@ -146,6 +150,22 @@ export function testTriggers(test: ITest) {
                     trainID,
                     "units_ids",
                     "int8[]"
+                )
+            ]
+        ),
+        new Table(
+            gtdID.schema,
+            gtdID.name,
+            [
+                new Column(
+                    gtdID,
+                    "id",
+                    "integer"
+                ),
+                new Column(
+                    gtdID,
+                    "orders_ids",
+                    "bigint[]"
                 )
             ]
         )
