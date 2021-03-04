@@ -61,19 +61,11 @@ export class TriggerBuilderFactory {
             from.length > 1 || 
             from.length === 1 && isFromJoin
         );
-        const needOneRowTrigger = (
-            from.length === 1 &&
-            !hasAgg &&
-            !isTriggerOnCacheTable
-        );
 
         if ( needUniversalTrigger ) {
             return UniversalTriggerBuilder;
         }
-        else if ( needOneRowTrigger ) {
-            return OneRowTriggerBuilder;
-        }
-        else {
+        else if ( hasAgg ) {
             const noDepsToCacheTable = context.cache.select
                 .getAllTableReferences()
                 .every(tableRef =>
@@ -85,6 +77,9 @@ export class TriggerBuilderFactory {
             }
 
             return CommutativeTriggerBuilder;
+        }
+        else if ( from.length === 1 ) {
+            return OneRowTriggerBuilder;
         }
     }
 }

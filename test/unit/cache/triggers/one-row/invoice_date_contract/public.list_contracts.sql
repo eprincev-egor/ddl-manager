@@ -1,6 +1,7 @@
 create or replace function cache_contract_for_invoice_on_list_contracts()
 returns trigger as $body$
 begin
+
     if TG_OP = 'DELETE' then
         if old.date_contract is not null then
             update invoice set
@@ -35,6 +36,7 @@ begin
 
         return new;
     end if;
+
 end
 $body$
 language plpgsql;

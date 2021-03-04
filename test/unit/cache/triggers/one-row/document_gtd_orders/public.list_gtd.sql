@@ -1,6 +1,7 @@
 create or replace function cache_gtd_for_list_documents_on_list_gtd()
 returns trigger as $body$
 begin
+
     if TG_OP = 'DELETE' then
         if
             old.orders_ids is not null
@@ -59,6 +60,7 @@ begin
 
         return new;
     end if;
+
 end
 $body$
 language plpgsql;

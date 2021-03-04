@@ -1,6 +1,5 @@
-import { Update, Expression, SetItem } from "../../ast";
+import { Update, Expression, SetItem, UnknownExpressionElement } from "../../ast";
 import { CoalesceFalseExpression } from "../../ast/expression/CoalesceFalseExpression";
-import { TableReference } from "../../database/schema/TableReference";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { buildOneRowBody } from "./body/buildOneRowBody";
 
@@ -77,9 +76,17 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
 
     private setNulls() {
         const setItems = this.context.cache.select.columns.map(selectColumn => {
+
+            const nullSql = UnknownExpressionElement.fromSql("null");
+            let nullExpression = selectColumn.expression;
+            const columnRefs = selectColumn.expression.getColumnReferences();
+            for (const columnRef of columnRefs) {
+                nullExpression = nullExpression.replaceColumn(columnRef, nullSql);
+            }
+
             const setItem = new SetItem({
                 column: selectColumn.name,
-                value: Expression.and(["null"])
+                value: nullExpression
             })
             return setItem;
         });

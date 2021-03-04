@@ -24,6 +24,7 @@ export function buildOneRowBody(ast: IOneAst) {
     return new Body({
         declares: [],
         statements: [
+            new BlankLine(),
             new If({
                 if: Expression.and([
                     "TG_OP = 'DELETE'"
@@ -84,6 +85,7 @@ export function buildOneRowBody(ast: IOneAst) {
                     })
                 ]
             }),
+            new BlankLine()
         ]
     })
 }
