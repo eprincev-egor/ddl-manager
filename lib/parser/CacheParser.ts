@@ -50,6 +50,7 @@ export class CacheParser {
             forTable,
             select,
             this.parseWithoutTriggers(),
+            this.parseWithoutInserts(),
             this.parseIndexes(select, forTable)
         );
         return cache;
@@ -73,6 +74,14 @@ export class CacheParser {
             this.tableParser.parse(onTableSyntax).table.toString()
         );
         return withoutTriggers;
+    }
+
+    private parseWithoutInserts() {
+        const withoutInsertSyntaxes = this.syntax.get("withoutInsertOn") || [];
+        const withoutInserts = withoutInsertSyntaxes.map(onTableSyntax =>
+            this.tableParser.parse(onTableSyntax).table.toString()
+        );
+        return withoutInserts;
     }
 
     private parseIndexes(select: Select, cacheFor: TableReference) {

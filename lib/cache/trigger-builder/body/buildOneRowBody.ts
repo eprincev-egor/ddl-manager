@@ -17,7 +17,7 @@ export interface IOneAst {
         noChanges: Expression;
         update: Update;
     };
-    onInsert: IUpdateCase;
+    onInsert?: IUpdateCase;
 }
 
 export function buildOneRowBody(ast: IOneAst) {
@@ -67,24 +67,26 @@ export function buildOneRowBody(ast: IOneAst) {
                     })
                 ]
             }),
-            new BlankLine(),
-            new If({
-                if: Expression.and([
-                    "TG_OP = 'INSERT'"
-                ]),
-                then: [
-                    new If({
-                        if: ast.onInsert.needUpdate,
-                        then: [
-                            ast.onInsert.update
-                        ]
-                    }),
-                    new BlankLine(),
-                    new HardCode({
-                        sql: `return new;`
-                    })
-                ]
-            }),
+            ...(ast.onInsert ? [
+                new BlankLine(),
+                new If({
+                    if: Expression.and([
+                        "TG_OP = 'INSERT'"
+                    ]),
+                    then: [
+                        new If({
+                            if: ast.onInsert.needUpdate,
+                            then: [
+                                ast.onInsert.update
+                            ]
+                        }),
+                        new BlankLine(),
+                        new HardCode({
+                            sql: `return new;`
+                        })
+                    ]
+                })
+            ] : []),
             new BlankLine()
         ]
     })

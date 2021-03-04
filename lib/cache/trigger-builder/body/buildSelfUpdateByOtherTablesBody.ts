@@ -11,6 +11,7 @@ import { TableReference } from "../../../database/schema/TableReference";
 import { exitIf } from "./util/exitIf";
 
 export function buildSelfUpdateByOtherTablesBody(
+    needInsertCase: boolean,
     updateTable: TableReference,
     noReferenceChanges: Expression,
     hasReference: Expression,
@@ -21,25 +22,28 @@ export function buildSelfUpdateByOtherTablesBody(
 ) {
     const body = new Body({
         statements: [
-            new If({
-                if: new HardCode({
-                    sql: `TG_OP = 'INSERT'`
-                }),
-                then: [
-                    new If({
-                        if: hasReference,
-                        then: [
-                            new HardCode({
-                                sql: `return new;`
-                            })
-                        ]
+            ...(needInsertCase ? [
+                new If({
+                    if: new HardCode({
+                        sql: `TG_OP = 'INSERT'`
                     }),
-                    ...exitIf({
-                        if: notMatchedFilterOnInsert,
-                        blanksBefore: [new BlankLine()]
-                    })
-                ]
-            }),
+                    then: [
+                        new If({
+                            if: hasReference,
+                            then: [
+                                new HardCode({
+                                    sql: `return new;`
+                                })
+                            ]
+                        }),
+                        ...exitIf({
+                            if: notMatchedFilterOnInsert,
+                            blanksBefore: [new BlankLine()]
+                        })
+                    ]
+                }),
+            ] : []),
+            
             new BlankLine(),
             new If({
                 if: new HardCode({

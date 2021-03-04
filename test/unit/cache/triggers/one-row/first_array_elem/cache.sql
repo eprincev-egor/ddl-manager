@@ -18,4 +18,3 @@ cache gtd for comments (
             'LIST_GTD'
         )
 )
--- without insert case on list_gtd

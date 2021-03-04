@@ -56,6 +56,7 @@ export interface IArrVar {
 }
 
 export function buildCommutativeBody(
+    needInsertCase: boolean,
     hasMutableColumns: boolean,
     noChanges: Expression,
     oldJoins: IJoin[],
@@ -115,12 +116,12 @@ export function buildCommutativeBody(
                 })
             ] : []),
 
-            ...buildInsertOrDeleteCase(
+            ...(needInsertCase ? buildInsertOrDeleteCase(
                 "INSERT",
                 newCase,
                 newJoins,
                 "new"
-            )
+            ): [])
         ]
     });
     

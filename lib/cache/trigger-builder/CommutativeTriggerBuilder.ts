@@ -15,6 +15,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
         });
 
         const body = buildCommutativeBody(
+            this.context.withoutInsertCase() ? false : true,
             this.conditions.hasMutableColumns(),
             this.conditions.noChanges(),
             this.buildJoins("old"),

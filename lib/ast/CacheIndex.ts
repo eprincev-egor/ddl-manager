@@ -10,4 +10,8 @@ export class CacheIndex {
         this.index = index;
         this.on = on;
     }
+
+    toString() {
+        return `index ${this.index} on (${this.on.join(", ")})`;
+    }
 }

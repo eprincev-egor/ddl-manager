@@ -15,7 +15,7 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
         });
 
         const body = buildOneRowBody({
-            onInsert: {
+            onInsert: this.context.withoutInsertCase() ?  undefined : {
                 needUpdate: this.hasEffect("new"),
                 update: updateNew
             },

@@ -60,7 +60,7 @@ export abstract class AbstractTriggerBuilder {
         const trigger = new DatabaseTrigger({
             name: this.generateTriggerName(),
             after: true,
-            insert: true,
+            insert: this.context.withoutInsertCase() ? false : true,
             delete: true,
             update: updateOfColumns.length > 0,
             updateOf: updateOfColumns,

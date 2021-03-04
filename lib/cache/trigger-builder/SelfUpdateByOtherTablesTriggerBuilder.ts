@@ -49,6 +49,7 @@ export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilde
         );
 
         return buildSelfUpdateByOtherTablesBody(
+            this.context.withoutInsertCase() ? false : true,
             this.context.cache.for,
             this.conditions.noReferenceChanges(),
             hasReference,
@@ -69,7 +70,7 @@ export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilde
         const trigger = new DatabaseTrigger({
             name: this.generateTriggerName(),
             after: true,
-            insert: true,
+            insert: this.context.withoutInsertCase() ? false : true,
             
             delete: false,
 

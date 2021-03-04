@@ -1,4 +1,3 @@
-import { flatMap } from "lodash";
 import {
     Expression,
     Cache,
@@ -152,6 +151,12 @@ export class CacheContext {
         }
 
         return referenceMeta;
+    }
+
+    withoutInsertCase(): boolean {
+        return (this.cache.withoutInserts || []).includes(
+            this.triggerTable.toString() 
+        );
     }
 }
 

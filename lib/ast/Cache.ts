@@ -7,6 +7,7 @@ export class Cache {
     readonly for: TableReference;
     readonly select: Select;
     readonly withoutTriggers: string[];
+    readonly withoutInserts: string[];
     readonly indexes: CacheIndex[];
 
     constructor(
@@ -14,12 +15,14 @@ export class Cache {
         forTable: TableReference,
         select: Select,
         withoutTriggers: string[] = [],
+        withoutInserts: string[] = [],
         indexes: CacheIndex[] = []
     ) {
         this.name = name;
         this.for = forTable;
         this.select = select;
         this.withoutTriggers = withoutTriggers;
+        this.withoutInserts = withoutInserts;
         this.indexes = indexes;
     }
 
@@ -28,7 +31,9 @@ export class Cache {
             this.name === otherCache.name &&
             this.for.equal(otherCache.for) &&
             this.select.toString() === otherCache.select.toString() &&
-            this.withoutTriggers.join(",") === otherCache.withoutTriggers.join(",")
+            this.withoutTriggers.join(",") === otherCache.withoutTriggers.join(",") &&
+            this.withoutInserts.join(",") === otherCache.withoutInserts.join(",") &&
+            this.indexes.join(",") === otherCache.indexes.join(",")
         );
     }
 
@@ -44,6 +49,10 @@ cache ${this.name} for ${this.for} (
 ${ this.withoutTriggers.map(onTable => 
     `without triggers on ${onTable}`
 ).join(" ").trim() }
+${ this.withoutInserts.map(onTable => 
+    `without insert case on ${onTable}`
+).join(" ").trim() }
+${ this.indexes.join("\n") }
         `;
     }
 }
