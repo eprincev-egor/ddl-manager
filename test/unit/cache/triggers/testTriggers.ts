@@ -45,6 +45,10 @@ export function testTriggers(test: ITest) {
         "public",
         "list_gtd",
     );
+    const operationID = new TableID(
+        "operation",
+        "operation",
+    );
 
     const testDatabase = new Database([
         new Table(
@@ -166,6 +170,27 @@ export function testTriggers(test: ITest) {
                     gtdID,
                     "orders_ids",
                     "bigint[]"
+                )
+            ]
+        ),
+        new Table(
+            operationID.schema,
+            operationID.name,
+            [
+                new Column(
+                    gtdID,
+                    "id",
+                    "integer"
+                ),
+                new Column(
+                    gtdID,
+                    "doc_parent_id_order",
+                    "bigint"
+                ),
+                new Column(
+                    gtdID,
+                    "id_order",
+                    "bigint"
                 )
             ]
         )

@@ -85,7 +85,7 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
                 );
                 const dbColumn = dbTable && dbTable.getColumn( columnRef.name );
                 
-                const nullSql = dbColumn && dbColumn.type.isArray() ? 
+                const nullSql = dbColumn ? 
                     UnknownExpressionElement.fromSql(`(null::${ dbColumn.type })`) :
                     UnknownExpressionElement.fromSql("null");
 
