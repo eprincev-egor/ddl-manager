@@ -85,8 +85,15 @@ export class MainComparator {
     }
 
     private async compare() {
+        // need add new functions to migration
+        // before rebuild cache
+        this.functions.create();
+
         await this.dropOldObjects();
-        await this.createNewObjects();
+
+        this.triggers.create();
+        await this.cache.create();
+        this.indexes.create();
 
         return this.migration;
     }
@@ -99,9 +106,12 @@ export class MainComparator {
     }
 
     private async compareWithoutUpdates() {
+        // need add new functions to migration
+        // before rebuild cache
+        this.functions.create();
+
         await this.dropOldObjects();
 
-        this.functions.create();
         this.triggers.create();
         await this.cache.createWithoutUpdates();
         this.indexes.create();
@@ -119,12 +129,5 @@ export class MainComparator {
         this.triggers.drop();
         await this.cache.drop();
         this.indexes.drop();
-    }
-
-    private async createNewObjects() {
-        this.functions.create();
-        this.triggers.create();
-        await this.cache.create();
-        this.indexes.create();
     }
 }

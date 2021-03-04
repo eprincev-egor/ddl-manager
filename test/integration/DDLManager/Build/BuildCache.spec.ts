@@ -1448,10 +1448,20 @@ describe("integration/DDLManager.build cache", () => {
         await db.query(`
             create table documents (
                 id serial primary key,
+
+                -- need recreate column
+                orders_ids text,
+
                 invoice_orders_ids bigint[],
                 gtd_orders_ids bigint[]
             );
-            
+
+            comment on column documents.orders_ids is $$
+            ddl-manager-sync
+            ddl-manager-select(select ',1,' as orders_ids)
+            ddl-manager-cache(cache orders_ids for list_documents as doc)
+            $$;
+
             insert into documents (invoice_orders_ids, gtd_orders_ids)
             values (
                 array[1, null, 2]::bigint[],
