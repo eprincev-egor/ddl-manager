@@ -128,7 +128,11 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
     private createNullExpression(expression: Expression) {
 
         let nullExpression = expression;
-        const columnRefs = expression.getColumnReferences();
+        const columnRefs = expression.getColumnReferences()
+            .filter(columnRef =>
+                this.columnRefToTriggerTable(columnRef)
+            );
+
         for (const columnRef of columnRefs) {
             const dbTable = this.context.database.getTable(
                 columnRef.tableReference.table
@@ -146,24 +150,42 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
     }
 
     private hasEffect(row: Row) {
-        const conditions = this.context.cache.select.columns.map(selectColumn => {
-            const expression = this.replaceTriggerTableToRow(
-                row, selectColumn.expression
-            );
-            return expression.toString() + " is not null";
-        });
+        const conditions = this.context.cache.select.columns
+            .filter(selectColumn =>
+                selectColumn.expression.getColumnReferences()
+                    .every(columnRef =>
+                        this.columnRefToTriggerTable(columnRef)
+                    )
+            )
+            .map(selectColumn => {
+                const expression = this.replaceTriggerTableToRow(
+                    row, selectColumn.expression
+                );
+                return expression.toString() + " is not null";
+            });
 
         if ( this.context.referenceMeta.filters.length ) {
             const filters = this.context.referenceMeta.filters.map(filter =>
                 this.replaceTriggerTableToRow(row, filter)
             );
-            const hasEffectAndFilters = Expression.and([
-                Expression.or(conditions),
-                Expression.and(filters)
-            ]);
-            return hasEffectAndFilters;
+
+            if ( conditions.length ) {
+                const hasEffectAndFilters = Expression.and([
+                    Expression.or(conditions),
+                    Expression.and(filters)
+                ]);
+                return hasEffectAndFilters;
+            }
+
+            return Expression.and(filters);
         }
 
         return Expression.or(conditions);
+    }
+
+    private columnRefToTriggerTable(columnRef: ColumnReference) {
+        return columnRef.tableReference.equal(
+            this.context.cache.select.from[0]!.table
+        );
     }
 }
