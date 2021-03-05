@@ -4,6 +4,7 @@ import {
     FunctionCall,
     ColumnLink,
     Operator as OperatorSyntax,
+    CaseWhen as CaseWhenSyntax,
     FunctionLink,
     PgArray
 } from "grapeql-lang";
@@ -12,6 +13,7 @@ import {
     FuncCall,
     Select,
     Operator,
+    CaseWhen,
     Expression,
     UnknownExpressionElement,
     IOrderByItem
@@ -62,6 +64,27 @@ export class ExpressionParser {
                         )
                     );
                 elem = new ArrayElement(content);
+            }
+            else if ( elemSyntax instanceof CaseWhenSyntax ) {
+                elem = new CaseWhen({
+                    cases: elemSyntax.get("case")!.map(caseSyntax => ({
+                        when: this.parse(
+                            select,
+                            additionalTableReferences, 
+                            caseSyntax.get("when")!.toString()
+                        ),
+                        then: this.parse(
+                            select,
+                            additionalTableReferences, 
+                            caseSyntax.get("then")!.toString()
+                        )
+                    })),
+                    else: elemSyntax.get("else") ? this.parse(
+                        select,
+                        additionalTableReferences, 
+                        elemSyntax.get("else")!.toString()
+                    ) : undefined
+                })
             }
             else if ( elemSyntax instanceof ExpressionSyntax ) {
                 elem = this.parse(

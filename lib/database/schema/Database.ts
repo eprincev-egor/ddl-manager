@@ -25,7 +25,8 @@ export class Database {
             "array_agg",
             "string_agg",
             "bool_or",
-            "bool_and"
+            "bool_and",
+            "every"
         ];
     }
 

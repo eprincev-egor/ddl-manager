@@ -138,6 +138,11 @@ export function testTriggers(test: ITest) {
                     invoiceID,
                     "payments_ids",
                     "int8[]"
+                ),
+                new Column(
+                    invoiceID,
+                    "orders_ids",
+                    "bigint[]"
                 )
             ]
         ),
