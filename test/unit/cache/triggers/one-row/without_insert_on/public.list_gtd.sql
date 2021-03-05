@@ -13,7 +13,9 @@ begin
             where
                 old.id = comments.row_id
                 and
-                comments.query_name in ('LIST_ALL_GTD', 'LIST_ARCHIVE_GTD', 'LIST_ACTIVE_GTD', 'LIST_GTD');
+                comments.query_name in ('LIST_ALL_GTD', 'LIST_ARCHIVE_GTD', 'LIST_ACTIVE_GTD', 'LIST_GTD')
+                and
+                comments.gtd_orders_ids is distinct from (null::bigint[]);
         end if;
 
         return old;
@@ -38,7 +40,9 @@ begin
             where
                 new.id = comments.row_id
                 and
-                comments.query_name in ('LIST_ALL_GTD', 'LIST_ARCHIVE_GTD', 'LIST_ACTIVE_GTD', 'LIST_GTD');
+                comments.query_name in ('LIST_ALL_GTD', 'LIST_ARCHIVE_GTD', 'LIST_ACTIVE_GTD', 'LIST_GTD')
+                and
+                comments.gtd_orders_ids is distinct from new.orders_ids;
         end if;
 
         return new;

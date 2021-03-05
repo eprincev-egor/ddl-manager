@@ -15,7 +15,9 @@ begin
             where
                 old.id = comments.row_id
                 and
-                comments.query_name in ('LIST_ALL_GTD', 'LIST_ARCHIVE_GTD', 'LIST_ACTIVE_GTD', 'LIST_GTD');
+                comments.query_name in ('LIST_ALL_GTD', 'LIST_ARCHIVE_GTD', 'LIST_ACTIVE_GTD', 'LIST_GTD')
+                and
+                comments.gtd_order_id is distinct from (null::bigint[]) [1] * 3;
         end if;
 
         return old;
@@ -44,7 +46,9 @@ begin
             where
                 new.id = comments.row_id
                 and
-                comments.query_name in ('LIST_ALL_GTD', 'LIST_ARCHIVE_GTD', 'LIST_ACTIVE_GTD', 'LIST_GTD');
+                comments.query_name in ('LIST_ALL_GTD', 'LIST_ARCHIVE_GTD', 'LIST_ACTIVE_GTD', 'LIST_GTD')
+                and
+                comments.gtd_order_id is distinct from new.orders_ids [1] * 3;
         end if;
 
         return new;
@@ -63,7 +67,9 @@ begin
             where
                 new.id = comments.row_id
                 and
-                comments.query_name in ('LIST_ALL_GTD', 'LIST_ARCHIVE_GTD', 'LIST_ACTIVE_GTD', 'LIST_GTD');
+                comments.query_name in ('LIST_ALL_GTD', 'LIST_ARCHIVE_GTD', 'LIST_ACTIVE_GTD', 'LIST_GTD')
+                and
+                comments.gtd_order_id is distinct from new.orders_ids [1] * 3;
         end if;
 
         return new;

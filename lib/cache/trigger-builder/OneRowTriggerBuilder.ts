@@ -1,4 +1,4 @@
-import { Update, Expression, SetItem, UnknownExpressionElement } from "../../ast";
+import { Update, Expression, SetItem, UnknownExpressionElement, ColumnReference } from "../../ast";
 import { CoalesceFalseExpression } from "../../ast/expression/CoalesceFalseExpression";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { buildOneRowBody } from "./body/buildOneRowBody";
@@ -11,7 +11,10 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
         const updateNew = new Update({
             table: this.context.cache.for.toString(),
             set: this.setNewItems(),
-            where: this.conditions.simpleWhere("new")
+            where: Expression.and([
+                this.conditions.simpleWhere("new")!,
+                this.whereDistinctNewValues()
+            ])
         });
 
         const body = buildOneRowBody({
@@ -29,11 +32,46 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
                 update: new Update({
                     table: this.context.cache.for.toString(),
                     set: this.setNulls(),
-                    where: this.conditions.simpleWhere("old")
+                    where: Expression.and([
+                        this.conditions.simpleWhere("old")!,
+                        this.whereDistinctNullValues()
+                    ])
                 })
             }
         });
         return body;
+    }
+
+    private whereDistinctNewValues() {
+        const selectColumns = this.context.cache.select.columns;
+        const newValues = selectColumns.map(selectColumn => 
+            this.replaceTriggerTableToRow(
+                "new", selectColumn.expression
+            )
+        );
+        return this.whereDistinctFrom(newValues);
+    }
+
+    private whereDistinctNullValues() {
+        const selectColumns = this.context.cache.select.columns;
+        const nullValues = selectColumns.map(selectColumn => 
+            this.createNullExpression(selectColumn.expression)
+        );
+        return this.whereDistinctFrom(nullValues);
+    }
+
+    private whereDistinctFrom(values: Expression[]) {
+        const selectColumns = this.context.cache.select.columns;
+        const compareConditions = selectColumns.map((selectColumn, i) => {
+            const cacheColumnRef = new ColumnReference(
+                this.context.cache.for,
+                selectColumn.name
+            );
+            return UnknownExpressionElement.fromSql(
+                `${cacheColumnRef} is distinct from ${ values[ i ] }`
+            );
+        });
+        return Expression.or(compareConditions);
     }
 
     private needUpdateOnUpdate() {
@@ -76,29 +114,35 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
 
     private setNulls() {
         const setItems = this.context.cache.select.columns.map(selectColumn => {
-
-            let nullExpression = selectColumn.expression;
-            const columnRefs = selectColumn.expression.getColumnReferences();
-            for (const columnRef of columnRefs) {
-                const dbTable = this.context.database.getTable(
-                    columnRef.tableReference.table
-                );
-                const dbColumn = dbTable && dbTable.getColumn( columnRef.name );
-                
-                const nullSql = dbColumn ? 
-                    UnknownExpressionElement.fromSql(`(null::${ dbColumn.type })`) :
-                    UnknownExpressionElement.fromSql("null");
-
-                nullExpression = nullExpression.replaceColumn(columnRef, nullSql);
-            }
-
             const setItem = new SetItem({
                 column: selectColumn.name,
-                value: nullExpression
+                value: this.createNullExpression(
+                    selectColumn.expression
+                )
             })
             return setItem;
         });
         return setItems;
+    }
+
+    private createNullExpression(expression: Expression) {
+
+        let nullExpression = expression;
+        const columnRefs = expression.getColumnReferences();
+        for (const columnRef of columnRefs) {
+            const dbTable = this.context.database.getTable(
+                columnRef.tableReference.table
+            );
+            const dbColumn = dbTable && dbTable.getColumn( columnRef.name );
+            
+            const nullSql = dbColumn ? 
+                UnknownExpressionElement.fromSql(`(null::${ dbColumn.type })`) :
+                UnknownExpressionElement.fromSql("null");
+
+            nullExpression = nullExpression.replaceColumn(columnRef, nullSql);
+        }
+
+        return nullExpression;
     }
 
     private hasEffect(row: Row) {

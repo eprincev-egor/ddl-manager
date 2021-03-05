@@ -7,7 +7,9 @@ begin
             update operation.operation as child_oper set
                 lvl = coalesce(null, 0) + 1
             where
-                old.id = child_oper.id_parent_operation;
+                old.id = child_oper.id_parent_operation
+                and
+                child_oper.lvl is distinct from coalesce(null, 0) + 1;
         end if;
 
         return old;
@@ -21,7 +23,9 @@ begin
         update operation.operation as child_oper set
             lvl = coalesce(new.lvl, 0) + 1
         where
-            new.id = child_oper.id_parent_operation;
+            new.id = child_oper.id_parent_operation
+            and
+            child_oper.lvl is distinct from coalesce(new.lvl, 0) + 1;
 
         return new;
     end if;
@@ -31,7 +35,9 @@ begin
             update operation.operation as child_oper set
                 lvl = coalesce(new.lvl, 0) + 1
             where
-                new.id = child_oper.id_parent_operation;
+                new.id = child_oper.id_parent_operation
+                and
+                child_oper.lvl is distinct from coalesce(new.lvl, 0) + 1;
         end if;
 
         return new;

@@ -7,7 +7,9 @@ begin
             update invoice set
                 date_contract = null
             where
-                old.id = invoice.id_list_contracts;
+                old.id = invoice.id_list_contracts
+                and
+                invoice.date_contract is distinct from null;
         end if;
 
         return old;
@@ -21,7 +23,9 @@ begin
         update invoice set
             date_contract = new.date_contract
         where
-            new.id = invoice.id_list_contracts;
+            new.id = invoice.id_list_contracts
+            and
+            invoice.date_contract is distinct from new.date_contract;
 
         return new;
     end if;
@@ -31,7 +35,9 @@ begin
             update invoice set
                 date_contract = new.date_contract
             where
-                new.id = invoice.id_list_contracts;
+                new.id = invoice.id_list_contracts
+                and
+                invoice.date_contract is distinct from new.date_contract;
         end if;
 
         return new;

@@ -12,7 +12,13 @@ begin
                 parent_id_order = (null::bigint),
                 lvl = coalesce(null, 0) + 1
             where
-                old.id = child_oper.id_parent_operation;
+                old.id = child_oper.id_parent_operation
+                and
+                (
+                    child_oper.parent_id_order is distinct from (null::bigint)
+                    or
+                    child_oper.lvl is distinct from coalesce(null, 0) + 1
+                );
         end if;
 
         return old;
@@ -31,7 +37,13 @@ begin
             parent_id_order = new.id_order,
             lvl = coalesce(new.lvl, 0) + 1
         where
-            new.id = child_oper.id_parent_operation;
+            new.id = child_oper.id_parent_operation
+            and
+            (
+                child_oper.parent_id_order is distinct from new.id_order
+                or
+                child_oper.lvl is distinct from coalesce(new.lvl, 0) + 1
+            );
 
         return new;
     end if;
@@ -46,7 +58,13 @@ begin
                 parent_id_order = new.id_order,
                 lvl = coalesce(new.lvl, 0) + 1
             where
-                new.id = child_oper.id_parent_operation;
+                new.id = child_oper.id_parent_operation
+                and
+                (
+                    child_oper.parent_id_order is distinct from new.id_order
+                    or
+                    child_oper.lvl is distinct from coalesce(new.lvl, 0) + 1
+                );
         end if;
 
         return new;

@@ -13,7 +13,9 @@ begin
             where
                 old.id = list_documents.table_id
                 and
-                list_documents.table_name in ('LIST_GTD_ACTIVE', 'LIST_GTD_ARCHIVE');
+                list_documents.table_name in ('LIST_GTD_ACTIVE', 'LIST_GTD_ARCHIVE')
+                and
+                list_documents.gtd_orders_ids is distinct from (null::bigint[]);
         end if;
 
         return old;
@@ -38,7 +40,9 @@ begin
             where
                 new.id = list_documents.table_id
                 and
-                list_documents.table_name in ('LIST_GTD_ACTIVE', 'LIST_GTD_ARCHIVE');
+                list_documents.table_name in ('LIST_GTD_ACTIVE', 'LIST_GTD_ARCHIVE')
+                and
+                list_documents.gtd_orders_ids is distinct from new.orders_ids;
         end if;
 
         return new;
@@ -55,7 +59,9 @@ begin
             where
                 new.id = list_documents.table_id
                 and
-                list_documents.table_name in ('LIST_GTD_ACTIVE', 'LIST_GTD_ARCHIVE');
+                list_documents.table_name in ('LIST_GTD_ACTIVE', 'LIST_GTD_ARCHIVE')
+                and
+                list_documents.gtd_orders_ids is distinct from new.orders_ids;
         end if;
 
         return new;
