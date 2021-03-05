@@ -406,21 +406,16 @@ export class CacheComparator extends AbstractComparator {
 
         let {expression} = select.columns[0] as SelectColumn;
 
-        if ( expression.isColumnReference() ) {
-            const columnRef = expression.elements[0] as ColumnReference;
-            const dbTable = this.database.getTable(
-                columnRef.tableReference.table
-            );
-            const dbColumn = dbTable && dbTable.getColumn(columnRef.name);
-
-            if ( dbColumn ) {
-                return dbColumn.type.toString();
+        if ( expression.isFuncCall() ) {
+            const funcCall = expression.getFuncCalls()[0] as FuncCall;
+            if ( funcCall.name === "coalesce" ) {
+                expression = funcCall.args[0] as Expression;
             }
         }
 
         if ( expression.isFuncCall() ) {
             const funcCall = expression.getFuncCalls()[0] as FuncCall;
-            if ( funcCall.name === "coalesce" ) {
+            if ( funcCall.name === "max" || funcCall.name === "min" ) {
                 expression = funcCall.args[0] as Expression;
             }
         }
@@ -460,21 +455,6 @@ export class CacheComparator extends AbstractComparator {
                 }
             }
 
-            if ( funcCall.name === "max" || funcCall.name === "min" ) {
-    
-                const firstArg = funcCall.args[0] as Expression;
-                const columnRef = firstArg.getColumnReferences()[0];
-
-                if ( columnRef && firstArg.elements.length === 1 ) {
-                    const table = this.database.getTable(columnRef.tableReference.table);
-                    const column = table && table.getColumn(columnRef.name);
-                    
-                    if ( column ) {
-                        return column.type.toString();
-                    }
-                }
-            }
-
             const newFunc = this.migration.toCreate.functions.find(func =>
                 func.name === funcCall.name
             );
@@ -483,9 +463,25 @@ export class CacheComparator extends AbstractComparator {
             }
         }
 
+        if ( expression.isColumnReference() ) {
+            const columnRef = expression.elements[0] as ColumnReference;
+            const dbTable = this.database.getTable(
+                columnRef.tableReference.table
+            );
+            const dbColumn = dbTable && dbTable.getColumn(columnRef.name);
+
+            if ( dbColumn ) {
+                return dbColumn.type.toString();
+            }
+        }
+
         const selectWithReplacedColumns = await this.replaceUnknownColumns(select);
         const columnsTypes = await this.driver.getCacheColumnsTypes(
-            selectWithReplacedColumns,
+            selectWithReplacedColumns.cloneWith({
+                columns: [
+                    selectWithReplacedColumns.columns[0]
+                ]
+            }),
             cache.for
         );
 
