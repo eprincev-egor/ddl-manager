@@ -8,7 +8,7 @@ begin
     end if;
 
     if TG_OP = 'UPDATE' then
-        if new.orders_ids is not distinct from old.orders_ids then
+        if cm_equal_arrays(new.orders_ids, old.orders_ids) then
             return new;
         end if;
     end if;
