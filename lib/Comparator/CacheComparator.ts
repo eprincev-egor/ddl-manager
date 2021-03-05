@@ -184,7 +184,7 @@ export class CacheComparator extends AbstractComparator {
                     })
                 );
 
-                if ( sameNameSelectColumn && column.type.equal(newColumnType) ) {
+                if ( column.type.equal(newColumnType) ) {
                     return true;
                 }
             }
@@ -212,7 +212,7 @@ export class CacheComparator extends AbstractComparator {
                 const existFunc = this.database.functions.some(existentFunc =>
                     existentFunc.equal(func)
                 );
-    
+
                 this.migration.create({
                     triggers: existFunc && existsTrigger ? [] : [trigger],
                     functions: existFunc ? [] : [func]
@@ -238,6 +238,14 @@ export class CacheComparator extends AbstractComparator {
                 if ( dbTrigger.frozen ) {
                     continue;
                 }
+                const hasDropInMigration = this.migration.toDrop.triggers
+                    .some(dropTrigger =>
+                        dropTrigger.name === dbTrigger.name &&
+                        dropTrigger.table.equal(dbTrigger.table)
+                    );
+                if ( hasDropInMigration ) {
+                    continue;
+                }
 
                 const table = dbTrigger.table;
                 const hasDepsToCacheColumn = (dbTrigger.updateOf || [])
@@ -249,7 +257,7 @@ export class CacheComparator extends AbstractComparator {
                             );
                         return thisColumnNeedDrop;
                     });
-                
+
                 if ( hasDepsToCacheColumn ) {
                     this.migration.drop({
                         triggers: [dbTrigger]
@@ -398,6 +406,18 @@ export class CacheComparator extends AbstractComparator {
 
         let {expression} = select.columns[0] as SelectColumn;
 
+        if ( expression.isColumnReference() ) {
+            const columnRef = expression.elements[0] as ColumnReference;
+            const dbTable = this.database.getTable(
+                columnRef.tableReference.table
+            );
+            const dbColumn = dbTable && dbTable.getColumn(columnRef.name);
+
+            if ( dbColumn ) {
+                return dbColumn.type.toString();
+            }
+        }
+
         if ( expression.isFuncCall() ) {
             const funcCall = expression.getFuncCalls()[0] as FuncCall;
             if ( funcCall.name === "coalesce" ) {
@@ -463,30 +483,7 @@ export class CacheComparator extends AbstractComparator {
             }
         }
 
-        // TODO: refactor it
-        let selectWithReplacedColumns: Select = select;
-        this.migration.toCreate.columns.forEach(someNewColumn => {
-            const someNewColumnRef = new ColumnReference(
-                // TODO: change signature of replaceColumn
-                someNewColumn.table as any,
-                someNewColumn.name
-            )
-            const selectColumn = selectWithReplacedColumns.columns[0];
-
-            selectWithReplacedColumns = selectWithReplacedColumns.cloneWith({
-                columns: [
-                    selectColumn.replaceExpression(
-                        selectColumn.expression.replaceColumn(
-                            someNewColumnRef,
-                            UnknownExpressionElement.fromSql(
-                                `null::${ someNewColumn.type.toString() }`
-                            )
-                        )
-                    )
-                ]
-            })
-        });
-
+        const selectWithReplacedColumns = await this.replaceUnknownColumns(select);
         const columnsTypes = await this.driver.getCacheColumnsTypes(
             selectWithReplacedColumns,
             cache.for
@@ -494,6 +491,83 @@ export class CacheComparator extends AbstractComparator {
 
         const columnType = Object.values(columnsTypes)[0];
         return columnType;
+    }
+
+    private async replaceUnknownColumns(select: Select) {
+        let replacedSelect = select;
+
+        for (const selectColumn of select.columns) {
+            const columnRefs = selectColumn.expression.getColumnReferences();
+            for (const columnRef of columnRefs) {
+                const dbTable = this.database.getTable(
+                    columnRef.tableReference.table
+                );
+                const dbColumn = dbTable && dbTable.getColumn(columnRef.name);
+                if ( dbColumn ) {
+                    continue;
+                }
+
+                const maybeIsCreatingNow = this.migration.toCreate.columns.find(newColumn =>
+                    newColumn.name === columnRef.name &&
+                    newColumn.table.equal(columnRef.tableReference.table)
+                );
+                if ( maybeIsCreatingNow ) {
+                    replace(
+                        columnRef,
+                        maybeIsCreatingNow.type.toString()
+                    );
+                    continue;
+                }
+
+                const maybeExistsCache = flatMap(this.fs.files, (file) => 
+                    file.content.cache
+                ).find(cache =>
+                    cache.for.table.equal(columnRef.tableReference.table) &&
+                    cache.select.columns.some(column =>
+                        column.name === columnRef.name
+                    )
+                );
+                if ( maybeExistsCache ) {
+
+                    const selectToUpdate = this.createSelectForUpdate(maybeExistsCache);
+                    const sameNameSelectColumn = selectToUpdate.columns.find(selectColumn =>
+                        selectColumn.name === columnRef.name
+                    )!;
+
+                    const newColumnType = await this.getColumnType(
+                        maybeExistsCache,
+                        selectToUpdate.cloneWith({
+                            columns: [sameNameSelectColumn]
+                        })
+                    );
+
+                    replace(
+                        columnRef,
+                        newColumnType
+                    );
+                }
+            }
+        }
+
+        function replace(
+            columnRef: ColumnReference,
+            columnType: string
+        ) {
+            replacedSelect = replacedSelect.cloneWith({
+                columns: replacedSelect.columns.map(selectColumn => {
+                    const newExpression = selectColumn.expression.replaceColumn(
+                        columnRef,
+                        UnknownExpressionElement.fromSql(
+                            `null::${ columnType }`
+                        )
+                    );
+
+                    return selectColumn.replaceExpression(newExpression);
+                })
+            });
+        }
+
+        return replacedSelect;
     }
 
     private getColumnDefault(select: Select) {

@@ -97,6 +97,13 @@ export class Expression extends AbstractExpressionElement {
         );
     }
 
+    isColumnReference() {
+        return (
+            this.elements.length === 1 &&
+            this.elements[0] instanceof ColumnReference
+        );
+    }
+
     isIn() {
         return (
             this.elements.length === 2 &&

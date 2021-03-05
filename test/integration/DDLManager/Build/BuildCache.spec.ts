@@ -1512,4 +1512,76 @@ describe("integration/DDLManager.build cache", () => {
             orders_ids: [1,2,3]
         });
     });
+
+    it("rebuild cache when exists dependency to other cache", async() => {
+        const folderPath = ROOT_TMP_PATH + "/rebuild-two-caches";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table user_task (
+                id serial primary key,
+                id_order bigint,
+                department_users_ids bigint[]
+            );
+            create table public.order (
+                id serial primary key,
+                id_user_operations bigint
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/order.sql", `
+            cache order for user_task (
+                select
+                    array[orders.id_user_operations]::bigint[] as order_user_operations_ids
+            
+                from public.order as orders
+                where
+                    orders.id = user_task.id_order
+            )
+            without insert case on public.order
+        `);
+        fs.writeFileSync(folderPath + "/managers.sql", `
+            cache managers for user_task (
+                select
+                    (user_task.department_users_ids ||
+                    user_task.order_user_operations_ids) as managers_ids_and_owner
+            )
+            index gin on (managers_ids_and_owner)
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        // rebuild
+        fs.writeFileSync(folderPath + "/order.sql", `
+            cache order for user_task (
+                select
+                    orders.id_user_operations as order_user_operations_id
+            
+                from public.order as orders
+                where
+                    orders.id = user_task.id_order
+            )
+            without insert case on public.order
+        `);
+        fs.writeFileSync(folderPath + "/managers.sql", `
+            cache managers for user_task (
+                select
+                    (user_task.department_users_ids ||
+                    user_task.order_user_operations_id) as managers_ids_and_owner
+            )
+            index gin on (managers_ids_and_owner)
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+    });
+
 });

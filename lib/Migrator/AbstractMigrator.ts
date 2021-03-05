@@ -29,7 +29,11 @@ export abstract class AbstractMigrator {
         err: Error
     ) {
         // redefine callstack
-        const newErr = new Error(obj.getSignature() + "\n" + err.message);
+        const newErr = new Error(
+            obj.getSignature() + "\n" + 
+            err.message + "\n\n" +
+            ((err as any).sql || "")
+        );
         (newErr as any).originalError = err;
         
         this.outputErrors.push(newErr);

@@ -64,6 +64,13 @@ export class DatabaseTrigger {
         }
         this.name = this.name.slice(0, MAX_NAME_LENGTH);
 
+        if ( !(this.table instanceof TableID) ) {
+            const tableJson = this.table as {schema: string, name: string};
+            this.table = new TableID(
+                tableJson.schema,
+                tableJson.name
+            );
+        }
 
         if ( !json.comment ) {
             this.comment = Comment.fromFs({
