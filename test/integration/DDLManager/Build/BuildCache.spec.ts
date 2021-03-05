@@ -1584,4 +1584,176 @@ describe("integration/DDLManager.build cache", () => {
 
     });
 
+    it("rebuild cache when exists dependency to other cache inside Where", async() => {
+        const folderPath = ROOT_TMP_PATH + "/comment-target";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table user_task (
+                id serial primary key,
+                query_name text,
+                row_id bigint,
+                deleted smallint
+            );
+            create table comments (
+                id serial primary key,
+                query_name text,
+                row_id bigint
+            );
+            create table list_gtd (
+                id serial primary key,
+                orders_ids bigint[],
+                deleted smallint
+            );
+            create table operations (
+                id serial primary key,
+                id_order bigint,
+                deleted smallint
+            );
+            create table orders (
+                id serial primary key,
+                id_company_crm bigint
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/gtd.sql", `
+            cache gtd for comments (
+                select
+                    gtd.orders_ids[1] as gtd_order_id
+            
+                from list_gtd as gtd
+                where
+                    gtd.id = comments.target_row_id and
+                    gtd.deleted = 0 and
+            
+                    array_length( gtd.orders_ids, 1 ) = 1 and
+            
+                    comments.target_query_name in (
+                        'LIST_ALL_GTD',
+                        'LIST_ARCHIVE_GTD',
+                        'LIST_ACTIVE_GTD',
+                        'LIST_GTD'
+                    )
+            )
+            without insert case on list_gtd
+        `);
+
+        fs.writeFileSync(folderPath + "/operations.sql", `
+            cache operations for comments (
+                select
+                    operations.id_order as operation_id_order
+            
+                from operations
+                where
+                    operations.id = comments.target_row_id and
+                    operations.deleted = 0 and
+                    comments.target_query_name in (
+                        'OPERATION',
+                        'OPERATION_SEA',
+                        'OPERATION_AUTO',
+                        'OPERATION_TRAIN',
+                        'OPERATION_AIR',
+                        'OPERATION_FORWARD',
+                        'OPERATION_SUB_DOC'
+                    )
+            )
+            without insert case on operations
+        `);
+        fs.writeFileSync(folderPath + "/user_task.sql", `
+            cache user_task for comments (
+                select
+                    coalesce(
+                        user_task.query_name,
+                        comments.query_name
+                    ) as target_query_name,
+                    
+                    coalesce(
+                        user_task.row_id,
+                        comments.row_id
+                    ) as target_row_id
+            
+                from user_task
+                where
+                    user_task.id = comments.row_id and
+                    user_task.deleted = 0 and
+                    comments.query_name = 'USER_TASK'
+            )
+            without insert case on user_task
+        `);
+        fs.writeFileSync(folderPath + "/order_id.sql", `
+            cache order_id for comments (
+                select
+                    coalesce(
+                        comments.gtd_order_id,
+            
+                        (case
+                            when comments.target_query_name in ('ORDER', 'ORDER_REQUEST')
+                            then comments.target_row_id
+                        end)
+            
+                    ) as order_id,
+            
+                    (case
+                        when comments.target_query_name = 'OPERATION_UNIT'
+                        then comments.target_row_id
+                    end) as unit_id
+            )
+            )
+        `);
+        fs.writeFileSync(folderPath + "/company_crm_id.sql", `
+            cache company_crm_id for comments (
+                select
+                    orders.id_company_crm as company_crm_id
+            
+                from orders
+                where
+                    orders.id = comments.order_id
+            )
+            without insert case on orders
+            without insert case on comments
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        fs.writeFileSync(folderPath + "/user_task.sql", `
+            cache user_task for comments (
+                select
+                    user_task.query_name as user_task_query_name,
+                    user_task.row_id as user_task_row_id
+            
+                from user_task
+                where
+                    user_task.id = comments.row_id and
+                    user_task.deleted = 0 and
+                    comments.query_name = 'USER_TASK'
+            )
+            without insert case on user_task
+        `);
+        fs.writeFileSync(folderPath + "/target.sql", `
+            cache target for comments (
+                select
+                    coalesce(
+                        comments.user_task_query_name,
+                        comments.query_name
+                    ) as target_query_name,
+            
+                    coalesce(
+                        comments.user_task_row_id,
+                        comments.row_id
+                    ) as target_row_id
+            )
+        `);
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+    });
+
 });

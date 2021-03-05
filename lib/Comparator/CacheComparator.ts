@@ -477,10 +477,11 @@ export class CacheComparator extends AbstractComparator {
 
         const selectWithReplacedColumns = await this.replaceUnknownColumns(select);
         const columnsTypes = await this.driver.getCacheColumnsTypes(
-            selectWithReplacedColumns.cloneWith({
+            new Select({
                 columns: [
                     selectWithReplacedColumns.columns[0]
-                ]
+                ],
+                from: selectWithReplacedColumns.from
             }),
             cache.for
         );
@@ -592,8 +593,19 @@ export class CacheComparator extends AbstractComparator {
         const sortedSelectsForEveryColumn = sortSelectsByDependencies(
             allSelectsForEveryColumn
         );
+        const sortedSelectsForEveryColumnSelectOnlyTypes = sortedSelectsForEveryColumn.map(item => ({
+            cache: item.cache,
+            select: new Select({
+                columns: [
+                    item.select.columns[0]!
+                ],
+                from: item.select.getAllTableReferences().map(tableRef =>
+                    new From(tableRef)
+                )
+            })
+        }));
 
-        return sortedSelectsForEveryColumn;
+        return sortedSelectsForEveryColumnSelectOnlyTypes;
     }
 
     private generateAllSelectsForEveryColumn(allCache: Cache[]) {
@@ -603,16 +615,16 @@ export class CacheComparator extends AbstractComparator {
             const selectToUpdate = this.createSelectForUpdate(cache);
             
             return selectToUpdate.columns.map(updateColumn => {
-                const selectThatColumn = new Select({
-                    columns: [updateColumn],
-                    from: selectToUpdate.getAllTableReferences().map(tableRef =>
-                        new From(tableRef)
-                    )
-                });
-
                 return {
-                    select: selectThatColumn,
-                    cache
+                    cache,
+                    select: new Select({
+                        columns: [
+                            updateColumn
+                        ],
+                        from: selectToUpdate.getAllTableReferences().map(tableRef =>
+                            new From(tableRef)
+                        )
+                    })
                 };
             });
         });

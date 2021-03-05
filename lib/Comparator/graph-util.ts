@@ -62,7 +62,7 @@ function dependentOn(
     assert.ok(xColumn);
     assert.ok(yColumn);
 
-    const xRefs = xColumn.expression.getColumnReferences();
+    const xRefs = xItem.select.getAllColumnReferences();
     const xDependentOnY = xRefs.some(xColumnRef =>
         xColumnRef.tableReference.table.equal( yItem.cache.for.table ) &&
         xColumnRef.name === yColumn.name
