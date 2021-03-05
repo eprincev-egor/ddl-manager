@@ -118,7 +118,7 @@ export class AggFactory {
         else if ( aggCall.name === "bool_or" ) {
             AggConstructor = BoolOrAgg;
         }
-        else if ( aggCall.name === "bool_and" ) {
+        else if ( aggCall.name === "bool_and" || aggCall.name === "every" ) {
             AggConstructor = BoolAndAgg;
         }
         else if (

@@ -203,34 +203,14 @@ begin
                     all_invoices_has_payment_every_payment_date,
                     new.payment_date
                 ),
-                all_invoices_has_payment_every = (
-                    select
-                        every(
-                            item.payment_date is not null
-                        )
-
-                    from unnest(
-                        array_append(
-                            all_invoices_has_payment_every_payment_date,
-                            new.payment_date
-                        )
-                    ) as item(payment_date)
-                ),
+                all_invoices_has_payment_every = all_invoices_has_payment_every
+                and
+                new.payment_date is not null,
                 all_invoices_has_payment = case
                     when
-                        ((
-                            select
-                                every(
-                                    item.payment_date is not null
-                                )
-
-                            from unnest(
-                                array_append(
-                                    all_invoices_has_payment_every_payment_date,
-                                    new.payment_date
-                                )
-                            ) as item(payment_date)
-                        ))
+                        (all_invoices_has_payment_every
+                        and
+                        new.payment_date is not null)
                     then
                         1
                     else
@@ -257,34 +237,14 @@ begin
                     all_invoices_has_payment_every_payment_date,
                     new.payment_date
                 ),
-                all_invoices_has_payment_every = (
-                    select
-                        every(
-                            item.payment_date is not null
-                        )
-
-                    from unnest(
-                        array_append(
-                            all_invoices_has_payment_every_payment_date,
-                            new.payment_date
-                        )
-                    ) as item(payment_date)
-                ),
+                all_invoices_has_payment_every = all_invoices_has_payment_every
+                and
+                new.payment_date is not null,
                 all_invoices_has_payment = case
                     when
-                        ((
-                            select
-                                every(
-                                    item.payment_date is not null
-                                )
-
-                            from unnest(
-                                array_append(
-                                    all_invoices_has_payment_every_payment_date,
-                                    new.payment_date
-                                )
-                            ) as item(payment_date)
-                        ))
+                        (all_invoices_has_payment_every
+                        and
+                        new.payment_date is not null)
                     then
                         1
                     else
