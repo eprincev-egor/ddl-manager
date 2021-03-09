@@ -3,6 +3,7 @@ import {
     Cache,
     ColumnReference
 } from "../../ast";
+import { MAX_NAME_LENGTH } from "../../database/postgres/constants";
 import { Database } from "../../database/schema/Database";
 import { TableID } from "../../database/schema/TableID";
 import { TableReference } from "../../database/schema/TableReference";
@@ -57,7 +58,7 @@ export class CacheContext {
     }
 
     generateTriggerName() {
-        const triggerName = [
+        const defaultTriggerName = [
             "cache",
             this.cache.name,
             "for",
@@ -67,7 +68,30 @@ export class CacheContext {
             "on",
             this.triggerTable.name
         ].join("_");
-        return triggerName;
+
+        if ( defaultTriggerName.length >= MAX_NAME_LENGTH ) {
+            const tableRef = this.cache.select
+                .getAllTableReferences()
+                .find(fromTableRef =>
+                    fromTableRef.table.equal(this.triggerTable)
+                );
+
+            if ( tableRef && tableRef.alias ) {
+                const shortTriggerName = [
+                    "cache",
+                    this.cache.name,
+                    "for",
+                    this.excludeRef ?
+                        this.cache.for.table.name :
+                        "self",
+                    "on",
+                    tableRef.alias
+                ].join("_");
+                return shortTriggerName;
+            }
+        }
+
+        return defaultTriggerName;
     }
 
     private buildReferenceMeta(): IReferenceMeta {
