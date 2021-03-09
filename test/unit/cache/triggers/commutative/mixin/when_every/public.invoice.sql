@@ -142,6 +142,11 @@ begin
             return new;
         end if;
 
+        if cm_equal_arrays(old.orders_ids, new.orders_ids) then
+            inserted_orders_ids = new.orders_ids;
+            deleted_orders_ids = old.orders_ids;
+        end if;
+
         if
             deleted_orders_ids is not null
             and

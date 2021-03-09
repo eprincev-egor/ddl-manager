@@ -489,4 +489,96 @@ describe("integration/DDLManager.build cache", () => {
         }
     });
 
+    it("test set deleted = 1, when not changed orders_ids", async() => {
+        const folderPath = ROOT_TMP_PATH + "/deleted_and_orders_ids";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table public.order (
+                id serial primary key
+            );
+
+            create table list_gtd (
+                id serial primary key,
+                gtd_number text,
+                orders_ids bigint[],
+                deleted smallint default 0
+            );
+
+            insert into public.order default values;
+            insert into public.order default values;
+
+            insert into list_gtd (
+                gtd_number,
+                deleted,
+                orders_ids
+            ) values (
+                'gtd 1',
+                0,
+                array[1]
+            );
+            insert into list_gtd (
+                gtd_number,
+                deleted,
+                orders_ids
+            ) values (
+                'gtd 2',
+                0,
+                array[1]
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/gtd_totals.sql", `
+            cache gtd_totals for public.order (
+                select
+                    string_agg(distinct gtd.gtd_number, ', ') as gtd_numbers
+
+                from list_gtd as gtd
+                where
+                    gtd.orders_ids && ARRAY[public.order.id]::bigint[] and
+                    gtd.deleted = 0
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        // set deleted = 1
+        await db.query(`
+            update list_gtd set
+                deleted = 1
+            where
+                id = 1
+        `);
+        let result = await db.query(`
+            select gtd_numbers
+            from public.order
+            order by id
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {gtd_numbers: "gtd 2"},
+            {gtd_numbers: null}
+        ]);
+
+
+        // set deleted = 0 and other orders_ids
+        await db.query(`
+            update list_gtd set
+                deleted = 0,
+                orders_ids = array[2]
+            where
+                id = 1
+        `);
+        result = await db.query(`
+            select gtd_numbers
+            from public.order
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {gtd_numbers: "gtd 2"},
+            {gtd_numbers: "gtd 1"}
+        ]);
+    });
 });

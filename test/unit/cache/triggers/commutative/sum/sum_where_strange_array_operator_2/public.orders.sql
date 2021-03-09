@@ -51,6 +51,11 @@ begin
             return new;
         end if;
 
+        if cm_equal_arrays(old.companies_ids, new.companies_ids) then
+            inserted_companies_ids = new.companies_ids;
+            deleted_companies_ids = old.companies_ids;
+        end if;
+
         if
             deleted_companies_ids is not null
             and

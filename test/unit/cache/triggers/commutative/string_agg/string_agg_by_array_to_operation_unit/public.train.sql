@@ -85,6 +85,11 @@ begin
             return new;
         end if;
 
+        if cm_equal_arrays(old.units_ids, new.units_ids) then
+            inserted_units_ids = new.units_ids;
+            deleted_units_ids = old.units_ids;
+        end if;
+
         if
             deleted_units_ids is not null
             and

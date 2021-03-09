@@ -121,6 +121,11 @@ begin
             return new;
         end if;
 
+        if cm_equal_arrays(old.clients_ids, new.clients_ids) then
+            inserted_clients_ids = new.clients_ids;
+            deleted_clients_ids = old.clients_ids;
+        end if;
+
         if
             deleted_clients_ids is not null
             and

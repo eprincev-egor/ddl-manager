@@ -195,6 +195,12 @@ function buildUpdateCaseBody(
         ),
 
         ...buildDeltaUpdate(deltaCase),
+
+        ...resetArraysIfNotChangedColumns(
+            deltaCase,
+            insertedArrElements,
+            deletedArrElements
+        ),
         
         new BlankLine(),
 
@@ -436,6 +442,48 @@ function assignArrVars(
 
     if ( output.length ) {
         output.push(new BlankLine());
+    }
+
+    return output;
+}
+
+function resetArraysIfNotChangedColumns(
+    deltaCase: IDeltaCase,
+    insertedArrElements: IArrVar[],
+    deletedArrElements: IArrVar[]
+) {
+    if ( !deltaCase.exitIf || !insertedArrElements.length ) {
+        return [];
+    }
+
+    const output: AbstractAstElement[] = [
+        new BlankLine()
+    ];
+
+    for (let i = 0, n = insertedArrElements.length; i < n; i++) {
+        const inserted = insertedArrElements[i];
+        const deleted = deletedArrElements[i];
+        const {triggerColumn} = inserted;
+
+        output.push(new If({
+            if: new HardCode({
+                sql: `cm_equal_arrays(old.${triggerColumn}, new.${triggerColumn})`
+            }),
+            then: [
+                new AssignVariable({
+                    variable: inserted.name,
+                    value: new HardCode({
+                        sql: `new.${triggerColumn}`
+                    })
+                }),
+                new AssignVariable({
+                    variable: deleted.name,
+                    value: new HardCode({
+                        sql: `old.${triggerColumn}`
+                    })
+                })
+            ]
+        }));
     }
 
     return output;
