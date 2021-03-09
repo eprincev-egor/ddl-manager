@@ -3,7 +3,7 @@ import {
     Body, If,
     HardCode, BlankLine
 } from "../../../ast";
-import { updateIf } from "./util/updateIf";
+import { doIf } from "./util/doIf";
 
 export interface IUpdateCase {
     needUpdate: Expression;
@@ -57,9 +57,9 @@ export function buildOneRowBody(ast: IOneAst) {
                         ]
                     }),
                     new BlankLine(),
-                    ...updateIf(
+                    ...doIf(
                         ast.onUpdate.needUpdate,
-                        ast.onUpdate.update
+                        [ast.onUpdate.update]
                     ),
                     new BlankLine(),
                     new HardCode({

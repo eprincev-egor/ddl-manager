@@ -10,7 +10,7 @@ import {
     AbstractAstElement,
     ColumnReference
 } from "../../../ast";
-import { updateIf } from "./util/updateIf";
+import { doIf } from "./util/doIf";
 import { exitIf } from "./util/exitIf";
 import { Update } from "../../../ast/Update";
 import { TableReference } from "../../../database/schema/TableReference";
@@ -145,9 +145,9 @@ function buildInsertOrDeleteCase(
 
                 ...doIf(simpleCase.hasReferenceWithoutJoins, [
                     ...assignVariables(joins, returnRow),
-                    ...updateIf(
+                    ...doIf(
                         simpleCase.needUpdate,
-                        simpleCase.update
+                        [simpleCase.update]
                     )
                 ]),
 
@@ -198,16 +198,16 @@ function buildUpdateCaseBody(
         
         new BlankLine(),
 
-        ...updateIf(
+        ...doIf(
             oldCaseCondition,
-            oldUpdate
+            oldUpdate ? [oldUpdate] : []
         ),
 
         new BlankLine(),
 
-        ...updateIf(
+        ...doIf(
             newCaseCondition,
-            newUpdate
+            newUpdate ? [newUpdate] : []
         ),
         new BlankLine(),
         new HardCode({sql: "return new;"})
@@ -240,23 +240,6 @@ function buildDeltaUpdate(deltaCase: IDeltaCase) {
         ]
     }
 }
-
-function doIf(
-    condition: Expression | undefined,
-    doBlock: AbstractAstElement[]
-) {
-    if ( !condition ) {
-        return doBlock;
-    }
-
-    return [new If({
-        if: condition,
-        then: [
-            ...doBlock
-        ]
-    })];
-}
-
 
 function assignVariables(joins: IJoin[], row: "new" | "old") {
     const lines: AbstractAstElement[] = [];

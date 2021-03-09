@@ -1,25 +1,25 @@
 import {
     If,
     Expression,
-    Update
+    AbstractAstElement
 } from "../../../../ast";
 
-export function updateIf(
+export function doIf(
     condition: Expression | undefined,
-    update: Update | undefined
+    doBlock: AbstractAstElement[]
 ) {
-    if ( !update ) {
+    if ( !doBlock.length ) {
         return [];
     }
 
     if ( !condition ) {
-        return [update];
+        return doBlock;
     }
 
     return [new If({
         if: condition,
         then: [
-            update
+            ...doBlock
         ]
     })];
 }
