@@ -17,7 +17,7 @@ interface ISelectParams {
     where?: Expression;
     from: From[];
     intoRow?: string;
-    orderBy: OrderByItem[];
+    orderBy?: OrderByItem[];
     limit?: number;
 }
 
@@ -36,6 +36,7 @@ export class Select extends AbstractAstElement {
     }) {
         super();
         Object.assign(this, params);
+        this.orderBy = this.orderBy || [];
     }
 
     addColumn(newColumn: SelectColumn): Select {
