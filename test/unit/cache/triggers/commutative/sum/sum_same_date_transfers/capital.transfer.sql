@@ -24,6 +24,10 @@ begin
         end if;
 
         if new.transfer_date is not distinct from old.transfer_date then
+            if new.transfer_date is null then
+                return new;
+            end if;
+
             update capital.account_date_balance as date_balance set
                 transfers_sum = transfers_sum - coalesce(old.delta, 0) + coalesce(new.delta, 0)
             where

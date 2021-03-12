@@ -28,6 +28,10 @@ begin
         end if;
 
         if new.id_client is not distinct from old.id_client then
+            if new.id_client is null then
+                return new;
+            end if;
+
             update companies set
                 orders_profit_sum_sales = orders_profit_sum_sales - coalesce(old.sales, 0) + coalesce(new.sales, 0),
                 orders_profit_sum_buys = orders_profit_sum_buys - coalesce(old.buys, 0) + coalesce(new.buys, 0),

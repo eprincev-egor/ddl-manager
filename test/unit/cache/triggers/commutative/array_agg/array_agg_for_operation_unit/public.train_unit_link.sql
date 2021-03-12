@@ -48,7 +48,11 @@ begin
             and
             new.deleted is not distinct from old.deleted
         then
-            if not coalesce(new.deleted = 0, false) then
+            if
+                new.id_unit is null
+                or
+                not coalesce(new.deleted = 0, false)
+            then
                 return new;
             end if;
 

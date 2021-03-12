@@ -27,6 +27,10 @@ begin
         end if;
 
         if new.id_client is not distinct from old.id_client then
+            if new.id_client is null then
+                return new;
+            end if;
+
             update companies set
                 orders_dates = cm_array_append_order_by_asc_nulls_first(
                     cm_array_remove_one_element(

@@ -38,6 +38,10 @@ begin
         end if;
 
         if new.id_client is not distinct from old.id_client then
+            if new.id_client is null then
+                return new;
+            end if;
+
             update companies set
                 has_lcl_order_is_lcl = array_append(
                     cm_array_remove_one_element(

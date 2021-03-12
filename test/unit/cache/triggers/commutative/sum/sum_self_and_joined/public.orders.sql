@@ -65,6 +65,10 @@ begin
         end if;
 
         if new.id_client is not distinct from old.id_client then
+            if new.id_client is null then
+                return new;
+            end if;
+
             update companies set
                 orders_total = orders_total - coalesce(
                     old.profit * old_vat_vat_value,

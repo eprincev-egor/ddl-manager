@@ -77,6 +77,10 @@ begin
         end if;
 
         if new.id_order is not distinct from old.id_order then
+            if new.id_order is null then
+                return new;
+            end if;
+
             update orders set
                 cargos_weight = cargos_weight - coalesce(old.total_weight, 0) + coalesce(new.total_weight, 0),
                 cargos_products_names_name = array_append(

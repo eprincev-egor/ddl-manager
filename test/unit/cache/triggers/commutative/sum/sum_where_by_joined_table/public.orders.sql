@@ -77,6 +77,8 @@ begin
             new_order_type_name is not distinct from old_order_type_name
         then
             if
+                new.id_client is null
+                or
                 not coalesce(new.deleted = 0, false)
                 or
                 not coalesce(new_order_type_name in ('LCL', 'LTL'), false)

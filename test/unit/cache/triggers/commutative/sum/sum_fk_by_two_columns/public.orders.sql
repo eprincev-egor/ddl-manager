@@ -36,6 +36,14 @@ begin
             and
             new.id_partner is not distinct from old.id_partner
         then
+            if
+                new.id_client is null
+                or
+                new.id_partner is null
+            then
+                return new;
+            end if;
+
             update companies set
                 orders_total = orders_total - coalesce(old.profit, 0) + coalesce(new.profit, 0)
             where

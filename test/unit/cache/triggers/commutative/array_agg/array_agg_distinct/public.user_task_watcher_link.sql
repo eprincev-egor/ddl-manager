@@ -38,6 +38,10 @@ begin
         end if;
 
         if new.id_user_task is not distinct from old.id_user_task then
+            if new.id_user_task is null then
+                return new;
+            end if;
+
             update user_task set
                 watchers_users_ids_id_user = array_append(
                     cm_array_remove_one_element(

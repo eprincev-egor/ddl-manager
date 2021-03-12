@@ -91,6 +91,10 @@ begin
         end if;
 
         if new.id_client is not distinct from old.id_client then
+            if new.id_client is null then
+                return new;
+            end if;
+
             update companies set
                 max_general_order_date_order_date = case
                     when

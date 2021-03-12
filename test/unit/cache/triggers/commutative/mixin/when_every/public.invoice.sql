@@ -82,6 +82,8 @@ begin
             new.deleted is not distinct from old.deleted
         then
             if
+                new.orders_ids is null
+                or
                 not coalesce(new.id_invoice_type = 2, false)
                 or
                 not coalesce(new.deleted = 0, false)

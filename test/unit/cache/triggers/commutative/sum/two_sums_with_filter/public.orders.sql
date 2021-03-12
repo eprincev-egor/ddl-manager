@@ -66,6 +66,10 @@ begin
         end if;
 
         if new.id_client is not distinct from old.id_client then
+            if new.id_client is null then
+                return new;
+            end if;
+
             update companies set
                 orders_profit_sum_total_is_sale = case
                     when

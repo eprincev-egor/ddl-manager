@@ -38,6 +38,10 @@ begin
         end if;
 
         if new.id_client is not distinct from old.id_client then
+            if new.id_client is null then
+                return new;
+            end if;
+
             update companies set
                 max_order_date_order_date = array_append(
                     cm_array_remove_one_element(

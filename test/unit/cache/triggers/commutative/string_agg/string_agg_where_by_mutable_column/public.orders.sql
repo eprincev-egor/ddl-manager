@@ -38,6 +38,10 @@ begin
         end if;
 
         if new.id_country is not distinct from old.id_country then
+            if new.id_country is null then
+                return new;
+            end if;
+
             update companies set
                 orders_numbers_doc_number = array_append(
                     cm_array_remove_one_element(

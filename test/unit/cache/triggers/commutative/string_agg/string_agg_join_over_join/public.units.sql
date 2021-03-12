@@ -134,6 +134,10 @@ begin
         end if;
 
         if new.id_order is not distinct from old.id_order then
+            if new.id_order is null then
+                return new;
+            end if;
+
             update orders set
                 units_types_name = array_append(
                     cm_array_remove_one_element(

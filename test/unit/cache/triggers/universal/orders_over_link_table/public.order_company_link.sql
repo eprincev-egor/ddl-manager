@@ -98,6 +98,10 @@ begin
         end if;
 
         if new.id_company is not distinct from old.id_company then
+            if new.id_company is null then
+                return new;
+            end if;
+
             update companies set
                 max_order_date_order_date = array_append(
                     cm_array_remove_one_element(
