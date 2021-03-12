@@ -6,22 +6,33 @@ import { SelectColumn } from "./SelectColumn";
 import { Spaces } from "./Spaces";
 import { TableReference, IReferenceFilter } from "../database/schema/TableReference";
 
+export interface OrderByItem {
+    expression: Expression;
+    type: "asc" | "desc";
+    nulls: "first" | "last";
+}
+
 interface ISelectParams {
     columns: SelectColumn[];
     where?: Expression;
     from: From[];
     intoRow?: string;
+    orderBy: OrderByItem[];
+    limit?: number;
 }
 
 export class Select extends AbstractAstElement {
     readonly columns!: SelectColumn[];
     readonly where?: Expression;
     readonly from!: From[];
+    readonly orderBy!: OrderByItem[];
     readonly intoRow?: string;
+    readonly limit?: number;
 
     constructor(params: ISelectParams = {
         columns: [], 
-        from: []
+        from: [],
+        orderBy: []
     }) {
         super();
         Object.assign(this, params);
@@ -54,11 +65,31 @@ export class Select extends AbstractAstElement {
         return clone;
     }
 
+    addOrderBy(orderBy: OrderByItem[]) {
+        const clone = this.cloneWith({
+            orderBy
+        });
+        return clone;
+    }
+
+    setLimit(limit: number) {
+        const clone = this.cloneWith({
+            limit
+        });
+        return clone;
+    }
+
     cloneWith(params: Partial<ISelectParams>) {
         const clone = new Select({
             columns: this.columns.map(column => column.clone()),
             from: this.from.map(from => from.clone()),
             where: this.where ? this.where.clone() : undefined,
+            orderBy: this.orderBy.map(orderItem => ({
+                expression: orderItem.expression.clone(),
+                type: orderItem.type,
+                nulls: orderItem.nulls
+            })),
+            limit: this.limit,
             ...params
         });
         return clone;
@@ -88,6 +119,19 @@ export class Select extends AbstractAstElement {
                 this.where.toSQL( spaces.plusOneLevel() )
             ]: []),
 
+            ...(this.orderBy.length ? [
+                spaces + "order by",
+                this.orderBy.map(orderItem =>
+                    orderItem.expression.toSQL( spaces.plusOneLevel() ) +
+                    " " + orderItem.type +
+                    " nulls " + orderItem.nulls
+                ).join(",\n")
+            ]: []),
+
+            ...(this.limit ? [
+                spaces + `limit ${this.limit}`
+            ]: []),
+
             ...(this.intoRow ? [
                 spaces + `into ${ this.intoRow };`
             ]: [])
@@ -109,6 +153,10 @@ export class Select extends AbstractAstElement {
 
         if ( this.where ) {
             allReferences.push( ...this.where.getColumnReferences() );
+        }
+
+        for (const orderItem of this.orderBy) {
+            allReferences.push( ...orderItem.expression.getColumnReferences() );
         }
 
         return allReferences;

@@ -83,7 +83,7 @@ export abstract class AbstractTriggerBuilder {
     }
 
     protected replaceTriggerTableToRow(
-        row: "new" | "old",
+        row: string,
         expression: Expression
     ) {
         return expression.replaceTable(

@@ -32,7 +32,14 @@ export class SelectColumn extends AbstractAstElement {
     }
 
     template(spaces: Spaces) {
-        return [`${this.expression.toSQL(spaces.plusOneLevel() )} as ${this.name}`];
+        const expression = this.expression.toSQL(
+            spaces.plusOneLevel()
+        );
+        if ( expression.trim() === this.name ) {
+            return [expression];
+        }
+
+        return [`${expression} as ${this.name}`];
     }
 
     getAggregations(database: Database) {

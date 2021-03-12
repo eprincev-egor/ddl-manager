@@ -9,7 +9,10 @@ import {
 } from "grapeql-lang";
 import { ExpressionParser } from "./ExpressionParser";
 import { TableReferenceParser } from "./TableReferenceParser";
-import { From, Join, Select, SelectColumn } from "../ast";
+import {
+    From, Join, Select,
+    SelectColumn, OrderByItem 
+} from "../ast";
 import { TableReference } from "../database/schema/TableReference";
 import assert from "assert";
 
@@ -59,6 +62,8 @@ export class SelectParser {
         select = this.parseFromItems(cacheFor, selectSyntax, select);
         select = this.parseColumns(cacheFor, selectSyntax, select);
         select = this.parseWhere(cacheFor, selectSyntax, select);
+        select = this.parseOrderBy(cacheFor, selectSyntax, select);
+        select = this.parseLimit(cacheFor, selectSyntax, select);
 
         return select;
     }
@@ -171,6 +176,52 @@ export class SelectParser {
             const whereExpression = this.expressionParser.parse(select, [cacheFor], whereSql);
 
             select = select.addWhere(whereExpression);
+        }
+
+        return select;
+    }
+
+    private parseOrderBy(
+        cacheFor: TableReference,
+        selectSyntax: SelectSyntax,
+        select: Select
+    ) {
+        const orderBySyntax = selectSyntax.row.orderBy || [];
+        if ( orderBySyntax.length ) {
+            const orderBy: OrderByItem[] = orderBySyntax.map(orderItemSyntax => {
+                const itemExpressionSql = orderItemSyntax.row.expression!.toString();
+                const type = (orderItemSyntax.row.vector || "asc")
+                    .toLowerCase() as "asc" | "desc";
+
+                const nulls = (orderItemSyntax.row.nulls || "")
+                    .toLowerCase() as "first" | "last" || "";
+
+                const orderItem: OrderByItem = {
+                    type,
+                    expression: this.expressionParser.parse(
+                        select, [cacheFor], itemExpressionSql
+                    ),
+                    nulls: nulls ? nulls : (
+                        type === "asc" ? "first" : "last"
+                    )
+                };
+                return orderItem;
+            });
+            select = select.addOrderBy(orderBy)
+        }
+
+        return select;
+    }
+
+    private parseLimit(
+        cacheFor: TableReference,
+        selectSyntax: SelectSyntax,
+        select: Select
+    ) {
+        const limit = +(selectSyntax.row.limit || 0);
+
+        if ( limit > 0 ) {
+            select = select.setLimit(limit);
         }
 
         return select;
