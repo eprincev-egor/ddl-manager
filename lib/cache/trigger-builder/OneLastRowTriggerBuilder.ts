@@ -52,7 +52,7 @@ export class OneLastRowTriggerBuilder extends AbstractTriggerBuilder {
                 value: UnknownExpressionElement.fromSql("false")
             })],
             where: Expression.and([
-                `${triggerTable}.id = max_prev_id`,
+                `${triggerTable}.id = prev_id`,
                 `${isLastColumn} = true`
             ])
         });
@@ -95,29 +95,38 @@ export class OneLastRowTriggerBuilder extends AbstractTriggerBuilder {
             })
         );
 
+        const orderBy = this.context.cache.select.orderBy[0]!;
         const selectMaxPrevId = new SimpleSelect({
-            columns: [`max( ${ triggerTable }.id )`],
+            columns: [
+                `${ orderBy.type == "desc" ? "max" : "min" }( ${ triggerTable }.id )`
+            ],
             from: this.context.triggerTable,
             where: Expression.and([
                 ...this.context.referenceMeta.columns.map(column =>
                     `${triggerTable}.${column} = new.${column}`
                 ),
+                ...this.context.referenceMeta.filters,
                 `${triggerTable}.id <> new.id`
             ])
         });
 
         const selectPrevRow = this.context.cache.select.cloneWith({
             columns: selectPrevRowColumns,
-            where: Expression.and(
-                this.context.referenceMeta.columns.map(column =>
+            where: Expression.and([
+                ...this.context.referenceMeta.columns.map(column =>
                     `${triggerTable}.${column} = old.${column}`
-                )
-            ),
+                ),
+                ...this.context.referenceMeta.filters
+            ]),
             intoRow: "prev_row"
         });
 
         const body = buildOneLastRowBody({
             isLastColumn,
+            ifNeedUpdateNewOnChangeReference: Expression.or([
+                `prev_id ${orderBy.type === "desc" ? "<" : ">"} new.id`,
+                "prev_id is null"
+            ]),
             updateNew,
 
             selectMaxPrevId,

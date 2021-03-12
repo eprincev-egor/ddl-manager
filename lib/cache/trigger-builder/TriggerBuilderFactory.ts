@@ -98,7 +98,7 @@ export class TriggerBuilderFactory {
         const {select} = context.cache;
         return (
             select.from.length === 1 &&
-            select.orderBy.length > 0 &&
+            select.orderBy.length === 1 &&
             select.limit === 1 &&
             context.referenceMeta.expressions.length > 0
         );

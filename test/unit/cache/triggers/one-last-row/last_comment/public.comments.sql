@@ -1,7 +1,7 @@
 create or replace function cache_last_comment_for_unit_on_comments()
 returns trigger as $body$
 declare prev_row record;
-declare max_prev_id bigint;
+declare prev_id bigint;
 begin
 
     if TG_OP = 'DELETE' then
@@ -98,7 +98,7 @@ begin
         end if;
 
         if new.unit_id is not null then
-            max_prev_id = (
+            prev_id = (
                 select
                     max( comments.id )
                 from comments
@@ -109,15 +109,15 @@ begin
             );
 
             if
-                max_prev_id < new.id
+                prev_id < new.id
                 or
-                max_prev_id is null
+                prev_id is null
             then
-                if max_prev_id is not null then
+                if prev_id is not null then
                     update comments set
                         __last_comment_for_unit = false
                     where
-                        comments.id = max_prev_id
+                        comments.id = prev_id
                         and
                         __last_comment_for_unit = true;
                 end if;

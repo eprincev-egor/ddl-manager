@@ -8,6 +8,7 @@ import { doIf } from "./util/doIf";
 
 export interface ILastRowParams {
     isLastColumn: string;
+    ifNeedUpdateNewOnChangeReference: Expression;
     hasNewReference: Expression;
     hasOldReference: Expression;
     hasOldReferenceAndIsLast: Expression;
@@ -31,7 +32,7 @@ export function buildOneLastRowBody(ast: ILastRowParams) {
                 type: "record"
             }),
             new Declare({
-                name: "max_prev_id",
+                name: "prev_id",
                 type: "bigint"
             })
         ],
@@ -116,18 +117,15 @@ export function buildOneLastRowBody(ast: ILastRowParams) {
                         if: ast.hasNewReference,
                         then: [
                             new AssignVariable({
-                                variable: "max_prev_id",
+                                variable: "prev_id",
                                 value: ast.selectMaxPrevId
                             }),
                             new BlankLine(),
                             new If({
-                                if: Expression.or([
-                                    "max_prev_id < new.id",
-                                    "max_prev_id is null"
-                                ]),
+                                if: ast.ifNeedUpdateNewOnChangeReference,
                                 then: [
                                     new If({
-                                        if: new HardCode({sql: "max_prev_id is not null"}),
+                                        if: new HardCode({sql: "prev_id is not null"}),
                                         then: [
                                             ast.updateMaxRowLastColumnFalse
                                         ]
