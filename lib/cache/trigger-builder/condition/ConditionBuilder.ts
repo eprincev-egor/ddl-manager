@@ -111,11 +111,17 @@ export class ConditionBuilder {
     }
 
     exitFromDeltaUpdateIf(): Expression | undefined {
-        const conditions = this.context.referenceMeta.filters.map(filter =>
+        const conditions: (Expression | NotExpression)[] = this.context.referenceMeta.filters.map(filter =>
             new NotExpression(
                 this.replaceTriggerTableRefsTo(filter, "new")!
             )
         );
+
+        const hasNoReference = this.hasNoReference("new");
+        if ( hasNoReference ) {
+            conditions.unshift( hasNoReference );
+        }
+
         if ( !conditions.length ) {
             return;
         }

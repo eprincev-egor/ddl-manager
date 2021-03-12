@@ -51,6 +51,10 @@ begin
         end if;
 
         if new.unit_id is not distinct from old.unit_id then
+            if new.unit_id is null then
+                return new;
+            end if;
+
             if not new.__last_comment_for_unit then
                 return new;
             end if;

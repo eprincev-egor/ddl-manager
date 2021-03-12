@@ -1,11 +1,12 @@
 import { AbstractAstElement } from "./AbstractAstElement";
+import { Exists } from "./Exists";
 import { HardCode } from "./HardCode";
 import { SimpleSelect } from "./SimpleSelect";
 import { Spaces } from "./Spaces";
 
 interface AssignVariableRow {
     variable: string;
-    value: HardCode | SimpleSelect;
+    value: HardCode | SimpleSelect | Exists;
 }
 
 export class AssignVariable extends AbstractAstElement {

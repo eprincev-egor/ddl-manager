@@ -4,9 +4,12 @@ import {
     AssignVariable,
     HardCode, BlankLine, Update, SimpleSelect
 } from "../../../ast";
+import { Exists } from "../../../ast/Exists";
 import { doIf } from "./util/doIf";
+import { exitIf } from "./util/exitIf";
 
 export interface ILastRowParams {
+    orderVector: "asc" | "desc";
     isLastColumn: string;
     ifNeedUpdateNewOnChangeReference: Expression;
     hasNewReference: Expression;
@@ -19,9 +22,11 @@ export interface ILastRowParams {
     updatePrevRowLastColumnTrue: Update;
     clearLastColumnOnInsert: Update;
     selectPrevRow: Select;
+    existsPrevRow: Exists;
     selectMaxPrevId: SimpleSelect;
     updateMaxRowLastColumnFalse: Update;
     updateThisRowLastColumnTrue: Update;
+    exitFromDeltaUpdateIf?: Expression;
 }
 
 export function buildOneLastRowBody(ast: ILastRowParams) {
@@ -34,7 +39,13 @@ export function buildOneLastRowBody(ast: ILastRowParams) {
             new Declare({
                 name: "prev_id",
                 type: "bigint"
-            })
+            }),
+            ...(ast.orderVector === "desc" ? [] : [
+                new Declare({
+                    name: "is_not_first",
+                    type: "boolean"
+                })
+            ])
         ],
         statements: [
             new BlankLine(),
@@ -86,6 +97,11 @@ export function buildOneLastRowBody(ast: ILastRowParams) {
                     ...doIf(
                         ast.noReferenceChanges,
                         [
+                            ...exitIf({
+                                if: ast.exitFromDeltaUpdateIf,
+                                blanksAfter: [new BlankLine()]
+                            }),
+
                             new If({
                                 if: new HardCode({sql: `not new.${ast.isLastColumn}`}),
                                 then: [
@@ -155,8 +171,25 @@ export function buildOneLastRowBody(ast: ILastRowParams) {
                 then: [
                     ...doIf(
                         ast.hasNewReference,
-                        [
+                        ast.orderVector === "desc" ? [
                             ast.clearLastColumnOnInsert,
+                            new BlankLine(),
+                            ast.updateNew,
+                            new BlankLine()
+                        ] : [
+                            new AssignVariable({
+                                variable: "is_not_first",
+                                value: ast.existsPrevRow
+                            }),
+                            new BlankLine(),
+                            new If({
+                                if: new HardCode({sql: "is_not_first"}),
+                                then: [
+                                    new HardCode({sql: "return new;"})
+                                ]
+                            }),
+                            new BlankLine(),
+                            ast.updateThisRowLastColumnTrue,
                             new BlankLine(),
                             ast.updateNew,
                             new BlankLine()

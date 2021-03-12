@@ -3,6 +3,7 @@ import {
     SelectColumn,
     ColumnReference, UnknownExpressionElement, SimpleSelect
 } from "../../ast";
+import { Exists } from "../../ast/Exists";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { buildOneLastRowBody } from "./body/buildOneLastRowBody";
 
@@ -120,8 +121,24 @@ export class OneLastRowTriggerBuilder extends AbstractTriggerBuilder {
             ]),
             intoRow: "prev_row"
         });
+        const existsPrevRow = new Exists({
+            select: this.context.cache.select.cloneWith({
+                columns: [],
+                where: Expression.and([
+                    ...this.context.referenceMeta.columns.map(column =>
+                        `${triggerTable}.${column} = new.${column}`
+                    ),
+                    ...this.context.referenceMeta.filters,
+                    `${triggerTable}.id < new.id`
+                ]),
+                orderBy: [],
+                limit: undefined
+            })
+        });
 
         const body = buildOneLastRowBody({
+            orderVector: orderBy.type,
+
             isLastColumn,
             ifNeedUpdateNewOnChangeReference: Expression.or([
                 `prev_id ${orderBy.type === "desc" ? "<" : ">"} new.id`,
@@ -129,8 +146,11 @@ export class OneLastRowTriggerBuilder extends AbstractTriggerBuilder {
             ]),
             updateNew,
 
+            exitFromDeltaUpdateIf: this.conditions.exitFromDeltaUpdateIf(),
+
             selectMaxPrevId,
             selectPrevRow,
+            existsPrevRow,
             updatePrev,
 
             updateMaxRowLastColumnFalse,

@@ -2,6 +2,7 @@ create or replace function cache_first_auto_for_order_on_operations()
 returns trigger as $body$
 declare prev_row record;
 declare prev_id bigint;
+declare is_not_first boolean;
 begin
 
     if TG_OP = 'DELETE' then
@@ -81,6 +82,16 @@ begin
             and
             new.deleted is not distinct from old.deleted
         then
+            if
+                new.id_order is null
+                or
+                not coalesce(new.type = 'auto', false)
+                or
+                not coalesce(new.deleted = 0, false)
+            then
+                return new;
+            end if;
+
             if not new.__first_auto_for_order then
                 return new;
             end if;
@@ -215,14 +226,28 @@ begin
             and
             new.deleted = 0
         then
+            is_not_first = exists(
+                select
+
+                from operations
+                where
+                    operations.id_order = new.id_order
+                    and
+                    operations.type = 'auto'
+                    and
+                    operations.deleted = 0
+                    and
+                    operations.id < new.id
+            );
+
+            if is_not_first then
+                return new;
+            end if;
+
             update operations set
-                __first_auto_for_order = false
+                __first_auto_for_order = true
             where
-                operations.id_order = new.id_order
-                and
-                operations.id < new.id
-                and
-                __first_auto_for_order = true;
+                operations.id = new.id;
 
             update public.order set
                 first_auto_number = new.doc_number,
