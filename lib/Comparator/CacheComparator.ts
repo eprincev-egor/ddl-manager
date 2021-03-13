@@ -398,6 +398,10 @@ export class CacheComparator extends AbstractComparator {
             }
         }
 
+        if ( expression.isNotExists() ) {
+            return "boolean";
+        }
+
         if ( expression.isFuncCall() ) {
             const funcCall = expression.getFuncCalls()[0] as FuncCall;
 

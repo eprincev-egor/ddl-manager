@@ -75,11 +75,11 @@
 - test not( null::text in ('car', 'truck') )
 
 - one last row
-  - before insert trigger
-  - create helper column
-  - test trigger working with Desc by id
-  - test trigger working with Asc by id
+  + before insert trigger
+  + create helper column
+  + test trigger working with Desc by id
+  + test trigger working with Asc by id
   - test trigger working with Desc by mutable
   - test trigger working with Asc by mutable
   - test trigger working without insert case
-  - test filling __first_auto_for_order flag
+  + test filling __first_auto_for_order flag

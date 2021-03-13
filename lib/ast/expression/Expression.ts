@@ -7,6 +7,7 @@ import { AbstractExpressionElement } from "./AbstractExpressionElement";
 import { Spaces } from "../Spaces";
 import { IColumnsMap, UnknownExpressionElement } from "./UnknownExpressionElement";
 import { ColumnReference } from "./ColumnReference";
+import { Exists } from "./Exists";
 
 type ConditionElementType = string | IExpressionElement;
 
@@ -108,6 +109,14 @@ export class Expression extends AbstractExpressionElement {
         return (
             this.elements.length === 2 &&
             /^\s*in\s*\([^\)]+\)\s*$/.test(this.elements[1].toString())
+        );
+    }
+
+    isNotExists() {
+        return (
+            this.elements.length === 2 &&
+            this.elements[0].toString() === "not" &&
+            this.elements[1] instanceof Exists
         );
     }
 

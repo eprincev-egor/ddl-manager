@@ -4,7 +4,7 @@ import {
     AssignVariable,
     HardCode, BlankLine, Update, SimpleSelect
 } from "../../../ast";
-import { Exists } from "../../../ast/Exists";
+import { Exists } from "../../../ast/expression/Exists";
 import { doIf } from "./util/doIf";
 import { exitIf } from "./util/exitIf";
 

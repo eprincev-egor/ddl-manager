@@ -1756,4 +1756,77 @@ describe("integration/DDLManager.build cache", () => {
 
     });
 
+    it("one last row cache dependent on self update cache", async() => {
+        const folderPath = ROOT_TMP_PATH + "/last_comment_message";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table operation_unit (
+                id serial primary key,
+                name text
+            );
+
+            create table comments (
+                id serial primary key,
+                query_name text default 'OPERATION_UNIT',
+                row_id bigint,
+                message text
+            );
+
+            insert into operation_unit
+                (name)
+            values
+                ('unit 1'),
+                ('unit 2');
+            
+            insert into comments
+                (row_id, message)
+            values
+                (1, 'comment X'),
+                (1, 'comment Y'),
+                (2, 'comment A'),
+                (2, 'comment B'),
+                (2, 'comment C');
+        `);
+
+        fs.writeFileSync(folderPath + "/a_unit_id.sql", `
+            cache unit_id for comments (
+                select
+                    case
+                        when comments.query_name = 'OPERATION_UNIT'
+                        then comments.row_id
+                    end as unit_id
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/last_comment.sql", `
+            cache last_comment for operation_unit (
+                select
+                    comments.message as last_comment
+                from comments
+                where
+                    comments.unit_id = operation_unit.id
+            
+                order by comments.id desc
+                limit 1
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            select id, last_comment
+            from operation_unit
+            order by id
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, last_comment: "comment Y"},
+            {id: 2, last_comment: "comment C"}
+        ]);
+    });
+
 });

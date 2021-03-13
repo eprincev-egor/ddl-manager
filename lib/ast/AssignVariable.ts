@@ -1,5 +1,5 @@
 import { AbstractAstElement } from "./AbstractAstElement";
-import { Exists } from "./Exists";
+import { Exists } from "./expression/Exists";
 import { HardCode } from "./HardCode";
 import { SimpleSelect } from "./SimpleSelect";
 import { Spaces } from "./Spaces";

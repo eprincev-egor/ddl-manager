@@ -3,12 +3,14 @@ import {
     Select, SelectColumn,
     ColumnReference, UnknownExpressionElement, 
     SimpleSelect,
-    Spaces
+    Spaces,
+    From
 } from "../../ast";
-import { Exists } from "../../ast/Exists";
+import { Exists } from "../../ast/expression/Exists";
 import { Comment } from "../../database/schema/Comment";
 import { DatabaseFunction } from "../../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
+import { TableReference } from "../../database/schema/TableReference";
 import { AbstractTriggerBuilder, ICacheTrigger } from "./AbstractTriggerBuilder";
 import { buildOneLastRowBody } from "./body/buildOneLastRowBody";
 
@@ -16,25 +18,44 @@ export class OneLastRowTriggerBuilder extends AbstractTriggerBuilder {
 
     createSelectForUpdateHelperColumn() {
         const fromTable = this.context.triggerTable;
+        const fromRef = new TableReference(fromTable);
+        const prevRef = new TableReference(
+            fromTable,
+            `prev_${ fromTable.name }`
+        );
         const orderBy = this.context.cache.select.orderBy[0]!;
 
         const select = new Select({
             columns: [new SelectColumn({
                 name: this.getIsLastColumnName(),
                 expression: new Expression([
-                    UnknownExpressionElement.fromSql(`
-                        not exists(
-                            select from ${ fromTable } as prev_${ fromTable.name }
-                            where
-                                ${Expression.and([
-                                    ...this.context.referenceMeta.columns.map(column =>
-                                        `prev_${ fromTable.name }.${column} = ${fromTable}.${column}`
+                    UnknownExpressionElement.fromSql(`not`),
+                    new Exists({
+                        select: new Select({
+                            columns: [],
+                            from: [
+                                new From(prevRef)
+                            ],
+                            where: Expression.and([
+                                ...this.context.referenceMeta.columns.map(column =>
+                                    new Expression([
+                                        new ColumnReference(prevRef, column),
+                                        UnknownExpressionElement.fromSql("="),
+                                        new ColumnReference(fromRef, column),
+                                    ])
+                                ),
+                                ...this.context.referenceMeta.filters,
+                                new Expression([
+                                    new ColumnReference(prevRef, "id"),
+                                    UnknownExpressionElement.fromSql(
+                                        orderBy.type === "desc" ? 
+                                            ">" : "<"
                                     ),
-                                    ...this.context.referenceMeta.filters,
-                                    `prev_${ fromTable.name }.id ${orderBy.type === "desc" ? ">" : "<"} ${fromTable}.id`
-                                ])}
-                        )
-                    `)
+                                    new ColumnReference(fromRef, "id"),
+                                ])
+                            ])
+                        })
+                    })
                 ])
             })],
             from: []
