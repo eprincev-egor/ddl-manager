@@ -5,7 +5,7 @@ import { Database } from "../../database/schema/Database";
 export function buildJoinVariables(
     database: Database,
     joins: IJoinMeta[],
-    row: "new" | "old"
+    row: string
 ) {
     const variables: IJoin[] = [];
 

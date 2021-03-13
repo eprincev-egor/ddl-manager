@@ -37,6 +37,10 @@ export abstract class AbstractTriggerBuilder {
         };
     }
 
+    createHelperTrigger(): ICacheTrigger | undefined {
+        return;
+    }
+
     private createDatabaseFunction() {
 
         const func = new DatabaseFunction({

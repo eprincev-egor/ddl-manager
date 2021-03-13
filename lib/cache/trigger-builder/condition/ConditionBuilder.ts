@@ -47,7 +47,7 @@ export class ConditionBuilder {
         return this.buildNoChanges( triggerTableColumnsRefs );
     }
 
-    hasNoReference(row: RowType) {
+    hasNoReference(row: string) {
         const hasReferenceCondition = hasNoReference(this.context);
         const output = this.replaceTriggerTableRefsTo(
             hasReferenceCondition,
@@ -56,13 +56,13 @@ export class ConditionBuilder {
         return output;
     }
 
-    hasReferenceWithoutJoins(row: RowType) {
+    hasReferenceWithoutJoins(row: string) {
         const needUpdate = this.buildHasReferenceWithoutJoins();
         const output = this.replaceTriggerTableRefsTo(needUpdate, row);
         return output;
     }
 
-    filtersWithJoins(row: RowType) {
+    filtersWithJoins(row: string) {
         let conditions: Expression[] = this.context.referenceMeta.filters.slice();
 
         const aggFilters = this.matchedAllAggFilters();
@@ -84,7 +84,7 @@ export class ConditionBuilder {
         }
     }
 
-    needUpdateConditionOnUpdate(row: RowType) {
+    needUpdateConditionOnUpdate(row: string) {
         const needUpdate = replaceArrayNotNullOn(
             this.context,
             this.buildNeedUpdateConditionOnUpdate(),
@@ -94,13 +94,13 @@ export class ConditionBuilder {
         return output;
     }
 
-    simpleWhere(row: RowType) {
+    simpleWhere(row: string) {
         const simpleWhere = this.buildSimpleWhere();
         const output = this.replaceTriggerTableRefsTo(simpleWhere, row);
         return output;
     }
 
-    simpleWhereOnUpdate(row: RowType) {
+    simpleWhereOnUpdate(row: string) {
         const simpleWhere = this.buildSimpleWhere();
         const output = replaceArrayNotNullOn(
             this.context,
@@ -297,7 +297,7 @@ export class ConditionBuilder {
 
     private replaceTriggerTableRefsTo(
         expression: Expression | undefined,
-        row: RowType
+        row: string
     ) {
         if ( !expression ) {
             return;

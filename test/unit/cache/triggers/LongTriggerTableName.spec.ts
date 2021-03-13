@@ -18,9 +18,9 @@ describe("try use alias for name if default is long", () => {
             new Database([])
         );
 
-        const triggers = builder.createTriggers();
-        const cacheTrigger = triggers.find(trigger =>
-            trigger.table.name === "my_very_very_long_table_name"
+        const result = builder.createTriggers();
+        const cacheTrigger = result.find(item =>
+            item.trigger.table.name === "my_very_very_long_table_name"
         )!;
 
         assert.strictEqual(

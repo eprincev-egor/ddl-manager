@@ -4,7 +4,6 @@ import { Comment } from "../database/schema/Comment";
 import {
     Cache,
     Select,
-    From,
     SelectColumn,
     FuncCall,
     Expression,
@@ -172,7 +171,7 @@ export class CacheComparator extends AbstractComparator {
             }
 
             const newColumnType = await this.getColumnType(
-                new TableReference(toUpdate.for),
+                toUpdate.for,
                 toUpdate.select
             );
 
@@ -268,10 +267,10 @@ export class CacheComparator extends AbstractComparator {
             const columnName = selectColumn.name;
 
             const columnToCreate = new Column(
-                toUpdate.for,
+                toUpdate.for.table,
                 columnName,
                 await this.getColumnType(
-                    new TableReference(toUpdate.for),
+                    toUpdate.for,
                     toUpdate.select
                 ),
                 this.getColumnDefault(toUpdate.select),
@@ -282,7 +281,7 @@ export class CacheComparator extends AbstractComparator {
                 })
             );
 
-            const table = this.database.getTable( toUpdate.for );
+            const table = this.database.getTable( toUpdate.for.table );
             const existentColumn = table && table.getColumn(columnName);
             const existsSameColumn = (
                 existentColumn && 
@@ -301,11 +300,9 @@ export class CacheComparator extends AbstractComparator {
         const allUpdates = this.generateAllUpdates(sortedSelectsForEveryColumn);
         const requiredUpdates: IUpdate[] = allUpdates
             .map((update) => {
-                const {cache: cacheToCreate, select} = update;
-
-                const selectWithRequiredColumns = select.cloneWith({
-                    columns: select.columns.filter(selectColumn => {
-                        const existentTable = this.database.getTable(cacheToCreate.for.table);
+                const selectWithRequiredColumns = update.select.cloneWith({
+                    columns: update.select.columns.filter(selectColumn => {
+                        const existentTable = this.database.getTable(update.forTable.table);
                         const existentColumn = existentTable && existentTable.getColumn(selectColumn.name);
         
                         if ( !existentColumn ) {
@@ -324,9 +321,9 @@ export class CacheComparator extends AbstractComparator {
                 });
                 
                 const requiredUpdate: IUpdate = {
-                    cacheName: cacheToCreate.name,
+                    cacheName: update.cacheName,
                     select: selectWithRequiredColumns,
-                    forTable: cacheToCreate.for
+                    forTable: update.forTable
                 };
                 return requiredUpdate;
             })
@@ -340,31 +337,26 @@ export class CacheComparator extends AbstractComparator {
     }
 
     private forceUpdateAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
-        const allUpdates: IUpdate[] = this.generateAllUpdates(sortedSelectsForEveryColumn)
-            .map(inputUpdate => {
-                const update: IUpdate = {
-                    cacheName: inputUpdate.cache.name,
-                    select: inputUpdate.select,
-                    forTable: inputUpdate.cache.for
-                };
-                return update;
-            });
-        
+        const allUpdates = this.generateAllUpdates(sortedSelectsForEveryColumn);
         this.migration.create({
             updates: allUpdates
         });
     }
 
     private generateAllUpdates(sortedSelectsForEveryColumn: ISortSelectItem[]) {
-        const updates: ISortSelectItem[] = [];
+        const updates: IUpdate[] = [];
 
         for (let i = 0, n = sortedSelectsForEveryColumn.length; i < n; i++) {
-            const {select, cache: cacheToCreate} = sortedSelectsForEveryColumn[ i ];
+            const prevItem = sortedSelectsForEveryColumn[ i ];
 
-            const selectsToUpdateOneTable: Select[] = [select];
+            const selectsToUpdateOneTable: Select[] = [prevItem.select];
             for (let j = i + 1; j < n; j++) {
                 const nextItem = sortedSelectsForEveryColumn[ j ];
-                if ( nextItem.cache !== cacheToCreate ) {
+                const isSimilarSelect = (
+                    nextItem.for.equal(prevItem.for) &&
+                    nextItem.cache.name === prevItem.cache.name
+                );
+                if ( !isSimilarSelect ) {
                     break;
                 }
 
@@ -372,19 +364,17 @@ export class CacheComparator extends AbstractComparator {
                 selectsToUpdateOneTable.push(nextItem.select);
             }
 
-            const columnsToOnlyRequiredUpdate = selectsToUpdateOneTable.map(selectToUpdateOneTable =>
+            const columnsToUpdate = selectsToUpdateOneTable.map(selectToUpdateOneTable =>
                 selectToUpdateOneTable.columns[0] as SelectColumn
             );
 
-            for (const toUpdate of this.createSelectForUpdate(cacheToCreate)) {
-                updates.push({
-                    cache: cacheToCreate,
-                    for: toUpdate.for,
-                    select: toUpdate.select.cloneWith({
-                        columns: columnsToOnlyRequiredUpdate
-                    })
-                });
-            }
+            updates.push({
+                cacheName: prevItem.cache.name,
+                forTable: prevItem.for,
+                select: prevItem.select.cloneWith({
+                    columns: columnsToUpdate
+                })
+            });
         }
 
         return updates;
@@ -511,7 +501,7 @@ export class CacheComparator extends AbstractComparator {
                 );
                 if ( toUpdateThatColumn ) {
                     const newColumnType = await this.getColumnType(
-                        new TableReference(toUpdateThatColumn.for),
+                        toUpdateThatColumn.for,
                         toUpdateThatColumn.select
                     );
 
@@ -545,9 +535,11 @@ export class CacheComparator extends AbstractComparator {
     }
 
     private getColumnDefault(select: Select) {
+        const selectColumn = select.columns[0] as SelectColumn;
+
         const aggFactory = new AggFactory(
             this.database,
-            select.columns[0] as SelectColumn
+            selectColumn
         );
         const aggregations = aggFactory.createAggregations();
         const agg = Object.values(aggregations)[0];
@@ -555,6 +547,9 @@ export class CacheComparator extends AbstractComparator {
         if ( agg ) {
             const defaultExpression = agg.default();
             return defaultExpression;
+        }
+        else if ( /not exists/.test(selectColumn.expression.toString()) ) {
+            return "false";
         }
         else {
             // TODO: detect coalesce(x, some)

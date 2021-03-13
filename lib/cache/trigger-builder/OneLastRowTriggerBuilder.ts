@@ -1,21 +1,108 @@
 import {
     Update, Expression, SetItem,
-    SelectColumn,
-    ColumnReference, UnknownExpressionElement, SimpleSelect
+    Select, SelectColumn,
+    ColumnReference, UnknownExpressionElement, 
+    SimpleSelect,
+    Spaces
 } from "../../ast";
 import { Exists } from "../../ast/Exists";
-import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
+import { Comment } from "../../database/schema/Comment";
+import { DatabaseFunction } from "../../database/schema/DatabaseFunction";
+import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
+import { AbstractTriggerBuilder, ICacheTrigger } from "./AbstractTriggerBuilder";
 import { buildOneLastRowBody } from "./body/buildOneLastRowBody";
 
 export class OneLastRowTriggerBuilder extends AbstractTriggerBuilder {
 
-    protected createBody() {
-        const isLastColumn = [
-            "_",
+    createSelectForUpdateHelperColumn() {
+        const fromTable = this.context.triggerTable;
+        const orderBy = this.context.cache.select.orderBy[0]!;
+
+        const select = new Select({
+            columns: [new SelectColumn({
+                name: this.getIsLastColumnName(),
+                expression: new Expression([
+                    UnknownExpressionElement.fromSql(`
+                        not exists(
+                            select from ${ fromTable } as prev_${ fromTable.name }
+                            where
+                                ${Expression.and([
+                                    ...this.context.referenceMeta.columns.map(column =>
+                                        `prev_${ fromTable.name }.${column} = ${fromTable}.${column}`
+                                    ),
+                                    ...this.context.referenceMeta.filters,
+                                    `prev_${ fromTable.name }.id ${orderBy.type === "desc" ? ">" : "<"} ${fromTable}.id`
+                                ])}
+                        )
+                    `)
+                ])
+            })],
+            from: []
+        });
+        return select;
+    }
+
+    createHelperTrigger(): ICacheTrigger | undefined {
+        const orderBy = this.context.cache.select.orderBy[0]!;
+        if ( orderBy.type === "asc" ) {
+            return;
+        }
+
+        const isLastColumnName = this.getIsLastColumnName();
+
+        const helperTriggerName = [
+            "cache",
             this.context.cache.name,
-            "for",
-            this.context.cache.for.table.name
+            "before",
+            "insert",
+            this.context.triggerTable.name
         ].join("_");
+
+        const trigger = new DatabaseTrigger({
+            name: helperTriggerName,
+            before: true,
+            insert: true,
+            procedure: {
+                schema: "public",
+                name: helperTriggerName,
+                args: []
+            },
+            table: this.context.triggerTable,
+            comment: Comment.fromFs({
+                objectType: "trigger",
+                cacheSignature: this.context.cache.getSignature()
+            })
+        });
+
+        return {
+            trigger,
+            function: new DatabaseFunction({
+                schema: "public",
+                name: helperTriggerName,
+                body: `
+    begin
+
+    new.${isLastColumnName} = (
+        ${this.conditions
+            .hasReferenceWithoutJoins("new")!
+            .toSQL( Spaces.level(2) )}
+    );
+
+    return new;
+    end;
+                `.trim(),
+                comment: Comment.fromFs({
+                    objectType: "function",
+                    cacheSignature: this.context.cache.getSignature()
+                }),
+                args: [],
+                returns: {type: "trigger"}
+            })
+        };
+    }
+
+    protected createBody() {
+        const isLastColumnName = this.getIsLastColumnName();
 
         const updateNew = new Update({
             table: this.context.cache.for.toString(),
@@ -38,7 +125,7 @@ export class OneLastRowTriggerBuilder extends AbstractTriggerBuilder {
         const updatePrevRowLastColumnTrue = new Update({
             table: triggerTable,
             set: [new SetItem({
-                column: isLastColumn,
+                column: isLastColumnName,
                 value: UnknownExpressionElement.fromSql("true")
             })],
             where: Expression.and([
@@ -49,19 +136,19 @@ export class OneLastRowTriggerBuilder extends AbstractTriggerBuilder {
         const updateMaxRowLastColumnFalse = new Update({
             table: triggerTable,
             set: [new SetItem({
-                column: isLastColumn,
+                column: isLastColumnName,
                 value: UnknownExpressionElement.fromSql("false")
             })],
             where: Expression.and([
                 `${triggerTable}.id = prev_id`,
-                `${isLastColumn} = true`
+                `${isLastColumnName} = true`
             ])
         });
 
         const updateThisRowLastColumnTrue = new Update({
             table: triggerTable,
             set: [new SetItem({
-                column: isLastColumn,
+                column: isLastColumnName,
                 value: UnknownExpressionElement.fromSql("true")
             })],
             where: Expression.and([
@@ -72,7 +159,7 @@ export class OneLastRowTriggerBuilder extends AbstractTriggerBuilder {
         const clearLastColumnOnInsert = new Update({
             table: triggerTable,
             set: [new SetItem({
-                column: isLastColumn,
+                column: isLastColumnName,
                 value: UnknownExpressionElement.fromSql("false")
             })],
             where: Expression.and([
@@ -80,7 +167,7 @@ export class OneLastRowTriggerBuilder extends AbstractTriggerBuilder {
                     `${triggerTable}.${column} = new.${column}`
                 ),
                 `${triggerTable}.id < new.id`,
-                `${isLastColumn} = true`
+                `${isLastColumnName} = true`
             ])
         });
 
@@ -139,7 +226,7 @@ export class OneLastRowTriggerBuilder extends AbstractTriggerBuilder {
         const body = buildOneLastRowBody({
             orderVector: orderBy.type,
 
-            isLastColumn,
+            isLastColumn: isLastColumnName,
             ifNeedUpdateNewOnChangeReference: Expression.or([
                 `prev_id ${orderBy.type === "desc" ? "<" : ">"} new.id`,
                 "prev_id is null"
@@ -165,12 +252,22 @@ export class OneLastRowTriggerBuilder extends AbstractTriggerBuilder {
                 .hasReferenceWithoutJoins("old")!,
             hasOldReferenceAndIsLast: Expression.and([
                 this.conditions.hasReferenceWithoutJoins("old")!,
-                UnknownExpressionElement.fromSql(`old.${isLastColumn}`)
+                UnknownExpressionElement.fromSql(`old.${isLastColumnName}`)
             ]),
             noChanges: this.conditions.noChanges(),
             noReferenceChanges: this.conditions.noReferenceChanges()
         });
         return body;
+    }
+
+    private getIsLastColumnName() {
+        const helperColumnName = [
+            "_",
+            this.context.cache.name,
+            "for",
+            this.context.cache.for.table.name
+        ].join("_");
+        return helperColumnName;
     }
 
     private whereDistinctRowValues(row: string) {

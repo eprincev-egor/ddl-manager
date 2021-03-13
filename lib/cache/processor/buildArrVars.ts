@@ -1,7 +1,7 @@
 import { IArrVar } from "../trigger-builder/body/buildCommutativeBody";
 import { CacheContext } from "../trigger-builder/CacheContext";
 
-export function buildArrVars(context: CacheContext, row: "new" | "old"): IArrVar[] {
+export function buildArrVars(context: CacheContext, row: string): IArrVar[] {
     const dbTable = context.database.getTable(context.triggerTable);
 
     const arrVars: IArrVar[] = [];

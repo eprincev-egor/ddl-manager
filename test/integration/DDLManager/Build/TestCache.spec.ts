@@ -27,7 +27,7 @@ describe("integration/DDLManager.build cache", () => {
         db.end();
     });
 
-    xit("test cache commutative/self update triggers working", async() => {
+    it("test cache commutative/self update triggers working", async() => {
         const folderPath = ROOT_TMP_PATH + "/universal_cache_test";
         fs.mkdirSync(folderPath);
 
@@ -140,7 +140,7 @@ describe("integration/DDLManager.build cache", () => {
         }]);
     });
 
-    xit("test cache with custom agg", async() => {
+    it("test cache with custom agg", async() => {
         const folderPath = ROOT_TMP_PATH + "/max_or_null";
         fs.mkdirSync(folderPath);
 
@@ -340,7 +340,7 @@ describe("integration/DDLManager.build cache", () => {
         }
     });
 
-    xit("test cache with self update", async() => {
+    it("test cache with self update", async() => {
         const folderPath = ROOT_TMP_PATH + "/gtd_dates";
         fs.mkdirSync(folderPath);
 
@@ -393,7 +393,7 @@ describe("integration/DDLManager.build cache", () => {
         }]);
     });
 
-    xit("test cache with custom agg", async() => {
+    it("test cache with custom agg", async() => {
         const folderPath = ROOT_TMP_PATH + "/max_or_null";
         fs.mkdirSync(folderPath);
 
@@ -485,7 +485,7 @@ describe("integration/DDLManager.build cache", () => {
         }
     });
 
-    xit("test set deleted = 1, when not changed orders_ids", async() => {
+    it("test set deleted = 1, when not changed orders_ids", async() => {
         const folderPath = ROOT_TMP_PATH + "/deleted_and_orders_ids";
         fs.mkdirSync(folderPath);
 
@@ -588,11 +588,26 @@ describe("integration/DDLManager.build cache", () => {
                 name text
             );
 
-            create table public.comments (
+            create table comments (
                 id serial primary key,
                 unit_id bigint,
                 message text
             );
+
+            insert into operation_unit
+                (name)
+            values
+                ('unit 1'),
+                ('unit 2');
+            
+            insert into comments
+                (unit_id, message)
+            values
+                (1, 'comment X'),
+                (1, 'comment Y'),
+                (2, 'comment A'),
+                (2, 'comment B'),
+                (2, 'comment C');
         `);
 
         fs.writeFileSync(folderPath + "/last_comment.sql", `
@@ -614,7 +629,7 @@ describe("integration/DDLManager.build cache", () => {
             throwError: true
         });
 
-        await db.query(`
+        const testSql = `
 create or replace function check_units(check_label text)
 returns void as $body$
 declare invalid_units text;
@@ -658,7 +673,7 @@ begin
                     '    id: ' || comments.id || E',\n' ||
                     '    unit_id: ' || coalesce(comments.unit_id::text, '<NULL>') || E',\n' ||
                     '    comment: ' || coalesce(comments.message, '<NULL>') || E',\n' ||
-                    '    __last_comment_for_unit: ' || coalesce(comments.__last_comment_for_unit::text, '<NULL>')
+                    '    __last_comment_for_operation_unit: ' || coalesce(comments.__last_comment_for_operation_unit::text, '<NULL>')
 
                     , E'\n\n'
                 )
@@ -673,6 +688,16 @@ language plpgsql;
 
 do $$
 begin
+    PERFORM check_units('label OLD ROWS - 1');
+
+    update comments set
+        message = message || 'updated';
+    PERFORM check_units('label OLD ROWS - 2');
+
+    delete from comments;
+    delete from operation_unit;
+    ALTER SEQUENCE comments_id_seq RESTART WITH 1;
+    ALTER SEQUENCE operation_unit_id_seq RESTART WITH 1;    
 
     insert into operation_unit (name) values ('unit 1');
     insert into operation_unit (name) values ('unit 2');
@@ -778,6 +803,214 @@ begin
     raise exception 'success';
 end
 $$;
+        `;
+
+        let actualErr: Error = new Error("expected error");
+        try {
+            await db.query(testSql);
+        } catch(err) {
+            actualErr = err;
+        }
+
+        assert.strictEqual(actualErr.message, "success");
+    });
+
+    it("first auto number", async() => {
+        const folderPath = ROOT_TMP_PATH + "/first_auto_number";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table public.order (
+                id serial primary key,
+                name text
+            );
+            
+            create table operations (
+                id serial primary key,
+                id_order bigint,
+                type text,
+                deleted smallint,
+                doc_number text,
+                incoming_date text
+            );
+
+            insert into public.order
+                (name)
+            values
+                ('order 1'),
+                ('order 2');
+            
+            insert into operations
+                (id_order, type, deleted, doc_number)
+            values
+                (1, 'auto', 0, 'auto 1'),
+                (1, 'sea',  0, 'sea 1'),
+                (2, 'auto', 0, 'auto A'),
+                (2, 'auto', 0, 'auto B'),
+                (2, 'auto', 0, 'auto C');
         `);
+
+        fs.writeFileSync(folderPath + "/first_auto.sql", `
+            cache first_auto for public.order (
+                select
+                    operations.doc_number as first_auto_number,
+                    operations.incoming_date as first_incoming_date
+            
+                from operations
+                where
+                    operations.id_order = public.order.id
+                    and
+                    operations.type = 'auto'
+                    and
+                    operations.deleted = 0
+            
+                order by operations.id asc
+                limit 1
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const testSql = `
+
+        create or replace function check_orders(check_label text)
+        returns void as $body$
+        declare invalid_orders text;
+        begin
+        
+            select
+                string_agg(
+                    '    id: ' || public.order.id || E'\n' ||
+                    '    name: ' || coalesce(public.order.name, '<NULL>') || E'\n' ||
+                    '    should_be: ' || coalesce(should_be.first_auto_number, '<NULL>') || E'\n' ||
+                    '    actual: ' || coalesce(public.order.first_auto_number, '<NULL>')
+        
+                    , E'\n\n'
+                )
+            into
+                invalid_orders
+        
+            from public.order
+        
+            left join lateral (
+                select
+                    operations.doc_number as first_auto_number
+        
+                from operations
+                where
+                    operations.id_order = public.order.id
+                    and
+                    operations.type = 'auto'
+                    and
+                    operations.deleted = 0
+        
+                order by operations.id asc
+                limit 1
+            ) as should_be on true
+            where
+                should_be.first_auto_number is distinct from public.order.first_auto_number;
+        
+        
+            if invalid_orders is not null then
+                raise exception E'\n%, invalid orders:\n%\n\n\noperations:\n%\n\n\n', 
+                    check_label,
+                    invalid_orders,
+                    (
+                        select
+                        string_agg(
+                            '    id: ' || operations.id || E',\n' ||
+                            '    id_order: ' || coalesce(operations.id_order::text, '<NULL>') || E',\n' ||
+                            '    type: ' || coalesce(operations.type, '<NULL>') || E',\n' ||
+                            '    deleted: ' || coalesce(operations.deleted::text, '<NULL>') || E',\n' ||
+                            '    doc_number: ' || coalesce(operations.doc_number, '<NULL>') || E',\n' ||
+                            '    __first_auto_for_order: ' || coalesce(operations.__first_auto_for_order::text, '<NULL>')
+        
+                            , E'\n\n'
+                        )
+                        from operations
+                    );
+            else
+                raise notice '% - success', check_label;
+            end if;
+        end
+        $body$
+        language plpgsql;
+        
+        do $$
+        begin
+        
+            insert into public.order (name) values ('order 1');
+            insert into public.order (name) values ('order 2');
+        
+            insert into operations (doc_number, type, deleted)
+            values ('auto 1', 'auto', 0);
+            PERFORM check_orders('label 1');
+        
+            update operations set
+                id_order = 1
+            where id = 1;
+            PERFORM check_orders('label 2');
+        
+            insert into operations (doc_number, type, deleted, id_order)
+            values ('auto 2', 'auto', 0, 1);
+            PERFORM check_orders('label 3');
+        
+            update operations set
+                id_order = 2;
+            PERFORM check_orders('label 4');
+        
+            delete from operations;
+            PERFORM check_orders('label 5');
+        
+            insert into operations
+                (doc_number, type, deleted, id_order)
+            values
+                ('auto X', 'auto', 0, 1),
+                ('auto Y', 'auto', 0, 1),
+                ('auto Z', 'auto', 0, 1),
+                ('auto A', 'auto', 0, 2),
+                ('auto B', 'auto', 0, 2),
+                ('auto C', 'auto', 0, 2)
+            ;
+            PERFORM check_orders('label 6');
+        
+            update operations set
+                type = 'sea',
+                doc_number = 'auto X updated'
+            where
+                doc_number = 'auto X';
+            PERFORM check_orders('label 7');
+        
+            update operations set
+                doc_number = 'auto X update 2'
+            where
+                doc_number = 'auto X updated';
+            PERFORM check_orders('label 8');
+        
+            update operations set
+                type = 'auto',
+                doc_number = 'auto X updated 3'
+            where
+                doc_number = 'auto X updated 2';
+            PERFORM check_orders('label 9');
+        
+            raise exception 'success';
+        end
+        $$;
+        
+        `;
+
+        let actualErr: Error = new Error("expected error");
+        try {
+            await db.query(testSql);
+        } catch(err) {
+            actualErr = err;
+        }
+
+        assert.strictEqual(actualErr.message, "success");
     });
 });

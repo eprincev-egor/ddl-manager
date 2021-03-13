@@ -1,7 +1,5 @@
 import { CacheParser } from "../parser";
-import {
-    Cache, Select
-} from "../ast";
+import { Cache, Select } from "../ast";
 import {
     findDependencies,
     findDependenciesToCacheTable
@@ -15,9 +13,11 @@ import { createSelectForUpdate } from "./processor/createSelectForUpdate";
 import { SelfUpdateByOtherTablesTriggerBuilder } from "./trigger-builder/SelfUpdateByOtherTablesTriggerBuilder";
 import { CacheContext } from "./trigger-builder/CacheContext";
 import { SelfUpdateBySelfRowTriggerBuilder } from "./trigger-builder/SelfUpdateBySelfRowTriggerBuilder";
+import { OneLastRowTriggerBuilder } from "./trigger-builder/OneLastRowTriggerBuilder";
+import { TableReference } from "../database/schema/TableReference";
 
 export interface ISelectForUpdate {
-    for: TableID;
+    for: TableReference;
     select: Select;
 }
 
@@ -44,17 +44,45 @@ export class CacheTriggersBuilder {
     }
 
     createSelectsForUpdate(): ISelectForUpdate[] {
-        const select = createSelectForUpdate(this.database, this.cache);
-        return [{
-            for: this.cache.for.table,
-            select
-        }];
+        const output: ISelectForUpdate[] = [];
+
+        output.push({
+            for: this.cache.for,
+            select: createSelectForUpdate(
+                this.database,
+                this.cache
+            )
+        });
+
+        const cacheSelect = this.cache.select;
+        const needLastRowColumn = (
+            cacheSelect.from.length === 1 &&
+            cacheSelect.orderBy.length === 1 &&
+            cacheSelect.limit === 1
+        );
+        if ( needLastRowColumn ) {
+            const allDeps = findDependencies(this.cache, false);
+            const fromTable = cacheSelect.from[0].table.table;
+            const fromTableDeps = allDeps[ fromTable.toString() ]!;
+
+            const lastRowBuilder = this.builderFactory.tryCreateBuilder(
+                fromTable,
+                fromTableDeps.columns
+            ) as OneLastRowTriggerBuilder;
+            const selectHelperColumn = lastRowBuilder.createSelectForUpdateHelperColumn();
+
+            output.push({
+                for: new TableReference(fromTable),
+                select: selectHelperColumn
+            });
+        }
+
+        return output;
     }
 
     createTriggers() {
         interface IOutputTrigger {
             name: string;
-            table: TableID;
             trigger: DatabaseTrigger;
             function: DatabaseFunction;
         };
@@ -98,13 +126,12 @@ export class CacheTriggersBuilder {
 
             if ( TriggerBuilderConstructor ) {
                 const builder = new TriggerBuilderConstructor(context);
-                const {trigger, function: func} = builder.createTrigger();
+                const cacheTrigger = builder.createTrigger();
     
                 output.push({
-                    name: trigger.name,
-                    table: this.cache.for.table,
-                    trigger,
-                    function: func
+                    name: cacheTrigger.trigger.name,
+                    trigger: cacheTrigger.trigger,
+                    function: cacheTrigger.function
                 });
             }
         }
@@ -129,10 +156,18 @@ export class CacheTriggersBuilder {
             const result = triggerBuilder.createTrigger();
             output.push({
                 name: result.trigger.name,
-                table: result.trigger.table,
                 trigger: result.trigger,
                 function: result.function
             });
+
+            const helper = triggerBuilder.createHelperTrigger();
+            if ( helper ) {
+                output.push({
+                    name: helper.trigger.name,
+                    trigger: helper.trigger,
+                    function: helper.function
+                });
+            }
         }
 
         return output;

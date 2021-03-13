@@ -23,9 +23,9 @@ describe("TriggerFabric, no triggers for some table", () => {
             new Database([])
         );
 
-        const triggers = builder.createTriggers();
-        const orderTypeTrigger = triggers.find(trigger =>
-            trigger.table.name === "order_type"
+        const result = builder.createTriggers();
+        const orderTypeTrigger = result.find(item =>
+            item.trigger.table.name === "order_type"
         );
 
         assert.ok(
@@ -60,12 +60,12 @@ describe("TriggerFabric, no triggers for some table", () => {
             new Database([])
         );
 
-        const triggers = builder.createTriggers();
-        const orderTypeTrigger = triggers.find(trigger =>
-            trigger.table.name === "order_type"
+        const result = builder.createTriggers();
+        const orderTypeTrigger = result.find(item =>
+            item.trigger.table.name === "order_type"
         );
-        const countriesTrigger = triggers.find(trigger =>
-            trigger.table.name === "countries"
+        const countriesTrigger = result.find(item =>
+            item.trigger.table.name === "countries"
         );
 
         assert.ok(
