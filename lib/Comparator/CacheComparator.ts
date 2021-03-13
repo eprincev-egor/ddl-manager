@@ -22,6 +22,7 @@ import { TableID } from "../database/schema/TableID";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
 import { DatabaseFunction } from "../database/schema/DatabaseFunction";
 import { IUpdate } from "../Migrator/Migration";
+import { TableReference } from "../database/schema/TableReference";
 
 export class CacheComparator extends AbstractComparator {
 
@@ -61,8 +62,7 @@ export class CacheComparator extends AbstractComparator {
     }
 
     async refreshCache() {
-        const allCache = flatMap(this.fs.files, file => file.content.cache);
-        const sortedSelectsForEveryColumn = this.sortSelectsByDependencies(allCache);
+        const sortedSelectsForEveryColumn = this.sortSelectsByDependencies();
 
         await this.createAllColumns(sortedSelectsForEveryColumn);
         this.forceUpdateAllColumns(sortedSelectsForEveryColumn);
@@ -162,31 +162,22 @@ export class CacheComparator extends AbstractComparator {
     }
 
     private async existsCacheWithSameColumn(table: TableID, column: Column) {
-        for (const file of this.fs.files) {
-            for (const cache of file.content.cache) {
+        const allSelectsForEveryColumn = this.generateAllSelectsForEveryColumn();
+        for (const toUpdate of allSelectsForEveryColumn) {
+            if ( !toUpdate.for.equal(table) ) {
+                continue;
+            }
+            if ( toUpdate.select.columns[0].name !== column.name ) {
+                continue;
+            }
 
-                if ( !cache.for.table.equal(table) ) {
-                    continue;
-                }
+            const newColumnType = await this.getColumnType(
+                new TableReference(toUpdate.for),
+                toUpdate.select
+            );
 
-                const selectToUpdate = this.createSelectForUpdate(cache);
-                const sameNameSelectColumn = selectToUpdate.columns.find(selectColumn =>
-                    selectColumn.name === column.name
-                );
-                if ( !sameNameSelectColumn ) {
-                    continue;
-                }
-
-                const newColumnType = await this.getColumnType(
-                    cache,
-                    selectToUpdate.cloneWith({
-                        columns: [sameNameSelectColumn]
-                    })
-                );
-
-                if ( column.type.equal(newColumnType) ) {
-                    return true;
-                }
+            if ( column.type.equal(newColumnType) ) {
+                return true;
             }
         }
 
@@ -220,7 +211,7 @@ export class CacheComparator extends AbstractComparator {
             }
         }
 
-        const sortedSelectsForEveryColumn = this.sortSelectsByDependencies(allCache);
+        const sortedSelectsForEveryColumn = this.sortSelectsByDependencies();
         
         await this.createAllColumns(
             sortedSelectsForEveryColumn
@@ -272,28 +263,26 @@ export class CacheComparator extends AbstractComparator {
 
     private async createAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
 
-        for (const {cache, select} of sortedSelectsForEveryColumn) {
-            const selectColumn = select.columns[0] as SelectColumn;
+        for (const toUpdate of sortedSelectsForEveryColumn) {
+            const selectColumn = toUpdate.select.columns[0] as SelectColumn;
             const columnName = selectColumn.name;
 
-            const selectToUpdate = this.createSelectForUpdate(cache)
-                .cloneWith({
-                    columns: [selectColumn]
-                });
-            
             const columnToCreate = new Column(
-                cache.for.table,
+                toUpdate.for,
                 columnName,
-                await this.getColumnType(cache, select),
-                this.getColumnDefault(select),
+                await this.getColumnType(
+                    new TableReference(toUpdate.for),
+                    toUpdate.select
+                ),
+                this.getColumnDefault(toUpdate.select),
                 Comment.fromFs({
                     objectType: "column",
-                    cacheSignature: cache.getSignature(),
-                    cacheSelect: selectToUpdate.toString()
+                    cacheSignature: toUpdate.cache.getSignature(),
+                    cacheSelect: toUpdate.select.toString()
                 })
             );
 
-            const table = this.database.getTable( cache.for.table );
+            const table = this.database.getTable( toUpdate.for );
             const existentColumn = table && table.getColumn(columnName);
             const existsSameColumn = (
                 existentColumn && 
@@ -323,13 +312,12 @@ export class CacheComparator extends AbstractComparator {
                             return true;
                         }
         
-                        const selectToUpdate = this.createSelectForUpdate(cacheToCreate)
-                            .cloneWith({
-                                columns: [selectColumn]
-                            });
+                        const selectToUpdateColumn = update.select.cloneWith({
+                            columns: [selectColumn]
+                        });
                         
                         const changedUpdateExpression = (
-                            existentColumn.comment.cacheSelect !== selectToUpdate.toString()
+                            existentColumn.comment.cacheSelect !== selectToUpdateColumn.toString()
                         );
                         return changedUpdateExpression;
                     })
@@ -388,21 +376,21 @@ export class CacheComparator extends AbstractComparator {
                 selectToUpdateOneTable.columns[0] as SelectColumn
             );
 
-            const selectToUpdate = this.createSelectForUpdate(cacheToCreate)
-                .cloneWith({
-                    columns: columnsToOnlyRequiredUpdate
+            for (const toUpdate of this.createSelectForUpdate(cacheToCreate)) {
+                updates.push({
+                    cache: cacheToCreate,
+                    for: toUpdate.for,
+                    select: toUpdate.select.cloneWith({
+                        columns: columnsToOnlyRequiredUpdate
+                    })
                 });
-            
-            updates.push({
-                select: selectToUpdate,
-                cache: cacheToCreate
-            });
+            }
         }
 
         return updates;
     }
 
-    private async getColumnType(cache: Cache, select: Select) {
+    private async getColumnType(forTable: TableReference, select: Select) {
 
         let {expression} = select.columns[0] as SelectColumn;
 
@@ -483,7 +471,7 @@ export class CacheComparator extends AbstractComparator {
                 ],
                 from: selectWithReplacedColumns.from
             }),
-            cache.for
+            forTable
         );
 
         const columnType = Object.values(columnsTypes)[0];
@@ -516,26 +504,15 @@ export class CacheComparator extends AbstractComparator {
                     continue;
                 }
 
-                const maybeExistsCache = flatMap(this.fs.files, (file) => 
-                    file.content.cache
-                ).find(cache =>
-                    cache.for.table.equal(columnRef.tableReference.table) &&
-                    cache.select.columns.some(column =>
-                        column.name === columnRef.name
-                    )
+                const allSelectsForEveryColumn = this.generateAllSelectsForEveryColumn();
+                const toUpdateThatColumn = allSelectsForEveryColumn.find(toUpdate =>
+                    toUpdate.for.equal(columnRef.tableReference.table) &&
+                    toUpdate.select.columns[0].name === columnRef.name
                 );
-                if ( maybeExistsCache ) {
-
-                    const selectToUpdate = this.createSelectForUpdate(maybeExistsCache);
-                    const sameNameSelectColumn = selectToUpdate.columns.find(selectColumn =>
-                        selectColumn.name === columnRef.name
-                    )!;
-
+                if ( toUpdateThatColumn ) {
                     const newColumnType = await this.getColumnType(
-                        maybeExistsCache,
-                        selectToUpdate.cloneWith({
-                            columns: [sameNameSelectColumn]
-                        })
+                        new TableReference(toUpdateThatColumn.for),
+                        toUpdateThatColumn.select
                     );
 
                     replace(
@@ -586,48 +563,35 @@ export class CacheComparator extends AbstractComparator {
     }
 
 
-    private sortSelectsByDependencies(allCache: Cache[]) {
+    private sortSelectsByDependencies() {
         // one cache can dependent on other cache
         // need build all columns before package updates
-        const allSelectsForEveryColumn = this.generateAllSelectsForEveryColumn(allCache);
-        const sortedSelectsForEveryColumn = sortSelectsByDependencies(
+        const allSelectsForEveryColumn = this.generateAllSelectsForEveryColumn();
+        return sortSelectsByDependencies(
             allSelectsForEveryColumn
         );
-        const sortedSelectsForEveryColumnSelectOnlyTypes = sortedSelectsForEveryColumn.map(item => ({
-            cache: item.cache,
-            select: new Select({
-                columns: [
-                    item.select.columns[0]!
-                ],
-                from: item.select.getAllTableReferences().map(tableRef =>
-                    new From(tableRef)
-                )
-            })
-        }));
-
-        return sortedSelectsForEveryColumnSelectOnlyTypes;
     }
 
-    private generateAllSelectsForEveryColumn(allCache: Cache[]) {
+    private generateAllSelectsForEveryColumn() {
+        const allCache = flatMap(this.fs.files, file => file.content.cache);
 
-        const allSelectsForEveryColumn = flatMap(allCache, cache => {
+        const allSelectsForEveryColumn: ISortSelectItem[] = [];
 
-            const selectToUpdate = this.createSelectForUpdate(cache);
-            
-            return selectToUpdate.columns.map(updateColumn => {
-                return {
-                    cache,
-                    select: new Select({
-                        columns: [
-                            updateColumn
-                        ],
-                        from: selectToUpdate.getAllTableReferences().map(tableRef =>
-                            new From(tableRef)
-                        )
-                    })
-                };
-            });
-        });
+        for (const cache of allCache) {
+            for (const toUpdate of this.createSelectForUpdate(cache)) {
+                for (const updateColumn of toUpdate.select.columns) {
+                    allSelectsForEveryColumn.push({
+                        cache,
+                        for: toUpdate.for,
+                        select: toUpdate.select.cloneWith({
+                            columns: [
+                                updateColumn
+                            ]
+                        })
+                    });
+                }
+            }
+        }
 
         return allSelectsForEveryColumn;
     }
@@ -637,7 +601,7 @@ export class CacheComparator extends AbstractComparator {
             cache,
             this.database
         );
-        const selectToUpdate = cacheTriggerFactory.createSelectForUpdate();
+        const selectToUpdate = cacheTriggerFactory.createSelectsForUpdate();
         return selectToUpdate;
     }
 }

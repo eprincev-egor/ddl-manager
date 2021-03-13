@@ -1,8 +1,10 @@
 import assert from "assert";
 import { Cache, Select } from "../ast";
+import { TableID } from "../database/schema/TableID";
 
 export interface ISortSelectItem {
     select: Select;
+    for: TableID;
     cache: Cache;
 }
 
@@ -64,7 +66,7 @@ function dependentOn(
 
     const xRefs = xItem.select.getAllColumnReferences();
     const xDependentOnY = xRefs.some(xColumnRef =>
-        xColumnRef.tableReference.table.equal( yItem.cache.for.table ) &&
+        xColumnRef.tableReference.table.equal( yItem.for ) &&
         xColumnRef.name === yColumn.name
     );
 

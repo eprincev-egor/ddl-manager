@@ -1,6 +1,6 @@
 import { CacheParser } from "../parser";
 import {
-    Cache
+    Cache, Select
 } from "../ast";
 import {
     findDependencies,
@@ -15,6 +15,11 @@ import { createSelectForUpdate } from "./processor/createSelectForUpdate";
 import { SelfUpdateByOtherTablesTriggerBuilder } from "./trigger-builder/SelfUpdateByOtherTablesTriggerBuilder";
 import { CacheContext } from "./trigger-builder/CacheContext";
 import { SelfUpdateBySelfRowTriggerBuilder } from "./trigger-builder/SelfUpdateBySelfRowTriggerBuilder";
+
+export interface ISelectForUpdate {
+    for: TableID;
+    select: Select;
+}
 
 export class CacheTriggersBuilder {
 
@@ -38,9 +43,12 @@ export class CacheTriggersBuilder {
         );
     }
 
-    createSelectForUpdate() {
+    createSelectsForUpdate(): ISelectForUpdate[] {
         const select = createSelectForUpdate(this.database, this.cache);
-        return select;
+        return [{
+            for: this.cache.for.table,
+            select
+        }];
     }
 
     createTriggers() {
@@ -108,24 +116,23 @@ export class CacheTriggersBuilder {
             }
 
             const [schemaName, tableName] = schemaTable.split(".");
-
-            const triggerTable = new TableID(schemaName, tableName);
             const tableDeps = allDeps[ schemaTable ];
 
             const triggerBuilder = this.builderFactory.tryCreateBuilder(
-                triggerTable,
+                new TableID(schemaName, tableName),
                 tableDeps.columns
             );
-
-            if ( triggerBuilder ) {
-                const {trigger, function: func} = triggerBuilder.createTrigger();
-                output.push({
-                    name: trigger.name,
-                    table: triggerTable,
-                    trigger: trigger,
-                    function: func
-                });
+            if ( !triggerBuilder ) {
+                continue;
             }
+
+            const result = triggerBuilder.createTrigger();
+            output.push({
+                name: result.trigger.name,
+                table: result.trigger.table,
+                trigger: result.trigger,
+                function: result.function
+            });
         }
 
         return output;

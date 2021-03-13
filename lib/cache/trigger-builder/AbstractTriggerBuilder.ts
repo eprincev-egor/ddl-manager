@@ -12,6 +12,11 @@ import { SetItemsFactory } from "../aggregator/SetItemsFactory";
 import { CacheContext } from "./CacheContext";
 import { ConditionBuilder } from "./condition/ConditionBuilder";
 
+export interface ICacheTrigger {
+    trigger: DatabaseTrigger;
+    function: DatabaseFunction;
+}
+
 export abstract class AbstractTriggerBuilder {
     protected readonly context: CacheContext;
     protected readonly conditions: ConditionBuilder;
@@ -25,10 +30,7 @@ export abstract class AbstractTriggerBuilder {
         this.deltaSetItems = new DeltaSetItemsFactory(context);
     }
 
-    createTrigger(): {
-        trigger: DatabaseTrigger;
-        function: DatabaseFunction;
-    } {
+    createTrigger(): ICacheTrigger {
         return {
             trigger: this.createDatabaseTrigger(),
             function: this.createDatabaseFunction()

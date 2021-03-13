@@ -16,18 +16,18 @@
     - no columns
     + column name is not unique
     + exists same column name in another cache in another file
-    - exists column in db with another type
+    - no universal triggers option: error on using universal triggers
 + diff: compare caches
-- Migrator: 
++ Migrator: 
   + i can rename cache but, don't need recreate columns and update rows,
         need change only triggers
   + do not drop cache columns if no changes
   + do not drop cache columns if same columns exists in db
   + need REAL load schema
   + universal agg
-  - first agg
-  - last agg
-  - date_or_null_agg
+  + first agg
+  + last agg
+  + date_or_null_agg
   + cache like are
     cache totals for companies (
       select companies.id * 2
@@ -73,3 +73,13 @@
 + log migration in watcher mode
 - test recreating cache after syntax error
 - test not( null::text in ('car', 'truck') )
+
+- one last row
+  - before insert trigger
+  - create helper column
+  - test trigger working with Desc by id
+  - test trigger working with Asc by id
+  - test trigger working with Desc by mutable
+  - test trigger working with Asc by mutable
+  - test trigger working without insert case
+  - test filling __first_auto_for_order flag

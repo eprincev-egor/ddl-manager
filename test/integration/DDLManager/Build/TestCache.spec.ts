@@ -3,10 +3,6 @@ import fs from "fs";
 import fse from "fs-extra";
 import { getDBClient } from "../../getDbClient";
 import { DDLManager } from "../../../../lib/DDLManager";
-import {expect, use} from "chai";
-import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
-
-use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
@@ -31,7 +27,7 @@ describe("integration/DDLManager.build cache", () => {
         db.end();
     });
 
-    it("test cache commutative/self update triggers working", async() => {
+    xit("test cache commutative/self update triggers working", async() => {
         const folderPath = ROOT_TMP_PATH + "/universal_cache_test";
         fs.mkdirSync(folderPath);
 
@@ -144,7 +140,7 @@ describe("integration/DDLManager.build cache", () => {
         }]);
     });
 
-    it("test cache with custom agg", async() => {
+    xit("test cache with custom agg", async() => {
         const folderPath = ROOT_TMP_PATH + "/max_or_null";
         fs.mkdirSync(folderPath);
 
@@ -344,7 +340,7 @@ describe("integration/DDLManager.build cache", () => {
         }
     });
 
-    it("test cache with self update", async() => {
+    xit("test cache with self update", async() => {
         const folderPath = ROOT_TMP_PATH + "/gtd_dates";
         fs.mkdirSync(folderPath);
 
@@ -397,7 +393,7 @@ describe("integration/DDLManager.build cache", () => {
         }]);
     });
 
-    it("test cache with custom agg", async() => {
+    xit("test cache with custom agg", async() => {
         const folderPath = ROOT_TMP_PATH + "/max_or_null";
         fs.mkdirSync(folderPath);
 
@@ -489,7 +485,7 @@ describe("integration/DDLManager.build cache", () => {
         }
     });
 
-    it("test set deleted = 1, when not changed orders_ids", async() => {
+    xit("test set deleted = 1, when not changed orders_ids", async() => {
         const folderPath = ROOT_TMP_PATH + "/deleted_and_orders_ids";
         fs.mkdirSync(folderPath);
 
@@ -580,5 +576,208 @@ describe("integration/DDLManager.build cache", () => {
             {gtd_numbers: "gtd 2"},
             {gtd_numbers: "gtd 1"}
         ]);
+    });
+
+    it("last comment message", async() => {
+        const folderPath = ROOT_TMP_PATH + "/last_comment_message";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table operation_unit (
+                id serial primary key,
+                name text
+            );
+
+            create table public.comments (
+                id serial primary key,
+                unit_id bigint,
+                message text
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/last_comment.sql", `
+            cache last_comment for operation_unit (
+                select
+                    comments.message as last_comment
+                from comments
+                where
+                    comments.unit_id = operation_unit.id
+            
+                order by comments.id desc
+                limit 1
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        await db.query(`
+create or replace function check_units(check_label text)
+returns void as $body$
+declare invalid_units text;
+begin
+
+    select
+        string_agg(
+            '    id: ' || operation_unit.id || E'\n' ||
+            '    name: ' || coalesce(operation_unit.name, '<NULL>') || E'\n' ||
+            '    should_be_comment: ' || coalesce(should_be.last_comment, '<NULL>') || E'\n' ||
+            '    actual_comment: ' || coalesce(operation_unit.last_comment, '<NULL>')
+
+            , E'\n\n'
+        )
+    into
+        invalid_units
+
+    from operation_unit
+
+    left join lateral (
+        select
+            comments.message as last_comment
+        from comments
+        where
+            comments.unit_id = operation_unit.id
+
+        order by comments.id desc
+        limit 1
+    ) as should_be on true
+    where
+        should_be.last_comment is distinct from operation_unit.last_comment;
+
+
+    if invalid_units is not null then
+        raise exception E'\n%, invalid units:\n%\n\n\ncomments:\n%\n\n\n', 
+            check_label,
+            invalid_units,
+            (
+                select
+                string_agg(
+                    '    id: ' || comments.id || E',\n' ||
+                    '    unit_id: ' || coalesce(comments.unit_id::text, '<NULL>') || E',\n' ||
+                    '    comment: ' || coalesce(comments.message, '<NULL>') || E',\n' ||
+                    '    __last_comment_for_unit: ' || coalesce(comments.__last_comment_for_unit::text, '<NULL>')
+
+                    , E'\n\n'
+                )
+                from comments
+            );
+    else
+        raise notice '% - success', check_label;
+    end if;
+end
+$body$
+language plpgsql;
+
+do $$
+begin
+
+    insert into operation_unit (name) values ('unit 1');
+    insert into operation_unit (name) values ('unit 2');
+
+    insert into comments (message)
+    values ('comment A');
+    PERFORM check_units('label 1');
+
+    update comments set
+        unit_id = 1
+    where id = 1;
+    PERFORM check_units('label 2');
+
+    update comments set
+        unit_id = 2
+    where id = 1;
+    PERFORM check_units('label 3');
+
+    update comments set
+        unit_id = 3
+    where id = 1;
+    PERFORM check_units('label 4');
+
+    update comments set
+        unit_id = 1
+    where id = 1;
+    PERFORM check_units('label 5');
+
+    insert into comments (message, unit_id)
+    values ('comment B', 1);
+    PERFORM check_units('label 6');
+
+    update comments set
+        message = 'comment B - updated'
+    where id = 2;
+    PERFORM check_units('label 7');
+
+    update comments set
+        message = 'comment A - updated'
+    where id = 1;
+    PERFORM check_units('label 8');
+
+    update comments set
+        unit_id = null
+    where id = 2;
+    PERFORM check_units('label 9');
+
+    update comments set
+        message = 'comment A - update 2'
+    where id = 1;
+    PERFORM check_units('label 10');
+
+    update comments set
+        message = 'comment B - update 2'
+    where id = 2;
+    PERFORM check_units('label 11');
+
+    delete from comments;
+    PERFORM check_units('label 12');
+
+
+    insert into comments (unit_id, message)
+    values
+        (1, 'Comment A.X'),
+        (1, 'Comment B.X'),
+        (1, 'Comment C.X')
+    ;
+    PERFORM check_units('label 13');
+
+    insert into comments (unit_id, message)
+    values
+        (2, 'Comment A.Y'),
+        (2, 'Comment B.Y'),
+        (2, 'Comment C.Y')
+    ;
+    PERFORM check_units('label 14');
+
+
+    update comments set
+        unit_id = 1,
+        message = 'Comment B.Y - updated'
+    where
+        message = 'Comment B.Y';
+    PERFORM check_units('label 15');
+
+
+    update comments set
+        unit_id = 2,
+        message = 'Comment B.Y - updated 2'
+    where
+        message = 'Comment B.Y - updated';
+    PERFORM check_units('label 16');
+
+
+    update comments set
+        unit_id = 1,
+        message = 'Comment C.Y - updated'
+    where
+        message = 'Comment C.Y';
+    PERFORM check_units('label 17');
+
+
+    raise exception 'success';
+end
+$$;
+        `);
     });
 });
