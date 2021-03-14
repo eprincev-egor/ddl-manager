@@ -25,7 +25,6 @@ export interface ILastRowParams {
     updatePrevRowLastColumnTrue: Update;
     prevRowIsLess: Expression;
     updatePrevAndThisFlag: Update;
-    ifNeedUpdateNewOnChangeReference: Expression;
     updateMaxRowLastColumnFalse: Update;
     updateThisRowLastColumnTrue: Update;
     updatePrevAndThisFlagNot: Update;
@@ -186,7 +185,7 @@ export function buildOneLastRowByMutableBody(ast: ILastRowParams) {
                             ast.selectPrevRowByFlag,
                             new BlankLine(),
                             new If({
-                                if: ast.ifNeedUpdateNewOnChangeReference,
+                                if: ast.prevRowIsLess,
                                 then: [
                                     new If({
                                         if: new HardCode({sql: "prev_row.id is not null"}),

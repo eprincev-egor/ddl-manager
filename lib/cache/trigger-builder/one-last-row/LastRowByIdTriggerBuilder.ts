@@ -1,6 +1,6 @@
 import {
-    Update, Expression, SetItem,
-    SelectColumn, UnknownExpressionElement, 
+    Update, SetItem,
+    Expression,
     SimpleSelect,
     Spaces
 } from "../../../ast";
@@ -82,7 +82,7 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
             table: triggerTable,
             set: [new SetItem({
                 column: isLastColumnName,
-                value: UnknownExpressionElement.fromSql("false")
+                value: Expression.unknown("false")
             })],
             where: this.filterTriggerTable("new", [
                 `${triggerTable}.id < new.id`,
@@ -143,7 +143,7 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
                 .hasReferenceWithoutJoins("old")!,
             hasOldReferenceAndIsLast: Expression.and([
                 this.conditions.hasReferenceWithoutJoins("old")!,
-                UnknownExpressionElement.fromSql(`old.${isLastColumnName}`)
+                `old.${isLastColumnName}`
             ]),
             noChanges: this.conditions.noChanges(),
             noReferenceChanges: this.conditions.noReferenceChanges()
