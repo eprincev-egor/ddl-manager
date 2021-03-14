@@ -74,7 +74,6 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
     }
 
     protected createBody() {
-        const isLastColumnName = this.getIsLastColumnName();
 
         const updateNew = new Update({
             table: this.context.cache.for.toString(),
@@ -93,7 +92,9 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
             ])
         });
 
+        const isLastColumnName = this.getIsLastColumnName();
         const triggerTable = this.context.triggerTable.toStringWithoutPublic();
+
         const updatePrevRowLastColumnTrue = new Update({
             table: triggerTable,
             set: [new SetItem({

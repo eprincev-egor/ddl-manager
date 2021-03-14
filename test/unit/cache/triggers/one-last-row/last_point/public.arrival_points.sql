@@ -11,9 +11,11 @@ begin
 
             select
                 id,
-                sort,
+                actual_date,
+                expected_date,
                 id_operation,
-                point_name
+                id_point,
+                sort
             from arrival_points
             where
                 arrival_points.id_operation = old.id_operation
@@ -51,11 +53,15 @@ begin
 
     if TG_OP = 'UPDATE' then
         if
-            new.point_name is not distinct from old.point_name
+            new.actual_date is not distinct from old.actual_date
             and
-            new.sort is not distinct from old.sort
+            new.expected_date is not distinct from old.expected_date
             and
             new.id_operation is not distinct from old.id_operation
+            and
+            new.id_point is not distinct from old.id_point
+            and
+            new.sort is not distinct from old.sort
         then
             return new;
         end if;
@@ -224,9 +230,11 @@ begin
         then
             select
                 id,
-                sort,
+                actual_date,
+                expected_date,
                 id_operation,
-                point_name
+                id_point,
+                sort
             from arrival_points
             where
                 arrival_points.id_operation = old.id_operation
