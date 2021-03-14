@@ -29,7 +29,7 @@ export interface ILastRowParams {
     exitFromDeltaUpdateIf?: Expression;
 }
 
-export function buildOneLastRowBody(ast: ILastRowParams) {
+export function buildOneLastRowByIdBody(ast: ILastRowParams) {
     return new Body({
         declares: [
             new Declare({

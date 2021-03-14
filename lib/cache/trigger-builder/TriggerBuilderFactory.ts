@@ -8,7 +8,8 @@ import { UniversalTriggerBuilder } from "./UniversalTriggerBuilder";
 import { CacheContext } from "./CacheContext";
 import { flatMap } from "lodash";
 import { OneRowTriggerBuilder } from "./OneRowTriggerBuilder";
-import { OneLastRowTriggerBuilder } from "./OneLastRowTriggerBuilder";
+import { LastRowByIdTriggerBuilder } from "./one-last-row/LastRowByIdTriggerBuilder";
+import { LastRowByMutableTriggerBuilder } from "./one-last-row/LastRowByMutableTriggerBuilder";
 
 export class TriggerBuilderFactory {
     private readonly cache: Cache;
@@ -80,7 +81,21 @@ export class TriggerBuilderFactory {
             return CommutativeTriggerBuilder;
         }
         else if ( this.oneLastRow(context) ) {
-            return OneLastRowTriggerBuilder;
+            const orderBy = context.cache.select.orderBy[0]!;
+            const orderByColumns = orderBy.expression.getColumnReferences();
+            const firstOrderColumn = orderByColumns[0];
+            const byId = (
+                orderByColumns.length === 1 &&
+                firstOrderColumn.name === "id" &&
+                context.isColumnRefToTriggerTable( firstOrderColumn )
+            );
+
+            if ( byId ) {
+                return LastRowByIdTriggerBuilder;
+            }
+            else {
+                return LastRowByMutableTriggerBuilder;
+            }
         }
         else if ( this.oneRowFromTable(context) ) {
             return OneRowTriggerBuilder;
