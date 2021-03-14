@@ -2,18 +2,19 @@ import { TableID } from "../database/schema/TableID";
 import { AbstractAstElement } from "./AbstractAstElement";
 import { Spaces } from "./Spaces";
 import { Expression } from "./expression/Expression";
+import { TableReference } from "../database/schema/TableReference";
 
 interface SimpleSelectRow {
     columns: string[];
     into?: string[];
-    from: TableID;
+    from: TableID | TableReference;
     where: Expression | string;
 }
 
 export class SimpleSelect extends AbstractAstElement {
 
     readonly columns!: string[];
-    readonly from!: TableID;
+    readonly from!: TableID | TableReference;
     readonly where!: Expression | string;
     readonly into!: string[];
 
@@ -36,7 +37,7 @@ export class SimpleSelect extends AbstractAstElement {
 
             ...this.intoTemplate(spaces),
             
-            spaces + `from ${this.from.toStringWithoutPublic()}`,
+            spaces + `from ${this.fromClause()}`,
             spaces + "where",
 
             (
@@ -45,7 +46,7 @@ export class SimpleSelect extends AbstractAstElement {
                         spaces.plusOneLevel()
                     ) :
                     spaces.plusOneLevel() + 
-                    `${this.from.toStringWithoutPublic()}.id = ${this.where}`
+                    `${this.getFromIdentifier()}.id = ${this.where}`
             )
         ];
 
@@ -67,7 +68,7 @@ export class SimpleSelect extends AbstractAstElement {
             const comma = i === this.columns.length - 1 ? "" : ",";
 
             const selectColumn = /^\w+$/.test(columnName) ?
-                `${this.from.toStringWithoutPublic()}.${columnName}` :
+                `${this.getFromIdentifier()}.${columnName}` :
                 columnName;
 
             selectColumnsTemplate.push(
@@ -100,5 +101,23 @@ export class SimpleSelect extends AbstractAstElement {
         });
 
         return intoTemplate;
+    }
+
+    private getFromIdentifier() {
+        if ( this.from instanceof TableID ) {
+            return this.from.toStringWithoutPublic();
+        }
+        else {
+            return this.from.getIdentifier();
+        }
+    }
+
+    private fromClause() {
+        if ( this.from instanceof TableID ) {
+            return this.from.toStringWithoutPublic();
+        }
+        else {
+            return this.from.toString();
+        }
     }
 }

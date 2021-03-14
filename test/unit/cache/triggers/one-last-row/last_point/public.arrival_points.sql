@@ -174,7 +174,13 @@ begin
                 where
                     arrival_points.id_operation = new.id_operation
                     and
-                    arrival_points.sort > new.sort
+                    (
+                        arrival_points.sort is not null
+                        and
+                        new.sort is null
+                        or
+                        arrival_points.sort > new.sort
+                    )
                 order by
                     arrival_points.sort desc nulls last
                 limit 1

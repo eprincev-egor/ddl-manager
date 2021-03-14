@@ -133,10 +133,9 @@ export abstract class AbstractLastRowTriggerBuilder extends AbstractTriggerBuild
     }
 
     protected updatePrevRowLastColumnTrue() {
-        const triggerTable = this.context.triggerTable
-            .toStringWithoutPublic();
+        const triggerTable = this.triggerTableAlias();
         return new Update({
-            table: triggerTable,
+            table: this.fromTable().toString(),
             set: [new SetItem({
                 column: this.getIsLastColumnName(),
                 value: Expression.unknown("true")
@@ -149,11 +148,10 @@ export abstract class AbstractLastRowTriggerBuilder extends AbstractTriggerBuild
 
     protected updateMaxRowLastColumnFalse(filterBy: string) {
         const isLastColumnName = this.getIsLastColumnName();
-        const triggerTable = this.context.triggerTable
-            .toStringWithoutPublic();
+        const triggerTable = this.triggerTableAlias();
 
         return new Update({
-            table: triggerTable,
+            table: this.fromTable().toString(),
             set: [new SetItem({
                 column: isLastColumnName,
                 value: Expression.unknown("false")
@@ -166,11 +164,10 @@ export abstract class AbstractLastRowTriggerBuilder extends AbstractTriggerBuild
     }
 
     protected updateThisRowLastColumnTrue() {
-        const triggerTable = this.context.triggerTable
-            .toStringWithoutPublic();
+        const triggerTable = this.triggerTableAlias();
 
         return new Update({
-            table: triggerTable,
+            table: this.fromTable().toString(),
             set: [new SetItem({
                 column: this.getIsLastColumnName(),
                 value: UnknownExpressionElement.fromSql("true")
@@ -204,8 +201,7 @@ export abstract class AbstractLastRowTriggerBuilder extends AbstractTriggerBuild
         byRow: string,
         andConditions: ConditionElementType[] = []
     ) {
-        const triggerTable = this.context.triggerTable
-            .toStringWithoutPublic();
+        const triggerTable = this.triggerTableAlias();
 
         return Expression.and([
             ...this.context.referenceMeta.columns.map(column =>
@@ -214,5 +210,18 @@ export abstract class AbstractLastRowTriggerBuilder extends AbstractTriggerBuild
             ...this.context.referenceMeta.filters,
             ...andConditions
         ]);
+    }
+
+    protected fromTable() {
+        const from = this.context.cache.select.from[0]!;
+        return from.table;
+    }
+
+    protected triggerTableAlias() {
+        const fromTable = this.fromTable();
+        if ( fromTable.alias ) {
+            return fromTable.alias;
+        }
+        return fromTable.table.toStringWithoutPublic();
     }
 }

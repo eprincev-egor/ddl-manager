@@ -12,7 +12,7 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
         const orderBy = this.context.cache.select.orderBy[0]!;
         const sortColumnRef = orderBy.expression.getColumnReferences()[0]!;
 
-        const triggerTable = this.context.triggerTable.toStringWithoutPublic();
+        const triggerTable = this.triggerTableAlias();
         const isLastColumnName = this.getIsLastColumnName();
 
         const selectPrevRowByFlag = this.context.cache.select.cloneWith({
@@ -33,7 +33,7 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
             columns: this.allPrevRowColumns(),
             where: this.filterTriggerTable("new", [
                 // TODO: check alias
-                `${triggerTable}.${sortColumnRef.name} > new.${sortColumnRef.name}`
+                this.rowIsGreatByOrder(triggerTable, "new")
             ]),
             intoRow: "prev_row"
         });
@@ -61,10 +61,10 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
                 .hasReferenceWithoutJoins("old")!,
             updateNew: this.updateNew(),
             updatePrev: this.updatePrev(),
-            prevRowIsLess: this.rowIsLess("prev_row", "new", [
+            prevRowIsLess: this.rowIsLessByOrder("prev_row", "new", [
                 "prev_row.id is null",
             ]),
-            prevRowIsGreat: this.rowIsGreat("prev_row", "new"),
+            prevRowIsGreat: this.rowIsGreatByOrder("prev_row", "new"),
             selectPrevRowByOrder: this.selectPrevRowByOrder(),
             selectPrevRowByFlag,
             updatePrevRowLastColumnTrue: this.updatePrevRowLastColumnTrue(),
@@ -77,12 +77,12 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
             ]),
             isLastAndSortMinus: Expression.and([
                 Expression.unknown(`new.${isLastColumnName}`),
-                this.rowIsLess("new", "old")
+                this.rowIsLessByOrder("new", "old")
             ]),
             selectPrevRowWhereGreatOrder,
             isNotLastAndSortPlus: Expression.and([
                 Expression.unknown(`not new.${isLastColumnName}`),
-                this.rowIsGreat("new", "old")
+                this.rowIsGreatByOrder("new", "old")
             ]),
             updatePrevAndThisFlag: this.updatePrevAndThisFlag(
                 `(${triggerTable}.id = new.id)`
@@ -111,11 +111,10 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
     }
 
     private updatePrevAndThisFlag(flagValue: string) {
-        const triggerTable = this.context.triggerTable
-            .toStringWithoutPublic();
+        const triggerTable = this.triggerTableAlias();
 
         return new Update({
-            table: triggerTable,
+            table: this.fromTable().toString(),
             set: [new SetItem({
                 column: this.getIsLastColumnName(),
                 value: Expression.unknown( flagValue )
@@ -126,11 +125,44 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
         });
     }
 
-    private rowIsGreat(greatRow: string, lessRow: string) {
+    private rowIsGreatByOrder(
+        greatRow: string,
+        lessRow: string,
+        orPreConditions: ConditionElementType[] = []
+    ) {
+        const orderBy = this.context.cache.select.orderBy[0]!;
+        if ( orderBy.type === "desc" ) {
+            return this.rowIsGreat(greatRow, lessRow, orPreConditions);
+        }
+        else {
+            return this.rowIsLess(greatRow, lessRow, orPreConditions);
+        }
+    }
+
+    private rowIsLessByOrder(
+        lessRow: string,
+        greatRow: string,
+        orPreConditions: ConditionElementType[] = []
+    ) {
+        const orderBy = this.context.cache.select.orderBy[0]!;
+        if ( orderBy.type === "desc" ) {
+            return this.rowIsLess(lessRow, greatRow, orPreConditions);
+        }
+        else {
+            return this.rowIsGreat(lessRow, greatRow, orPreConditions);
+        }
+    }
+
+    private rowIsGreat(
+        greatRow: string,
+        lessRow: string,
+        orPreConditions: ConditionElementType[] = []
+    ) {
         const orderBy = this.context.cache.select.orderBy[0]!;
         const sortColumnRef = orderBy.expression.getColumnReferences()[0]!;
 
         return Expression.or([
+            ...orPreConditions,
             Expression.and([
                 `${greatRow}.${sortColumnRef.name} is not null`,
                 `${lessRow}.${sortColumnRef.name} is null`

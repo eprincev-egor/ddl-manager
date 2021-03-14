@@ -154,7 +154,7 @@ begin
                 and
                 comments.id < new.id
                 and
-                __last_comment_for_unit = true;
+                comments.__last_comment_for_unit = true;
 
             update operation.unit set
                 last_comment = new.message

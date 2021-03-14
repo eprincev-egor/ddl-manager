@@ -76,17 +76,17 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
     protected createBody() {
 
         const isLastColumnName = this.getIsLastColumnName();
-        const triggerTable = this.context.triggerTable.toStringWithoutPublic();
+        const triggerTable = this.triggerTableAlias();
 
         const clearLastColumnOnInsert = new Update({
-            table: triggerTable,
+            table: this.fromTable().toString(),
             set: [new SetItem({
                 column: isLastColumnName,
                 value: Expression.unknown("false")
             })],
             where: this.filterTriggerTable("new", [
                 `${triggerTable}.id < new.id`,
-                `${isLastColumnName} = true`
+                `${triggerTable}.${isLastColumnName} = true`
             ])
         });
 
@@ -95,7 +95,7 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
             columns: [
                 `${ orderBy.type == "desc" ? "max" : "min" }( ${ triggerTable }.id )`
             ],
-            from: this.context.triggerTable,
+            from: this.context.cache.select.from[0]!.table,
             where: this.filterTriggerTable("new", [
                 `${triggerTable}.id <> new.id`
             ])
