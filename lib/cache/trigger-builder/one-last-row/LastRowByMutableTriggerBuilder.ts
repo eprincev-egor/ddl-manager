@@ -9,23 +9,6 @@ import { buildOneLastRowByMutableBody } from "../body/buildOneLastRowByMutableBo
 export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilder {
 
     protected createBody() {
-        const updateNew = new Update({
-            table: this.context.cache.for.toString(),
-            set: this.setItemsByRow("new"),
-            where: Expression.and([
-                this.conditions.simpleWhere("new")!,
-                this.whereDistinctRowValues("new")
-            ])
-        });
-        const updatePrev = new Update({
-            table: this.context.cache.for.toString(),
-            set: this.setItemsByRow("prev_row"),
-            where: Expression.and([
-                this.conditions.simpleWhere("old")!,
-                this.whereDistinctRowValues("prev_row")
-            ])
-        });
-
         const orderBy = this.context.cache.select.orderBy[0]!;
         const sortColumnRef = orderBy.expression.getColumnReferences()[0]!;
         const prevRowIsLess = Expression.or([
@@ -72,17 +55,6 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
             })],
             where: Expression.and([
                 `${triggerTable}.id in (new.id, prev_row.id)`
-            ])
-        });
-
-        const updatePrevRowLastColumnTrue = new Update({
-            table: triggerTable,
-            set: [new SetItem({
-                column: isLastColumnName,
-                value: Expression.unknown("true")
-            })],
-            where: Expression.and([
-                `${triggerTable}.id = prev_row.id`
             ])
         });
 
@@ -133,28 +105,6 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
             intoRow: "prev_row"
         });
 
-        const updateMaxRowLastColumnFalse = new Update({
-            table: triggerTable,
-            set: [new SetItem({
-                column: isLastColumnName,
-                value: Expression.unknown("false")
-            })],
-            where: Expression.and([
-                `${triggerTable}.id = prev_row.id`,
-                `${isLastColumnName} = true`
-            ])
-        });
-
-        const updateThisRowLastColumnTrue = new Update({
-            table: triggerTable,
-            set: [new SetItem({
-                column: isLastColumnName,
-                value: Expression.unknown("true")
-            })],
-            where: Expression.and([
-                `${triggerTable}.id = new.id`
-            ])
-        });
         const selectPrevRowWhereGreatOrder = this.context.cache.select.cloneWith({
             columns: selectPrevRowColumns,
             where: Expression.and([
@@ -191,14 +141,14 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
                 .hasReferenceWithoutJoins("new")!,
             hasOldReference: this.conditions
                 .hasReferenceWithoutJoins("old")!,
-            updateNew,
-            updatePrev,
+            updateNew: this.updateNew(),
+            updatePrev: this.updatePrev(),
             prevRowIsLess,
             prevRowIsGreat,
             updatePrevAndThisFlag,
             selectPrevRowByOrder,
             selectPrevRowByFlag,
-            updatePrevRowLastColumnTrue,
+            updatePrevRowLastColumnTrue: this.updatePrevRowLastColumnTrue(),
             ifNeedUpdateNewOnChangeReference: Expression.or([
                 "prev_row.id is null",
                 Expression.and([
@@ -207,8 +157,9 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
                 ]),
                 `prev_row.${sortColumnRef.name} < new.${sortColumnRef.name}`
             ]),
-            updateMaxRowLastColumnFalse,
-            updateThisRowLastColumnTrue,
+            updateMaxRowLastColumnFalse: this.updateMaxRowLastColumnFalse("prev_row.id"),
+            updateThisRowLastColumnTrue: this.updateThisRowLastColumnTrue(),
+
             hasOldReferenceAndIsLast: Expression.and([
                 this.conditions.hasReferenceWithoutJoins("old")!,
                 Expression.unknown(`old.${isLastColumnName}`)

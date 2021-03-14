@@ -75,59 +75,8 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
 
     protected createBody() {
 
-        const updateNew = new Update({
-            table: this.context.cache.for.toString(),
-            set: this.setItemsByRow("new"),
-            where: Expression.and([
-                this.conditions.simpleWhere("new")!,
-                this.whereDistinctRowValues("new")
-            ])
-        });
-        const updatePrev = new Update({
-            table: this.context.cache.for.toString(),
-            set: this.setItemsByRow("prev_row"),
-            where: Expression.and([
-                this.conditions.simpleWhere("old")!,
-                this.whereDistinctRowValues("prev_row")
-            ])
-        });
-
         const isLastColumnName = this.getIsLastColumnName();
         const triggerTable = this.context.triggerTable.toStringWithoutPublic();
-
-        const updatePrevRowLastColumnTrue = new Update({
-            table: triggerTable,
-            set: [new SetItem({
-                column: isLastColumnName,
-                value: UnknownExpressionElement.fromSql("true")
-            })],
-            where: Expression.and([
-                `${triggerTable}.id = prev_row.id`
-            ])
-        });
-
-        const updateMaxRowLastColumnFalse = new Update({
-            table: triggerTable,
-            set: [new SetItem({
-                column: isLastColumnName,
-                value: UnknownExpressionElement.fromSql("false")
-            })],
-            where: Expression.and([
-                `${triggerTable}.id = prev_id`,
-                `${isLastColumnName} = true`
-            ])
-        });
-
-        const updateThisRowLastColumnTrue = new Update({
-            table: triggerTable,
-            set: [new SetItem({
-                column: isLastColumnName,
-                value: UnknownExpressionElement.fromSql("true")
-            })],
-            where: Expression.and([
-                `${triggerTable}.id = new.id`
-            ])
-        });
 
         const clearLastColumnOnInsert = new Update({
             table: triggerTable,
@@ -204,20 +153,21 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
                 `prev_id ${orderBy.type === "desc" ? "<" : ">"} new.id`,
                 "prev_id is null"
             ]),
-            updateNew,
+
+            updateNew: this.updateNew(),
+            updatePrev: this.updatePrev(),
 
             exitFromDeltaUpdateIf: this.conditions.exitFromDeltaUpdateIf(),
 
             selectMaxPrevId,
             selectPrevRow,
             existsPrevRow,
-            updatePrev,
 
-            updateMaxRowLastColumnFalse,
-            updateThisRowLastColumnTrue,
+            updateMaxRowLastColumnFalse: this.updateMaxRowLastColumnFalse("prev_id"),
+            updateThisRowLastColumnTrue: this.updateThisRowLastColumnTrue(),
 
             clearLastColumnOnInsert,
-            updatePrevRowLastColumnTrue,
+            updatePrevRowLastColumnTrue: this.updatePrevRowLastColumnTrue(),
 
             hasNewReference: this.conditions
                 .hasReferenceWithoutJoins("new")!,

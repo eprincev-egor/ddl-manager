@@ -1,5 +1,6 @@
 import {
-    Expression, SetItem,
+    Expression, 
+    Update, SetItem,
     Select, SelectColumn,
     ColumnReference, UnknownExpressionElement,
     From
@@ -107,5 +108,76 @@ export abstract class AbstractLastRowTriggerBuilder extends AbstractTriggerBuild
             return setItem;
         });
         return setItems;
+    }
+
+    protected updateNew() {
+        return new Update({
+            table: this.context.cache.for.toString(),
+            set: this.setItemsByRow("new"),
+            where: Expression.and([
+                this.conditions.simpleWhere("new")!,
+                this.whereDistinctRowValues("new")
+            ])
+        });
+    }
+
+    protected updatePrev() {
+        return new Update({
+            table: this.context.cache.for.toString(),
+            set: this.setItemsByRow("prev_row"),
+            where: Expression.and([
+                this.conditions.simpleWhere("old")!,
+                this.whereDistinctRowValues("prev_row")
+            ])
+        });
+    }
+
+    protected updatePrevRowLastColumnTrue() {
+        const triggerTable = this.context.triggerTable
+            .toStringWithoutPublic();
+        return new Update({
+            table: triggerTable,
+            set: [new SetItem({
+                column: this.getIsLastColumnName(),
+                value: Expression.unknown("true")
+            })],
+            where: Expression.and([
+                `${triggerTable}.id = prev_row.id`
+            ])
+        });
+    }
+
+    protected updateMaxRowLastColumnFalse(filterBy: string) {
+        const isLastColumnName = this.getIsLastColumnName();
+        const triggerTable = this.context.triggerTable
+            .toStringWithoutPublic();
+
+        return new Update({
+            table: triggerTable,
+            set: [new SetItem({
+                column: isLastColumnName,
+                value: Expression.unknown("false")
+            })],
+            where: Expression.and([
+                `${triggerTable}.id = ${filterBy}`,
+                `${isLastColumnName} = true`
+            ])
+        });
+    }
+
+    protected updateThisRowLastColumnTrue() {
+        const triggerTable = this.context.triggerTable
+            .toStringWithoutPublic();
+
+        return new Update({
+            table: triggerTable,
+            set: [new SetItem({
+                column: this.getIsLastColumnName(),
+                value: UnknownExpressionElement.fromSql("true")
+            })],
+            where: Expression.and([
+                `${triggerTable}.id = new.id`
+            ])
+        });
     }
 }
