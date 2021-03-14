@@ -105,6 +105,11 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
 
         const body = buildOneLastRowByMutableBody({
             isLastColumn: isLastColumnName,
+            noReferenceAndSortChanges: Expression.and([
+                this.conditions.noReferenceChanges(),
+                `new.${sortColumnRef.name} is not distinct from old.${sortColumnRef.name}`
+            ]),
+            exitFromDeltaUpdateIf: this.conditions.exitFromDeltaUpdateIf(),
             noChanges: this.conditions.noChanges(),
             hasNewReference: this.conditions
                 .hasReferenceWithoutJoins("new")!,

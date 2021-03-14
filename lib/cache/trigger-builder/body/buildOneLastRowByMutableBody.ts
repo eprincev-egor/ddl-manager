@@ -4,9 +4,12 @@ import {
     HardCode, BlankLine, Update
 } from "../../../ast";
 import { doIf } from "./util/doIf";
+import { exitIf } from "./util/exitIf";
 
 export interface ILastRowParams {
     noChanges: Expression;
+    noReferenceAndSortChanges: Expression;
+    exitFromDeltaUpdateIf?: Expression;
     isLastColumn: string;
     hasNewReference: Expression;
     hasOldReference: Expression;
@@ -74,6 +77,27 @@ export function buildOneLastRowByMutableBody(ast: ILastRowParams) {
                         ]
                     }),
                     new BlankLine(),
+                    ...doIf(
+                        ast.noReferenceAndSortChanges,
+                        [
+                            ...exitIf({
+                                if: ast.exitFromDeltaUpdateIf,
+                                blanksAfter: [new BlankLine()]
+                            }),
+
+                            new If({
+                                if: new HardCode({sql: `not new.${ast.isLastColumn}`}),
+                                then: [
+                                    new HardCode({sql: "return new;"})
+                                ]
+                            }),
+                            new BlankLine(),
+                            ast.updateNew,
+                            new BlankLine(),
+                            new HardCode({sql: "return new;"})
+                        ]
+                    ),
+                    new BlankLine(),
                     new HardCode({sql: "return new;"})
                 ]
             }),
@@ -86,6 +110,7 @@ export function buildOneLastRowByMutableBody(ast: ILastRowParams) {
                     ...doIf(
                         ast.hasNewReference,
                         [
+                            new BlankLine(),
                             ast.selectPrevRowByFlag,
                             new BlankLine(),
                             new If({
