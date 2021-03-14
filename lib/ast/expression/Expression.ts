@@ -9,7 +9,7 @@ import { IColumnsMap, UnknownExpressionElement } from "./UnknownExpressionElemen
 import { ColumnReference } from "./ColumnReference";
 import { Exists } from "./Exists";
 
-type ConditionElementType = string | IExpressionElement;
+export type ConditionElementType = string | IExpressionElement;
 
 export class Expression extends AbstractExpressionElement {
 

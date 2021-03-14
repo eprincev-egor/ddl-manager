@@ -1,5 +1,5 @@
 import {
-    Expression, 
+    Expression, ConditionElementType,
     Update, SetItem,
     Select, SelectColumn,
     ColumnReference, UnknownExpressionElement,
@@ -179,5 +179,40 @@ export abstract class AbstractLastRowTriggerBuilder extends AbstractTriggerBuild
                 `${triggerTable}.id = new.id`
             ])
         });
+    }
+
+    protected allPrevRowColumns() {
+        const selectPrevRowColumnsNames = this.context.triggerTableColumns.slice();
+        if  ( !selectPrevRowColumnsNames.includes("id") ) {
+            selectPrevRowColumnsNames.unshift("id");
+        }
+
+        return selectPrevRowColumnsNames.map(name =>
+            SelectColumn.onlyName(name)
+        );
+    }
+
+    protected selectPrevRowByOrder() {
+        return this.context.cache.select.cloneWith({
+            columns: this.allPrevRowColumns(),
+            where: this.filterTriggerTable("old"),
+            intoRow: "prev_row"
+        });
+    }
+
+    protected filterTriggerTable(
+        byRow: string,
+        andConditions: ConditionElementType[] = []
+    ) {
+        const triggerTable = this.context.triggerTable
+            .toStringWithoutPublic();
+
+        return Expression.and([
+            ...this.context.referenceMeta.columns.map(column =>
+                `${triggerTable}.${column} = ${byRow}.${column}`
+            ),
+            ...this.context.referenceMeta.filters,
+            ...andConditions
+        ]);
     }
 }

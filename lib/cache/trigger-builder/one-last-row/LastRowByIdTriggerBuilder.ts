@@ -84,26 +84,11 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
                 column: isLastColumnName,
                 value: UnknownExpressionElement.fromSql("false")
             })],
-            where: Expression.and([
-                ...this.context.referenceMeta.columns.map(column =>
-                    `${triggerTable}.${column} = new.${column}`
-                ),
+            where: this.filterTriggerTable("new", [
                 `${triggerTable}.id < new.id`,
                 `${isLastColumnName} = true`
             ])
         });
-
-        const selectPrevRowColumnsNames = this.context.triggerTableColumns.slice();
-        if  ( !selectPrevRowColumnsNames.includes("id") ) {
-            selectPrevRowColumnsNames.unshift("id");
-        }
-
-        const selectPrevRowColumns: SelectColumn[] = selectPrevRowColumnsNames.map(name =>
-            new SelectColumn({
-                name,
-                expression: Expression.unknown(name)
-            })
-        );
 
         const orderBy = this.context.cache.select.orderBy[0]!;
         const selectMaxPrevId = new SimpleSelect({
@@ -111,33 +96,16 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
                 `${ orderBy.type == "desc" ? "max" : "min" }( ${ triggerTable }.id )`
             ],
             from: this.context.triggerTable,
-            where: Expression.and([
-                ...this.context.referenceMeta.columns.map(column =>
-                    `${triggerTable}.${column} = new.${column}`
-                ),
-                ...this.context.referenceMeta.filters,
+            where: this.filterTriggerTable("new", [
                 `${triggerTable}.id <> new.id`
             ])
         });
 
-        const selectPrevRow = this.context.cache.select.cloneWith({
-            columns: selectPrevRowColumns,
-            where: Expression.and([
-                ...this.context.referenceMeta.columns.map(column =>
-                    `${triggerTable}.${column} = old.${column}`
-                ),
-                ...this.context.referenceMeta.filters
-            ]),
-            intoRow: "prev_row"
-        });
         const existsPrevRow = new Exists({
             select: this.context.cache.select.cloneWith({
                 columns: [],
-                where: Expression.and([
-                    ...this.context.referenceMeta.columns.map(column =>
-                        `${triggerTable}.${column} = new.${column}`
-                    ),
-                    ...this.context.referenceMeta.filters,
+                where: this.filterTriggerTable("new", [
+                    // TODO: test with order asc
                     `${triggerTable}.id < new.id`
                 ]),
                 orderBy: [],
@@ -160,7 +128,7 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
             exitFromDeltaUpdateIf: this.conditions.exitFromDeltaUpdateIf(),
 
             selectMaxPrevId,
-            selectPrevRow,
+            selectPrevRow: this.selectPrevRowByOrder(),
             existsPrevRow,
 
             updateMaxRowLastColumnFalse: this.updateMaxRowLastColumnFalse("prev_id"),

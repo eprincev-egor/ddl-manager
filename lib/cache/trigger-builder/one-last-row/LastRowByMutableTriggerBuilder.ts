@@ -32,73 +32,14 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
         const triggerTable = this.context.triggerTable.toStringWithoutPublic();
         const isLastColumnName = this.getIsLastColumnName();
 
-        const updatePrevAndThisFlag = new Update({
-            table: triggerTable,
-            set: [new SetItem({
-                column: isLastColumnName,
-                value: Expression.unknown(
-                    `(${triggerTable}.id = new.id)`
-                )
-            })],
-            where: Expression.and([
-                `${triggerTable}.id in (new.id, prev_row.id)`
-            ])
-        });
-
-        const updatePrevAndThisFlagNot = new Update({
-            table: triggerTable,
-            set: [new SetItem({
-                column: isLastColumnName,
-                value: Expression.unknown(
-                    `(${triggerTable}.id != new.id)`
-                )
-            })],
-            where: Expression.and([
-                `${triggerTable}.id in (new.id, prev_row.id)`
-            ])
-        });
-
-        const selectPrevRowColumnsNames = this.context.triggerTableColumns.slice();
-        if  ( !selectPrevRowColumnsNames.includes("id") ) {
-            selectPrevRowColumnsNames.unshift("id");
-        }
-
-        const selectPrevRowColumns: SelectColumn[] = selectPrevRowColumnsNames.map(name =>
-            new SelectColumn({
-                name,
-                expression: Expression.unknown(name)
-            })
-        );
-
-        const selectPrevRowByOrder = this.context.cache.select.cloneWith({
-            columns: selectPrevRowColumns,
-            where: Expression.and([
-                ...this.context.referenceMeta.columns.map(column =>
-                    `${triggerTable}.${column} = old.${column}`
-                ),
-                ...this.context.referenceMeta.filters
-            ]),
-            intoRow: "prev_row"
-        });
-
         const selectPrevRowByFlag = this.context.cache.select.cloneWith({
             columns: [
-                new SelectColumn({
-                    name: "id",
-                    expression: Expression.unknown("id")
-                }),
-                new SelectColumn({
-                    name: sortColumnRef.name,
-                    expression: Expression.unknown(sortColumnRef.name)
-                })
+                SelectColumn.onlyName("id"),
+                SelectColumn.onlyName(sortColumnRef.name)
             ],
-            where: Expression.and([
-                ...this.context.referenceMeta.columns.map(column =>
-                    `${triggerTable}.${column} = new.${column}`
-                ),
-                ...this.context.referenceMeta.filters,
+            where: this.filterTriggerTable("new", [
                 // TODO: check alias
-                Expression.unknown(`${triggerTable}.${isLastColumnName} = true`)
+                `${triggerTable}.${isLastColumnName} = true`
             ]),
             orderBy: [],
             limit: undefined,
@@ -106,16 +47,10 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
         });
 
         const selectPrevRowWhereGreatOrder = this.context.cache.select.cloneWith({
-            columns: selectPrevRowColumns,
-            where: Expression.and([
-                ...this.context.referenceMeta.columns.map(column =>
-                    `${triggerTable}.${column} = new.${column}`
-                ),
-                ...this.context.referenceMeta.filters,
+            columns: this.allPrevRowColumns(),
+            where: this.filterTriggerTable("new", [
                 // TODO: check alias
-                Expression.unknown(
-                    `${triggerTable}.${sortColumnRef.name} > new.${sortColumnRef.name}`
-                )
+                `${triggerTable}.${sortColumnRef.name} > new.${sortColumnRef.name}`
             ]),
             intoRow: "prev_row"
         });
@@ -145,8 +80,7 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
             updatePrev: this.updatePrev(),
             prevRowIsLess,
             prevRowIsGreat,
-            updatePrevAndThisFlag,
-            selectPrevRowByOrder,
+            selectPrevRowByOrder: this.selectPrevRowByOrder(),
             selectPrevRowByFlag,
             updatePrevRowLastColumnTrue: this.updatePrevRowLastColumnTrue(),
             ifNeedUpdateNewOnChangeReference: Expression.or([
@@ -185,7 +119,12 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
                     `new.${sortColumnRef.name} > old.${sortColumnRef.name}`
                 ])
             ]),
-            updatePrevAndThisFlagNot
+            updatePrevAndThisFlag: this.updatePrevAndThisFlag(
+                `(${triggerTable}.id = new.id)`
+            ),
+            updatePrevAndThisFlagNot: this.updatePrevAndThisFlag(
+                `(${triggerTable}.id != new.id)`
+            )
         });
         return body;
     }
@@ -204,5 +143,21 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
         );
 
         return dataColumns;
+    }
+
+    private updatePrevAndThisFlag(flagValue: string) {
+        const triggerTable = this.context.triggerTable
+            .toStringWithoutPublic();
+
+        return new Update({
+            table: triggerTable,
+            set: [new SetItem({
+                column: this.getIsLastColumnName(),
+                value: Expression.unknown( flagValue )
+            })],
+            where: Expression.and([
+                `${triggerTable}.id in (new.id, prev_row.id)`
+            ])
+        });
     }
 }

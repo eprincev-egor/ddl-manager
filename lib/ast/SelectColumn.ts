@@ -12,6 +12,13 @@ export class SelectColumn extends AbstractAstElement {
     readonly name!: string;
     readonly expression!: Expression;
 
+    static onlyName(columnName: string) {
+        return new SelectColumn({
+            name: columnName,
+            expression: Expression.unknown(columnName)
+        });
+    }
+
     constructor(params: ISelectColumnParams) {
         super();
         Object.assign(this, params);
