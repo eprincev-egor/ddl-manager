@@ -9,6 +9,10 @@ import { exitIf } from "./util/exitIf";
 export interface ILastRowParams {
     noChanges: Expression;
     noReferenceAndSortChanges: Expression;
+    noReferenceChanges: Expression;
+    isLastAndHasDataChange: Expression;
+    isLastAndSortMinus: Expression;
+    prevRowIsGreat: Expression;
     exitFromDeltaUpdateIf?: Expression;
     isLastColumn: string;
     hasNewReference: Expression;
@@ -17,9 +21,16 @@ export interface ILastRowParams {
     updateNew: Update;
     selectPrevRowByOrder: Select;
     selectPrevRowByFlag: Select;
+    selectPrevRowWhereGreatOrder: Select;
     updatePrevRowLastColumnTrue: Update;
     prevRowIsLess: Expression;
     updatePrevAndThisFlag: Update;
+    ifNeedUpdateNewOnChangeReference: Expression;
+    updateMaxRowLastColumnFalse: Update;
+    updateThisRowLastColumnTrue: Update;
+    updatePrevAndThisFlagNot: Update;
+    hasOldReferenceAndIsLast: Expression;
+    isNotLastAndSortPlus: Expression;
 }
 
 export function buildOneLastRowByMutableBody(ast: ILastRowParams) {
@@ -97,6 +108,105 @@ export function buildOneLastRowByMutableBody(ast: ILastRowParams) {
                             new HardCode({sql: "return new;"})
                         ]
                     ),
+
+                    new BlankLine(),
+                    
+                    new If({
+                        if: ast.noReferenceChanges,
+                        then: [
+
+                            new If({
+                                if: ast.isNotLastAndSortPlus,
+                                then: [
+                                    ast.selectPrevRowByFlag,
+                                    new BlankLine(),
+                                    new If({
+                                        if: ast.prevRowIsLess,
+                                        then: [
+                                            ast.updatePrevAndThisFlag,
+                                            new BlankLine(),
+                                            ast.updateNew,
+                                            new BlankLine(),
+                                            new HardCode({sql: "return new;"})
+                                        ]
+                                    })
+                                ]
+                            }),
+                            new BlankLine(),
+                            
+                            new If({
+                                if: ast.isLastAndSortMinus,
+                                then: [
+                                    ast.selectPrevRowWhereGreatOrder,
+                                    new BlankLine(),
+                                    new If({
+                                        if: ast.prevRowIsGreat,
+                                        then: [
+                                            ast.updatePrevAndThisFlagNot,
+                                            new BlankLine(),
+                                            ast.updatePrev,
+                                            new BlankLine(),
+                                            new HardCode({sql: "return new;"})
+                                        ]
+                                    })
+                                ]
+                            }),
+                            new BlankLine(),
+                            
+                            new If({
+                                if: ast.isLastAndHasDataChange,
+                                then: [
+                                    ast.updateNew
+                                ]
+                            }),
+                            new BlankLine(),
+                            new HardCode({sql: "return new;"})
+                        ]
+                    }),
+                    
+                    new BlankLine(),
+                    new If({
+                        if: ast.hasOldReferenceAndIsLast,
+                        then: [
+                            ast.selectPrevRowByOrder,
+                            new BlankLine(),
+                            new If({
+                                if: new HardCode({sql: "prev_row.id is not null"}),
+                                then: [ast.updatePrevRowLastColumnTrue]
+                            }),
+                            new BlankLine(),
+                            ast.updatePrev
+                        ]
+                    }),
+                    new BlankLine(),
+
+                    new If({
+                        if: ast.hasNewReference,
+                        then: [
+                            ast.selectPrevRowByFlag,
+                            new BlankLine(),
+                            new If({
+                                if: ast.ifNeedUpdateNewOnChangeReference,
+                                then: [
+                                    new If({
+                                        if: new HardCode({sql: "prev_row.id is not null"}),
+                                        then: [
+                                            ast.updateMaxRowLastColumnFalse
+                                        ]
+                                    }),
+                                    new BlankLine(),
+                                    new If({
+                                        if: new HardCode({sql: `not new.${ast.isLastColumn}`}),
+                                        then: [
+                                            ast.updateThisRowLastColumnTrue
+                                        ]
+                                    }),
+                                    new BlankLine(),
+                                    ast.updateNew
+                                ]
+                            })
+                        ]
+                    }),
                     new BlankLine(),
                     new HardCode({sql: "return new;"})
                 ]

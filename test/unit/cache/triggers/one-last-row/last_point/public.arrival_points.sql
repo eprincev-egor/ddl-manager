@@ -102,11 +102,11 @@ begin
                 not new.__last_point_for_operations
                 and
                 (
-                    new.sort > old.sort
-                    or
                     new.sort is not null
                     and
                     old.sort is null
+                    or
+                    new.sort > old.sort
                 )
             then
                 select
@@ -121,6 +121,10 @@ begin
 
                 if
                     prev_row.id is null
+                    or
+                    prev_row.sort is null
+                    and
+                    new.sort is not null
                     or
                     prev_row.sort < new.sort
                 then
@@ -152,29 +156,37 @@ begin
                 new.__last_point_for_operations
                 and
                 (
-                    new.sort < old.sort
-                    or
                     new.sort is null
                     and
                     old.sort is not null
+                    or
+                    new.sort < old.sort
                 )
             then
                 select
                     id,
-                    sort,
+                    actual_date,
+                    expected_date,
                     id_operation,
-                    point_name
+                    id_point,
+                    sort
                 from arrival_points
                 where
                     arrival_points.id_operation = new.id_operation
                     and
                     arrival_points.sort > new.sort
                 order by
-                    arrival_points.sort desc
+                    arrival_points.sort desc nulls last
                 limit 1
                 into prev_row;
 
-                if prev_row.sort > new.sort then
+                if
+                    prev_row.sort is not null
+                    and
+                    new.sort is null
+                    or
+                    prev_row.sort > new.sort
+                then
                     update arrival_points set
                         __last_point_for_operations = (arrival_points.id != new.id)
                     where
@@ -185,7 +197,7 @@ begin
                         last_point_expected_date = prev_row.expected_date,
                         last_point_id_point = prev_row.id_point
                     where
-                        new.id_operation = operations.id
+                        old.id_operation = operations.id
                         and
                         (
                             operations.last_point_actual_date is distinct from prev_row.actual_date
@@ -200,9 +212,15 @@ begin
             end if;
 
             if
-                new.point_name is distinct from old.point_name
-                and
                 new.__last_point_for_operations
+                and
+                (
+                    new.actual_date is distinct from old.actual_date
+                    or
+                    new.expected_date is distinct from old.expected_date
+                    or
+                    new.id_point is distinct from old.id_point
+                )
             then
                 update operations set
                     last_point_actual_date = new.actual_date,
@@ -274,17 +292,17 @@ begin
             where
                 arrival_points.id_operation = new.id_operation
                 and
-                arrival_points.__last_point_for_operations
+                arrival_points.__last_point_for_operations = true
             into prev_row;
 
             if
                 prev_row.id is null
                 or
-                prev_row.sort < new.sort
-                or
                 prev_row.sort is null
                 and
                 new.sort is not null
+                or
+                prev_row.sort < new.sort
             then
                 if prev_row.id is not null then
                     update arrival_points set
@@ -337,6 +355,10 @@ begin
 
             if
                 prev_row.id is null
+                or
+                prev_row.sort is null
+                and
+                new.sort is not null
                 or
                 prev_row.sort < new.sort
             then

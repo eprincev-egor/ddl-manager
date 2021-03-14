@@ -84,6 +84,7 @@ export abstract class AbstractLastRowTriggerBuilder extends AbstractTriggerBuild
     protected whereDistinctFrom(values: Expression[]) {
         const selectColumns = this.context.cache.select.columns;
         const compareConditions = selectColumns.map((selectColumn, i) => {
+            // TODO: test hard expressions
             const cacheColumnRef = new ColumnReference(
                 this.context.cache.for,
                 selectColumn.name
