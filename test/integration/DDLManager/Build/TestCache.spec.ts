@@ -1013,4 +1013,245 @@ $$;
 
         assert.strictEqual(actualErr.message, "success");
     });
+
+    it("last point by sort desc", async() => {
+        const folderPath = ROOT_TMP_PATH + "/last_point_by_sort_desc";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table arrival_points (
+                id serial primary key,
+                name text,
+                id_operation bigint,
+                point_name text,
+                sort integer not null
+            );
+            
+            create table operations (
+                id serial primary key,
+                name text
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/last_point.sql", `
+            cache last_point for operations (
+                select
+                    arrival_points.point_name as last_point_name
+
+                from arrival_points
+                where
+                    arrival_points.id_operation = operations.id
+
+                order by arrival_points.sort desc
+                limit 1
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const testSql = `
+
+        create or replace function check_operations(check_label text)
+        returns void as $body$
+        declare invalid_operations text;
+        begin
+        
+            select
+                string_agg(
+                    '    id: ' || operations.id || E'\n' ||
+                    '    name: ' || coalesce(operations.name, '<NULL>') || E'\n' ||
+                    '    should_be: ' || coalesce(should_be.last_point_name, '<NULL>') || E'\n' ||
+                    '    actual: ' || coalesce(operations.last_point_name, '<NULL>')
+        
+                    , E'\n\n'
+                )
+            into
+                invalid_operations
+        
+            from operations
+        
+            left join lateral (
+                select
+                    arrival_points.point_name as last_point_name
+        
+                from arrival_points
+                where
+                    arrival_points.id_operation = operations.id
+        
+                order by arrival_points.sort desc
+                limit 1
+            ) as should_be on true
+            where
+                should_be.last_point_name is distinct from operations.last_point_name;
+        
+        
+            if invalid_operations is not null then
+                raise exception E'\n%, invalid operations:\n%\n\n\narrival_points:\n%\n\n\n', 
+                    check_label,
+                    invalid_operations,
+                    (
+                        select
+                        string_agg(
+                            '    id: ' || arrival_points.id || E',\n' ||
+                            '    name: ' || coalesce(arrival_points.name, '<NULL>') || E',\n' ||
+                            '    id_operation: ' || coalesce(arrival_points.id_operation::text, '<NULL>') || E',\n' ||
+                            '    sort: ' || coalesce(arrival_points.sort::text, '<NULL>') || E',\n' ||
+                            '    point_name: ' || coalesce(arrival_points.point_name, '<NULL>') || E',\n' ||
+                            '    __last_point_for_operations: ' || coalesce(arrival_points.__last_point_for_operations::text, '<NULL>')
+        
+                            , E'\n\n'
+                        )
+                        from arrival_points
+                    );
+            else
+                raise notice '% - success', check_label;
+            end if;
+        end
+        $body$
+        language plpgsql;
+        
+        do $$
+        begin
+        
+            insert into operations (name) values ('operation 1');
+            insert into operations (name) values ('operation 2');
+        
+            insert into arrival_points
+                (name, id_operation, sort, point_name)
+            values
+                ('point X', 1, 1, 'warehouse 1');
+            PERFORM check_operations('label 1 insert');
+        
+            update arrival_points set
+                point_name = 'warehouse 2'
+            where name = 'point X';
+            PERFORM check_operations('label 2 update point_name');
+        
+            delete from arrival_points;
+            PERFORM check_operations('label 3 delete');
+        
+            insert into arrival_points
+                (name, id_operation, sort, point_name)
+            values
+                ('point A', 1, 1, 'warehouse 1'),
+                ('point B', 1, 2, 'warehouse 2'),
+                ('point X', 2, 30, 'warehouse 3'),
+                ('point Y', 2, 40, 'warehouse 4')
+            ;
+            PERFORM check_operations('label 4 insert 4 points');
+        
+            update arrival_points set
+                sort = 0
+            where name = 'point A';
+            PERFORM check_operations('label 5 update only sort -1 where not last');
+        
+            update arrival_points set
+                sort = 1
+            where name = 'point A';
+            PERFORM check_operations('label 6 update only sort +1 where not last and after update NOT last');
+        
+            update arrival_points set
+                sort = 3
+            where name = 'point A';
+            PERFORM check_operations('label 7 update only sort +1 where not last and after update IS last');
+        
+            update arrival_points set
+                sort = 1
+            where name = 'point A';
+            PERFORM check_operations('label 8 update only sort -1 where is last and after update not last');
+        
+            update arrival_points set
+                id_operation = 2
+            where name = 'point B';
+            PERFORM check_operations('label 9 update reference where not last for old and not last for new');
+        
+            update arrival_points set
+                id_operation = 1
+            where name = 'point Y';
+            PERFORM check_operations('label 10 update reference where is last for old and is last for new');
+        
+            delete from arrival_points;
+            PERFORM check_operations('label 11 deleted 4 points');
+        
+            insert into arrival_points
+                (name, id_operation, sort, point_name)
+            values
+                ('point A', 1, 1, 'warehouse 1'),
+                ('point B', 1, 2, 'warehouse 2'),
+                ('point X', 2, 30, 'warehouse 3'),
+                ('point Y', 2, 40, 'warehouse 4')
+            ;
+            PERFORM check_operations('label 12 insert 4 points');
+        
+            update arrival_points set
+                id_operation = 2,
+                sort = 45
+            where name = 'point B';
+            PERFORM check_operations('label 13 update sort and reference, where old is last and last for new');
+        
+            update arrival_points set
+                point_name = 'warehouse B',
+                sort = 46
+            where name = 'point B';
+            PERFORM check_operations('label 14 update sort +1 and data, where is last after update sort');
+        
+            update arrival_points set
+                point_name = 'warehouse A',
+                sort = 0
+            where name = 'point A';
+            PERFORM check_operations('label 15 update sort -1 and data, where is last after update sort');
+        
+            update arrival_points set
+                id_operation = 3
+            where name = 'point A';
+            PERFORM check_operations('label 16 update reference to unknown where is last for OLD');
+        
+            update arrival_points set
+                point_name = 'warehouse A - updated'
+            where name = 'point A';
+            PERFORM check_operations('label 17 update data where reference is unknown');
+        
+            update arrival_points set
+                point_name = 'warehouse X'
+            where name = 'point X';
+            PERFORM check_operations('label 18 update data where is not last');
+        
+            update arrival_points set
+                point_name = 'warehouse X - update',
+                sort = 100,
+                id_operation = 1
+            where name = 'point X';
+            PERFORM check_operations('label 19 update all where is not last for old and now is last for new');
+        
+            update arrival_points set
+                sort = 200,
+                id_operation = 1,
+                point_name = 'warehouse A'
+            where name = 'point A';
+            PERFORM check_operations('label 20 update all where is not last for old and now is last for new');
+        
+            update arrival_points set
+                point_name = 'warehouse X updated twice'
+            where name = 'point X';
+            PERFORM check_operations('label 21 update data where was last before pvev update');
+        
+            raise exception 'success';
+        end
+        $$;
+        
+        `;
+
+        let actualErr: Error = new Error("expected error");
+        try {
+            await db.query(testSql);
+        } catch(err) {
+            actualErr = err;
+        }
+
+        assert.strictEqual(actualErr.message, "success");
+    });
 });

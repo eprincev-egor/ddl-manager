@@ -186,6 +186,11 @@ export const testDatabase = new Database([
                 gtdID,
                 "id_order",
                 "bigint"
+            ),
+            new Column(
+                gtdID,
+                "units_ids",
+                "bigint[]"
             )
         ]
     ),

@@ -83,3 +83,5 @@
   - test trigger working with Asc by mutable
   - test trigger working without insert case
   + test filling __first_auto_for_order flag
+- test commutative cache working with insert/deleted ids
+  - data fields change and reference fields change
