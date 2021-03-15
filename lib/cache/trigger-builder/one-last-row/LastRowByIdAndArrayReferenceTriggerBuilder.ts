@@ -164,7 +164,9 @@ export class LastRowByIdAndArrayReferenceTriggerBuilder extends AbstractLastRowT
         });
 
         const body = buildOneLastRowByIdAndArrayReferenceBody({
+            needMatching: this.context.referenceMeta.filters.length > 0,
             arrColumn,
+            dataFields: this.findDataColumns(),
             hasNewReference: this.conditions
                 .hasReferenceWithoutJoins("new")!,
             hasOldReference: this.conditions

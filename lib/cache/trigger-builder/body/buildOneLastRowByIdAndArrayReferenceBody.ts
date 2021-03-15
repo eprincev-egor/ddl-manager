@@ -8,6 +8,8 @@ import { Column } from "../../../database/schema/Column";
 import { doIf } from "./util/doIf";
 
 export interface ILastRowParams {
+    needMatching: boolean;
+    dataFields: string[];
     arrColumn: Column;
     hasNewReference: Expression;
     hasOldReference: Expression;
@@ -24,14 +26,18 @@ export interface ILastRowParams {
 export function buildOneLastRowByIdAndArrayReferenceBody(ast: ILastRowParams) {
     return new Body({
         declares: [
-            new Declare({
-                name: "matched_old",
-                type: "boolean"
-            }),
-            new Declare({
-                name: "matched_new",
-                type: "boolean"
-            }),
+            ...(
+                ast.needMatching ? [
+                    new Declare({
+                        name: "matched_old",
+                        type: "boolean"
+                    }),
+                    new Declare({
+                        name: "matched_new",
+                        type: "boolean"
+                    }),
+                ] : []
+            ),
             new Declare({
                 name: "inserted_" + ast.arrColumn.name,
                 type: ast.arrColumn.type.toString()
@@ -78,100 +84,128 @@ export function buildOneLastRowByIdAndArrayReferenceBody(ast: ILastRowParams) {
                         ]
                     }),
                     new BlankLine(),
-                    new AssignVariable({
-                        variable: "matched_old",
-                        value: ast.matchedOld
-                    }),
-                    new AssignVariable({
-                        variable: "matched_new",
-                        value: ast.matchedNew
-                    }),
-                    new BlankLine(),
-                    new If({
-                        if: Expression.and([
-                            "not matched_old",
-                            "not matched_new"
-                        ]),
-                        then: [
-                            new HardCode({sql: "return new;"})
-                        ]
-                    }),
-                    new BlankLine(),
-                    new If({
-                        if: Expression.and([
-                            "matched_old",
-                            "not matched_new"
-                        ]),
-                        then: [
-                            new AssignVariable({
-                                variable: "inserted_" + ast.arrColumn.name,
-                                value: Expression.unknown("null")
-                            }),
-                            new AssignVariable({
-                                variable: "not_changed_" + ast.arrColumn.name,
-                                value: Expression.unknown("null")
-                            }),
-                            new AssignVariable({
-                                variable: "deleted_" + ast.arrColumn.name,
-                                value: Expression.unknown(`old.${ ast.arrColumn.name }`)
-                            })
-                        ]
-                    }),
-                    new BlankLine(),
-                    new If({
-                        if: Expression.and([
-                            "not matched_old",
-                            "matched_new"
-                        ]),
-                        then: [
-                            new AssignVariable({
-                                variable: "inserted_" + ast.arrColumn.name,
-                                value: Expression.unknown(`new.${ ast.arrColumn.name }`)
-                            }),
-                            new AssignVariable({
-                                variable: "not_changed_" + ast.arrColumn.name,
-                                value: Expression.unknown("null")
-                            }),
-                            new AssignVariable({
-                                variable: "deleted_" + ast.arrColumn.name,
-                                value: Expression.unknown("null")
-                            })
-                        ]
-                    }),
 
+                    ...(ast.needMatching ? [
+                        new AssignVariable({
+                            variable: "matched_old",
+                            value: ast.matchedOld
+                        }),
+                        new AssignVariable({
+                            variable: "matched_new",
+                            value: ast.matchedNew
+                        }),
+                        new BlankLine(),
+                        new If({
+                            if: Expression.and([
+                                "not matched_old",
+                                "not matched_new"
+                            ]),
+                            then: [
+                                new HardCode({sql: "return new;"})
+                            ]
+                        }),
+                        new BlankLine(),
+                        new If({
+                            if: Expression.and([
+                                "matched_old",
+                                "not matched_new"
+                            ]),
+                            then: [
+                                new AssignVariable({
+                                    variable: "inserted_" + ast.arrColumn.name,
+                                    value: Expression.unknown("null")
+                                }),
+                                new AssignVariable({
+                                    variable: "not_changed_" + ast.arrColumn.name,
+                                    value: Expression.unknown("null")
+                                }),
+                                new AssignVariable({
+                                    variable: "deleted_" + ast.arrColumn.name,
+                                    value: Expression.unknown(`old.${ ast.arrColumn.name }`)
+                                })
+                            ]
+                        }),
+                        new BlankLine(),
+                        new If({
+                            if: Expression.and([
+                                "not matched_old",
+                                "matched_new"
+                            ]),
+                            then: [
+                                new AssignVariable({
+                                    variable: "inserted_" + ast.arrColumn.name,
+                                    value: Expression.unknown(`new.${ ast.arrColumn.name }`)
+                                }),
+                                new AssignVariable({
+                                    variable: "not_changed_" + ast.arrColumn.name,
+                                    value: Expression.unknown("null")
+                                }),
+                                new AssignVariable({
+                                    variable: "deleted_" + ast.arrColumn.name,
+                                    value: Expression.unknown("null")
+                                })
+                            ]
+                        }),
+    
+                        new BlankLine(),
+                        new If({
+                            if: Expression.and([
+                                "matched_old",
+                                "matched_new"
+                            ]),
+                            then: [
+                                new AssignVariable({
+                                    variable: "inserted_" + ast.arrColumn.name,
+                                    value: Expression.unknown(
+                                        `cm_get_inserted_elements(old.${ast.arrColumn.name}, new.${ast.arrColumn.name})`
+                                    )
+                                }),
+                                new AssignVariable({
+                                    variable: "not_changed_" + ast.arrColumn.name,
+                                    value: Expression.unknown(
+                                        `cm_get_not_changed_elements(old.${ast.arrColumn.name}, new.${ast.arrColumn.name})`
+                                    )
+                                }),
+                                new AssignVariable({
+                                    variable: "deleted_" + ast.arrColumn.name,
+                                    value: Expression.unknown(
+                                        `cm_get_deleted_elements(old.${ast.arrColumn.name}, new.${ast.arrColumn.name})`
+                                    )
+                                })
+                            ]
+                        })
+                    ] : [
+                        new AssignVariable({
+                            variable: "inserted_" + ast.arrColumn.name,
+                            value: Expression.unknown(
+                                `cm_get_inserted_elements(old.${ast.arrColumn.name}, new.${ast.arrColumn.name})`
+                            )
+                        }),
+                        new AssignVariable({
+                            variable: "not_changed_" + ast.arrColumn.name,
+                            value: Expression.unknown(
+                                `cm_get_not_changed_elements(old.${ast.arrColumn.name}, new.${ast.arrColumn.name})`
+                            )
+                        }),
+                        new AssignVariable({
+                            variable: "deleted_" + ast.arrColumn.name,
+                            value: Expression.unknown(
+                                `cm_get_deleted_elements(old.${ast.arrColumn.name}, new.${ast.arrColumn.name})`
+                            )
+                        })
+                    ]),
+                    
+                    new BlankLine(),
                     new BlankLine(),
                     new If({
                         if: Expression.and([
-                            "matched_old",
-                            "matched_new"
+                            `not_changed_${ast.arrColumn.name} is not null`,
+                            ...(ast.needMatching ? [] : [Expression.or(
+                                ast.dataFields.map(columnName =>
+                                    `new.${columnName} is distinct from old.${columnName}`
+                                )
+                            )])
                         ]),
-                        then: [
-                            new AssignVariable({
-                                variable: "inserted_" + ast.arrColumn.name,
-                                value: Expression.unknown(
-                                    `cm_get_inserted_elements(old.${ast.arrColumn.name}, new.${ast.arrColumn.name})`
-                                )
-                            }),
-                            new AssignVariable({
-                                variable: "not_changed_" + ast.arrColumn.name,
-                                value: Expression.unknown(
-                                    `cm_get_not_changed_elements(old.${ast.arrColumn.name}, new.${ast.arrColumn.name})`
-                                )
-                            }),
-                            new AssignVariable({
-                                variable: "deleted_" + ast.arrColumn.name,
-                                value: Expression.unknown(
-                                    `cm_get_deleted_elements(old.${ast.arrColumn.name}, new.${ast.arrColumn.name})`
-                                )
-                            })
-                        ]
-                    }),
-                    new BlankLine(),
-                    new BlankLine(),
-                    new If({
-                        if: Expression.unknown(
-                            `not_changed_${ast.arrColumn.name} is not null`
-                        ),
                         then: [
                             ast.updateNotChangedIds
                         ]

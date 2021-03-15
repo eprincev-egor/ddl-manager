@@ -96,22 +96,6 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
         return body;
     }
 
-    private findDataColumns() {
-        const dataColumns: string[] = [];
-        this.context.cache.select.columns.forEach(selectColumn =>
-            selectColumn.expression.getColumnReferences()
-                .forEach(columnRef =>{
-                    if ( this.context.isColumnRefToTriggerTable(columnRef) ) {
-                        if ( !dataColumns.includes(columnRef.name) ) {
-                            dataColumns.push(columnRef.name);
-                        }
-                    }
-                })
-        );
-
-        return dataColumns;
-    }
-
     private updatePrevAndThisFlag(flagValue: string) {
         const triggerTable = this.triggerTableAlias();
 

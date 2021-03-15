@@ -233,4 +233,20 @@ export abstract class AbstractLastRowTriggerBuilder extends AbstractTriggerBuild
         }
         return fromTable.table.toStringWithoutPublic();
     }
+
+    protected findDataColumns() {
+        const dataColumns: string[] = [];
+        this.context.cache.select.columns.forEach(selectColumn =>
+            selectColumn.expression.getColumnReferences()
+                .forEach(columnRef =>{
+                    if ( this.context.isColumnRefToTriggerTable(columnRef) ) {
+                        if ( !dataColumns.includes(columnRef.name) ) {
+                            dataColumns.push(columnRef.name);
+                        }
+                    }
+                })
+        );
+
+        return dataColumns;
+    }
 }
