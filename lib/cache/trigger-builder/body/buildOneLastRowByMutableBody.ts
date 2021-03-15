@@ -13,7 +13,7 @@ export interface ILastRowParams {
     isLastAndHasDataChange: Expression;
     isLastAndSortMinus: Expression;
     prevRowIsGreat: Expression;
-    exitFromDeltaUpdateIf?: Expression;
+    exitFromDeltaUpdateIf: Expression;
     isLastColumn: string;
     hasNewReference: Expression;
     hasOldReference: Expression;
@@ -23,6 +23,7 @@ export interface ILastRowParams {
     selectPrevRowByFlag: Select;
     selectPrevRowWhereGreatOrder: Select;
     updatePrevRowLastColumnTrue: Update;
+    updateThisRowLastColumnFalse: Update;
     prevRowIsLess: Expression;
     updatePrevAndThisFlag: Update;
     updateMaxRowLastColumnFalse: Update;
@@ -113,6 +114,10 @@ export function buildOneLastRowByMutableBody(ast: ILastRowParams) {
                     new If({
                         if: ast.noReferenceChanges,
                         then: [
+                            ...exitIf({
+                                if: ast.exitFromDeltaUpdateIf,
+                                blanksAfter: [new BlankLine()]
+                            }),
 
                             new If({
                                 if: ast.isNotLastAndSortPlus,
@@ -139,7 +144,10 @@ export function buildOneLastRowByMutableBody(ast: ILastRowParams) {
                                     ast.selectPrevRowWhereGreatOrder,
                                     new BlankLine(),
                                     new If({
-                                        if: ast.prevRowIsGreat,
+                                        if: Expression.and([
+                                            "prev_row.id is not null",
+                                            ast.prevRowIsGreat
+                                        ]),
                                         then: [
                                             ast.updatePrevAndThisFlagNot,
                                             new BlankLine(),
@@ -172,6 +180,13 @@ export function buildOneLastRowByMutableBody(ast: ILastRowParams) {
                             new If({
                                 if: new HardCode({sql: "prev_row.id is not null"}),
                                 then: [ast.updatePrevRowLastColumnTrue]
+                            }),
+                            new BlankLine(),
+                            new If({
+                                if: ast.exitFromDeltaUpdateIf,
+                                then: [
+                                    ast.updateThisRowLastColumnFalse
+                                ]
                             }),
                             new BlankLine(),
                             ast.updatePrev

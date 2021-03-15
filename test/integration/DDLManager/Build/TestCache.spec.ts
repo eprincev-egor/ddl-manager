@@ -1254,4 +1254,193 @@ $$;
 
         assert.strictEqual(actualErr.message, "success");
     });
+
+    it("first point by sort asc and filter deleted", async() => {
+        const folderPath = ROOT_TMP_PATH + "/first_point_by_sort_asc";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table arrival_points (
+                id serial primary key,
+                name text,
+                id_operation bigint,
+                point_name text,
+                deleted smallint default 0,
+                sort integer not null
+            );
+            
+            create table operations (
+                id serial primary key,
+                name text
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/first_point.sql", `
+            cache first_point for operations (
+                select
+                    first_point.point_name as first_point_name
+
+                from arrival_points as first_point
+                where
+                    first_point.id_operation = operations.id and
+                    first_point.deleted = 0
+
+                order by first_point.sort asc
+                limit 1
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const testSql = `
+
+        create or replace function check_operations(check_label text)
+        returns void as $body$
+        declare invalid_operations text;
+        begin
+        
+            select
+                string_agg(
+                    '    id: ' || operations.id || E'\n' ||
+                    '    name: ' || coalesce(operations.name, '<NULL>') || E'\n' ||
+                    '    should_be: ' || coalesce(should_be.first_point_name, '<NULL>') || E'\n' ||
+                    '    actual: ' || coalesce(operations.first_point_name, '<NULL>')
+        
+                    , E'\n\n'
+                )
+            into
+                invalid_operations
+        
+            from operations
+        
+            left join lateral (
+                select
+                    first_point.point_name as first_point_name
+
+                from arrival_points as first_point
+                where
+                    first_point.id_operation = operations.id and
+                    first_point.deleted = 0
+
+                order by first_point.sort asc
+                limit 1
+            ) as should_be on true
+            where
+                should_be.first_point_name is distinct from operations.first_point_name;
+        
+        
+            if invalid_operations is not null then
+                raise exception E'\n%, invalid operations:\n%\n\n\narrival_points:\n%\n\n\n', 
+                    check_label,
+                    invalid_operations,
+                    (
+                        select
+                        string_agg(
+                            '    id: ' || arrival_points.id || E',\n' ||
+                            '    name: ' || coalesce(arrival_points.name, '<NULL>') || E',\n' ||
+                            '    id_operation: ' || coalesce(arrival_points.id_operation::text, '<NULL>') || E',\n' ||
+                            '    sort: ' || coalesce(arrival_points.sort::text, '<NULL>') || E',\n' ||
+                            '    point_name: ' || coalesce(arrival_points.point_name, '<NULL>') || E',\n' ||
+                            '    __first_point_for_operations: ' || coalesce(arrival_points.__first_point_for_operations::text, '<NULL>')
+        
+                            , E'\n\n'
+                        )
+                        from arrival_points
+                    );
+            else
+                raise notice '% - success', check_label;
+            end if;
+        end
+        $body$
+        language plpgsql;
+        
+        
+        do $$
+        begin
+
+            insert into operations (name) values ('operation 1');
+            insert into operations (name) values ('operation 2');
+
+            insert into arrival_points
+                (name, id_operation, sort, point_name)
+            values
+                ('point X', 1, 1, 'warehouse 1');
+            PERFORM check_operations('label 1 insert');
+
+            update arrival_points set
+                point_name = 'warehouse 2'
+            where name = 'point X';
+            PERFORM check_operations('label 2 update point_name');
+
+            delete from arrival_points;
+            PERFORM check_operations('label 3 delete');
+
+            insert into arrival_points
+                (name, id_operation, sort, point_name)
+            values
+                ('point A', 1, 1, 'warehouse 1'),
+                ('point B', 1, 2, 'warehouse 2'),
+                ('point X', 2, 30, 'warehouse 3'),
+                ('point Y', 2, 40, 'warehouse 4')
+            ;
+            PERFORM check_operations('label 4 insert 4 points');
+
+            update arrival_points set
+                sort = 0
+            where name = 'point A';
+            PERFORM check_operations('label 5 update only sort -1 where first');
+
+            update arrival_points set
+                sort = 1
+            where name = 'point A';
+            PERFORM check_operations('label 6 update only sort +1 where first and after update first');
+
+            update arrival_points set
+                deleted = 1
+            where name = 'point A';
+            PERFORM check_operations('label 7 update only deleted where first');
+
+            update arrival_points set
+                point_name = 'updated point A'
+            where name = 'point A';
+            PERFORM check_operations('label 8 update data where deleted');
+
+            update arrival_points set
+                point_name = 'warehouse A',
+                sort = 0
+            where name = 'point A';
+            PERFORM check_operations('label 9 update data and sort where deleted');
+
+            update arrival_points set
+                point_name = 'warehouse A - updated',
+                sort = 10,
+                deleted = 0
+            where name = 'point A';
+            PERFORM check_operations('label 10 update deleted = 0 and data and sort, after update not first');
+
+            update arrival_points set
+                sort = 1
+            where name = 'point A';
+            PERFORM check_operations('label 11 update only sort -1, now is first');
+
+            raise exception 'success';
+        end
+        $$;
+
+        
+        `;
+
+        let actualErr: Error = new Error("expected error");
+        try {
+            await db.query(testSql);
+        } catch(err) {
+            actualErr = err;
+        }
+
+        assert.strictEqual(actualErr.message, "success");
+    });
 });

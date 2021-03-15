@@ -21,7 +21,6 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
                 SelectColumn.onlyName(sortColumnRef.name)
             ],
             where: this.filterTriggerTable("new", [
-                // TODO: check alias
                 `${triggerTable}.${isLastColumnName} = true`
             ]),
             orderBy: [],
@@ -32,8 +31,8 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
         const selectPrevRowWhereGreatOrder = this.context.cache.select.cloneWith({
             columns: this.allPrevRowColumns(),
             where: this.filterTriggerTable("new", [
-                // TODO: check alias
-                this.rowIsGreatByOrder(triggerTable, "new")
+                this.rowIsGreatByOrder(triggerTable, "new"),
+                `${triggerTable}.id <> new.id`
             ]),
             intoRow: "prev_row"
         });
@@ -53,7 +52,7 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
                 )
             ]),
             noReferenceChanges: this.conditions.noReferenceChanges(),
-            exitFromDeltaUpdateIf: this.conditions.exitFromDeltaUpdateIf(),
+            exitFromDeltaUpdateIf: this.conditions.exitFromDeltaUpdateIf()!,
             noChanges: this.conditions.noChanges(),
             hasNewReference: this.conditions
                 .hasReferenceWithoutJoins("new")!,
@@ -67,9 +66,12 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
             prevRowIsGreat: this.rowIsGreatByOrder("prev_row", "new"),
             selectPrevRowByOrder: this.selectPrevRowByOrder(),
             selectPrevRowByFlag,
+
             updatePrevRowLastColumnTrue: this.updatePrevRowLastColumnTrue(),
             updateMaxRowLastColumnFalse: this.updateMaxRowLastColumnFalse("prev_row.id"),
-            updateThisRowLastColumnTrue: this.updateThisRowLastColumnTrue(),
+
+            updateThisRowLastColumnFalse: this.updateThisRowLastColumn("false"),
+            updateThisRowLastColumnTrue: this.updateThisRowLastColumn("true"),
 
             hasOldReferenceAndIsLast: Expression.and([
                 this.conditions.hasReferenceWithoutJoins("old")!,

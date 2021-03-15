@@ -98,6 +98,10 @@ begin
         end if;
 
         if new.id_operation is not distinct from old.id_operation then
+            if new.id_operation is null then
+                return new;
+            end if;
+
             if
                 not new.__last_point_for_operations
                 and
@@ -181,17 +185,23 @@ begin
                         or
                         arrival_points.sort > new.sort
                     )
+                    and
+                    arrival_points.id <> new.id
                 order by
                     arrival_points.sort desc nulls last
                 limit 1
                 into prev_row;
 
                 if
-                    prev_row.sort is not null
+                    prev_row.id is not null
                     and
-                    new.sort is null
-                    or
-                    prev_row.sort > new.sort
+                    (
+                        prev_row.sort is not null
+                        and
+                        new.sort is null
+                        or
+                        prev_row.sort > new.sort
+                    )
                 then
                     update arrival_points set
                         __last_point_for_operations = (arrival_points.id != new.id)
@@ -272,6 +282,13 @@ begin
                     __last_point_for_operations = true
                 where
                     arrival_points.id = prev_row.id;
+            end if;
+
+            if new.id_operation is null then
+                update arrival_points set
+                    __last_point_for_operations = false
+                where
+                    arrival_points.id = new.id;
             end if;
 
             update operations set

@@ -105,7 +105,6 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
             select: this.context.cache.select.cloneWith({
                 columns: [],
                 where: this.filterTriggerTable("new", [
-                    // TODO: test with order asc
                     `${triggerTable}.id < new.id`
                 ]),
                 orderBy: [],
@@ -132,7 +131,7 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
             existsPrevRow,
 
             updateMaxRowLastColumnFalse: this.updateMaxRowLastColumnFalse("prev_id"),
-            updateThisRowLastColumnTrue: this.updateThisRowLastColumnTrue(),
+            updateThisRowLastColumnTrue: this.updateThisRowLastColumn("true"),
 
             clearLastColumnOnInsert,
             updatePrevRowLastColumnTrue: this.updatePrevRowLastColumnTrue(),

@@ -118,6 +118,14 @@ begin
             new.deleted is not distinct from old.deleted
         then
             if
+                new.id_operation is null
+                or
+                not coalesce(new.deleted = 0, false)
+            then
+                return new;
+            end if;
+
+            if
                 not new.__first_point_for_operations
                 and
                 (
@@ -205,17 +213,23 @@ begin
                         or
                         first_point.sort < new.sort
                     )
+                    and
+                    first_point.id <> new.id
                 order by
                     first_point.sort asc nulls first
                 limit 1
                 into prev_row;
 
                 if
-                    prev_row.sort is null
+                    prev_row.id is not null
                     and
-                    new.sort is not null
-                    or
-                    prev_row.sort < new.sort
+                    (
+                        prev_row.sort is null
+                        and
+                        new.sort is not null
+                        or
+                        prev_row.sort < new.sort
+                    )
                 then
                     update arrival_points as first_point set
                         __first_point_for_operations = (first_point.id != new.id)
@@ -301,6 +315,17 @@ begin
                     __first_point_for_operations = true
                 where
                     first_point.id = prev_row.id;
+            end if;
+
+            if
+                new.id_operation is null
+                or
+                not coalesce(new.deleted = 0, false)
+            then
+                update arrival_points as first_point set
+                    __first_point_for_operations = false
+                where
+                    first_point.id = new.id;
             end if;
 
             update operations set

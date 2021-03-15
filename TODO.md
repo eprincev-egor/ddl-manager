@@ -79,9 +79,9 @@
   + create helper column
   + test trigger working with Desc by id
   + test trigger working with Asc by id
-  - test trigger working with Desc by mutable
-  - test trigger working with Asc by mutable
-  - test trigger working without insert case
+  + test trigger working with Desc by mutable
+  + test trigger working with Asc by mutable
   + test filling __first_auto_for_order flag
+  - multi reference by array 
 - test commutative cache working with insert/deleted ids
   - data fields change and reference fields change

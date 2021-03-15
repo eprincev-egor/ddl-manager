@@ -39,7 +39,12 @@ export abstract class AbstractLastRowTriggerBuilder extends AbstractTriggerBuild
                                         new ColumnReference(fromRef, column),
                                     ])
                                 ),
-                                ...this.context.referenceMeta.filters,
+                                ...this.context.referenceMeta.filters.map(filter =>
+                                    filter.replaceTable(
+                                        this.fromTable(),
+                                        prevRef
+                                    )
+                                ),
                                 new Expression([
                                     new ColumnReference(prevRef, "id"),
                                     UnknownExpressionElement.fromSql(
@@ -163,14 +168,14 @@ export abstract class AbstractLastRowTriggerBuilder extends AbstractTriggerBuild
         });
     }
 
-    protected updateThisRowLastColumnTrue() {
+    protected updateThisRowLastColumn(value: string) {
         const triggerTable = this.triggerTableAlias();
 
         return new Update({
             table: this.fromTable().toString(),
             set: [new SetItem({
                 column: this.getIsLastColumnName(),
-                value: UnknownExpressionElement.fromSql("true")
+                value: Expression.unknown(value)
             })],
             where: Expression.and([
                 `${triggerTable}.id = new.id`
