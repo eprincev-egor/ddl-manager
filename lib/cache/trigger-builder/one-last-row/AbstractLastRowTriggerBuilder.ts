@@ -60,7 +60,11 @@ export abstract class AbstractLastRowTriggerBuilder extends AbstractTriggerBuild
             })],
             from: []
         });
-        return select;
+
+        return {
+            select,
+            for: fromRef
+        };
     }
 
     createHelperTrigger(): ICacheTrigger | undefined {

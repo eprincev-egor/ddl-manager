@@ -10,6 +10,7 @@ import { flatMap } from "lodash";
 import { OneRowTriggerBuilder } from "./OneRowTriggerBuilder";
 import { LastRowByIdTriggerBuilder } from "./one-last-row/LastRowByIdTriggerBuilder";
 import { LastRowByMutableTriggerBuilder } from "./one-last-row/LastRowByMutableTriggerBuilder";
+import { LastRowByIdAndArrayReferenceTriggerBuilder } from "./one-last-row/LastRowByIdAndArrayReferenceTriggerBuilder";
 
 export class TriggerBuilderFactory {
     private readonly cache: Cache;
@@ -89,9 +90,17 @@ export class TriggerBuilderFactory {
                 firstOrderColumn.name === "id" &&
                 context.isColumnRefToTriggerTable( firstOrderColumn )
             );
+            const arrayReference = context.referenceMeta.expressions.some(expression =>
+                expression.isBinary("&&")
+            );
 
             if ( byId ) {
-                return LastRowByIdTriggerBuilder;
+                if ( arrayReference ) {
+                    return LastRowByIdAndArrayReferenceTriggerBuilder;
+                }
+                else {
+                    return LastRowByIdTriggerBuilder;
+                }
             }
             else {
                 return LastRowByMutableTriggerBuilder;

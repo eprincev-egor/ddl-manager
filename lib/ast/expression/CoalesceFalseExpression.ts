@@ -1,5 +1,6 @@
 import { TableID } from "../../database/schema/TableID";
 import { TableReference } from "../../database/schema/TableReference";
+import { Spaces } from "../Spaces";
 import { AbstractExpressionElement } from "./AbstractExpressionElement";
 import { ColumnReference } from "./ColumnReference";
 import { Expression } from "./Expression";
@@ -13,8 +14,10 @@ export class CoalesceFalseExpression extends AbstractExpressionElement {
         this.condition = condition;
     }
 
-    template() {
-        return [`coalesce(${ this.condition }, false)`];
+    template(spaces: Spaces) {
+        return [`coalesce(${ this.condition.toSQL(
+            spaces.plusOneLevel()
+        ).trim() }, false)`];
     }
 
     replaceTable(

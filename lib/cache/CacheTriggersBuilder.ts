@@ -69,11 +69,11 @@ export class CacheTriggersBuilder {
                 fromTable,
                 fromTableDeps.columns
             ) as AbstractLastRowTriggerBuilder;
-            const selectHelperColumn = lastRowBuilder.createSelectForUpdateHelperColumn();
+            const helper = lastRowBuilder.createSelectForUpdateHelperColumn();
 
             output.push({
-                for: new TableReference(fromTable),
-                select: selectHelperColumn
+                for: helper.for,
+                select: helper.select
             });
         }
 

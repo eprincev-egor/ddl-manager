@@ -1443,4 +1443,184 @@ $$;
 
         assert.strictEqual(actualErr.message, "success");
     });
+
+    it("last sea operation by id desc and filter deleted for unit", async() => {
+        const folderPath = ROOT_TMP_PATH + "/last_sea_for_unit_by_id";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table units (
+                id serial primary key,
+                name text
+            );
+
+            create table operations (
+                id serial primary key,
+                name text,
+                units_ids bigint[],
+                type text,
+                deleted smallint,
+                incoming_date text,
+                outgoing_date text
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/last_sea.sql", `
+            cache last_sea for units (
+                select
+                    last_sea.incoming_date as last_sea_incoming_date,
+                    last_sea.outgoing_date as last_sea_outgoing_date
+            
+                from operations as last_sea
+                where
+                    last_sea.units_ids && array[ units.id ]::bigint[] and
+                    last_sea.type = 'sea' and
+                    last_sea.deleted = 0
+            
+                order by
+                    last_sea.id desc
+                limit 1
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const testSql = `
+
+        create or replace function check_units(check_label text)
+        returns void as $body$
+        declare invalid_units text;
+        begin
+        
+            select
+                string_agg(
+                    '    id: ' || units.id || E'\n' ||
+                    '    name: ' || coalesce(units.name, '<NULL>') || E'\n' ||
+                    '    __last_sea_id: ' || coalesce(units.__last_sea_id::text, '<NULL>') || E'\n' ||
+                    '    should_be: ' || coalesce(should_be.last_sea_incoming_date, '<NULL>') || E'\n' ||
+                    '    actual: ' || coalesce(units.last_sea_incoming_date, '<NULL>')
+        
+                    , E'\n\n'
+                )
+            into
+                invalid_units
+        
+            from units
+        
+            left join lateral (
+                select
+                    last_sea.id as __last_sea_id,
+                    last_sea.incoming_date as last_sea_incoming_date,
+                    last_sea.outgoing_date as last_sea_outgoing_date
+        
+                from operations as last_sea
+                where
+                    last_sea.units_ids && array[ units.id ]::bigint[] and
+                    last_sea.type = 'sea' and
+                    last_sea.deleted = 0
+        
+                order by
+                    last_sea.id desc
+                limit 1
+            ) as should_be on true
+            where
+                (
+                    should_be.last_sea_incoming_date is distinct from units.last_sea_incoming_date
+                    or
+                    should_be.__last_sea_id is distinct from units.__last_sea_id
+                );
+        
+        
+            if invalid_units is not null then
+                raise exception E'\n%, invalid units:\n%\n\n\noperations:\n%\n\n\n', 
+                    check_label,
+                    invalid_units,
+                    (
+                        select
+                        string_agg(
+                            '    id: ' || operations.id || E',\n' ||
+                            '    name: ' || coalesce(operations.name, '<NULL>') || E',\n' ||
+                            '    units_ids: ' || coalesce(operations.units_ids::text, '<NULL>') || E',\n' ||
+                            '    type: ' || coalesce(operations.type, '<NULL>') || E',\n' ||
+                            '    deleted: ' || coalesce(operations.deleted::text, '<NULL>') || E',\n' ||
+                            '    incoming_date: ' || coalesce(operations.incoming_date::text, '<NULL>')
+                            , E'\n\n'
+                        )
+                        from operations
+                    );
+            else
+                raise notice '% - success', check_label;
+            end if;
+        end
+        $body$
+        language plpgsql;
+        
+        do $$
+        begin
+        
+            insert into units (name) values ('unit 1');
+            insert into units (name) values ('unit 2');
+        
+            insert into operations
+                (name, type, deleted, units_ids, incoming_date)
+            values
+                ('sea 1', 'sea', 0, array[1]::bigint[], 'date 1'),
+                ('sea 2', 'sea', 0, array[1,2]::bigint[], 'date 2'),
+                ('sea 3', 'sea', 0, array[2]::bigint[], 'date 3');
+            PERFORM check_units('label 1, insert 3 operations');
+        
+            update operations set
+                deleted = 1
+            where name = 'sea 2';
+            PERFORM check_units('label 2 update deleted');
+        
+            update operations set
+                units_ids = array[2, 1]
+            where name = 'sea 2';
+            PERFORM check_units('label 3 update units_ids in deleted operation');
+        
+            update operations set
+                units_ids = array[1, 2],
+                deleted = 0
+            where name = 'sea 2';
+            PERFORM check_units('label 4 update deleted and units_ids in deleted operation');
+        
+            update operations set
+                units_ids = array[2, 1],
+                incoming_date = 'date 3 updated'
+            where name = 'sea 3';
+            PERFORM check_units('label 5 update data and units_ids');
+        
+            update operations set
+                units_ids = array[2],
+                incoming_date = 'date 3 update twice'
+            where name = 'sea 3';
+            PERFORM check_units('label 6 update data and units_ids');
+        
+            update operations set
+                incoming_date = name || ' update all operations';
+            PERFORM check_units('label 7 update all operations');
+            
+            delete from operations;
+            PERFORM check_units('label 8 delete all operations');
+        
+            raise exception 'success';
+        end
+        $$;
+        
+        `;
+
+        let actualErr: Error = new Error("expected error");
+        try {
+            await db.query(testSql);
+        } catch(err) {
+            actualErr = err;
+        }
+
+        assert.strictEqual(actualErr.message, "success");
+    });
 });

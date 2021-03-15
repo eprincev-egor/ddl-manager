@@ -35,6 +35,10 @@ const operationID = new TableID(
     "operation",
     "operation",
 );
+const operationsID = new TableID(
+    "public",
+    "operations",
+);
 const userTaskID = new TableID(
     "public",
     "user_task",
@@ -173,22 +177,22 @@ export const testDatabase = new Database([
         operationID.name,
         [
             new Column(
-                gtdID,
+                operationID,
                 "id",
                 "integer"
             ),
             new Column(
-                gtdID,
+                operationID,
                 "doc_parent_id_order",
                 "bigint"
             ),
             new Column(
-                gtdID,
+                operationID,
                 "id_order",
                 "bigint"
             ),
             new Column(
-                gtdID,
+                operationID,
                 "units_ids",
                 "bigint[]"
             )
@@ -212,6 +216,23 @@ export const testDatabase = new Database([
                 userTaskID,
                 "row_id",
                 "int8"
+            )
+        ]
+    ),
+
+    new Table(
+        operationsID.schema,
+        operationsID.name,
+        [
+            new Column(
+                operationsID,
+                "id",
+                "integer"
+            ),
+            new Column(
+                operationsID,
+                "units_ids",
+                "bigint[]"
             )
         ]
     )

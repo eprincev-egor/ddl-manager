@@ -31,3 +31,7 @@ export const CM_ARRAY_APPEND_ORDER_BY_DESC_NULLS_LAST = fs.readFileSync(
 export const CM_ARRAY_APPEND_ORDER_BY_DESC_NULLS_FIRST = fs.readFileSync(
     __dirname + "/cm_array_append_order_by_desc_nulls_first.sql"
 ).toString();
+
+export const CM_GET_NOT_CHANGED_ELEMENTS = fs.readFileSync(
+    __dirname + "/cm_get_not_changed_elements.sql"
+).toString();
