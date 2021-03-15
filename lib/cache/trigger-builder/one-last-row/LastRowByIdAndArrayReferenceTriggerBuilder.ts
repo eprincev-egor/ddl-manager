@@ -50,6 +50,7 @@ export class LastRowByIdAndArrayReferenceTriggerBuilder extends AbstractLastRowT
         );
 
         const lastIdColumnName = "__" + this.context.cache.name + "_id";
+        const orderBy = this.context.cache.select.orderBy[0]!;
 
         const updateOnInsert = new Update({
             table: this.context.cache.for.toString(),
@@ -62,6 +63,9 @@ export class LastRowByIdAndArrayReferenceTriggerBuilder extends AbstractLastRowT
             ],
             where: Expression.and([
                 `${cacheTable}.id = any( new.${ arrColumnRef.name } )`,
+                ...(orderBy.type === "asc" ? [
+                    `${cacheTable}.${lastIdColumnName} is null`
+                ] : []),
                 this.whereDistinctRowValues("new")
             ])
         });
@@ -151,8 +155,9 @@ export class LastRowByIdAndArrayReferenceTriggerBuilder extends AbstractLastRowT
                 `${cacheTable}.id = any( inserted_${ arrColumnRef.name } )`,
                 Expression.or([
                     `${cacheTable}.${ lastIdColumnName } is null`,
-                    // TODO: check order vector asc/desc
-                    `${cacheTable}.${ lastIdColumnName } < new.id`
+                    `${cacheTable}.${ lastIdColumnName } ${
+                        orderBy.type == "asc" ? ">" : "<"
+                    } new.id`
                 ]),
                 this.whereDistinctRowValues("new")
             ])
