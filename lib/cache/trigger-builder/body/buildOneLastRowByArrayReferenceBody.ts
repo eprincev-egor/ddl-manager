@@ -9,6 +9,7 @@ import { doIf } from "./util/doIf";
 
 export interface ILastRowParams {
     needMatching: boolean;
+    orderByColumnName: string;
     dataFields: string[];
     arrColumn: Column;
     hasNewReference: Expression;
@@ -17,13 +18,14 @@ export interface ILastRowParams {
     updateOnDelete: Update;
     updateOnInsert: Update;
     updateNotChangedIds: Update;
+    updateNotChangedIdsWithReselect: Update;
     updateDeletedIds: Update;
     updateInsertedIds: Update;
     matchedOld: AbstractAstElement;
     matchedNew: AbstractAstElement;
 }
 
-export function buildOneLastRowByIdAndArrayReferenceBody(ast: ILastRowParams) {
+export function buildOneLastRowByArrayReferenceBody(ast: ILastRowParams) {
     return new Body({
         declares: [
             ...(
@@ -206,8 +208,20 @@ export function buildOneLastRowByIdAndArrayReferenceBody(ast: ILastRowParams) {
                                 )
                             )])
                         ]),
-                        then: [
+                        then: ast.orderByColumnName === "id" ? [
                             ast.updateNotChangedIds
+                        ] : [
+                            new If({
+                                if: Expression.unknown(
+                                    `new.${ast.orderByColumnName} is not distinct from old.${ast.orderByColumnName}`
+                                ),
+                                then: [
+                                    ast.updateNotChangedIds
+                                ],
+                                else: [
+                                    ast.updateNotChangedIdsWithReselect
+                                ]
+                            })
                         ]
                     }),
                     new BlankLine(),

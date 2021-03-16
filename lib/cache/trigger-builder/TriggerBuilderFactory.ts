@@ -10,7 +10,7 @@ import { flatMap } from "lodash";
 import { OneRowTriggerBuilder } from "./OneRowTriggerBuilder";
 import { LastRowByIdTriggerBuilder } from "./one-last-row/LastRowByIdTriggerBuilder";
 import { LastRowByMutableTriggerBuilder } from "./one-last-row/LastRowByMutableTriggerBuilder";
-import { LastRowByIdAndArrayReferenceTriggerBuilder } from "./one-last-row/LastRowByIdAndArrayReferenceTriggerBuilder";
+import { LastRowByArrayReferenceTriggerBuilder } from "./one-last-row/LastRowByArrayReferenceTriggerBuilder";
 
 export class TriggerBuilderFactory {
     private readonly cache: Cache;
@@ -85,22 +85,21 @@ export class TriggerBuilderFactory {
             const orderBy = context.cache.select.orderBy[0]!;
             const orderByColumns = orderBy.expression.getColumnReferences();
             const firstOrderColumn = orderByColumns[0];
+
+            const arrayReference = context.referenceMeta.expressions.some(expression =>
+                expression.isBinary("&&")
+            );
+            if ( arrayReference ) {
+                return LastRowByArrayReferenceTriggerBuilder;
+            }
+
             const byId = (
                 orderByColumns.length === 1 &&
                 firstOrderColumn.name === "id" &&
                 context.isColumnRefToTriggerTable( firstOrderColumn )
             );
-            const arrayReference = context.referenceMeta.expressions.some(expression =>
-                expression.isBinary("&&")
-            );
-
             if ( byId ) {
-                if ( arrayReference ) {
-                    return LastRowByIdAndArrayReferenceTriggerBuilder;
-                }
-                else {
-                    return LastRowByIdTriggerBuilder;
-                }
+                return LastRowByIdTriggerBuilder;
             }
             else {
                 return LastRowByMutableTriggerBuilder;
