@@ -23,7 +23,7 @@ begin
                     where
                         last_operation.units_ids && ARRAY[units.id] :: bigint[]
             order by
-                last_operation.id desc nulls last
+                last_operation.id desc nulls first
             limit 1
                 )
             where
@@ -94,7 +94,7 @@ begin
                     where
                         last_operation.units_ids && ARRAY[units.id] :: bigint[]
             order by
-                last_operation.id desc nulls last
+                last_operation.id desc nulls first
             limit 1
                 )
             where

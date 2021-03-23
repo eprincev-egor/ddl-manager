@@ -20,7 +20,7 @@ begin
             where
                 arrival_points.id_operation = old.id_operation
             order by
-                arrival_points.sort desc nulls last
+                arrival_points.sort desc nulls first
             limit 1
             into prev_row;
 
@@ -188,7 +188,7 @@ begin
                     and
                     arrival_points.id <> new.id
                 order by
-                    arrival_points.sort desc nulls last
+                    arrival_points.sort desc nulls first
                 limit 1
                 into prev_row;
 
@@ -273,7 +273,7 @@ begin
             where
                 arrival_points.id_operation = old.id_operation
             order by
-                arrival_points.sort desc nulls last
+                arrival_points.sort desc nulls first
             limit 1
             into prev_row;
 

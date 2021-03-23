@@ -37,7 +37,7 @@ begin
                 and
                 last_sea.deleted = 0
             order by
-                last_sea.lvl desc nulls last
+                last_sea.lvl desc nulls first
             limit 1
                 )
             where
@@ -131,33 +131,61 @@ begin
                         units.last_sea_outgoing_date is distinct from new.outgoing_date
                     );
             else
-                update units set
-                    (
-                        __last_sea_id,
-                        __last_sea_lvl,
-                        last_sea_incoming_date,
-                        last_sea_outgoing_date
-                    ) = (
-                        select
-                            last_sea.id as __last_sea_id,
-                            last_sea.lvl as __last_sea_lvl,
+                if
+                    new.lvl is null
+                    and
+                    old.lvl is not null
+                    or
+                    new.lvl > old.lvl
+                then
+                    update units set
+                        __last_sea_id = new.id,
+                        __last_sea_lvl = new.lvl,
+                        last_sea_incoming_date = new.incoming_date,
+                        last_sea_outgoing_date = new.outgoing_date
+                    where
+                        units.id = any( not_changed_units_ids )
+                        and
+                        (
+                            units.__last_sea_id = new.id
+                            or
+                            units.__last_sea_id is null
+                            or
+                            new.lvl is null
+                            and
+                            units.__last_sea_lvl is not null
+                            or
+                            units.__last_sea_lvl < new.lvl
+                        );
+                else
+                    update units set
+                        (
+                            __last_sea_id,
+                            __last_sea_lvl,
+                            last_sea_incoming_date,
+                            last_sea_outgoing_date
+                        ) = (
+                            select
+                                last_sea.id as __last_sea_id,
+                                last_sea.lvl as __last_sea_lvl,
                 last_sea.incoming_date as last_sea_incoming_date,
                 last_sea.outgoing_date as last_sea_outgoing_date
 
-                        from operations as last_sea
+                            from operations as last_sea
 
-                        where
-                            last_sea.units_ids && ARRAY[units.id] :: bigint[]
+                            where
+                                last_sea.units_ids && ARRAY[units.id] :: bigint[]
                 and
                 last_sea.type = 'sea'
                 and
                 last_sea.deleted = 0
             order by
-                last_sea.lvl desc nulls last
+                last_sea.lvl desc nulls first
             limit 1
-                    )
-                where
-                    units.id = any( not_changed_units_ids );
+                        )
+                    where
+                        units.id = any( not_changed_units_ids );
+                end if;
             end if;
         end if;
 
@@ -184,7 +212,7 @@ begin
                 and
                 last_sea.deleted = 0
             order by
-                last_sea.lvl desc nulls last
+                last_sea.lvl desc nulls first
             limit 1
                 )
             where

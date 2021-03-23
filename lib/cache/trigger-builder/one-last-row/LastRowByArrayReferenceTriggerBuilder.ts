@@ -15,16 +15,15 @@ import assert from "assert";
 export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTriggerBuilder {
 
     createSelectForUpdateHelperColumn() {
-        const lastIdColumnName = "__" + this.context.cache.name + "_id";
         const select = this.context.cache.select.cloneWith({
-            columns: [
+            columns: this.getOrderByColumnsRefs().map(columnRef =>
                 new SelectColumn({
-                    name: lastIdColumnName,
+                    name: this.helperColumnName(columnRef.name),
                     expression: Expression.unknown(
-                        this.triggerTableAlias() + ".id"
+                        this.triggerTableAlias() + "." + columnRef.name
                     )
                 })
-            ]
+            )
         });
         return {select, for: this.context.cache.for};
     }
@@ -56,7 +55,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
         const updateOnInsert = new Update({
             table: this.context.cache.for.toString(),
             set: [
-                ...this.setHelpersByNewRow(),
+                ...this.setHelpersByRow(),
                 ...this.setItemsByRow("new")
             ],
             where: Expression.and([
@@ -80,7 +79,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
         const updateNotChangedIds = new Update({
             table: this.context.cache.for.toString(),
             set: [
-                ...this.setHelpersByNewRow(),
+                ...this.setHelpersByRow(),
                 ...this.setItemsByRow("new")
             ],
             where: Expression.and([
@@ -111,7 +110,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
         const updateInsertedIds = new Update({
             table: this.context.cache.for.toString(),
             set: [
-                ...this.setHelpersByNewRow(),
+                ...this.setHelpersByRow(),
                 ...this.setItemsByRow("new")
             ],
             where: Expression.and([
@@ -130,10 +129,35 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
             ])
         });
 
+        const orderByColumnName = this.getOrderByColumnRef().name;
+        const newSortIsGreat = Expression.or([
+            Expression.and([
+                `new.${orderByColumnName} is null`,
+                `old.${orderByColumnName} is not null`
+            ]),
+            `new.${orderByColumnName} > old.${orderByColumnName}`
+        ]);
+
+        const updateNotChangedIdsWhereSortIsLess = new Update({
+            table: this.context.cache.for.toString(),
+            set: [
+                ...this.setHelpersByRow(),
+                ...this.setItemsByRow("new")
+            ],
+            where: Expression.and([
+                `${cacheTable}.id = any( not_changed_${ arrColumnRef.name } )`,
+                ...this.whereIsGreat([
+                    Expression.unknown(
+                        `${cacheTable}.${lastIdColumnName} = new.id`
+                    )
+                ])
+            ])
+        });
+
         const body = buildOneLastRowByArrayReferenceBody({
             needMatching: this.context.referenceMeta.filters.length > 0,
             arrColumn,
-            orderByColumnName: this.getOrderByColumnRef().name,
+            orderByColumnName,
             updateNotChangedIdsWithReselect,
             dataFields: this.findDataColumns(),
             hasNewReference: this.conditions
@@ -141,6 +165,8 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
             hasOldReference: this.conditions
                 .hasReferenceWithoutJoins("old")!,
             noChanges: this.conditions.noChanges(),
+            newSortIsGreat,
+            updateNotChangedIdsWhereSortIsLess,
             updateOnInsert,
             updateOnDelete,
             updateNotChangedIds,
@@ -164,11 +190,11 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
         return matchedExpression;
     }
 
-    private setHelpersByNewRow() {
+    private setHelpersByRow(row = "new") {
         const helpers: SetItem[] = this.getOrderByColumnsRefs().map(columnRef =>
             new SetItem({
                 column: this.helperColumnName(columnRef.name),
-                value: Expression.unknown("new." + columnRef.name)
+                value: Expression.unknown(row + "." + columnRef.name)
             })
         );
         return helpers;
@@ -192,7 +218,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
         return orderByColumns;
     }
 
-    private whereIsGreat() {
+    private whereIsGreat(additionalOr: Expression[] = []) {
         const cacheTable = (
             this.context.cache.for.alias ||
             this.context.cache.for.table.toStringWithoutPublic()
@@ -211,6 +237,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
 
         const firstOrderColumn = this.getOrderByColumnRef();
         return [Expression.or([
+            ...additionalOr,
             `${cacheTable}.${lastIdColumnName} is null`,
             Expression.and([
                 `new.${firstOrderColumn.name} is null`,

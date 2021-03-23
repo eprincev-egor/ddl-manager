@@ -1623,4 +1623,240 @@ $$;
 
         assert.strictEqual(actualErr.message, "success");
     });
+
+    it("last sea operation by lvl desc and filter deleted for unit", async() => {
+        const folderPath = ROOT_TMP_PATH + "/last_sea_for_unit_by_lvl";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table units (
+                id serial primary key,
+                name text
+            );
+
+            create table operations (
+                id serial primary key,
+                name text,
+                lvl smallint,
+                units_ids bigint[],
+                type text,
+                deleted smallint,
+                incoming_date text,
+                outgoing_date text
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/last_sea.sql", `
+            cache last_sea for units (
+                select
+                    last_sea.incoming_date as last_sea_incoming_date,
+                    last_sea.outgoing_date as last_sea_outgoing_date
+        
+                from operations as last_sea
+                where
+                    last_sea.units_ids && array[ units.id ]::bigint[] and
+                    last_sea.type = 'sea' and
+                    last_sea.deleted = 0
+        
+                order by
+                    last_sea.lvl desc
+                limit 1
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const testSql = `
+
+        create or replace function check_units(check_label text)
+        returns void as $body$
+        declare invalid_units text;
+        begin
+        
+            select
+                string_agg(
+                    '    id: ' || units.id || E'\n' ||
+                    '    name: ' || coalesce(units.name, '<NULL>') || E'\n' ||
+                    '    __last_sea_id: ' || coalesce(units.__last_sea_id::text, '<NULL>') || E'\n' ||
+                    '    __last_sea_lvl: ' || coalesce(units.__last_sea_lvl::text, '<NULL>') || E'\n' ||
+                    '    incoming_date: should_be: ' || coalesce(should_be.last_sea_incoming_date, '<NULL>') || E'\n' ||
+                    '    incoming_date: actual: ' || coalesce(units.last_sea_incoming_date, '<NULL>') || E'\n' ||
+                    '    last lvl: should_be: ' || coalesce(should_be.__last_sea_lvl::text, '<NULL>') || E'\n' ||
+                    '    last lvl: actual: ' || coalesce(units.__last_sea_lvl::text, '<NULL>') || E'\n' ||
+                    '    last id: should_be: ' || coalesce(should_be.__last_sea_id::text, '<NULL>') || E'\n' ||
+                    '    last id: actual: ' || coalesce(units.__last_sea_id::text, '<NULL>')
+        
+                    , E'\n\n'
+                )
+            into
+                invalid_units
+        
+            from units
+        
+            left join lateral (
+                select
+                    last_sea.id as __last_sea_id,
+                    last_sea.lvl as __last_sea_lvl,
+                    last_sea.incoming_date as last_sea_incoming_date,
+                    last_sea.outgoing_date as last_sea_outgoing_date
+        
+                from operations as last_sea
+                where
+                    last_sea.units_ids && array[ units.id ]::bigint[] and
+                    last_sea.type = 'sea' and
+                    last_sea.deleted = 0
+        
+                order by
+                    last_sea.lvl desc,
+                    last_sea.id desc
+                limit 1
+            ) as should_be on true
+            where
+                (
+                    should_be.last_sea_incoming_date is distinct from units.last_sea_incoming_date
+                    or
+                    should_be.__last_sea_id is distinct from units.__last_sea_id
+                    or
+                    should_be.__last_sea_lvl is distinct from units.__last_sea_lvl
+                );
+        
+        
+            if invalid_units is not null then
+                raise exception E'\n%, invalid units:\n%\n\n\noperations:\n%\n\n\n', 
+                    check_label,
+                    invalid_units,
+                    (
+                        select
+                        string_agg(
+                            '    id: ' || operations.id || E',\n' ||
+                            '    name: ' || coalesce(operations.name, '<NULL>') || E',\n' ||
+                            '    lvl: ' || coalesce(operations.lvl::text, '<NULL>') || E',\n' ||
+                            '    units_ids: ' || coalesce(operations.units_ids::text, '<NULL>') || E',\n' ||
+                            '    type: ' || coalesce(operations.type, '<NULL>') || E',\n' ||
+                            '    deleted: ' || coalesce(operations.deleted::text, '<NULL>') || E',\n' ||
+                            '    incoming_date: ' || coalesce(operations.incoming_date::text, '<NULL>')
+                            , E'\n\n'
+                        )
+                        from operations
+                    );
+            else
+                raise notice '% - success', check_label;
+            end if;
+        end
+        $body$
+        language plpgsql;
+        
+        do $$
+        begin
+        
+            insert into units (name) values ('unit 1');
+            insert into units (name) values ('unit 2');
+        
+            insert into operations
+                (name, lvl, type, deleted, units_ids, incoming_date)
+            values
+                ('sea 1', null, 'sea', 0, array[1]::bigint[], 'date 1'),
+                ('sea 2', null, 'sea', 0, array[1,2]::bigint[], 'date 2'),
+                ('sea 3', null, 'sea', 0, array[2]::bigint[], 'date 3');
+            PERFORM check_units('label 1, insert 3 operations without lvl');
+        
+            delete from operations;
+            PERFORM check_units('label 2, delete 3 operations without lvl');
+        
+        
+            insert into operations
+                (name, lvl, type, deleted, units_ids, incoming_date)
+            values
+                ('sea 1', 1, 'sea', 0, array[1]::bigint[], 'date 1'),
+                ('sea 2', 2, 'sea', 0, array[1,2]::bigint[], 'date 2'),
+                ('sea 3', 3, 'sea', 0, array[2]::bigint[], 'date 3');
+            PERFORM check_units('label 3, insert 3 operations with lvl');
+        
+            update operations set
+                lvl = 4,
+                incoming_date = 'date 2 updated',
+                units_ids = array[2, 1]::bigint[]
+            where name = 'sea 2';
+            PERFORM check_units('label 4, update lvl to max + 1 and change data');
+        
+            update operations set
+                lvl = 0,
+                incoming_date = 'date 2',
+                units_ids = array[2]::bigint[]
+            where name = 'sea 2';
+            PERFORM check_units('label 5, update max lvl to min and change reference and change data');
+        
+            update operations set
+                units_ids = array[2, 1]::bigint[]
+            where name = 'sea 2';
+            PERFORM check_units('label 6, update reference in min lvl');
+        
+            update operations set
+                lvl = 2
+            where name = 'sea 2';
+            PERFORM check_units('label 7, update only lvl from min to medium');
+        
+            update operations set
+                lvl = null
+            where name = 'sea 3';
+            PERFORM check_units('label 8, update lvl=null where lvl was max');
+        
+            update operations set
+                units_ids = array[1]::bigint[]
+            where name = 'sea 3';
+            PERFORM check_units('label 9, update units_ids=[1] where lvl is null');
+        
+            update operations set
+                units_ids = array[2]::bigint[]
+            where name = 'sea 3';
+            PERFORM check_units('label 10, update units_ids=[2] where lvl is null');
+        
+            delete from operations;
+            PERFORM check_units('label 11, delete from operations');
+        
+            insert into operations
+                (name, lvl, type, deleted, units_ids, incoming_date)
+            values
+                ('sea 1', 1, 'sea', 0, array[1]::bigint[], null),
+                ('sea 2', 2, 'sea', 0, array[2]::bigint[], null);
+            PERFORM check_units('label 12, insert 2 operations with not null lvl and null dates');
+
+            insert into operations
+                (name, lvl, type, deleted, units_ids, incoming_date)
+            values
+                ('sea 3', null, 'sea', 0, array[1]::bigint[], null),
+                ('sea 4', null, 'sea', 0, array[2]::bigint[], null);
+            PERFORM check_units('label 13, insert 2 operations with null lvl and null dates');
+
+            update operations set
+                incoming_date = 'date';
+            PERFORM check_units('label 14, update all dates to same date');
+
+            update operations set
+                units_ids = array[1, 2];
+            PERFORM check_units('label 15, update all units_ids');
+
+            update operations set
+                incoming_date = 'date - ' || operations.name;
+            PERFORM check_units('label 16, update all dates to different dates');
+
+            raise exception 'success';
+        end
+        $$;
+        
+        `;
+
+        let actualErr: Error = new Error("expected error");
+        try {
+            await db.query(testSql);
+        } catch(err) {
+            actualErr = err;
+        }
+
+        assert.strictEqual(actualErr.message, "success");
+    });
 });

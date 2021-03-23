@@ -201,9 +201,7 @@ export class SelectParser {
                     expression: this.expressionParser.parse(
                         select, [cacheFor], itemExpressionSql
                     ),
-                    nulls: nulls ? nulls : (
-                        type === "asc" ? "first" : "last"
-                    )
+                    nulls: nulls || "first"
                 };
                 return orderItem;
             });

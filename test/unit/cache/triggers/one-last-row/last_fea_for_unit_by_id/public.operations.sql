@@ -35,7 +35,7 @@ begin
                 and
                 last_sea.deleted = 0
             order by
-                last_sea.id desc nulls last
+                last_sea.id desc nulls first
             limit 1
                 )
             where
@@ -147,7 +147,7 @@ begin
                 and
                 last_sea.deleted = 0
             order by
-                last_sea.id desc nulls last
+                last_sea.id desc nulls first
             limit 1
                 )
             where

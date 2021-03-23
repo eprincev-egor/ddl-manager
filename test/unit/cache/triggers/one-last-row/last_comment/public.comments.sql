@@ -18,7 +18,7 @@ begin
             where
                 comments.unit_id = old.unit_id
             order by
-                comments.id desc nulls last
+                comments.id desc nulls first
             limit 1
             into prev_row;
 
@@ -82,7 +82,7 @@ begin
             where
                 comments.unit_id = old.unit_id
             order by
-                comments.id desc nulls last
+                comments.id desc nulls first
             limit 1
             into prev_row;
 

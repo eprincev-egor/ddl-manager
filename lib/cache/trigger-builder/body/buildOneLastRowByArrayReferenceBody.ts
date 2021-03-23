@@ -15,10 +15,12 @@ export interface ILastRowParams {
     hasNewReference: Expression;
     hasOldReference: Expression;
     noChanges: Expression;
+    newSortIsGreat: Expression;
     updateOnDelete: Update;
     updateOnInsert: Update;
     updateNotChangedIds: Update;
     updateNotChangedIdsWithReselect: Update;
+    updateNotChangedIdsWhereSortIsLess: Update;
     updateDeletedIds: Update;
     updateInsertedIds: Update;
     matchedOld: AbstractAstElement;
@@ -219,7 +221,15 @@ export function buildOneLastRowByArrayReferenceBody(ast: ILastRowParams) {
                                     ast.updateNotChangedIds
                                 ],
                                 else: [
-                                    ast.updateNotChangedIdsWithReselect
+                                    new If({
+                                        if: ast.newSortIsGreat,
+                                        then: [
+                                            ast.updateNotChangedIdsWhereSortIsLess
+                                        ],
+                                        else: [
+                                            ast.updateNotChangedIdsWithReselect
+                                        ]
+                                    })
                                 ]
                             })
                         ]
