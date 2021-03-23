@@ -37,7 +37,8 @@ begin
                 and
                 last_sea.deleted = 0
             order by
-                last_sea.lvl desc nulls first
+                last_sea.lvl desc nulls first,
+                last_sea.id desc nulls first
             limit 1
                 )
             where
@@ -151,6 +152,10 @@ begin
                             or
                             units.__last_sea_id is null
                             or
+                            units.__last_sea_lvl is not distinct from new.lvl
+                            and
+                            units.__last_sea_id < new.id
+                            or
                             new.lvl is null
                             and
                             units.__last_sea_lvl is not null
@@ -180,7 +185,8 @@ begin
                 and
                 last_sea.deleted = 0
             order by
-                last_sea.lvl desc nulls first
+                last_sea.lvl desc nulls first,
+                last_sea.id desc nulls first
             limit 1
                         )
                     where
@@ -212,7 +218,8 @@ begin
                 and
                 last_sea.deleted = 0
             order by
-                last_sea.lvl desc nulls first
+                last_sea.lvl desc nulls first,
+                last_sea.id desc nulls first
             limit 1
                 )
             where
@@ -233,17 +240,15 @@ begin
                 (
                     units.__last_sea_id is null
                     or
+                    units.__last_sea_lvl is not distinct from new.lvl
+                    and
+                    units.__last_sea_id < new.id
+                    or
                     new.lvl is null
                     and
                     units.__last_sea_lvl is not null
                     or
                     units.__last_sea_lvl < new.lvl
-                )
-                and
-                (
-                    units.last_sea_incoming_date is distinct from new.incoming_date
-                    or
-                    units.last_sea_outgoing_date is distinct from new.outgoing_date
                 );
         end if;
 
@@ -269,17 +274,15 @@ begin
                 (
                     units.__last_sea_id is null
                     or
+                    units.__last_sea_lvl is not distinct from new.lvl
+                    and
+                    units.__last_sea_id < new.id
+                    or
                     new.lvl is null
                     and
                     units.__last_sea_lvl is not null
                     or
                     units.__last_sea_lvl < new.lvl
-                )
-                and
-                (
-                    units.last_sea_incoming_date is distinct from new.incoming_date
-                    or
-                    units.last_sea_outgoing_date is distinct from new.outgoing_date
                 );
 
         end if;

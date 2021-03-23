@@ -168,12 +168,6 @@ begin
                     units.__first_auto_id is null
                     or
                     units.__first_auto_id > new.id
-                )
-                and
-                (
-                    units.first_auto_incoming_date is distinct from new.incoming_date
-                    or
-                    units.first_auto_outgoing_date is distinct from new.outgoing_date
                 );
         end if;
 
@@ -195,13 +189,7 @@ begin
             where
                 units.id = any( new.units_ids )
                 and
-                units.__first_auto_id is null
-                and
-                (
-                    units.first_auto_incoming_date is distinct from new.incoming_date
-                    or
-                    units.first_auto_outgoing_date is distinct from new.outgoing_date
-                );
+                units.__first_auto_id is null;
 
         end if;
 

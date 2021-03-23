@@ -60,8 +60,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
             ],
             where: Expression.and([
                 `${cacheTable}.id = any( new.${ arrColumnRef.name } )`,
-                ...this.whereIsGreat(),
-                this.whereDistinctRowValues("new")
+                ...this.whereIsGreat()
             ])
         });
 
@@ -124,8 +123,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
                             } new.id`
                         ])] : 
                         this.whereIsGreat()
-                ),
-                this.whereDistinctRowValues("new")
+                )
             ])
         });
 
@@ -223,7 +221,9 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
             this.context.cache.for.alias ||
             this.context.cache.for.table.toStringWithoutPublic()
         );
+        const firstOrderColumn = this.getOrderByColumnRef();
         const lastIdColumnName = this.helperColumnName("id");
+        const lastSortColumnName = this.helperColumnName(firstOrderColumn.name);
 
         if ( this.isOrderById() ) {
             const orderBy = this.context.cache.select.orderBy[0]!;
@@ -235,15 +235,18 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
             return [];
         }
 
-        const firstOrderColumn = this.getOrderByColumnRef();
         return [Expression.or([
             ...additionalOr,
             `${cacheTable}.${lastIdColumnName} is null`,
             Expression.and([
-                `new.${firstOrderColumn.name} is null`,
-                `${cacheTable}.${this.helperColumnName(firstOrderColumn.name)} is not null`
+                `${cacheTable}.${lastSortColumnName} is not distinct from new.${firstOrderColumn.name}`,
+                `${cacheTable}.${lastIdColumnName} < new.id`
             ]),
-            `${cacheTable}.${this.helperColumnName(firstOrderColumn.name)} < new.${firstOrderColumn.name}`
+            Expression.and([
+                `new.${firstOrderColumn.name} is null`,
+                `${cacheTable}.${lastSortColumnName} is not null`
+            ]),
+            `${cacheTable}.${lastSortColumnName} < new.${firstOrderColumn.name}`
         ])];
     }
 
@@ -288,7 +291,20 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
     }
 
     private reselect() {
-        const select = this.context.cache.select.cloneWith({
+        const {select} = this.context.cache;
+        const orderBy = select.orderBy!.slice();
+        if ( !this.isOrderById() ) {
+            const firstOrder = orderBy[0]!;
+            orderBy.push({
+                expression: Expression.unknown(
+                    `${this.fromTable().getIdentifier()}.id`
+                ),
+                type: firstOrder.type,
+                nulls: firstOrder.nulls
+            });
+        }
+
+        const reselect = select.cloneWith({
             columns: [
                 ...this.getOrderByColumnsRefs().map(columnRef =>
                     new SelectColumn({
@@ -298,9 +314,10 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
                         )
                     })
                 ),
-                ...this.context.cache.select.columns
-            ]
+                ...select.columns
+            ],
+            orderBy
         });
-        return select;
+        return reselect;
     }
 }

@@ -115,12 +115,6 @@ begin
                     units.__last_operation_id is null
                     or
                     units.__last_operation_id < new.id
-                )
-                and
-                (
-                    units.last_operation_incoming_date is distinct from new.incoming_date
-                    or
-                    units.last_operation_outgoing_date is distinct from new.outgoing_date
                 );
         end if;
 
@@ -134,13 +128,7 @@ begin
                 last_operation_incoming_date = new.incoming_date,
                 last_operation_outgoing_date = new.outgoing_date
             where
-                units.id = any( new.units_ids )
-                and
-                (
-                    units.last_operation_incoming_date is distinct from new.incoming_date
-                    or
-                    units.last_operation_outgoing_date is distinct from new.outgoing_date
-                );
+                units.id = any( new.units_ids );
 
         end if;
 
