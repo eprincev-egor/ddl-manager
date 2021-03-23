@@ -11,7 +11,8 @@ import { ExpressionParser } from "./ExpressionParser";
 import { TableReferenceParser } from "./TableReferenceParser";
 import {
     From, Join, Select,
-    SelectColumn, OrderByItem 
+    SelectColumn,
+    OrderBy, OrderByItem
 } from "../ast";
 import { TableReference } from "../database/schema/TableReference";
 import assert from "assert";
@@ -188,23 +189,22 @@ export class SelectParser {
     ) {
         const orderBySyntax = selectSyntax.row.orderBy || [];
         if ( orderBySyntax.length ) {
-            const orderBy: OrderByItem[] = orderBySyntax.map(orderItemSyntax => {
+            const orderByItems: OrderByItem[] = orderBySyntax.map(orderItemSyntax => {
                 const itemExpressionSql = orderItemSyntax.row.expression!.toString();
                 const type = (orderItemSyntax.row.vector || "asc")
                     .toLowerCase() as "asc" | "desc";
 
-                const nulls = (orderItemSyntax.row.nulls || "")
-                    .toLowerCase() as "first" | "last" || "";
-
-                const orderItem: OrderByItem = {
+                const orderItem = new OrderByItem({
                     type,
                     expression: this.expressionParser.parse(
                         select, [cacheFor], itemExpressionSql
                     ),
-                    nulls: nulls || "first"
-                };
+                    nulls: orderItemSyntax.row.nulls as any
+                });
                 return orderItem;
             });
+            const orderBy = new OrderBy(orderByItems);
+
             select = select.addOrderBy(orderBy)
         }
 

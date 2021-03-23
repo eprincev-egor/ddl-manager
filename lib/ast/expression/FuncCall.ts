@@ -194,6 +194,7 @@ export class FuncCall extends AbstractExpressionElement {
             }
 
             const vector = item.vector || "asc";
+            // TODO: use class OrderBy
             const preparedItem = {
                 vector,
                 expression: item.expression,

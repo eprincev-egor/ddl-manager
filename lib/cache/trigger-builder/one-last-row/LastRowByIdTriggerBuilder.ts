@@ -15,7 +15,7 @@ import { buildOneLastRowByIdBody } from "../body/buildOneLastRowByIdBody";
 export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
 
     createHelperTrigger(): ICacheTrigger | undefined {
-        const orderBy = this.context.cache.select.orderBy[0]!;
+        const orderBy = this.context.cache.select.orderBy!.items[0]!;
         if ( orderBy.type === "asc" ) {
             return;
         }
@@ -90,7 +90,7 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
             ])
         });
 
-        const orderBy = this.context.cache.select.orderBy[0]!;
+        const orderBy = this.context.cache.select.orderBy!.items[0]!;
         const selectMaxPrevId = new SimpleSelect({
             columns: [
                 `${ orderBy.type == "desc" ? "max" : "min" }( ${ triggerTable }.id )`
@@ -107,7 +107,7 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
                 where: this.filterTriggerTable("new", [
                     `${triggerTable}.id < new.id`
                 ]),
-                orderBy: [],
+                orderBy: undefined,
                 limit: undefined
             })
         });

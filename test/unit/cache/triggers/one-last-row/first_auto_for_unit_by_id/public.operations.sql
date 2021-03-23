@@ -35,7 +35,7 @@ begin
                 and
                 first_auto.deleted = 0
             order by
-                first_auto.id asc nulls first
+                first_auto.id asc nulls last
             limit 1
                 )
             where
@@ -147,7 +147,7 @@ begin
                 and
                 first_auto.deleted = 0
             order by
-                first_auto.id asc nulls first
+                first_auto.id asc nulls last
             limit 1
                 )
             where

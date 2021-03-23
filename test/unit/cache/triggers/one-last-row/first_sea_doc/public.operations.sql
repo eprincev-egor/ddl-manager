@@ -32,7 +32,7 @@ begin
                 and
                 first_sea_doc.deleted = 0
             order by
-                first_sea_doc.id asc nulls first
+                first_sea_doc.id asc nulls last
             limit 1
             into prev_row;
 
@@ -135,7 +135,7 @@ begin
                 and
                 first_sea_doc.deleted = 0
             order by
-                first_sea_doc.id asc nulls first
+                first_sea_doc.id asc nulls last
             limit 1
             into prev_row;
 

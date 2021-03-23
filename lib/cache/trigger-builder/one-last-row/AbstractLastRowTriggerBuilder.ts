@@ -18,7 +18,7 @@ export abstract class AbstractLastRowTriggerBuilder extends AbstractTriggerBuild
             fromTable,
             `prev_${ fromTable.name }`
         );
-        const orderBy = this.context.cache.select.orderBy[0]!;
+        const orderBy = this.context.cache.select.orderBy!.items[0]!;
 
         const select = new Select({
             columns: [new SelectColumn({

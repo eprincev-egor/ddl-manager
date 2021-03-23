@@ -27,7 +27,7 @@ begin
                 and
                 first_point.deleted = 0
             order by
-                first_point.sort asc nulls first
+                first_point.sort asc nulls last
             limit 1
             into prev_row;
 
@@ -216,7 +216,7 @@ begin
                     and
                     first_point.id <> new.id
                 order by
-                    first_point.sort asc nulls first
+                    first_point.sort asc nulls last
                 limit 1
                 into prev_row;
 
@@ -306,7 +306,7 @@ begin
                 and
                 first_point.deleted = 0
             order by
-                first_point.sort asc nulls first
+                first_point.sort asc nulls last
             limit 1
             into prev_row;
 

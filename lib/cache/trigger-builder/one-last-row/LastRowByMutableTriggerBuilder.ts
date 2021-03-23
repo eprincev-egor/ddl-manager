@@ -9,7 +9,7 @@ import { buildOneLastRowByMutableBody } from "../body/buildOneLastRowByMutableBo
 export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilder {
 
     protected createBody() {
-        const orderBy = this.context.cache.select.orderBy[0]!;
+        const orderBy = this.context.cache.select.orderBy!.items[0]!;
         const sortColumnRef = orderBy.expression.getColumnReferences()[0]!;
 
         const triggerTable = this.triggerTableAlias();
@@ -23,7 +23,7 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
             where: this.filterTriggerTable("new", [
                 `${triggerTable}.${isLastColumnName} = true`
             ]),
-            orderBy: [],
+            orderBy: undefined,
             limit: undefined,
             intoRow: "prev_row"
         });
@@ -116,7 +116,7 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
         lessRow: string,
         orPreConditions: ConditionElementType[] = []
     ) {
-        const orderBy = this.context.cache.select.orderBy[0]!;
+        const orderBy = this.context.cache.select.orderBy!.items[0]!;
         if ( orderBy.type === "desc" ) {
             return this.rowIsGreat(greatRow, lessRow, orPreConditions);
         }
@@ -130,7 +130,7 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
         greatRow: string,
         orPreConditions: ConditionElementType[] = []
     ) {
-        const orderBy = this.context.cache.select.orderBy[0]!;
+        const orderBy = this.context.cache.select.orderBy!.items[0]!;
         if ( orderBy.type === "desc" ) {
             return this.rowIsLess(lessRow, greatRow, orPreConditions);
         }
@@ -144,7 +144,7 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
         lessRow: string,
         orPreConditions: ConditionElementType[] = []
     ) {
-        const orderBy = this.context.cache.select.orderBy[0]!;
+        const orderBy = this.context.cache.select.orderBy!.items[0]!;
         const sortColumnRef = orderBy.expression.getColumnReferences()[0]!;
 
         return Expression.or([
@@ -162,7 +162,7 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
         greatRow: string,
         orPreConditions: ConditionElementType[] = []
     ) {
-        const orderBy = this.context.cache.select.orderBy[0]!;
+        const orderBy = this.context.cache.select.orderBy!.items[0]!;
         const sortColumnRef = orderBy.expression.getColumnReferences()[0]!;
 
         return Expression.or([

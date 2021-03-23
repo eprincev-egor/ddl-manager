@@ -19,3 +19,5 @@ export * from "./Spaces";
 export * from "./Update";
 export * from "./With";
 export * from "./WithQuery";
+export * from "./OrderBy";
+export * from "./OrderByItem";

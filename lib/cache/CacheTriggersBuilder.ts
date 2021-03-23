@@ -57,7 +57,7 @@ export class CacheTriggersBuilder {
         const cacheSelect = this.cache.select;
         const needLastRowColumn = (
             cacheSelect.from.length === 1 &&
-            cacheSelect.orderBy.length === 1 &&
+            cacheSelect.orderBy &&
             cacheSelect.limit === 1
         );
         if ( needLastRowColumn ) {

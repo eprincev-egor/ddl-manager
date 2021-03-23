@@ -32,7 +32,7 @@ begin
                 and
                 operations.deleted = 0
             order by
-                operations.id asc nulls first
+                operations.id asc nulls last
             limit 1
             into prev_row;
 
@@ -135,7 +135,7 @@ begin
                 and
                 operations.deleted = 0
             order by
-                operations.id asc nulls first
+                operations.id asc nulls last
             limit 1
             into prev_row;
 

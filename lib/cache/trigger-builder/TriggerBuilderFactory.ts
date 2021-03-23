@@ -82,8 +82,8 @@ export class TriggerBuilderFactory {
             return CommutativeTriggerBuilder;
         }
         else if ( this.oneLastRow(context) ) {
-            const orderBy = context.cache.select.orderBy[0]!;
-            const orderByColumns = orderBy.expression.getColumnReferences();
+            const orderBy = context.cache.select.orderBy!;
+            const orderByColumns = orderBy.getColumnReferences();
             const firstOrderColumn = orderByColumns[0];
 
             const arrayReference = context.referenceMeta.expressions.some(expression =>
@@ -121,7 +121,7 @@ export class TriggerBuilderFactory {
         const {select} = context.cache;
         return (
             select.from.length === 1 &&
-            select.orderBy.length === 1 &&
+            select.orderBy &&
             select.limit === 1 &&
             context.referenceMeta.expressions.length > 0
         );
