@@ -224,9 +224,9 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
         const firstOrderColumn = this.getOrderByColumnRef();
         const lastIdColumnName = this.helperColumnName("id");
         const lastSortColumnName = this.helperColumnName(firstOrderColumn.name);
+        const orderBy = this.context.cache.select.orderBy[0]!;
 
         if ( this.isOrderById() ) {
-            const orderBy = this.context.cache.select.orderBy[0]!;
             if ( orderBy.type === "asc" ) {
                 return [
                     `${cacheTable}.${lastIdColumnName} is null`
@@ -240,13 +240,17 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
             `${cacheTable}.${lastIdColumnName} is null`,
             Expression.and([
                 `${cacheTable}.${lastSortColumnName} is not distinct from new.${firstOrderColumn.name}`,
-                `${cacheTable}.${lastIdColumnName} < new.id`
+                `${cacheTable}.${lastIdColumnName} ${
+                    orderBy.type == "asc" ? ">" : "<"
+                } new.id`
             ]),
             Expression.and([
                 `new.${firstOrderColumn.name} is null`,
                 `${cacheTable}.${lastSortColumnName} is not null`
             ]),
-            `${cacheTable}.${lastSortColumnName} < new.${firstOrderColumn.name}`
+            `${cacheTable}.${lastSortColumnName} ${
+                orderBy.type == "asc" ? ">" : "<"
+            } new.${firstOrderColumn.name}`
         ])];
     }
 
