@@ -20,9 +20,9 @@ begin
                             item.order_date
                             order by
                                 greatest(
-                            item.order_date,
-                            item.archive_date
-                        ) asc nulls last
+                                    item.order_date,
+                                    item.archive_date
+                                ) asc nulls last
                         )
 
                     from unnest(
@@ -80,9 +80,9 @@ begin
                             item.order_date
                             order by
                                 greatest(
-                            item.order_date,
-                            item.archive_date
-                        ) asc nulls last
+                                    item.order_date,
+                                    item.archive_date
+                                ) asc nulls last
                         )
 
                     from unnest(
@@ -124,9 +124,9 @@ begin
                             item.order_date
                             order by
                                 greatest(
-                            item.order_date,
-                            item.archive_date
-                        ) asc nulls last
+                                    item.order_date,
+                                    item.archive_date
+                                ) asc nulls last
                         )
 
                     from unnest(
@@ -160,9 +160,9 @@ begin
                             item.order_date
                             order by
                                 greatest(
-                            item.order_date,
-                            item.archive_date
-                        ) asc nulls last
+                                    item.order_date,
+                                    item.archive_date
+                                ) asc nulls last
                         )
 
                     from unnest(
@@ -201,9 +201,9 @@ begin
                             item.order_date
                             order by
                                 greatest(
-                            item.order_date,
-                            item.archive_date
-                        ) asc nulls last
+                                    item.order_date,
+                                    item.archive_date
+                                ) asc nulls last
                         )
 
                     from unnest(

@@ -124,7 +124,7 @@ export class AggFactory {
         else if (
             aggCall.name === "array_agg" &&
             aggCall.distinct &&
-            !aggCall.orderBy.length 
+            !aggCall.orderBy 
         ) {
             AggConstructor = DistinctArrayAgg;
         }
@@ -141,16 +141,16 @@ export class AggFactory {
 }
 
 function isHardOrderBy(aggCall: FuncCall) {
-    if ( aggCall.orderBy.length === 0 ) {
+    if ( !aggCall.orderBy ) {
         return false;
     }
 
-    if ( aggCall.orderBy.length > 1 ) {
+    if ( aggCall.orderBy.items.length > 1 ) {
         return true;
     }
     
     const firstArg = aggCall.args[0];
-    const firstOrderBy = aggCall.orderBy[0].expression;
+    const firstOrderBy = aggCall.orderBy.items[0].expression;
 
     const isAlienOrder = firstArg.toString() !== firstOrderBy.toString();
     return isAlienOrder;

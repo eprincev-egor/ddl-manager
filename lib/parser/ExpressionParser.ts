@@ -16,7 +16,8 @@ import {
     CaseWhen,
     Expression,
     UnknownExpressionElement,
-    IOrderByItem
+    OrderByItem,
+    OrderBy
 } from "../ast";
 import { UnknownExpressionElementParser } from "./UnknownExpressionElementParser";
 import { ColumnReferenceParser } from "./ColumnReferenceParser";
@@ -142,11 +143,10 @@ export class ExpressionParser {
             );
         }
 
-        let orderBy: Partial<IOrderByItem>[] = [];
+        let orderByItems: OrderByItem[] = [];
         if ( funcCallSyntax.row.orderBy ) {
             funcCallSyntax.row.orderBy.forEach(itemSyntax => {
                 const nulls = itemSyntax.row.nulls as ("first" | "last" | undefined);
-                const usingSyntax = itemSyntax.row.using;
                 const vector = itemSyntax.row.vector as ("asc" | "desc" | undefined);
                 const expressionSyntax = itemSyntax.row.expression as ExpressionSyntax;
                 const expression = this.parse(
@@ -155,13 +155,12 @@ export class ExpressionParser {
                     expressionSyntax
                 );
 
-                const item: Partial<IOrderByItem> = {
-                    vector,
+                const item = new OrderByItem({
+                    type: vector,
                     expression,
-                    using: usingSyntax ? usingSyntax.toString() : undefined,
                     nulls
-                };
-                orderBy.push(item);
+                });
+                orderByItems.push(item);
             })
         }
 
@@ -182,11 +181,11 @@ export class ExpressionParser {
             "bool_and"
         ];
         if ( funcsWithoutOrderBy.includes(funcName) ) {
-            orderBy = [];
+            orderByItems = [];
         }
 
         if ( funcName === "sum" ) {
-            orderBy = [];
+            orderByItems = [];
         }
 
         // min(distinct x) = min(x)
@@ -215,7 +214,9 @@ export class ExpressionParser {
             args,
             where,
             distinct,
-            orderBy
+            orderByItems.length ? 
+                new OrderBy(orderByItems) : 
+                undefined
         );
         return funcCall;
     }

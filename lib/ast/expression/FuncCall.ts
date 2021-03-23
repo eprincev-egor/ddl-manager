@@ -7,14 +7,8 @@ import { AbstractExpressionElement } from "./AbstractExpressionElement";
 import { Spaces } from "../Spaces";
 import { ColumnReference } from "./ColumnReference";
 import { IExpressionElement } from "./interface";
-
-// https://postgrespro.ru/docs/postgrespro/10/queries-order
-export interface IOrderByItem {
-    vector: "asc" | "desc";
-    expression: Expression;
-    using?: string;
-    nulls: "first" | "last";
-}
+import { OrderBy } from "../OrderBy";
+import { OrderByItem } from "../OrderByItem";
 
 export class FuncCall extends AbstractExpressionElement {
 
@@ -22,20 +16,20 @@ export class FuncCall extends AbstractExpressionElement {
     readonly args: Expression[];
     readonly where?: Expression;
     readonly distinct: boolean;
-    readonly orderBy: IOrderByItem[];
+    readonly orderBy?: OrderBy;
     constructor(
         name: string,
         args: Expression[],
         where?: Expression,
         distinct?: boolean,
-        orderBy: Partial<IOrderByItem>[] = []
+        orderBy?: OrderBy
     ) {
         super();
         this.name = name;
         this.args = args;
         this.where = where;
         this.distinct = distinct ? true : false;
-        this.orderBy = this.prepareOrderBy(orderBy);
+        this.orderBy = orderBy;
     }
 
     protected children() {
@@ -45,9 +39,11 @@ export class FuncCall extends AbstractExpressionElement {
             children.push( this.where );
         }
 
-        this.orderBy.forEach(item => {
-            children.push( item.expression );
-        });
+        if ( this.orderBy ) {
+            this.orderBy.items.forEach(item => {
+                children.push( item.expression );
+            });
+        }
         
         return children;
     }
@@ -67,10 +63,16 @@ export class FuncCall extends AbstractExpressionElement {
             arg.replaceTable(replaceTable, toTable)
         );
 
-        const orderBy = this.orderBy.map(item => ({
-            ...item,
-            expression: item.expression.replaceTable(replaceTable, toTable)
-        }));
+        let orderBy: OrderBy | undefined;
+        if ( this.orderBy ) {
+            const orderByItems = this.orderBy.items.map(item => 
+                new OrderByItem({
+                    ...item,
+                    expression: item.expression.replaceTable(replaceTable, toTable)
+                })
+            );
+            orderBy = new OrderBy(orderByItems);
+        }
 
         let newWhere = this.where;
         if ( newWhere ) {
@@ -89,10 +91,16 @@ export class FuncCall extends AbstractExpressionElement {
             arg.replaceColumn(replaceColumn, toSql)
         );
 
-        const orderBy = this.orderBy.map(item => ({
-            ...item,
-            expression: item.expression.replaceColumn(replaceColumn, toSql)
-        }));
+        let orderBy: OrderBy | undefined;
+        if ( this.orderBy ) {
+            const orderByItems = this.orderBy.items.map(item => 
+                new OrderByItem({
+                    ...item,
+                    expression: item.expression.replaceColumn(replaceColumn, toSql)
+                })
+            );
+            orderBy = new OrderBy(orderByItems);
+        }
 
         let newWhere = this.where;
         if ( newWhere ) {
@@ -115,7 +123,7 @@ export class FuncCall extends AbstractExpressionElement {
 
     clone(
         newArgs?: Expression[],
-        newOrderBy?: IOrderByItem[],
+        newOrderBy?: OrderBy,
         newWhere?: Expression
     ) {
         return new FuncCall(
@@ -149,7 +157,7 @@ export class FuncCall extends AbstractExpressionElement {
         }
 
         const isLongArgs = (
-            this.orderBy.length ||
+            this.orderBy ||
             this.args.join(", ").trim().length > 24
         );
         if ( isLongArgs ) {
@@ -171,8 +179,8 @@ export class FuncCall extends AbstractExpressionElement {
             sql += this.args.join(", ");
         }
 
-        if ( this.orderBy.length ) {
-            sql += this.toStringOrderBy( spaces ) + "\n";
+        if ( this.orderBy ) {
+            sql += this.orderBy.toSQL( spaces.plusOneLevel() ) + "\n";
         }
 
         sql += ")";
@@ -186,52 +194,9 @@ export class FuncCall extends AbstractExpressionElement {
         return sql.split("\n");
     }
 
-    // TODO: new abstraction
-    private prepareOrderBy(orderBy: Partial<IOrderByItem>[]): IOrderByItem[] {
-        const preparedOrderBy = orderBy.map(item => {
-            if ( !item.expression ) {
-                throw new Error("required orderBy expression")
-            }
-
-            const vector = item.vector || "asc";
-            // TODO: use class OrderBy
-            const preparedItem = {
-                vector,
-                expression: item.expression,
-                using: item.using,
-                // https://postgrespro.ru/docs/postgrespro/10/queries-order
-                // По умолчанию значения NULL считаются больше любых других, 
-                nulls: (
-                    item.nulls || (
-                        // то есть подразумевается NULLS FIRST для порядка DESC и 
-                        vector === "desc" ? 
-                            "first" :
-                        // NULLS LAST в противном случае.
-                            "last"
-                    )
-                )
-            };
-            return preparedItem;
-        });
-        return preparedOrderBy;
-    }
-
     private cloneOrderBy() {
-        const clone = this.orderBy.map(item => ({
-            ...item,
-            expression: item.expression.clone()
-        }));
-        return clone;
-    }
-
-    private toStringOrderBy(spaces: Spaces) {
-        return (
-            spaces.plusOneLevel() + "order by\n" + 
-            this.orderBy.map(item => 
-                spaces.plusOneLevel().plusOneLevel() + 
-                    `${item.expression} ${item.vector} nulls ${ item.nulls }`
-            )
-            .join(",\n")
-        );
+        if ( this.orderBy ) {
+            return this.orderBy.clone();
+        }
     }
 }

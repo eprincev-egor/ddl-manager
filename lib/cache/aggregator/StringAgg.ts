@@ -7,7 +7,7 @@ export class StringAgg extends UniversalAgg {
         const totalIsColumn = this.columnName === total.toString();
 
         const cannotOptimize = (
-            this.call.orderBy.length ||
+            this.call.orderBy ||
             !totalIsColumn
         );
         if ( cannotOptimize ) {
