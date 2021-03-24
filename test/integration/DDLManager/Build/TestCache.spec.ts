@@ -1024,7 +1024,7 @@ $$;
                 name text,
                 id_operation bigint,
                 point_name text,
-                sort integer not null
+                sort integer
             );
             
             create table operations (
@@ -1082,7 +1082,9 @@ $$;
                 where
                     arrival_points.id_operation = operations.id
         
-                order by arrival_points.sort desc
+                order by
+                    arrival_points.sort desc,
+                    arrival_points.id desc
                 limit 1
             ) as should_be on true
             where
@@ -1238,6 +1240,29 @@ $$;
                 point_name = 'warehouse X updated twice'
             where name = 'point X';
             PERFORM check_operations('label 21 update data where was last before pvev update');
+
+            delete from arrival_points;
+            PERFORM check_operations('label 22 delete all points');
+
+            insert into arrival_points
+                (name, id_operation, sort, point_name)
+            values
+                ('point A', 1, null, 'warehouse 1'),
+                ('point B', 1, null, 'warehouse 2'),
+                ('point X', 2, null, 'warehouse 3'),
+                ('point Y', 2, null, 'warehouse 4')
+            ;
+            PERFORM check_operations('label 23 insert points with null sort');
+
+            update arrival_points set
+                sort = 1
+            where
+                name in ('point A', 'point B');
+            PERFORM check_operations('label 24 update two points from null to 1');
+
+            update arrival_points set
+                sort = 2;
+            PERFORM check_operations('label 25 update all points sort to 2');
         
             raise exception 'success';
         end

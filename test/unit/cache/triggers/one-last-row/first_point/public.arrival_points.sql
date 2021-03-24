@@ -129,9 +129,13 @@ begin
                 not new.__first_point_for_operations
                 and
                 (
-                    new.sort is null
+                    old.sort is not distinct from new.sort
                     and
-                    old.sort is not null
+                    new.id < old.id
+                    or
+                    new.sort is not null
+                    and
+                    old.sort is null
                     or
                     new.sort < old.sort
                 )
@@ -151,9 +155,13 @@ begin
                 if
                     prev_row.id is null
                     or
-                    prev_row.sort is not null
+                    prev_row.sort is not distinct from new.sort
                     and
-                    new.sort is null
+                    prev_row.id > new.id
+                    or
+                    prev_row.sort is null
+                    and
+                    new.sort is not null
                     or
                     prev_row.sort > new.sort
                 then
@@ -185,9 +193,13 @@ begin
                 new.__first_point_for_operations
                 and
                 (
-                    new.sort is not null
+                    new.sort is not distinct from new.sort
                     and
-                    old.sort is null
+                    new.id > old.id
+                    or
+                    new.sort is null
+                    and
+                    old.sort is not null
                     or
                     new.sort > old.sort
                 )
@@ -207,9 +219,13 @@ begin
                     first_point.deleted = 0
                     and
                     (
-                        first_point.sort is null
+                        new.sort is not distinct from new.sort
                         and
-                        new.sort is not null
+                        first_point.id < new.id
+                        or
+                        first_point.sort is not null
+                        and
+                        new.sort is null
                         or
                         first_point.sort < new.sort
                     )
@@ -224,9 +240,13 @@ begin
                     prev_row.id is not null
                     and
                     (
-                        prev_row.sort is null
+                        new.sort is not distinct from new.sort
                         and
-                        new.sort is not null
+                        prev_row.id < new.id
+                        or
+                        prev_row.sort is not null
+                        and
+                        new.sort is null
                         or
                         prev_row.sort < new.sort
                     )
@@ -364,9 +384,13 @@ begin
             if
                 prev_row.id is null
                 or
-                prev_row.sort is not null
+                prev_row.sort is not distinct from new.sort
                 and
-                new.sort is null
+                prev_row.id > new.id
+                or
+                prev_row.sort is null
+                and
+                new.sort is not null
                 or
                 prev_row.sort > new.sort
             then
@@ -428,9 +452,13 @@ begin
             if
                 prev_row.id is null
                 or
-                prev_row.sort is not null
+                prev_row.sort is not distinct from new.sort
                 and
-                new.sort is null
+                prev_row.id > new.id
+                or
+                prev_row.sort is null
+                and
+                new.sort is not null
                 or
                 prev_row.sort > new.sort
             then

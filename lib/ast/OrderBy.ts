@@ -80,15 +80,19 @@ export class OrderBy extends AbstractAstElement {
         lessRow: string,
         orPreConditions: ConditionElementType[] = []
     ) {
-        const sortColumnRef = this.getColumnReferences()[0]!;
+        const sortColumnName = this.getFirstColumnRef()!.name;
 
         return Expression.or([
             ...orPreConditions,
             Expression.and([
-                `${greatRow}.${sortColumnRef.name} is not null`,
-                `${lessRow}.${sortColumnRef.name} is null`
+                `${greatRow}.${sortColumnName} is not distinct from new.${sortColumnName}`,
+                `${greatRow}.id > ${lessRow}.id`
             ]),
-            `${greatRow}.${sortColumnRef.name} > ${lessRow}.${sortColumnRef.name}`
+            Expression.and([
+                `${greatRow}.${sortColumnName} is null`,
+                `${lessRow}.${sortColumnName} is not null`
+            ]),
+            `${greatRow}.${sortColumnName} > ${lessRow}.${sortColumnName}`
         ]);
     }
 
@@ -97,15 +101,19 @@ export class OrderBy extends AbstractAstElement {
         greatRow: string,
         orPreConditions: ConditionElementType[] = []
     ) {
-        const sortColumnRef = this.getColumnReferences()[0]!;
+        const sortColumnName = this.getFirstColumnRef()!.name;
 
         return Expression.or([
             ...orPreConditions,
             Expression.and([
-                `${lessRow}.${sortColumnRef.name} is null`,
-                `${greatRow}.${sortColumnRef.name} is not null`
+                `${greatRow}.${sortColumnName} is not distinct from new.${sortColumnName}`,
+                `${lessRow}.id < ${greatRow}.id`
             ]),
-            `${lessRow}.${sortColumnRef.name} < ${greatRow}.${sortColumnRef.name}`
+            Expression.and([
+                `${lessRow}.${sortColumnName} is not null`,
+                `${greatRow}.${sortColumnName} is null`
+            ]),
+            `${lessRow}.${sortColumnName} < ${greatRow}.${sortColumnName}`
         ]);
     }
 }

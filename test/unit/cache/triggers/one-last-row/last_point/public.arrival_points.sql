@@ -106,9 +106,13 @@ begin
                 not new.__last_point_for_operations
                 and
                 (
-                    new.sort is not null
+                    new.sort is not distinct from new.sort
                     and
-                    old.sort is null
+                    new.id > old.id
+                    or
+                    new.sort is null
+                    and
+                    old.sort is not null
                     or
                     new.sort > old.sort
                 )
@@ -126,9 +130,13 @@ begin
                 if
                     prev_row.id is null
                     or
-                    prev_row.sort is null
+                    new.sort is not distinct from new.sort
                     and
-                    new.sort is not null
+                    prev_row.id < new.id
+                    or
+                    prev_row.sort is not null
+                    and
+                    new.sort is null
                     or
                     prev_row.sort < new.sort
                 then
@@ -160,9 +168,13 @@ begin
                 new.__last_point_for_operations
                 and
                 (
-                    new.sort is null
+                    old.sort is not distinct from new.sort
                     and
-                    old.sort is not null
+                    new.id < old.id
+                    or
+                    new.sort is not null
+                    and
+                    old.sort is null
                     or
                     new.sort < old.sort
                 )
@@ -179,9 +191,13 @@ begin
                     arrival_points.id_operation = new.id_operation
                     and
                     (
-                        arrival_points.sort is not null
+                        arrival_points.sort is not distinct from new.sort
                         and
-                        new.sort is null
+                        arrival_points.id > new.id
+                        or
+                        arrival_points.sort is null
+                        and
+                        new.sort is not null
                         or
                         arrival_points.sort > new.sort
                     )
@@ -196,9 +212,13 @@ begin
                     prev_row.id is not null
                     and
                     (
-                        prev_row.sort is not null
+                        prev_row.sort is not distinct from new.sort
                         and
-                        new.sort is null
+                        prev_row.id > new.id
+                        or
+                        prev_row.sort is null
+                        and
+                        new.sort is not null
                         or
                         prev_row.sort > new.sort
                     )
@@ -321,9 +341,13 @@ begin
             if
                 prev_row.id is null
                 or
-                prev_row.sort is null
+                new.sort is not distinct from new.sort
                 and
-                new.sort is not null
+                prev_row.id < new.id
+                or
+                prev_row.sort is not null
+                and
+                new.sort is null
                 or
                 prev_row.sort < new.sort
             then
@@ -379,9 +403,13 @@ begin
             if
                 prev_row.id is null
                 or
-                prev_row.sort is null
+                new.sort is not distinct from new.sort
                 and
-                new.sort is not null
+                prev_row.id < new.id
+                or
+                prev_row.sort is not null
+                and
+                new.sort is null
                 or
                 prev_row.sort < new.sort
             then
