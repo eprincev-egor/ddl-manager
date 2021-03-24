@@ -52,7 +52,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
         );
 
         const lastIdColumnName = this.helperColumnName("id");
-        const orderBy = this.context.cache.select.orderBy!.items[0]!;
+        const orderBy = this.context.cache.select.orderBy!;
 
         const updateOnInsert = new Update({
             table: this.context.cache.for.toString(),
@@ -117,11 +117,11 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
             where: Expression.and([
                 `${cacheTable}.id = any( inserted_${ arrColumnRef.name } )`,
                 ...(
-                    this.isOrderById() ?
+                    orderBy.isOnlyId() ?
                         [Expression.or([
                             `${cacheTable}.${ lastIdColumnName } is null`,
                             `${cacheTable}.${ lastIdColumnName } ${
-                                orderBy.type == "asc" ? ">" : "<"
+                                orderBy.items[0]!.type == "asc" ? ">" : "<"
                             } new.id`
                         ])] : 
                         this.whereIsGreat()
@@ -129,7 +129,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
             ])
         });
 
-        const orderByColumnName = this.getOrderByColumnRef().name;
+        const orderByColumnName = orderBy.getFirstColumnRef()!.name;
         const newSortIsGreat = Expression.or([
             Expression.and([
                 `new.${orderByColumnName} is null`,
@@ -223,13 +223,13 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
             this.context.cache.for.alias ||
             this.context.cache.for.table.toStringWithoutPublic()
         );
-        const firstOrderColumn = this.getOrderByColumnRef();
+        const orderBy = this.context.cache.select.orderBy!;
+        const firstOrderColumn = orderBy.getFirstColumnRef()!;
         const lastIdColumnName = this.helperColumnName("id");
         const lastSortColumnName = this.helperColumnName(firstOrderColumn.name);
-        const orderBy = this.context.cache.select.orderBy!.items[0]!;
 
-        if ( this.isOrderById() ) {
-            if ( orderBy.type === "asc" ) {
+        if ( orderBy.isOnlyId() ) {
+            if ( orderBy.items[0]!.type === "asc" ) {
                 return [
                     `${cacheTable}.${lastIdColumnName} is null`
                 ];
@@ -243,7 +243,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
             Expression.and([
                 `${cacheTable}.${lastSortColumnName} is not distinct from new.${firstOrderColumn.name}`,
                 `${cacheTable}.${lastIdColumnName} ${
-                    orderBy.type == "asc" ? ">" : "<"
+                    orderBy.items[0]!.type == "asc" ? ">" : "<"
                 } new.id`
             ]),
             Expression.and([
@@ -251,33 +251,13 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
                 `${cacheTable}.${lastSortColumnName} is not null`
             ]),
             `${cacheTable}.${lastSortColumnName} ${
-                orderBy.type == "asc" ? ">" : "<"
+                orderBy.items[0]!.type == "asc" ? ">" : "<"
             } new.${firstOrderColumn.name}`
         ])];
     }
 
     private helperColumnName(triggerTableColumnName: string) {
         return `__${this.context.cache.name}_${triggerTableColumnName}`;
-    }
-
-    private isOrderById() {
-        const orderBy = this.context.cache.select.orderBy!.items[0]!;
-        const orderByColumns = orderBy.expression.getColumnReferences();
-        const firstOrderColumn = this.getOrderByColumnRef();
-        const byId = (
-            orderByColumns.length === 1 &&
-            firstOrderColumn.name === "id" &&
-            this.context.isColumnRefToTriggerTable( firstOrderColumn )
-        );
-
-        return byId;
-    }
-
-    private getOrderByColumnRef() {
-        const orderBy = this.context.cache.select.orderBy!.items[0]!;
-        const orderByColumns = orderBy.expression.getColumnReferences();
-        const firstOrderColumn = orderByColumns[0];
-        return firstOrderColumn;
     }
 
     private reselectSetItem() {
@@ -299,7 +279,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
     private reselect() {
         const {select} = this.context.cache;
         const orderByItems = select.orderBy!.items.slice();
-        if ( !this.isOrderById() ) {
+        if ( !select.orderBy!.isOnlyId() ) {
             const firstOrder = orderByItems[0]!;
             orderByItems.push(
                 new OrderByItem({

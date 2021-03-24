@@ -34,6 +34,19 @@ export class OrderBy extends AbstractAstElement {
         ];
     }
 
+    isOnlyId() {
+        const orderByColumns = this.getColumnReferences();
+        const byId = (
+            orderByColumns.length === 1 &&
+            orderByColumns[0].name === "id"
+        );
+        return byId;
+    }
+
+    getFirstColumnRef() {
+        return this.getColumnReferences()[0];
+    }
+
     rowIsGreatByOrder(
         greatRow: string,
         lessRow: string,
