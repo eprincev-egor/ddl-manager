@@ -1,5 +1,5 @@
 import { AbstractAstElement } from "./AbstractAstElement";
-import { Expression } from "./expression";
+import { ConditionElementType, Expression } from "./expression";
 import { Spaces } from "./Spaces";
 
 export type OrderItemType = "asc" | "desc";
@@ -51,5 +51,52 @@ export class OrderByItem extends AbstractAstElement {
                     " " + this.type +
                     " nulls " + this.nulls
         ];
+    }
+
+    getFirstColumnRef() {
+        return this.getColumnReferences()[0];
+    }
+
+    rowIsGreatByOrder(
+        leftRow: string,
+        rightRow: string,
+        orPreConditions: ConditionElementType[] = []
+    ) {
+        const operator = this.type === "desc" ? ">" : "<";
+        return this.compareRows(leftRow, operator, rightRow, orPreConditions);
+    }
+
+    rowIsLessByOrder(
+        leftRow: string,
+        rightRow: string,
+        orPreConditions: ConditionElementType[] = []
+    ) {
+        const operator = this.type === "desc" ? "<" : ">";
+        return this.compareRows(leftRow, operator, rightRow, orPreConditions);
+    }
+
+    private compareRows(
+        leftRow: string,
+        operator: "<" | ">",
+        rightRow: string,
+        orPreConditions: ConditionElementType[] = []
+    ) {
+        const sortColumnName = this.getFirstColumnRef()!.name;
+
+        return Expression.or([
+            ...orPreConditions,
+            Expression.and([
+                `${leftRow}.${sortColumnName} is not distinct from ${rightRow}.${sortColumnName}`,
+                `${leftRow}.id ${operator} ${rightRow}.id`
+            ]),
+            Expression.and(operator === "<" ? [ 
+                `${leftRow}.${sortColumnName} is not null`,
+                `${rightRow}.${sortColumnName} is null`
+            ] : [
+                `${leftRow}.${sortColumnName} is null`,
+                `${rightRow}.${sortColumnName} is not null`
+            ]),
+            `${leftRow}.${sortColumnName} ${operator} ${rightRow}.${sortColumnName}`
+        ]);
     }
 }

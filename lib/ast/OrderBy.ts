@@ -48,72 +48,26 @@ export class OrderBy extends AbstractAstElement {
     }
 
     rowIsGreatByOrder(
-        greatRow: string,
-        lessRow: string,
+        leftRow: string,
+        rightRow: string,
         orPreConditions: ConditionElementType[] = []
     ) {
-        const orderBy = this.items[0]!;
-        if ( orderBy.type === "desc" ) {
-            return this.rowIsGreat(greatRow, lessRow, orPreConditions);
-        }
-        else {
-            return this.rowIsLess(greatRow, lessRow, orPreConditions);
-        }
+        return this.items[0]!.rowIsGreatByOrder(
+            leftRow,
+            rightRow,
+            orPreConditions
+        );
     }
 
     rowIsLessByOrder(
-        lessRow: string,
-        greatRow: string,
+        leftRow: string,
+        rightRow: string,
         orPreConditions: ConditionElementType[] = []
     ) {
-        const orderBy = this.items[0]!;
-        if ( orderBy.type === "desc" ) {
-            return this.rowIsLess(lessRow, greatRow, orPreConditions);
-        }
-        else {
-            return this.rowIsGreat(lessRow, greatRow, orPreConditions);
-        }
-    }
-
-    private rowIsGreat(
-        greatRow: string,
-        lessRow: string,
-        orPreConditions: ConditionElementType[] = []
-    ) {
-        const sortColumnName = this.getFirstColumnRef()!.name;
-
-        return Expression.or([
-            ...orPreConditions,
-            Expression.and([
-                `${greatRow}.${sortColumnName} is not distinct from new.${sortColumnName}`,
-                `${greatRow}.id > ${lessRow}.id`
-            ]),
-            Expression.and([
-                `${greatRow}.${sortColumnName} is null`,
-                `${lessRow}.${sortColumnName} is not null`
-            ]),
-            `${greatRow}.${sortColumnName} > ${lessRow}.${sortColumnName}`
-        ]);
-    }
-
-    private rowIsLess(
-        lessRow: string,
-        greatRow: string,
-        orPreConditions: ConditionElementType[] = []
-    ) {
-        const sortColumnName = this.getFirstColumnRef()!.name;
-
-        return Expression.or([
-            ...orPreConditions,
-            Expression.and([
-                `${greatRow}.${sortColumnName} is not distinct from new.${sortColumnName}`,
-                `${lessRow}.id < ${greatRow}.id`
-            ]),
-            Expression.and([
-                `${lessRow}.${sortColumnName} is not null`,
-                `${greatRow}.${sortColumnName} is null`
-            ]),
-            `${lessRow}.${sortColumnName} < ${greatRow}.${sortColumnName}`
-        ]);
+        return this.items[0]!.rowIsLessByOrder(
+            leftRow,
+            rightRow,
+            orPreConditions
+        );
     }
 }

@@ -106,7 +106,7 @@ begin
                 not new.__last_point_for_operations
                 and
                 (
-                    new.sort is not distinct from new.sort
+                    new.sort is not distinct from old.sort
                     and
                     new.id > old.id
                     or
@@ -130,7 +130,7 @@ begin
                 if
                     prev_row.id is null
                     or
-                    new.sort is not distinct from new.sort
+                    prev_row.sort is not distinct from new.sort
                     and
                     prev_row.id < new.id
                     or
@@ -168,7 +168,7 @@ begin
                 new.__last_point_for_operations
                 and
                 (
-                    old.sort is not distinct from new.sort
+                    new.sort is not distinct from old.sort
                     and
                     new.id < old.id
                     or
@@ -341,7 +341,7 @@ begin
             if
                 prev_row.id is null
                 or
-                new.sort is not distinct from new.sort
+                prev_row.sort is not distinct from new.sort
                 and
                 prev_row.id < new.id
                 or
@@ -403,7 +403,7 @@ begin
             if
                 prev_row.id is null
                 or
-                new.sort is not distinct from new.sort
+                prev_row.sort is not distinct from new.sort
                 and
                 prev_row.id < new.id
                 or

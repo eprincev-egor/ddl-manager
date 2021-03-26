@@ -129,7 +129,7 @@ begin
                 not new.__first_point_for_operations
                 and
                 (
-                    old.sort is not distinct from new.sort
+                    new.sort is not distinct from old.sort
                     and
                     new.id < old.id
                     or
@@ -193,7 +193,7 @@ begin
                 new.__first_point_for_operations
                 and
                 (
-                    new.sort is not distinct from new.sort
+                    new.sort is not distinct from old.sort
                     and
                     new.id > old.id
                     or
@@ -219,7 +219,7 @@ begin
                     first_point.deleted = 0
                     and
                     (
-                        new.sort is not distinct from new.sort
+                        first_point.sort is not distinct from new.sort
                         and
                         first_point.id < new.id
                         or
@@ -240,7 +240,7 @@ begin
                     prev_row.id is not null
                     and
                     (
-                        new.sort is not distinct from new.sort
+                        prev_row.sort is not distinct from new.sort
                         and
                         prev_row.id < new.id
                         or
