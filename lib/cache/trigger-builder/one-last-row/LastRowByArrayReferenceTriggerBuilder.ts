@@ -129,15 +129,6 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
             ])
         });
 
-        const orderByColumnName = orderBy.getFirstColumnRef()!.name;
-        const newSortIsGreat = Expression.or([
-            Expression.and([
-                `new.${orderByColumnName} is null`,
-                `old.${orderByColumnName} is not null`
-            ]),
-            `new.${orderByColumnName} > old.${orderByColumnName}`
-        ]);
-
         const updateNotChangedIdsWhereSortIsLess = new Update({
             table: this.context.cache.for.toString(),
             set: [
@@ -157,7 +148,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
         const body = buildOneLastRowByArrayReferenceBody({
             needMatching: this.context.referenceMeta.filters.length > 0,
             arrColumn,
-            orderByColumnName,
+            orderByColumnName: orderBy.getFirstColumnRef()!.name,
             updateNotChangedIdsWithReselect,
             dataFields: this.findDataColumns(),
             hasNewReference: this.conditions
@@ -165,7 +156,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
             hasOldReference: this.conditions
                 .hasReferenceWithoutJoins("old")!,
             noChanges: this.conditions.noChanges(),
-            newSortIsGreat,
+            newSortIsGreat: orderBy.compareRowsByOrder("new", ">", "old"),
             updateNotChangedIdsWhereSortIsLess,
             updateOnInsert,
             updateOnDelete,
@@ -219,41 +210,34 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
     }
 
     private whereIsGreat(additionalOr: Expression[] = []) {
+        const orderBy = this.context.cache.select.orderBy!;
+
         const cacheTable = (
             this.context.cache.for.alias ||
             this.context.cache.for.table.toStringWithoutPublic()
         );
-        const orderBy = this.context.cache.select.orderBy!;
-        const firstOrderColumn = orderBy.getFirstColumnRef()!;
-        const lastIdColumnName = this.helperColumnName("id");
-        const lastSortColumnName = this.helperColumnName(firstOrderColumn.name);
+        const cacheRow = (columnName: string) =>
+            `${cacheTable}.${this.helperColumnName(columnName)}`;
+
 
         if ( orderBy.isOnlyId() ) {
             if ( orderBy.items[0]!.type === "asc" ) {
                 return [
-                    `${cacheTable}.${lastIdColumnName} is null`
+                    `${cacheRow("id")} is null`
                 ];
             }
             return [];
         }
 
-        return [Expression.or([
-            ...additionalOr,
-            `${cacheTable}.${lastIdColumnName} is null`,
-            Expression.and([
-                `${cacheTable}.${lastSortColumnName} is not distinct from new.${firstOrderColumn.name}`,
-                `${cacheTable}.${lastIdColumnName} ${
-                    orderBy.items[0]!.type == "asc" ? ">" : "<"
-                } new.id`
-            ]),
-            Expression.and([
-                `new.${firstOrderColumn.name} is null`,
-                `${cacheTable}.${lastSortColumnName} is not null`
-            ]),
-            `${cacheTable}.${lastSortColumnName} ${
-                orderBy.items[0]!.type == "asc" ? ">" : "<"
-            } new.${firstOrderColumn.name}`
-        ])];
+        return [orderBy.compareRowsByOrder(
+            cacheRow,
+            "<",
+            "new",
+            [
+                ...additionalOr,
+                `${cacheRow("id")} is null`
+            ]
+        )];
     }
 
     private helperColumnName(triggerTableColumnName: string) {

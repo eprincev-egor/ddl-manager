@@ -133,11 +133,15 @@ begin
                     );
             else
                 if
-                    new.lvl is null
+                    new.lvl is not distinct from old.lvl
                     and
-                    old.lvl is not null
+                    new.id < old.id
                     or
-                    new.lvl > old.lvl
+                    new.lvl is not null
+                    and
+                    old.lvl is null
+                    or
+                    new.lvl < old.lvl
                 then
                     update units set
                         __first_auto_id = new.id,
@@ -156,9 +160,9 @@ begin
                             and
                             units.__first_auto_id > new.id
                             or
-                            new.lvl is null
+                            units.__first_auto_lvl is null
                             and
-                            units.__first_auto_lvl is not null
+                            new.lvl is not null
                             or
                             units.__first_auto_lvl > new.lvl
                         );
@@ -244,9 +248,9 @@ begin
                     and
                     units.__first_auto_id > new.id
                     or
-                    new.lvl is null
+                    units.__first_auto_lvl is null
                     and
-                    units.__first_auto_lvl is not null
+                    new.lvl is not null
                     or
                     units.__first_auto_lvl > new.lvl
                 );
@@ -278,9 +282,9 @@ begin
                     and
                     units.__first_auto_id > new.id
                     or
-                    new.lvl is null
+                    units.__first_auto_lvl is null
                     and
-                    units.__first_auto_lvl is not null
+                    new.lvl is not null
                     or
                     units.__first_auto_lvl > new.lvl
                 );

@@ -1,7 +1,7 @@
 import { flatMap } from "lodash";
 import { AbstractAstElement } from "./AbstractAstElement";
-import { Expression, ConditionElementType } from "./expression";
-import { OrderByItem } from "./OrderByItem";
+import { ConditionElementType } from "./expression";
+import { OrderByItem, CompareRow } from "./OrderByItem";
 import { Spaces } from "./Spaces";
 
 export class OrderBy extends AbstractAstElement {
@@ -48,9 +48,9 @@ export class OrderBy extends AbstractAstElement {
     }
 
     compareRowsByOrder(
-        leftRow: string,
+        leftRow: CompareRow,
         operator: "<" | ">",
-        rightRow: string,
+        rightRow: CompareRow,
         orPreConditions: ConditionElementType[] = []
     ) {
         return this.items[0]!.compareRowsByOrder(

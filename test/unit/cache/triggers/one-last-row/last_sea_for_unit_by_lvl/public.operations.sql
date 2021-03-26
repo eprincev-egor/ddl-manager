@@ -133,6 +133,10 @@ begin
                     );
             else
                 if
+                    new.lvl is not distinct from old.lvl
+                    and
+                    new.id > old.id
+                    or
                     new.lvl is null
                     and
                     old.lvl is not null
@@ -156,9 +160,9 @@ begin
                             and
                             units.__last_sea_id < new.id
                             or
-                            new.lvl is null
-                            and
                             units.__last_sea_lvl is not null
+                            and
+                            new.lvl is null
                             or
                             units.__last_sea_lvl < new.lvl
                         );
@@ -244,9 +248,9 @@ begin
                     and
                     units.__last_sea_id < new.id
                     or
-                    new.lvl is null
-                    and
                     units.__last_sea_lvl is not null
+                    and
+                    new.lvl is null
                     or
                     units.__last_sea_lvl < new.lvl
                 );
@@ -278,9 +282,9 @@ begin
                     and
                     units.__last_sea_id < new.id
                     or
-                    new.lvl is null
-                    and
                     units.__last_sea_lvl is not null
+                    and
+                    new.lvl is null
                     or
                     units.__last_sea_lvl < new.lvl
                 );

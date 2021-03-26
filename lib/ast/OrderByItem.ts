@@ -9,6 +9,11 @@ export interface OrderByItemParams {
     type?: OrderItemType;
     nulls?: OrderItemNulls;
 }
+export type CompareRowFunc = ((columnName: string) => string);
+export type CompareRow = (
+    string |
+    CompareRowFunc
+);
 
 export class OrderByItem extends AbstractAstElement {
 
@@ -58,39 +63,48 @@ export class OrderByItem extends AbstractAstElement {
     }
 
     compareRowsByOrder(
-        leftRow: string,
+        leftRow: CompareRow,
         operator: "<" | ">",
-        rightRow: string,
-        orPreConditions: ConditionElementType[] = []
+        rightRow: CompareRow,
+        orPreConditions: ConditionElementType[]
     ) {
         if ( this.type === "asc" ) {
             operator = operator === ">" ? "<" : ">";
         }
+        if ( typeof leftRow === "string" ) {
+            const rowName = leftRow;
+            leftRow = (columnName: string) => `${rowName}.${columnName}`;
+        }
+        if ( typeof rightRow === "string" ) {
+            const rowName = rightRow;
+            rightRow = (columnName: string) => `${rowName}.${columnName}`;
+        }
+
         return this.compareRows(leftRow, operator, rightRow, orPreConditions);
     }
 
     private compareRows(
-        leftRow: string,
+        leftRow: CompareRowFunc,
         operator: "<" | ">",
-        rightRow: string,
-        orPreConditions: ConditionElementType[] = []
+        rightRow: CompareRowFunc,
+        orPreConditions: ConditionElementType[]
     ) {
         const sortColumnName = this.getFirstColumnRef()!.name;
 
         return Expression.or([
             ...orPreConditions,
             Expression.and([
-                `${leftRow}.${sortColumnName} is not distinct from ${rightRow}.${sortColumnName}`,
-                `${leftRow}.id ${operator} ${rightRow}.id`
+                `${leftRow(sortColumnName)} is not distinct from ${rightRow(sortColumnName)}`,
+                `${leftRow("id")} ${operator} ${rightRow("id")}`
             ]),
             Expression.and(operator === "<" ? [ 
-                `${leftRow}.${sortColumnName} is not null`,
-                `${rightRow}.${sortColumnName} is null`
+                `${leftRow(sortColumnName)} is not null`,
+                `${rightRow(sortColumnName)} is null`
             ] : [
-                `${leftRow}.${sortColumnName} is null`,
-                `${rightRow}.${sortColumnName} is not null`
+                `${leftRow(sortColumnName)} is null`,
+                `${rightRow(sortColumnName)} is not null`
             ]),
-            `${leftRow}.${sortColumnName} ${operator} ${rightRow}.${sortColumnName}`
+            `${leftRow(sortColumnName)} ${operator} ${rightRow(sortColumnName)}`
         ]);
     }
 }
