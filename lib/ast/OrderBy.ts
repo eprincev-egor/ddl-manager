@@ -49,13 +49,13 @@ export class OrderBy extends AbstractAstElement {
 
     compareRowsByOrder(
         leftRow: CompareRow,
-        operator: "<" | ">",
+        vector: "above" | "below",
         rightRow: CompareRow,
         orPreConditions: ConditionElementType[] = []
     ) {
         return this.items[0]!.compareRowsByOrder(
             leftRow,
-            operator,
+            vector,
             rightRow,
             orPreConditions
         );

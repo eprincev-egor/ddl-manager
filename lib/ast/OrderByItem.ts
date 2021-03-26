@@ -64,13 +64,15 @@ export class OrderByItem extends AbstractAstElement {
 
     compareRowsByOrder(
         leftRow: CompareRow,
-        operator: "<" | ">",
+        vector: "above" | "below",
         rightRow: CompareRow,
         orPreConditions: ConditionElementType[]
     ) {
-        if ( this.type === "asc" ) {
-            operator = operator === ">" ? "<" : ">";
-        }
+        const operator = (
+            this.type === "asc" && vector === "above" ||
+            this.type === "desc" && vector === "below"
+        ) ? "<" : ">";
+
         if ( typeof leftRow === "string" ) {
             const rowName = leftRow;
             leftRow = (columnName: string) => `${rowName}.${columnName}`;
@@ -80,15 +82,6 @@ export class OrderByItem extends AbstractAstElement {
             rightRow = (columnName: string) => `${rowName}.${columnName}`;
         }
 
-        return this.compareRows(leftRow, operator, rightRow, orPreConditions);
-    }
-
-    private compareRows(
-        leftRow: CompareRowFunc,
-        operator: "<" | ">",
-        rightRow: CompareRowFunc,
-        orPreConditions: ConditionElementType[]
-    ) {
         const sortColumnName = this.getFirstColumnRef()!.name;
 
         return Expression.or([
@@ -97,14 +90,40 @@ export class OrderByItem extends AbstractAstElement {
                 `${leftRow(sortColumnName)} is not distinct from ${rightRow(sortColumnName)}`,
                 `${leftRow("id")} ${operator} ${rightRow("id")}`
             ]),
-            Expression.and(operator === "<" ? [ 
-                `${leftRow(sortColumnName)} is not null`,
-                `${rightRow(sortColumnName)} is null`
-            ] : [
-                `${leftRow(sortColumnName)} is null`,
-                `${rightRow(sortColumnName)} is not null`
-            ]),
+            this.compareRowsNulls(leftRow, vector, rightRow),
             `${leftRow(sortColumnName)} ${operator} ${rightRow(sortColumnName)}`
         ]);
+    }
+
+    private compareRowsNulls(
+        leftRow: CompareRowFunc,
+        vector: "above" | "below",
+        rightRow: CompareRowFunc
+    ) {
+        const sortColumnName = this.getFirstColumnRef()!.name;
+        let conditions: string[] = [];
+
+        // https://postgrespro.ru/docs/postgrespro/10/queries-order
+        // По умолчанию значения NULL считаются больше любых других, 
+        const leftShouldBeNull = (
+            vector === "above" && this.nulls === "first"
+            ||
+            vector === "below" && this.nulls === "last"
+        );
+
+        if ( leftShouldBeNull ) {
+            conditions = [
+                `${leftRow(sortColumnName)} is null`,
+                `${rightRow(sortColumnName)} is not null`
+            ];
+        }
+        else {
+            conditions = [
+                `${leftRow(sortColumnName)} is not null`,
+                `${rightRow(sortColumnName)} is null`
+            ];
+        }
+
+        return Expression.and(conditions);
     }
 }

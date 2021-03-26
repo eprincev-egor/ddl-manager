@@ -32,7 +32,7 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
         const selectPrevRowWhereGreatOrder = select.cloneWith({
             columns: this.allPrevRowColumns(),
             where: this.filterTriggerTable("new", [
-                orderBy.compareRowsByOrder(triggerTable, ">", "new"),
+                orderBy.compareRowsByOrder(triggerTable, "above", "new"),
                 `${triggerTable}.id <> new.id`
             ]),
             intoRow: "prev_row"
@@ -61,10 +61,10 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
                 .hasReferenceWithoutJoins("old")!,
             updateNew: this.updateNew(),
             updatePrev: this.updatePrev(),
-            prevRowIsLess: orderBy.compareRowsByOrder("prev_row", "<", "new", [
+            prevRowIsLess: orderBy.compareRowsByOrder("prev_row", "below", "new", [
                 "prev_row.id is null",
             ]),
-            prevRowIsGreat: orderBy.compareRowsByOrder("prev_row", ">", "new"),
+            prevRowIsGreat: orderBy.compareRowsByOrder("prev_row", "above", "new"),
             selectPrevRowByOrder: this.selectPrevRowByOrder(),
             selectPrevRowByFlag,
 
@@ -80,12 +80,12 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
             ]),
             isLastAndSortMinus: Expression.and([
                 Expression.unknown(`new.${isLastColumnName}`),
-                orderBy.compareRowsByOrder("new", "<", "old")
+                orderBy.compareRowsByOrder("new", "below", "old")
             ]),
             selectPrevRowWhereGreatOrder,
             isNotLastAndSortPlus: Expression.and([
                 Expression.unknown(`not new.${isLastColumnName}`),
-                orderBy.compareRowsByOrder("new", ">", "old")
+                orderBy.compareRowsByOrder("new", "above", "old")
             ]),
             updatePrevAndThisFlag: this.updatePrevAndThisFlag(
                 `(${triggerTable}.id = new.id)`

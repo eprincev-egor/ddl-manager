@@ -156,7 +156,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
             hasOldReference: this.conditions
                 .hasReferenceWithoutJoins("old")!,
             noChanges: this.conditions.noChanges(),
-            newSortIsGreat: orderBy.compareRowsByOrder("new", ">", "old"),
+            newSortIsGreat: orderBy.compareRowsByOrder("new", "above", "old"),
             updateNotChangedIdsWhereSortIsLess,
             updateOnInsert,
             updateOnDelete,
@@ -231,7 +231,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
 
         return [orderBy.compareRowsByOrder(
             cacheRow,
-            "<",
+            "below",
             "new",
             [
                 ...additionalOr,
@@ -270,8 +270,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
                     expression: Expression.unknown(
                         `${this.fromTable().getIdentifier()}.id`
                     ),
-                    type: firstOrder.type,
-                    nulls: firstOrder.nulls
+                    type: firstOrder.type
                 })
             );
         }
