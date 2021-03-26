@@ -15,6 +15,7 @@ export interface ILastRowParams {
     hasNewReference: Expression;
     hasOldReference: Expression;
     noChanges: Expression;
+    noOrderChanges: Expression;
     newSortIsGreat: Expression;
     updateOnDelete: Update;
     updateOnInsert: Update;
@@ -214,9 +215,7 @@ export function buildOneLastRowByArrayReferenceBody(ast: ILastRowParams) {
                             ast.updateNotChangedIds
                         ] : [
                             new If({
-                                if: Expression.unknown(
-                                    `new.${ast.orderByColumnName} is not distinct from old.${ast.orderByColumnName}`
-                                ),
+                                if: ast.noOrderChanges,
                                 then: [
                                     ast.updateNotChangedIds
                                 ],

@@ -82,16 +82,14 @@ export class OrderByItem extends AbstractAstElement {
             rightRow = (columnName: string) => `${rowName}.${columnName}`;
         }
 
-        const sortColumnName = this.getFirstColumnRef()!.name;
-
         return Expression.or([
             ...orPreConditions,
             Expression.and([
-                `${leftRow(sortColumnName)} is not distinct from ${rightRow(sortColumnName)}`,
+                `${this.printRowValue(leftRow)} is not distinct from ${this.printRowValue(rightRow)}`,
                 `${leftRow("id")} ${operator} ${rightRow("id")}`
             ]),
             this.compareRowsNulls(leftRow, vector, rightRow),
-            `${leftRow(sortColumnName)} ${operator} ${rightRow(sortColumnName)}`
+            `${this.printRowValue(leftRow)} ${operator} ${this.printRowValue(rightRow)}`
         ]);
     }
 
@@ -100,7 +98,6 @@ export class OrderByItem extends AbstractAstElement {
         vector: "above" | "below",
         rightRow: CompareRowFunc
     ) {
-        const sortColumnName = this.getFirstColumnRef()!.name;
         let conditions: string[] = [];
 
         // https://postgrespro.ru/docs/postgrespro/10/queries-order
@@ -113,17 +110,28 @@ export class OrderByItem extends AbstractAstElement {
 
         if ( leftShouldBeNull ) {
             conditions = [
-                `${leftRow(sortColumnName)} is null`,
-                `${rightRow(sortColumnName)} is not null`
+                `${this.printRowValue(leftRow)} is null`,
+                `${this.printRowValue(rightRow)} is not null`
             ];
         }
         else {
             conditions = [
-                `${leftRow(sortColumnName)} is not null`,
-                `${rightRow(sortColumnName)} is null`
+                `${this.printRowValue(leftRow)} is not null`,
+                `${this.printRowValue(rightRow)} is null`
             ];
         }
 
         return Expression.and(conditions);
+    }
+
+    private printRowValue(row: CompareRowFunc) {
+        let expression = this.expression;
+        for (const columnRef of this.getColumnReferences()) {
+            expression = expression.replaceColumn(
+                columnRef,
+                Expression.unknown(row(columnRef.name))
+            );
+        }
+        return expression.toString();
     }
 }

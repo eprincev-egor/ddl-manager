@@ -157,6 +157,11 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
                 .hasReferenceWithoutJoins("old")!,
             noChanges: this.conditions.noChanges(),
             newSortIsGreat: orderBy.compareRowsByOrder("new", "above", "old"),
+            noOrderChanges: Expression.and(
+                orderBy.getColumnReferences().map(columnRef =>
+                    `new.${columnRef.name} is not distinct from old.${columnRef.name}`
+                )
+            ),
             updateNotChangedIdsWhereSortIsLess,
             updateOnInsert,
             updateOnDelete,
