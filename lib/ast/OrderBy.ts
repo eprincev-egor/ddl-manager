@@ -47,25 +47,15 @@ export class OrderBy extends AbstractAstElement {
         return this.getColumnReferences()[0];
     }
 
-    rowIsGreatByOrder(
+    compareRowsByOrder(
         leftRow: string,
+        operator: "<" | ">",
         rightRow: string,
         orPreConditions: ConditionElementType[] = []
     ) {
-        return this.items[0]!.rowIsGreatByOrder(
+        return this.items[0]!.compareRowsByOrder(
             leftRow,
-            rightRow,
-            orPreConditions
-        );
-    }
-
-    rowIsLessByOrder(
-        leftRow: string,
-        rightRow: string,
-        orPreConditions: ConditionElementType[] = []
-    ) {
-        return this.items[0]!.rowIsLessByOrder(
-            leftRow,
+            operator,
             rightRow,
             orPreConditions
         );

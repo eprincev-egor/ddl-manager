@@ -57,21 +57,15 @@ export class OrderByItem extends AbstractAstElement {
         return this.getColumnReferences()[0];
     }
 
-    rowIsGreatByOrder(
+    compareRowsByOrder(
         leftRow: string,
+        operator: "<" | ">",
         rightRow: string,
         orPreConditions: ConditionElementType[] = []
     ) {
-        const operator = this.type === "desc" ? ">" : "<";
-        return this.compareRows(leftRow, operator, rightRow, orPreConditions);
-    }
-
-    rowIsLessByOrder(
-        leftRow: string,
-        rightRow: string,
-        orPreConditions: ConditionElementType[] = []
-    ) {
-        const operator = this.type === "desc" ? "<" : ">";
+        if ( this.type === "asc" ) {
+            operator = operator === ">" ? "<" : ">";
+        }
         return this.compareRows(leftRow, operator, rightRow, orPreConditions);
     }
 
