@@ -60,6 +60,30 @@ begin
             return new;
         end if;
 
+        if old.id_country is not null then
+            old_country_name = (
+                select
+                    countries.name
+                from countries
+                where
+                    countries.id = old.id_country
+            );
+        end if;
+
+        if new.id_country is not distinct from old.id_country then
+            new_country_name = old_country_name;
+        else
+            if new.id_country is not null then
+                new_country_name = (
+                    select
+                        countries.name
+                    from countries
+                    where
+                        countries.id = new.id_country
+                );
+            end if;
+        end if;
+
         matched_old = coalesce(old.deleted = 0, false);
         matched_new = coalesce(new.deleted = 0, false);
 
@@ -99,30 +123,6 @@ begin
             inserted_clients_ids = cm_get_inserted_elements(old.clients_ids, new.clients_ids);
             not_changed_clients_ids = cm_get_not_changed_elements(old.clients_ids, new.clients_ids);
             deleted_clients_ids = cm_get_deleted_elements(old.clients_ids, new.clients_ids);
-        end if;
-
-        if old.id_country is not null then
-            old_country_name = (
-                select
-                    countries.name
-                from countries
-                where
-                    countries.id = old.id_country
-            );
-        end if;
-
-        if new.id_country is not distinct from old.id_country then
-            new_country_name = old_country_name;
-        else
-            if new.id_country is not null then
-                new_country_name = (
-                    select
-                        countries.name
-                    from countries
-                    where
-                        countries.id = new.id_country
-                );
-            end if;
         end if;
 
         if not_changed_clients_ids is not null then

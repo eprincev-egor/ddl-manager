@@ -1,4 +1,4 @@
-import { ColumnReference, Expression, NotExpression, UnknownExpressionElement } from "../../../ast";
+import { AbstractExpressionElement, ColumnReference, Expression, NotExpression, UnknownExpressionElement } from "../../../ast";
 import { CacheContext } from "../CacheContext";
 import { TableReference } from "../../../database/schema/TableReference";
 import { flatMap } from "lodash";
@@ -295,8 +295,8 @@ export class ConditionBuilder {
         return Expression.or(filterConditions);
     }
 
-    private replaceTriggerTableRefsTo(
-        expression: Expression | undefined,
+    replaceTriggerTableRefsTo(
+        expression: AbstractExpressionElement | undefined,
         row: string
     ) {
         if ( !expression ) {

@@ -192,6 +192,12 @@ function buildUpdateCaseBody(ast: ArrayCommutativeAst) {
         }),
         new BlankLine(),
 
+        ...assignVariables(ast.oldJoins, "old"),
+        ...reassignVariables(
+            ast.newJoins,
+            ast.oldJoins
+        ),
+
         ...(ast.needMatching ? [
 
             new AssignVariable({
@@ -329,12 +335,6 @@ function buildUpdateCaseBody(ast: ArrayCommutativeAst) {
         ]),
 
         new BlankLine(),
-
-        ...assignVariables(ast.oldJoins, "old"),
-        ...reassignVariables(
-            ast.newJoins,
-            ast.oldJoins
-        ),
 
         ...doIf(
             notChanged && notChanged.needUpdate,

@@ -99,12 +99,13 @@ export class ArrayRefCommutativeTriggerBuilder extends AbstractTriggerBuilder {
         const matchedExpression = new CoalesceFalseExpression(
             Expression.and(
                 this.context.referenceMeta.filters
-            ).replaceTable(
+            )
+            .replaceTable(
                 this.context.triggerTable,
                 new TableReference(this.context.triggerTable, row)
             )
         );
-        return matchedExpression;
+        return this.conditions.replaceTriggerTableRefsTo(matchedExpression, row)!;
     }
 
     private buildJoins(row: "new" | "old") {

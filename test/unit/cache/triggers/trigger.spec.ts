@@ -15,9 +15,6 @@ describe("TriggerFabric", () => {
         if ( /^x-/.test(testName) ) {
             continue;
         }
-        // if ( testName !== "string_agg_where_by_arr_and_joins" ) {
-        //     continue;
-        // }
 
         const files = fs.readdirSync(testDir);
 
