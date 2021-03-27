@@ -1,6 +1,9 @@
 create or replace function cache_trains_for_unit_on_train()
 returns trigger as $body$
+declare matched_old boolean;
+declare matched_new boolean;
 declare inserted_units_ids int8[];
+declare not_changed_units_ids int8[];
 declare deleted_units_ids int8[];
 begin
 
@@ -45,22 +48,48 @@ begin
             return new;
         end if;
 
-        inserted_units_ids = cm_get_inserted_elements(old.units_ids, new.units_ids);
-        deleted_units_ids = cm_get_deleted_elements(old.units_ids, new.units_ids);
+        matched_old = coalesce(old.deleted = 0, false);
+        matched_new = coalesce(new.deleted = 0, false);
 
         if
-            cm_equal_arrays(new.units_ids, old.units_ids)
+            not matched_old
             and
-            new.deleted is not distinct from old.deleted
+            not matched_new
         then
-            if
-                new.units_ids is null
-                or
-                not coalesce(new.deleted = 0, false)
-            then
-                return new;
-            end if;
+            return new;
+        end if;
 
+        if
+            matched_old
+            and
+            not matched_new
+        then
+            inserted_units_ids = null;
+            not_changed_units_ids = null;
+            deleted_units_ids = old.units_ids;
+        end if;
+
+        if
+            not matched_old
+            and
+            matched_new
+        then
+            inserted_units_ids = new.units_ids;
+            not_changed_units_ids = null;
+            deleted_units_ids = null;
+        end if;
+
+        if
+            matched_old
+            and
+            matched_new
+        then
+            inserted_units_ids = cm_get_inserted_elements(old.units_ids, new.units_ids);
+            not_changed_units_ids = cm_get_not_changed_elements(old.units_ids, new.units_ids);
+            deleted_units_ids = cm_get_deleted_elements(old.units_ids, new.units_ids);
+        end if;
+
+        if not_changed_units_ids is not null then
             update operation.unit set
                 train_numbers_number = array_append(
                     cm_array_remove_one_element(
@@ -84,21 +113,10 @@ begin
                     ) as item(number)
                 )
             where
-                operation.unit.id = any( new.units_ids::bigint[] );
-
-            return new;
+                operation.unit.id = any( not_changed_units_ids::bigint[] );
         end if;
 
-        if cm_equal_arrays(old.units_ids, new.units_ids) then
-            inserted_units_ids = new.units_ids;
-            deleted_units_ids = old.units_ids;
-        end if;
-
-        if
-            deleted_units_ids is not null
-            and
-            old.deleted = 0
-        then
+        if deleted_units_ids is not null then
             update operation.unit set
                 train_numbers_number = cm_array_remove_one_element(
                     train_numbers_number,
@@ -119,11 +137,7 @@ begin
                 operation.unit.id = any( deleted_units_ids::bigint[] );
         end if;
 
-        if
-            inserted_units_ids is not null
-            and
-            new.deleted = 0
-        then
+        if inserted_units_ids is not null then
             update operation.unit set
                 train_numbers_number = array_append(
                     train_numbers_number,

@@ -1,6 +1,9 @@
 create or replace function cache_test_for_order_on_invoice()
 returns trigger as $body$
+declare matched_old boolean;
+declare matched_new boolean;
 declare inserted_orders_ids bigint[];
+declare not_changed_orders_ids bigint[];
 declare deleted_orders_ids bigint[];
 begin
 
@@ -71,26 +74,52 @@ begin
             return new;
         end if;
 
-        inserted_orders_ids = cm_get_inserted_elements(old.orders_ids, new.orders_ids);
-        deleted_orders_ids = cm_get_deleted_elements(old.orders_ids, new.orders_ids);
+        matched_old = coalesce(old.id_invoice_type = 2
+            and
+            old.deleted = 0, false);
+        matched_new = coalesce(new.id_invoice_type = 2
+            and
+            new.deleted = 0, false);
 
         if
-            cm_equal_arrays(new.orders_ids, old.orders_ids)
+            not matched_old
             and
-            new.id_invoice_type is not distinct from old.id_invoice_type
-            and
-            new.deleted is not distinct from old.deleted
+            not matched_new
         then
-            if
-                new.orders_ids is null
-                or
-                not coalesce(new.id_invoice_type = 2, false)
-                or
-                not coalesce(new.deleted = 0, false)
-            then
-                return new;
-            end if;
+            return new;
+        end if;
 
+        if
+            matched_old
+            and
+            not matched_new
+        then
+            inserted_orders_ids = null;
+            not_changed_orders_ids = null;
+            deleted_orders_ids = old.orders_ids;
+        end if;
+
+        if
+            not matched_old
+            and
+            matched_new
+        then
+            inserted_orders_ids = new.orders_ids;
+            not_changed_orders_ids = null;
+            deleted_orders_ids = null;
+        end if;
+
+        if
+            matched_old
+            and
+            matched_new
+        then
+            inserted_orders_ids = cm_get_inserted_elements(old.orders_ids, new.orders_ids);
+            not_changed_orders_ids = cm_get_not_changed_elements(old.orders_ids, new.orders_ids);
+            deleted_orders_ids = cm_get_deleted_elements(old.orders_ids, new.orders_ids);
+        end if;
+
+        if not_changed_orders_ids is not null then
             update public.order set
                 all_invoices_has_payment_every_payment_date = array_append(
                     cm_array_remove_one_element(
@@ -139,23 +168,10 @@ begin
                         0
                 end
             where
-                public.order.id = any( new.orders_ids::bigint[] );
-
-            return new;
+                public.order.id = any( not_changed_orders_ids::bigint[] );
         end if;
 
-        if cm_equal_arrays(old.orders_ids, new.orders_ids) then
-            inserted_orders_ids = new.orders_ids;
-            deleted_orders_ids = old.orders_ids;
-        end if;
-
-        if
-            deleted_orders_ids is not null
-            and
-            old.id_invoice_type = 2
-            and
-            old.deleted = 0
-        then
+        if deleted_orders_ids is not null then
             update public.order set
                 all_invoices_has_payment_every_payment_date = cm_array_remove_one_element(
                     all_invoices_has_payment_every_payment_date,
@@ -198,13 +214,7 @@ begin
                 public.order.id = any( deleted_orders_ids::bigint[] );
         end if;
 
-        if
-            inserted_orders_ids is not null
-            and
-            new.id_invoice_type = 2
-            and
-            new.deleted = 0
-        then
+        if inserted_orders_ids is not null then
             update public.order set
                 all_invoices_has_payment_every_payment_date = array_append(
                     all_invoices_has_payment_every_payment_date,
