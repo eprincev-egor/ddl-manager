@@ -1,6 +1,7 @@
 import { Cache } from "../../ast";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
-import { CommutativeTriggerBuilder } from "./CommutativeTriggerBuilder";
+import { CommutativeTriggerBuilder } from "./commutative/CommutativeTriggerBuilder";
+import { ArrayRefCommutativeTriggerBuilder } from "./commutative/ArrayRefCommutativeTriggerBuilder";
 import { Database } from "../../database/schema/Database";
 import { TableID } from "../../database/schema/TableID";
 import { buildFrom } from "../processor/buildFrom";
@@ -64,6 +65,10 @@ export class TriggerBuilderFactory {
             from.length > 1 || 
             from.length === 1 && isFromJoin
         );
+        const arrayReference = context.referenceMeta.expressions.some(expression =>
+            expression.isBinary("&&") ||
+            expression.isBinary("@>")
+        );
 
         if ( needUniversalTrigger ) {
             return UniversalTriggerBuilder;
@@ -79,16 +84,18 @@ export class TriggerBuilderFactory {
                 return;
             }
 
-            return CommutativeTriggerBuilder;
+            if ( arrayReference ) {
+                return ArrayRefCommutativeTriggerBuilder;
+            }
+            else {
+                return CommutativeTriggerBuilder;
+            }
         }
         else if ( this.oneLastRow(context) ) {
             const orderBy = context.cache.select.orderBy!;
             const orderByColumns = orderBy.getColumnReferences();
             const firstOrderColumn = orderByColumns[0];
 
-            const arrayReference = context.referenceMeta.expressions.some(expression =>
-                expression.isBinary("&&")
-            );
             if ( arrayReference ) {
                 return LastRowByArrayReferenceTriggerBuilder;
             }

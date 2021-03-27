@@ -1,7 +1,7 @@
-cache totals for companies (
-    select sum( orders.profit ) as orders_total
-    from orders
+cache invoices for orders (
+    select sum( invoice.profit ) as invoices_profit
+    from invoice
     where
-        orders.companies_ids @> array[ companies.id ] and
-        orders.deleted = 0
+        invoice.orders_ids @> array[ orders.id ]::bigint[] and
+        invoice.deleted = 0
 )

@@ -84,11 +84,11 @@ export class ConditionBuilder {
         }
     }
 
-    needUpdateConditionOnUpdate(row: string) {
+    needUpdateConditionOnUpdate(row: string, arrVarPrefix: string) {
         const needUpdate = replaceArrayNotNullOn(
             this.context,
             this.buildNeedUpdateConditionOnUpdate(),
-            buildArrVars(this.context, row)
+            buildArrVars(this.context, arrVarPrefix)
         );
         const output = this.replaceTriggerTableRefsTo(needUpdate, row);
         return output;
@@ -100,12 +100,12 @@ export class ConditionBuilder {
         return output;
     }
 
-    simpleWhereOnUpdate(row: string) {
+    simpleWhereOnUpdate(row: string, arrVarPrefix: string) {
         const simpleWhere = this.buildSimpleWhere();
         const output = replaceArrayNotNullOn(
             this.context,
             this.replaceTriggerTableRefsTo(simpleWhere, row),
-            buildArrVars(this.context, row)
+            buildArrVars(this.context, arrVarPrefix)
         );
         return output;
     }

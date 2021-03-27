@@ -15,6 +15,9 @@ describe("TriggerFabric", () => {
         if ( /^x-/.test(testName) ) {
             continue;
         }
+        if ( testName !== "sum_where_includes_array" ) {
+            continue;
+        }
 
         const files = fs.readdirSync(testDir);
 

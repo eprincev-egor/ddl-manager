@@ -1,9 +1,9 @@
-import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
-import { buildCommutativeBody } from "./body/buildCommutativeBody";
-import { Update } from "../../ast";
-import { buildJoinVariables } from "../processor/buildJoinVariables";
-import { findJoinsMeta } from "../processor/findJoinsMeta";
-import { buildArrVars } from "../processor/buildArrVars";
+import { AbstractTriggerBuilder } from "../AbstractTriggerBuilder";
+import { buildCommutativeBody } from "../body/buildCommutativeBody";
+import { Update } from "../../../ast";
+import { buildJoinVariables } from "../../processor/buildJoinVariables";
+import { findJoinsMeta } from "../../processor/findJoinsMeta";
+import { buildArrVars } from "../../processor/buildArrVars";
 
 export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
@@ -43,31 +43,42 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 update: deltaUpdate,
                 exitIf: this.conditions.exitFromDeltaUpdateIf(),
                 old: {
-                    needUpdate: this.conditions.needUpdateConditionOnUpdate("old"),
+                    needUpdate: this.conditions.needUpdateConditionOnUpdate(
+                        "old",
+                        "deleted_"
+                    ),
                     update: this.needUpdateInDelta() ? new Update({
                         table: this.context.cache.for.toString(),
                         set: this.setItems.minus(),
-                        where: this.conditions.simpleWhereOnUpdate("old")
+                        where: this.conditions.simpleWhereOnUpdate(
+                            "old",
+                            "deleted_"
+                        )
                     }) : undefined
                 },
                 new: {
-                    needUpdate: this.conditions.needUpdateConditionOnUpdate("new"),
+                    needUpdate: this.conditions.needUpdateConditionOnUpdate(
+                        "new", "inserted_"
+                    ),
                     update: this.needUpdateInDelta() ? new Update({
                         table: this.context.cache.for.toString(),
                         set: this.setItems.plus(),
-                        where: this.conditions.simpleWhereOnUpdate("new")
+                        where: this.conditions.simpleWhereOnUpdate("new", "inserted_")
                     }) : undefined
                 }
             },
-            buildArrVars(this.context, "new"),
-            buildArrVars(this.context, "old")
+            buildArrVars(this.context, "inserted_"),
+            buildArrVars(this.context, "deleted_")
         );
         
         return body;
     }
 
     private needUpdateInDelta() {
-        const hasCondition = !!this.conditions.needUpdateConditionOnUpdate("new");
+        const hasCondition = !!this.conditions.needUpdateConditionOnUpdate(
+            "new",
+            "inserted_"
+        );
         const hasUnknownReferenceExpressions = this.context.referenceMeta.unknownExpressions.length;
 
         return (

@@ -1885,39 +1885,34 @@ $$;
         assert.strictEqual(actualErr.message, "success");
     });
 
-
     it("test insert new ids to array reference and change sum", async() => {
         const folderPath = ROOT_TMP_PATH + "/deleted_and_orders_ids";
         fs.mkdirSync(folderPath);
 
         await db.query(`
             create table orders (
-                id serial primary key
+                id serial primary key,
+                name text
             );
-
+            
             create table invoices (
                 id serial primary key,
+                name text,
+                deleted smallint default 0,
                 orders_ids bigint[],
                 profit numeric
             );
-
-            insert into orders default values;
-            insert into orders default values;
-            insert into invoices
-                (orders_ids, profit)
-            values
-                (array[1]::bigint[], 200);
-
         `);
 
-        fs.writeFileSync(folderPath + "/gtd_totals.sql", `
+        fs.writeFileSync(folderPath + "/invoices.sql", `
             cache invoices for orders (
                 select
                     sum( invoices.profit ) as invoices_profit
 
                 from invoices
                 where
-                    invoices.orders_ids && ARRAY[orders.id]::bigint[]
+                    invoices.orders_ids && ARRAY[orders.id]::bigint[] and
+                    invoices.deleted = 0
             )
         `);
 
@@ -1927,31 +1922,144 @@ $$;
             throwError: true
         });
 
-        let result = await db.query(`
-            select id, invoices_profit
+
+        const testSql = `
+
+        create or replace function check_units(check_label text)
+        returns void as $body$
+        declare invalid_orders text;
+        begin
+        
+            select
+                string_agg(
+                    '    id: ' || orders.id || E'\n' ||
+                    '    name: ' || coalesce(orders.name, '<NULL>') || E'\n' ||
+                    '    profit: should_be: ' || coalesce(should_be.invoices_profit::text, '<NULL>') || E'\n' ||
+                    '    profit: actual: ' || coalesce(orders.invoices_profit::text, '<NULL>')
+        
+                    , E'\n\n'
+                )
+            into
+                invalid_orders
+        
             from orders
-            order by id
-        `);
-        assert.deepStrictEqual(result.rows, [
-            {id: 1, invoices_profit: "200"},
-            {id: 2, invoices_profit: "0"}
-        ]);
-
-
-        await db.query(`
+        
+            left join lateral (
+                select
+                    coalesce(sum( invoices.profit ), 0) as invoices_profit
+        
+                from invoices
+                where
+                    invoices.orders_ids && array[ orders.id ]::bigint[] and
+                    invoices.deleted = 0
+            ) as should_be on true
+            where
+                should_be.invoices_profit is distinct from orders.invoices_profit;
+        
+        
+            if invalid_orders is not null then
+                raise exception E'\n%, invalid orders:\n%\n\n\ninvoices:\n%\n\n\n', 
+                    check_label,
+                    invalid_orders,
+                    (
+                        select
+                        string_agg(
+                            '    id: ' || invoices.id || E',\n' ||
+                            '    name: ' || coalesce(invoices.name, '<NULL>') || E',\n' ||
+                            '    orders_ids: ' || coalesce(invoices.orders_ids::text, '<NULL>') || E',\n' ||
+                            '    deleted: ' || coalesce(invoices.deleted::text, '<NULL>') || E',\n' ||
+                            '    profit: ' || coalesce(invoices.profit::text, '<NULL>')
+                            , E'\n\n'
+                        )
+                        from invoices
+                    );
+            else
+                raise notice '% - success', check_label;
+            end if;
+        end
+        $body$
+        language plpgsql;
+        
+        do $$
+        begin
+        
+            insert into orders (name) values ('order 1');
+            insert into orders (name) values ('order 2');
+        
+            PERFORM check_units('label 1, insert 2 orders');
+        
+            insert into invoices
+                (name, orders_ids, profit)
+            values
+                ('invoice 1', ARRAY[1], 100),
+                ('invoice 2', ARRAY[2], 250);
+            PERFORM check_units('label 2, insert 2 invoices');
+        
+            delete from invoices;
+            PERFORM check_units('label 3, delete 2 invoices');
+        
+            insert into invoices
+                (name, orders_ids, profit)
+            values
+                ('invoice 1', ARRAY[1], 99),
+                ('invoice 2', ARRAY[2], 250),
+                ('invoice 3', ARRAY[1,2], 1000);
+            PERFORM check_units('label 4, insert 3 invoices');
+        
             update invoices set
-                orders_ids = array[2,1]::bigint[],
-                profit = 700
-        `);
-        result = await db.query(`
-            select id, invoices_profit
-            from orders
-            order by id
-        `);
-        assert.deepStrictEqual(result.rows, [
-            {id: 1, invoices_profit: "700"},
-            {id: 2, invoices_profit: "700"}
-        ]);
+                profit = profit - 5;
+            PERFORM check_units('label 5, update all invoices, set profit -= 5');
+        
+            update invoices set
+                profit = profit + 5;
+            PERFORM check_units('label 6, update all invoices, set profit += 5');
+        
+        
+            update invoices set
+                deleted = 1
+            where name = 'invoice 3';
+            PERFORM check_units('label 7, update last invoice, set deleted = 1');
+        
+            update invoices set
+                deleted = 0,
+                profit = 2000
+            where name = 'invoice 3';
+            PERFORM check_units('label 8, return back deleted invoice and change him profit');
+        
+            update invoices set
+                orders_ids = orders_ids || array[0]::bigint[];
+            PERFORM check_units('label 9, add unknown order id to all invoices');
+        
+            update invoices set
+                orders_ids = array[1, 2];
+            PERFORM check_units('label 10, link all invoices with all orders');
+        
+            update invoices set
+                orders_ids = array[1],
+                deleted = 1;
+            PERFORM check_units('label 11, all invoices set deleted = 1 and link with only first order');
+        
+            update invoices set
+                orders_ids = array[1, 2],
+                deleted = 0,
+                profit = 200
+            ;
+            PERFORM check_units('label 12, all invoices and all columns');
+        
+            raise exception 'success';
+        end
+        $$;
+        
+        `;
+
+        let actualErr: Error = new Error("expected error");
+        try {
+            await db.query(testSql);
+        } catch(err) {
+            actualErr = err;
+        }
+
+        assert.strictEqual(actualErr.message, "success");
     });
 
 });
