@@ -2,7 +2,10 @@ create or replace function cache_totals_for_companies_on_orders()
 returns trigger as $body$
 declare old_country_name text;
 declare new_country_name text;
+declare matched_old boolean;
+declare matched_new boolean;
 declare inserted_clients_ids integer[];
+declare not_changed_clients_ids integer[];
 declare deleted_clients_ids integer[];
 begin
 
@@ -57,8 +60,46 @@ begin
             return new;
         end if;
 
-        inserted_clients_ids = cm_get_inserted_elements(old.clients_ids, new.clients_ids);
-        deleted_clients_ids = cm_get_deleted_elements(old.clients_ids, new.clients_ids);
+        matched_old = coalesce(old.deleted = 0, false);
+        matched_new = coalesce(new.deleted = 0, false);
+
+        if
+            not matched_old
+            and
+            not matched_new
+        then
+            return new;
+        end if;
+
+        if
+            matched_old
+            and
+            not matched_new
+        then
+            inserted_clients_ids = null;
+            not_changed_clients_ids = null;
+            deleted_clients_ids = old.clients_ids;
+        end if;
+
+        if
+            not matched_old
+            and
+            matched_new
+        then
+            inserted_clients_ids = new.clients_ids;
+            not_changed_clients_ids = null;
+            deleted_clients_ids = null;
+        end if;
+
+        if
+            matched_old
+            and
+            matched_new
+        then
+            inserted_clients_ids = cm_get_inserted_elements(old.clients_ids, new.clients_ids);
+            not_changed_clients_ids = cm_get_not_changed_elements(old.clients_ids, new.clients_ids);
+            deleted_clients_ids = cm_get_deleted_elements(old.clients_ids, new.clients_ids);
+        end if;
 
         if old.id_country is not null then
             old_country_name = (
@@ -84,19 +125,7 @@ begin
             end if;
         end if;
 
-        if
-            cm_equal_arrays(new.clients_ids, old.clients_ids)
-            and
-            new.deleted is not distinct from old.deleted
-        then
-            if
-                new.clients_ids is null
-                or
-                not coalesce(new.deleted = 0, false)
-            then
-                return new;
-            end if;
-
+        if not_changed_clients_ids is not null then
             update companies set
                 countries_names_name = array_append(
                     cm_array_remove_one_element(
@@ -120,21 +149,10 @@ begin
                     ) as item(name)
                 )
             where
-                companies.id = any( new.clients_ids );
-
-            return new;
+                companies.id = any( not_changed_clients_ids );
         end if;
 
-        if cm_equal_arrays(old.clients_ids, new.clients_ids) then
-            inserted_clients_ids = new.clients_ids;
-            deleted_clients_ids = old.clients_ids;
-        end if;
-
-        if
-            deleted_clients_ids is not null
-            and
-            old.deleted = 0
-        then
+        if deleted_clients_ids is not null then
             update companies set
                 countries_names_name = cm_array_remove_one_element(
                     countries_names_name,
@@ -155,11 +173,7 @@ begin
                 companies.id = any( deleted_clients_ids );
         end if;
 
-        if
-            inserted_clients_ids is not null
-            and
-            new.deleted = 0
-        then
+        if inserted_clients_ids is not null then
             update companies set
                 countries_names_name = array_append(
                     countries_names_name,

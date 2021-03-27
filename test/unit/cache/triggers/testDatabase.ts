@@ -43,6 +43,10 @@ const userTaskID = new TableID(
     "public",
     "user_task",
 );
+const unitsID = new TableID(
+    "public",
+    "units",
+);
 
 export const testDatabase = new Database([
     new Table(
@@ -232,6 +236,23 @@ export const testDatabase = new Database([
             new Column(
                 operationsID,
                 "units_ids",
+                "bigint[]"
+            )
+        ]
+    ),
+
+    new Table(
+        unitsID.schema,
+        unitsID.name,
+        [
+            new Column(
+                unitsID,
+                "id",
+                "integer"
+            ),
+            new Column(
+                unitsID,
+                "orders_ids",
                 "bigint[]"
             )
         ]

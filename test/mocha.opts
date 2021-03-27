@@ -4,4 +4,4 @@
 --recursive
 --timeout 5000
 --exit
-test/**/TestCache.spec.ts
+test/**/*.spec.ts
