@@ -1884,4 +1884,74 @@ $$;
 
         assert.strictEqual(actualErr.message, "success");
     });
+
+
+    it("test insert new ids to array reference and change sum", async() => {
+        const folderPath = ROOT_TMP_PATH + "/deleted_and_orders_ids";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key
+            );
+
+            create table invoices (
+                id serial primary key,
+                orders_ids bigint[],
+                profit numeric
+            );
+
+            insert into orders default values;
+            insert into orders default values;
+            insert into invoices
+                (orders_ids, profit)
+            values
+                (array[1]::bigint[], 200);
+
+        `);
+
+        fs.writeFileSync(folderPath + "/gtd_totals.sql", `
+            cache invoices for orders (
+                select
+                    sum( invoices.profit ) as invoices_profit
+
+                from invoices
+                where
+                    invoices.orders_ids && ARRAY[orders.id]::bigint[]
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        let result = await db.query(`
+            select id, invoices_profit
+            from orders
+            order by id
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, invoices_profit: "200"},
+            {id: 2, invoices_profit: "0"}
+        ]);
+
+
+        await db.query(`
+            update invoices set
+                orders_ids = array[2,1]::bigint[],
+                profit = 700
+        `);
+        result = await db.query(`
+            select id, invoices_profit
+            from orders
+            order by id
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, invoices_profit: "700"},
+            {id: 2, invoices_profit: "700"}
+        ]);
+    });
+
 });
