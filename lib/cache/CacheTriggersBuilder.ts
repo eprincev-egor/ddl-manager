@@ -188,14 +188,15 @@ export class CacheTriggersBuilder {
                 throw new Error("order by many items is not supported");
             }
 
-            const fromTableRef = select.from[0]!.table;
-            const allColumnsRefs = orderBy.getColumnReferences();
-            const orderByJoinedColumns = allColumnsRefs.filter(columnRef =>
-                !columnRef.tableReference.equal(fromTableRef)
-            );
-            for (const columnRef of orderByJoinedColumns) {
-                const from = columnRef.tableReference.getIdentifier();
-                throw new Error(`order by joined table "${from}" is not supported`);
+            
+            if ( select.from.length === 0 ) {
+                throw new Error("required: from ...");
+            }
+            if ( select.from.length > 1 ) {
+                throw new Error("multi from is not supported here");
+            }
+            if ( select.from[0].joins.length ) {
+                throw new Error("joins is not supported here");
             }
         }
 

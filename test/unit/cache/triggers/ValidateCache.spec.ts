@@ -70,7 +70,24 @@ describe("TriggerFabric, validate cache", () => {
         );
     });
 
-    it("error on: order by joined tables", () => {
+    it("error on: multi from", () => {
+        const builder = new CacheTriggersBuilder(
+            `cache totals for companies (
+                select companies.name as name_1
+
+                order by companies.id
+                limit 1
+            )
+        `, new Database([]));
+
+        assert.throws(() => {
+            builder.createTriggers();
+        }, (err: Error) =>
+            /required: from \.\.\./.test(err.message)
+        );
+    });
+
+    it("error on: joins", () => {
         const builder = new CacheTriggersBuilder(
             `cache totals for companies (
                 select orders.date as order_date
@@ -87,7 +104,25 @@ describe("TriggerFabric, validate cache", () => {
         assert.throws(() => {
             builder.createTriggers();
         }, (err: Error) =>
-            /order by joined table "public\.order_type" is not supported/.test(err.message)
+            /joins is not supported here/.test(err.message)
+        );
+    });
+
+    it("error on: multi from", () => {
+        const builder = new CacheTriggersBuilder(
+            `cache totals for companies (
+                select orders.date as order_date
+                from orders, fin_operations
+
+                order by fin_operations.id
+                limit 1
+            )
+        `, new Database([]));
+
+        assert.throws(() => {
+            builder.createTriggers();
+        }, (err: Error) =>
+            /multi from is not supported here/.test(err.message)
         );
     });
 });
