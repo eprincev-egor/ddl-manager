@@ -1,6 +1,7 @@
 cache payments for invoice (
     select
-        string_agg(distinct payment_orders.number, ', ') as payments_no
+        sum(payment_orders.total, ', ') as payments_total
+
     from payment_orders
     where
         payment_orders.deleted = 0 and

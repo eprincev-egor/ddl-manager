@@ -16,15 +16,16 @@ begin
 
     update invoice set
         (
-            payments_no_number,
-            payments_no
+            payments_total
         ) = (
             select
-                array_agg(payment_orders.number) as payments_no_number,
-                string_agg(distinct
-        payment_orders.number,
-        ', '
-    ) as payments_no
+                coalesce(
+        sum(
+            payment_orders.total,
+            ', '
+        ),
+        0
+    ) as payments_total
 
             from payment_orders
 

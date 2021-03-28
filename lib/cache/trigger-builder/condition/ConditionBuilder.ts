@@ -118,7 +118,7 @@ export class ConditionBuilder {
         );
 
         const hasNoReference = this.hasNoReference("new");
-        if ( hasNoReference ) {
+        if ( hasNoReference && !hasNoReference.isEmpty() ) {
             conditions.unshift( hasNoReference );
         }
 
