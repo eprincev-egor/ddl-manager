@@ -4,32 +4,14 @@ import {
     HardCode,
     BlankLine,
     Expression,
-    Declare,
-    AssignVariable,
-    SimpleSelect,
-    AbstractAstElement,
-    ColumnReference
+    Declare
 } from "../../../ast";
 import { doIf } from "./util/doIf";
 import { exitIf } from "./util/exitIf";
 import { Update } from "../../../ast/Update";
-import { TableReference } from "../../../database/schema/TableReference";
-
-export interface IVariable {
-    name: string;
-    type: string;
-}
-
-export interface IJoin {
-    variable: IVariable;
-    table: {
-        ref: TableReference;
-        column: ColumnReference;
-    };
-    on: {
-        column: ColumnReference;
-    }
-}
+import { IJoin } from "../../processor/buildJoinVariables";
+import { assignVariables } from "./util/assignVariables";
+import { reassignVariables } from "./util/reassignVariables";
 
 export interface ICase {
     hasReferenceWithoutJoins?: Expression,
@@ -49,12 +31,6 @@ export interface IDeltaCase extends ICase {
     };
 }
 
-export interface IArrVar {
-    name: string;
-    type: string;
-    triggerColumn: string;
-}
-
 export function buildCommutativeBody(
     needInsertCase: boolean,
     hasMutableColumns: boolean,
@@ -63,9 +39,7 @@ export function buildCommutativeBody(
     newJoins: IJoin[],
     oldCase: ICase,
     newCase: ICase,
-    deltaCase: IDeltaCase,
-    insertedArrElements: IArrVar[],
-    deletedArrElements: IArrVar[]
+    deltaCase: IDeltaCase
 ) {
     const body = new Body({
         declares: [
@@ -80,19 +54,7 @@ export function buildCommutativeBody(
                     name: join.variable.name,
                     type: join.variable.type
                 })
-            ),
-            ...insertedArrElements.map(insertedVar =>
-                new Declare({
-                    name: insertedVar.name,
-                    type: insertedVar.type
-                })
-            ),
-            ...deletedArrElements.map(deletedVar =>
-                new Declare({
-                    name: deletedVar.name,
-                    type: deletedVar.type
-                })
-            ),
+            )
         ],
         statements: [
             ...buildInsertOrDeleteCase(
@@ -109,9 +71,7 @@ export function buildCommutativeBody(
                         noChanges,
                         oldJoins,
                         newJoins,
-                        deltaCase,
-                        insertedArrElements,
-                        deletedArrElements
+                        deltaCase
                     )
                 })
             ] : []),
@@ -165,9 +125,7 @@ function buildUpdateCaseBody(
     noChanges: Expression,
     oldJoins: IJoin[],
     newJoins: IJoin[],
-    deltaCase: IDeltaCase,
-    insertedArrElements: IArrVar[],
-    deletedArrElements: IArrVar[]
+    deltaCase: IDeltaCase
 ) {
     const oldUpdate = deltaCase.old.update;
     const newUpdate = deltaCase.new.update;
@@ -183,11 +141,6 @@ function buildUpdateCaseBody(
         }),
         new BlankLine(),
 
-        ...assignArrVars(
-            insertedArrElements,
-            deletedArrElements
-        ),
-
         ...assignVariables(oldJoins, "old"),
         ...reassignVariables(
             newJoins,
@@ -196,12 +149,6 @@ function buildUpdateCaseBody(
 
         ...buildDeltaUpdate(deltaCase),
 
-        ...resetArraysIfNotChangedColumns(
-            deltaCase,
-            insertedArrElements,
-            deletedArrElements
-        ),
-        
         new BlankLine(),
 
         ...doIf(
@@ -245,246 +192,4 @@ function buildDeltaUpdate(deltaCase: IDeltaCase) {
             deltaCase.update
         ]
     }
-}
-
-function assignVariables(joins: IJoin[], row: "new" | "old") {
-    const lines: AbstractAstElement[] = [];
-
-    const combinedJoins = groupJoinsByTableAndFilter(joins);
-
-    for (const combinedJoin of combinedJoins) {
-        lines.push(
-            new If({
-                if: Expression.and([
-                    replaceTableToVariableOrRow(
-                        combinedJoin.byColumn,
-                        joins,
-                        row
-                    ) + " is not null"
-                ]),
-                then: assignCombinedJoinVariables(
-                    combinedJoin,
-                    joins,
-                    row
-                )
-            })
-        );
-
-        lines.push( new BlankLine() );
-    }
-
-    return lines;
-}
-
-function replaceTableToVariableOrRow(
-    columnRef: ColumnReference,
-    joins: IJoin[],
-    row: "new" | "old"
-) {
-    const sourceJoin = joins.find(join =>
-        join.table.ref.equal(columnRef.tableReference) &&
-        join.table.column.name === columnRef.name
-    );
-    if ( sourceJoin ) {
-        return sourceJoin.variable.name;
-    }
-
-    return `${row}.${columnRef.name}`
-}
-
-function assignCombinedJoinVariables(
-    combinedJoin: ICombinedJoin,
-    joins: IJoin[],
-    row: "new" | "old"
-) {
-    if ( combinedJoin.variables.length === 1 ) {
-        return [
-            new AssignVariable({
-                variable: combinedJoin.variables[0],
-                value: new SimpleSelect({
-                    columns: combinedJoin.joinedColumns,
-                    from: combinedJoin.joinedTable.table,
-                    where: replaceTableToVariableOrRow(
-                        combinedJoin.byColumn,
-                        joins,
-                        row
-                    )
-                })
-            })
-        ]
-    }
-    
-    return [
-        new SimpleSelect({
-            columns: combinedJoin.joinedColumns,
-            into: combinedJoin.variables,
-            from: combinedJoin.joinedTable.table,
-            where: replaceTableToVariableOrRow(
-                combinedJoin.byColumn,
-                joins,
-                row
-            )
-        })
-    ];
-}
-
-interface ICombinedJoin {
-    variables: string[];
-    joinedColumns: string[];
-    joinedTable: TableReference;
-    byColumn: ColumnReference;
-}
-function groupJoinsByTableAndFilter(joins: IJoin[]) {
-    const combinedJoinByKey: {[key: string]: ICombinedJoin} = {};
-
-    for (const join of joins) {
-        const key = join.on.column.toString();
-
-        const defaultCombinedJoin: ICombinedJoin = {
-            variables: [],
-            joinedColumns: [],
-            joinedTable: join.table.ref,
-            byColumn: join.on.column
-        };
-        const combinedJoin: ICombinedJoin = combinedJoinByKey[ key ] || defaultCombinedJoin;
-
-        combinedJoin.variables.push(
-            join.variable.name
-        );
-        combinedJoin.joinedColumns.push(
-            join.table.column.name
-        );
-        combinedJoinByKey[ key ] = combinedJoin;
-    }
-
-    const combinedJoins = Object.values(combinedJoinByKey);
-    return combinedJoins;
-}
-
-function reassignVariables(newJoins: IJoin[], oldJoins: IJoin[]) {
-    const lines: AbstractAstElement[] = [];
-
-    const oldCombinedJoins = groupJoinsByTableAndFilter(oldJoins);
-    const newCombinedJoins = groupJoinsByTableAndFilter(newJoins);
-
-    for (let i = 0, n = newCombinedJoins.length; i < n; i++) {
-        const newCombinedJoin = newCombinedJoins[i];
-        const oldCombinedJoin = oldCombinedJoins[i];
-        
-        const newByColumn = replaceTableToVariableOrRow(
-            newCombinedJoin.byColumn,
-            newJoins,
-            "new"
-        );
-        const oldByColumn = replaceTableToVariableOrRow(
-            oldCombinedJoin.byColumn,
-            oldJoins,
-            "old"
-        );
-
-        lines.push(new If({
-            if: Expression.and([
-                newByColumn + " is not distinct from " + oldByColumn
-            ]),
-            then: newCombinedJoin.variables.map((newVarName, j) => 
-                new AssignVariable({
-                    variable: newVarName,
-                    value: new HardCode({
-                        sql: oldCombinedJoin.variables[j]
-                    })
-                })
-            ),
-            else: [
-                new If({
-                    if: Expression.and([
-                        `${newByColumn} is not null`
-                    ]),
-                    then: assignCombinedJoinVariables(
-                        newCombinedJoin,
-                        newJoins,
-                        "new"
-                    )
-                })
-            ]
-        }));
-        
-        lines.push( new BlankLine() );
-    }
-    
-    return lines;
-}
-
-function assignArrVars(
-    insertedArrElements: IArrVar[],
-    deletedArrElements: IArrVar[]
-) {
-    const output: AbstractAstElement[] = [];
-
-    for (const insertedVar of insertedArrElements) {
-        const assign = new AssignVariable({
-            variable: insertedVar.name,
-            value: new HardCode({
-                sql: `cm_get_inserted_elements(old.${insertedVar.triggerColumn}, new.${insertedVar.triggerColumn})`
-            })
-        });
-        output.push(assign);
-    }
-
-    for (const deletedVar of deletedArrElements) {
-        const assign = new AssignVariable({
-            variable: deletedVar.name,
-            value: new HardCode({
-                sql: `cm_get_deleted_elements(old.${deletedVar.triggerColumn}, new.${deletedVar.triggerColumn})`
-            })
-        });
-        output.push(assign);
-    }
-
-    if ( output.length ) {
-        output.push(new BlankLine());
-    }
-
-    return output;
-}
-
-function resetArraysIfNotChangedColumns(
-    deltaCase: IDeltaCase,
-    insertedArrElements: IArrVar[],
-    deletedArrElements: IArrVar[]
-) {
-    if ( !deltaCase.exitIf || !insertedArrElements.length ) {
-        return [];
-    }
-
-    const output: AbstractAstElement[] = [
-        new BlankLine()
-    ];
-
-    for (let i = 0, n = insertedArrElements.length; i < n; i++) {
-        const inserted = insertedArrElements[i];
-        const deleted = deletedArrElements[i];
-        const {triggerColumn} = inserted;
-
-        output.push(new If({
-            if: new HardCode({
-                sql: `cm_equal_arrays(old.${triggerColumn}, new.${triggerColumn})`
-            }),
-            then: [
-                new AssignVariable({
-                    variable: inserted.name,
-                    value: new HardCode({
-                        sql: `new.${triggerColumn}`
-                    })
-                }),
-                new AssignVariable({
-                    variable: deleted.name,
-                    value: new HardCode({
-                        sql: `old.${triggerColumn}`
-                    })
-                })
-            ]
-        }));
-    }
-
-    return output;
 }

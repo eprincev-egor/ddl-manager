@@ -1,7 +1,7 @@
 import { AbstractTriggerBuilder } from "../AbstractTriggerBuilder";
-import { buildArrayCommutativeBody, IArrVar } from "../body/buildArrayCommutativeBody";
+import { buildArrayCommutativeBody } from "../body/buildArrayCommutativeBody";
 import { ColumnReference, Expression, Update } from "../../../ast";
-import { buildArrVars } from "../../processor/buildArrVars";
+import { buildArrVars, IArrVar } from "../../processor/buildArrVars";
 import { CoalesceFalseExpression } from "../../../ast/expression/CoalesceFalseExpression";
 import { TableReference } from "../../../database/schema/TableReference";
 import { findJoinsMeta } from "../../processor/findJoinsMeta";

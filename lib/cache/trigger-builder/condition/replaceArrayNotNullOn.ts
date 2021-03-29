@@ -1,7 +1,7 @@
 import {
     Expression, UnknownExpressionElement
 } from "../../../ast";
-import { IArrVar } from "../body/buildCommutativeBody";
+import { IArrVar } from "../../processor/buildArrVars";
 import { CacheContext } from "../CacheContext";
 
 export function replaceArrayNotNullOn(

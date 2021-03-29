@@ -84,12 +84,8 @@ export class ConditionBuilder {
         }
     }
 
-    needUpdateConditionOnUpdate(row: string, arrVarPrefix: string) {
-        const needUpdate = replaceArrayNotNullOn(
-            this.context,
-            this.buildNeedUpdateConditionOnUpdate(),
-            buildArrVars(this.context, arrVarPrefix)
-        );
+    needUpdateConditionOnUpdate(row: string) {
+        const needUpdate = this.buildNeedUpdateConditionOnUpdate();
         const output = this.replaceTriggerTableRefsTo(needUpdate, row);
         return output;
     }

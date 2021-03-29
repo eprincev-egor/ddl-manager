@@ -3,7 +3,6 @@ import { buildCommutativeBody } from "../body/buildCommutativeBody";
 import { Update } from "../../../ast";
 import { buildJoinVariables } from "../../processor/buildJoinVariables";
 import { findJoinsMeta } from "../../processor/findJoinsMeta";
-import { buildArrVars } from "../../processor/buildArrVars";
 
 export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
@@ -43,10 +42,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                 update: deltaUpdate,
                 exitIf: this.conditions.exitFromDeltaUpdateIf(),
                 old: {
-                    needUpdate: this.conditions.needUpdateConditionOnUpdate(
-                        "old",
-                        "deleted_"
-                    ),
+                    needUpdate: this.conditions.needUpdateConditionOnUpdate("old"),
                     update: this.needUpdateInDelta() ? new Update({
                         table: this.context.cache.for.toString(),
                         set: this.setItems.minus(),
@@ -57,28 +53,21 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                     }) : undefined
                 },
                 new: {
-                    needUpdate: this.conditions.needUpdateConditionOnUpdate(
-                        "new", "inserted_"
-                    ),
+                    needUpdate: this.conditions.needUpdateConditionOnUpdate("new"),
                     update: this.needUpdateInDelta() ? new Update({
                         table: this.context.cache.for.toString(),
                         set: this.setItems.plus(),
                         where: this.conditions.simpleWhereOnUpdate("new", "inserted_")
                     }) : undefined
                 }
-            },
-            buildArrVars(this.context, "inserted_"),
-            buildArrVars(this.context, "deleted_")
+            }
         );
         
         return body;
     }
 
     private needUpdateInDelta() {
-        const hasCondition = !!this.conditions.needUpdateConditionOnUpdate(
-            "new",
-            "inserted_"
-        );
+        const hasCondition = !!this.conditions.needUpdateConditionOnUpdate("new");
         const hasUnknownReferenceExpressions = this.context.referenceMeta.unknownExpressions.length;
 
         return (

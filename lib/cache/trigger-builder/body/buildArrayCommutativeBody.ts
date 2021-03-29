@@ -5,30 +5,15 @@ import {
     BlankLine,
     Expression,
     Declare,
-    ColumnReference,
     AssignVariable,
-    AbstractAstElement,
-    SimpleSelect
+    AbstractAstElement
 } from "../../../ast";
 import { doIf } from "./util/doIf";
 import { Update } from "../../../ast/Update";
-import { TableReference } from "../../../database/schema/TableReference";
-
-export interface IVariable {
-    name: string;
-    type: string;
-}
-
-export interface IJoin {
-    variable: IVariable;
-    table: {
-        ref: TableReference;
-        column: ColumnReference;
-    };
-    on: {
-        column: ColumnReference;
-    }
-}
+import { IArrVar } from "../../processor/buildArrVars";
+import { IJoin } from "../../processor/buildJoinVariables";
+import { assignVariables } from "./util/assignVariables";
+import { reassignVariables } from "./util/reassignVariables";
 
 export interface ICase {
     hasReference?: Expression,
@@ -49,12 +34,6 @@ export interface IUpdateCase {
         needUpdate: Expression;
         update: Update;
     };
-}
-
-export interface IArrVar {
-    name: string;
-    type: string;
-    triggerColumn: string;
 }
 
 export interface ArrayCommutativeAst {
@@ -357,171 +336,4 @@ function buildUpdateCaseBody(ast: ArrayCommutativeAst) {
         new BlankLine(),
         new HardCode({sql: "return new;"})
     ];
-}
-
-function assignVariables(joins: IJoin[], row: "new" | "old") {
-    const lines: AbstractAstElement[] = [];
-
-    const combinedJoins = groupJoinsByTableAndFilter(joins);
-
-    for (const combinedJoin of combinedJoins) {
-        lines.push(
-            new If({
-                if: Expression.and([
-                    replaceTableToVariableOrRow(
-                        combinedJoin.byColumn,
-                        joins,
-                        row
-                    ) + " is not null"
-                ]),
-                then: assignCombinedJoinVariables(
-                    combinedJoin,
-                    joins,
-                    row
-                )
-            })
-        );
-
-        lines.push( new BlankLine() );
-    }
-
-    return lines;
-}
-
-function replaceTableToVariableOrRow(
-    columnRef: ColumnReference,
-    joins: IJoin[],
-    row: "new" | "old"
-) {
-    const sourceJoin = joins.find(join =>
-        join.table.ref.equal(columnRef.tableReference) &&
-        join.table.column.name === columnRef.name
-    );
-    if ( sourceJoin ) {
-        return sourceJoin.variable.name;
-    }
-
-    return `${row}.${columnRef.name}`
-}
-
-function assignCombinedJoinVariables(
-    combinedJoin: ICombinedJoin,
-    joins: IJoin[],
-    row: "new" | "old"
-) {
-    if ( combinedJoin.variables.length === 1 ) {
-        return [
-            new AssignVariable({
-                variable: combinedJoin.variables[0],
-                value: new SimpleSelect({
-                    columns: combinedJoin.joinedColumns,
-                    from: combinedJoin.joinedTable.table,
-                    where: replaceTableToVariableOrRow(
-                        combinedJoin.byColumn,
-                        joins,
-                        row
-                    )
-                })
-            })
-        ]
-    }
-    
-    return [
-        new SimpleSelect({
-            columns: combinedJoin.joinedColumns,
-            into: combinedJoin.variables,
-            from: combinedJoin.joinedTable.table,
-            where: replaceTableToVariableOrRow(
-                combinedJoin.byColumn,
-                joins,
-                row
-            )
-        })
-    ];
-}
-
-interface ICombinedJoin {
-    variables: string[];
-    joinedColumns: string[];
-    joinedTable: TableReference;
-    byColumn: ColumnReference;
-}
-function groupJoinsByTableAndFilter(joins: IJoin[]) {
-    const combinedJoinByKey: {[key: string]: ICombinedJoin} = {};
-
-    for (const join of joins) {
-        const key = join.on.column.toString();
-
-        const defaultCombinedJoin: ICombinedJoin = {
-            variables: [],
-            joinedColumns: [],
-            joinedTable: join.table.ref,
-            byColumn: join.on.column
-        };
-        const combinedJoin: ICombinedJoin = combinedJoinByKey[ key ] || defaultCombinedJoin;
-
-        combinedJoin.variables.push(
-            join.variable.name
-        );
-        combinedJoin.joinedColumns.push(
-            join.table.column.name
-        );
-        combinedJoinByKey[ key ] = combinedJoin;
-    }
-
-    const combinedJoins = Object.values(combinedJoinByKey);
-    return combinedJoins;
-}
-
-function reassignVariables(newJoins: IJoin[], oldJoins: IJoin[]) {
-    const lines: AbstractAstElement[] = [];
-
-    const oldCombinedJoins = groupJoinsByTableAndFilter(oldJoins);
-    const newCombinedJoins = groupJoinsByTableAndFilter(newJoins);
-
-    for (let i = 0, n = newCombinedJoins.length; i < n; i++) {
-        const newCombinedJoin = newCombinedJoins[i];
-        const oldCombinedJoin = oldCombinedJoins[i];
-        
-        const newByColumn = replaceTableToVariableOrRow(
-            newCombinedJoin.byColumn,
-            newJoins,
-            "new"
-        );
-        const oldByColumn = replaceTableToVariableOrRow(
-            oldCombinedJoin.byColumn,
-            oldJoins,
-            "old"
-        );
-
-        lines.push(new If({
-            if: Expression.and([
-                newByColumn + " is not distinct from " + oldByColumn
-            ]),
-            then: newCombinedJoin.variables.map((newVarName, j) => 
-                new AssignVariable({
-                    variable: newVarName,
-                    value: new HardCode({
-                        sql: oldCombinedJoin.variables[j]
-                    })
-                })
-            ),
-            else: [
-                new If({
-                    if: Expression.and([
-                        `${newByColumn} is not null`
-                    ]),
-                    then: assignCombinedJoinVariables(
-                        newCombinedJoin,
-                        newJoins,
-                        "new"
-                    )
-                })
-            ]
-        }));
-        
-        lines.push( new BlankLine() );
-    }
-    
-    return lines;
 }

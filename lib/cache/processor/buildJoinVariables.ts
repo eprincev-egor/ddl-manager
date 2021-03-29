@@ -1,6 +1,23 @@
 import { IJoinMeta } from "./findJoinsMeta";
-import { IJoin } from "../trigger-builder/body/buildCommutativeBody";
 import { Database } from "../../database/schema/Database";
+import { TableReference } from "../../database/schema/TableReference";
+import { ColumnReference } from "../../ast";
+
+export interface IVariable {
+    name: string;
+    type: string;
+}
+
+export interface IJoin {
+    variable: IVariable;
+    table: {
+        ref: TableReference;
+        column: ColumnReference;
+    };
+    on: {
+        column: ColumnReference;
+    }
+}
 
 export function buildJoinVariables(
     database: Database,
