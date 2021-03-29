@@ -12,6 +12,7 @@ import { OneRowTriggerBuilder } from "./OneRowTriggerBuilder";
 import { LastRowByIdTriggerBuilder } from "./one-last-row/LastRowByIdTriggerBuilder";
 import { LastRowByMutableTriggerBuilder } from "./one-last-row/LastRowByMutableTriggerBuilder";
 import { LastRowByArrayReferenceTriggerBuilder } from "./one-last-row/LastRowByArrayReferenceTriggerBuilder";
+import { buildArrVars } from "../processor/buildArrVars";
 
 export class TriggerBuilderFactory {
     private readonly cache: Cache;
@@ -65,9 +66,7 @@ export class TriggerBuilderFactory {
             from.length > 1 || 
             from.length === 1 && isFromJoin
         );
-        const arrayReference = context.referenceMeta.expressions.some(expression =>
-            isArrayReference(context, expression)
-        );
+        const arrayVars = buildArrVars(context);
 
         if ( needUniversalTrigger ) {
             return UniversalTriggerBuilder;
@@ -83,7 +82,7 @@ export class TriggerBuilderFactory {
                 return;
             }
 
-            if ( arrayReference ) {
+            if ( arrayVars.length ) {
                 return ArrayRefCommutativeTriggerBuilder;
             }
             else {
@@ -95,7 +94,7 @@ export class TriggerBuilderFactory {
             const orderByColumns = orderBy.getColumnReferences();
             const firstOrderColumn = orderByColumns[0];
 
-            if ( arrayReference ) {
+            if ( arrayVars.length ) {
                 return LastRowByArrayReferenceTriggerBuilder;
             }
 
@@ -132,27 +131,4 @@ export class TriggerBuilderFactory {
             context.referenceMeta.expressions.length > 0
         );
     }
-}
-
-function isArrayReference(
-    context: CacheContext,
-    expression: Expression
-): boolean {
-    const hasArrayOperator = (
-        expression.isBinary("&&") ||
-        expression.isBinary("@>") ||
-        expression.isBinary("<@") ||
-        expression.isEqualAny()
-    );
-    if ( !hasArrayOperator ) {
-        return false;
-    }
-
-    const triggerColumns = expression.getColumnReferences().filter(columnRef =>
-        context.isColumnRefToTriggerTable(columnRef)
-    );
-    const hasMutableTriggerColumn = triggerColumns.some(columnRef =>
-        columnRef.name !== "id"
-    );
-    return hasMutableTriggerColumn;
 }

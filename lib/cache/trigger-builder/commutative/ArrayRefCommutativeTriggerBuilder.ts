@@ -11,14 +11,10 @@ import { hasReference } from "../condition/hasReference";
 export class ArrayRefCommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
     protected createBody() {
-        const deltaUpdate = new Update({
-            table: this.context.cache.for.toString(),
-            set: this.deltaSetItems.delta(),
-            where: this.conditions.simpleWhereOnUpdate("new", "not_changed_")
-        });
+        const deltaSetItems = this.deltaSetItems.delta();
 
         const insertedArrElements = buildArrVars(this.context, "inserted_");
-        const notChangedArrElements = deltaUpdate.set.length ?
+        const notChangedArrElements = deltaSetItems.length ?
             buildArrVars(this.context, "not_changed_") :
             [];
         const deletedArrElements = buildArrVars(this.context, "deleted_");
@@ -53,17 +49,21 @@ export class ArrayRefCommutativeTriggerBuilder extends AbstractTriggerBuilder {
                     update: new Update({
                         table: this.context.cache.for.toString(),
                         set: this.setItems.minus(),
-                        where: this.conditions.simpleWhereOnUpdate("old", "deleted_")
+                        where: this.simpleWhereOnUpdate(
+                            "old", deletedArrElements
+                        )
                     })
                 },
-                notChanged: deltaUpdate.set.length ? {
+                notChanged: deltaSetItems.length ? {
                     needUpdate: this.hasReferenceWithArrVars(
                         notChangedArrElements
                     ),
                     update: new Update({
                         table: this.context.cache.for.toString(),
-                        set: this.deltaSetItems.delta(),
-                        where: this.conditions.simpleWhereOnUpdate("new", "not_changed_")
+                        set: deltaSetItems,
+                        where: this.simpleWhereOnUpdate(
+                            "new", notChangedArrElements
+                        )
                     })
                 } : undefined,
                 inserted: {
@@ -73,7 +73,9 @@ export class ArrayRefCommutativeTriggerBuilder extends AbstractTriggerBuilder {
                     update: new Update({
                         table: this.context.cache.for.toString(),
                         set: this.setItems.plus(),
-                        where: this.conditions.simpleWhereOnUpdate("new", "inserted_")
+                        where: this.simpleWhereOnUpdate(
+                            "new", insertedArrElements
+                        )
                     })
                 }
             },
@@ -109,25 +111,44 @@ export class ArrayRefCommutativeTriggerBuilder extends AbstractTriggerBuilder {
     }
 
     private hasReferenceWithArrVars(arrVars: IArrVar[]) {
-        let refCondition = this.conditions.replaceTriggerTableRefsTo(
+        const refCondition = this.conditions.replaceTriggerTableRefsTo(
             hasReference(this.context)!, "new"
         )!;
+        return this.replaceArrayColumnsToVariables(
+            refCondition,
+            arrVars,
+            "new"
+        );
+    }
 
+    private simpleWhereOnUpdate(row: string, arrVars: IArrVar[]) {
+        const where = this.conditions.simpleWhereOnUpdate(row)!;
+
+        return this.replaceArrayColumnsToVariables(
+            where, arrVars, row
+        );
+    }
+
+    private replaceArrayColumnsToVariables(
+        expression: Expression,
+        arrVars: IArrVar[],
+        row: string
+    ) {
         const tableRef = new TableReference(
             this.context.triggerTable,
-            "new"
+            row
         );
         for (const arrVar of arrVars) {
             const columnRef = new ColumnReference(
                 tableRef,
                 arrVar.triggerColumn
             );
-            refCondition = refCondition.replaceColumn(
+            expression = expression.replaceColumn(
                 columnRef,
                 Expression.unknown(arrVar.name)
             );
         }
 
-        return refCondition;
+        return expression;
     }
 }

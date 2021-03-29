@@ -3,14 +3,12 @@ import { CacheContext } from "../CacheContext";
 import { TableReference } from "../../../database/schema/TableReference";
 import { flatMap } from "lodash";
 import { hasNoReference, hasReference } from "./hasReference";
-import { replaceArrayNotNullOn } from "./replaceArrayNotNullOn";
 import { replaceOperatorAnyToIndexedOperator } from "./replaceOperatorAnyToIndexedOperator";
 import { replaceAmpArrayToAny } from "./replaceAmpArrayToAny";
 import { findJoinsMeta } from "../../processor/findJoinsMeta";
 import { buildJoinVariables } from "../../processor/buildJoinVariables";
 import { Table } from "../../../database/schema/Table";
 import { Column } from "../../../database/schema/Column";
-import { buildArrVars } from "../../processor/buildArrVars";
 import { CoalesceFalseExpression } from "../../../ast/expression/CoalesceFalseExpression";
 
 
@@ -96,13 +94,9 @@ export class ConditionBuilder {
         return output;
     }
 
-    simpleWhereOnUpdate(row: string, arrVarPrefix: string) {
+    simpleWhereOnUpdate(row: string) {
         const simpleWhere = this.buildSimpleWhere();
-        const output = replaceArrayNotNullOn(
-            this.context,
-            this.replaceTriggerTableRefsTo(simpleWhere, row),
-            buildArrVars(this.context, arrVarPrefix)
-        );
+        const output = this.replaceTriggerTableRefsTo(simpleWhere, row);
         return output;
     }
 

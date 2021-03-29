@@ -46,10 +46,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                     update: this.needUpdateInDelta() ? new Update({
                         table: this.context.cache.for.toString(),
                         set: this.setItems.minus(),
-                        where: this.conditions.simpleWhereOnUpdate(
-                            "old",
-                            "deleted_"
-                        )
+                        where: this.conditions.simpleWhereOnUpdate("old")
                     }) : undefined
                 },
                 new: {
@@ -57,7 +54,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
                     update: this.needUpdateInDelta() ? new Update({
                         table: this.context.cache.for.toString(),
                         set: this.setItems.plus(),
-                        where: this.conditions.simpleWhereOnUpdate("new", "inserted_")
+                        where: this.conditions.simpleWhereOnUpdate("new")
                     }) : undefined
                 }
             }
