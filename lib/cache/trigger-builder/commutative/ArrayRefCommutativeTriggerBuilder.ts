@@ -1,11 +1,12 @@
 import { AbstractTriggerBuilder } from "../AbstractTriggerBuilder";
-import { buildArrayCommutativeBody } from "../body/buildArrayCommutativeBody";
-import { Expression, Update } from "../../../ast";
+import { buildArrayCommutativeBody, IArrVar } from "../body/buildArrayCommutativeBody";
+import { ColumnReference, Expression, Update } from "../../../ast";
 import { buildArrVars } from "../../processor/buildArrVars";
 import { CoalesceFalseExpression } from "../../../ast/expression/CoalesceFalseExpression";
 import { TableReference } from "../../../database/schema/TableReference";
 import { findJoinsMeta } from "../../processor/findJoinsMeta";
 import { buildJoinVariables } from "../../processor/buildJoinVariables";
+import { hasReference } from "../condition/hasReference";
 
 export class ArrayRefCommutativeTriggerBuilder extends AbstractTriggerBuilder {
 
@@ -46,10 +47,8 @@ export class ArrayRefCommutativeTriggerBuilder extends AbstractTriggerBuilder {
             },
             updateCase: {
                 deleted: {
-                    needUpdate: Expression.and(
-                        deletedArrElements.map(deletedVar =>
-                            `${deletedVar.name} is not null`
-                        )
+                    needUpdate: this.hasReferenceWithArrVars(
+                        deletedArrElements
                     ),
                     update: new Update({
                         table: this.context.cache.for.toString(),
@@ -58,10 +57,8 @@ export class ArrayRefCommutativeTriggerBuilder extends AbstractTriggerBuilder {
                     })
                 },
                 notChanged: deltaUpdate.set.length ? {
-                    needUpdate: Expression.and(
-                        notChangedArrElements.map(notChangedVar =>
-                            `${notChangedVar.name} is not null`
-                        )
+                    needUpdate: this.hasReferenceWithArrVars(
+                        notChangedArrElements
                     ),
                     update: new Update({
                         table: this.context.cache.for.toString(),
@@ -70,10 +67,8 @@ export class ArrayRefCommutativeTriggerBuilder extends AbstractTriggerBuilder {
                     })
                 } : undefined,
                 inserted: {
-                    needUpdate: Expression.and(
-                        insertedArrElements.map(insertedVar =>
-                            `${insertedVar.name} is not null`
-                        )
+                    needUpdate: this.hasReferenceWithArrVars(
+                        insertedArrElements
                     ),
                     update: new Update({
                         table: this.context.cache.for.toString(),
@@ -111,5 +106,28 @@ export class ArrayRefCommutativeTriggerBuilder extends AbstractTriggerBuilder {
     private buildJoins(row: "new" | "old") {
         const joins = findJoinsMeta(this.context.cache.select);
         return buildJoinVariables(this.context.database, joins, row);
+    }
+
+    private hasReferenceWithArrVars(arrVars: IArrVar[]) {
+        let refCondition = this.conditions.replaceTriggerTableRefsTo(
+            hasReference(this.context)!, "new"
+        )!;
+
+        const tableRef = new TableReference(
+            this.context.triggerTable,
+            "new"
+        );
+        for (const arrVar of arrVars) {
+            const columnRef = new ColumnReference(
+                tableRef,
+                arrVar.triggerColumn
+            );
+            refCondition = refCondition.replaceColumn(
+                columnRef,
+                Expression.unknown(arrVar.name)
+            );
+        }
+
+        return refCondition;
     }
 }

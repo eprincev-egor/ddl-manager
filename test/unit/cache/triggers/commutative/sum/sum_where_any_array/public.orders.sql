@@ -17,7 +17,7 @@ begin
             update companies set
                 orders_total = orders_total - coalesce(old.profit, 0)
             where
-                old.companies_ids <@ ARRAY[companies.id];
+                companies.id = any (old.companies_ids);
         end if;
 
         return old;
@@ -79,21 +79,21 @@ begin
             update companies set
                 orders_total = orders_total - coalesce(old.profit, 0) + coalesce(new.profit, 0)
             where
-                not_changed_companies_ids <@ ARRAY[companies.id];
+                companies.id = any (not_changed_companies_ids);
         end if;
 
         if deleted_companies_ids is not null then
             update companies set
                 orders_total = orders_total - coalesce(old.profit, 0)
             where
-                deleted_companies_ids <@ ARRAY[companies.id];
+                companies.id = any (deleted_companies_ids);
         end if;
 
         if inserted_companies_ids is not null then
             update companies set
                 orders_total = orders_total + coalesce(new.profit, 0)
             where
-                inserted_companies_ids <@ ARRAY[companies.id];
+                companies.id = any (inserted_companies_ids);
         end if;
 
         return new;
@@ -109,7 +109,7 @@ begin
             update companies set
                 orders_total = orders_total + coalesce(new.profit, 0)
             where
-                new.companies_ids <@ ARRAY[companies.id];
+                companies.id = any (new.companies_ids);
         end if;
 
         return new;

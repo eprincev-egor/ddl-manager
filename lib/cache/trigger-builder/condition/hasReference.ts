@@ -83,7 +83,7 @@ function replaceSimpleExpressionToNotNulls(
     // companies.id = any( orders.clients_ids || orders.partners_ids )
     // =>
     // new.clients_ids or new.partners_ids
-    if ( expression.isBinary("=") ) {
+    if ( expression.isEqualAny() ) {
         const [leftOperand, rightOperand] = expression.getOperands();
         const columnOperand = detectColumnOperand(leftOperand, rightOperand);
         const anyOperand = detectAnyOperand(leftOperand, rightOperand);

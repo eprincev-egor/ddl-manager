@@ -135,6 +135,18 @@ export class Expression extends AbstractExpressionElement {
         return isBinaryExpression;
     }
 
+    isEqualAny() {
+        const elems = this.getElementsWithoutCasts();
+
+        const isEqualAnyExpression = (
+            elems.length === 3 &&
+            elems[1] instanceof Operator &&
+            elems[1].toString() === "=" &&
+            /^\s*any\s*\(/i.test(elems[2].toString())
+        );
+        return isEqualAnyExpression;
+    }
+
     getOperands() {
         const operands: IExpressionElement[] = [];
 

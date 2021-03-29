@@ -1,4 +1,4 @@
-import { Cache } from "../../ast";
+import { AbstractExpressionElement, Cache, Expression } from "../../ast";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { CommutativeTriggerBuilder } from "./commutative/CommutativeTriggerBuilder";
 import { ArrayRefCommutativeTriggerBuilder } from "./commutative/ArrayRefCommutativeTriggerBuilder";
@@ -66,8 +66,7 @@ export class TriggerBuilderFactory {
             from.length === 1 && isFromJoin
         );
         const arrayReference = context.referenceMeta.expressions.some(expression =>
-            expression.isBinary("&&") ||
-            expression.isBinary("@>")
+            isArrayReference(context, expression)
         );
 
         if ( needUniversalTrigger ) {
@@ -133,4 +132,27 @@ export class TriggerBuilderFactory {
             context.referenceMeta.expressions.length > 0
         );
     }
+}
+
+function isArrayReference(
+    context: CacheContext,
+    expression: Expression
+): boolean {
+    const hasArrayOperator = (
+        expression.isBinary("&&") ||
+        expression.isBinary("@>") ||
+        expression.isBinary("<@") ||
+        expression.isEqualAny()
+    );
+    if ( !hasArrayOperator ) {
+        return false;
+    }
+
+    const triggerColumns = expression.getColumnReferences().filter(columnRef =>
+        context.isColumnRefToTriggerTable(columnRef)
+    );
+    const hasMutableTriggerColumn = triggerColumns.some(columnRef =>
+        columnRef.name !== "id"
+    );
+    return hasMutableTriggerColumn;
 }

@@ -1,6 +1,9 @@
 create or replace function cache_totals_for_companies_on_orders()
 returns trigger as $body$
+declare matched_old boolean;
+declare matched_new boolean;
 declare inserted_companies_ids integer[];
+declare not_changed_companies_ids integer[];
 declare deleted_companies_ids integer[];
 begin
 
@@ -45,22 +48,48 @@ begin
             return new;
         end if;
 
-        inserted_companies_ids = cm_get_inserted_elements(old.companies_ids, new.companies_ids);
-        deleted_companies_ids = cm_get_deleted_elements(old.companies_ids, new.companies_ids);
+        matched_old = coalesce(old.deleted = 0, false);
+        matched_new = coalesce(new.deleted = 0, false);
 
         if
-            cm_equal_arrays(new.companies_ids, old.companies_ids)
+            not matched_old
             and
-            new.deleted is not distinct from old.deleted
+            not matched_new
         then
-            if
-                new.companies_ids is null
-                or
-                not coalesce(new.deleted = 0, false)
-            then
-                return new;
-            end if;
+            return new;
+        end if;
 
+        if
+            matched_old
+            and
+            not matched_new
+        then
+            inserted_companies_ids = null;
+            not_changed_companies_ids = null;
+            deleted_companies_ids = old.companies_ids;
+        end if;
+
+        if
+            not matched_old
+            and
+            matched_new
+        then
+            inserted_companies_ids = new.companies_ids;
+            not_changed_companies_ids = null;
+            deleted_companies_ids = null;
+        end if;
+
+        if
+            matched_old
+            and
+            matched_new
+        then
+            inserted_companies_ids = cm_get_inserted_elements(old.companies_ids, new.companies_ids);
+            not_changed_companies_ids = cm_get_not_changed_elements(old.companies_ids, new.companies_ids);
+            deleted_companies_ids = cm_get_deleted_elements(old.companies_ids, new.companies_ids);
+        end if;
+
+        if not_changed_companies_ids is not null then
             update companies set
                 orders_numbers_doc_number = array_append(
                     cm_array_remove_one_element(
@@ -84,21 +113,10 @@ begin
                     ) as item(doc_number)
                 )
             where
-                companies.id = any (new.companies_ids :: bigint[]);
-
-            return new;
+                companies.id = any (not_changed_companies_ids :: bigint[]);
         end if;
 
-        if cm_equal_arrays(old.companies_ids, new.companies_ids) then
-            inserted_companies_ids = new.companies_ids;
-            deleted_companies_ids = old.companies_ids;
-        end if;
-
-        if
-            deleted_companies_ids is not null
-            and
-            old.deleted = 0
-        then
+        if deleted_companies_ids is not null then
             update companies set
                 orders_numbers_doc_number = cm_array_remove_one_element(
                     orders_numbers_doc_number,
@@ -119,11 +137,7 @@ begin
                 companies.id = any (deleted_companies_ids :: bigint[]);
         end if;
 
-        if
-            inserted_companies_ids is not null
-            and
-            new.deleted = 0
-        then
+        if inserted_companies_ids is not null then
             update companies set
                 orders_numbers_doc_number = array_append(
                     orders_numbers_doc_number,
