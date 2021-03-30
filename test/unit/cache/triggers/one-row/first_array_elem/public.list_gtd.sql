@@ -42,13 +42,31 @@ begin
             coalesce(array_length_excluding_nulls(new.orders_ids) = 1, false)
         then
             update comments set
-                gtd_order_id = new.orders_ids [1] * 3
+                gtd_order_id = case
+                    when
+                        coalesce(new.deleted = 0, false)
+                        and
+                        coalesce(array_length_excluding_nulls(new.orders_ids) = 1, false)
+                    then
+                        new.orders_ids [1] * 3
+                    else
+                        null
+                end
             where
                 new.id = comments.row_id
                 and
                 comments.query_name in ('LIST_ALL_GTD', 'LIST_ARCHIVE_GTD', 'LIST_ACTIVE_GTD', 'LIST_GTD')
                 and
-                comments.gtd_order_id is distinct from new.orders_ids [1] * 3;
+                comments.gtd_order_id is distinct from case
+                    when
+                        coalesce(new.deleted = 0, false)
+                        and
+                        coalesce(array_length_excluding_nulls(new.orders_ids) = 1, false)
+                    then
+                        new.orders_ids [1] * 3
+                    else
+                        null
+                end;
         end if;
 
         return new;

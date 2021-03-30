@@ -36,13 +36,27 @@ begin
             coalesce(new.deleted = 0, false)
         then
             update list_documents set
-                gtd_orders_ids = new.orders_ids
+                gtd_orders_ids = case
+                    when
+                        coalesce(new.deleted = 0, false)
+                    then
+                        new.orders_ids
+                    else
+                        null
+                end
             where
                 new.id = list_documents.table_id
                 and
                 list_documents.table_name in ('LIST_GTD_ACTIVE', 'LIST_GTD_ARCHIVE')
                 and
-                list_documents.gtd_orders_ids is distinct from new.orders_ids;
+                list_documents.gtd_orders_ids is distinct from case
+                    when
+                        coalesce(new.deleted = 0, false)
+                    then
+                        new.orders_ids
+                    else
+                        null
+                end;
         end if;
 
         return new;

@@ -58,23 +58,51 @@ begin
             coalesce(new.deleted = 0, false)
         then
             update comments set
-                operation_id_order = coalesce(
-                    new.doc_parent_id_order,
-                    new.id_order
-                ),
-                operation_type_id = new.id_operation_type
+                operation_id_order = case
+                    when
+                        coalesce(new.deleted = 0, false)
+                    then
+                        coalesce(
+                            new.doc_parent_id_order,
+                            new.id_order
+                        )
+                    else
+                        null
+                end,
+                operation_type_id = case
+                    when
+                        coalesce(new.deleted = 0, false)
+                    then
+                        new.id_operation_type
+                    else
+                        null
+                end
             where
                 new.id = comments.row_id
                 and
                 comments.query_name = 'OPERATION'
                 and
                 (
-                    comments.operation_id_order is distinct from coalesce(
-                        new.doc_parent_id_order,
-                        new.id_order
-                    )
+                    comments.operation_id_order is distinct from case
+                        when
+                            coalesce(new.deleted = 0, false)
+                        then
+                            coalesce(
+                                new.doc_parent_id_order,
+                                new.id_order
+                            )
+                        else
+                            null
+                    end
                     or
-                    comments.operation_type_id is distinct from new.id_operation_type
+                    comments.operation_type_id is distinct from case
+                        when
+                            coalesce(new.deleted = 0, false)
+                        then
+                            new.id_operation_type
+                        else
+                            null
+                    end
                 );
         end if;
 

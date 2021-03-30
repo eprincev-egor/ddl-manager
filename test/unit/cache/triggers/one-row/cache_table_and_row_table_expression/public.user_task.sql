@@ -51,29 +51,57 @@ begin
             coalesce(new.deleted = 0, false)
         then
             update comments set
-                target_query_name = coalesce(
-                    new.query_name,
-                    comments.query_name
-                ),
-                target_row_id = coalesce(
-                    new.row_id,
-                    comments.row_id
-                )
+                target_query_name = case
+                    when
+                        coalesce(new.deleted = 0, false)
+                    then
+                        coalesce(
+                            new.query_name,
+                            comments.query_name
+                        )
+                    else
+                        null
+                end,
+                target_row_id = case
+                    when
+                        coalesce(new.deleted = 0, false)
+                    then
+                        coalesce(
+                            new.row_id,
+                            comments.row_id
+                        )
+                    else
+                        null
+                end
             where
                 new.id = comments.row_id
                 and
                 comments.query_name = 'USER_TASK'
                 and
                 (
-                    comments.target_query_name is distinct from coalesce(
-                        new.query_name,
-                        comments.query_name
-                    )
+                    comments.target_query_name is distinct from case
+                        when
+                            coalesce(new.deleted = 0, false)
+                        then
+                            coalesce(
+                                new.query_name,
+                                comments.query_name
+                            )
+                        else
+                            null
+                    end
                     or
-                    comments.target_row_id is distinct from coalesce(
-                        new.row_id,
-                        comments.row_id
-                    )
+                    comments.target_row_id is distinct from case
+                        when
+                            coalesce(new.deleted = 0, false)
+                        then
+                            coalesce(
+                                new.row_id,
+                                comments.row_id
+                            )
+                        else
+                            null
+                    end
                 );
         end if;
 

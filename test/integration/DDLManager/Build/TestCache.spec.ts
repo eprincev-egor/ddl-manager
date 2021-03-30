@@ -2062,4 +2062,167 @@ $$;
         assert.strictEqual(actualErr.message, "success");
     });
 
+    it("test one row trigger", async() => {
+        const folderPath = ROOT_TMP_PATH + "/one_row_working";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table user_task (
+                id serial primary key,
+                name text,
+                query_name text,
+                row_id bigint,
+                deleted smallint default 0
+            );
+            
+            create table comments (
+                id serial primary key,
+                name text,
+                query_name text,
+                row_id bigint,
+                user_task_query_name text,
+                user_task_row_id bigint
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/user_task.sql", `
+            cache user_task for comments (
+                select
+                    user_task.query_name as user_task_query_name,
+                    user_task.row_id as user_task_row_id
+
+                from user_task
+                where
+                    user_task.id = comments.row_id and
+                    user_task.deleted = 0 and
+                    comments.query_name = 'USER_TASK'
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        const testSql = `
+
+        create or replace function check_cache(check_label text)
+        returns void as $body$
+        declare invalid_rows text;
+        begin
+        
+            select
+                string_agg(
+                    '    id: ' || comments.id || E'\n' ||
+                    '    name: ' || coalesce(comments.name, '<NULL>') || E'\n' ||
+                    '    user_task_query_name: should_be: ' || coalesce(should_be.user_task_query_name::text, '<NULL>') || E'\n' ||
+                    '    user_task_query_name: actual: ' || coalesce(comments.user_task_query_name::text, '<NULL>') || E'\n' ||
+                    '    user_task_row_id: should_be: ' || coalesce(should_be.user_task_query_name::text, '<NULL>') || E'\n' ||
+                    '    user_task_row_id: actual: ' || coalesce(comments.user_task_row_id::text, '<NULL>')
+        
+                    , E'\n\n'
+                )
+            into
+                invalid_rows
+        
+            from comments
+        
+            left join lateral (
+                select
+                    user_task.query_name as user_task_query_name,
+                    user_task.row_id as user_task_row_id
+        
+                from user_task
+                where
+                    user_task.id = comments.row_id and
+                    user_task.deleted = 0 and
+                    comments.query_name = 'USER_TASK'
+            ) as should_be on true
+            where
+                (
+                    should_be.user_task_query_name is distinct from comments.user_task_query_name
+                    or
+                    should_be.user_task_row_id is distinct from comments.user_task_row_id
+                );
+        
+        
+            if invalid_rows is not null then
+                raise exception E'\n%, invalid cache rows:\n%\n\n\nsource rows:\n%\n\n\n', 
+                    check_label,
+                    invalid_rows,
+                    (
+                        select
+                        string_agg(
+                            '    id: ' || user_task.id || E',\n' ||
+                            '    name: ' || coalesce(user_task.name, '<NULL>') || E',\n' ||
+                            '    query_name: ' || coalesce(user_task.query_name::text, '<NULL>') || E',\n' ||
+                            '    row_id: ' || coalesce(user_task.row_id::text, '<NULL>') || E',\n' ||
+                            '    deleted: ' || coalesce(user_task.deleted::text, '<NULL>')
+                            , E'\n\n'
+                        )
+                        from user_task
+                    );
+            else
+                raise notice '% - success', check_label;
+            end if;
+        end
+        $body$
+        language plpgsql;
+        
+        do $$
+        begin
+        
+            insert into user_task
+                (name, query_name, row_id, deleted)
+            values
+                ('task 1', 'ORDER', 10, 0);
+        
+            insert into comments
+                (name, query_name, row_id)
+            values
+                ('comment 1', 'USER_TASK', 1),
+                ('comment 2', 'USER_TASK', 2),
+                ('comment 3', 'ORDER', 1);
+        
+            PERFORM check_cache('label 1, insert 1 task and 3 comments');
+        
+            update comments set
+                query_name = 'USER_TASK'
+            where name = 'comment 3';
+            PERFORM check_cache('label 2, updated comment query_name');
+        
+            update user_task set
+                deleted = 1
+            where name = 'task 1';
+            PERFORM check_cache('label 3, updated user_task deleted');
+        
+            insert into user_task
+                (name, query_name, row_id, deleted)
+            values
+                ('task 2', 'ORDER', 20, 0);
+            PERFORM check_cache('label 4, insert new user_task');
+        
+            delete from user_task;
+            PERFORM check_cache('label 5, delete user_task');
+        
+        
+            raise exception 'success';
+        end
+        $$;
+        
+        
+        `;
+
+        let actualErr: Error = new Error("expected error");
+        try {
+            await db.query(testSql);
+        } catch(err) {
+            actualErr = err;
+        }
+
+        assert.strictEqual(actualErr.message, "success");
+    });
+
 });
