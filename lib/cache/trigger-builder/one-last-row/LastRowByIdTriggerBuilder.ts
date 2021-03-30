@@ -25,6 +25,8 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
         const helperTriggerName = [
             "cache",
             this.context.cache.name,
+            "for",
+            this.context.cache.for.table.name,
             "before",
             "insert",
             this.context.triggerTable.name
