@@ -127,6 +127,13 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
 
     private createNullExpression(expression: Expression) {
 
+        if (
+            expression.isColumnReference() ||
+            expression.isArrayItemOfColumnReference()
+        ) {
+            return Expression.unknown("null");
+        }
+
         let nullExpression = expression;
         const columnRefs = expression.getColumnReferences()
             .filter(columnRef =>

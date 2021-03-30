@@ -9,13 +9,13 @@ begin
             old.deleted = 0
         then
             update list_documents set
-                gtd_orders_ids = (null::bigint[])
+                gtd_orders_ids = null
             where
                 old.id = list_documents.table_id
                 and
                 list_documents.table_name in ('LIST_GTD_ACTIVE', 'LIST_GTD_ARCHIVE')
                 and
-                list_documents.gtd_orders_ids is distinct from (null::bigint[]);
+                list_documents.gtd_orders_ids is distinct from null;
         end if;
 
         return old;

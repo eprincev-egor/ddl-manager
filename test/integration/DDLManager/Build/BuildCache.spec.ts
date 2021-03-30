@@ -1829,4 +1829,124 @@ describe("integration/DDLManager.build cache", () => {
         ]);
     });
 
+    it("cache first element of array and other dependent cache", async() => {
+        const folderPath = ROOT_TMP_PATH + "/array_element";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table comments (
+                id serial primary key,
+                query_name text,
+                row_id bigint,
+                message text
+            );
+
+            create table list_gtd (
+                id serial primary key,
+                deleted smallint
+            );
+
+            create table gtd_order_link (
+                id serial primary key,
+                id_order bigint,
+                id_gtd bigint
+            );
+
+            create table orders (
+                id serial primary key
+            );
+
+            insert into comments
+                (query_name, row_id, message)
+            values
+                ('LIST_ALL_GTD', 1, 'gtd comment');
+            
+            insert into list_gtd
+                (deleted)
+            values
+                (0);
+
+            insert into orders default values;
+
+            insert into gtd_order_link
+                (id_order, id_gtd)
+            values (1,1);
+        `);
+
+        fs.writeFileSync(folderPath + "/gtd_orders_ids.sql", `
+            cache gtd_orders_ids for list_gtd (
+                select
+                    array_agg( link.id_order ) as orders_ids
+            
+                from gtd_order_link as link
+                where
+                    link.id_order = list_gtd.id
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/gtd_order_id.sql", `
+            cache gtd for comments (
+                select
+                    gtd.orders_ids[1] as gtd_order_id
+            
+                from list_gtd as gtd
+                where
+                    gtd.id = comments.row_id and
+                    gtd.deleted = 0 and
+
+                    array_length( gtd.orders_ids, 1 ) = 1 and
+            
+                    comments.query_name in (
+                        'LIST_ALL_GTD',
+                        'LIST_ARCHIVE_GTD',
+                        'LIST_ACTIVE_GTD',
+                        'LIST_GTD'
+                    )
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/order_id.sql", `
+            cache order_id for comments (
+                select
+                    coalesce(
+                        comments.gtd_order_id,
+            
+                        (case
+                            when comments.query_name in ('ORDER', 'ORDER_REQUEST')
+                            then comments.row_id
+                        end)
+            
+                    ) as order_id
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/last_comment.sql", `
+            cache last_comment for orders (
+                select
+                    comments.message as last_comment
+                from comments
+                where
+                    comments.order_id = orders.id
+            
+                order by comments.id desc
+                limit 1
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            select id, last_comment
+            from orders
+            order by id
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, last_comment: "gtd comment"}
+        ]);
+    });
+
 });

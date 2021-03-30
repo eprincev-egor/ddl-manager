@@ -457,6 +457,20 @@ export class CacheComparator extends AbstractComparator {
             }
         }
 
+        if ( expression.isArrayItemOfColumnReference() ) {
+            const columnRef = expression.elements[0] as ColumnReference;
+            const dbTable = this.database.getTable(
+                columnRef.tableReference.table
+            );
+            const dbColumn = dbTable && dbTable.getColumn(columnRef.name);
+
+            if ( dbColumn && dbColumn.type.isArray() ) {
+                const arrayType = dbColumn.type.toString();
+                const elemType = arrayType.slice(0, -2);
+                return elemType;
+            }
+        }
+
         const selectWithReplacedColumns = await this.replaceUnknownColumns(select);
         const columnsTypes = await this.driver.getCacheColumnsTypes(
             new Select({
@@ -526,7 +540,7 @@ export class CacheComparator extends AbstractComparator {
                     const newExpression = selectColumn.expression.replaceColumn(
                         columnRef,
                         UnknownExpressionElement.fromSql(
-                            `null::${ columnType }`
+                            `(null::${ columnType })`
                         )
                     );
 

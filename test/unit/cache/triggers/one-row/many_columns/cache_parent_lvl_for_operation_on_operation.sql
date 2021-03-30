@@ -9,13 +9,13 @@ begin
             coalesce(old.lvl, 0) + 1 is not null
         then
             update operation.operation as child_oper set
-                parent_id_order = (null::bigint),
+                parent_id_order = null,
                 lvl = coalesce(null, 0) + 1
             where
                 old.id = child_oper.id_parent_operation
                 and
                 (
-                    child_oper.parent_id_order is distinct from (null::bigint)
+                    child_oper.parent_id_order is distinct from null
                     or
                     child_oper.lvl is distinct from coalesce(null, 0) + 1
                 );

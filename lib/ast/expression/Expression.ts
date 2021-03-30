@@ -105,6 +105,14 @@ export class Expression extends AbstractExpressionElement {
         );
     }
 
+    isArrayItemOfColumnReference() {
+        return (
+            this.elements.length === 2 &&
+            this.elements[0] instanceof ColumnReference &&
+            /^\[\s*\d+\s*\]$/.test(this.elements[1].toString().trim())
+        );
+    }
+
     isIn() {
         return (
             this.elements.length === 2 &&
