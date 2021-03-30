@@ -540,4 +540,79 @@ where
         assert.strictEqual(toCreate.updates.length, 0, "no update");
     });
 
+    it("boolean = bool", async() => {
+        const testCacheColumn = new Column(
+            companiesId,
+            "has_order",
+            "bool",
+            "null",
+            Comment.fromFs({
+                objectType: "column",
+                cacheSignature: "cache totals for companies",
+                cacheSelect: `
+select
+    bool_or(orders.id) as has_order
+from orders
+where
+    orders.id_client = companies.id`.trim()
+            })
+        );
+        const testCacheHelperColumn = new Column(
+            companiesId,
+            "has_order_id",
+            "int4[]",
+            "null",
+            Comment.fromFs({
+                objectType: "column",
+                cacheSignature: "cache totals for companies",
+                cacheSelect: `
+select
+    array_agg(orders.id) as has_order_id
+from orders
+where
+    orders.id_client = companies.id`.trim()
+            })
+        );
+
+        const testTableWithCache = new Table(
+            "public", "companies",
+            [
+                new Column(
+                    companiesId,
+                    "id",
+                    "integer"
+                ),
+                testCacheColumn,
+                testCacheHelperColumn
+            ]
+        );
+
+
+        database.addFunctions([ testCacheFunc ]);
+        database.setTable(testTableWithCache);
+        database.setTable(testTableSource);
+        database.addTrigger(testCacheTrigger);
+
+        fs.addFile({
+            ...someFileParams,
+            content: {
+                cache: [FileParser.parseCache(`
+                    cache totals for companies (
+                        select
+                            bool_or( orders.id ) as has_order
+                        from orders
+                        where
+                            orders.id_client = companies.id
+                    )
+                `)]
+            }
+        });
+
+        const {toDrop, toCreate} = await MainComparator.compare(postgres, database, fs);
+
+        assert.strictEqual(toDrop.columns.length, 0, "no columns to drop");
+        assert.strictEqual(toCreate.columns.length, 0, "no columns to create");
+        assert.strictEqual(toCreate.updates.length, 0, "no update");
+    });
+
 });

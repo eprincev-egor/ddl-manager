@@ -44,5 +44,9 @@ function normalize(type: string) {
         return "smallint[]";
     }
 
+    if ( type === "bool" ) {
+        return "boolean";
+    }
+
     return type;
 }

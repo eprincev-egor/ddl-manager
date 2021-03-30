@@ -417,6 +417,10 @@ export class CacheComparator extends AbstractComparator {
                 return "numeric";
             }
 
+            if ( funcCall.name === "bool_or" || funcCall.name === "bool_and" ) {
+                return "boolean";
+            }
+
             if ( funcCall.name === "array_agg" ) {
                 const firstArg = funcCall.args[0] as Expression;
                 const columnRef = firstArg.getColumnReferences()[0];
