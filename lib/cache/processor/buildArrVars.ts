@@ -45,6 +45,18 @@ function findTriggerTableArrayColumns(
 ) {
     for (const expression of expressions) {
         if ( isArrayBinary(expression) ) {
+            if ( expression.isEqualAny() ) {
+                const [left] = expression.splitBy("=");
+                const isTriggerTableColumnEqualAny = (
+                    left.getColumnReferences().every(columnRef =>
+                        context.isColumnRefToTriggerTable(columnRef)
+                    )
+                );
+                if ( isTriggerTableColumnEqualAny ) {
+                    continue;
+                }
+            }
+
             const mutableColumns = expression.getColumnReferences()
                 .filter(columnRef =>
                     columnRef.name !== "id" &&
