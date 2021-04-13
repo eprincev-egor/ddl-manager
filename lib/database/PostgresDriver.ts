@@ -331,15 +331,19 @@ implements IDatabaseDriver {
         `;
 
         const sql = `
+            with ddl_manager_tmp as (
+                ${selectBrokenRowsWithLimit}
+            )
             update ${forTable} set
                 (
                     ${ columnsToUpdate.join(", ") }
                 ) = (
-                    ${ select }
+                    select
+                    ${ columnsToUpdate.map(columnName =>
+                        "ddl_manager_tmp." + columnName
+                    ).join(", ") }
                 )
-            from (
-                ${ selectBrokenRowsWithLimit }
-            ) as ddl_manager_tmp
+            from ddl_manager_tmp
 
             where
                 ddl_manager_tmp.id = ${forTable.getIdentifier()}.id
