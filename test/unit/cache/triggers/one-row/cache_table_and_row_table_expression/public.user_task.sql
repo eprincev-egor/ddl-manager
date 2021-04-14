@@ -19,15 +19,15 @@ begin
                 comments.query_name = 'USER_TASK'
                 and
                 (
-                    comments.target_query_name is distinct from coalesce(
+                    comments.target_query_name is distinct from (coalesce(
                         (null::text),
                         comments.query_name
-                    )
+                    ))
                     or
-                    comments.target_row_id is distinct from coalesce(
+                    comments.target_row_id is distinct from (coalesce(
                         (null::int8),
                         comments.row_id
-                    )
+                    ))
                 );
         end if;
 
@@ -79,7 +79,7 @@ begin
                 comments.query_name = 'USER_TASK'
                 and
                 (
-                    comments.target_query_name is distinct from case
+                    comments.target_query_name is distinct from (case
                         when
                             coalesce(new.deleted = 0, false)
                         then
@@ -89,9 +89,9 @@ begin
                             )
                         else
                             null
-                    end
+                    end)
                     or
-                    comments.target_row_id is distinct from case
+                    comments.target_row_id is distinct from (case
                         when
                             coalesce(new.deleted = 0, false)
                         then
@@ -101,7 +101,7 @@ begin
                             )
                         else
                             null
-                    end
+                    end)
                 );
         end if;
 

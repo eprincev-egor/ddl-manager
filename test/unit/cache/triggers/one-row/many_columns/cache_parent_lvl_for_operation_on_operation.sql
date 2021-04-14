@@ -15,9 +15,9 @@ begin
                 old.id = child_oper.id_parent_operation
                 and
                 (
-                    child_oper.parent_id_order is distinct from null
+                    child_oper.parent_id_order is distinct from (null)
                     or
-                    child_oper.lvl is distinct from coalesce(null, 0) + 1
+                    child_oper.lvl is distinct from (coalesce(null, 0) + 1)
                 );
         end if;
 
@@ -40,9 +40,9 @@ begin
             new.id = child_oper.id_parent_operation
             and
             (
-                child_oper.parent_id_order is distinct from new.id_order
+                child_oper.parent_id_order is distinct from (new.id_order)
                 or
-                child_oper.lvl is distinct from coalesce(new.lvl, 0) + 1
+                child_oper.lvl is distinct from (coalesce(new.lvl, 0) + 1)
             );
 
         return new;
@@ -61,9 +61,9 @@ begin
                 new.id = child_oper.id_parent_operation
                 and
                 (
-                    child_oper.parent_id_order is distinct from new.id_order
+                    child_oper.parent_id_order is distinct from (new.id_order)
                     or
-                    child_oper.lvl is distinct from coalesce(new.lvl, 0) + 1
+                    child_oper.lvl is distinct from (coalesce(new.lvl, 0) + 1)
                 );
         end if;
 

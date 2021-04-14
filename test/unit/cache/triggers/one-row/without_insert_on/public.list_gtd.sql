@@ -15,7 +15,7 @@ begin
                 and
                 comments.query_name in ('LIST_ALL_GTD', 'LIST_ARCHIVE_GTD', 'LIST_ACTIVE_GTD', 'LIST_GTD')
                 and
-                comments.gtd_orders_ids is distinct from null;
+                comments.gtd_orders_ids is distinct from (null);
         end if;
 
         return old;
@@ -49,14 +49,14 @@ begin
                 and
                 comments.query_name in ('LIST_ALL_GTD', 'LIST_ARCHIVE_GTD', 'LIST_ACTIVE_GTD', 'LIST_GTD')
                 and
-                comments.gtd_orders_ids is distinct from case
+                comments.gtd_orders_ids is distinct from (case
                     when
                         coalesce(new.deleted = 0, false)
                     then
                         new.orders_ids
                     else
                         null
-                end;
+                end);
         end if;
 
         return new;

@@ -27,12 +27,12 @@ begin
                 comments.query_name = 'OPERATION'
                 and
                 (
-                    comments.operation_id_order is distinct from coalesce(
+                    comments.operation_id_order is distinct from (coalesce(
                         (null::bigint),
                         (null::bigint)
-                    )
+                    ))
                     or
-                    comments.operation_type_id is distinct from null
+                    comments.operation_type_id is distinct from (null)
                 );
         end if;
 
@@ -83,7 +83,7 @@ begin
                 comments.query_name = 'OPERATION'
                 and
                 (
-                    comments.operation_id_order is distinct from case
+                    comments.operation_id_order is distinct from (case
                         when
                             coalesce(new.deleted = 0, false)
                         then
@@ -93,16 +93,16 @@ begin
                             )
                         else
                             null
-                    end
+                    end)
                     or
-                    comments.operation_type_id is distinct from case
+                    comments.operation_type_id is distinct from (case
                         when
                             coalesce(new.deleted = 0, false)
                         then
                             new.id_operation_type
                         else
                             null
-                    end
+                    end)
                 );
         end if;
 
@@ -134,12 +134,12 @@ begin
                 comments.query_name = 'OPERATION'
                 and
                 (
-                    comments.operation_id_order is distinct from coalesce(
+                    comments.operation_id_order is distinct from (coalesce(
                         new.doc_parent_id_order,
                         new.id_order
-                    )
+                    ))
                     or
-                    comments.operation_type_id is distinct from new.id_operation_type
+                    comments.operation_type_id is distinct from (new.id_operation_type)
                 );
         end if;
 

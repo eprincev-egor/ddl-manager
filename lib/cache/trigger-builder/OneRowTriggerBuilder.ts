@@ -81,7 +81,7 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
                 selectColumn.name
             );
             return UnknownExpressionElement.fromSql(
-                `${cacheColumnRef} is distinct from ${ values[ i ] }`
+                `${cacheColumnRef} is distinct from (${ values[ i ] })`
             );
         });
         return Expression.or(compareConditions);

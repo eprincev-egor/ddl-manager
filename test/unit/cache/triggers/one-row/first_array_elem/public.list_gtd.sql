@@ -17,7 +17,7 @@ begin
                 and
                 comments.query_name in ('LIST_ALL_GTD', 'LIST_ARCHIVE_GTD', 'LIST_ACTIVE_GTD', 'LIST_GTD')
                 and
-                comments.gtd_order_id is distinct from (null::bigint[]) [1] * 3;
+                comments.gtd_order_id is distinct from ((null::bigint[]) [1] * 3);
         end if;
 
         return old;
@@ -57,7 +57,7 @@ begin
                 and
                 comments.query_name in ('LIST_ALL_GTD', 'LIST_ARCHIVE_GTD', 'LIST_ACTIVE_GTD', 'LIST_GTD')
                 and
-                comments.gtd_order_id is distinct from case
+                comments.gtd_order_id is distinct from (case
                     when
                         coalesce(new.deleted = 0, false)
                         and
@@ -66,7 +66,7 @@ begin
                         new.orders_ids [1] * 3
                     else
                         null
-                end;
+                end);
         end if;
 
         return new;
@@ -87,7 +87,7 @@ begin
                 and
                 comments.query_name in ('LIST_ALL_GTD', 'LIST_ARCHIVE_GTD', 'LIST_ACTIVE_GTD', 'LIST_GTD')
                 and
-                comments.gtd_order_id is distinct from new.orders_ids [1] * 3;
+                comments.gtd_order_id is distinct from (new.orders_ids [1] * 3);
         end if;
 
         return new;

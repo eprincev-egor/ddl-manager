@@ -9,7 +9,7 @@ begin
             where
                 old.id = invoice.id_list_contracts
                 and
-                invoice.date_contract is distinct from null;
+                invoice.date_contract is distinct from (null);
         end if;
 
         return old;
@@ -25,7 +25,7 @@ begin
         where
             new.id = invoice.id_list_contracts
             and
-            invoice.date_contract is distinct from new.date_contract;
+            invoice.date_contract is distinct from (new.date_contract);
 
         return new;
     end if;
@@ -37,7 +37,7 @@ begin
             where
                 new.id = invoice.id_list_contracts
                 and
-                invoice.date_contract is distinct from new.date_contract;
+                invoice.date_contract is distinct from (new.date_contract);
         end if;
 
         return new;

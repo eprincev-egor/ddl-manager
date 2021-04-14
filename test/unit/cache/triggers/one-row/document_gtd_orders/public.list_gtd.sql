@@ -15,7 +15,7 @@ begin
                 and
                 list_documents.table_name in ('LIST_GTD_ACTIVE', 'LIST_GTD_ARCHIVE')
                 and
-                list_documents.gtd_orders_ids is distinct from null;
+                list_documents.gtd_orders_ids is distinct from (null);
         end if;
 
         return old;
@@ -49,14 +49,14 @@ begin
                 and
                 list_documents.table_name in ('LIST_GTD_ACTIVE', 'LIST_GTD_ARCHIVE')
                 and
-                list_documents.gtd_orders_ids is distinct from case
+                list_documents.gtd_orders_ids is distinct from (case
                     when
                         coalesce(new.deleted = 0, false)
                     then
                         new.orders_ids
                     else
                         null
-                end;
+                end);
         end if;
 
         return new;
@@ -75,7 +75,7 @@ begin
                 and
                 list_documents.table_name in ('LIST_GTD_ACTIVE', 'LIST_GTD_ARCHIVE')
                 and
-                list_documents.gtd_orders_ids is distinct from new.orders_ids;
+                list_documents.gtd_orders_ids is distinct from (new.orders_ids);
         end if;
 
         return new;

@@ -9,7 +9,7 @@ begin
             where
                 old.id = child_oper.id_parent_operation
                 and
-                child_oper.lvl is distinct from coalesce(null, 0) + 1;
+                child_oper.lvl is distinct from (coalesce(null, 0) + 1);
         end if;
 
         return old;
@@ -25,7 +25,7 @@ begin
         where
             new.id = child_oper.id_parent_operation
             and
-            child_oper.lvl is distinct from coalesce(new.lvl, 0) + 1;
+            child_oper.lvl is distinct from (coalesce(new.lvl, 0) + 1);
 
         return new;
     end if;
@@ -37,7 +37,7 @@ begin
             where
                 new.id = child_oper.id_parent_operation
                 and
-                child_oper.lvl is distinct from coalesce(new.lvl, 0) + 1;
+                child_oper.lvl is distinct from (coalesce(new.lvl, 0) + 1);
         end if;
 
         return new;
