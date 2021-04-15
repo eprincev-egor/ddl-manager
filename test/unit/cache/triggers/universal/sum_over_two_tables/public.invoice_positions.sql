@@ -34,7 +34,8 @@ begin
                 coalesce(
         sum(invoice_positions.cost),
         0
-    ) as invoice_positions_cost
+    )
+    :: numeric as invoice_positions_cost
 
             from invoice_positions
 

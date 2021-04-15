@@ -200,7 +200,8 @@ export const testCacheColumn = new Column(
         cacheSignature: "cache totals for companies",
         cacheSelect: `
 select
-    coalesce(sum(orders.profit), 0) as orders_profit
+    coalesce(sum(orders.profit), 0)
+    :: numeric as orders_profit
 from orders
 where
     orders.id_client = companies.id`.trim()

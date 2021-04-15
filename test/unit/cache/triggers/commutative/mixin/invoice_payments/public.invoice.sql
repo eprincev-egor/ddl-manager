@@ -25,7 +25,8 @@ begin
             ', '
         ),
         0
-    ) as payments_total
+    )
+    :: numeric as payments_total
 
             from payment_orders
 

@@ -82,7 +82,7 @@ describe("Comparator: compare cache", async() => {
         );
         assert.strictEqual(
             toCreate.updates[0].select.columns[0].toString().trim(),
-            "coalesce(sum(orders.profit), 0) as orders_profit"
+            "coalesce(sum(orders.profit), 0)\n    :: numeric as orders_profit"
         );
 
         assert.strictEqual(toCreate.triggers.length, 1, "one cache func to create");
@@ -352,7 +352,8 @@ describe("Comparator: compare cache", async() => {
                 cacheSignature: "cache totals for companies",
                 cacheSelect: `
 select
-    coalesce(sum(orders.profit), 0) as orders_profit
+    coalesce(sum(orders.profit), 0)
+    :: numeric as orders_profit
 from orders
 where
     orders.id_client = companies.id`.trim()

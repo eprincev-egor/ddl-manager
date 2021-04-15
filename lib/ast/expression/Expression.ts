@@ -91,10 +91,17 @@ export class Expression extends AbstractExpressionElement {
         ]);
     }
 
-    isFuncCall() {
+    isFuncCall(): boolean {
+        const elements = this.getElementsWithoutCasts();
+        const firstElem = elements[0];
         return (
-            this.elements.length === 1 &&
-            this.elements[0] instanceof FuncCall
+            elements.length === 1 &&
+            (
+                firstElem instanceof FuncCall
+                ||
+                firstElem instanceof Expression &&
+                firstElem.isFuncCall()
+            )
         );
     }
 

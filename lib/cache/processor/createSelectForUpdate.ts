@@ -1,7 +1,8 @@
 import {
     Expression,
     Cache,
-    SelectColumn
+    SelectColumn,
+    UnknownExpressionElement
 } from "../../ast";
 import { AggFactory } from "../aggregator";
 import { flatMap } from "lodash";
@@ -23,9 +24,13 @@ export function createSelectForUpdate(
                 agg.call
             ]);
             if ( agg.call.name === "sum" ) {
-                expression = Expression.funcCall("coalesce", [
-                    expression,
-                    Expression.unknown( agg.default() )
+                expression = new Expression([
+                    Expression.funcCall("coalesce", [
+                        expression,
+                        Expression.unknown( "0" )
+                    ]),
+                    UnknownExpressionElement.fromSql("::"),
+                    UnknownExpressionElement.fromSql("numeric")
                 ]);
             }
 

@@ -22,7 +22,8 @@ begin
                 coalesce(
         sum(capital.transfer.delta),
         0
-    ) as transfers_sum
+    )
+    :: numeric as transfers_sum
 
             from capital.transfer
 
