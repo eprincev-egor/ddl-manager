@@ -51,7 +51,7 @@ export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilde
         return buildSelfUpdateByOtherTablesBody(
             this.context.withoutInsertCase() ? false : true,
             this.context.cache.for,
-            this.conditions.noReferenceChanges(),
+            this.conditions.noChanges(),
             hasReference,
             selectToUpdate.columns.map(col => col.name),
             selectToUpdate.toString(),

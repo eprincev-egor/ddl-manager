@@ -13,7 +13,7 @@ import { exitIf } from "./util/exitIf";
 export function buildSelfUpdateByOtherTablesBody(
     needInsertCase: boolean,
     updateTable: TableReference,
-    noReferenceChanges: Expression,
+    noChanges: Expression,
     hasReference: Expression,
     columnsToUpdate: string[],
     selectNewValues: string,
@@ -51,7 +51,7 @@ export function buildSelfUpdateByOtherTablesBody(
                 }),
                 then: [
                     new If({
-                        if: noReferenceChanges,
+                        if: noChanges,
                         then: [
                             new HardCode({
                                 sql: `return new;`
