@@ -37,9 +37,7 @@ export class SelfUpdateBySelfRowTriggerBuilder extends AbstractTriggerBuilder {
 
     protected createDatabaseTrigger() {
         
-        const updateOfColumns = this.context.triggerTableColumns
-            .filter(column =>  column !== "id" )
-            .sort();
+        const updateOfColumns = this.buildUpdateOfColumns();
         
         const trigger = new DatabaseTrigger({
             name: this.generateTriggerName(),

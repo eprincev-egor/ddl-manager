@@ -63,9 +63,7 @@ export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilde
 
     protected createDatabaseTrigger() {
         
-        const updateOfColumns = this.context.triggerTableColumns
-            .filter(column =>  column !== "id" )
-            .sort();
+        const updateOfColumns = this.buildUpdateOfColumns();
         
         const trigger = new DatabaseTrigger({
             name: this.generateTriggerName(),

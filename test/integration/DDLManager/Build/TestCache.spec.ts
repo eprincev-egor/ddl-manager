@@ -2225,4 +2225,77 @@ $$;
         assert.strictEqual(actualErr.message, "success");
     });
 
+    it("when exists before update trigger who change dependency columns ", async() => {
+        const folderPath = ROOT_TMP_PATH + "/one_row_working";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key
+            );
+            
+            create table fin_operation (
+                id serial primary key,
+                id_order bigint,
+                debit numeric,
+                credit numeric,
+                total numeric
+            );
+
+            create or replace function debit_credit_total()
+            returns trigger as $body$
+            begin
+                
+                new.total = coalesce(new.debit, -new.credit);
+                
+                return new;
+            end
+            $body$
+            language plpgsql;
+
+            create trigger debit_credit_total
+            before insert or update of debit, credit
+            on fin_operation
+            for each row
+            execute procedure debit_credit_total();
+
+            insert into orders default values;
+            insert into fin_operation
+                (id_order, debit, credit)
+            values
+                (1, 100, null);
+        `);
+
+        fs.writeFileSync(folderPath + "/fin_totals.sql", `
+            cache fin_totals for orders (
+                select
+                    sum( fin_operation.total ) as fin_total
+
+                from fin_operation
+                where
+                    fin_operation.id_order = orders.id
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        await db.query(`
+            update fin_operation set
+                credit = 400,
+                debit = null;
+        `);
+
+
+        const {rows} = await db.query(`
+            select fin_total from orders
+        `);
+        assert.deepStrictEqual(rows[0], {
+            fin_total: "-400"
+        })
+    });
+
 });

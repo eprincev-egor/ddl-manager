@@ -1,3 +1,4 @@
+import { uniq } from "lodash";
 import {
     AbstractAstElement,
     Expression
@@ -59,9 +60,7 @@ export abstract class AbstractTriggerBuilder {
 
     protected createDatabaseTrigger() {
         
-        const updateOfColumns = this.context.triggerTableColumns
-            .filter(column =>  column !== "id" )
-            .sort();
+        const updateOfColumns = this.buildUpdateOfColumns();
         
         const trigger = new DatabaseTrigger({
             name: this.generateTriggerName(),
@@ -106,4 +105,50 @@ export abstract class AbstractTriggerBuilder {
     }
 
     protected abstract createBody(): AbstractAstElement;
+
+    protected buildUpdateOfColumns() {
+
+        let updateOfColumns = this.context.triggerTableColumns
+            .filter(column =>  column !== "id" );
+        
+        const triggerDbTable = this.context.database.getTable(
+            this.context.triggerTable
+        );
+        if ( triggerDbTable ) {
+            const beforeUpdateTriggers = triggerDbTable.triggers
+                .filter(trigger =>
+                    trigger.before &&
+                    trigger.update
+                );
+
+            for (const beforeUpdateTrigger of beforeUpdateTriggers) {
+                const dbFunction = this.context.database.functions
+                    .find(func =>
+                        func.name === beforeUpdateTrigger.procedure.name &&
+                        func.schema === beforeUpdateTrigger.procedure.schema
+                    );
+                if ( dbFunction ) {
+                    const matches = dbFunction.body.match(/new\.\w+\s*=/g) || [];
+                    const changedColumns = matches.map(str =>
+                        str
+                            .replace(/^new\./, "")
+                            .replace(/\s*=$/, "")
+                            .toLowerCase()
+                    );
+                    const hasDepsColumns = changedColumns.some(columnName =>
+                        updateOfColumns.includes(columnName)
+                    );
+
+                    if ( hasDepsColumns ) {
+                        updateOfColumns = updateOfColumns.concat(
+                            (beforeUpdateTrigger.updateOf || [])
+                        );
+                    }
+                }
+            }
+        }
+        updateOfColumns = uniq(updateOfColumns).sort();
+        
+        return updateOfColumns;
+    }
 }
