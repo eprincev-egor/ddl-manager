@@ -21,6 +21,7 @@ export function sortSelectsByDependencies(allSelectsForEveryColumn: ISortSelectI
 
         // ищем те, которые явно указали, что они будут после prevItem
         const nextItems = allSelectsForEveryColumn.filter((nextItem) =>
+            !isExplicitCastType(nextItem) &&
             dependentOn(nextItem.select, {
                 for: prevItem.for,
                 column: prevItem.select.columns[0]
@@ -48,7 +49,7 @@ export function sortSelectsByDependencies(allSelectsForEveryColumn: ISortSelectI
 }
 
 function isRoot(allItems: ISortSelectItem[], item: ISortSelectItem) {
-    if ( item.select.columns[0]!.expression.getExplicitCastType() ) {
+    if ( isExplicitCastType(item) ) {
         return true;
     }
 
@@ -60,6 +61,12 @@ function isRoot(allItems: ISortSelectItem[], item: ISortSelectItem) {
         })
     );
     return !hasDependencies;
+}
+
+function isExplicitCastType(item: ISortSelectItem) {
+    const explicitCastType = item.select.columns[0]!
+        .expression.getExplicitCastType();
+    return !!explicitCastType;
 }
 
 export function findRecursionUpdates(

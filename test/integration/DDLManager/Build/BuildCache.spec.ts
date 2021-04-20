@@ -1956,13 +1956,28 @@ describe("integration/DDLManager.build cache", () => {
         await db.query(`
             create table operations (
                 id serial primary key,
+                doc_number text,
                 id_prev_operation bigint,
                 id_doc_parent_operation bigint,
-                deleted smallint default 0
+                deleted smallint default 0,
+                units_ids bigint[]
             );
 
-            insert into operations default values;
-            insert into operations (id_prev_operation) values (1);
+            create table units (
+                id serial primary key
+            );
+
+            insert into units default values;
+            insert into units default values;
+
+            insert into operations
+                (units_ids)
+            values (array[1]);
+
+            insert into operations
+                (id_prev_operation, units_ids)
+            values
+                (1, array[2]);
         `);
         
         fs.writeFileSync(folderPath + "/parent.sql", `
@@ -1986,6 +2001,21 @@ describe("integration/DDLManager.build cache", () => {
                         log_oper.parent_lvl + 1,
                         1
                     )::integer as lvl
+            )
+        `);
+        
+        fs.writeFileSync(folderPath + "/last_oper.sql", `
+            cache last_oper for units (
+                select
+                    last_oper.doc_number as last_oper_doc_number
+
+                from operations as last_oper
+                where
+                    last_oper.units_ids && array[ units.id ]::bigint[] and
+                    last_oper.deleted = 0
+
+                order by last_oper.lvl desc
+                limit 1
             )
         `);
 

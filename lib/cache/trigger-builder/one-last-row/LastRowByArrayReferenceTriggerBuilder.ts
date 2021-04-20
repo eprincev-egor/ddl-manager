@@ -21,9 +21,12 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
             columns: this.getOrderByColumnsRefs().map(columnRef =>
                 new SelectColumn({
                     name: this.helperColumnName(columnRef.name),
-                    expression: Expression.unknown(
-                        this.triggerTableAlias() + "." + columnRef.name
-                    )
+                    expression: new Expression([
+                        new ColumnReference(
+                            this.fromTable(),
+                            columnRef.name
+                        )
+                    ])
                 })
             )
         });
