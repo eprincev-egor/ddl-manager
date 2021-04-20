@@ -21,7 +21,7 @@ export class UpdateMigrator extends AbstractMigrator {
         packageIndex = 0
     ) {
         const limit = 500;
-        let updatedCount = 0;
+        let needUpdateMore = false;
         const columnsToUpdate = update.select.columns.map(col =>
             col.name
         );
@@ -35,12 +35,37 @@ export class UpdateMigrator extends AbstractMigrator {
                 `cache: ${update.cacheName} `
             ].join("\n"));
 
-            updatedCount = await this.tryUpdateCachePackage(
+            const updatedCount = await this.tryUpdateCachePackage(
                 update.select,
                 update.forTable,
                 limit
             );
-        } while( updatedCount >= limit );
+            needUpdateMore = updatedCount >= limit;
+
+            for (const updateAlso of update.recursionWith || []) {
+                const columnsToUpdate = update.select.columns.map(col =>
+                    col.name
+                );
+
+                // tslint:disable-next-line: no-console
+                console.log([
+                    `recursion updating #${ packageIndex }`,
+                    `table: ${updateAlso.forTable}`,
+                    `columns: ${columnsToUpdate.join(", ")}`,
+                    `cache: ${updateAlso.cacheName} `
+                ].join("\n"));
+
+                const updatedAlsoCount = await this.tryUpdateCachePackage(
+                    updateAlso.select,
+                    updateAlso.forTable,
+                    limit
+                );
+
+                if ( updatedAlsoCount > 0 ) {
+                    needUpdateMore = true;
+                }
+            }
+        } while( needUpdateMore );
     }
 
     private async tryUpdateCachePackage(

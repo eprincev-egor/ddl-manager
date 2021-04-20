@@ -15,7 +15,8 @@ import { AggFactory } from "../cache/aggregator";
 import { flatMap } from "lodash";
 import {
     ISortSelectItem,
-    sortSelectsByDependencies
+    sortSelectsByDependencies,
+    findRecursionUpdates
 } from "./graph-util";
 import { TableID } from "../database/schema/TableID";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
@@ -298,6 +299,7 @@ export class CacheComparator extends AbstractComparator {
 
     private updateAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
         const allUpdates = this.generateAllUpdates(sortedSelectsForEveryColumn);
+
         const requiredUpdates: IUpdate[] = allUpdates
             .map((update) => {
                 const selectWithRequiredColumns = update.select.cloneWith({
@@ -325,6 +327,12 @@ export class CacheComparator extends AbstractComparator {
                     select: selectWithRequiredColumns,
                     forTable: update.forTable
                 };
+
+                requiredUpdate.recursionWith = findRecursionUpdates(
+                    update,
+                    allUpdates
+                );
+
                 return requiredUpdate;
             })
             .filter(update =>

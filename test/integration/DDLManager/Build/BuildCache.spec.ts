@@ -1950,7 +1950,7 @@ describe("integration/DDLManager.build cache", () => {
     });
 
     it("coalesce(parent_lvl, lvl) infinity recursion", async() => {
-        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        const folderPath = ROOT_TMP_PATH + "/recursion-cache";
         fs.mkdirSync(folderPath);
 
         await db.query(`
@@ -2011,6 +2011,114 @@ describe("integration/DDLManager.build cache", () => {
             {id: 2, parent_lvl: 1, lvl: 2},
             {id: 3, parent_lvl: 2, lvl: 3}
         ])
+    });
+
+    it("correct update cache rows with infinity recursion", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table operations (
+                id serial primary key,
+                id_prev_operation bigint
+            );
+
+            do $$
+            declare new_id bigint;
+            declare prev_id bigint;
+            declare i bigint;
+            declare j bigint;
+            begin
+                for i in (select index from generate_series(1, 100) as index) loop
+                    prev_id = null;
+
+                    for j in (select index from generate_series(1, 10) as index) loop
+                        insert into operations (
+                            id_prev_operation
+                        ) values (
+                            prev_id
+                        )
+                        returning id
+                        into new_id;
+
+                        prev_id = new_id;
+                    end loop;
+
+                end loop;
+            end
+            $$;
+
+            create index operations_prev_indx
+            on operations
+            using btree
+            (id_prev_operation);
+        `);
+        
+        fs.writeFileSync(folderPath + "/parent.sql", `
+            cache parent for operations as child_log_oper (
+                select
+                    parent_log_oper.lvl as parent_lvl
+            
+                from operations as parent_log_oper
+                where
+                    parent_log_oper.id = child_log_oper.id_prev_operation
+            )
+        `);
+        
+        fs.writeFileSync(folderPath + "/lvl.sql", `
+            cache lvl for operations as log_oper (
+                select
+                    coalesce(
+                        log_oper.parent_lvl + 1,
+                        1
+                    )::integer as lvl
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            with recursive
+                all_operations as (
+                    select
+                        root_operation.id,
+                        1 as expected_lvl,
+                        root_operation.lvl as actual_lvl
+
+                    from operations as root_operation
+                    where
+                        root_operation.id_prev_operation is null
+
+                    union
+
+                    select
+                        next_operation.id,
+                        prev_operation.expected_lvl + 1 as expected_lvl,
+                        next_operation.lvl as actual_lvl
+                    from
+                        operations as next_operation,
+                        all_operations as prev_operation
+                    where
+                        prev_operation.id = next_operation.id_prev_operation
+                )
+            select
+                exists(
+                    select from all_operations
+                    where
+                        expected_lvl is distinct from actual_lvl
+                ) as has_wrong_lvl
+        `);
+
+        assert.strictEqual(
+            result.rows[0].has_wrong_lvl,
+            false,
+            "exists wrong lvl"
+        );
     });
 
 });

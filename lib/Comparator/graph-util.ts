@@ -1,6 +1,6 @@
-import assert from "assert";
-import { Cache, Select } from "../ast";
+import { Cache, Select, SelectColumn } from "../ast";
 import { TableReference } from "../database/schema/TableReference";
+import { IUpdate } from "../Migrator/Migration";
 
 export interface ISortSelectItem {
     select: Select;
@@ -21,7 +21,10 @@ export function sortSelectsByDependencies(allSelectsForEveryColumn: ISortSelectI
 
         // ищем те, которые явно указали, что они будут после prevItem
         const nextItems = allSelectsForEveryColumn.filter((nextItem) =>
-            dependentOn(nextItem, prevItem)
+            dependentOn(nextItem.select, {
+                for: prevItem.for,
+                column: prevItem.select.columns[0]
+            })
         );
 
         for (let j = 0, m = nextItems.length; j < m; j++) {
@@ -45,33 +48,76 @@ export function sortSelectsByDependencies(allSelectsForEveryColumn: ISortSelectI
 }
 
 function isRoot(allItems: ISortSelectItem[], item: ISortSelectItem) {
+    if ( item.select.columns[0]!.expression.getExplicitCastType() ) {
+        return true;
+    }
+
     const hasDependencies = allItems.some(prevItem =>
         prevItem !== item &&
-        dependentOn(item, prevItem)
+        dependentOn(item.select, {
+            for: prevItem.for,
+            column: prevItem.select.columns[0]
+        })
     );
     return !hasDependencies;
 }
 
-// x dependent on y ?
-function dependentOn(
-    xItem: ISortSelectItem,
-    yItem: ISortSelectItem
-): boolean {
-    
-    const xColumn = xItem.select.columns[0];
-    const yColumn = yItem.select.columns[0];
+export function findRecursionUpdates(
+    someUpdate: IUpdate,
+    allUpdates: IUpdate[]
+): IUpdate[] {
+    for (const otherUpdate of allUpdates) {
+        if ( otherUpdate == someUpdate ) {
+            continue;
+        }
 
-    assert.ok(xColumn);
-    assert.ok(yColumn);
-
-    if ( yColumn.expression.getExplicitCastType() ) {
-        return false;
+        if ( hasCircularDependency(someUpdate, otherUpdate) ) {
+            return [otherUpdate];
+        }
     }
 
-    const xRefs = xItem.select.getAllColumnReferences();
+    return [];
+}
+
+function hasCircularDependency(
+    xUpdate: IUpdate,
+    yUpdate: IUpdate
+) {
+    for (const xColumn of xUpdate.select.columns) {
+        for (const yColumn of yUpdate.select.columns) {
+            const isCircularDependency = (
+                dependentOn(
+                    xUpdate.select, {
+                        for: yUpdate.forTable,
+                        column: yColumn
+                    }
+                )
+                &&
+                dependentOn(
+                    yUpdate.select, {
+                        for: xUpdate.forTable,
+                        column: xColumn
+                    }
+                )
+            );
+            if ( isCircularDependency ) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+// x dependent on y ?
+function dependentOn(
+    xSelect: Select,
+    yItem: {for: TableReference, column: SelectColumn}
+): boolean {
+    const xRefs = xSelect.getAllColumnReferences();
     const xDependentOnY = xRefs.some(xColumnRef =>
         xColumnRef.tableReference.table.equal( yItem.for.table ) &&
-        xColumnRef.name === yColumn.name
+        xColumnRef.name === yItem.column.name
     );
 
     return xDependentOnY;
