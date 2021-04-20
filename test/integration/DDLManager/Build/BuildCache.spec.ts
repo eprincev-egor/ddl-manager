@@ -1949,4 +1949,68 @@ describe("integration/DDLManager.build cache", () => {
         ]);
     });
 
+    it("coalesce(parent_lvl, lvl) infinity recursion", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table operations (
+                id serial primary key,
+                id_prev_operation bigint,
+                id_doc_parent_operation bigint,
+                deleted smallint default 0
+            );
+
+            insert into operations default values;
+            insert into operations (id_prev_operation) values (1);
+        `);
+        
+        fs.writeFileSync(folderPath + "/parent.sql", `
+            cache parent for operations as child_log_oper (
+                select
+                    parent_log_oper.lvl as parent_lvl
+            
+                from operations as parent_log_oper
+                where
+                    parent_log_oper.id = child_log_oper.id_prev_operation and
+                    parent_log_oper.deleted = 0 and
+                    parent_log_oper.id_doc_parent_operation is null and
+                    child_log_oper.id_doc_parent_operation is null
+            )
+        `);
+        
+        fs.writeFileSync(folderPath + "/lvl.sql", `
+            cache lvl for operations as log_oper (
+                select
+                    coalesce(
+                        log_oper.parent_lvl + 1,
+                        1
+                    )::integer as lvl
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        await db.query(`
+            insert into operations (id_prev_operation) values (2);
+        `);
+
+        const result = await db.query(`
+            select id, parent_lvl, lvl
+            from operations
+            order by id
+        `);
+
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, parent_lvl: null, lvl: 1},
+            {id: 2, parent_lvl: 1, lvl: 2},
+            {id: 3, parent_lvl: 2, lvl: 3}
+        ])
+    });
+
 });

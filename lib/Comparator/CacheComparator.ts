@@ -384,6 +384,11 @@ export class CacheComparator extends AbstractComparator {
 
         let {expression} = select.columns[0] as SelectColumn;
 
+        const explicitCastType = expression.getExplicitCastType();
+        if ( explicitCastType ) {
+            return explicitCastType;
+        }
+
         if ( expression.isFuncCall() ) {
             const funcCall = expression.getFuncCalls()[0] as FuncCall;
             if ( funcCall.name === "coalesce" ) {

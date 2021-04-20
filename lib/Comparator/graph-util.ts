@@ -64,6 +64,10 @@ function dependentOn(
     assert.ok(xColumn);
     assert.ok(yColumn);
 
+    if ( yColumn.expression.getExplicitCastType() ) {
+        return false;
+    }
+
     const xRefs = xItem.select.getAllColumnReferences();
     const xDependentOnY = xRefs.some(xColumnRef =>
         xColumnRef.tableReference.table.equal( yItem.for.table ) &&

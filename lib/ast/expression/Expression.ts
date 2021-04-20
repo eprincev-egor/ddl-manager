@@ -91,6 +91,17 @@ export class Expression extends AbstractExpressionElement {
         ]);
     }
 
+    getExplicitCastType(): string | undefined {
+        const twoLastElements = this.elements.slice(-2);
+        const isCasting = (
+            twoLastElements.length === 2 && 
+            twoLastElements[0].toString() === "::"
+        );
+        if ( isCasting ) {
+            return twoLastElements[1].toString();
+        }
+    }
+
     isFuncCall(): boolean {
         const elements = this.getElementsWithoutCasts();
         const firstElem = elements[0];
