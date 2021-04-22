@@ -79,7 +79,7 @@ export class DeltaSetItemsFactory extends SetItemsFactory {
             );
         }
 
-        if ( !updateColumn.expression.isFuncCall() ) {
+        if ( !updateColumn.isFuncCall() ) {
             const mainSetItem = new SetItem({
                 column: updateColumn.name,
                 value: new HardCode({

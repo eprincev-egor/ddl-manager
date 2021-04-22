@@ -109,7 +109,8 @@ export class FuncCall extends AbstractExpressionElement {
 
         return this.clone(
             newArgs,
-            orderBy
+            orderBy,
+            newWhere
         );
     }
 
@@ -118,7 +119,31 @@ export class FuncCall extends AbstractExpressionElement {
             return UnknownExpressionElement.fromSql(toSql);
         }
 
-        return this.clone();
+        const newArgs = this.args.map(arg =>
+            arg.replaceFuncCall(replaceFunc, toSql)
+        );
+
+        let orderBy: OrderBy | undefined;
+        if ( this.orderBy ) {
+            const orderByItems = this.orderBy.items.map(item => 
+                new OrderByItem({
+                    ...item,
+                    expression: item.expression.replaceFuncCall(replaceFunc, toSql)
+                })
+            );
+            orderBy = new OrderBy(orderByItems);
+        }
+
+        let newWhere = this.where;
+        if ( newWhere ) {
+            newWhere = newWhere.replaceFuncCall(replaceFunc, toSql);
+        }
+
+        return this.clone(
+            newArgs,
+            orderBy,
+            newWhere
+        );
     }
 
     clone(

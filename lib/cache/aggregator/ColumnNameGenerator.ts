@@ -22,7 +22,7 @@ export class ColumnNameGenerator {
     }
 
     private generateFullName(aggCall: FuncCall) {
-        if ( this.updateColumn.expression.isFuncCall() ) {
+        if ( this.updateColumn.isFuncCall() ) {
             return this.updateColumn.name;
         }
 
