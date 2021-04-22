@@ -49,7 +49,7 @@ export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilde
         );
 
         return buildSelfUpdateByOtherTablesBody(
-            this.context.withoutInsertCase() ? false : true,
+            this.needInsertCase(),
             this.context.cache.for,
             this.conditions.noChanges(),
             hasReference,
@@ -92,4 +92,16 @@ export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilde
         return trigger;
     }
 
+    private needInsertCase(): boolean {
+        if ( this.context.withoutInsertCase() ) {
+            return false;
+        }
+
+        const hasReference = this.conditions.hasNoReference("new");
+        if ( !hasReference || hasReference.isEmpty() ) {
+            return false;
+        }
+
+        return true;
+    }
 }
