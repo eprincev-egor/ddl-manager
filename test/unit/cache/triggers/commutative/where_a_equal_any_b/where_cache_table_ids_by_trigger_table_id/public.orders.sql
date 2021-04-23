@@ -123,48 +123,12 @@ begin
 
         return new;
     end if;
-
-    if TG_OP = 'INSERT' then
-
-        if new.deleted = 0 then
-            update companies set
-                orders_numbers_doc_number = array_append(
-                    orders_numbers_doc_number,
-                    new.doc_number
-                ),
-                orders_numbers = case
-                    when
-                        array_position(
-                            orders_numbers_doc_number,
-                            new.doc_number
-                        )
-                        is null
-                    then
-                        coalesce(
-                            orders_numbers ||
-                            coalesce(
-                                ', '
-                                || new.doc_number,
-                                ''
-                            ),
-                            new.doc_number
-                        )
-                    else
-                        orders_numbers
-                end
-            where
-                companies.order_ids && ARRAY[ new.id ];
-        end if;
-
-        return new;
-    end if;
-
 end
 $body$
 language plpgsql;
 
 create trigger cache_totals_for_companies_on_orders
-after insert or update of deleted, doc_number or delete
+after update of deleted, doc_number or delete
 on public.orders
 for each row
 execute procedure cache_totals_for_companies_on_orders();

@@ -65,7 +65,7 @@ export abstract class AbstractTriggerBuilder {
         const trigger = new DatabaseTrigger({
             name: this.generateTriggerName(),
             after: true,
-            insert: this.context.withoutInsertCase() ? false : true,
+            insert: this.needListenInsert(),
             delete: true,
             update: updateOfColumns.length > 0,
             updateOf: updateOfColumns,
@@ -85,6 +85,11 @@ export abstract class AbstractTriggerBuilder {
         });
 
         return trigger;
+    }
+
+    // can be redefined
+    protected needListenInsert(): boolean {
+        return !this.context.withoutInsertCase();
     }
 
     protected replaceTriggerTableToRow(

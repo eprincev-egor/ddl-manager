@@ -1,6 +1,6 @@
 import { AbstractTriggerBuilder } from "../AbstractTriggerBuilder";
 import { buildCommutativeBody } from "../body/buildCommutativeBody";
-import { Update } from "../../../ast";
+import { Update, Expression } from "../../../ast";
 import { buildJoinVariables } from "../../processor/buildJoinVariables";
 import { findJoinsMeta } from "../../processor/findJoinsMeta";
 
@@ -14,7 +14,7 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
         });
 
         const body = buildCommutativeBody(
-            this.context.withoutInsertCase() ? false : true,
+            this.needListenInsert(),
             this.conditions.hasMutableColumns(),
             this.conditions.noChanges(),
             this.buildJoins("old"),
@@ -61,6 +61,35 @@ export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
         );
         
         return body;
+    }
+
+    protected needListenInsert() {
+        if ( this.context.withoutInsertCase() ) {
+            return false;
+        }
+        const isReferenceByTriggerTableId = this.context.referenceMeta
+            .expressions.some(condition => {
+                if ( !condition.isBinary("=") ) {
+                    return false;
+                }
+                const [left, right] = condition.splitBy("=");
+                return (
+                    this.isTriggerTableId(left) ||
+                    this.isTriggerTableId(right) 
+                );
+            });
+
+        return !isReferenceByTriggerTableId;
+    }
+
+    private isTriggerTableId(condition: Expression): boolean {
+        const columnRefs = condition.getColumnReferences();
+        const isTriggerTableIdColumn = (
+            columnRefs.length === 1 &&
+            columnRefs[0].name === "id" &&
+            this.context.isColumnRefToTriggerTable(columnRefs[0])
+        );
+        return isTriggerTableIdColumn;
     }
 
     private needUpdateInDelta() {

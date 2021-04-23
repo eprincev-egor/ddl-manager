@@ -2298,4 +2298,83 @@ $$;
         })
     });
 
+    it("insert into table with commutative trigger with reference by id", async() => {
+        const folderPath = ROOT_TMP_PATH + "/one_row_working";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table company (
+                id serial primary key,
+                id_parent bigint,
+                profit numeric,
+                deleted smallint default 0
+            );
+
+            insert into company default values;
+        `);
+
+        fs.writeFileSync(folderPath + "/children_ids.sql", `
+            cache children_ids for company as parent_company (
+                select
+                    array_agg( child_company.id ) as children_ids
+
+                from company as child_company
+                where
+                    child_company.id_parent = parent_company.id and
+                    child_company.deleted = 0
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/children_profit.sql", `
+            cache children_profit for company as parent_company (
+                select
+                    sum( child_company.profit ) as children_profit
+
+                from company as child_company
+                where
+                    child_company.id = any( parent_company.children_ids )
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        let result;
+
+        // insert child
+        await db.query(`
+            insert into company
+                (id_parent, profit)
+            values
+                (1, 1000)
+        `);
+        result = await db.query(`
+            select children_profit
+            from company
+            where id = 1
+        `);
+        assert.deepStrictEqual(result.rows[0], {
+            children_profit: "1000"
+        });
+
+
+        // update child, set deleted = 1
+        await db.query(`
+            update company set
+                deleted = 1
+            where id = 2
+        `);
+        result = await db.query(`
+            select children_profit
+            from company
+            where id = 1
+        `);
+        assert.deepStrictEqual(result.rows[0], {
+            children_profit: "0"
+        })
+    });
+
 });

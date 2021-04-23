@@ -26,23 +26,12 @@ begin
 
         return new;
     end if;
-
-    if TG_OP = 'INSERT' then
-
-        update companies set
-            orders_total = orders_total + coalesce(new.profit, 0)
-        where
-            companies.bigint_orders_ids && ARRAY[ new.id ]::bigint[];
-
-        return new;
-    end if;
-
 end
 $body$
 language plpgsql;
 
 create trigger cache_totals_for_companies_on_orders
-after insert or update of profit or delete
+after update of profit or delete
 on public.orders
 for each row
 execute procedure cache_totals_for_companies_on_orders();

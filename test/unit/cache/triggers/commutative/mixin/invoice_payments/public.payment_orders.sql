@@ -52,25 +52,12 @@ begin
 
         return new;
     end if;
-
-    if TG_OP = 'INSERT' then
-
-        if new.deleted = 0 then
-            update invoice set
-                payments_total = payments_total + coalesce(new.total, 0)
-            where
-                invoice.payments_ids && ARRAY[ new.id ]::int8[];
-        end if;
-
-        return new;
-    end if;
-
 end
 $body$
 language plpgsql;
 
 create trigger cache_payments_for_invoice_on_payment_orders
-after insert or update of deleted, total or delete
+after update of deleted, total or delete
 on public.payment_orders
 for each row
 execute procedure cache_payments_for_invoice_on_payment_orders();
