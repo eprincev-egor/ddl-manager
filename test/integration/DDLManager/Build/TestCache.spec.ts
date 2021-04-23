@@ -2377,4 +2377,59 @@ $$;
         })
     });
 
+    it("fill columns for coalesce(bool_or())", async() => {
+        const folderPath = ROOT_TMP_PATH + "/coalesce_bool_or";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table weight_position (
+                id serial primary key
+            );
+            create table weight_position_link (
+                id serial primary key,
+                id_position bigint,
+                weight numeric
+            );
+
+            insert into weight_position default values;
+            insert into weight_position default values;
+
+            insert into weight_position_link
+                (id_position, weight)
+            values
+                (1, 55),
+                (2, null);
+        `);
+
+        fs.writeFileSync(folderPath + "/bool_or.sql", `
+            cache has_weight for weight_position as position (
+                select
+                    coalesce(
+                        bool_or(link.weight is not null),
+                        false
+                    ) as has_weight
+            
+                from weight_position_link as link
+                where
+                    link.id_position = position.id
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const {rows} = await db.query(`
+            select id, has_weight
+            from weight_position
+            order by id
+        `);
+        assert.deepStrictEqual(rows, [
+            {id: 1, has_weight: true},
+            {id: 2, has_weight: false}
+        ]);
+    });
+
 });

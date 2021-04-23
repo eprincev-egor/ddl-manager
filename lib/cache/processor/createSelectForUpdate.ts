@@ -44,7 +44,7 @@ export function createSelectForUpdate(
         const needCreateMainColumn = (
             Object.keys(aggregations).length === 0
             ||
-            !selectColumn.expression.isFuncCall()
+            !selectColumn.isFuncCall()
         )
         if ( needCreateMainColumn ) {
             columns.push(selectColumn);
