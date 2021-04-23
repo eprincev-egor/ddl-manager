@@ -472,6 +472,14 @@ export class CacheComparator extends AbstractComparator {
             if ( dbColumn ) {
                 return dbColumn.type.toString();
             }
+
+            const maybeIsCreatingNow = this.migration.toCreate.columns.find(newColumn =>
+                newColumn.name === columnRef.name &&
+                newColumn.table.equal(columnRef.tableReference.table)
+            );
+            if ( maybeIsCreatingNow ) {
+                return maybeIsCreatingNow.type.toString();
+            }
         }
 
         if ( expression.isArrayItemOfColumnReference() ) {

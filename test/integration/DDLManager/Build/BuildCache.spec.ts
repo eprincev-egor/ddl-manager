@@ -2151,4 +2151,106 @@ describe("integration/DDLManager.build cache", () => {
         );
     });
 
+    it("one-row with 'coalesce' trigger dependent on other one-row trigger", async() => {
+        const folderPath = ROOT_TMP_PATH + "/recursion-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key
+            );
+
+            create table operations (
+                id serial primary key,
+                id_order bigint,
+                is_border_crossing smallint default 0 not null,
+                deleted smallint default 0 not null,
+                id_arrival_point_end integer
+            );
+
+            create table arrival_points (
+                id serial primary key,
+                id_operation bigint,
+                id_point bigint,
+                actual_departure_date timestamp without time zone,
+                actual_date timestamp without time zone,
+                expected_date timestamp without time zone,
+                id_arrival_point_type smallint
+            );
+            
+            insert into orders default values;
+            insert into operations 
+                (id_order, is_border_crossing, id_arrival_point_end)
+            values
+                (1, 1, 1);
+            insert into arrival_points
+                (id_operation, id_arrival_point_type)
+            values
+                (1, 2);
+        `);
+        
+        fs.writeFileSync(folderPath + "/border_crossing.sql", `
+            cache border_crossing for orders (
+                select
+                    border_crossing.id as id_border_crossing,
+
+                    coalesce(
+                        border_crossing.end_expected_date,
+                        orders.date_delivery
+                    ) as date_delivery,
+
+                    coalesce(
+                        border_crossing.id_point_end,
+                        orders.id_point_delivery
+                    ) as id_point_delivery
+            
+                from operations as border_crossing
+                where
+                    border_crossing.id_order = orders.id and
+                    border_crossing.is_border_crossing = 1 and
+                    border_crossing.deleted = 0
+            
+                order by border_crossing.id desc
+                limit 1
+            )
+        `);
+        
+        fs.writeFileSync(folderPath + "/end_arr_point.sql", `
+            cache end_arr_point for operations as oper (
+                select
+                    end_arr_point.id_point as id_point_end,
+                    end_arr_point.actual_departure_date as end_actual_departure_date,
+                    end_arr_point.actual_date as end_actual_date,
+                    end_arr_point.expected_date as end_expected_date
+            
+                from arrival_points as end_arr_point
+                where
+                    end_arr_point.id = oper.id_arrival_point_end and
+                    end_arr_point.id_arrival_point_type = 2
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        await db.query(`
+            update arrival_points set
+                id_point = 4
+        `);
+
+        const result = await db.query(`
+            select id, id_point_delivery
+            from orders
+        `);
+
+        assert.deepStrictEqual(result.rows[0], {
+            id: 1,
+            id_point_delivery: "4"
+        });
+    });
+
 });
