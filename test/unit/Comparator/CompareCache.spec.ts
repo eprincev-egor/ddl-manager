@@ -85,8 +85,8 @@ describe("Comparator: compare cache", async() => {
             "coalesce(sum(orders.profit), 0)\n    :: numeric as orders_profit"
         );
 
-        assert.strictEqual(toCreate.triggers.length, 1, "one cache func to create");
-        assert.strictEqual(toCreate.functions.length, 1, "one cache trigger to create");
+        assert.strictEqual(toCreate.triggers.length, 1, "one cache trigger to create");
+        assert.strictEqual(toCreate.functions.length, 1, "one cache func to create");
 
         assert.strictEqual(toCreate.functions[0].cacheSignature, "cache totals for companies");
         assert.strictEqual(toCreate.triggers[0].cacheSignature, "cache totals for companies");

@@ -1,3 +1,4 @@
+import { flatMap } from "lodash";
 import { Cache } from "../ast";
 import { DatabaseFunction } from "../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
@@ -8,6 +9,10 @@ export class FilesState {
     
     constructor(files: File[] = []) {
         this.files = files;
+    }
+
+    allCache() {
+        return flatMap(this.files, file => file.content.cache)    
     }
 
     addFile(fileOrParams: File | IFileParams) {

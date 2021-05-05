@@ -2,7 +2,6 @@ import { AbstractComparator } from "./AbstractComparator";
 import { Column } from "../database/schema/Column";
 import { Comment } from "../database/schema/Comment";
 import {
-    Cache,
     Select,
     SelectColumn,
     FuncCall,
@@ -10,7 +9,7 @@ import {
     ColumnReference,
     UnknownExpressionElement
 } from "../ast";
-import { CacheTriggersBuilder } from "../cache/CacheTriggersBuilder";
+import { CacheTriggersBuilder, IOutputTrigger } from "../cache/CacheTriggersBuilder";
 import { AggFactory } from "../cache/aggregator";
 import { flatMap } from "lodash";
 import {
@@ -19,12 +18,60 @@ import {
     findRecursionUpdates
 } from "./graph-util";
 import { TableID } from "../database/schema/TableID";
-import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
-import { DatabaseFunction } from "../database/schema/DatabaseFunction";
-import { IUpdate } from "../Migrator/Migration";
+import { IUpdate, Migration } from "../Migrator/Migration";
 import { TableReference } from "../database/schema/TableReference";
+import { IDatabaseDriver } from "../database/interface";
+import { Database } from "../database/schema/Database";
+import { FilesState } from "../fs/FilesState";
 
 export class CacheComparator extends AbstractComparator {
+
+    private sortedSelectsForEveryColumn: ISortSelectItem[];
+    private allCacheTriggers: IOutputTrigger[];
+
+    constructor(
+        driver: IDatabaseDriver,
+        database: Database,
+        fs: FilesState,
+        migration: Migration
+    ) {
+        super(driver, database, fs, migration);
+
+        this.allCacheTriggers = [];
+        const allSelectsForEveryColumn: ISortSelectItem[] = [];
+
+        for (const cache of this.fs.allCache()) {
+            const cacheTriggerFactory = new CacheTriggersBuilder(
+                cache,
+                this.database
+            );
+
+            const cacheTriggers = cacheTriggerFactory.createTriggers();
+    
+            for (const trigger of cacheTriggers) {
+                this.allCacheTriggers.push(trigger);
+            }
+
+            for (const toUpdate of cacheTriggerFactory.createSelectsForUpdate()) {
+                for (const updateColumn of toUpdate.select.columns) {
+                    allSelectsForEveryColumn.push({
+                        cache,
+                        for: toUpdate.for,
+                        select: toUpdate.select.cloneWith({
+                            columns: [
+                                updateColumn
+                            ]
+                        })
+                    });
+                }
+            }
+
+        }
+
+        this.sortedSelectsForEveryColumn = sortSelectsByDependencies(
+            allSelectsForEveryColumn
+        );
+    }
 
     async drop() {
         this.dropTrashTriggers();
@@ -33,48 +80,39 @@ export class CacheComparator extends AbstractComparator {
     }
 
     async create() {
-        const {sortedSelectsForEveryColumn} = await this.createColumnsAndTriggers();
-        this.updateAllColumns(
-            sortedSelectsForEveryColumn
-        );
+        this.createTriggers();
+        await this.createAllColumns();
+        this.updateAllColumns();
     }
 
     async createLogFuncs() {
-        const allCache = flatMap(this.fs.files, file => file.content.cache);
-
-        for (const cache of allCache) {
-            const cacheTriggerFactory = new CacheTriggersBuilder(
-                cache,
-                this.database
-            );
-            const cacheTriggers = cacheTriggerFactory.createTriggers();
-    
-            for (const trigger of cacheTriggers) {
-                this.migration.create({
-                    functions: [trigger.function]
-                });
-            }
+        for (const trigger of this.allCacheTriggers) {
+            this.migration.create({
+                functions: [trigger.function]
+            });
         }
     }
 
     async createWithoutUpdates() {
-        await this.createColumnsAndTriggers();
+        this.createTriggers();
+        await this.createAllColumns();
     }
 
     async refreshCache() {
-        const sortedSelectsForEveryColumn = this.sortSelectsByDependencies();
-
-        await this.createAllColumns(sortedSelectsForEveryColumn);
-        this.forceUpdateAllColumns(sortedSelectsForEveryColumn);
+        await this.createAllColumns();
+        this.forceUpdateAllColumns();
     }
 
     private dropTrashTriggers() {
-        const allCacheTriggers = flatMap(this.database.tables, 
-            table => table.triggers
-        ).filter(trigger => !!trigger.cacheSignature);
-
-        for (const dbCacheTrigger of allCacheTriggers) {
-            this.dropTriggerIfNotExistsCache(dbCacheTrigger);
+        for (const dbCacheTrigger of this.database.allCacheTriggers()) {
+            const existsSameCacheTrigger = this.allCacheTriggers.some(item => 
+                item.trigger.equal( dbCacheTrigger )
+            );
+            if ( !existsSameCacheTrigger ) {
+                this.migration.drop({
+                    triggers: [dbCacheTrigger]
+                });
+            }
         }
     }
 
@@ -83,7 +121,21 @@ export class CacheComparator extends AbstractComparator {
             !!func.cacheSignature
         );
         for (const dbCacheFunc of allCacheFuncs) {
-            this.dropFuncIfNotExistsCache(dbCacheFunc);
+            const existsSameCacheFunc = this.allCacheTriggers.some(item =>
+                item.function.equal( dbCacheFunc )
+            );
+            if ( !existsSameCacheFunc ) {
+                const needDropTrigger = flatMap(this.database.tables, table => table.triggers)
+                    .find(trigger => trigger.procedure.name === dbCacheFunc.name);
+                const alreadyDropped = needDropTrigger && this.migration.toDrop.triggers.some(trigger =>
+                    trigger.equal(needDropTrigger)
+                );
+    
+                this.migration.drop({
+                    triggers: needDropTrigger && !alreadyDropped ? [needDropTrigger] : [],
+                    functions: [dbCacheFunc]
+                });
+            }
         }
 
     }
@@ -108,62 +160,8 @@ export class CacheComparator extends AbstractComparator {
         }
     }
 
-    private dropTriggerIfNotExistsCache(dbCacheTrigger: DatabaseTrigger) {
-        const existsCache = this.fs.files.some(file => 
-            file.content.cache.some(cache => {
-
-                const cacheTriggerFactory = new CacheTriggersBuilder(
-                    cache,
-                    this.database
-                );
-                const triggers = cacheTriggerFactory.createTriggers();
-            
-                const existsSameCacheFunc = triggers.some(item => 
-                    item.trigger.equal( dbCacheTrigger )
-                );
-                return existsSameCacheFunc;
-            })
-        );
-        if ( !existsCache ) {
-            this.migration.drop({
-                triggers: [dbCacheTrigger]
-            });
-        }
-    }
-
-    private dropFuncIfNotExistsCache(dbCacheFunc: DatabaseFunction) {
-        const existsCache = this.fs.files.some(file => 
-            file.content.cache.some(cache => {
-
-                const cacheTriggerFactory = new CacheTriggersBuilder(
-                    cache,
-                    this.database
-                );
-                const triggers = cacheTriggerFactory.createTriggers();
-            
-                const existsSameCacheFunc = triggers.some(item => 
-                    item.function.equal( dbCacheFunc )
-                );
-                return existsSameCacheFunc;
-            })
-        );
-        if ( !existsCache ) {
-            const needDropTrigger = flatMap(this.database.tables, table => table.triggers)
-                .find(trigger => trigger.procedure.name === dbCacheFunc.name);
-            const alreadyDropped = needDropTrigger && this.migration.toDrop.triggers.some(trigger =>
-                trigger.equal(needDropTrigger)
-            );
-
-            this.migration.drop({
-                triggers: needDropTrigger && !alreadyDropped ? [needDropTrigger] : [],
-                functions: [dbCacheFunc]
-            });
-        }
-    }
-
     private async existsCacheWithSameColumn(table: TableID, column: Column) {
-        const allSelectsForEveryColumn = this.generateAllSelectsForEveryColumn();
-        for (const toUpdate of allSelectsForEveryColumn) {
+        for (const toUpdate of this.sortedSelectsForEveryColumn) {
             if ( !toUpdate.for.equal(table) ) {
                 continue;
             }
@@ -184,42 +182,60 @@ export class CacheComparator extends AbstractComparator {
         return false;
     }
 
-    private async createColumnsAndTriggers() {
-        const allCache = flatMap(this.fs.files, file => file.content.cache);
-
-        for (const cache of allCache) {
-            const cacheTriggerFactory = new CacheTriggersBuilder(
-                cache,
-                this.database
+    private createTriggers() {
+        for (const {trigger, function: func} of this.allCacheTriggers) {
+            
+            const existFunc = this.database.functions.some(existentFunc =>
+                existentFunc.equal(func)
             );
-            const cacheTriggers = cacheTriggerFactory.createTriggers();
-    
-            for (const {trigger, function: func} of cacheTriggers) {
+            const table = this.database.getTable( trigger.table );
+            const existsTrigger = table && table.triggers.some(existentTrigger =>
+                existentTrigger.equal( trigger )
+            );
 
-                const table = this.database.getTable( trigger.table );
-                const existsTrigger = table && table.triggers.some(existentTrigger =>
-                    existentTrigger.equal( trigger )
-                );
-                const existFunc = this.database.functions.some(existentFunc =>
-                    existentFunc.equal(func)
-                );
+            this.migration.create({
+                triggers: existFunc && existsTrigger ? [] : [trigger],
+                functions: existFunc ? [] : [func]
+            });
+        }
+    }
 
+    private async createAllColumns() {
+
+        for (const toUpdate of this.sortedSelectsForEveryColumn) {
+            const selectColumn = toUpdate.select.columns[0] as SelectColumn;
+            const columnName = selectColumn.name;
+
+            const columnToCreate = new Column(
+                toUpdate.for.table,
+                columnName,
+                await this.getColumnType(
+                    toUpdate.for,
+                    toUpdate.select
+                ),
+                this.getColumnDefault(toUpdate.select),
+                Comment.fromFs({
+                    objectType: "column",
+                    cacheSignature: toUpdate.cache.getSignature(),
+                    cacheSelect: toUpdate.select.toString()
+                })
+            );
+
+            const table = this.database.getTable( toUpdate.for.table );
+            const existentColumn = table && table.getColumn(columnName);
+            const existsSameColumn = (
+                existentColumn && 
+                existentColumn.equal( columnToCreate )
+            );
+
+            if ( !existsSameColumn ) {
                 this.migration.create({
-                    triggers: existFunc && existsTrigger ? [] : [trigger],
-                    functions: existFunc ? [] : [func]
+                    columns: [columnToCreate]
                 });
             }
         }
 
-        const sortedSelectsForEveryColumn = this.sortSelectsByDependencies();
-        
-        await this.createAllColumns(
-            sortedSelectsForEveryColumn
-        );
-
         this.recreateDepsTriggers();
-
-        return {sortedSelectsForEveryColumn};
     }
 
     // fix: cannot drop column because other objects depend on it
@@ -261,44 +277,8 @@ export class CacheComparator extends AbstractComparator {
         }
     }
 
-    private async createAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
-
-        for (const toUpdate of sortedSelectsForEveryColumn) {
-            const selectColumn = toUpdate.select.columns[0] as SelectColumn;
-            const columnName = selectColumn.name;
-
-            const columnToCreate = new Column(
-                toUpdate.for.table,
-                columnName,
-                await this.getColumnType(
-                    toUpdate.for,
-                    toUpdate.select
-                ),
-                this.getColumnDefault(toUpdate.select),
-                Comment.fromFs({
-                    objectType: "column",
-                    cacheSignature: toUpdate.cache.getSignature(),
-                    cacheSelect: toUpdate.select.toString()
-                })
-            );
-
-            const table = this.database.getTable( toUpdate.for.table );
-            const existentColumn = table && table.getColumn(columnName);
-            const existsSameColumn = (
-                existentColumn && 
-                existentColumn.equal( columnToCreate )
-            );
-
-            if ( !existsSameColumn ) {
-                this.migration.create({
-                    columns: [columnToCreate]
-                });
-            }
-        }
-    }
-
-    private updateAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
-        const allUpdates = this.generateAllUpdates(sortedSelectsForEveryColumn);
+    private updateAllColumns() {
+        const allUpdates = this.generateAllUpdates();
 
         const requiredUpdates: IUpdate[] = allUpdates
             .map((update) => {
@@ -344,22 +324,22 @@ export class CacheComparator extends AbstractComparator {
         });
     }
 
-    private forceUpdateAllColumns(sortedSelectsForEveryColumn: ISortSelectItem[]) {
-        const allUpdates = this.generateAllUpdates(sortedSelectsForEveryColumn);
+    private forceUpdateAllColumns() {
+        const allUpdates = this.generateAllUpdates();
         this.migration.create({
             updates: allUpdates
         });
     }
 
-    private generateAllUpdates(sortedSelectsForEveryColumn: ISortSelectItem[]) {
+    private generateAllUpdates() {
         const updates: IUpdate[] = [];
 
-        for (let i = 0, n = sortedSelectsForEveryColumn.length; i < n; i++) {
-            const prevItem = sortedSelectsForEveryColumn[ i ];
+        for (let i = 0, n = this.sortedSelectsForEveryColumn.length; i < n; i++) {
+            const prevItem = this.sortedSelectsForEveryColumn[ i ];
 
             const selectsToUpdateOneTable: Select[] = [prevItem.select];
             for (let j = i + 1; j < n; j++) {
-                const nextItem = sortedSelectsForEveryColumn[ j ];
+                const nextItem = this.sortedSelectsForEveryColumn[ j ];
                 const isSimilarSelect = (
                     nextItem.for.equal(prevItem.for) &&
                     nextItem.cache.name === prevItem.cache.name
@@ -537,8 +517,7 @@ export class CacheComparator extends AbstractComparator {
                     continue;
                 }
 
-                const allSelectsForEveryColumn = this.generateAllSelectsForEveryColumn();
-                const toUpdateThatColumn = allSelectsForEveryColumn.find(toUpdate =>
+                const toUpdateThatColumn = this.sortedSelectsForEveryColumn.find(toUpdate =>
                     toUpdate.for.equal(columnRef.tableReference.table) &&
                     toUpdate.select.columns[0].name === columnRef.name
                 );
@@ -598,48 +577,5 @@ export class CacheComparator extends AbstractComparator {
             // TODO: detect coalesce(x, some)
             return "null";
         }
-    }
-
-
-    private sortSelectsByDependencies() {
-        // one cache can dependent on other cache
-        // need build all columns before package updates
-        const allSelectsForEveryColumn = this.generateAllSelectsForEveryColumn();
-        return sortSelectsByDependencies(
-            allSelectsForEveryColumn
-        );
-    }
-
-    private generateAllSelectsForEveryColumn() {
-        const allCache = flatMap(this.fs.files, file => file.content.cache);
-
-        const allSelectsForEveryColumn: ISortSelectItem[] = [];
-
-        for (const cache of allCache) {
-            for (const toUpdate of this.createSelectForUpdate(cache)) {
-                for (const updateColumn of toUpdate.select.columns) {
-                    allSelectsForEveryColumn.push({
-                        cache,
-                        for: toUpdate.for,
-                        select: toUpdate.select.cloneWith({
-                            columns: [
-                                updateColumn
-                            ]
-                        })
-                    });
-                }
-            }
-        }
-
-        return allSelectsForEveryColumn;
-    }
-
-    private createSelectForUpdate(cache: Cache) {
-        const cacheTriggerFactory = new CacheTriggersBuilder(
-            cache,
-            this.database
-        );
-        const selectToUpdate = cacheTriggerFactory.createSelectsForUpdate();
-        return selectToUpdate;
     }
 }

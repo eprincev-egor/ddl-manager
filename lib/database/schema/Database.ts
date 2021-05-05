@@ -123,4 +123,10 @@ export class Database {
             }
         }
     }
+
+    allCacheTriggers() {
+        return flatMap(this.tables, table => table.triggers)
+            .filter(trigger => !!trigger.cacheSignature);
+    }
+
 }

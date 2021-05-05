@@ -21,6 +21,12 @@ export interface ISelectForUpdate {
     select: Select;
 }
 
+export interface IOutputTrigger {
+    name: string;
+    trigger: DatabaseTrigger;
+    function: DatabaseFunction;
+};
+
 export class CacheTriggersBuilder {
 
     private readonly cache: Cache;
@@ -81,11 +87,6 @@ export class CacheTriggersBuilder {
     }
 
     createTriggers() {
-        interface IOutputTrigger {
-            name: string;
-            trigger: DatabaseTrigger;
-            function: DatabaseFunction;
-        };
         const output: IOutputTrigger[] = [];
 
         // throws warning
