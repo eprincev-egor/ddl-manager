@@ -49,11 +49,11 @@ export class SelectColumn extends AbstractAstElement {
         return [`${expression} as ${this.name}`];
     }
 
-    isFuncCall() {
+    isAggCall(database: Database) {
         const funcs = this.expression.getFuncCalls();
         return (
             this.expression.isFuncCall() &&
-            funcs[0].name !== "coalesce"
+            database.aggregators.includes( funcs[0].name )
         );
     }
 

@@ -2253,4 +2253,81 @@ describe("integration/DDLManager.build cache", () => {
         });
     });
 
+    it("multi agg inside hard expression", async() => {
+        const folderPath = ROOT_TMP_PATH + "/strange-transit-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+
+            create table units (
+                id serial primary key,
+                operations bigint[]
+            );
+            
+            create table arrival_points (
+                id serial primary key,
+                id_operation bigint,
+                actual_departure_date timestamp without time zone,
+                actual_date timestamp without time zone,
+                expected_date timestamp without time zone
+            );
+            
+            insert into units (operations)
+            values (array[1]), (array[2]), (array[1, 2]);
+
+            insert into arrival_points (id_operation)
+            values (1), (2);
+        `);
+        
+        fs.writeFileSync(folderPath + "/transit.sql", `
+            cache transit for units (
+                select 
+                    floor(
+                        extract(
+                            epoch from(
+                                coalesce(
+                                    max(ap.actual_date),
+                                    max(ap.expected_date)
+                                ) 
+                                - min(ap.actual_departure_date)
+                            )
+                        ) 
+                        / 60
+                    ) as transit_period_minute
+                from arrival_points as ap
+                where units.operations && array[ ap.id_operation  ]::bigint[]
+            );
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        await db.query(`
+            update arrival_points set
+                actual_date = now(),
+                actual_departure_date = now()
+            where id_operation = 1;
+
+            update arrival_points set
+                actual_date = now() - interval '1 minute',
+                actual_departure_date = now() - interval '1 minute'
+            where id_operation = 2;
+        `);
+
+        const result = await db.query(`
+            select id, transit_period_minute
+            from units
+            order by id
+        `);
+
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, transit_period_minute: 0},
+            {id: 2, transit_period_minute: 0},
+            {id: 3, transit_period_minute: 1}
+        ]);
+    });
+
 });

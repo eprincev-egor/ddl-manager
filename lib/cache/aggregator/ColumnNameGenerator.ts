@@ -1,6 +1,7 @@
 import { FuncCall, SelectColumn, ColumnReference, Expression } from "../../ast";
 import assert from "assert";
 import { MAX_NAME_LENGTH } from "../../database/postgres/constants";
+import { Database } from "../../database/schema/Database";
 
 interface IFuncsByName {
     [funcName: string]: FuncCall[]
@@ -9,8 +10,10 @@ interface IFuncsByName {
 export class ColumnNameGenerator {
     private readonly updateColumn: SelectColumn;
     private readonly funcsByName: IFuncsByName;
+    private readonly database: Database;
 
-    constructor(updateColumn: SelectColumn) {
+    constructor(database: Database, updateColumn: SelectColumn) {
+        this.database = database;
         this.updateColumn = updateColumn;
         this.funcsByName = this.groupFuncsByName();
     }
@@ -22,7 +25,7 @@ export class ColumnNameGenerator {
     }
 
     private generateFullName(aggCall: FuncCall) {
-        if ( this.updateColumn.isFuncCall() ) {
+        if ( this.updateColumn.isAggCall(this.database) ) {
             return this.updateColumn.name;
         }
 

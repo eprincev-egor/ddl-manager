@@ -6,7 +6,8 @@ import {
     Operator as OperatorSyntax,
     CaseWhen as CaseWhenSyntax,
     FunctionLink,
-    PgArray
+    PgArray,
+    Extract as ExtractSyntax
 } from "grapeql-lang";
 import { 
     IExpressionElement,
@@ -17,7 +18,8 @@ import {
     Expression,
     UnknownExpressionElement,
     OrderByItem,
-    OrderBy
+    OrderBy,
+    Extract
 } from "../ast";
 import { UnknownExpressionElementParser } from "./UnknownExpressionElementParser";
 import { ColumnReferenceParser } from "./ColumnReferenceParser";
@@ -65,6 +67,14 @@ export class ExpressionParser {
                         )
                     );
                 elem = new ArrayElement(content);
+            }
+            else if ( elemSyntax instanceof ExtractSyntax ) {
+                const extract = elemSyntax.get("extract")!;
+                const from = this.parse(
+                    select, additionalTableReferences,
+                    elemSyntax.get("from")!
+                );
+                elem = new Extract(extract, from);
             }
             else if ( elemSyntax instanceof CaseWhenSyntax ) {
                 elem = new CaseWhen({

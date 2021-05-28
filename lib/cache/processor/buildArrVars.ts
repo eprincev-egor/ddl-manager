@@ -1,5 +1,6 @@
 import { uniq } from "lodash";
 import { Expression } from "../../ast";
+import { ArrayElement } from "../../ast/expression/ArrayElement";
 import { CacheContext } from "../trigger-builder/CacheContext";
 
 export interface IArrVar {
@@ -55,6 +56,27 @@ function findTriggerTableArrayColumns(
                 if ( isTriggerTableColumnEqualAny ) {
                     continue;
                 }
+            }
+
+            if ( expression.isBinary("&&") ) {
+                const notArrExpressions = expression.elements.filter(item =>
+                    !(item instanceof ArrayElement)
+                );
+
+                for (const notArrayExpression of notArrExpressions) {
+                    const mutableColumns = notArrayExpression.getColumnReferences()
+                    .filter(columnRef =>
+                        columnRef.name !== "id" &&
+                        context.isColumnRefToTriggerTable(columnRef)
+                    )
+                    .map(columnRef =>
+                        columnRef.name
+                    );
+
+                    arrayColumns.push( ...mutableColumns );
+                }
+
+                continue;
             }
 
             const mutableColumns = expression.getColumnReferences()

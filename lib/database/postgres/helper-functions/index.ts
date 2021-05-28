@@ -1,5 +1,7 @@
 import fs from "fs";
 
+// @see FunctionsMigrator
+
 export const CM_ARRAY_REMOVE_ONE_ELEMENT = fs.readFileSync(
     __dirname + "/cm_array_remove_one_element.sql"
 ).toString();

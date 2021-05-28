@@ -79,7 +79,7 @@ export class DeltaSetItemsFactory extends SetItemsFactory {
             );
         }
 
-        if ( !updateColumn.isFuncCall() ) {
+        if ( !updateColumn.isAggCall( this.context.database ) ) {
             const mainSetItem = new SetItem({
                 column: updateColumn.name,
                 value: new HardCode({

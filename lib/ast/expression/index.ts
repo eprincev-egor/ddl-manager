@@ -6,4 +6,5 @@ export * from "./Operator";
 export * from "./UnknownExpressionElement";
 export * from "./NotExpression";
 export * from "./CaseWhen";
+export * from "./Extract";
 export * from "./interface";

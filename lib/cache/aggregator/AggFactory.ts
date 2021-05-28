@@ -26,7 +26,7 @@ export class AggFactory {
     constructor(database: Database, updateColumn: SelectColumn) {
         this.database = database;
         this.updateColumn = updateColumn;
-        this.columnNameGenerator = new ColumnNameGenerator(updateColumn);
+        this.columnNameGenerator = new ColumnNameGenerator(database, updateColumn);
     }
 
     createAggregations(): IAggMap {

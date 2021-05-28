@@ -73,7 +73,7 @@ export class SetItemsFactory {
             const sql = this.aggregate(
                 aggType,
                 agg,
-                hasOtherColumns || !updateColumn.isFuncCall()
+                hasOtherColumns || !updateColumn.isAggCall( this.context.database )
             );
 
             const aggSetItem = new SetItem({
@@ -87,7 +87,7 @@ export class SetItemsFactory {
             );
         }
 
-        if ( !updateColumn.isFuncCall() ) {
+        if ( !updateColumn.isAggCall( this.context.database ) ) {
             const mainSetItem = new SetItem({
                 column: updateColumn.name,
                 value: new HardCode({
