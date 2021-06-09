@@ -305,6 +305,12 @@ export class Expression extends AbstractExpressionElement {
         );
     }
 
+    needWrapToBrackets() {
+        return (
+            /^case\s/.test( this.toString().trim() )
+        );
+    }
+
     template(spaces: Spaces) {
         const lines: string[] = [];
 

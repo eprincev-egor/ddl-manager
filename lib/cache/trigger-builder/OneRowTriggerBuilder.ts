@@ -224,7 +224,11 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
                 const expression = this.replaceTriggerTableToRow(
                     row, selectColumn.expression
                 );
-                return expression.toString() + " is not null";
+
+                if ( expression.needWrapToBrackets() ) {
+                    return `(${expression}) is not null`;
+                }
+                return `${expression} is not null`;
             });
 
         if ( this.context.referenceMeta.filters.length ) {

@@ -2330,4 +2330,75 @@ describe("integration/DDLManager.build cache", () => {
         ]);
     });
 
+    it("case/when need wrap to brackets inside IF ... THEN", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table units (
+                id serial primary key,
+                has_exped boolean,
+                has_our_service_in_forward_operation smallint,
+                deleted smallint default 0
+            );
+            create table operations (
+                id serial primary key,
+                id_unit bigint
+            );
+
+            insert into units (
+                has_exped, has_our_service_in_forward_operation
+            ) values (
+                true, 1
+            );
+            insert into operations (id_unit)
+            values (1);
+        `);
+        
+        fs.writeFileSync(folderPath + "/set_note_trigger.sql", `
+            cache totals for operations (
+                select
+                    (
+                        CASE
+                            WHEN units.has_exped IS TRUE AND has_our_service_in_forward_operation = 1 THEN 'Наша услуга'
+                            WHEN units.has_exped IS TRUE THEN 'Да'
+                            ELSE 'Нет'
+                        END
+                    ) as forward_for_auto
+                from units
+                where
+                    units.id = operations.id_unit and
+                    units.deleted = 0
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        await db.query(`
+            insert into units (
+                has_exped, has_our_service_in_forward_operation
+            ) values (
+                true, 0
+            );
+            insert into operations (id_unit)
+            values (2);
+        `);
+
+        const result = await db.query(`
+            select id, forward_for_auto
+            from operations
+            order by id
+        `);
+
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, forward_for_auto: "Наша услуга"},
+            {id: 2, forward_for_auto: "Да"}
+        ]);
+    });
+
 });
