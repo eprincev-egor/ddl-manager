@@ -72,7 +72,7 @@ export class UpdateMigrator extends AbstractMigrator {
         selectToUpdate: Select,
         forTableRef: TableReference,
         limit: number,
-        tryCount = 3
+        attemptsNumberAfterDeadlock = 0
     ): Promise<number> {
         try {
             return await this.postgres.updateCachePackage(
@@ -81,17 +81,19 @@ export class UpdateMigrator extends AbstractMigrator {
                 limit
             );
         } catch(err) {
-            if ( /deadlock/.test(err.message) ) {
-                if ( tryCount <= 0 ) {
-                    throw err;
-                }
+            if ( /deadlock/i.test(err.message) ) {
+                // next attempt must have more timeout 
+                const timeoutOnDeadlock = (
+                    Math.max(attemptsNumberAfterDeadlock, 5) * 
+                    UpdateMigrator.timeoutOnDeadlock
+                );
+                await sleep( timeoutOnDeadlock );
 
-                await sleep( UpdateMigrator.timeoutOnDeadlock );
                 return await this.tryUpdateCachePackage(
                     selectToUpdate,
                     forTableRef,
                     limit,
-                    tryCount - 1
+                    attemptsNumberAfterDeadlock + 1
                 );
             }
 

@@ -141,15 +141,20 @@ describe("Migrator", () => {
         );
     });
 
-    it("throw deadlock error, if cannot update many times", async() => {
+    it("throw deadlock error, try update many times", async() => {
         UpdateMigrator.timeoutOnDeadlock = 1;
         
-        databaseDriver.setRowsCount("public.some_table", 1499);
+        databaseDriver.setRowsCount("public.some_table", 499);
 
         let updatesCount = 0;
         databaseDriver.updateCachePackage = () => {
             updatesCount++;
-            throw new Error("deadlock");
+
+            if ( updatesCount < 10 ) {
+                throw new Error("deadlock");
+            }
+
+            return Promise.resolve(499);
         };
 
         migration.create({
@@ -161,20 +166,11 @@ describe("Migrator", () => {
         });
 
         
-        let actualError = new Error("expected error");
-        try {
-            await MainMigrator.migrate(databaseDriver, database, migration);
-        } catch(err) {
-            actualError = err;
-        }
+        await MainMigrator.migrate(databaseDriver, database, migration);
 
         assert.strictEqual(
-            actualError.message,
-            "deadlock"
-        );
-        assert.strictEqual(
             updatesCount,
-            4
+            10
         );
     });
 });
