@@ -37,14 +37,19 @@ ${ this.printChildrenAggregations() }
 
     private printMainAgg() {
         const mainAggCall = this.call.withoutWhere();
+        let preparedCall = mainAggCall;
 
-        const columnRef = mainAggCall.getColumnReferences()[0] as ColumnReference;
-        const tableRef = columnRef.tableReference;
+        for (const {tableReference} of mainAggCall.getColumnReferences()) {
+            const itemRef = new TableReference(
+                tableReference.table,
+                "item"
+            );
 
-        const preparedCall = mainAggCall.replaceTable(tableRef, new TableReference(
-            tableRef.table,
-            "item"
-        ));
+            preparedCall = preparedCall.replaceTable(
+                tableReference, itemRef
+            );
+        }
+        
         const sql = preparedCall.toSQL(
             Spaces.empty()
         );

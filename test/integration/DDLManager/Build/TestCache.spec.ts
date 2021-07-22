@@ -2432,4 +2432,100 @@ $$;
         ]);
     });
 
+    it("string_agg with hard expression by joins", async() => {
+        const folderPath = ROOT_TMP_PATH + "/coalesce_bool_or";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table operation (
+                id serial primary key
+            );
+            create table arrival_point (
+                id serial primary key,
+                id_operation bigint not null,
+                id_country bigint,
+                id_point bigint,
+                sort integer not null
+            );
+            create table list_country (
+                id serial primary key,
+                code text
+            );
+            create table list_warehouse (
+                id serial primary key,
+                list_warehouse_name text
+            );
+
+            insert into list_country (code) values ('RU');
+            insert into list_country (code) values ('EN');
+            insert into list_warehouse (list_warehouse_name) values ('AAA');
+            insert into list_warehouse (list_warehouse_name) values ('BBB');
+
+            insert into operation default values;
+        `);
+
+        fs.writeFileSync(folderPath + "/route_text.sql", `
+            cache route_text for operation as oper (
+
+                SELECT
+                    string_agg(
+                        
+                        --// !!! конкатенация с null вернет null !!!
+                        --// '(страна) ' или ничего
+                        coalesce('(' || trim(country.code) || ') ',
+                                '') ||
+                            --// 'точка' или ничего
+                            coalesce(
+                                trim(place.list_warehouse_name), '')
+            
+                        , ' -> '
+            
+                        order by arr_point.sort asc
+            
+                    ) AS route_text
+            
+                FROM arrival_point as arr_point
+            
+                LEFT JOIN list_country as country ON
+                    country.id = arr_point.id_country AND
+                    country.code IS NOT NULL AND
+                    trim(country.code) <> ''
+            
+                LEFT JOIN list_warehouse as place ON
+                    place.id = arr_point.id_point AND
+                    place.list_warehouse_name IS NOT NULL AND
+                    trim(place.list_warehouse_name) <> ''
+            
+                WHERE
+                    arr_point.id_operation = oper.id
+                    AND arr_point.id_point IS NOT NULL
+            )
+            without triggers on list_country
+            without triggers on list_warehouse
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        await db.query(`
+            insert into arrival_point (
+                id_operation, id_country, id_point, sort
+            ) values 
+                (1, 1, 1, 1),
+                (1, 2, 2, 2)
+            ;
+        `);
+
+        const {rows} = await db.query(`
+            select id, route_text 
+            from operation
+        `);
+        assert.deepStrictEqual(rows, [
+            { id: 1, route_text: "(RU) AAA -> (EN) BBB" }
+        ]);
+    });
+
 });
