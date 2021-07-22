@@ -110,20 +110,26 @@ begin
 
 
         if not_changed_units_ids is not null then
-            update units set
-                __first_auto_id = new.id,
-                first_auto_incoming_date = new.incoming_date,
-                first_auto_outgoing_date = new.outgoing_date
-            where
-                units.id = any( not_changed_units_ids )
-                and
-                units.__first_auto_id = new.id
-                and
-                (
-                    units.first_auto_incoming_date is distinct from new.incoming_date
-                    or
-                    units.first_auto_outgoing_date is distinct from new.outgoing_date
-                );
+            if
+                new.incoming_date is distinct from old.incoming_date
+                or
+                new.outgoing_date is distinct from old.outgoing_date
+            then
+                update units set
+                    __first_auto_id = new.id,
+                    first_auto_incoming_date = new.incoming_date,
+                    first_auto_outgoing_date = new.outgoing_date
+                where
+                    units.id = any( not_changed_units_ids )
+                    and
+                    units.__first_auto_id = new.id
+                    and
+                    (
+                        units.first_auto_incoming_date is distinct from new.incoming_date
+                        or
+                        units.first_auto_outgoing_date is distinct from new.outgoing_date
+                    );
+            end if;
         end if;
 
         if deleted_units_ids is not null then

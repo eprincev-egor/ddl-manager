@@ -127,22 +127,28 @@ begin
                 and
                 new.parent_lvl is not distinct from old.parent_lvl
             then
-                update units set
-                    __last_sea_id = new.id,
-                    __last_sea_lvl = new.lvl,
-                    __last_sea_parent_lvl = new.parent_lvl,
-                    last_sea_incoming_date = new.incoming_date,
-                    last_sea_outgoing_date = new.outgoing_date
-                where
-                    units.id = any( not_changed_units_ids )
-                    and
-                    units.__last_sea_id = new.id
-                    and
-                    (
-                        units.last_sea_incoming_date is distinct from new.incoming_date
-                        or
-                        units.last_sea_outgoing_date is distinct from new.outgoing_date
-                    );
+                if
+                    new.incoming_date is distinct from old.incoming_date
+                    or
+                    new.outgoing_date is distinct from old.outgoing_date
+                then
+                    update units set
+                        __last_sea_id = new.id,
+                        __last_sea_lvl = new.lvl,
+                        __last_sea_parent_lvl = new.parent_lvl,
+                        last_sea_incoming_date = new.incoming_date,
+                        last_sea_outgoing_date = new.outgoing_date
+                    where
+                        units.id = any( not_changed_units_ids )
+                        and
+                        units.__last_sea_id = new.id
+                        and
+                        (
+                            units.last_sea_incoming_date is distinct from new.incoming_date
+                            or
+                            units.last_sea_outgoing_date is distinct from new.outgoing_date
+                        );
+                end if;
             else
                 if
                     coalesce(new.lvl, new.parent_lvl) is not distinct from coalesce(old.lvl, old.parent_lvl)

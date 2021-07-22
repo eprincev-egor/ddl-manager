@@ -52,29 +52,27 @@ begin
         deleted_units_ids = cm_get_deleted_elements(old.units_ids, new.units_ids);
 
 
-        if
-            not_changed_units_ids is not null
-            and
-            (
+        if not_changed_units_ids is not null then
+            if
                 new.incoming_date is distinct from old.incoming_date
                 or
                 new.outgoing_date is distinct from old.outgoing_date
-            )
-        then
-            update units set
-                __last_operation_id = new.id,
-                last_operation_incoming_date = new.incoming_date,
-                last_operation_outgoing_date = new.outgoing_date
-            where
-                units.id = any( not_changed_units_ids )
-                and
-                units.__last_operation_id = new.id
-                and
-                (
-                    units.last_operation_incoming_date is distinct from new.incoming_date
-                    or
-                    units.last_operation_outgoing_date is distinct from new.outgoing_date
-                );
+            then
+                update units set
+                    __last_operation_id = new.id,
+                    last_operation_incoming_date = new.incoming_date,
+                    last_operation_outgoing_date = new.outgoing_date
+                where
+                    units.id = any( not_changed_units_ids )
+                    and
+                    units.__last_operation_id = new.id
+                    and
+                    (
+                        units.last_operation_incoming_date is distinct from new.incoming_date
+                        or
+                        units.last_operation_outgoing_date is distinct from new.outgoing_date
+                    );
+            end if;
         end if;
 
         if deleted_units_ids is not null then

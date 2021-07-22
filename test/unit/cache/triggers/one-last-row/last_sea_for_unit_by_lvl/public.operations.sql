@@ -116,21 +116,27 @@ begin
 
         if not_changed_units_ids is not null then
             if new.lvl is not distinct from old.lvl then
-                update units set
-                    __last_sea_id = new.id,
-                    __last_sea_lvl = new.lvl,
-                    last_sea_incoming_date = new.incoming_date,
-                    last_sea_outgoing_date = new.outgoing_date
-                where
-                    units.id = any( not_changed_units_ids )
-                    and
-                    units.__last_sea_id = new.id
-                    and
-                    (
-                        units.last_sea_incoming_date is distinct from new.incoming_date
-                        or
-                        units.last_sea_outgoing_date is distinct from new.outgoing_date
-                    );
+                if
+                    new.incoming_date is distinct from old.incoming_date
+                    or
+                    new.outgoing_date is distinct from old.outgoing_date
+                then
+                    update units set
+                        __last_sea_id = new.id,
+                        __last_sea_lvl = new.lvl,
+                        last_sea_incoming_date = new.incoming_date,
+                        last_sea_outgoing_date = new.outgoing_date
+                    where
+                        units.id = any( not_changed_units_ids )
+                        and
+                        units.__last_sea_id = new.id
+                        and
+                        (
+                            units.last_sea_incoming_date is distinct from new.incoming_date
+                            or
+                            units.last_sea_outgoing_date is distinct from new.outgoing_date
+                        );
+                end if;
             else
                 if
                     new.lvl is not distinct from old.lvl

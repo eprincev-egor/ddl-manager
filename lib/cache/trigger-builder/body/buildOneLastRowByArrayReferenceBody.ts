@@ -204,20 +204,33 @@ export function buildOneLastRowByArrayReferenceBody(ast: ILastRowParams) {
                     new BlankLine(),
                     new If({
                         if: Expression.and([
-                            `not_changed_${ast.arrColumn.name} is not null`,
-                            ...(ast.needMatching ? [] : [Expression.or(
-                                ast.dataFields.map(columnName =>
-                                    `new.${columnName} is distinct from old.${columnName}`
-                                )
-                            )])
+                            `not_changed_${ast.arrColumn.name} is not null`
                         ]),
                         then: ast.orderByColumnName === "id" ? [
-                            ast.updateNotChangedIds
+                            new If({
+                                if: Expression.or(
+                                    ast.dataFields.map(columnName =>
+                                        `new.${columnName} is distinct from old.${columnName}`
+                                    )
+                                ),
+                                then: [
+                                    ast.updateNotChangedIds
+                                ]
+                            })
                         ] : [
                             new If({
                                 if: ast.noOrderChanges,
                                 then: [
-                                    ast.updateNotChangedIds
+                                    new If({
+                                        if: Expression.or(
+                                            ast.dataFields.map(columnName =>
+                                                `new.${columnName} is distinct from old.${columnName}`
+                                            )
+                                        ),
+                                        then: [
+                                            ast.updateNotChangedIds
+                                        ]
+                                    })
                                 ],
                                 else: [
                                     new If({
