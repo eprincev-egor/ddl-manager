@@ -2,7 +2,7 @@
 // timestamp for file name
 export function date2timestamp(date: Date) {
 
-    let day: string = date.getDay().toString();
+    let day: string = date.getDate().toString();
     let month: string = (date.getMonth() + 1).toString();
     const year = date.getFullYear().toString();
     let hours: string = date.getHours().toString();

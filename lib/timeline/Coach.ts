@@ -65,7 +65,7 @@ export function parseCalls(logs: LogRow[]) {
     const coach = new Coach(logs);
     const rootCalls = coach.parseCalls();
     
-    const slowCalls = rootCalls.sort((callA, callB) =>
+    const slowCalls = rootCalls.slice().sort((callA, callB) =>
         callB.total_time - callA.total_time
     ).slice(0, 10);
 
