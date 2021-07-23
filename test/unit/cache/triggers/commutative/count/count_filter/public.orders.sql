@@ -27,7 +27,33 @@ begin
             return new;
         end if;
 
+        if new.id_client is not distinct from old.id_client then
+            if new.id_client is null then
+                return new;
+            end if;
 
+            update companies set
+                orders_count = case
+                    when
+                        new.id_order_type in (1, 2, 3)
+                        and
+                        not coalesce(old.id_order_type in (1, 2, 3), false)
+                    then
+                        orders_count + 1
+                    when
+                        not coalesce(new.id_order_type in (1, 2, 3), false)
+                        and
+                        old.id_order_type in (1, 2, 3)
+                    then
+                        orders_count - 1
+                    else
+                        orders_count
+                end
+            where
+                new.id_client = companies.id;
+
+            return new;
+        end if;
 
         if
             old.id_client is not null

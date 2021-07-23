@@ -29,7 +29,8 @@ export class DeltaSetItemsFactory extends SetItemsFactory {
             const isOnlyCountAgg = (
                 aggregations.length === 1 &&
                 aggregations[0].name === "count" &&
-                !aggregations[0].distinct
+                !aggregations[0].distinct &&
+                !aggregations[0].where
             );
 
             return (

@@ -2528,4 +2528,80 @@ $$;
         ]);
     });
 
+    it("count with filter by mutable column", async() => {
+        const folderPath = ROOT_TMP_PATH + "/count_filter";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key
+            );
+            create table gtds (
+                id serial primary key,
+                orders_ids integer[],
+                date_clear timestamp without time zone
+            );
+
+            insert into orders default values;
+            insert into gtds (orders_ids) values (array[1]);
+            insert into gtds (orders_ids) values (array[1]);
+            insert into gtds (orders_ids) values (array[1]);
+        `);
+
+        fs.writeFileSync(folderPath + "/route_text.sql", `
+            cache gtds for orders (
+
+                SELECT
+                    count(*) as all_count,
+                    count(*) filter ( where
+                        gtds.date_clear is not null
+                    ) as clear_count
+            
+                FROM gtds
+            
+                WHERE
+                    gtds.orders_ids && array[ orders.id ]
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        await db.query(`
+            update gtds set
+                date_clear = now()
+            where
+                id = 3
+        `);
+
+        let actual: any;
+
+        actual = await db.query(`
+            select id, all_count, clear_count
+            from orders
+        `);
+        assert.deepStrictEqual(actual.rows, [
+            { id: 1, all_count: "3", clear_count: "1" }
+        ]);
+
+
+        await db.query(`
+            update gtds set
+                date_clear = case 
+                    when id in (1,2)
+                    then now() 
+                    else null 
+                end
+        `);
+        actual = await db.query(`
+            select id, all_count, clear_count
+            from orders
+        `);
+        assert.deepStrictEqual(actual.rows, [
+            { id: 1, all_count: "3", clear_count: "2" }
+        ]);
+    });
 });

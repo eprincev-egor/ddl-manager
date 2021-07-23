@@ -80,7 +80,49 @@ begin
             end if;
         end if;
 
+        if new.id_client is not distinct from old.id_client then
+            if new.id_client is null then
+                return new;
+            end if;
 
+            update companies set
+                rus_orders_count = case
+                    when
+                        new_country_code = 'RUS'
+                        and
+                        not coalesce(old_country_code = 'RUS', false)
+                    then
+                        rus_orders_count + 1
+                    when
+                        not coalesce(new_country_code = 'RUS', false)
+                        and
+                        old_country_code = 'RUS'
+                    then
+                        rus_orders_count - 1
+                    else
+                        rus_orders_count
+                end,
+                eng_orders_count = case
+                    when
+                        new_country_code = 'ENG'
+                        and
+                        not coalesce(old_country_code = 'ENG', false)
+                    then
+                        eng_orders_count + 1
+                    when
+                        not coalesce(new_country_code = 'ENG', false)
+                        and
+                        old_country_code = 'ENG'
+                    then
+                        eng_orders_count - 1
+                    else
+                        eng_orders_count
+                end
+            where
+                new.id_client = companies.id;
+
+            return new;
+        end if;
 
         if
             old.id_client is not null
