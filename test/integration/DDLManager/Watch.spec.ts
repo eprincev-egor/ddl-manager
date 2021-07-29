@@ -77,6 +77,11 @@ describe("integration/DDLManager.watch", () => {
             language plpgsql;
         `);
 
+        await DDLManager.build({
+            db, 
+            folder: folderPath
+        });
+
 
         await DDLManager.watch({
             db, 
@@ -268,6 +273,11 @@ describe("integration/DDLManager.watch", () => {
             language plpgsql;
         `);
 
+        await DDLManager.build({
+            db, 
+            folder: folderPath
+        });
+
 
         await DDLManager.watch({
             db, 
@@ -351,6 +361,11 @@ describe("integration/DDLManager.watch", () => {
             $body$
             language plpgsql;
         `);
+
+        await DDLManager.build({
+            db, 
+            folder: [folderPath1, folderPath2]
+        });
 
         await DDLManager.watch({
             db, 
@@ -478,6 +493,12 @@ describe("integration/DDLManager.watch", () => {
                     orders.id_client = companies.id
             )
         `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath
+        });
+
         await DDLManager.watch({
             db, 
             folder: folderPath

@@ -56,7 +56,7 @@ export class DDLManager {
             folder: params.folder
         });
 
-        await ddlManager.watch();
+        return await ddlManager.watch();
     }
 
     static async dump(params: {
@@ -262,24 +262,6 @@ export class DDLManager {
         const database = await postgres.load();
         const watcher = await FileWatcher.watch(this.folders);
 
-        const migration = await MainComparator.compare(
-            postgres,
-            database,
-            watcher.state
-        );
-        const migrateErrors = await MainMigrator.migrate(
-            postgres,
-            database,
-            migration
-        );
-
-        migration.log();
-        if ( migrateErrors.length ) {
-            console.error(migrateErrors);
-        }
-
-        database.applyMigration(migration);
-
         watcher.on("change", () => {
             this.onChangeFS(
                 postgres,
@@ -287,8 +269,13 @@ export class DDLManager {
                 watcher.state
             );
         });
+        watcher.on("error", (err) => {
+            console.error(err.message);
+        });
 
         watchers.push(watcher);
+
+        return watcher;
     }
 
     private async onChangeFS(
