@@ -1946,7 +1946,7 @@ $$;
         
             left join lateral (
                 select
-                    coalesce(sum( invoices.profit ), 0) as invoices_profit
+                    sum( invoices.profit ) as invoices_profit
         
                 from invoices
                 where
@@ -1954,7 +1954,7 @@ $$;
                     invoices.deleted = 0
             ) as should_be on true
             where
-                should_be.invoices_profit is distinct from orders.invoices_profit;
+                coalesce(should_be.invoices_profit, 0) != coalesce(orders.invoices_profit, 0);
         
         
             if invalid_orders is not null then
@@ -2373,7 +2373,7 @@ $$;
             where id = 1
         `);
         assert.deepStrictEqual(result.rows[0], {
-            children_profit: "0"
+            children_profit: null
         })
     });
 

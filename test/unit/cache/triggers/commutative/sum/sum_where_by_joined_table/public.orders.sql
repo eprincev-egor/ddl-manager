@@ -23,7 +23,7 @@ begin
 
             if old_order_type_name in ('LCL', 'LTL') then
                 update companies set
-                    orders_total = orders_total - coalesce(old.profit, 0)
+                    orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0)
                 where
                     old.id_client = companies.id;
             end if;
@@ -87,7 +87,7 @@ begin
             end if;
 
             update companies set
-                orders_total = orders_total - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+                orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
             where
                 new.id_client = companies.id;
 
@@ -102,7 +102,7 @@ begin
             old_order_type_name in ('LCL', 'LTL')
         then
             update companies set
-                orders_total = orders_total - coalesce(old.profit, 0)
+                orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0)
             where
                 old.id_client = companies.id;
         end if;
@@ -115,7 +115,7 @@ begin
             new_order_type_name in ('LCL', 'LTL')
         then
             update companies set
-                orders_total = orders_total + coalesce(new.profit, 0)
+                orders_total = coalesce(orders_total, 0) + coalesce(new.profit, 0)
             where
                 new.id_client = companies.id;
         end if;
@@ -142,7 +142,7 @@ begin
 
             if new_order_type_name in ('LCL', 'LTL') then
                 update companies set
-                    orders_total = orders_total + coalesce(new.profit, 0)
+                    orders_total = coalesce(orders_total, 0) + coalesce(new.profit, 0)
                 where
                     new.id_client = companies.id;
             end if;

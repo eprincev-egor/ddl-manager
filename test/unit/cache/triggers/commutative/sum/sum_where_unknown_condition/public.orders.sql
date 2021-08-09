@@ -5,7 +5,7 @@ begin
     if TG_OP = 'DELETE' then
 
         update companies set
-            orders_total = orders_total - coalesce(old.profit, 0)
+            orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0)
         where
             unknown_func(
                 companies.id,
@@ -26,7 +26,7 @@ begin
 
         if new.id_client is not distinct from old.id_client then
             update companies set
-                orders_total = orders_total - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+                orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
             where
                 unknown_func(
                     companies.id,
@@ -37,7 +37,7 @@ begin
         end if;
 
         update companies set
-            orders_total = orders_total - coalesce(old.profit, 0)
+            orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0)
         where
             unknown_func(
                 companies.id,
@@ -45,7 +45,7 @@ begin
             );
 
         update companies set
-            orders_total = orders_total + coalesce(new.profit, 0)
+            orders_total = coalesce(orders_total, 0) + coalesce(new.profit, 0)
         where
             unknown_func(
                 companies.id,
@@ -58,7 +58,7 @@ begin
     if TG_OP = 'INSERT' then
 
         update companies set
-            orders_total = orders_total + coalesce(new.profit, 0)
+            orders_total = coalesce(orders_total, 0) + coalesce(new.profit, 0)
         where
             unknown_func(
                 companies.id,

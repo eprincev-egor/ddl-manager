@@ -20,23 +20,11 @@ export function createSelectForUpdate(
         const columns = Object.keys(aggregations).map(aggColumnName => {
             const agg = aggregations[ aggColumnName ];
 
-            let expression = new Expression([
-                agg.call
-            ]);
-            if ( agg.call.name === "sum" ) {
-                expression = new Expression([
-                    Expression.funcCall("coalesce", [
-                        expression,
-                        Expression.unknown( "0" )
-                    ]),
-                    UnknownExpressionElement.fromSql("::"),
-                    UnknownExpressionElement.fromSql("numeric")
-                ]);
-            }
-
             const column = new SelectColumn({
                 name: aggColumnName,
-                expression
+                expression: new Expression([
+                    agg.call
+                ])
             });
             return column;
         });

@@ -6,7 +6,7 @@ begin
 
         if old.deleted = 0 then
             update invoice set
-                payments_total = payments_total - coalesce(old.total, 0)
+                payments_total = coalesce(payments_total, 0) - coalesce(old.total, 0)
             where
                 invoice.payments_ids && ARRAY[ old.id ]::int8[];
         end if;
@@ -29,7 +29,7 @@ begin
             end if;
 
             update invoice set
-                payments_total = payments_total - coalesce(old.total, 0) + coalesce(new.total, 0)
+                payments_total = coalesce(payments_total, 0) - coalesce(old.total, 0) + coalesce(new.total, 0)
             where
                 invoice.payments_ids && ARRAY[ new.id ]::int8[];
 
@@ -38,14 +38,14 @@ begin
 
         if old.deleted = 0 then
             update invoice set
-                payments_total = payments_total - coalesce(old.total, 0)
+                payments_total = coalesce(payments_total, 0) - coalesce(old.total, 0)
             where
                 invoice.payments_ids && ARRAY[ old.id ]::int8[];
         end if;
 
         if new.deleted = 0 then
             update invoice set
-                payments_total = payments_total + coalesce(new.total, 0)
+                payments_total = coalesce(payments_total, 0) + coalesce(new.total, 0)
             where
                 invoice.payments_ids && ARRAY[ new.id ]::int8[];
         end if;

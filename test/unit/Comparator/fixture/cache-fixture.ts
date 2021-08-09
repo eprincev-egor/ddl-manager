@@ -90,7 +90,7 @@ begin
 
         if old.id_client is not null then
             update companies set
-                orders_profit = orders_profit - coalesce(old.profit, 0)
+                orders_profit = coalesce(orders_profit, 0) - coalesce(old.profit, 0)
             where
                 old.id_client = companies.id;
         end if;
@@ -113,7 +113,7 @@ begin
             end if;
 
             update companies set
-                orders_profit = orders_profit - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+                orders_profit = coalesce(orders_profit, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
             where
                 new.id_client = companies.id;
 
@@ -122,14 +122,14 @@ begin
 
         if old.id_client is not null then
             update companies set
-                orders_profit = orders_profit - coalesce(old.profit, 0)
+                orders_profit = coalesce(orders_profit, 0) - coalesce(old.profit, 0)
             where
                 old.id_client = companies.id;
         end if;
 
         if new.id_client is not null then
             update companies set
-                orders_profit = orders_profit + coalesce(new.profit, 0)
+                orders_profit = coalesce(orders_profit, 0) + coalesce(new.profit, 0)
             where
                 new.id_client = companies.id;
         end if;
@@ -141,7 +141,7 @@ begin
 
         if new.id_client is not null then
             update companies set
-                orders_profit = orders_profit + coalesce(new.profit, 0)
+                orders_profit = coalesce(orders_profit, 0) + coalesce(new.profit, 0)
             where
                 new.id_client = companies.id;
         end if;
@@ -194,14 +194,13 @@ export const testCacheColumn = new Column(
     companiesId,
     "orders_profit",
     "numeric",
-    "0",
+    "null",
     Comment.fromFs({
         objectType: "column",
         cacheSignature: "cache totals for companies",
         cacheSelect: `
 select
-    coalesce(sum(orders.profit), 0)
-    :: numeric as orders_profit
+    sum(orders.profit) as orders_profit
 from orders
 where
     orders.id_client = companies.id`.trim()

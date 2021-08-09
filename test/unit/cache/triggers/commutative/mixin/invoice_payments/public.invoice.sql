@@ -19,14 +19,7 @@ begin
             payments_total
         ) = (
             select
-                coalesce(
-        sum(
-            payment_orders.total,
-            ', '
-        ),
-        0
-    )
-    :: numeric as payments_total
+                sum(payment_orders.total) as payments_total
 
             from payment_orders
 

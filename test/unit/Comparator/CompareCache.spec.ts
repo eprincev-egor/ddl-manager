@@ -70,7 +70,7 @@ describe("Comparator: compare cache", async() => {
             },
             name: "orders_profit",
             type: "numeric",
-            "default": "0",
+            "default": "null",
             cacheSignature: "cache totals for companies",
             comment: actualColumn.comment.toString()
         });
@@ -82,7 +82,7 @@ describe("Comparator: compare cache", async() => {
         );
         assert.strictEqual(
             toCreate.updates[0].select.columns[0].toString().trim(),
-            "coalesce(sum(orders.profit), 0)\n    :: numeric as orders_profit"
+            "sum(orders.profit) as orders_profit"
         );
 
         assert.strictEqual(toCreate.triggers.length, 1, "one cache trigger to create");
@@ -122,7 +122,7 @@ describe("Comparator: compare cache", async() => {
             },
             name: "orders_profit",
             type: "numeric",
-            "default": "0",
+            "default": "null",
             cacheSignature: "cache totals for companies",
             comment: testCacheColumn.comment.toString()
         });
@@ -171,7 +171,7 @@ describe("Comparator: compare cache", async() => {
             },
             name: "orders_profit",
             type: "numeric",
-            "default": "0",
+            "default": "null",
             cacheSignature: testCacheWithOtherName.getSignature(),
 
             // no matter...
@@ -315,7 +315,7 @@ describe("Comparator: compare cache", async() => {
                 },
                 name: "sum_text_sum",
                 type: "numeric",
-                default: "0",
+                default: "null",
                 cacheSignature: "cache totals for companies",
                 comment: actualColumns[3].comment
             },
@@ -326,7 +326,7 @@ describe("Comparator: compare cache", async() => {
                 },
                 name: "sum_text",
                 type: "text",
-                default: "0",
+                default: "null",
                 cacheSignature: "cache totals for companies",
                 comment: actualColumns[4].comment
             }
@@ -346,14 +346,13 @@ describe("Comparator: compare cache", async() => {
             new TableID("public", "companies"),
             "orders_profit",
             "numeric",
-            "0",
+            "null",
             Comment.fromFs({
                 objectType: "column",
                 cacheSignature: "cache totals for companies",
                 cacheSelect: `
 select
-    coalesce(sum(orders.profit), 0)
-    :: numeric as orders_profit
+    sum(orders.profit) as orders_profit
 from orders
 where
     orders.id_client = companies.id`.trim()

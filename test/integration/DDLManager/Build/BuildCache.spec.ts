@@ -461,7 +461,7 @@ describe("integration/DDLManager.build cache", () => {
 
         assert.deepStrictEqual(result.rows[0], {
             id: 1,
-            orders_profit: "0"
+            orders_profit: null
         });
 
 
@@ -2398,6 +2398,67 @@ describe("integration/DDLManager.build cache", () => {
         assert.deepStrictEqual(result.rows, [
             {id: 1, forward_for_auto: "Наша услуга"},
             {id: 2, forward_for_auto: "Да"}
+        ]);
+    });
+
+    it("cache sum() using existent column without cache rows", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table units (
+                id serial primary key,
+                accepted_weight numeric
+            );
+            create table accepted (
+                id serial primary key,
+                id_unit bigint,
+                weight numeric
+            );
+
+            insert into units default values;
+        `);
+        
+        fs.writeFileSync(folderPath + "/set_note_trigger.sql", `
+            cache accepted for units (
+                select
+                    sum( accepted.weight ) as accepted_weight
+                from accepted
+                where
+                    accepted.id_unit = units.id
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        let result = await db.query(`
+            select id, accepted_weight
+            from units
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, accepted_weight: null}
+        ]);
+
+
+
+        await db.query(`
+            insert into accepted (
+                id_unit, weight
+            ) values (
+                1, 400
+            );
+        `);
+        result = await db.query(`
+            select id, accepted_weight
+            from units
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, accepted_weight: "400"}
         ]);
     });
 

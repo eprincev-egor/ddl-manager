@@ -6,7 +6,7 @@ begin
 
         if old.transfer_date is not null then
             update capital.account_date_balance as date_balance set
-                transfers_sum = transfers_sum - coalesce(old.delta, 0)
+                transfers_sum = coalesce(transfers_sum, 0) - coalesce(old.delta, 0)
             where
                 old.transfer_date = date_balance.balance_date;
         end if;
@@ -29,7 +29,7 @@ begin
             end if;
 
             update capital.account_date_balance as date_balance set
-                transfers_sum = transfers_sum - coalesce(old.delta, 0) + coalesce(new.delta, 0)
+                transfers_sum = coalesce(transfers_sum, 0) - coalesce(old.delta, 0) + coalesce(new.delta, 0)
             where
                 new.transfer_date = date_balance.balance_date;
 
@@ -38,14 +38,14 @@ begin
 
         if old.transfer_date is not null then
             update capital.account_date_balance as date_balance set
-                transfers_sum = transfers_sum - coalesce(old.delta, 0)
+                transfers_sum = coalesce(transfers_sum, 0) - coalesce(old.delta, 0)
             where
                 old.transfer_date = date_balance.balance_date;
         end if;
 
         if new.transfer_date is not null then
             update capital.account_date_balance as date_balance set
-                transfers_sum = transfers_sum + coalesce(new.delta, 0)
+                transfers_sum = coalesce(transfers_sum, 0) + coalesce(new.delta, 0)
             where
                 new.transfer_date = date_balance.balance_date;
         end if;
@@ -57,7 +57,7 @@ begin
 
         if new.transfer_date is not null then
             update capital.account_date_balance as date_balance set
-                transfers_sum = transfers_sum + coalesce(new.delta, 0)
+                transfers_sum = coalesce(transfers_sum, 0) + coalesce(new.delta, 0)
             where
                 new.transfer_date = date_balance.balance_date;
         end if;

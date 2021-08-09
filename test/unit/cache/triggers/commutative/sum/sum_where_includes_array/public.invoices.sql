@@ -15,7 +15,7 @@ begin
             old.deleted = 0
         then
             update orders set
-                invoices_profit = invoices_profit - coalesce(old.profit, 0)
+                invoices_profit = coalesce(invoices_profit, 0) - coalesce(old.profit, 0)
             where
                 orders.id = any( old.orders_ids::bigint[] );
         end if;
@@ -77,21 +77,21 @@ begin
 
         if not_changed_orders_ids is not null then
             update orders set
-                invoices_profit = invoices_profit - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+                invoices_profit = coalesce(invoices_profit, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
             where
                 orders.id = any( not_changed_orders_ids::bigint[] );
         end if;
 
         if deleted_orders_ids is not null then
             update orders set
-                invoices_profit = invoices_profit - coalesce(old.profit, 0)
+                invoices_profit = coalesce(invoices_profit, 0) - coalesce(old.profit, 0)
             where
                 orders.id = any( deleted_orders_ids::bigint[] );
         end if;
 
         if inserted_orders_ids is not null then
             update orders set
-                invoices_profit = invoices_profit + coalesce(new.profit, 0)
+                invoices_profit = coalesce(invoices_profit, 0) + coalesce(new.profit, 0)
             where
                 orders.id = any( inserted_orders_ids::bigint[] );
         end if;
@@ -107,7 +107,7 @@ begin
             new.deleted = 0
         then
             update orders set
-                invoices_profit = invoices_profit + coalesce(new.profit, 0)
+                invoices_profit = coalesce(invoices_profit, 0) + coalesce(new.profit, 0)
             where
                 orders.id = any( new.orders_ids::bigint[] );
         end if;

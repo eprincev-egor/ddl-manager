@@ -19,11 +19,7 @@ begin
             transfers_sum
         ) = (
             select
-                coalesce(
-        sum(capital.transfer.delta),
-        0
-    )
-    :: numeric as transfers_sum
+                sum(capital.transfer.delta) as transfers_sum
 
             from capital.transfer
 

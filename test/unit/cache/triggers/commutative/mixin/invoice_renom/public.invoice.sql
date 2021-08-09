@@ -17,7 +17,7 @@ begin
         end if;
 
         update invoice set
-            renomination_sum = renomination_sum - coalesce(old.sum, 0),
+            renomination_sum = coalesce(renomination_sum, 0) - coalesce(old.sum, 0),
             renomination_link_account_no_doc_number = cm_array_remove_one_element(
                 renomination_link_account_no_doc_number,
                 old.account_no_doc_number
@@ -93,7 +93,7 @@ begin
         end if;
 
         update invoice set
-            renomination_sum = renomination_sum - coalesce(old.sum, 0) + coalesce(new.sum, 0),
+            renomination_sum = coalesce(renomination_sum, 0) - coalesce(old.sum, 0) + coalesce(new.sum, 0),
             renomination_link_account_no_doc_number = array_append(
                 cm_array_remove_one_element(
                     renomination_link_account_no_doc_number,

@@ -18,7 +18,7 @@ begin
             end if;
 
             update orders set
-                cargos_weight = cargos_weight - coalesce(old.total_weight, 0),
+                cargos_weight = coalesce(cargos_weight, 0) - coalesce(old.total_weight, 0),
                 cargos_products_names_name = cm_array_remove_one_element(
                     cargos_products_names_name,
                     old_product_type_name
@@ -82,7 +82,7 @@ begin
             end if;
 
             update orders set
-                cargos_weight = cargos_weight - coalesce(old.total_weight, 0) + coalesce(new.total_weight, 0),
+                cargos_weight = coalesce(cargos_weight, 0) - coalesce(old.total_weight, 0) + coalesce(new.total_weight, 0),
                 cargos_products_names_name = array_append(
                     cm_array_remove_one_element(
                         cargos_products_names_name,
@@ -112,7 +112,7 @@ begin
 
         if old.id_order is not null then
             update orders set
-                cargos_weight = cargos_weight - coalesce(old.total_weight, 0),
+                cargos_weight = coalesce(cargos_weight, 0) - coalesce(old.total_weight, 0),
                 cargos_products_names_name = cm_array_remove_one_element(
                     cargos_products_names_name,
                     old_product_type_name
@@ -134,7 +134,7 @@ begin
 
         if new.id_order is not null then
             update orders set
-                cargos_weight = cargos_weight + coalesce(new.total_weight, 0),
+                cargos_weight = coalesce(cargos_weight, 0) + coalesce(new.total_weight, 0),
                 cargos_products_names_name = array_append(
                     cargos_products_names_name,
                     new_product_type_name
@@ -169,7 +169,7 @@ begin
             end if;
 
             update orders set
-                cargos_weight = cargos_weight + coalesce(new.total_weight, 0),
+                cargos_weight = coalesce(cargos_weight, 0) + coalesce(new.total_weight, 0),
                 cargos_products_names_name = array_append(
                     cargos_products_names_name,
                     new_product_type_name

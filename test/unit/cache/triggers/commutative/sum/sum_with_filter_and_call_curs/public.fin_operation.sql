@@ -20,7 +20,7 @@ begin
                     when
                         old.id_fin_operation_type = 1
                     then
-                        fin_operation_buys - coalesce(
+                        coalesce(fin_operation_buys, 0) - coalesce(
                             old.sum * get_curs(
                                 old.date,
                                 old.id_currency
@@ -34,7 +34,7 @@ begin
                     when
                         old.id_fin_operation_type = 2
                     then
-                        fin_operation_sales - coalesce(
+                        coalesce(fin_operation_sales, 0) - coalesce(
                             old.sum * get_curs(
                                 old.date,
                                 old.id_currency
@@ -88,7 +88,7 @@ begin
                         and
                         not coalesce(old.id_fin_operation_type = 1, false)
                     then
-                        fin_operation_buys + coalesce(
+                        coalesce(fin_operation_buys, 0) + coalesce(
                             new.sum * get_curs(
                                 new.date,
                                 new.id_currency
@@ -100,7 +100,7 @@ begin
                         and
                         old.id_fin_operation_type = 1
                     then
-                        fin_operation_buys - coalesce(
+                        coalesce(fin_operation_buys, 0) - coalesce(
                             old.sum * get_curs(
                                 old.date,
                                 old.id_currency
@@ -110,7 +110,7 @@ begin
                     when
                         new.id_fin_operation_type = 1
                     then
-                        fin_operation_buys - coalesce(
+                        coalesce(fin_operation_buys, 0) - coalesce(
                             old.sum * get_curs(
                                 old.date,
                                 old.id_currency
@@ -132,7 +132,7 @@ begin
                         and
                         not coalesce(old.id_fin_operation_type = 2, false)
                     then
-                        fin_operation_sales + coalesce(
+                        coalesce(fin_operation_sales, 0) + coalesce(
                             new.sum * get_curs(
                                 new.date,
                                 new.id_currency
@@ -144,7 +144,7 @@ begin
                         and
                         old.id_fin_operation_type = 2
                     then
-                        fin_operation_sales - coalesce(
+                        coalesce(fin_operation_sales, 0) - coalesce(
                             old.sum * get_curs(
                                 old.date,
                                 old.id_currency
@@ -154,7 +154,7 @@ begin
                     when
                         new.id_fin_operation_type = 2
                     then
-                        fin_operation_sales - coalesce(
+                        coalesce(fin_operation_sales, 0) - coalesce(
                             old.sum * get_curs(
                                 old.date,
                                 old.id_currency
@@ -192,7 +192,7 @@ begin
                     when
                         old.id_fin_operation_type = 1
                     then
-                        fin_operation_buys - coalesce(
+                        coalesce(fin_operation_buys, 0) - coalesce(
                             old.sum * get_curs(
                                 old.date,
                                 old.id_currency
@@ -206,7 +206,7 @@ begin
                     when
                         old.id_fin_operation_type = 2
                     then
-                        fin_operation_sales - coalesce(
+                        coalesce(fin_operation_sales, 0) - coalesce(
                             old.sum * get_curs(
                                 old.date,
                                 old.id_currency
@@ -236,7 +236,7 @@ begin
                     when
                         new.id_fin_operation_type = 1
                     then
-                        fin_operation_buys + coalesce(
+                        coalesce(fin_operation_buys, 0) + coalesce(
                             new.sum * get_curs(
                                 new.date,
                                 new.id_currency
@@ -250,7 +250,7 @@ begin
                     when
                         new.id_fin_operation_type = 2
                     then
-                        fin_operation_sales + coalesce(
+                        coalesce(fin_operation_sales, 0) + coalesce(
                             new.sum * get_curs(
                                 new.date,
                                 new.id_currency
@@ -285,7 +285,7 @@ begin
                     when
                         new.id_fin_operation_type = 1
                     then
-                        fin_operation_buys + coalesce(
+                        coalesce(fin_operation_buys, 0) + coalesce(
                             new.sum * get_curs(
                                 new.date,
                                 new.id_currency
@@ -299,7 +299,7 @@ begin
                     when
                         new.id_fin_operation_type = 2
                     then
-                        fin_operation_sales + coalesce(
+                        coalesce(fin_operation_sales, 0) + coalesce(
                             new.sum * get_curs(
                                 new.date,
                                 new.id_currency

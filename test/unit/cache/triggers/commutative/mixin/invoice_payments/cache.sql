@@ -1,6 +1,6 @@
 cache payments for invoice (
     select
-        sum(payment_orders.total, ', ') as payments_total
+        sum(payment_orders.total) as payments_total
 
     from payment_orders
     where

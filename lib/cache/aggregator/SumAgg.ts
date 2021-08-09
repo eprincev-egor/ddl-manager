@@ -5,7 +5,7 @@ export class SumAgg extends AbstractAgg {
 
     minus(total: IExpressionElement, value: Expression) {
         return new Expression([
-            ...this.extrudeExpression(total),
+            ...coalesceTotal(total),
             new Operator("-"),
             new FuncCall("coalesce", [
                 value,
@@ -16,7 +16,7 @@ export class SumAgg extends AbstractAgg {
 
     plus(total: IExpressionElement, value: Expression) {
         return new Expression([
-            ...this.extrudeExpression(total),
+            ...coalesceTotal(total),
             new Operator("+"),
             new FuncCall("coalesce", [
                 value,
@@ -24,19 +24,23 @@ export class SumAgg extends AbstractAgg {
             ])
         ]);
     }
+}
 
-    default() {
-        return "0";
+function coalesceTotal(total: IExpressionElement) {
+    const alreadyCoalesced = (
+        total instanceof Expression &&
+        total.isBinary("-") &&
+        total.elements[0] instanceof FuncCall &&
+        total.elements[2] instanceof FuncCall &&
+        (total.elements[0] as FuncCall).name === "coalesce" &&
+        (total.elements[2] as FuncCall).name === "coalesce"
+    );
+    if ( alreadyCoalesced ) {
+        return (total as Expression).elements;
     }
-    
-    // fix delta case:
-    // column = (column - old) + new
-    // =>
-    // column = column - old + new
-    private extrudeExpression(total: IExpressionElement) {
-        if ( total instanceof Expression ) {
-            return total.elements;
-        }
-        return [total];
-    }
+
+    return [new FuncCall("coalesce", [
+        new Expression([total]),
+        Expression.unknown("0")
+    ])];
 }

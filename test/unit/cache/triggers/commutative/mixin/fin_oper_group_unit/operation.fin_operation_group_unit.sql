@@ -34,12 +34,21 @@ begin
             end if;
 
             update operation.unit set
-                group_unit_quantity = group_unit_quantity - coalesce(old.quantity, 0),
-                group_unit_netto_weight = group_unit_netto_weight - coalesce(old.netto_weight, 0),
-                group_unit_gross_weight = group_unit_gross_weight - coalesce(old.gross_weight, 0),
-                group_unit_volume = group_unit_volume - coalesce(old.volume, 0),
-                group_unit_ldm = group_unit_ldm - coalesce(old.ldm, 0),
-                group_unit_quantity_pallet = group_unit_quantity_pallet - coalesce(old.quantity_pallet, 0),
+                group_unit_quantity = coalesce(group_unit_quantity, 0) - coalesce(old.quantity, 0),
+                group_unit_netto_weight = coalesce(
+                    group_unit_netto_weight,
+                    0
+                ) - coalesce(old.netto_weight, 0),
+                group_unit_gross_weight = coalesce(
+                    group_unit_gross_weight,
+                    0
+                ) - coalesce(old.gross_weight, 0),
+                group_unit_volume = coalesce(group_unit_volume, 0) - coalesce(old.volume, 0),
+                group_unit_ldm = coalesce(group_unit_ldm, 0) - coalesce(old.ldm, 0),
+                group_unit_quantity_pallet = coalesce(
+                    group_unit_quantity_pallet,
+                    0
+                ) - coalesce(old.quantity_pallet, 0),
                 group_unit_buyers_names_list_company_name = case
                     when
                         old_company_buyer_list_company_name is not null
@@ -198,12 +207,21 @@ begin
             end if;
 
             update operation.unit set
-                group_unit_quantity = group_unit_quantity - coalesce(old.quantity, 0) + coalesce(new.quantity, 0),
-                group_unit_netto_weight = group_unit_netto_weight - coalesce(old.netto_weight, 0) + coalesce(new.netto_weight, 0),
-                group_unit_gross_weight = group_unit_gross_weight - coalesce(old.gross_weight, 0) + coalesce(new.gross_weight, 0),
-                group_unit_volume = group_unit_volume - coalesce(old.volume, 0) + coalesce(new.volume, 0),
-                group_unit_ldm = group_unit_ldm - coalesce(old.ldm, 0) + coalesce(new.ldm, 0),
-                group_unit_quantity_pallet = group_unit_quantity_pallet - coalesce(old.quantity_pallet, 0) + coalesce(new.quantity_pallet, 0),
+                group_unit_quantity = coalesce(group_unit_quantity, 0) - coalesce(old.quantity, 0) + coalesce(new.quantity, 0),
+                group_unit_netto_weight = coalesce(
+                    group_unit_netto_weight,
+                    0
+                ) - coalesce(old.netto_weight, 0) + coalesce(new.netto_weight, 0),
+                group_unit_gross_weight = coalesce(
+                    group_unit_gross_weight,
+                    0
+                ) - coalesce(old.gross_weight, 0) + coalesce(new.gross_weight, 0),
+                group_unit_volume = coalesce(group_unit_volume, 0) - coalesce(old.volume, 0) + coalesce(new.volume, 0),
+                group_unit_ldm = coalesce(group_unit_ldm, 0) - coalesce(old.ldm, 0) + coalesce(new.ldm, 0),
+                group_unit_quantity_pallet = coalesce(
+                    group_unit_quantity_pallet,
+                    0
+                ) - coalesce(old.quantity_pallet, 0) + coalesce(new.quantity_pallet, 0),
                 group_unit_buyers_names_list_company_name = case
                     when
                         new_company_buyer_list_company_name is not null
@@ -416,12 +434,21 @@ begin
             old.deleted = 0
         then
             update operation.unit set
-                group_unit_quantity = group_unit_quantity - coalesce(old.quantity, 0),
-                group_unit_netto_weight = group_unit_netto_weight - coalesce(old.netto_weight, 0),
-                group_unit_gross_weight = group_unit_gross_weight - coalesce(old.gross_weight, 0),
-                group_unit_volume = group_unit_volume - coalesce(old.volume, 0),
-                group_unit_ldm = group_unit_ldm - coalesce(old.ldm, 0),
-                group_unit_quantity_pallet = group_unit_quantity_pallet - coalesce(old.quantity_pallet, 0),
+                group_unit_quantity = coalesce(group_unit_quantity, 0) - coalesce(old.quantity, 0),
+                group_unit_netto_weight = coalesce(
+                    group_unit_netto_weight,
+                    0
+                ) - coalesce(old.netto_weight, 0),
+                group_unit_gross_weight = coalesce(
+                    group_unit_gross_weight,
+                    0
+                ) - coalesce(old.gross_weight, 0),
+                group_unit_volume = coalesce(group_unit_volume, 0) - coalesce(old.volume, 0),
+                group_unit_ldm = coalesce(group_unit_ldm, 0) - coalesce(old.ldm, 0),
+                group_unit_quantity_pallet = coalesce(
+                    group_unit_quantity_pallet,
+                    0
+                ) - coalesce(old.quantity_pallet, 0),
                 group_unit_buyers_names_list_company_name = case
                     when
                         old_company_buyer_list_company_name is not null
@@ -496,12 +523,21 @@ begin
             new.deleted = 0
         then
             update operation.unit set
-                group_unit_quantity = group_unit_quantity + coalesce(new.quantity, 0),
-                group_unit_netto_weight = group_unit_netto_weight + coalesce(new.netto_weight, 0),
-                group_unit_gross_weight = group_unit_gross_weight + coalesce(new.gross_weight, 0),
-                group_unit_volume = group_unit_volume + coalesce(new.volume, 0),
-                group_unit_ldm = group_unit_ldm + coalesce(new.ldm, 0),
-                group_unit_quantity_pallet = group_unit_quantity_pallet + coalesce(new.quantity_pallet, 0),
+                group_unit_quantity = coalesce(group_unit_quantity, 0) + coalesce(new.quantity, 0),
+                group_unit_netto_weight = coalesce(
+                    group_unit_netto_weight,
+                    0
+                ) + coalesce(new.netto_weight, 0),
+                group_unit_gross_weight = coalesce(
+                    group_unit_gross_weight,
+                    0
+                ) + coalesce(new.gross_weight, 0),
+                group_unit_volume = coalesce(group_unit_volume, 0) + coalesce(new.volume, 0),
+                group_unit_ldm = coalesce(group_unit_ldm, 0) + coalesce(new.ldm, 0),
+                group_unit_quantity_pallet = coalesce(
+                    group_unit_quantity_pallet,
+                    0
+                ) + coalesce(new.quantity_pallet, 0),
                 group_unit_buyers_names_list_company_name = case
                     when
                         new_company_buyer_list_company_name is not null
@@ -613,12 +649,21 @@ begin
             end if;
 
             update operation.unit set
-                group_unit_quantity = group_unit_quantity + coalesce(new.quantity, 0),
-                group_unit_netto_weight = group_unit_netto_weight + coalesce(new.netto_weight, 0),
-                group_unit_gross_weight = group_unit_gross_weight + coalesce(new.gross_weight, 0),
-                group_unit_volume = group_unit_volume + coalesce(new.volume, 0),
-                group_unit_ldm = group_unit_ldm + coalesce(new.ldm, 0),
-                group_unit_quantity_pallet = group_unit_quantity_pallet + coalesce(new.quantity_pallet, 0),
+                group_unit_quantity = coalesce(group_unit_quantity, 0) + coalesce(new.quantity, 0),
+                group_unit_netto_weight = coalesce(
+                    group_unit_netto_weight,
+                    0
+                ) + coalesce(new.netto_weight, 0),
+                group_unit_gross_weight = coalesce(
+                    group_unit_gross_weight,
+                    0
+                ) + coalesce(new.gross_weight, 0),
+                group_unit_volume = coalesce(group_unit_volume, 0) + coalesce(new.volume, 0),
+                group_unit_ldm = coalesce(group_unit_ldm, 0) + coalesce(new.ldm, 0),
+                group_unit_quantity_pallet = coalesce(
+                    group_unit_quantity_pallet,
+                    0
+                ) + coalesce(new.quantity_pallet, 0),
                 group_unit_buyers_names_list_company_name = case
                     when
                         new_company_buyer_list_company_name is not null

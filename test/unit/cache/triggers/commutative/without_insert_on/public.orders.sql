@@ -6,7 +6,7 @@ begin
 
         if old.id_client is not null then
             update companies set
-                orders_total = orders_total - coalesce(old.profit, 0)
+                orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0)
             where
                 old.id_client = companies.id;
         end if;
@@ -29,7 +29,7 @@ begin
             end if;
 
             update companies set
-                orders_total = orders_total - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+                orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
             where
                 new.id_client = companies.id;
 
@@ -38,14 +38,14 @@ begin
 
         if old.id_client is not null then
             update companies set
-                orders_total = orders_total - coalesce(old.profit, 0)
+                orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0)
             where
                 old.id_client = companies.id;
         end if;
 
         if new.id_client is not null then
             update companies set
-                orders_total = orders_total + coalesce(new.profit, 0)
+                orders_total = coalesce(orders_total, 0) + coalesce(new.profit, 0)
             where
                 new.id_client = companies.id;
         end if;

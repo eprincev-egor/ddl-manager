@@ -33,11 +33,7 @@ begin
             cargos_products_names
         ) = (
             select
-                coalesce(
-        sum(cargos.total_weight),
-        0
-    )
-    :: numeric as cargos_weight,
+                sum(cargos.total_weight) as cargos_weight,
                 array_agg(product_types.name) as cargos_products_names_name,
     string_agg(product_types.name, ', ') as cargos_products_names
 

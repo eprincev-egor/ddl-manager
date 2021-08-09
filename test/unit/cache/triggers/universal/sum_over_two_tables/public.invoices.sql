@@ -31,11 +31,7 @@ begin
             invoice_positions_cost
         ) = (
             select
-                coalesce(
-        sum(invoice_positions.cost),
-        0
-    )
-    :: numeric as invoice_positions_cost
+                sum(invoice_positions.cost) as invoice_positions_cost
 
             from invoice_positions
 

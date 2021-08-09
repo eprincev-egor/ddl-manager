@@ -34,7 +34,7 @@ begin
             end if;
 
             update invoice set
-                total_base_cost = total_base_cost - coalesce(
+                total_base_cost = coalesce(total_base_cost, 0) - coalesce(
                     old_rate_expense_category_base_cost,
                     0
                 )
@@ -118,7 +118,7 @@ begin
             end if;
 
             update invoice set
-                total_base_cost = total_base_cost - coalesce(
+                total_base_cost = coalesce(total_base_cost, 0) - coalesce(
                     old_rate_expense_category_base_cost,
                     0
                 ) + coalesce(
@@ -137,7 +137,7 @@ begin
             old.deleted = 0
         then
             update invoice set
-                total_base_cost = total_base_cost - coalesce(
+                total_base_cost = coalesce(total_base_cost, 0) - coalesce(
                     old_rate_expense_category_base_cost,
                     0
                 )
@@ -151,7 +151,7 @@ begin
             new.deleted = 0
         then
             update invoice set
-                total_base_cost = total_base_cost + coalesce(
+                total_base_cost = coalesce(total_base_cost, 0) + coalesce(
                     new_rate_expense_category_base_cost,
                     0
                 )
@@ -190,7 +190,7 @@ begin
             end if;
 
             update invoice set
-                total_base_cost = total_base_cost + coalesce(
+                total_base_cost = coalesce(total_base_cost, 0) + coalesce(
                     new_rate_expense_category_base_cost,
                     0
                 )

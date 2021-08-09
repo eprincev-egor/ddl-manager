@@ -23,11 +23,7 @@ begin
             renomination_currencies
         ) = (
             select
-                coalesce(
-        sum(renomination_invoice.sum),
-        0
-    )
-    :: numeric as renomination_sum,
+                sum(renomination_invoice.sum) as renomination_sum,
                 array_agg(
         renomination_invoice.account_no_doc_number
     ) as renomination_link_account_no_doc_number,

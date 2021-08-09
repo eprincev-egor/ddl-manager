@@ -174,7 +174,7 @@ describe("integration/DDLManager.refreshCache", () => {
         `);
         assert.deepStrictEqual(result.rows, [
             {id: 1, orders_count: "2", cargos_gross_weight: "600"},
-            {id: 2, orders_count: "0", cargos_gross_weight: "0"}
+            {id: 2, orders_count: "0", cargos_gross_weight: null}
         ]);
         result = await db.query(`
             select id, cargos_gross_weight 

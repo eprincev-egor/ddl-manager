@@ -10,14 +10,14 @@ begin
             old.deleted = 0
         then
             update invoice set
-                balance_sum = balance_sum - coalesce(
+                balance_sum = coalesce(balance_sum, 0) - coalesce(
                     round(
                         old.total_sum_with_vat_in_curs :: numeric,
                         - 2
                     ),
                     0
                 ),
-                balance = invoice.invoice_summ - (balance_sum - coalesce(
+                balance = invoice.invoice_summ - (coalesce(balance_sum, 0) - coalesce(
                     round(
                         old.total_sum_with_vat_in_curs :: numeric,
                         - 2
@@ -56,7 +56,7 @@ begin
             end if;
 
             update invoice set
-                balance_sum = balance_sum - coalesce(
+                balance_sum = coalesce(balance_sum, 0) - coalesce(
                     round(
                         old.total_sum_with_vat_in_curs :: numeric,
                         - 2
@@ -69,7 +69,7 @@ begin
                     ),
                     0
                 ),
-                balance = invoice.invoice_summ - (balance_sum - coalesce(
+                balance = invoice.invoice_summ - (coalesce(balance_sum, 0) - coalesce(
                     round(
                         old.total_sum_with_vat_in_curs :: numeric,
                         - 2
@@ -94,14 +94,14 @@ begin
             old.deleted = 0
         then
             update invoice set
-                balance_sum = balance_sum - coalesce(
+                balance_sum = coalesce(balance_sum, 0) - coalesce(
                     round(
                         old.total_sum_with_vat_in_curs :: numeric,
                         - 2
                     ),
                     0
                 ),
-                balance = invoice.invoice_summ - (balance_sum - coalesce(
+                balance = invoice.invoice_summ - (coalesce(balance_sum, 0) - coalesce(
                     round(
                         old.total_sum_with_vat_in_curs :: numeric,
                         - 2
@@ -118,14 +118,14 @@ begin
             new.deleted = 0
         then
             update invoice set
-                balance_sum = balance_sum + coalesce(
+                balance_sum = coalesce(balance_sum, 0) + coalesce(
                     round(
                         new.total_sum_with_vat_in_curs :: numeric,
                         - 2
                     ),
                     0
                 ),
-                balance = invoice.invoice_summ - (balance_sum + coalesce(
+                balance = invoice.invoice_summ - (coalesce(balance_sum, 0) + coalesce(
                     round(
                         new.total_sum_with_vat_in_curs :: numeric,
                         - 2
@@ -147,14 +147,14 @@ begin
             new.deleted = 0
         then
             update invoice set
-                balance_sum = balance_sum + coalesce(
+                balance_sum = coalesce(balance_sum, 0) + coalesce(
                     round(
                         new.total_sum_with_vat_in_curs :: numeric,
                         - 2
                     ),
                     0
                 ),
-                balance = invoice.invoice_summ - (balance_sum + coalesce(
+                balance = invoice.invoice_summ - (coalesce(balance_sum, 0) + coalesce(
                     round(
                         new.total_sum_with_vat_in_curs :: numeric,
                         - 2

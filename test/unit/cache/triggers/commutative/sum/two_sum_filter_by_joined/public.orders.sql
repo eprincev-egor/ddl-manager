@@ -27,7 +27,7 @@ begin
                         when
                             old_order_type_name = 'LTL'
                         then
-                            ltl_profit - coalesce(old.profit, 0)
+                            coalesce(ltl_profit, 0) - coalesce(old.profit, 0)
                         else
                             ltl_profit
                     end,
@@ -35,7 +35,7 @@ begin
                         when
                             old_order_type_name = 'FTL'
                         then
-                            ftl_orders_profit - coalesce(old.profit, 0)
+                            coalesce(ftl_orders_profit, 0) - coalesce(old.profit, 0)
                         else
                             ftl_orders_profit
                     end
@@ -94,17 +94,17 @@ begin
                         and
                         not coalesce(old_order_type_name = 'LTL', false)
                     then
-                        ltl_profit + coalesce(new.profit, 0)
+                        coalesce(ltl_profit, 0) + coalesce(new.profit, 0)
                     when
                         not coalesce(new_order_type_name = 'LTL', false)
                         and
                         old_order_type_name = 'LTL'
                     then
-                        ltl_profit - coalesce(old.profit, 0)
+                        coalesce(ltl_profit, 0) - coalesce(old.profit, 0)
                     when
                         new_order_type_name = 'LTL'
                     then
-                        ltl_profit - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+                        coalesce(ltl_profit, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
                     else
                         ltl_profit
                 end,
@@ -114,17 +114,17 @@ begin
                         and
                         not coalesce(old_order_type_name = 'FTL', false)
                     then
-                        ftl_orders_profit + coalesce(new.profit, 0)
+                        coalesce(ftl_orders_profit, 0) + coalesce(new.profit, 0)
                     when
                         not coalesce(new_order_type_name = 'FTL', false)
                         and
                         old_order_type_name = 'FTL'
                     then
-                        ftl_orders_profit - coalesce(old.profit, 0)
+                        coalesce(ftl_orders_profit, 0) - coalesce(old.profit, 0)
                     when
                         new_order_type_name = 'FTL'
                     then
-                        ftl_orders_profit - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+                        coalesce(ftl_orders_profit, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
                     else
                         ftl_orders_profit
                 end
@@ -148,7 +148,7 @@ begin
                     when
                         old_order_type_name = 'LTL'
                     then
-                        ltl_profit - coalesce(old.profit, 0)
+                        coalesce(ltl_profit, 0) - coalesce(old.profit, 0)
                     else
                         ltl_profit
                 end,
@@ -156,7 +156,7 @@ begin
                     when
                         old_order_type_name = 'FTL'
                     then
-                        ftl_orders_profit - coalesce(old.profit, 0)
+                        coalesce(ftl_orders_profit, 0) - coalesce(old.profit, 0)
                     else
                         ftl_orders_profit
                 end
@@ -178,7 +178,7 @@ begin
                     when
                         new_order_type_name = 'LTL'
                     then
-                        ltl_profit + coalesce(new.profit, 0)
+                        coalesce(ltl_profit, 0) + coalesce(new.profit, 0)
                     else
                         ltl_profit
                 end,
@@ -186,7 +186,7 @@ begin
                     when
                         new_order_type_name = 'FTL'
                     then
-                        ftl_orders_profit + coalesce(new.profit, 0)
+                        coalesce(ftl_orders_profit, 0) + coalesce(new.profit, 0)
                     else
                         ftl_orders_profit
                 end
@@ -220,7 +220,7 @@ begin
                         when
                             new_order_type_name = 'LTL'
                         then
-                            ltl_profit + coalesce(new.profit, 0)
+                            coalesce(ltl_profit, 0) + coalesce(new.profit, 0)
                         else
                             ltl_profit
                     end,
@@ -228,7 +228,7 @@ begin
                         when
                             new_order_type_name = 'FTL'
                         then
-                            ftl_orders_profit + coalesce(new.profit, 0)
+                            coalesce(ftl_orders_profit, 0) + coalesce(new.profit, 0)
                         else
                             ftl_orders_profit
                     end

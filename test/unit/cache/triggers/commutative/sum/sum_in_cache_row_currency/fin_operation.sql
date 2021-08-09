@@ -15,7 +15,7 @@ begin
             old.deleted = 0
         then
             update operation.owner_unit as own_unit set
-                fin_sum = fin_sum - coalesce(
+                fin_sum = coalesce(fin_sum, 0) - coalesce(
                     round(
                         coalesce(old.sum_vat, 0 :: bigint) :: numeric * get_curs(
                             old.id_currency,
@@ -97,7 +97,7 @@ begin
 
         if not_changed_units_ids is not null then
             update operation.owner_unit as own_unit set
-                fin_sum = fin_sum - coalesce(
+                fin_sum = coalesce(fin_sum, 0) - coalesce(
                     round(
                         coalesce(old.sum_vat, 0 :: bigint) :: numeric * get_curs(
                             old.id_currency,
@@ -128,7 +128,7 @@ begin
 
         if deleted_units_ids is not null then
             update operation.owner_unit as own_unit set
-                fin_sum = fin_sum - coalesce(
+                fin_sum = coalesce(fin_sum, 0) - coalesce(
                     round(
                         coalesce(old.sum_vat, 0 :: bigint) :: numeric * get_curs(
                             old.id_currency,
@@ -147,7 +147,7 @@ begin
 
         if inserted_units_ids is not null then
             update operation.owner_unit as own_unit set
-                fin_sum = fin_sum + coalesce(
+                fin_sum = coalesce(fin_sum, 0) + coalesce(
                     round(
                         coalesce(new.sum_vat, 0 :: bigint) :: numeric * get_curs(
                             new.id_currency,
@@ -175,7 +175,7 @@ begin
             new.deleted = 0
         then
             update operation.owner_unit as own_unit set
-                fin_sum = fin_sum + coalesce(
+                fin_sum = coalesce(fin_sum, 0) + coalesce(
                     round(
                         coalesce(new.sum_vat, 0 :: bigint) :: numeric * get_curs(
                             new.id_currency,

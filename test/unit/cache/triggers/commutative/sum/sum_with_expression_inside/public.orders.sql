@@ -6,7 +6,7 @@ begin
 
         if old.id_client is not null then
             update companies set
-                orders_total = orders_total - coalesce(
+                orders_total = coalesce(orders_total, 0) - coalesce(
                     (old.debet - old.credit) * old.quantity,
                     0
                 )
@@ -36,7 +36,7 @@ begin
             end if;
 
             update companies set
-                orders_total = orders_total - coalesce(
+                orders_total = coalesce(orders_total, 0) - coalesce(
                     (old.debet - old.credit) * old.quantity,
                     0
                 ) + coalesce(
@@ -51,7 +51,7 @@ begin
 
         if old.id_client is not null then
             update companies set
-                orders_total = orders_total - coalesce(
+                orders_total = coalesce(orders_total, 0) - coalesce(
                     (old.debet - old.credit) * old.quantity,
                     0
                 )
@@ -61,7 +61,7 @@ begin
 
         if new.id_client is not null then
             update companies set
-                orders_total = orders_total + coalesce(
+                orders_total = coalesce(orders_total, 0) + coalesce(
                     (new.debet - new.credit) * new.quantity,
                     0
                 )
@@ -76,7 +76,7 @@ begin
 
         if new.id_client is not null then
             update companies set
-                orders_total = orders_total + coalesce(
+                orders_total = coalesce(orders_total, 0) + coalesce(
                     (new.debet - new.credit) * new.quantity,
                     0
                 )

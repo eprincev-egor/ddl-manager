@@ -5,7 +5,7 @@ begin
     if TG_OP = 'DELETE' then
 
         update companies set
-            orders_total = orders_total - coalesce(old.profit, 0)
+            orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0)
         where
             companies.bigint_orders_ids && ARRAY[ old.id ]::bigint[];
 
@@ -18,7 +18,7 @@ begin
         end if;
 
         update companies set
-            orders_total = orders_total - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+            orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
         where
             companies.bigint_orders_ids && ARRAY[ new.id ]::bigint[];
 

@@ -6,9 +6,21 @@ begin
 
         if old.id_client is not null then
             update companies set
-                orders_profit_sum_sales = orders_profit_sum_sales - coalesce(old.sales, 0),
-                orders_profit_sum_buys = orders_profit_sum_buys - coalesce(old.buys, 0),
-                orders_profit = (orders_profit_sum_sales - coalesce(old.sales, 0)) - (orders_profit_sum_buys - coalesce(old.buys, 0))
+                orders_profit_sum_sales = coalesce(
+                    orders_profit_sum_sales,
+                    0
+                ) - coalesce(old.sales, 0),
+                orders_profit_sum_buys = coalesce(
+                    orders_profit_sum_buys,
+                    0
+                ) - coalesce(old.buys, 0),
+                orders_profit = (coalesce(
+                    orders_profit_sum_sales,
+                    0
+                ) - coalesce(old.sales, 0)) - (coalesce(
+                    orders_profit_sum_buys,
+                    0
+                ) - coalesce(old.buys, 0))
             where
                 old.id_client = companies.id;
         end if;
@@ -33,9 +45,21 @@ begin
             end if;
 
             update companies set
-                orders_profit_sum_sales = orders_profit_sum_sales - coalesce(old.sales, 0) + coalesce(new.sales, 0),
-                orders_profit_sum_buys = orders_profit_sum_buys - coalesce(old.buys, 0) + coalesce(new.buys, 0),
-                orders_profit = (orders_profit_sum_sales - coalesce(old.sales, 0) + coalesce(new.sales, 0)) - (orders_profit_sum_buys - coalesce(old.buys, 0) + coalesce(new.buys, 0))
+                orders_profit_sum_sales = coalesce(
+                    orders_profit_sum_sales,
+                    0
+                ) - coalesce(old.sales, 0) + coalesce(new.sales, 0),
+                orders_profit_sum_buys = coalesce(
+                    orders_profit_sum_buys,
+                    0
+                ) - coalesce(old.buys, 0) + coalesce(new.buys, 0),
+                orders_profit = (coalesce(
+                    orders_profit_sum_sales,
+                    0
+                ) - coalesce(old.sales, 0) + coalesce(new.sales, 0)) - (coalesce(
+                    orders_profit_sum_buys,
+                    0
+                ) - coalesce(old.buys, 0) + coalesce(new.buys, 0))
             where
                 new.id_client = companies.id;
 
@@ -44,18 +68,42 @@ begin
 
         if old.id_client is not null then
             update companies set
-                orders_profit_sum_sales = orders_profit_sum_sales - coalesce(old.sales, 0),
-                orders_profit_sum_buys = orders_profit_sum_buys - coalesce(old.buys, 0),
-                orders_profit = (orders_profit_sum_sales - coalesce(old.sales, 0)) - (orders_profit_sum_buys - coalesce(old.buys, 0))
+                orders_profit_sum_sales = coalesce(
+                    orders_profit_sum_sales,
+                    0
+                ) - coalesce(old.sales, 0),
+                orders_profit_sum_buys = coalesce(
+                    orders_profit_sum_buys,
+                    0
+                ) - coalesce(old.buys, 0),
+                orders_profit = (coalesce(
+                    orders_profit_sum_sales,
+                    0
+                ) - coalesce(old.sales, 0)) - (coalesce(
+                    orders_profit_sum_buys,
+                    0
+                ) - coalesce(old.buys, 0))
             where
                 old.id_client = companies.id;
         end if;
 
         if new.id_client is not null then
             update companies set
-                orders_profit_sum_sales = orders_profit_sum_sales + coalesce(new.sales, 0),
-                orders_profit_sum_buys = orders_profit_sum_buys + coalesce(new.buys, 0),
-                orders_profit = (orders_profit_sum_sales + coalesce(new.sales, 0)) - (orders_profit_sum_buys + coalesce(new.buys, 0))
+                orders_profit_sum_sales = coalesce(
+                    orders_profit_sum_sales,
+                    0
+                ) + coalesce(new.sales, 0),
+                orders_profit_sum_buys = coalesce(
+                    orders_profit_sum_buys,
+                    0
+                ) + coalesce(new.buys, 0),
+                orders_profit = (coalesce(
+                    orders_profit_sum_sales,
+                    0
+                ) + coalesce(new.sales, 0)) - (coalesce(
+                    orders_profit_sum_buys,
+                    0
+                ) + coalesce(new.buys, 0))
             where
                 new.id_client = companies.id;
         end if;
@@ -67,9 +115,21 @@ begin
 
         if new.id_client is not null then
             update companies set
-                orders_profit_sum_sales = orders_profit_sum_sales + coalesce(new.sales, 0),
-                orders_profit_sum_buys = orders_profit_sum_buys + coalesce(new.buys, 0),
-                orders_profit = (orders_profit_sum_sales + coalesce(new.sales, 0)) - (orders_profit_sum_buys + coalesce(new.buys, 0))
+                orders_profit_sum_sales = coalesce(
+                    orders_profit_sum_sales,
+                    0
+                ) + coalesce(new.sales, 0),
+                orders_profit_sum_buys = coalesce(
+                    orders_profit_sum_buys,
+                    0
+                ) + coalesce(new.buys, 0),
+                orders_profit = (coalesce(
+                    orders_profit_sum_sales,
+                    0
+                ) + coalesce(new.sales, 0)) - (coalesce(
+                    orders_profit_sum_buys,
+                    0
+                ) + coalesce(new.buys, 0))
             where
                 new.id_client = companies.id;
         end if;

@@ -9,7 +9,7 @@ begin
 
         if old.unknown_ids is not null then
             update cache_table set
-                total_profit = total_profit - coalesce(old.profit, 0)
+                total_profit = coalesce(total_profit, 0) - coalesce(old.profit, 0)
             where
                 cache_table.id = any( old.unknown_ids::bigint[] );
         end if;
@@ -32,21 +32,21 @@ begin
 
         if not_changed_unknown_ids is not null then
             update cache_table set
-                total_profit = total_profit - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+                total_profit = coalesce(total_profit, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
             where
                 cache_table.id = any( not_changed_unknown_ids::bigint[] );
         end if;
 
         if deleted_unknown_ids is not null then
             update cache_table set
-                total_profit = total_profit - coalesce(old.profit, 0)
+                total_profit = coalesce(total_profit, 0) - coalesce(old.profit, 0)
             where
                 cache_table.id = any( deleted_unknown_ids::bigint[] );
         end if;
 
         if inserted_unknown_ids is not null then
             update cache_table set
-                total_profit = total_profit + coalesce(new.profit, 0)
+                total_profit = coalesce(total_profit, 0) + coalesce(new.profit, 0)
             where
                 cache_table.id = any( inserted_unknown_ids::bigint[] );
         end if;
@@ -58,7 +58,7 @@ begin
 
         if new.unknown_ids is not null then
             update cache_table set
-                total_profit = total_profit + coalesce(new.profit, 0)
+                total_profit = coalesce(total_profit, 0) + coalesce(new.profit, 0)
             where
                 cache_table.id = any( new.unknown_ids::bigint[] );
         end if;

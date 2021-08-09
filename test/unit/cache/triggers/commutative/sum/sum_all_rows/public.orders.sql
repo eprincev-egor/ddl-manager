@@ -5,7 +5,7 @@ begin
     if TG_OP = 'DELETE' then
 
         update some_report_row set
-            orders_total = orders_total - coalesce(old.profit, 0);
+            orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0);
 
         return old;
     end if;
@@ -16,7 +16,7 @@ begin
         end if;
 
         update some_report_row set
-            orders_total = orders_total - coalesce(old.profit, 0) + coalesce(new.profit, 0);
+            orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0);
 
 
 
@@ -26,7 +26,7 @@ begin
     if TG_OP = 'INSERT' then
 
         update some_report_row set
-            orders_total = orders_total + coalesce(new.profit, 0);
+            orders_total = coalesce(orders_total, 0) + coalesce(new.profit, 0);
 
         return new;
     end if;

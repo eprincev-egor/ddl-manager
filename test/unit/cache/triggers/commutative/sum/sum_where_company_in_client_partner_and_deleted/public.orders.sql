@@ -14,7 +14,7 @@ begin
             old.deleted = 0
         then
             update companies set
-                orders_total = orders_total - coalesce(old.profit, 0)
+                orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0)
             where
                 companies.id in (old.id_client, old.id_partner);
         end if;
@@ -55,7 +55,7 @@ begin
             end if;
 
             update companies set
-                orders_total = orders_total - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+                orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
             where
                 companies.id in (new.id_client, new.id_partner);
 
@@ -72,7 +72,7 @@ begin
             old.deleted = 0
         then
             update companies set
-                orders_total = orders_total - coalesce(old.profit, 0)
+                orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0)
             where
                 companies.id in (old.id_client, old.id_partner);
         end if;
@@ -87,7 +87,7 @@ begin
             new.deleted = 0
         then
             update companies set
-                orders_total = orders_total + coalesce(new.profit, 0)
+                orders_total = coalesce(orders_total, 0) + coalesce(new.profit, 0)
             where
                 companies.id in (new.id_client, new.id_partner);
         end if;
@@ -107,7 +107,7 @@ begin
             new.deleted = 0
         then
             update companies set
-                orders_total = orders_total + coalesce(new.profit, 0)
+                orders_total = coalesce(orders_total, 0) + coalesce(new.profit, 0)
             where
                 companies.id in (new.id_client, new.id_partner);
         end if;

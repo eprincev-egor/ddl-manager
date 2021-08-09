@@ -18,7 +18,10 @@ begin
                     when
                         old.is_sale
                     then
-                        orders_profit_sum_total_is_sale - coalesce(old.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_sale,
+                            0
+                        ) - coalesce(old.total, 0)
                     else
                         orders_profit_sum_total_is_sale
                 end,
@@ -26,7 +29,10 @@ begin
                     when
                         old.is_buy
                     then
-                        orders_profit_sum_total_is_buy - coalesce(old.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_buy,
+                            0
+                        ) - coalesce(old.total, 0)
                     else
                         orders_profit_sum_total_is_buy
                 end,
@@ -34,14 +40,20 @@ begin
                     when
                         old.is_sale
                     then
-                        orders_profit_sum_total_is_sale - coalesce(old.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_sale,
+                            0
+                        ) - coalesce(old.total, 0)
                     else
                         orders_profit_sum_total_is_sale
                 end) - (case
                     when
                         old.is_buy
                     then
-                        orders_profit_sum_total_is_buy - coalesce(old.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_buy,
+                            0
+                        ) - coalesce(old.total, 0)
                     else
                         orders_profit_sum_total_is_buy
                 end)
@@ -77,17 +89,26 @@ begin
                         and
                         not coalesce(old.is_sale, false)
                     then
-                        orders_profit_sum_total_is_sale + coalesce(new.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_sale,
+                            0
+                        ) + coalesce(new.total, 0)
                     when
                         not coalesce(new.is_sale, false)
                         and
                         old.is_sale
                     then
-                        orders_profit_sum_total_is_sale - coalesce(old.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_sale,
+                            0
+                        ) - coalesce(old.total, 0)
                     when
                         new.is_sale
                     then
-                        orders_profit_sum_total_is_sale - coalesce(old.total, 0) + coalesce(new.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_sale,
+                            0
+                        ) - coalesce(old.total, 0) + coalesce(new.total, 0)
                     else
                         orders_profit_sum_total_is_sale
                 end,
@@ -97,17 +118,26 @@ begin
                         and
                         not coalesce(old.is_buy, false)
                     then
-                        orders_profit_sum_total_is_buy + coalesce(new.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_buy,
+                            0
+                        ) + coalesce(new.total, 0)
                     when
                         not coalesce(new.is_buy, false)
                         and
                         old.is_buy
                     then
-                        orders_profit_sum_total_is_buy - coalesce(old.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_buy,
+                            0
+                        ) - coalesce(old.total, 0)
                     when
                         new.is_buy
                     then
-                        orders_profit_sum_total_is_buy - coalesce(old.total, 0) + coalesce(new.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_buy,
+                            0
+                        ) - coalesce(old.total, 0) + coalesce(new.total, 0)
                     else
                         orders_profit_sum_total_is_buy
                 end,
@@ -117,17 +147,26 @@ begin
                         and
                         not coalesce(old.is_sale, false)
                     then
-                        orders_profit_sum_total_is_sale + coalesce(new.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_sale,
+                            0
+                        ) + coalesce(new.total, 0)
                     when
                         not coalesce(new.is_sale, false)
                         and
                         old.is_sale
                     then
-                        orders_profit_sum_total_is_sale - coalesce(old.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_sale,
+                            0
+                        ) - coalesce(old.total, 0)
                     when
                         new.is_sale
                     then
-                        orders_profit_sum_total_is_sale - coalesce(old.total, 0) + coalesce(new.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_sale,
+                            0
+                        ) - coalesce(old.total, 0) + coalesce(new.total, 0)
                     else
                         orders_profit_sum_total_is_sale
                 end) - (case
@@ -136,17 +175,26 @@ begin
                         and
                         not coalesce(old.is_buy, false)
                     then
-                        orders_profit_sum_total_is_buy + coalesce(new.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_buy,
+                            0
+                        ) + coalesce(new.total, 0)
                     when
                         not coalesce(new.is_buy, false)
                         and
                         old.is_buy
                     then
-                        orders_profit_sum_total_is_buy - coalesce(old.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_buy,
+                            0
+                        ) - coalesce(old.total, 0)
                     when
                         new.is_buy
                     then
-                        orders_profit_sum_total_is_buy - coalesce(old.total, 0) + coalesce(new.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_buy,
+                            0
+                        ) - coalesce(old.total, 0) + coalesce(new.total, 0)
                     else
                         orders_profit_sum_total_is_buy
                 end)
@@ -170,7 +218,10 @@ begin
                     when
                         old.is_sale
                     then
-                        orders_profit_sum_total_is_sale - coalesce(old.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_sale,
+                            0
+                        ) - coalesce(old.total, 0)
                     else
                         orders_profit_sum_total_is_sale
                 end,
@@ -178,7 +229,10 @@ begin
                     when
                         old.is_buy
                     then
-                        orders_profit_sum_total_is_buy - coalesce(old.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_buy,
+                            0
+                        ) - coalesce(old.total, 0)
                     else
                         orders_profit_sum_total_is_buy
                 end,
@@ -186,14 +240,20 @@ begin
                     when
                         old.is_sale
                     then
-                        orders_profit_sum_total_is_sale - coalesce(old.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_sale,
+                            0
+                        ) - coalesce(old.total, 0)
                     else
                         orders_profit_sum_total_is_sale
                 end) - (case
                     when
                         old.is_buy
                     then
-                        orders_profit_sum_total_is_buy - coalesce(old.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_buy,
+                            0
+                        ) - coalesce(old.total, 0)
                     else
                         orders_profit_sum_total_is_buy
                 end)
@@ -215,7 +275,10 @@ begin
                     when
                         new.is_sale
                     then
-                        orders_profit_sum_total_is_sale + coalesce(new.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_sale,
+                            0
+                        ) + coalesce(new.total, 0)
                     else
                         orders_profit_sum_total_is_sale
                 end,
@@ -223,7 +286,10 @@ begin
                     when
                         new.is_buy
                     then
-                        orders_profit_sum_total_is_buy + coalesce(new.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_buy,
+                            0
+                        ) + coalesce(new.total, 0)
                     else
                         orders_profit_sum_total_is_buy
                 end,
@@ -231,14 +297,20 @@ begin
                     when
                         new.is_sale
                     then
-                        orders_profit_sum_total_is_sale + coalesce(new.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_sale,
+                            0
+                        ) + coalesce(new.total, 0)
                     else
                         orders_profit_sum_total_is_sale
                 end) - (case
                     when
                         new.is_buy
                     then
-                        orders_profit_sum_total_is_buy + coalesce(new.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_buy,
+                            0
+                        ) + coalesce(new.total, 0)
                     else
                         orders_profit_sum_total_is_buy
                 end)
@@ -265,7 +337,10 @@ begin
                     when
                         new.is_sale
                     then
-                        orders_profit_sum_total_is_sale + coalesce(new.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_sale,
+                            0
+                        ) + coalesce(new.total, 0)
                     else
                         orders_profit_sum_total_is_sale
                 end,
@@ -273,7 +348,10 @@ begin
                     when
                         new.is_buy
                     then
-                        orders_profit_sum_total_is_buy + coalesce(new.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_buy,
+                            0
+                        ) + coalesce(new.total, 0)
                     else
                         orders_profit_sum_total_is_buy
                 end,
@@ -281,14 +359,20 @@ begin
                     when
                         new.is_sale
                     then
-                        orders_profit_sum_total_is_sale + coalesce(new.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_sale,
+                            0
+                        ) + coalesce(new.total, 0)
                     else
                         orders_profit_sum_total_is_sale
                 end) - (case
                     when
                         new.is_buy
                     then
-                        orders_profit_sum_total_is_buy + coalesce(new.total, 0)
+                        coalesce(
+                            orders_profit_sum_total_is_buy,
+                            0
+                        ) + coalesce(new.total, 0)
                     else
                         orders_profit_sum_total_is_buy
                 end)
