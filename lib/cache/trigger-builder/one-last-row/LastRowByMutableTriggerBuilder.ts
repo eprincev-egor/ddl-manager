@@ -1,114 +1,124 @@
-import {
-    Expression,
-    Update, SetItem, 
-    SelectColumn
-} from "../../../ast";
+import { ColumnReference, Expression, From, Select, SelectColumn, Update } from "../../../ast";
 import { AbstractLastRowTriggerBuilder } from "./AbstractLastRowTriggerBuilder";
 import { buildOneLastRowByMutableBody } from "../body/buildOneLastRowByMutableBody";
 
 export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilder {
+
+    createSelectForUpdateHelperColumn() {
+        const select = this.context.cache.select.cloneWith({
+            columns: this.getOrderByColumnsRefs().map(columnRef =>
+                new SelectColumn({
+                    name: this.helperColumnName(columnRef.name),
+                    expression: new Expression([
+                        new ColumnReference(
+                            this.fromTable(),
+                            columnRef.name
+                        )
+                    ])
+                })
+            )
+        });
+        return {select, for: this.context.cache.for};
+    }
 
     protected createBody() {
         const {select} = this.context.cache;
         const orderBy = select.orderBy!;
         const sortColumnRef = orderBy!.getColumnReferences()[0]!;
 
-        const triggerTable = this.triggerTableAlias();
-        const isLastColumnName = this.getIsLastColumnName();
-
-        const selectPrevRowByFlag = select.cloneWith({
-            columns: [
-                SelectColumn.onlyName("id"),
-                SelectColumn.onlyName(sortColumnRef.name)
-            ],
-            where: this.filterTriggerTable("new", [
-                `${triggerTable}.${isLastColumnName} = true`
-            ]),
-            orderBy: undefined,
-            limit: undefined,
-            intoRow: "prev_row"
-        });
-
-        const selectPrevRowWhereGreatOrder = select.cloneWith({
-            columns: this.allPrevRowColumns(),
-            where: this.filterTriggerTable("new", [
-                orderBy.compareRowsByOrder(triggerTable, "above", "new"),
-                `${triggerTable}.id <> new.id`
-            ]),
-            intoRow: "prev_row"
-        });
+        const cacheTable = (
+            this.context.cache.for.alias ||
+            this.context.cache.for.table.toStringWithoutPublic()
+        );
+        const lastIdColumnName = this.helperColumnName("id");
 
         const body = buildOneLastRowByMutableBody({
-            isLastColumn: isLastColumnName,
-            noReferenceAndSortChanges: Expression.and([
-                this.conditions.noReferenceChanges(),
-                `new.${sortColumnRef.name} is not distinct from old.${sortColumnRef.name}`
-            ]),
-            isLastAndHasDataChange: Expression.and([
-                Expression.unknown(`new.${isLastColumnName}`),
-                Expression.or(
-                    this.findDataColumns().map(columnName =>
-                        `new.${columnName} is distinct from old.${columnName}`
-                    )
-                )
-            ]),
+            noChanges: this.conditions.noChanges(),
             noReferenceChanges: this.conditions.noReferenceChanges(),
             exitFromDeltaUpdateIf: this.conditions.exitFromDeltaUpdateIf()!,
-            noChanges: this.conditions.noChanges(),
+            newSortIsGreat: orderBy.compareRowsByOrder("new", "above", "old"),
+            hasSortChanges: Expression.and([
+                `new.${sortColumnRef.name} is distinct from old.${sortColumnRef.name}`
+            ]),
             hasNewReference: this.conditions
                 .hasReferenceWithoutJoins("new")!,
             hasOldReference: this.conditions
                 .hasReferenceWithoutJoins("old")!,
-            updateNew: this.updateNew(),
-            updatePrev: this.updatePrev(),
-            prevRowIsLess: orderBy.compareRowsByOrder("prev_row", "below", "new", [
-                "prev_row.id is null",
-            ]),
-            prevRowIsGreat: orderBy.compareRowsByOrder("prev_row", "above", "new"),
-            selectPrevRowByOrder: this.selectPrevRowByOrder(),
-            selectPrevRowByFlag,
 
-            updatePrevRowLastColumnTrue: this.updatePrevRowLastColumnTrue(),
-            updateMaxRowLastColumnFalse: this.updateMaxRowLastColumnFalse("prev_row.id"),
-
-            updateThisRowLastColumnFalse: this.updateThisRowLastColumn("false"),
-            updateThisRowLastColumnTrue: this.updateThisRowLastColumn("true"),
-
-            hasOldReferenceAndIsLast: Expression.and([
-                this.conditions.hasReferenceWithoutJoins("old")!,
-                Expression.unknown(`old.${isLastColumnName}`)
-            ]),
-            isLastAndSortMinus: Expression.and([
-                Expression.unknown(`new.${isLastColumnName}`),
-                orderBy.compareRowsByOrder("new", "below", "old")
-            ]),
-            selectPrevRowWhereGreatOrder,
-            isNotLastAndSortPlus: Expression.and([
-                Expression.unknown(`not new.${isLastColumnName}`),
-                orderBy.compareRowsByOrder("new", "above", "old")
-            ]),
-            updatePrevAndThisFlag: this.updatePrevAndThisFlag(
-                `(${triggerTable}.id = new.id)`
+                updateReselectCacheRow: new Update({
+                table: this.context.cache.for.toString(),
+                set: [this.reselectSetItem()],
+                where: Expression.and([
+                    `${cacheTable}.id = cache_row.id`
+                ])
+            }),
+            oldIsLast: Expression.and([`cache_row.${lastIdColumnName} = old.id`]),
+            newIsLast: Expression.and([`cache_row.${lastIdColumnName} = new.id`]),
+            newSortIsLessThenCacheRow: orderBy.compareRowsByOrder(
+                "new", "above",
+                (columnName) => `cache_row.${this.helperColumnName(columnName)}`
             ),
-            updatePrevAndThisFlagNot: this.updatePrevAndThisFlag(
-                `(${triggerTable}.id != new.id)`
-            )
+            selectByOldAndLockCacheRow: this.selectAndLock("old"),
+            selectByNewAndLockCacheRow: this.selectAndLock("new"),
+            updateNew: new Update({
+                table: this.context.cache.for.toString(),
+                set: [
+                    ...this.setHelpersByRow(),
+                    ...this.setItemsByRow("new")
+                ],
+                where: this.conditions.simpleWhere("new")!
+            }),
+            updateNewWhereIsGreat: new Update({
+                table: this.context.cache.for.toString(),
+                set: [
+                    ...this.setHelpersByRow(),
+                    ...this.setItemsByRow("new")
+                ],
+                where: Expression.and([
+                    this.conditions.simpleWhere("new")!,
+                    Expression.and(this.whereIsGreat())
+                ])
+            }),
+            updateNewWhereIsLastAndDistinctNew: new Update({
+                table: this.context.cache.for.toString(),
+                set: this.setItemsByRow("new"),
+                where: Expression.and([
+                    this.conditions.simpleWhere("new")!,
+                    `${cacheTable}.${ lastIdColumnName } = new.id`,
+                    this.whereDistinctRowValues("new")
+                ])
+            })
         });
         return body;
     }
 
-    private updatePrevAndThisFlag(flagValue: string) {
-        const triggerTable = this.triggerTableAlias();
-
-        return new Update({
-            table: this.fromTable().toString(),
-            set: [new SetItem({
-                column: this.getIsLastColumnName(),
-                value: Expression.unknown( flagValue )
-            })],
-            where: Expression.and([
-                `${triggerTable}.id in (new.id, prev_row.id)`
-            ])
+    private selectAndLock(row: "new" | "old") {
+        return new Select({
+            columns: [
+                new SelectColumn({
+                    name: "id",
+                    expression: new Expression([
+                        new ColumnReference(
+                            this.context.cache.for, "id"
+                        )
+                    ])
+                }),
+                ...this.getOrderByColumnsRefs().map(columnRef =>
+                    new SelectColumn({
+                        name: this.helperColumnName(columnRef.name),
+                        expression: new Expression([
+                            new ColumnReference(
+                                this.context.cache.for,
+                                this.helperColumnName(columnRef.name)
+                            )
+                        ])
+                    })
+                )
+            ],
+            from: [new From(this.context.cache.for)],
+            where: this.conditions.simpleWhere(row)!,
+            forUpdate: true,
+            intoRow: "cache_row"
         });
     }
 }

@@ -14,6 +14,7 @@ interface ISelectParams {
     intoRow?: string;
     orderBy?: OrderBy;
     limit?: number;
+    forUpdate?: boolean;
 }
 
 export class Select extends AbstractAstElement {
@@ -23,6 +24,7 @@ export class Select extends AbstractAstElement {
     readonly orderBy?: OrderBy;
     readonly intoRow?: string;
     readonly limit?: number;
+    readonly forUpdate: boolean;
 
     constructor(params: ISelectParams = {
         columns: [], 
@@ -34,6 +36,8 @@ export class Select extends AbstractAstElement {
         if ( params.orderBy ) {
             this.orderBy = params.orderBy;
         }
+
+        this.forUpdate = !!params.forUpdate;
     }
 
     addColumn(newColumn: SelectColumn): Select {
@@ -84,6 +88,7 @@ export class Select extends AbstractAstElement {
             where: this.where ? this.where.clone() : undefined,
             orderBy: this.orderBy ? this.orderBy.clone() : undefined,
             limit: this.limit,
+            forUpdate: "forUpdate" in params ? params.forUpdate : this.forUpdate,
             ...params
         });
         return clone;
@@ -121,6 +126,10 @@ export class Select extends AbstractAstElement {
             ...(this.limit ? [
                 spaces + `limit ${this.limit}`
             ]: []),
+
+            ...(this.forUpdate ? [
+                spaces + "for update" + (this.intoRow ? "" : ";")
+            ] : []),
 
             ...(this.intoRow ? [
                 spaces + `into ${ this.intoRow };`

@@ -3,7 +3,8 @@ import {
     Update, SetItem,
     Select, SelectColumn,
     ColumnReference, UnknownExpressionElement,
-    From
+    From, SetSelectItem, Spaces,
+    OrderByItem, OrderBy
 } from "../../../ast";
 import { Exists } from "../../../ast/expression/Exists";
 import { TableReference } from "../../../database/schema/TableReference";
@@ -249,4 +250,116 @@ export abstract class AbstractLastRowTriggerBuilder extends AbstractTriggerBuild
 
         return dataColumns;
     }
+
+    protected reselectSetItem() {
+        return new SetSelectItem({
+            columns: [
+                ...this.getOrderByColumnsRefs().map(columnRef =>
+                    this.helperColumnName(columnRef.name)
+                ),
+                ...this.context.cache.select.columns.map(selectColumn =>
+                    selectColumn.name
+                )
+            ],
+            select: this.reselect()
+                .toSQL( Spaces.level(3) )
+                .trim()
+        });
+    }
+
+    protected reselect() {
+        const {select} = this.context.cache;
+        const orderByItems = select.orderBy!.items.slice();
+        if ( !select.orderBy!.isOnlyId() ) {
+            const firstOrder = orderByItems[0]!;
+            orderByItems.push(
+                new OrderByItem({
+                    expression: Expression.unknown(
+                        `${this.fromTable().getIdentifier()}.id`
+                    ),
+                    type: firstOrder.type
+                })
+            );
+        }
+
+        const reselect = select.cloneWith({
+            columns: [
+                ...this.getOrderByColumnsRefs().map(columnRef =>
+                    new SelectColumn({
+                        name: this.helperColumnName(columnRef.name),
+                        expression: Expression.unknown(
+                            this.triggerTableAlias() + "." + columnRef.name
+                        )
+                    })
+                ),
+                ...select.columns
+            ],
+            orderBy: new OrderBy(orderByItems)
+        });
+        return reselect;
+    }
+
+    protected getOrderByColumnsRefs() {
+        // TODO: order by hard expression
+        const {select} = this.context.cache;
+        const orderByColumns = select.orderBy!.getColumnReferences();
+        
+        const hasId = orderByColumns.some(columnRef => columnRef.name === "id");
+        if ( !hasId ) {
+            orderByColumns.unshift(
+                new ColumnReference(
+                    this.fromTable(),
+                    "id"
+                )
+            );
+        }
+
+        return orderByColumns;
+    }
+
+    protected helperColumnName(triggerTableColumnName: string) {
+        return `__${this.context.cache.name}_${triggerTableColumnName}`;
+    }
+
+    protected setHelpersByRow(row = "new") {
+        const helpers: SetItem[] = this.getOrderByColumnsRefs().map(columnRef =>
+            new SetItem({
+                column: this.helperColumnName(columnRef.name),
+                value: Expression.unknown(row + "." + columnRef.name)
+            })
+        );
+        return helpers;
+    }
+
+    protected whereIsGreat(additionalOr: Expression[] = []) {
+        const orderBy = this.context.cache.select.orderBy!;
+
+        const cacheTable = (
+            this.context.cache.for.alias ||
+            this.context.cache.for.table.toStringWithoutPublic()
+        );
+        const cacheRow = (columnName: string) =>
+            `${cacheTable}.${this.helperColumnName(columnName)}`;
+
+
+        if ( orderBy.isOnlyId() ) {
+            if ( orderBy.items[0]!.type === "asc" ) {
+                return [
+                    `${cacheRow("id")} is null`
+                ];
+            }
+            return [];
+        }
+
+        return [orderBy.compareRowsByOrder(
+            cacheRow,
+            "below",
+            "new",
+            [
+                ...additionalOr,
+                `${cacheRow("id")} is null`
+            ]
+        )];
+    }
+
 }

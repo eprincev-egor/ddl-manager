@@ -1,6 +1,6 @@
 create or replace function cache_first_point_for_operations_on_arrival_points()
 returns trigger as $body$
-declare prev_row record;
+declare cache_row record;
 begin
 
     if TG_OP = 'DELETE' then
@@ -9,50 +9,46 @@ begin
             and
             old.deleted = 0
         then
-            if not old.__first_point_for_operations then
-                return old;
-            end if;
-
             select
-                id,
-                actual_date,
-                deleted,
-                expected_date,
-                id_operation,
-                id_point,
-                sort
-            from arrival_points as first_point
+                operations.id as id,
+                operations.__first_point_id as __first_point_id,
+                operations.__first_point_sort as __first_point_sort
+            from operations
             where
-                first_point.id_operation = old.id_operation
+                old.id_operation = operations.id
+            for update
+            into cache_row;
+
+            if cache_row.__first_point_id = old.id then
+                update operations set
+                    (
+                        __first_point_id,
+                        __first_point_sort,
+                        first_point_actual_date,
+                        first_point_expected_date,
+                        first_point_id_point
+                    ) = (
+                        select
+                            first_point.id as __first_point_id,
+                            first_point.sort as __first_point_sort,
+                first_point.actual_date as first_point_actual_date,
+                first_point.expected_date as first_point_expected_date,
+                first_point.id_point as first_point_id_point
+
+                        from arrival_points as first_point
+
+                        where
+                            first_point.id_operation = operations.id
                 and
                 first_point.deleted = 0
             order by
-                first_point.sort asc nulls first
+                first_point.sort asc nulls first,
+                first_point.id asc nulls last
             limit 1
-            into prev_row;
-
-            if prev_row.id is not null then
-                update arrival_points as first_point set
-                    __first_point_for_operations = true
+                    )
                 where
-                    first_point.id = prev_row.id;
+                    operations.id = cache_row.id;
             end if;
-
-            update operations set
-                first_point_actual_date = prev_row.actual_date,
-                first_point_expected_date = prev_row.expected_date,
-                first_point_id_point = prev_row.id_point
-            where
-                old.id_operation = operations.id
-                and
-                (
-                    operations.first_point_actual_date is distinct from prev_row.actual_date
-                    or
-                    operations.first_point_expected_date is distinct from prev_row.expected_date
-                    or
-                    operations.first_point_id_point is distinct from prev_row.id_point
-                );
-
         end if;
 
         return old;
@@ -79,8 +75,6 @@ begin
             new.id_operation is not distinct from old.id_operation
             and
             new.deleted is not distinct from old.deleted
-            and
-            new.sort is not distinct from old.sort
         then
             if
                 new.id_operation is null
@@ -90,45 +84,18 @@ begin
                 return new;
             end if;
 
-            if not new.__first_point_for_operations then
-                return new;
-            end if;
+            if new.sort is distinct from old.sort then
+                select
+                    operations.id as id,
+                    operations.__first_point_id as __first_point_id,
+                    operations.__first_point_sort as __first_point_sort
+                from operations
+                where
+                    old.id_operation = operations.id
+                for update
+                into cache_row;
 
-            update operations set
-                first_point_actual_date = new.actual_date,
-                first_point_expected_date = new.expected_date,
-                first_point_id_point = new.id_point
-            where
-                new.id_operation = operations.id
-                and
-                (
-                    operations.first_point_actual_date is distinct from new.actual_date
-                    or
-                    operations.first_point_expected_date is distinct from new.expected_date
-                    or
-                    operations.first_point_id_point is distinct from new.id_point
-                );
-
-            return new;
-        end if;
-
-        if
-            new.id_operation is not distinct from old.id_operation
-            and
-            new.deleted is not distinct from old.deleted
-        then
-            if
-                new.id_operation is null
-                or
-                not coalesce(new.deleted = 0, false)
-            then
-                return new;
-            end if;
-
-            if
-                not new.__first_point_for_operations
-                and
-                (
+                if
                     new.sort is not distinct from old.sort
                     and
                     new.id < old.id
@@ -138,160 +105,68 @@ begin
                     old.sort is not null
                     or
                     new.sort < old.sort
-                )
-            then
-                select
-                    id,
-                    sort
-                from arrival_points as first_point
-                where
-                    first_point.id_operation = new.id_operation
-                    and
-                    first_point.deleted = 0
-                    and
-                    first_point.__first_point_for_operations = true
-                into prev_row;
-
-                if
-                    prev_row.id is null
-                    or
-                    prev_row.sort is not distinct from new.sort
-                    and
-                    prev_row.id > new.id
-                    or
-                    prev_row.sort is not null
-                    and
-                    new.sort is null
-                    or
-                    prev_row.sort > new.sort
                 then
-                    update arrival_points as first_point set
-                        __first_point_for_operations = (first_point.id = new.id)
-                    where
-                        first_point.id in (new.id, prev_row.id);
-
-                    update operations set
-                        first_point_actual_date = new.actual_date,
-                        first_point_expected_date = new.expected_date,
-                        first_point_id_point = new.id_point
-                    where
-                        new.id_operation = operations.id
+                    if
+                        new.sort is not distinct from cache_row.__first_point_sort
                         and
-                        (
-                            operations.first_point_actual_date is distinct from new.actual_date
-                            or
-                            operations.first_point_expected_date is distinct from new.expected_date
-                            or
-                            operations.first_point_id_point is distinct from new.id_point
-                        );
+                        new.id < cache_row.__first_point_id
+                        or
+                        new.sort is null
+                        and
+                        cache_row.__first_point_sort is not null
+                        or
+                        new.sort < cache_row.__first_point_sort
+                    then
+                        update operations set
+                            __first_point_id = new.id,
+                            __first_point_sort = new.sort,
+                            first_point_actual_date = new.actual_date,
+                            first_point_expected_date = new.expected_date,
+                            first_point_id_point = new.id_point
+                        where
+                            new.id_operation = operations.id;
+                    end if;
+                else
+                    if cache_row.__first_point_id = new.id then
+                        update operations set
+                            (
+                                __first_point_id,
+                                __first_point_sort,
+                                first_point_actual_date,
+                                first_point_expected_date,
+                                first_point_id_point
+                            ) = (
+                                select
+                                    first_point.id as __first_point_id,
+                                    first_point.sort as __first_point_sort,
+                first_point.actual_date as first_point_actual_date,
+                first_point.expected_date as first_point_expected_date,
+                first_point.id_point as first_point_id_point
 
-                    return new;
-                end if;
-            end if;
+                                from arrival_points as first_point
 
-            if
-                new.__first_point_for_operations
+                                where
+                                    first_point.id_operation = operations.id
                 and
-                (
-                    new.sort is not distinct from old.sort
-                    and
-                    new.id > old.id
-                    or
-                    new.sort is not null
-                    and
-                    old.sort is null
-                    or
-                    new.sort > old.sort
-                )
-            then
-                select
-                    id,
-                    actual_date,
-                    deleted,
-                    expected_date,
-                    id_operation,
-                    id_point,
-                    sort
-                from arrival_points as first_point
-                where
-                    first_point.id_operation = new.id_operation
-                    and
-                    first_point.deleted = 0
-                    and
-                    (
-                        first_point.sort is not distinct from new.sort
-                        and
-                        first_point.id < new.id
-                        or
-                        first_point.sort is null
-                        and
-                        new.sort is not null
-                        or
-                        first_point.sort < new.sort
-                    )
-                    and
-                    first_point.id <> new.id
-                order by
-                    first_point.sort asc nulls first
-                limit 1
-                into prev_row;
-
-                if
-                    prev_row.id is not null
-                    and
-                    (
-                        prev_row.sort is not distinct from new.sort
-                        and
-                        prev_row.id < new.id
-                        or
-                        prev_row.sort is null
-                        and
-                        new.sort is not null
-                        or
-                        prev_row.sort < new.sort
-                    )
-                then
-                    update arrival_points as first_point set
-                        __first_point_for_operations = (first_point.id != new.id)
-                    where
-                        first_point.id in (new.id, prev_row.id);
-
-                    update operations set
-                        first_point_actual_date = prev_row.actual_date,
-                        first_point_expected_date = prev_row.expected_date,
-                        first_point_id_point = prev_row.id_point
-                    where
-                        old.id_operation = operations.id
-                        and
-                        (
-                            operations.first_point_actual_date is distinct from prev_row.actual_date
-                            or
-                            operations.first_point_expected_date is distinct from prev_row.expected_date
-                            or
-                            operations.first_point_id_point is distinct from prev_row.id_point
-                        );
-
-                    return new;
+                first_point.deleted = 0
+            order by
+                first_point.sort asc nulls first,
+                first_point.id asc nulls last
+            limit 1
+                            )
+                        where
+                            operations.id = cache_row.id;
+                    end if;
                 end if;
-            end if;
-
-            if
-                new.__first_point_for_operations
-                and
-                (
-                    new.actual_date is distinct from old.actual_date
-                    or
-                    new.expected_date is distinct from old.expected_date
-                    or
-                    new.id_point is distinct from old.id_point
-                )
-            then
+            else
                 update operations set
                     first_point_actual_date = new.actual_date,
                     first_point_expected_date = new.expected_date,
                     first_point_id_point = new.id_point
                 where
                     new.id_operation = operations.id
+                    and
+                    operations.__first_point_id = new.id
                     and
                     (
                         operations.first_point_actual_date is distinct from new.actual_date
@@ -309,59 +184,47 @@ begin
             old.id_operation is not null
             and
             old.deleted = 0
-            and
-            old.__first_point_for_operations
         then
             select
-                id,
-                actual_date,
-                deleted,
-                expected_date,
-                id_operation,
-                id_point,
-                sort
-            from arrival_points as first_point
+                operations.id as id,
+                operations.__first_point_id as __first_point_id,
+                operations.__first_point_sort as __first_point_sort
+            from operations
             where
-                first_point.id_operation = old.id_operation
+                old.id_operation = operations.id
+            for update
+            into cache_row;
+
+            if cache_row.__first_point_id = old.id then
+                update operations set
+                    (
+                        __first_point_id,
+                        __first_point_sort,
+                        first_point_actual_date,
+                        first_point_expected_date,
+                        first_point_id_point
+                    ) = (
+                        select
+                            first_point.id as __first_point_id,
+                            first_point.sort as __first_point_sort,
+                first_point.actual_date as first_point_actual_date,
+                first_point.expected_date as first_point_expected_date,
+                first_point.id_point as first_point_id_point
+
+                        from arrival_points as first_point
+
+                        where
+                            first_point.id_operation = operations.id
                 and
                 first_point.deleted = 0
             order by
-                first_point.sort asc nulls first
+                first_point.sort asc nulls first,
+                first_point.id asc nulls last
             limit 1
-            into prev_row;
-
-            if prev_row.id is not null then
-                update arrival_points as first_point set
-                    __first_point_for_operations = true
+                    )
                 where
-                    first_point.id = prev_row.id;
+                    operations.id = cache_row.id;
             end if;
-
-            if
-                new.id_operation is null
-                or
-                not coalesce(new.deleted = 0, false)
-            then
-                update arrival_points as first_point set
-                    __first_point_for_operations = false
-                where
-                    first_point.id = new.id;
-            end if;
-
-            update operations set
-                first_point_actual_date = prev_row.actual_date,
-                first_point_expected_date = prev_row.expected_date,
-                first_point_id_point = prev_row.id_point
-            where
-                old.id_operation = operations.id
-                and
-                (
-                    operations.first_point_actual_date is distinct from prev_row.actual_date
-                    or
-                    operations.first_point_expected_date is distinct from prev_row.expected_date
-                    or
-                    operations.first_point_id_point is distinct from prev_row.id_point
-                );
         end if;
 
         if
@@ -370,61 +233,37 @@ begin
             new.deleted = 0
         then
             select
-                id,
-                sort
-            from arrival_points as first_point
+                operations.id as id,
+                operations.__first_point_id as __first_point_id,
+                operations.__first_point_sort as __first_point_sort
+            from operations
             where
-                first_point.id_operation = new.id_operation
-                and
-                first_point.deleted = 0
-                and
-                first_point.__first_point_for_operations = true
-            into prev_row;
+                new.id_operation = operations.id
+            for update
+            into cache_row;
 
-            if
-                prev_row.id is null
-                or
-                prev_row.sort is not distinct from new.sort
+            update operations set
+                __first_point_id = new.id,
+                __first_point_sort = new.sort,
+                first_point_actual_date = new.actual_date,
+                first_point_expected_date = new.expected_date,
+                first_point_id_point = new.id_point
+            where
+                new.id_operation = operations.id
                 and
-                prev_row.id > new.id
-                or
-                prev_row.sort is not null
-                and
-                new.sort is null
-                or
-                prev_row.sort > new.sort
-            then
-                if prev_row.id is not null then
-                    update arrival_points as first_point set
-                        __first_point_for_operations = false
-                    where
-                        first_point.id = prev_row.id
-                        and
-                        __first_point_for_operations = true;
-                end if;
-
-                if not new.__first_point_for_operations then
-                    update arrival_points as first_point set
-                        __first_point_for_operations = true
-                    where
-                        first_point.id = new.id;
-                end if;
-
-                update operations set
-                    first_point_actual_date = new.actual_date,
-                    first_point_expected_date = new.expected_date,
-                    first_point_id_point = new.id_point
-                where
-                    new.id_operation = operations.id
+                (
+                    operations.__first_point_id is null
+                    or
+                    operations.__first_point_sort is not distinct from new.sort
                     and
-                    (
-                        operations.first_point_actual_date is distinct from new.actual_date
-                        or
-                        operations.first_point_expected_date is distinct from new.expected_date
-                        or
-                        operations.first_point_id_point is distinct from new.id_point
-                    );
-            end if;
+                    operations.__first_point_id > new.id
+                    or
+                    operations.__first_point_sort is not null
+                    and
+                    new.sort is null
+                    or
+                    operations.__first_point_sort > new.sort
+                );
         end if;
 
         return new;
@@ -436,52 +275,38 @@ begin
             and
             new.deleted = 0
         then
-
             select
-                id,
-                sort
-            from arrival_points as first_point
+                operations.id as id,
+                operations.__first_point_id as __first_point_id,
+                operations.__first_point_sort as __first_point_sort
+            from operations
             where
-                first_point.id_operation = new.id_operation
-                and
-                first_point.deleted = 0
-                and
-                first_point.__first_point_for_operations = true
-            into prev_row;
+                new.id_operation = operations.id
+            for update
+            into cache_row;
 
-            if
-                prev_row.id is null
-                or
-                prev_row.sort is not distinct from new.sort
+            update operations set
+                __first_point_id = new.id,
+                __first_point_sort = new.sort,
+                first_point_actual_date = new.actual_date,
+                first_point_expected_date = new.expected_date,
+                first_point_id_point = new.id_point
+            where
+                new.id_operation = operations.id
                 and
-                prev_row.id > new.id
-                or
-                prev_row.sort is not null
-                and
-                new.sort is null
-                or
-                prev_row.sort > new.sort
-            then
-                update arrival_points as first_point set
-                    __first_point_for_operations = (first_point.id = new.id)
-                where
-                    first_point.id in (new.id, prev_row.id);
-
-                update operations set
-                    first_point_actual_date = new.actual_date,
-                    first_point_expected_date = new.expected_date,
-                    first_point_id_point = new.id_point
-                where
-                    new.id_operation = operations.id
+                (
+                    operations.__first_point_id is null
+                    or
+                    operations.__first_point_sort is not distinct from new.sort
                     and
-                    (
-                        operations.first_point_actual_date is distinct from new.actual_date
-                        or
-                        operations.first_point_expected_date is distinct from new.expected_date
-                        or
-                        operations.first_point_id_point is distinct from new.id_point
-                    );
-            end if;
+                    operations.__first_point_id > new.id
+                    or
+                    operations.__first_point_sort is not null
+                    and
+                    new.sort is null
+                    or
+                    operations.__first_point_sort > new.sort
+                );
         end if;
 
         return new;

@@ -1,46 +1,36 @@
 import { 
-    Body, Declare, 
-    If, Expression, Select,
-    HardCode, BlankLine, Update
+    Body,
+    If, Expression, Update,
+    HardCode, BlankLine, Declare, Select
 } from "../../../ast";
 import { doIf } from "./util/doIf";
 import { exitIf } from "./util/exitIf";
 
 export interface ILastRowParams {
     noChanges: Expression;
-    noReferenceAndSortChanges: Expression;
     noReferenceChanges: Expression;
-    isLastAndHasDataChange: Expression;
-    isLastAndSortMinus: Expression;
-    prevRowIsGreat: Expression;
+    hasSortChanges: Expression;
+    newSortIsGreat: Expression;
     exitFromDeltaUpdateIf: Expression;
-    isLastColumn: string;
     hasNewReference: Expression;
     hasOldReference: Expression;
-    updatePrev: Update;
+    newSortIsLessThenCacheRow: Expression;
+    oldIsLast: Expression;
+    newIsLast: Expression;
     updateNew: Update;
-    selectPrevRowByOrder: Select;
-    selectPrevRowByFlag: Select;
-    selectPrevRowWhereGreatOrder: Select;
-    updatePrevRowLastColumnTrue: Update;
-    updateThisRowLastColumnFalse: Update;
-    prevRowIsLess: Expression;
-    updatePrevAndThisFlag: Update;
-    updateMaxRowLastColumnFalse: Update;
-    updateThisRowLastColumnTrue: Update;
-    updatePrevAndThisFlagNot: Update;
-    hasOldReferenceAndIsLast: Expression;
-    isNotLastAndSortPlus: Expression;
+    updateNewWhereIsGreat: Update;
+    updateReselectCacheRow: Update;
+    updateNewWhereIsLastAndDistinctNew: Update;
+    selectByOldAndLockCacheRow: Select;
+    selectByNewAndLockCacheRow: Select;
 }
 
 export function buildOneLastRowByMutableBody(ast: ILastRowParams) {
     return new Body({
-        declares: [
-            new Declare({
-                name: "prev_row",
-                type: "record"
-            })
-        ],
+        declares: [new Declare({
+            name: "cache_row",
+            type: "record"
+        })],
         statements: [
             new BlankLine(),
             new If({
@@ -51,22 +41,14 @@ export function buildOneLastRowByMutableBody(ast: ILastRowParams) {
                     ...doIf(
                         ast.hasOldReference,
                         [
+                            ast.selectByOldAndLockCacheRow,
+                            new BlankLine(),
                             new If({
-                                if: new HardCode({sql: `not old.${ast.isLastColumn}`}),
+                                if: ast.oldIsLast,
                                 then: [
-                                    new HardCode({sql: "return old;"})
+                                    ast.updateReselectCacheRow
                                 ]
-                            }),
-                            new BlankLine(),
-                            ast.selectPrevRowByOrder,
-                            new BlankLine(),
-                            new If({
-                                if: new HardCode({sql: "prev_row.id is not null"}),
-                                then: [ast.updatePrevRowLastColumnTrue]
-                            }),
-                            new BlankLine(),
-                            ast.updatePrev,
-                            new BlankLine()
+                            })
                         ]
                     ),
                     new BlankLine(),
@@ -88,28 +70,6 @@ export function buildOneLastRowByMutableBody(ast: ILastRowParams) {
                         ]
                     }),
                     new BlankLine(),
-                    ...doIf(
-                        ast.noReferenceAndSortChanges,
-                        [
-                            ...exitIf({
-                                if: ast.exitFromDeltaUpdateIf,
-                                blanksAfter: [new BlankLine()]
-                            }),
-
-                            new If({
-                                if: new HardCode({sql: `not new.${ast.isLastColumn}`}),
-                                then: [
-                                    new HardCode({sql: "return new;"})
-                                ]
-                            }),
-                            new BlankLine(),
-                            ast.updateNew,
-                            new BlankLine(),
-                            new HardCode({sql: "return new;"})
-                        ]
-                    ),
-
-                    new BlankLine(),
                     
                     new If({
                         if: ast.noReferenceChanges,
@@ -120,52 +80,35 @@ export function buildOneLastRowByMutableBody(ast: ILastRowParams) {
                             }),
 
                             new If({
-                                if: ast.isNotLastAndSortPlus,
+                                if: ast.hasSortChanges,
                                 then: [
-                                    ast.selectPrevRowByFlag,
+                                    ast.selectByOldAndLockCacheRow,
                                     new BlankLine(),
                                     new If({
-                                        if: ast.prevRowIsLess,
+                                        if: ast.newSortIsGreat,
                                         then: [
-                                            ast.updatePrevAndThisFlag,
-                                            new BlankLine(),
-                                            ast.updateNew,
-                                            new BlankLine(),
-                                            new HardCode({sql: "return new;"})
+                                            new If({
+                                                if: ast.newSortIsLessThenCacheRow,
+                                                then: [
+                                                    ast.updateNew
+                                                ]
+                                            })
+                                        ],
+                                        else: [
+                                            new If({
+                                                if: ast.newIsLast,
+                                                then: [
+                                                    ast.updateReselectCacheRow
+                                                ]
+                                            })
                                         ]
                                     })
+                                ],
+                                else: [
+                                    ast.updateNewWhereIsLastAndDistinctNew
                                 ]
                             }),
-                            new BlankLine(),
-                            
-                            new If({
-                                if: ast.isLastAndSortMinus,
-                                then: [
-                                    ast.selectPrevRowWhereGreatOrder,
-                                    new BlankLine(),
-                                    new If({
-                                        if: Expression.and([
-                                            "prev_row.id is not null",
-                                            ast.prevRowIsGreat
-                                        ]),
-                                        then: [
-                                            ast.updatePrevAndThisFlagNot,
-                                            new BlankLine(),
-                                            ast.updatePrev,
-                                            new BlankLine(),
-                                            new HardCode({sql: "return new;"})
-                                        ]
-                                    })
-                                ]
-                            }),
-                            new BlankLine(),
-                            
-                            new If({
-                                if: ast.isLastAndHasDataChange,
-                                then: [
-                                    ast.updateNew
-                                ]
-                            }),
+
                             new BlankLine(),
                             new HardCode({sql: "return new;"})
                         ]
@@ -173,23 +116,16 @@ export function buildOneLastRowByMutableBody(ast: ILastRowParams) {
                     
                     new BlankLine(),
                     new If({
-                        if: ast.hasOldReferenceAndIsLast,
+                        if: ast.hasOldReference,
                         then: [
-                            ast.selectPrevRowByOrder,
+                            ast.selectByOldAndLockCacheRow,
                             new BlankLine(),
                             new If({
-                                if: new HardCode({sql: "prev_row.id is not null"}),
-                                then: [ast.updatePrevRowLastColumnTrue]
-                            }),
-                            new BlankLine(),
-                            new If({
-                                if: ast.exitFromDeltaUpdateIf,
+                                if: ast.oldIsLast,
                                 then: [
-                                    ast.updateThisRowLastColumnFalse
+                                    ast.updateReselectCacheRow
                                 ]
-                            }),
-                            new BlankLine(),
-                            ast.updatePrev
+                            })
                         ]
                     }),
                     new BlankLine(),
@@ -197,28 +133,9 @@ export function buildOneLastRowByMutableBody(ast: ILastRowParams) {
                     new If({
                         if: ast.hasNewReference,
                         then: [
-                            ast.selectPrevRowByFlag,
+                            ast.selectByNewAndLockCacheRow,
                             new BlankLine(),
-                            new If({
-                                if: ast.prevRowIsLess,
-                                then: [
-                                    new If({
-                                        if: new HardCode({sql: "prev_row.id is not null"}),
-                                        then: [
-                                            ast.updateMaxRowLastColumnFalse
-                                        ]
-                                    }),
-                                    new BlankLine(),
-                                    new If({
-                                        if: new HardCode({sql: `not new.${ast.isLastColumn}`}),
-                                        then: [
-                                            ast.updateThisRowLastColumnTrue
-                                        ]
-                                    }),
-                                    new BlankLine(),
-                                    ast.updateNew
-                                ]
-                            })
+                            ast.updateNewWhereIsGreat
                         ]
                     }),
                     new BlankLine(),
@@ -234,17 +151,9 @@ export function buildOneLastRowByMutableBody(ast: ILastRowParams) {
                     ...doIf(
                         ast.hasNewReference,
                         [
+                            ast.selectByNewAndLockCacheRow,
                             new BlankLine(),
-                            ast.selectPrevRowByFlag,
-                            new BlankLine(),
-                            new If({
-                                if: ast.prevRowIsLess,
-                                then: [
-                                    ast.updatePrevAndThisFlag,
-                                    new BlankLine(),
-                                    ast.updateNew
-                                ]
-                            })
+                            ast.updateNewWhereIsGreat
                         ]
                     ),
                     new BlankLine(),

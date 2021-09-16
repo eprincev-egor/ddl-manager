@@ -2604,4 +2604,175 @@ $$;
             { id: 1, all_count: "3", clear_count: "2" }
         ]);
     });
+
+
+    it("first_point (order by ASC trigger): parallel update sort", async() => {
+        const folderPath = ROOT_TMP_PATH + "/count_filter";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table operations (
+                id serial primary key
+            );
+            create table arrival_points (
+                id serial primary key,
+                id_operation integer,
+                sort integer,
+                point_name text
+            );
+
+            insert into operations (id) values (1);
+            insert into arrival_points
+                (id, id_operation, sort, point_name)
+            values
+                (1, 1, 10, 'A'),
+                (2, 1, 20, 'B'),
+                (3, 1, 30, 'C');
+        `);
+
+        fs.writeFileSync(folderPath + "/first_point_name.sql", `
+            cache first_point for operations (
+                select
+                    arrival_points.point_name as first_point_name
+
+                from arrival_points
+                where
+                    arrival_points.id_operation = operations.id
+
+                order by arrival_points.sort asc
+                limit 1
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const transaction1 = await getDBClient();
+        const transaction2 = await getDBClient();
+
+        await transaction1.query("begin");
+        await transaction2.query("begin");
+
+        await transaction1.query("update arrival_points set sort = 14 where id = 3;");
+
+        let doneTransactions!: (...args: any[]) => void;
+        transaction2.query("update arrival_points set sort = 15 where id = 1;")
+            .then(async() => {
+                await transaction2.query("commit");
+    
+                await sleep(30);
+                while ( !doneTransactions ) {
+                    await sleep(10);
+                }
+                doneTransactions();
+            });
+            
+        await sleep(100);
+        await transaction1.query("commit");
+        
+        await new Promise((resolve) => {
+            doneTransactions = resolve;
+        });
+
+        const {rows} = await db.query(`select id, first_point_name from operations`);
+        assert.deepStrictEqual(rows, [
+            {id: 1, first_point_name: "C"}
+        ]);
+
+        await transaction1.end();
+        await transaction2.end();
+    });
+
+    it("first_point (order by ASC trigger): parallel insert and update sort", async() => {
+        const folderPath = ROOT_TMP_PATH + "/count_filter";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table operations (
+                id serial primary key
+            );
+            create table arrival_points (
+                id serial primary key,
+                id_operation integer,
+                sort integer,
+                point_name text
+            );
+
+            insert into operations (id) values (1);
+            insert into arrival_points
+                (id, id_operation, sort, point_name)
+            values
+                (1, 1, 10, 'A'),
+                (2, 1, 20, 'B'),
+                (3, 1, 30, 'C');
+        `);
+
+        fs.writeFileSync(folderPath + "/first_point_name.sql", `
+            cache first_point for operations (
+                select
+                    arrival_points.point_name as first_point_name
+
+                from arrival_points
+                where
+                    arrival_points.id_operation = operations.id
+
+                order by arrival_points.sort asc
+                limit 1
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const transaction1 = await getDBClient();
+        const transaction2 = await getDBClient();
+
+        await transaction1.query("begin");
+        await transaction2.query("begin");
+
+        await transaction1.query(`
+            insert into arrival_points 
+                (id, id_operation, sort, point_name) 
+            values
+                (4, 1, 15, 'D');
+        `);
+
+        let doneTransactions!: (...args: any[]) => void;
+        transaction2.query("update arrival_points set sort = 25 where id = 1;")
+            .then(async() => {
+                await transaction2.query("commit");
+    
+                await sleep(30);
+                while ( !doneTransactions ) {
+                    await sleep(10);
+                }
+                doneTransactions();
+            });
+            
+        await sleep(100);
+        await transaction1.query("commit");
+        
+        await new Promise((resolve) => {
+            doneTransactions = resolve;
+        });
+
+        const {rows} = await db.query(`select id, first_point_name from operations`);
+        assert.deepStrictEqual(rows, [
+            {id: 1, first_point_name: "D"}
+        ]);
+
+        await transaction1.end();
+        await transaction2.end();
+    });
+
+    async function sleep(ms: number) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
 });
