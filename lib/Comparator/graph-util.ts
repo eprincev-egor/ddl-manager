@@ -12,30 +12,35 @@ export interface ISortSelectItem {
 export function sortSelectsByDependencies(allSelectsForEveryColumn: ISortSelectItem[]) {
 
     // sort selects be dependencies
-    const sortedSelectsForEveryColumn = allSelectsForEveryColumn
+    let sortedSelectsForEveryColumn = allSelectsForEveryColumn
         .filter(item =>
             isRoot(allSelectsForEveryColumn, item)
         );
 
-    for (const prevItem of sortedSelectsForEveryColumn) {
+    for (let prevIndex = 0; prevIndex < sortedSelectsForEveryColumn.length; prevIndex++) {
+        const prevItem = sortedSelectsForEveryColumn[prevIndex];
 
         // ищем те, которые явно указали, что они будут после prevItem
         const nextItems = allSelectsForEveryColumn.filter((nextItem) =>
             !isExplicitCastType(nextItem) &&
+            nextItem !== prevItem &&
             dependentOn(nextItem.select, {
                 for: prevItem.for,
                 column: prevItem.select.columns[0]
             })
         );
 
-        for (let j = 0, m = nextItems.length; j < m; j++) {
-            const nextItem = nextItems[ j ];
-
+        for (const nextItem of nextItems) {
             // если в очереди уже есть этот элемент
-            const index = sortedSelectsForEveryColumn.indexOf(nextItem);
+            const nextIndex = sortedSelectsForEveryColumn.indexOf(nextItem);
             //  удалим дубликат
-            if ( index !== -1 ) {
-                sortedSelectsForEveryColumn.splice(index, 1);
+            if ( nextIndex !== -1 ) {
+                if ( nextIndex > prevIndex ) {
+                    sortedSelectsForEveryColumn.splice(nextIndex, 1);
+                }
+                else {
+                    delete sortedSelectsForEveryColumn[ nextIndex ];
+                }
             }
 
             //  и перенесем в конец очереди,
@@ -45,6 +50,7 @@ export function sortSelectsByDependencies(allSelectsForEveryColumn: ISortSelectI
         }
     }
 
+    sortedSelectsForEveryColumn = sortedSelectsForEveryColumn.filter(item => !!item);
     return sortedSelectsForEveryColumn;
 }
 

@@ -2462,4 +2462,73 @@ describe("integration/DDLManager.build cache", () => {
         ]);
     });
 
+    it("correct sort dependencies", async() => {
+        const folderPath = ROOT_TMP_PATH + "/sort-deps";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                profit integer
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/a.sql", `
+            cache a for orders (
+                select
+                    orders.profit + 1 as profit_a
+            )
+        `);
+        fs.writeFileSync(folderPath + "/b.sql", `
+            cache b for orders (
+                select
+                    orders.profit_c + 1000 + orders.profit_a as profit_b
+            )
+        `);
+        fs.writeFileSync(folderPath + "/c.sql", `
+            cache c for orders (
+                select
+                    orders.profit_a + 10 as profit_c
+            )
+        `);
+        fs.writeFileSync(folderPath + "/d.sql", `
+            cache d for orders (
+                select
+                    orders.profit_c + 100 + orders.profit_a as profit_d
+            )
+        `);
+        fs.writeFileSync(folderPath + "/e.sql", `
+            cache e for orders (
+                select
+                    orders.profit_b + 100 as profit_e
+            )
+        `);
+        fs.writeFileSync(folderPath + "/f.sql", `
+            cache f for orders (
+                select
+                    orders.profit_d + 100 as profit_f
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        await db.query(`insert into orders (profit) values (10000)`);
+
+        const result = await db.query(`select * from orders`);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            profit: 10000,
+            profit_a: 10001,
+            profit_b: 21012,
+            profit_c: 10011,
+            profit_d: 20112,
+            profit_e: 21112,
+            profit_f: 20212
+        }]);
+    });
+
 });
