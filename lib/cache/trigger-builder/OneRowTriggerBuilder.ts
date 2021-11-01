@@ -1,7 +1,9 @@
 import { Update, Expression, SetItem, UnknownExpressionElement, ColumnReference, CaseWhen, SelectColumn, AbstractAstElement } from "../../ast";
 import { CoalesceFalseExpression } from "../../ast/expression/CoalesceFalseExpression";
+import { TableReference } from "../../database/schema/TableReference";
+import { findJoinsMeta, IJoinMeta } from "../processor/findJoinsMeta";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
-import { buildOneRowBody } from "./body/buildOneRowBody";
+import { buildOneRowBody, ISelectRecord } from "./body/buildOneRowBody";
 
 type Row = "new" | "old";
 
@@ -9,6 +11,7 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
 
     protected createBody() {
         const body = buildOneRowBody({
+            selects: this.buildSelectRecords(),
             onInsert: this.context.withoutInsertCase() ?  undefined : {
                 needUpdate: this.hasEffect("new"),
                 update: new Update({
@@ -47,10 +50,27 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
         return body;
     }
 
+    private buildSelectRecords() {
+        const selects: ISelectRecord[] = [];
+        const joins = findJoinsMeta(this.context.cache.select);
+        for (const join of joins) {
+
+            const select: ISelectRecord = {
+                recordName: buildRecordName(join),
+                select: join.joinedColumns.map(column => column.name),
+                from: join.joinedTable.table,
+                where: join.joinByColumn.name
+            };
+            selects.push(select);
+        }
+
+        return selects;
+    }
+
     private whereDistinctNewValues() {
         const selectColumns = this.context.cache.select.columns;
         const newValues = selectColumns.map(selectColumn => 
-            this.replaceTriggerTableToRow(
+            this.replaceTables(
                 "new", selectColumn.expression
             )
         );
@@ -125,7 +145,7 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
         const setItems = this.context.cache.select.columns.map(selectColumn => {
             const setItem = new SetItem({
                 column: selectColumn.name,
-                value: this.replaceTriggerTableToRow(
+                value: this.replaceTables(
                     "new", selectColumn.expression
                 )
             })
@@ -151,7 +171,7 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
         selectColumn: SelectColumn
     ) {
         if ( !this.context.referenceMeta.filters.length ) {
-            return this.replaceTriggerTableToRow(
+            return this.replaceTables(
                 "new", selectColumn.expression
             );
         }
@@ -160,7 +180,7 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
         return new CaseWhen({
             cases: [{
                 when: matchedNew,
-                then: this.replaceTriggerTableToRow(
+                then: this.replaceTables(
                     "new", selectColumn.expression
                 )
             }],
@@ -193,7 +213,7 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
         let nullExpression = expression;
         const columnRefs = expression.getColumnReferences()
             .filter(columnRef =>
-                this.columnRefToTriggerTable(columnRef)
+                this.notColumnToCacheRow(columnRef)
             );
 
         for (const columnRef of columnRefs) {
@@ -221,7 +241,7 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
                     )
             )
             .map(selectColumn => {
-                const expression = this.replaceTriggerTableToRow(
+                const expression = this.replaceTables(
                     row, selectColumn.expression
                 );
 
@@ -233,7 +253,7 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
 
         if ( this.context.referenceMeta.filters.length ) {
             const filters = this.context.referenceMeta.filters.map(filter =>
-                this.replaceTriggerTableToRow(row, filter)
+                this.replaceTables(row, filter)
             );
 
             if ( conditions.length ) {
@@ -255,4 +275,41 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
             this.context.cache.select.from[0]!.table
         );
     }
+
+    private notColumnToCacheRow(columnRef: ColumnReference) {
+        return !columnRef.tableReference.equal(
+            this.context.cache.for
+        );
+    }
+
+    private replaceTables(row: Row, expression: Expression) {
+        expression = expression.replaceTable(
+            this.context.triggerTable,
+            new TableReference(
+                this.context.triggerTable,
+                row
+            )
+        );
+
+        const joins = findJoinsMeta(this.context.cache.select);
+        for (const join of joins) {
+            const recordName = buildRecordName(join);
+
+            expression = expression.replaceTable(
+                join.joinedTable,
+                new TableReference(
+                    join.joinedTable.table,
+                    recordName
+                )
+            );
+        }
+
+        return expression;
+    }
+}
+
+function buildRecordName(join: IJoinMeta) {
+    const recordName = join.joinedTable.getIdentifier()
+        .replace(".", "_") + "_row";
+    return recordName;
 }

@@ -1,8 +1,9 @@
 import {
     Expression, Update,
     Body, If,
-    HardCode, BlankLine
+    HardCode, BlankLine, Declare, SimpleSelect, AbstractAstElement
 } from "../../../ast";
+import { TableID } from "../../../database/schema/TableID";
 import { doIf } from "./util/doIf";
 
 export interface IUpdateCase {
@@ -10,7 +11,15 @@ export interface IUpdateCase {
     update: Update;
 }
 
+export interface ISelectRecord {
+    recordName: string;
+    select: string[];
+    from: TableID;
+    where: string;
+}
+
 export interface IOneAst {
+    selects: ISelectRecord[];
     onDelete: IUpdateCase;
     onUpdate: {
         needUpdate?: Expression;
@@ -22,7 +31,12 @@ export interface IOneAst {
 
 export function buildOneRowBody(ast: IOneAst) {
     return new Body({
-        declares: [],
+        declares: ast.selects.map(select =>
+            new Declare({
+                name: select.recordName,
+                type: "record"
+            })
+        ),
         statements: [
             new BlankLine(),
             new If({
@@ -58,8 +72,10 @@ export function buildOneRowBody(ast: IOneAst) {
                     }),
                     new BlankLine(),
                     ...doIf(
-                        ast.onUpdate.needUpdate,
-                        [ast.onUpdate.update]
+                        ast.onUpdate.needUpdate, [
+                            ...assignJoinedRows(ast.selects),
+                            ast.onUpdate.update
+                        ]
                     ),
                     new BlankLine(),
                     new HardCode({
@@ -77,6 +93,7 @@ export function buildOneRowBody(ast: IOneAst) {
                         new If({
                             if: ast.onInsert.needUpdate,
                             then: [
+                                ...assignJoinedRows(ast.selects),
                                 ast.onInsert.update
                             ]
                         }),
@@ -90,4 +107,35 @@ export function buildOneRowBody(ast: IOneAst) {
             new BlankLine()
         ]
     })
+}
+
+function assignJoinedRows(selects: ISelectRecord[]): AbstractAstElement[] {
+    if ( selects.length === 0 ) {
+        return [];
+    }
+
+    const output: AbstractAstElement[] = [
+        new BlankLine()
+    ];
+    for (const select of selects) {
+        output.push(...assignJoinedRow(select));
+    }
+    return output;
+}
+
+function assignJoinedRow(select: ISelectRecord): AbstractAstElement[] {
+    return [
+        new If({
+            if: Expression.unknown(`new.${select.where} is not null`),
+            then: [
+                new SimpleSelect({
+                    columns: select.select,
+                    from: select.from,
+                    into: [select.recordName],
+                    where: Expression.unknown(`${select.from}.id = new.${select.where}`)
+                })
+            ]
+        }),
+        new BlankLine()
+    ]
 }
