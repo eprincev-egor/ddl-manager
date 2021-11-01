@@ -1441,6 +1441,84 @@ describe("integration/DDLManager.build cache", () => {
         });
     });
 
+    it("build one row with join cache trigger", async() => {
+        const folderPath = ROOT_TMP_PATH + "/one-row-trigger";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table invoice (
+                id serial primary key,
+                id_list_contracts bigint
+            );
+            create table list_contracts (
+                id serial primary key,
+                date_contract date,
+                id_country bigint,
+                contract_number text
+            );
+            create table countries (
+                id serial primary key,
+                name text
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/contract.sql", `
+            cache one_row_contract for invoice (
+                select
+                    contract.date_contract as date_contract,
+                    contract.contract_number as contract_number,
+                    coalesce(countries.name, 'RUS') as country_name
+
+                from list_contracts as contract
+
+                left join countries on
+                    countries.id = contract.id_country
+
+                where
+                    contract.id = invoice.id_list_contracts
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        
+        await db.query(`
+            insert into countries (name) values ('ENG');
+
+            insert into list_contracts (contract_number, id_country) 
+            values ('hello', 1);
+
+            insert into invoice (id_list_contracts)
+            values (1);
+        `);
+
+        let result = await db.query(`
+            select contract_number, country_name
+            from invoice
+        `);
+        assert.deepStrictEqual(result.rows[0], {
+            contract_number: "hello",
+            country_name: "ENG"
+        });
+
+
+        await db.query(`
+            update list_contracts set
+                id_country = null
+        `);
+        result = await db.query(`
+            select country_name
+            from invoice
+        `);
+        assert.deepStrictEqual(result.rows[0], {
+            country_name: "RUS"
+        });
+    });
+
     it("build cache when exists dependency to function", async() => {
         const folderPath = ROOT_TMP_PATH + "/cache-with-func-and-cache";
         fs.mkdirSync(folderPath);

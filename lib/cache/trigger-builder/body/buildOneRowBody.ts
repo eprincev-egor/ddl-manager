@@ -125,16 +125,11 @@ function assignJoinedRows(selects: ISelectRecord[]): AbstractAstElement[] {
 
 function assignJoinedRow(select: ISelectRecord): AbstractAstElement[] {
     return [
-        new If({
-            if: Expression.unknown(`new.${select.where} is not null`),
-            then: [
-                new SimpleSelect({
-                    columns: select.select,
-                    from: select.from,
-                    into: [select.recordName],
-                    where: Expression.unknown(`${select.from}.id = new.${select.where}`)
-                })
-            ]
+        new SimpleSelect({
+            columns: select.select,
+            from: select.from,
+            into: [select.recordName],
+            where: Expression.unknown(`${select.from}.id = new.${select.where}`)
         }),
         new BlankLine()
     ]

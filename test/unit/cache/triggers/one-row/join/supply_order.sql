@@ -31,15 +31,13 @@ begin
             coalesce(new.deleted = 0, false)
         then
 
-            if new.id_country_start is not null then
-                select
-                    countries.has_surveyor_inspection
-                into
-                    country_start_row
-                from countries
-                where
-                    public.countries.id = new.id_country_start;
-            end if;
+            select
+                countries.has_surveyor_inspection
+            into
+                country_start_row
+            from countries
+            where
+                public.countries.id = new.id_country_start;
 
             update orders_positions as positions set
                 has_surveyor_inspection = case
@@ -75,15 +73,13 @@ begin
     if TG_OP = 'INSERT' then
         if new.deleted = 0 then
 
-            if new.id_country_start is not null then
-                select
-                    countries.has_surveyor_inspection
-                into
-                    country_start_row
-                from countries
-                where
-                    public.countries.id = new.id_country_start;
-            end if;
+            select
+                countries.has_surveyor_inspection
+            into
+                country_start_row
+            from countries
+            where
+                public.countries.id = new.id_country_start;
 
             update orders_positions as positions set
                 has_surveyor_inspection = coalesce(
