@@ -2609,4 +2609,83 @@ describe("integration/DDLManager.build cache", () => {
         }]);
     });
 
+    it("one last row by arr ref and some column", async() => {
+        const folderPath = ROOT_TMP_PATH + "/cache-arr-ref";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table operations (
+                id serial primary key,
+                id_operation_type smallint,
+                id_doc_parent_operation bigint,
+                deleted smallint default 0,
+                units_ids bigint[]
+            );
+
+            create table units (
+                id serial primary key,
+                id_last_auto integer
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/arr_concat.sql", `
+            cache last_auto_doc for units (
+                select
+                    last_auto_doc.id as id_last_auto_doc
+            
+                from operations as last_auto_doc
+                where
+                    last_auto_doc.id_doc_parent_operation = units.id_last_auto
+                    -- auto
+                    and last_auto_doc.id_operation_type = 1
+                    and last_auto_doc.deleted = 0
+                    and last_auto_doc.units_ids && array[units.id]::bigint[]
+            
+                order by
+                    last_auto_doc.id desc
+                limit 1
+            );
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        await db.query(`
+            insert into operations
+                (id_operation_type, deleted)
+            values
+                (1, 0);
+            insert into operations
+                (id_operation_type, deleted)
+            values
+                (1, 0);
+
+            insert into units
+                (id_last_auto)
+            values
+                (1),
+                (2);
+            
+            insert into operations
+                (id_operation_type, id_doc_parent_operation, deleted, units_ids)
+            values
+                (1, 1, 0, array[1, 2]),
+                (1, 2, 0, array[1, 2]);
+        `);
+
+        const result = await db.query(`
+            select id, id_last_auto_doc
+            from units
+            order by id
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, id_last_auto_doc: 3},
+            {id: 2, id_last_auto_doc: 4}
+        ]);
+    });
+
 });

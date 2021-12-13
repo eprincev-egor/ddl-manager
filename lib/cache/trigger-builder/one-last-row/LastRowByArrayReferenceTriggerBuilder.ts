@@ -31,25 +31,14 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
     }
 
     protected createBody() {
+        const arrColumnRef = this.getArrColumnRef();
         const dbTable = this.context.database
             .getTable(this.context.triggerTable);
-        // TODO: check other columns
-        const columnsRefs = flatMap(
-            this.context.referenceMeta.expressions,
-            expression => expression.isBinary("&&") ?
-                expression.getColumnReferences() :
-                []
-        );
-        const arrColumnRef = columnsRefs.find(columnRef =>
-            this.context.isColumnRefToTriggerTable(columnRef)
-        )!;
+
         const arrColumn = dbTable && dbTable.getColumn(arrColumnRef.name);
         assert.ok(arrColumn, "required db column with array type: " + arrColumnRef.toString());
     
-        const cacheTable = (
-            this.context.cache.for.alias ||
-            this.context.cache.for.table.toStringWithoutPublic()
-        );
+        const cacheTable = this.getCacheTable();
 
         const lastIdColumnName = this.helperColumnName("id");
         const orderBy = this.context.cache.select.orderBy!;
@@ -61,7 +50,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
                 ...this.setItemsByRow("new")
             ],
             where: Expression.and([
-                `${cacheTable}.id = any( new.${ arrColumnRef.name } )`,
+                ...this.whereMainRef("new", "new."),
                 ...this.whereIsGreat()
             ])
         });
@@ -115,7 +104,7 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
                 ...this.setItemsByRow("new")
             ],
             where: Expression.and([
-                `${cacheTable}.id = any( inserted_${ arrColumnRef.name } )`,
+                ...this.whereMainRef("new", "inserted_"),
                 ...(
                     orderBy.isOnlyId() ?
                         [Expression.or([
@@ -184,6 +173,67 @@ export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTrigge
             )
         );
         return matchedExpression;
+    }
+
+    private whereMainRef(
+        row: string,
+        arrPrefix: string
+    ) {
+        const cacheTable = this.getCacheTable();
+        const dbTable = this.context.database
+            .getTable(this.context.triggerTable);
+
+        const where: string[] = [];
+
+        for (const expression of this.context.referenceMeta.expressions) {
+            if ( expression.isBinary("&&") ) {
+                const arrColumnRef = expression.getColumnReferences().find(columnRef =>
+                    this.context.isColumnRefToTriggerTable(columnRef)
+                )!;
+                const arrColumn = dbTable && dbTable.getColumn(arrColumnRef.name);
+                assert.ok(
+                    arrColumn && arrColumn.type.isArray(),
+                    "required db column with array type: " + arrColumnRef.toString()
+                );
+
+                where.push(
+                    `${cacheTable}.id = any( ${arrPrefix}${ arrColumnRef.name } )`
+                )
+            }
+            else {
+                const sql = expression.replaceTable(
+                    this.context.triggerTable,
+                    new TableReference(
+                        this.context.triggerTable,
+                        row
+                    )
+                ).toString();
+                where.push(sql);
+            }
+        }
+
+        return where;
+    }
+
+    private getCacheTable() {
+        return (
+            this.context.cache.for.alias ||
+            this.context.cache.for.table.toStringWithoutPublic()
+        );
+    }
+
+    private getArrColumnRef() {
+        // TODO: check other columns
+        const columnsRefs = flatMap(
+            this.context.referenceMeta.expressions,
+            expression => expression.isBinary("&&") ?
+                expression.getColumnReferences() :
+                []
+        );
+        const arrColumnRef = columnsRefs.find(columnRef =>
+            this.context.isColumnRefToTriggerTable(columnRef)
+        )!;
+        return arrColumnRef;
     }
 
 }
