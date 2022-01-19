@@ -589,6 +589,9 @@ describe("integration/DDLManager.build cache", () => {
             folder: folderPath,
             throwError: true
         });
+        await db.query(`
+            delete from company_updates
+        `);
 
         let result;
 

@@ -90,7 +90,7 @@ describe("Migrator", () => {
 
     it("update error on invalid select", async() => {
         databaseDriver.setRowsCount("public.some_table", 1499);
-        databaseDriver.updateCachePackage = () => {
+        databaseDriver.updateCacheLimitedPackage = () => {
             throw new Error("operator does not exist: bigint[] && integer[]");
         };
 
@@ -119,9 +119,9 @@ describe("Migrator", () => {
         UpdateMigrator.timeoutOnDeadlock = 1;
         databaseDriver.setRowsCount("public.some_table", 1499);
 
-        const originalUpdate = databaseDriver.updateCachePackage;
-        databaseDriver.updateCachePackage = () => {
-            databaseDriver.updateCachePackage = originalUpdate;
+        const originalUpdate = databaseDriver.updateCacheLimitedPackage;
+        databaseDriver.updateCacheLimitedPackage = () => {
+            databaseDriver.updateCacheLimitedPackage = originalUpdate;
             throw new Error("deadlock");
         };
 
@@ -147,7 +147,7 @@ describe("Migrator", () => {
         databaseDriver.setRowsCount("public.some_table", 499);
 
         let updatesCount = 0;
-        databaseDriver.updateCachePackage = () => {
+        databaseDriver.updateCacheLimitedPackage = () => {
             updatesCount++;
 
             if ( updatesCount < 10 ) {

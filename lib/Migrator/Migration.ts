@@ -10,6 +10,7 @@ export interface IUpdate {
     select: Select;
     forTable: TableReference;
     recursionWith?: IUpdate[];
+    isFirst?: boolean;
 }
 
 export interface IChanges {

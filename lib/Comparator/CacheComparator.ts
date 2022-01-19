@@ -312,6 +312,7 @@ export class CacheComparator extends AbstractComparator {
                     update,
                     allUpdates
                 );
+                requiredUpdate.isFirst = true;
 
                 return requiredUpdate;
             })

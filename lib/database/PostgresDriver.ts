@@ -300,7 +300,41 @@ implements IDatabaseDriver {
         await this.query(sql);
     }
 
-    async updateCachePackage(
+    async selectIds(table: TableID, offset: number): Promise<number[]> {
+        const sql = `
+            select id
+            from ${table}
+            order by id
+            offset ${+offset}
+        `;
+        const {rows} = await this.query(sql);
+        const ids = rows.map(row => row.id);
+        return ids;
+    }
+
+    async updateCacheForRows(
+        select: Select,
+        forTable: TableReference,
+        ids: number[]
+    ) {
+        const sql = `
+            update ${forTable} set
+                (
+                    ${ select.columns.map(column =>
+                        column.name
+                    ).join(", ") }
+                ) = (
+                    ${ select.toString() }
+                )
+            where
+                ${forTable.getIdentifier()}.id in (${ids.map(id => +id).join(", ")})
+            
+            returning ${forTable.getIdentifier()}.id
+        `;
+        await this.query(sql);
+    }
+
+    async updateCacheLimitedPackage(
         select: Select,
         forTable: TableReference,
         limit: number
@@ -398,9 +432,10 @@ implements IDatabaseDriver {
             return await this.pgClient.query(sql);
         } catch(originalErr) {
             // redefine call stack
-            const err = new Error(originalErr.message);
+            const {message, code} = originalErr as any;
+            const err = new Error(message);
             (err as any).sql = sql;
-            (err as any).code = originalErr.code;
+            (err as any).code = code;
             (err as any).originalError = originalErr;
             console.error(originalErr);
             console.error(sql);

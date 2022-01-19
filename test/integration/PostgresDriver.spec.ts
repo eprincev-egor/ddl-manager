@@ -878,7 +878,7 @@ describe("integration/PostgresDriver.loadState", () => {
         });
     });
 
-    it("updateCachePackage", async() => {
+    it("updateCacheLimitedPackage", async() => {
         
         await db.query(`
             create table companies (
@@ -943,7 +943,7 @@ describe("integration/PostgresDriver.loadState", () => {
         let result: any;
         let updatedCount: any;
 
-        updatedCount = await driver.updateCachePackage(
+        updatedCount = await driver.updateCacheLimitedPackage(
             select,
             companiesTableRef,
             3
@@ -968,7 +968,7 @@ describe("integration/PostgresDriver.loadState", () => {
         // after second update, more rows should be updated
         // also should be update broken rows
         await db.query("update companies set orders_profit = 20 where id in (1,2,3)");
-        updatedCount = await driver.updateCachePackage(
+        updatedCount = await driver.updateCacheLimitedPackage(
             select,
             companiesTableRef,
             6
@@ -992,7 +992,7 @@ describe("integration/PostgresDriver.loadState", () => {
 
         
         // last update, all rows should be updated
-        updatedCount = await driver.updateCachePackage(
+        updatedCount = await driver.updateCacheLimitedPackage(
             select,
             companiesTableRef,
             5

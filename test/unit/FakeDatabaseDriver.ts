@@ -8,6 +8,7 @@ import { DatabaseTrigger } from "../../lib/database/schema/DatabaseTrigger";
 import { Column } from "../../lib/database/schema/Column";
 import { IFileContent } from "../../lib/fs/File";
 import { Index } from "../../lib/database/schema/Index";
+import { TableID } from "../../lib/database/schema/TableID";
 
 export class FakeDatabaseDriver
 implements IDatabaseDriver {
@@ -27,6 +28,8 @@ implements IDatabaseDriver {
     private updatedPackages: {[table: string]: {
         limit: number;
     }[]};
+    private tablesIds: {[table: string]: number[]};
+    private updatedIds: {[table: string]: number[]};
     private columnsDrops: {[tableColumn: string]: boolean};
 
     constructor(state?: IFileContent) {
@@ -39,6 +42,8 @@ implements IDatabaseDriver {
         this.columnsTypes = {};
         this.rowsCountByTable = {};
         this.updatedPackages = {};
+        this.updatedIds = {};
+        this.tablesIds = {};
         this.columnsDrops = {};
         this.indexes = {};
     }
@@ -137,7 +142,21 @@ implements IDatabaseDriver {
         this.columnsDrops[ column.getSignature() ] = true;
     }
 
-    async updateCachePackage(select: Select, forTable: TableReference, limit: number): Promise<number> {
+    async selectIds(tableId: TableID, offset: number, limit: number): Promise<number[]> {
+        const table = tableId.toString();
+        const allIds = (this.tablesIds[ table ] || []).slice();
+        return allIds.slice(offset, offset + limit);
+    }
+    
+    async updateCacheForRows(select: Select, forTable: TableReference, ids: number[]): Promise<void> {
+        const table = forTable.table.toString();
+        const updatedIds = (this.updatedIds[ table ] || []).slice();
+        updatedIds.push(...ids);
+
+        this.updatedIds[ table ] = updatedIds;
+    }
+
+    async updateCacheLimitedPackage(select: Select, forTable: TableReference, limit: number): Promise<number> {
         const table = forTable.table.toString();
         
         const alreadyUpdatedPackages = (this.updatedPackages[table] || []).slice();
@@ -202,5 +221,15 @@ implements IDatabaseDriver {
 
     wasDroppedColumn(table: string, columnName: string): boolean {
         return !!this.columnsDrops[ table + "." + columnName ];
+    }
+
+    setTableIds(table: TableID, allTableIds: number[]): void {
+        this.tablesIds[ table.toString() ] = allTableIds;
+    }
+
+    getUpdatedIds(table: TableID) {
+        const updatedIds = (this.updatedIds[ table.toString() ] || []).slice();
+        updatedIds.sort((a, b) => a - b);
+        return updatedIds;
     }
 }
