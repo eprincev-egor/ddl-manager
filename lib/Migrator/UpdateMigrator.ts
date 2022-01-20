@@ -4,8 +4,8 @@ import { TableReference } from "../database/schema/TableReference";
 import { IUpdate } from "./Migration";
 import assert from "assert";
 
-const packageSize = 500;
-const parallelPackagesCount = 30;
+export const packageSize = 500;
+export const parallelPackagesCount = 30;
 
 export class UpdateMigrator extends AbstractMigrator {
 

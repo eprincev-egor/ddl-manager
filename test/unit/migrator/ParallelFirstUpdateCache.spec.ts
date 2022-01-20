@@ -6,7 +6,7 @@ import { TableID } from "../../../lib/database/schema/TableID";
 import { Select } from "../../../lib/ast";
 import { TableReference } from "../../../lib/database/schema/TableReference";
 import { Database } from "../../../lib/database/schema/Database";
-import { UpdateMigrator } from "../../../lib/Migrator/UpdateMigrator";
+import { UpdateMigrator, packageSize, parallelPackagesCount } from "../../../lib/Migrator/UpdateMigrator";
 import { sleep } from "../../integration/sleep";
 
 
@@ -18,7 +18,7 @@ describe("ParallelFirstUpdateCache", () => {
 
     const timeoutOnDeadlock = UpdateMigrator.timeoutOnDeadlock;
 
-    const allIds = generateIds(20_000);
+    const allIds = generateIds(2 * packageSize * parallelPackagesCount);
     const someTable = new TableID("public", "some_table");
     const someUpdate: IUpdate = {
         cacheName: "my_cache",
@@ -101,17 +101,11 @@ describe("ParallelFirstUpdateCache", () => {
         await MainMigrator.migrate(fakePostgres, database, migration);
 
         assert.deepStrictEqual(calls, [
-            "start", "start", "start", "start", "start", "start", "start", "start", "start", "start",
-            "end", "end", "end", "end", "end", "end", "end", "end", "end", "end",
+            ...repeat("start", parallelPackagesCount),
+            ...repeat("end", parallelPackagesCount),
 
-            "start", "start", "start", "start", "start", "start", "start", "start", "start", "start",
-            "end", "end", "end", "end", "end", "end", "end", "end", "end", "end",
-
-            "start", "start", "start", "start", "start", "start", "start", "start", "start", "start",
-            "end", "end", "end", "end", "end", "end", "end", "end", "end", "end",
-
-            "start", "start", "start", "start", "start", "start", "start", "start", "start", "start",
-            "end", "end", "end", "end", "end", "end", "end", "end", "end", "end",
+            ...repeat("start", parallelPackagesCount),
+            ...repeat("end", parallelPackagesCount)
         ]);
     });
 
@@ -121,5 +115,13 @@ describe("ParallelFirstUpdateCache", () => {
             ids.push(id);
         }
         return ids;
+    }
+
+    function repeat(word: string, quantity: number): string[] {
+        const words: string[] = [];
+        for (let i = 0; i < quantity; i++) {
+            words.push(word);
+        }
+        return words;
     }
 });
