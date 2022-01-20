@@ -5,7 +5,7 @@ import { IUpdate } from "./Migration";
 import assert from "assert";
 
 const packageSize = 500;
-const parallelPackagesCount = 10;
+const parallelPackagesCount = 30;
 
 export class UpdateMigrator extends AbstractMigrator {
 
