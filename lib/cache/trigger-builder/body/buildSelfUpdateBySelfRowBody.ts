@@ -25,24 +25,26 @@ export function buildSelfUpdateBySelfRowBody(
         ],
         statements: [
             new BlankLine(),
-            new If({
-                if: new HardCode({
-                    sql: `TG_OP = 'UPDATE'`
-                }),
-                then: [
-                    new If({
-                        if: noChanges,
-                        then: [
-                            new HardCode({
-                                sql: `return new;`
-                            })
-                        ]
-                    }),
-                ]
-            }),
-            new BlankLine(),
-            new BlankLine(),
 
+            ...(noChanges.isEmpty() ? [] : [
+                new If({
+                    if: new HardCode({
+                        sql: `TG_OP = 'UPDATE'`
+                    }),
+                    then: [
+                        new If({
+                            if: noChanges,
+                            then: [
+                                new HardCode({
+                                    sql: `return new;`
+                                })
+                            ]
+                        }),
+                    ]
+                }),
+                new BlankLine(),
+                new BlankLine(),
+            ]),
 
             selectNewValues.cloneWith({
                 intoRow: "new_totals"
