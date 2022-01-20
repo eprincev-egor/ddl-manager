@@ -16,7 +16,7 @@ export class UpdateMigrator extends AbstractMigrator {
     async create() {
 
         for (const update of this.migration.toCreate.updates) {
-            if ( update.isFirst && !update.recursionWith ) {
+            if ( update.isFirst && (!update.recursionWith || !update.recursionWith.length) ) {
                 await this.parallelUpdateCacheByIds(update);
             }
             else {
@@ -57,6 +57,14 @@ export class UpdateMigrator extends AbstractMigrator {
         update: IUpdate, updateIds: number[],
         attemptsNumberAfterDeadlock = 0
     ) {
+        // tslint:disable-next-line: no-console
+        console.log([
+            `parallel updating ids ${ updateIds[0] } - ${ updateIds.slice(-1) }`,
+            `table: ${update.forTable}`,
+            `columns: ${update.select.columns.map(col => col.name).join(", ")}`,
+            `cache: ${update.cacheName} `
+        ].join("\n"));
+
         try {
             await this.postgres.updateCacheForRows(
                 update.select, update.forTable,

@@ -49,6 +49,24 @@ describe("ParallelFirstUpdateCache", () => {
         assert.deepStrictEqual(actualUpdatedIds, allIds);
     });
 
+    it("update all rows when recursionWith is empty array", async() => {
+        migration = Migration.empty();
+        migration.create({
+            updates: [{
+                cacheName: "my_cache",
+                select: new Select(),
+                forTable: new TableReference(someTable),
+                isFirst: true,
+                recursionWith: []
+            }]
+        });
+
+        await MainMigrator.migrate(fakePostgres, database, migration);
+
+        const actualUpdatedIds = fakePostgres.getUpdatedIds(someTable);
+        assert.strictEqual(actualUpdatedIds.length, allIds.length);
+    });
+
     it("re-try on deadlock", async() => {
         UpdateMigrator.timeoutOnDeadlock = 1;
 
