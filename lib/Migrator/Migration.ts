@@ -114,7 +114,7 @@ export class Migration {
 
         this.toCreate.updates.forEach((update) => {
             const columns = update.select.columns.map(column => column.name);
-            console.log(`cache ${update.cacheName}, update ${update.forTable} set ${columns.join(", ")}`);
+            console.log(`cache ${update.cacheName}, update ${update.forTable.table} set ${columns.join(", ")}`);
         });
     }
     
