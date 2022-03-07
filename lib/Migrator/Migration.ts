@@ -111,6 +111,11 @@ export class Migration {
         this.toCreate.indexes.forEach((index) => {
             console.log("create index " + index.getSignature());
         });
+
+        this.toCreate.updates.forEach((update) => {
+            const columns = update.select.columns.map(column => column.name);
+            console.log(`cache ${update.cacheName}, update ${update.forTable} set ${columns.join(", ")}`);
+        });
     }
     
 }

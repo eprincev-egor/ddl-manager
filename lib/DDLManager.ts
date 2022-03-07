@@ -37,6 +37,12 @@ export class DDLManager {
         return await ddlManager.build();
     }
 
+    static async compare(params: IParams) {
+        const ddlManager = new DDLManager(params);
+        const {migration} = await ddlManager.compareDbAndFs();
+        return migration;
+    }
+
     static async timeline(params: ITimelineParams) {
         const ddlManager = new DDLManager(params);
         return await ddlManager.timeline(params);
