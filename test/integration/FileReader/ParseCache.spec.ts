@@ -205,6 +205,29 @@ describe("integration/FileReader parse cache", () => {
         );
     });
 
+    it("syntax error on string_agg without delimiter", () => {
+
+        const sql = `
+            cache totals for orders (
+                select
+                    string_agg( invoice.doc_number ) || 'test' as invoices_numbers
+                from invoice
+                where
+                    invoice.id_order = orders.id
+            )
+        `.trim();
+
+        const filePath = ROOT_TMP_PATH + "/test-file.sql";
+        fs.writeFileSync(filePath, sql);
+
+        assert.throws(() => {
+            FileReader.read([ROOT_TMP_PATH]);
+        }, (err: Error) =>
+            /required delimiter for string_agg, column: invoices_numbers/
+                .test(err.message)
+        );
+    });
+
     it("CTE are not supported", () => {
 
         const sql = `

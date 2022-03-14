@@ -93,8 +93,8 @@ describe("WhereBuilder", () => {
             cache: `
                 cache totals for orders (
                     select
-                        string_agg( distinct company_from.name ) as from_companies,
-                        string_agg( distinct company_to.name ) as to_companies
+                        string_agg( distinct company_from.name, ', ' ) as from_companies,
+                        string_agg( distinct company_to.name, ', ' ) as to_companies
                     from payments
                     
                     left join companies as company_from on
@@ -136,8 +136,8 @@ describe("WhereBuilder", () => {
             cache: `
                 cache totals for orders (
                     select
-                        string_agg( distinct company_from.name ) as from_companies,
-                        string_agg( distinct company_to.name ) as to_companies
+                        string_agg( distinct company_from.name, ', ' ) as from_companies,
+                        string_agg( distinct company_to.name, ', ' ) as to_companies
                     from 
                         payments, 
                         companies as company_from,

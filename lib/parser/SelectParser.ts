@@ -5,7 +5,8 @@ import {
     FromItem,
     Join as JoinSyntax,
     TableLink,
-    ObjectName
+    ObjectName,
+    FunctionCall
 } from "grapeql-lang";
 import { ExpressionParser } from "./ExpressionParser";
 import { TableReferenceParser } from "./TableReferenceParser";
@@ -57,6 +58,19 @@ export class SelectParser {
                     throw new Error(`duplicated cache column ${cacheFor.toString()}\.${columnAlias}`);
                 }
             }
+
+            const funcCalls = column.filterChildrenByInstance(FunctionCall);
+            for (const funcCall of funcCalls) {
+                const name = String(funcCall.get("function"));
+
+                if ( name == "string_agg" ) {
+                    const args = funcCall.get("arguments") || [];
+
+                    if ( args.length === 1 ) {
+                        throw new Error(`required delimiter for string_agg, column: ${columnAlias}`);
+                    }
+                }
+            }
         }
 
 
@@ -64,7 +78,7 @@ export class SelectParser {
         select = this.parseColumns(cacheFor, selectSyntax, select);
         select = this.parseWhere(cacheFor, selectSyntax, select);
         select = this.parseOrderBy(cacheFor, selectSyntax, select);
-        select = this.parseLimit(cacheFor, selectSyntax, select);
+        select = this.parseLimit(selectSyntax, select);
 
         return select;
     }
@@ -212,7 +226,6 @@ export class SelectParser {
     }
 
     private parseLimit(
-        cacheFor: TableReference,
         selectSyntax: SelectSyntax,
         select: Select
     ) {

@@ -217,7 +217,7 @@ describe("CacheDependencies", () => {
     testDependencies({
         cache: `cache test for companies (
             select 
-                string_agg( orders.id ) as orders_ids,
+                string_agg( orders.id, ', ' ) as orders_ids,
                 string_agg( distinct from_country.name, ', ' ) as orders_countries_names
             from public.orders as orders
             
