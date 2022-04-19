@@ -2,7 +2,7 @@ import { CacheTriggersBuilder } from "../../../../lib/cache/CacheTriggersBuilder
 import { Database } from "../../../../lib/database/schema/Database";
 import assert from "assert";
 
-describe("TriggerFabric, validate cache", () => {
+describe("TriggerFactory, validate cache", () => {
 
     it("error on: order by without limit 1", () => {
         const builder = new CacheTriggersBuilder(

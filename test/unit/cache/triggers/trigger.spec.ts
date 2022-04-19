@@ -2,7 +2,7 @@ import fs from "fs";
 import glob from "glob";
 import { testTriggers } from "./testTriggers";
 
-describe("TriggerFabric", () => {
+describe("TriggerFactory", () => {
 
     const cacheFiles = glob.sync(__dirname + "/**/cache.sql");
 

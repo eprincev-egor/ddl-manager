@@ -2,7 +2,7 @@ import { CacheTriggersBuilder } from "../../../../lib/cache/CacheTriggersBuilder
 import { Database } from "../../../../lib/database/schema/Database";
 import assert from "assert";
 
-describe("TriggerFabric, no triggers for some table", () => {
+describe("TriggerFactory, no triggers for some table", () => {
 
     it("no triggers by table name", () => {
         const builder = new CacheTriggersBuilder(
