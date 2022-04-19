@@ -76,7 +76,7 @@ export class FileReader extends EventEmitter {
         //   }
         // }
 
-        const files = glob.sync(folderPath + "/**/*.sql");
+        const files = glob.sync(folderPath.replace(/\\/g, "/") + "/**/*.sql");
         files.forEach(filePath => {
             // ignore dirs with *.sql name
             //   ./dir.sql/file
