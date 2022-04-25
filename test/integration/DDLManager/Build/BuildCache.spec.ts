@@ -2691,4 +2691,87 @@ describe("integration/DDLManager.build cache", () => {
         ]);
     });
 
+    it("self row cache with deps to func", async() => {
+        const folderPath = ROOT_TMP_PATH + "/self-cache-get-curs";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table payment_orders_list_gtd_link (
+                id serial primary key,
+                gtd_id_currency integer,
+                swift_id_currency integer,
+                custom_curs double precision,
+                conversion_date timestamp without time zone,
+                gtd_date timestamp without time zone
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/conversion_rate.sql", `
+            cache conversion_rate for payment_orders_list_gtd_link (
+                select
+                    public.get_curs(
+                        coalesce(payment_orders_list_gtd_link.gtd_id_currency, get_default_currency(), 1):: bigint,
+                        coalesce(payment_orders_list_gtd_link.swift_id_currency, get_default_currency(), 1):: bigint,
+                        payment_orders_list_gtd_link.custom_curs::double precision,
+                        coalesce(payment_orders_list_gtd_link.conversion_date, payment_orders_list_gtd_link.gtd_date, now())::timestamp without time zone,
+                        0::smallint,
+                        payment_orders_list_gtd_link.id::bigint,
+                        'PAYMENT_ORDERS_LIST_GTD_LINK'::text
+                    ) as conversion_rate
+            )
+        `);
+        fs.writeFileSync(folderPath + "/get_curs.sql", `
+            CREATE OR REPLACE FUNCTION get_curs(
+                currency_from_id BIGINT,
+                currency_to_id BIGINT,
+                custom_curs DOUBLE PRECISION,
+                date_curs_to TIMESTAMP WITHOUT TIME ZONE,
+                is_euro_zone_curs SMALLINT DEFAULT 0,
+                reference_id BIGINT DEFAULT NULL,
+                reference_table text DEFAULT ''
+            )
+                RETURNS NUMERIC
+                LANGUAGE plpgsql
+            AS
+            $body$
+            begin
+                return custom_curs;
+            end
+            $body$;
+        `);
+        fs.writeFileSync(folderPath + "/get_default_currency.sql", `
+            create or replace function public.get_default_currency() 
+            returns bigint 
+            language plpgsql
+            as $body$
+            BEGIN
+                return 1;
+            END;
+            $body$
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        await db.query(`
+            insert into payment_orders_list_gtd_link
+                (custom_curs)
+            values
+                (66.6);
+        `);
+
+        const result = await db.query(`
+            select conversion_rate
+            from payment_orders_list_gtd_link
+            order by id
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {conversion_rate: "66.6"}
+        ]);
+    });
+
 });

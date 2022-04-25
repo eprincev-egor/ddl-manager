@@ -78,6 +78,13 @@ export class DatabaseFunction  {
         this.cacheSignature = this.comment.cacheSignature;
     }
 
+    equalName(schemaName: string): boolean {
+        if ( !schemaName.includes(".") ) {
+            schemaName = "public." + schemaName;
+        }
+        return this.schema + "." + this.name === schemaName;
+    }
+
     equal(otherFunc: DatabaseFunction) {
         return (
             this.schema === otherFunc.schema &&

@@ -436,7 +436,7 @@ export class CacheComparator extends AbstractComparator {
             }
 
             const newFunc = this.migration.toCreate.functions.find(func =>
-                func.name === funcCall.name
+                func.equalName(funcCall.name)
             );
             if ( newFunc && newFunc.returns.type ) {
                 return newFunc.returns.type;
