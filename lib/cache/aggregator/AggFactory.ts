@@ -56,6 +56,13 @@ export class AggFactory {
             return this.createSimpleAgg(aggCall);
         }
 
+        if ( aggCall.name === "array_union_agg" || aggCall.name === "array_union_all_agg" ) {
+            if ( aggCall.orderBy ) {
+                throw new Error("order by for array_union is not supported")
+            }
+            return this.createSimpleAgg(aggCall);
+        }
+
         return this.createUniversalAgg(aggCall);
     }
 
@@ -69,9 +76,15 @@ export class AggFactory {
             columnName: aggColumnName
         });
 
-        return {
+        const map: IAggMap = {
             [ aggColumnName ]: agg
         };
+
+        for (const helperAgg of agg.helpersAgg || []) {
+            map[ helperAgg.columnName ] = helperAgg;
+        }
+
+        return map;
     }
 
     private createUniversalAgg(aggCall: FuncCall) {

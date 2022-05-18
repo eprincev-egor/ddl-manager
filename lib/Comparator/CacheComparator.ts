@@ -420,13 +420,10 @@ export class CacheComparator extends AbstractComparator {
                 const columnRef = firstArg.getColumnReferences()[0];
     
                 if ( columnRef && firstArg.elements.length === 1 ) {        
-                    const table = this.database.getTable(
-                        columnRef.tableReference.table
-                    );
-                    const column = table && table.getColumn(columnRef.name);
+                    const dbColumn = this.findDbColumnByRef(columnRef);
                     
-                    if ( column ) {
-                        return column.type + "[]";
+                    if ( dbColumn ) {
+                        return dbColumn.type + "[]";
                     }
 
                     if ( columnRef.name === "id" ) {
@@ -445,30 +442,15 @@ export class CacheComparator extends AbstractComparator {
 
         if ( expression.isColumnReference() ) {
             const columnRef = expression.elements[0] as ColumnReference;
-            const dbTable = this.database.getTable(
-                columnRef.tableReference.table
-            );
-            const dbColumn = dbTable && dbTable.getColumn(columnRef.name);
-
+            const dbColumn = this.findDbColumnByRef(columnRef);
             if ( dbColumn ) {
                 return dbColumn.type.toString();
-            }
-
-            const maybeIsCreatingNow = this.migration.toCreate.columns.find(newColumn =>
-                newColumn.name === columnRef.name &&
-                newColumn.table.equal(columnRef.tableReference.table)
-            );
-            if ( maybeIsCreatingNow ) {
-                return maybeIsCreatingNow.type.toString();
             }
         }
 
         if ( expression.isArrayItemOfColumnReference() ) {
             const columnRef = expression.elements[0] as ColumnReference;
-            const dbTable = this.database.getTable(
-                columnRef.tableReference.table
-            );
-            const dbColumn = dbTable && dbTable.getColumn(columnRef.name);
+            const dbColumn = this.findDbColumnByRef(columnRef);
 
             if ( dbColumn && dbColumn.type.isArray() ) {
                 const arrayType = dbColumn.type.toString();
@@ -490,6 +472,25 @@ export class CacheComparator extends AbstractComparator {
 
         const columnType = Object.values(columnsTypes)[0];
         return columnType;
+    }
+
+    private findDbColumnByRef(columnRef: ColumnReference) {
+        const dbTable = this.database.getTable(
+            columnRef.tableReference.table
+        );
+        const dbColumn = dbTable && dbTable.getColumn(columnRef.name);
+
+        if ( dbColumn ) {
+            return dbColumn;
+        }
+
+        const maybeIsCreatingNow = this.migration.toCreate.columns.find(newColumn =>
+            newColumn.name === columnRef.name &&
+            newColumn.table.equal(columnRef.tableReference.table)
+        );
+        if ( maybeIsCreatingNow ) {
+            return maybeIsCreatingNow;
+        }
     }
 
     private async replaceUnknownColumns(select: Select) {

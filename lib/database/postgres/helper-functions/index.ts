@@ -37,3 +37,11 @@ export const CM_ARRAY_APPEND_ORDER_BY_DESC_NULLS_FIRST = fs.readFileSync(
 export const CM_GET_NOT_CHANGED_ELEMENTS = fs.readFileSync(
     __dirname + "/cm_get_not_changed_elements.sql"
 ).toString();
+
+export const CM_ARRAY_REMOVE_ELEMENTS = fs.readFileSync(
+    __dirname + "/cm_array_remove_elements.sql"
+).toString();
+
+export const CM_DISTINCT_ARRAY = fs.readFileSync(
+    __dirname + "/cm_distinct_array.sql"
+).toString();

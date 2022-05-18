@@ -2774,4 +2774,363 @@ describe("integration/DDLManager.build cache", () => {
         ]);
     });
 
+    it("array_union_agg", async() => {
+        const folderPath = ROOT_TMP_PATH + "/array-union";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            CREATE FUNCTION array_union_all(a ANYARRAY, b ANYARRAY)
+            RETURNS ANYARRAY AS
+            $$
+            SELECT array_agg(x)
+            FROM (
+                SELECT unnest(a) x
+                UNION ALL
+                SELECT unnest(b)
+            ) AS u
+            $$ LANGUAGE SQL;
+
+            CREATE AGGREGATE array_union_all_agg(ANYARRAY) (
+            SFUNC = array_union_all,
+            STYPE = ANYARRAY,
+            INITCOND = '{}'
+            );
+
+            CREATE FUNCTION array_union(a ANYARRAY, b ANYARRAY)
+            RETURNS ANYARRAY AS
+            $$
+            SELECT array_agg(distinct x)
+            FROM unnest(a || b) as x
+            $$ LANGUAGE SQL;
+
+            CREATE AGGREGATE array_union_agg(ANYARRAY) (
+            SFUNC = array_union,
+            STYPE = ANYARRAY,
+            INITCOND = '{}'
+            );
+
+            create table orders (
+                id serial primary key,
+                number text,
+                id_invoice integer
+            );
+            create table invoices (
+                id serial primary key,
+                id_payment integer
+            );
+            create table payments (
+                id serial primary key
+            );
+
+            insert into orders (number, id_invoice) 
+            values
+                ('order-A', 1),
+                ('order-B', 1),
+                ('order-C', 2),
+                ('order-D', 2),
+                ('order-E', 3),
+                ('order-F', 3);
+            
+            insert into invoices (id_payment)
+            values
+                (1), (1), (2);
+
+            insert into payments default values;
+            insert into payments default values;
+        `);
+
+        fs.writeFileSync(folderPath + "/invoices_orders.sql", `
+            cache orders for invoices (
+                select
+                    array_agg(distinct orders.number) as orders_numbers
+                from orders
+                where
+                    orders.id_invoice = invoices.id
+            )
+        `);
+        fs.writeFileSync(folderPath + "/payment_orders.sql", `
+            cache orders for payments (
+                select
+                    array_union_agg(invoices.orders_numbers) as orders_numbers
+                from invoices
+                where
+                    invoices.id_payment = payments.id
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        let result = await db.query(`
+            select payments.id, payments.orders_numbers
+            from payments
+            order by payments.id
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, orders_numbers: ["order-A", "order-B", "order-C", "order-D"]},
+            {id: 2, orders_numbers: ["order-E", "order-F"]}
+        ]);
+
+        await db.query(`
+            update invoices set
+                id_payment = 2
+            where id = 2;
+        `);
+        result = await db.query(`
+            select payments.id, payments.orders_numbers
+            from payments
+            order by payments.id
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, orders_numbers: ["order-A", "order-B"]},
+            {id: 2, orders_numbers: ["order-C", "order-D", "order-E", "order-F"]}
+        ]);
+
+
+        await db.query(`
+            update orders set
+                number = 'order-X'
+            where number in ('order-B', 'order-C', 'order-D');
+        `);
+        result = await db.query(`
+            select payments.id, payments.orders_numbers
+            from payments
+            order by payments.id
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, orders_numbers: ["order-A", "order-X"]},
+            {id: 2, orders_numbers: ["order-E", "order-F", "order-X"]}
+        ]);
+    });
+
+
+    it("array_union_all_agg", async() => {
+        const folderPath = ROOT_TMP_PATH + "/array-union-all";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            CREATE FUNCTION array_union_all(a ANYARRAY, b ANYARRAY)
+            RETURNS ANYARRAY AS
+            $$
+            SELECT array_agg(x)
+            FROM (
+                SELECT unnest(a) x
+                UNION ALL
+                SELECT unnest(b)
+            ) AS u
+            $$ LANGUAGE SQL;
+
+            CREATE AGGREGATE array_union_all_agg(ANYARRAY) (
+            SFUNC = array_union_all,
+            STYPE = ANYARRAY,
+            INITCOND = '{}'
+            );
+
+            create table invoices (
+                id serial primary key,
+                id_payment integer,
+                orders_numbers text[]
+            );
+            create table payments (
+                id serial primary key
+            );
+
+            insert into invoices (id_payment, orders_numbers)
+            values
+                (1, ARRAY['X', 'Y']),
+                (1, ARRAY['Y', 'Z']),
+                (2, ARRAY['Z', 'A', 'B']);
+
+            insert into payments default values;
+            insert into payments default values;
+        `);
+
+        fs.writeFileSync(folderPath + "/payment_orders.sql", `
+            cache orders for payments (
+                select
+                    array_union_all_agg(invoices.orders_numbers) as orders_numbers
+                from invoices
+                where
+                    invoices.id_payment = payments.id
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        let result = await db.query(`
+            select payments.id, payments.orders_numbers
+            from payments
+            order by payments.id
+        `);
+        assert.deepStrictEqual( sort(result.rows), [
+            {id: 1, orders_numbers: ["X", "Y", "Y", "Z"]},
+            {id: 2, orders_numbers: ["A", "B", "Z"]}
+        ]);
+
+        await db.query(`
+            update invoices set
+                id_payment = 2
+            where id = 2;
+        `);
+        result = await db.query(`
+            select payments.id, payments.orders_numbers
+            from payments
+            order by payments.id
+        `);
+        assert.deepStrictEqual( sort(result.rows), [
+            {id: 1, orders_numbers: ["X", "Y"]},
+            {id: 2, orders_numbers: ["A", "B", "Y", "Z", "Z"]}
+        ]);
+
+
+        await db.query(`
+            update invoices set
+                orders_numbers = ARRAY['A', 'B']
+            where id = 3;
+        `);
+        result = await db.query(`
+            select payments.id, payments.orders_numbers
+            from payments
+            order by payments.id
+        `);
+        assert.deepStrictEqual( sort(result.rows), [
+            {id: 1, orders_numbers: ["X", "Y"]},
+            {id: 2, orders_numbers: ["A", "B", "Y", "Z"]}
+        ]);
+    
+        function sort(rows: any[]) {
+            for(const row of rows) {
+                row.orders_numbers.sort();
+            }
+            return rows;
+        }
+    });
+
+    it("array_union_agg, filter by array", async() => {
+        const folderPath = ROOT_TMP_PATH + "/array-union";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            CREATE FUNCTION array_union_all(a ANYARRAY, b ANYARRAY)
+            RETURNS ANYARRAY AS
+            $$
+            SELECT array_agg(x)
+            FROM (
+                SELECT unnest(a) x
+                UNION ALL
+                SELECT unnest(b)
+            ) AS u
+            $$ LANGUAGE SQL;
+
+            CREATE AGGREGATE array_union_all_agg(ANYARRAY) (
+            SFUNC = array_union_all,
+            STYPE = ANYARRAY,
+            INITCOND = '{}'
+            );
+
+            CREATE FUNCTION array_union(a ANYARRAY, b ANYARRAY)
+            RETURNS ANYARRAY AS
+            $$
+            SELECT array_agg(distinct x)
+            FROM unnest(a || b) as x
+            $$ LANGUAGE SQL;
+
+            CREATE AGGREGATE array_union_agg(ANYARRAY) (
+            SFUNC = array_union,
+            STYPE = ANYARRAY,
+            INITCOND = '{}'
+            );
+
+            create table invoices (
+                id serial primary key,
+                payments_ids integer[],
+                units_numbers text[]
+            );
+            create table payments (
+                id serial primary key
+            );
+
+            insert into invoices (payments_ids, units_numbers)
+            values
+                (ARRAY[1, 2], ARRAY['A', 'B', 'C']), 
+                (ARRAY[1], ARRAY['A', 'E']), 
+                (ARRAY[2], ARRAY['B', 'D']);
+
+            insert into payments default values;
+            insert into payments default values;
+        `);
+
+        fs.writeFileSync(folderPath + "/payment_orders.sql", `
+            cache orders for payments (
+                select
+                    array_union_agg(invoices.units_numbers) as units_numbers
+                from invoices
+                where
+                    invoices.payments_ids && ARRAY[payments.id]::integer[]
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        let result = await db.query(`
+            select payments.id, payments.units_numbers
+            from payments
+            order by payments.id
+        `);
+        assert.deepStrictEqual( sort(result.rows), [
+            {id: 1, units_numbers: ["A", "B", "C", "E"]},
+            {id: 2, units_numbers: ["A", "B", "C", "D"]}
+        ]);
+
+
+        await db.query(`
+            update invoices set
+                payments_ids = ARRAY[3]
+            where id = 1;
+        `);
+        result = await db.query(`
+            select payments.id, payments.units_numbers
+            from payments
+            order by payments.id
+        `);
+        assert.deepStrictEqual( sort(result.rows), [
+            {id: 1, units_numbers: ["A", "E"]},
+            {id: 2, units_numbers: ["B", "D"]}
+        ]);
+
+
+        await db.query(`
+            update invoices set
+                units_numbers = ARRAY['X', 'Y']
+            where id in (2, 3);
+        `);
+        result = await db.query(`
+            select payments.id, payments.units_numbers
+            from payments
+            order by payments.id
+        `);
+        assert.deepStrictEqual( sort(result.rows), [
+            {id: 1, units_numbers: ["X", "Y"]},
+            {id: 2, units_numbers: ["X", "Y"]}
+        ]);
+
+        function sort(rows: any[]) {
+            for(const row of rows) {
+                row.units_numbers.sort();
+            }
+            return rows;
+        }
+    });
+
 });

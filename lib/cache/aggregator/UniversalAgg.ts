@@ -14,17 +14,14 @@ export class UniversalAgg extends AbstractAgg {
     }
 
     minus() {
-        return Expression.unknown(`(
-    select
-${ this.printMainAgg() }
-
-    from unnest(
-${ this.printChildrenAggregations() }
-    ) as ${ this.printAlias() }
-)`, this.buildColumnsMap());
+        return this.printTotal();
     }
 
     plus(total: IExpressionElement, value: Expression) {
+        return this.printTotal();
+    }
+
+    private printTotal() {
         return Expression.unknown(`(
     select
 ${ this.printMainAgg() }
