@@ -4,23 +4,6 @@ import { buildOneLastRowByMutableBody } from "../body/buildOneLastRowByMutableBo
 
 export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilder {
 
-    createSelectForUpdateHelperColumn() {
-        const select = this.context.cache.select.cloneWith({
-            columns: this.getOrderByColumnsRefs().map(columnRef =>
-                new SelectColumn({
-                    name: this.helperColumnName(columnRef.name),
-                    expression: new Expression([
-                        new ColumnReference(
-                            this.fromTable(),
-                            columnRef.name
-                        )
-                    ])
-                })
-            )
-        });
-        return {select, for: this.context.cache.for};
-    }
-
     protected createBody() {
         const {select} = this.context.cache;
         const orderBy = select.orderBy!;

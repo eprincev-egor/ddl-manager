@@ -2771,6 +2771,102 @@ $$;
         await transaction2.end();
     });
 
+    it("first operation for order, when order has operations_ids", async() => {
+        const folderPath = ROOT_TMP_PATH + "/last_sea_for_unit_by_lvl";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                operations_ids integer[]
+            );
+
+            create table operations (
+                id serial primary key,
+                name text,
+                lvl integer,
+                deleted smallint default 0
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/first_oper.sql", `
+            cache first_operation for orders (
+                select
+                    first_oper.name as first_oper_name
+        
+                from operations as first_oper
+                where
+                    first_oper.id = any( orders.operations_ids ) and
+                    first_oper.deleted = 0
+        
+                order by first_oper.lvl
+                limit 1
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        
+        await db.query(`
+            insert into orders default values;
+            insert into orders default values;
+            insert into orders default values;
+
+            insert into operations
+                (name, lvl)
+            values
+                ('sea 1', 1),
+                ('sea 2', 2),
+                ('auto 3', 3),
+                ('auto 4', 4)
+            ;
+        `);
+
+        let actual: any;
+
+        await db.query(`
+            update orders set
+                operations_ids = array[1, 3]
+            where id = 1;
+            update orders set
+                operations_ids = array[2, 4]
+            where id = 2;
+            update orders set
+            operations_ids = array[3, 4]
+            where id = 3;
+        `);
+        actual = await db.query(`
+            select id, first_oper_name
+            from orders
+            order by id
+        `);
+        assert.deepStrictEqual(actual.rows, [
+            { id: 1, first_oper_name: "sea 1" },
+            { id: 2, first_oper_name: "sea 2" },
+            { id: 3, first_oper_name: "auto 3" }
+        ]);
+
+
+        await db.query(`
+            update operations set
+                name = name || ' updated'
+        `);
+        actual = await db.query(`
+            select id, first_oper_name
+            from orders
+            order by id
+        `);
+        assert.deepStrictEqual(actual.rows, [
+            { id: 1, first_oper_name: "sea 1 updated" },
+            { id: 2, first_oper_name: "sea 2 updated" },
+            { id: 3, first_oper_name: "auto 3 updated" }
+        ]);
+    });
+
     async function sleep(ms: number) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }

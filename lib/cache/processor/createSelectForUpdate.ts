@@ -2,7 +2,8 @@ import {
     Expression,
     Cache,
     SelectColumn,
-    UnknownExpressionElement
+    ColumnReference,
+    Select
 } from "../../ast";
 import { AggFactory } from "../aggregator";
 import { flatMap } from "lodash";
@@ -41,8 +42,53 @@ export function createSelectForUpdate(
         return columns;
     });
 
-    const selectToUpdate = cache.select.cloneWith({
+    let selectToUpdate = cache.select.cloneWith({
         columns: columnsToUpdate
     });
+    if ( cache.select.orderBy ) {
+        selectToUpdate = addHelperColumns(cache, selectToUpdate);
+    }
+
     return selectToUpdate;
+}
+
+export function addHelperColumns(cache: Cache, select: Select) {
+    const helperColumns = getOrderByColumnsRefs(select).map(columnRef =>
+        new SelectColumn({
+            name: helperColumnName(cache, columnRef.name),
+            expression: new Expression([
+                new ColumnReference(
+                    select.from[0].table,
+                    columnRef.name
+                )
+            ])
+        })
+    );
+
+    return select.cloneWith({
+        columns: [
+            ...select.columns,
+            ...helperColumns
+        ]
+    })
+}
+
+export function getOrderByColumnsRefs(select: Select) {
+    const orderByColumns = select.orderBy!.getColumnReferences();
+    
+    const hasId = orderByColumns.some(columnRef => columnRef.name === "id");
+    if ( !hasId ) {
+        orderByColumns.unshift(
+            new ColumnReference(
+                select.from[0].table,
+                "id"
+            )
+        );
+    }
+
+    return orderByColumns;
+}
+
+export function helperColumnName(cache: Cache, columnName: string) {
+    return `__${cache.name}_${columnName}`;
 }

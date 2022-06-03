@@ -1,9 +1,4 @@
-import {
-    Update, SetItem,
-    Expression,
-    SelectColumn,
-    ColumnReference
-} from "../../../ast";
+import { Update, Expression } from "../../../ast";
 import { AbstractLastRowTriggerBuilder } from "./AbstractLastRowTriggerBuilder";
 import { buildOneLastRowByArrayReferenceBody } from "../body/buildOneLastRowByArrayReferenceBody";
 import { flatMap } from "lodash";
@@ -12,23 +7,6 @@ import { CoalesceFalseExpression } from "../../../ast/expression/CoalesceFalseEx
 import assert from "assert";
 
 export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTriggerBuilder {
-
-    createSelectForUpdateHelperColumn() {
-        const select = this.context.cache.select.cloneWith({
-            columns: this.getOrderByColumnsRefs().map(columnRef =>
-                new SelectColumn({
-                    name: this.helperColumnName(columnRef.name),
-                    expression: new Expression([
-                        new ColumnReference(
-                            this.fromTable(),
-                            columnRef.name
-                        )
-                    ])
-                })
-            )
-        });
-        return {select, for: this.context.cache.for};
-    }
 
     protected createBody() {
         const arrColumnRef = this.getArrColumnRef();

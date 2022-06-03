@@ -12,14 +12,16 @@ begin
     update public.order as orders set
         (
             id_border_crossing,
-            date_delivery
+            date_delivery,
+            __border_crossing_id
         ) = (
             select
                 border_crossing.id as id_border_crossing,
                 coalesce(
         border_crossing.end_expected_date,
         orders.date_delivery
-    ) as date_delivery
+    ) as date_delivery,
+    border_crossing.id as __border_crossing_id
 
             from operation.operation as border_crossing
 

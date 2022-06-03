@@ -14,7 +14,7 @@ import { SelfUpdateByOtherTablesTriggerBuilder } from "./trigger-builder/SelfUpd
 import { CacheContext } from "./trigger-builder/CacheContext";
 import { SelfUpdateBySelfRowTriggerBuilder } from "./trigger-builder/SelfUpdateBySelfRowTriggerBuilder";
 import { TableReference } from "../database/schema/TableReference";
-import { AbstractLastRowTriggerBuilder } from "./trigger-builder/one-last-row/AbstractLastRowTriggerBuilder";
+import { LastRowByIdTriggerBuilder } from "./trigger-builder/one-last-row/LastRowByIdTriggerBuilder";
 
 export interface ISelectForUpdate {
     for: TableReference;
@@ -74,13 +74,15 @@ export class CacheTriggersBuilder {
             const lastRowBuilder = this.builderFactory.tryCreateBuilder(
                 fromTable,
                 fromTableDeps.columns
-            ) as AbstractLastRowTriggerBuilder;
-            const helper = lastRowBuilder.createSelectForUpdateHelperColumn();
-
-            output.push({
-                for: helper.for,
-                select: helper.select
-            });
+            );
+            if ( lastRowBuilder instanceof LastRowByIdTriggerBuilder ) {
+                const helper = lastRowBuilder.createSelectForUpdateHelperColumn();
+    
+                output.push({
+                    for: helper.for,
+                    select: helper.select
+                });
+            }
         }
 
         return output;

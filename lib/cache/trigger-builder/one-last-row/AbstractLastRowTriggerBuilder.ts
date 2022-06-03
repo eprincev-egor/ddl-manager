@@ -1,72 +1,15 @@
 import {
     Expression, ConditionElementType,
     Update, SetItem,
-    Select, SelectColumn,
+    SelectColumn,
     ColumnReference, UnknownExpressionElement,
-    From, SetSelectItem, Spaces,
+    SetSelectItem, Spaces,
     OrderByItem, OrderBy
 } from "../../../ast";
-import { Exists } from "../../../ast/expression/Exists";
-import { TableReference } from "../../../database/schema/TableReference";
+import { createSelectForUpdate, getOrderByColumnsRefs, helperColumnName } from "../../processor/createSelectForUpdate";
 import { AbstractTriggerBuilder, ICacheTrigger } from "../AbstractTriggerBuilder";
 
 export abstract class AbstractLastRowTriggerBuilder extends AbstractTriggerBuilder {
-
-    createSelectForUpdateHelperColumn() {
-        const fromTable = this.context.triggerTable;
-        const fromRef = new TableReference(fromTable);
-        const prevRef = new TableReference(
-            fromTable,
-            `prev_${ fromTable.name }`
-        );
-        const orderBy = this.context.cache.select.orderBy!.items[0]!;
-
-        const select = new Select({
-            columns: [new SelectColumn({
-                name: this.getIsLastColumnName(),
-                expression: new Expression([
-                    UnknownExpressionElement.fromSql(`not`),
-                    new Exists({
-                        select: new Select({
-                            columns: [],
-                            from: [
-                                new From(prevRef)
-                            ],
-                            where: Expression.and([
-                                ...this.context.referenceMeta.columns.map(column =>
-                                    new Expression([
-                                        new ColumnReference(prevRef, column),
-                                        UnknownExpressionElement.fromSql("="),
-                                        new ColumnReference(fromRef, column),
-                                    ])
-                                ),
-                                ...this.context.referenceMeta.filters.map(filter =>
-                                    filter.replaceTable(
-                                        this.fromTable(),
-                                        prevRef
-                                    )
-                                ),
-                                new Expression([
-                                    new ColumnReference(prevRef, "id"),
-                                    UnknownExpressionElement.fromSql(
-                                        orderBy.type === "desc" ? 
-                                            ">" : "<"
-                                    ),
-                                    new ColumnReference(fromRef, "id"),
-                                ])
-                            ])
-                        })
-                    })
-                ])
-            })],
-            from: []
-        });
-
-        return {
-            select,
-            for: fromRef
-        };
-    }
 
     createHelperTrigger(): ICacheTrigger | undefined {
         return;
@@ -300,25 +243,11 @@ export abstract class AbstractLastRowTriggerBuilder extends AbstractTriggerBuild
     }
 
     protected getOrderByColumnsRefs() {
-        // TODO: order by hard expression
-        const {select} = this.context.cache;
-        const orderByColumns = select.orderBy!.getColumnReferences();
-        
-        const hasId = orderByColumns.some(columnRef => columnRef.name === "id");
-        if ( !hasId ) {
-            orderByColumns.unshift(
-                new ColumnReference(
-                    this.fromTable(),
-                    "id"
-                )
-            );
-        }
-
-        return orderByColumns;
+        return getOrderByColumnsRefs(this.context.cache.select);
     }
 
     protected helperColumnName(triggerTableColumnName: string) {
-        return `__${this.context.cache.name}_${triggerTableColumnName}`;
+        return helperColumnName(this.context.cache, triggerTableColumnName);
     }
 
     protected setHelpersByRow(row = "new") {
