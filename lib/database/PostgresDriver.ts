@@ -265,9 +265,10 @@ implements IDatabaseDriver {
 
             left join lateral (
                 ${ select }
+                where false
             ) as ddl_manager_dmp on true
 
-            limit 1
+            where false
         `;
         const {fields} = await this.query(sql);
 
