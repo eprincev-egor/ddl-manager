@@ -44,12 +44,11 @@ export function buildOneRowBody(ast: IOneAst) {
                     "TG_OP = 'DELETE'"
                 ]),
                 then: [
-                    new If({
-                        if: ast.onDelete.needUpdate,
-                        then: [
+                    ...doIf(
+                        ast.onDelete.needUpdate, [
                             ast.onDelete.update
                         ]
-                    }),
+                    ),
                     new BlankLine(),
                     new HardCode({
                         sql: `return old;`
@@ -90,13 +89,12 @@ export function buildOneRowBody(ast: IOneAst) {
                         "TG_OP = 'INSERT'"
                     ]),
                     then: [
-                        new If({
-                            if: ast.onInsert.needUpdate,
-                            then: [
+                        ...doIf(
+                            ast.onInsert.needUpdate, [
                                 ...assignJoinedRows(ast.selects),
                                 ast.onInsert.update
                             ]
-                        }),
+                        ),
                         new BlankLine(),
                         new HardCode({
                             sql: `return new;`

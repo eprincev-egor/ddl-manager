@@ -12,7 +12,7 @@ export function doIf(
         return [];
     }
 
-    if ( !condition ) {
+    if ( !condition || condition.isEmpty() ) {
         return doBlock;
     }
 
