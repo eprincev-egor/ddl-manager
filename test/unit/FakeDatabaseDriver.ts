@@ -64,6 +64,12 @@ implements IDatabaseDriver {
         return database;
     }
 
+    async enableTrigger(onTable: TableID, triggerName: string): Promise<void> {
+    }
+
+    async disableTrigger(onTable: TableID, triggerName: string): Promise<void> {
+    }
+
     async createOrReplaceFunction(func: DatabaseFunction): Promise<void> {
         const existentFuncIndex = this.state.functions.findIndex(someFunc =>
             someFunc.getSignature() === func.getSignature()

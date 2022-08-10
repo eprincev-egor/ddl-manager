@@ -301,19 +301,19 @@ export class CacheComparator extends AbstractComparator {
                         return changedUpdateExpression;
                     })
                 });
-                
+
                 const requiredUpdate: IUpdate = {
                     cacheName: update.cacheName,
                     select: selectWithRequiredColumns,
-                    forTable: update.forTable
+                    forTable: update.forTable,
+                    recursionWith: []
                 };
-
-                requiredUpdate.recursionWith = findRecursionUpdates(
-                    update,
-                    allUpdates
-                );
-                requiredUpdate.isFirst = true;
-
+                if ( selectWithRequiredColumns.columns.length > 0 ) {
+                    requiredUpdate.recursionWith = findRecursionUpdates(
+                        requiredUpdate,
+                        allUpdates
+                    );
+                }
                 return requiredUpdate;
             })
             .filter(update =>
@@ -362,7 +362,8 @@ export class CacheComparator extends AbstractComparator {
                 forTable: prevItem.for,
                 select: prevItem.select.cloneWith({
                     columns: columnsToUpdate
-                })
+                }),
+                recursionWith: []
             });
         }
 

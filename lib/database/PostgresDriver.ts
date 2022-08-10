@@ -64,6 +64,20 @@ implements IDatabaseDriver {
         return database;
     }
 
+    async enableTrigger(onTable: TableID, triggerName: string): Promise<void> {
+        await this.query(`
+            alter table ${onTable}
+            enable trigger ${triggerName};
+        `);
+    }
+
+    async disableTrigger(onTable: TableID, triggerName: string): Promise<void> {
+        await this.query(`
+            alter table ${onTable}
+            disable trigger ${triggerName};
+        `);
+    }
+
     private async loadFunctions(): Promise<DatabaseFunction[]> {
         const funcs = await this.loadObjects<DatabaseFunction>(
             selectAllFunctionsSQL
@@ -305,7 +319,7 @@ implements IDatabaseDriver {
         const sql = `
             select id
             from ${table}
-            order by id
+            order by id desc
             offset ${+offset}
         `;
         const {rows} = await this.query(sql);
@@ -318,17 +332,46 @@ implements IDatabaseDriver {
         forTable: TableReference,
         ids: number[]
     ) {
+        const columnsToUpdate = select.columns.map(column =>
+            column.name
+        );
+
+        const whereRowIsBroken = columnsToUpdate.map(columnName =>
+            `${forTable.getIdentifier()}.${columnName} is distinct from ddl_manager_tmp.${columnName}`
+        ).join("\nor\n");
+
+        const selectBrokenRowsWithLimit = `
+            select
+                ${forTable.getIdentifier()}.id,
+                ddl_manager_tmp.*
+            from ${forTable}
+
+            left join lateral (
+                ${ select }
+            ) as ddl_manager_tmp on true
+
+            where
+                ${forTable.getIdentifier()}.id in (${ids.map(id => +id).join(", ")}) and
+                ${ whereRowIsBroken }
+        `;
+
         const sql = `
+            with ddl_manager_tmp as (
+                ${selectBrokenRowsWithLimit}
+            )
             update ${forTable} set
                 (
-                    ${ select.columns.map(column =>
-                        column.name
-                    ).join(", ") }
+                    ${ columnsToUpdate.join(", ") }
                 ) = (
-                    ${ select.toString() }
+                    select
+                    ${ columnsToUpdate.map(columnName =>
+                        "ddl_manager_tmp." + columnName
+                    ).join(", ") }
                 )
+            from ddl_manager_tmp
+
             where
-                ${forTable.getIdentifier()}.id in (${ids.map(id => +id).join(", ")})
+                ddl_manager_tmp.id = ${forTable.getIdentifier()}.id
             
             returning ${forTable.getIdentifier()}.id
         `;

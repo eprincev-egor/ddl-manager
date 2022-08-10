@@ -9,8 +9,7 @@ export interface IUpdate {
     cacheName: string;
     select: Select;
     forTable: TableReference;
-    recursionWith?: IUpdate[];
-    isFirst?: boolean;
+    recursionWith: IUpdate[];
 }
 
 export interface IChanges {

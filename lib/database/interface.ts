@@ -28,4 +28,6 @@ export interface IDatabaseDriver {
     dropIndex(index: Index): Promise<void>;
     createOrReplaceIndex(index: Index): Promise<void>;
     end(): void;
+    disableTrigger(onTable: TableID, triggerName: string): Promise<void>;
+    enableTrigger(onTable: TableID, triggerName: string): Promise<void>;
 }

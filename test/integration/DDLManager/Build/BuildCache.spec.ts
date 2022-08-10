@@ -3133,4 +3133,81 @@ describe("integration/DDLManager.build cache", () => {
         }
     });
 
+    it("rebuild cache and check deps", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table companies (
+                id serial primary key
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer,
+                profit numeric(14, 2),
+                deleted smallint
+            );
+
+            insert into companies default values;
+            insert into orders 
+                (id_client, profit, deleted)
+            values 
+                (1, 200, 0),
+                (1, 800, 1);
+        `);
+        fs.writeFileSync(folderPath + "/source.sql", `
+            cache orders for companies (
+                select
+                    sum( orders.profit ) as total_profit
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+        fs.writeFileSync(folderPath + "/deps1.sql", `
+            cache client for orders (
+                select
+                    100 * orders.profit / client.total_profit as percent_of_client_profit
+                from companies as client
+                where
+                    client.id = orders.id_client
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        fs.writeFileSync(folderPath + "/source.sql", `
+            cache orders for companies (
+                select
+                    sum( orders.profit ) as total_profit
+                from orders
+                where
+                    orders.id_client = companies.id and
+                    orders.deleted = 0
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            select
+                id, 
+                percent_of_client_profit::integer as percent_of_client_profit
+            from orders
+            order by id
+        `);
+
+        expect(result.rows).to.be.shallowDeepEqual([
+            {id: 1, percent_of_client_profit: 100},
+            {id: 2, percent_of_client_profit: 400}
+        ]);
+    });
 });

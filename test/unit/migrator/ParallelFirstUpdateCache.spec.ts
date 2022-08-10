@@ -24,7 +24,7 @@ describe("ParallelFirstUpdateCache", () => {
         cacheName: "my_cache",
         select: new Select(),
         forTable: new TableReference(someTable),
-        isFirst: true
+        recursionWith: []
     };
     const someUpdateMigration: Partial<IChanges> = {
         updates: [someUpdate]
@@ -56,7 +56,6 @@ describe("ParallelFirstUpdateCache", () => {
                 cacheName: "my_cache",
                 select: new Select(),
                 forTable: new TableReference(someTable),
-                isFirst: true,
                 recursionWith: []
             }]
         });
@@ -107,6 +106,33 @@ describe("ParallelFirstUpdateCache", () => {
             ...repeat("start", parallelPackagesCount),
             ...repeat("end", parallelPackagesCount)
         ]);
+    });
+
+    it("update error on invalid select", async() => {
+        fakePostgres.updateCacheForRows = () => {
+            throw new Error("operator does not exist: bigint[] && integer[]");
+        };
+
+        migration.create({
+            updates: [{
+                cacheName: "my_cache",
+                select: new Select(),
+                forTable: new TableReference(new TableID("public", "some_table")),
+                recursionWith: []
+            }]
+        });
+
+        let actualError = new Error("expected error");
+        try {
+            await MainMigrator.migrate(fakePostgres, database, migration);
+        } catch(err) {
+            actualError = err;
+        }
+
+        assert.strictEqual(
+            actualError.message,
+            "operator does not exist: bigint[] && integer[]"
+        );
     });
 
     function generateIds(quantity: number): number[] {

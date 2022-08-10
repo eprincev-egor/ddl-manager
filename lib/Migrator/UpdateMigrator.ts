@@ -2,10 +2,10 @@ import { AbstractMigrator } from "./AbstractMigrator";
 import { Select } from "../ast";
 import { TableReference } from "../database/schema/TableReference";
 import { IUpdate } from "./Migration";
-import assert from "assert";
+import { TableID } from "../database/schema/TableID";
 
-export const packageSize = 500;
-export const parallelPackagesCount = 30;
+export const packageSize = 1000;
+export const parallelPackagesCount = 16;
 
 export class UpdateMigrator extends AbstractMigrator {
 
@@ -14,20 +14,48 @@ export class UpdateMigrator extends AbstractMigrator {
     async drop() {}
 
     async create() {
-
         for (const update of this.migration.toCreate.updates) {
-            if ( update.isFirst && (!update.recursionWith || !update.recursionWith.length) ) {
-                await this.parallelUpdateCacheByIds(update);
-            }
-            else {
+            const updatingTable = update.forTable.table;
+            const notCacheTriggers = this.findNotCacheTriggers(updatingTable);
+
+            await this.disableTriggers(updatingTable, notCacheTriggers);
+
+            if ( update.recursionWith.length > 0 ) {
                 await this.updateCacheLimitedPackage(update);
             }
+            else {
+                await this.parallelUpdateCacheByIds(update);
+            }
+
+            await this.enableTriggers(updatingTable, notCacheTriggers);
+        }
+    }
+
+    private findNotCacheTriggers(onTable: TableID): string[] {
+        const table = this.database.getTable(onTable);
+        if ( !table ) {
+            return []
+        }
+
+        return table.triggers
+            .filter(trigger => !trigger.cacheSignature)
+            .filter(trigger => trigger.update || trigger.updateOf)
+            .map(trigger => trigger.name);
+    }
+
+    private async disableTriggers(onTable: TableID, triggers: string[]) {
+        for (const triggerName of triggers) {
+            await this.postgres.disableTrigger(onTable, triggerName);
+        }
+    }
+
+    private async enableTriggers(onTable: TableID, triggers: string[]) {
+        for (const triggerName of triggers) {
+            await this.postgres.enableTrigger(onTable, triggerName);
         }
     }
 
     private async parallelUpdateCacheByIds(update: IUpdate, offset = 0) {
-        assert.ok(update.isFirst, "only first migration can update cache by ids in parallel");
-
         const limit = packageSize * parallelPackagesCount;
         const updateIds = await this.postgres.selectIds(
             update.forTable.table,
@@ -159,7 +187,7 @@ export class UpdateMigrator extends AbstractMigrator {
     ) {
         let totalUpdatedCount = 0;
 
-        for (const updateAlso of update.recursionWith || []) {
+        for (const updateAlso of update.recursionWith) {
             const updatedAlsoCount = await this.updateAlsoRecursion(
                 updateAlso, packageIndex
             );
