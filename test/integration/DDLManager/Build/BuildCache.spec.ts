@@ -3210,4 +3210,158 @@ describe("integration/DDLManager.build cache", () => {
             {id: 2, percent_of_client_profit: 400}
         ]);
     });
+
+    it("build cache when exists trigger on table and exists two same name tables inside different schemas", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            drop schema if exists operation cascade;
+            create schema operation;
+
+            create table public.companies (
+                id serial primary key
+            );
+            create table operation.companies (
+                id serial primary key
+            );
+            
+            insert into public.companies default values;
+            insert into operation.companies default values;
+        `);
+
+        fs.writeFileSync(folderPath + "/public.cache.sql", `
+            cache public1 for public.companies as companies (
+                select
+                    companies.id + 1 as id1
+            )
+        `);
+        fs.writeFileSync(folderPath + "/public.trigger.sql", `
+            create or replace function test_public()
+            returns trigger as $body$
+            begin
+                --raise exception 'need disable me (public)';
+                return new;
+            end;
+            $body$ language plpgsql;
+
+            create trigger test_public
+            after update
+            on public.companies
+            for each row
+            execute procedure test_public();
+        `);
+
+        fs.writeFileSync(folderPath + "/operation.cache.sql", `
+            cache operation2 for operation.companies as companies (
+                select
+                    companies.id + 2 as id2
+            )
+        `);
+        fs.writeFileSync(folderPath + "/operation.trigger.sql", `
+            create or replace function test_operation()
+            returns trigger as $body$
+            begin
+                --raise exception 'need disable me (operation)';
+                return new;
+            end;
+            $body$ language plpgsql;
+
+            create trigger test_operation
+            after update
+            on operation.companies
+            for each row
+            execute procedure test_operation();
+        `);
+        
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            select 
+                public.companies.id as public_id, 
+                public.companies.id1 as public_id1,
+
+                operation.companies.id as operation_id, 
+                operation.companies.id2 as operation_id2
+
+            from public.companies, operation.companies
+            limit 1
+        `);
+
+        expect(result.rows).to.be.shallowDeepEqual([{
+            public_id: 1,
+            public_id1: 2,
+            operation_id: 1,
+            operation_id2: 3
+        }]);
+    });
+
+    it("remove some trigger and update cache on table", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table public.companies (
+                id serial primary key
+            );
+            insert into public.companies default values;
+        `);
+
+        const someTriggerPath = folderPath + "/public.trigger.sql";
+
+        fs.writeFileSync(folderPath + "/public.trigger.sql", `
+            create or replace function test_public()
+            returns trigger as $body$
+            begin
+                --raise exception 'need disable me (public)';
+                return new;
+            end;
+            $body$ language plpgsql;
+
+            create trigger test_public
+            after update
+            on public.companies
+            for each row
+            execute procedure test_public();
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        fs.unlinkSync(someTriggerPath);
+
+        fs.writeFileSync(folderPath + "/public.cache.sql", `
+            cache public1 for public.companies as companies (
+                select
+                    companies.id + 1 as id1
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            select 
+                public.companies.id as public_id, 
+                public.companies.id1 as public_id1
+            from public.companies, operation.companies
+        `);
+
+        expect(result.rows).to.be.shallowDeepEqual([{
+            public_id: 1,
+            public_id1: 2
+        }]);
+    });
+
 });

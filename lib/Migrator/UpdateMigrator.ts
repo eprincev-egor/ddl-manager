@@ -35,7 +35,15 @@ export class UpdateMigrator extends AbstractMigrator {
             return []
         }
 
-        return table.triggers
+        const oldTriggers = table.triggers
+            .filter(trigger => 
+                !this.migration.toDrop.triggers
+                    .some(removed => removed.name == trigger.name)
+            );
+        const newTriggers = this.migration.toCreate.triggers
+            .filter(trigger => false && trigger.table.equal(onTable));
+
+        return [...oldTriggers, ...newTriggers]
             .filter(trigger => !trigger.cacheSignature)
             .filter(trigger => trigger.update || trigger.updateOf)
             .map(trigger => trigger.name);
