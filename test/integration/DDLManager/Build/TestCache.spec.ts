@@ -24,7 +24,7 @@ describe("integration/DDLManager.build cache", () => {
     });
 
     afterEach(async() => {
-        db.end();
+        await db.end();
     });
 
     it("test cache commutative/self update triggers working", async() => {

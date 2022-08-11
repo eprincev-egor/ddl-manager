@@ -13,6 +13,7 @@ const ROOT_TMP_PATH = __dirname + "/tmp";
 
 describe("integration/DDLManager.watch", () => {
     let db: any;
+    const dbConfig = require("../../../ddl-manager-config");
     
     beforeEach(async() => {
         db = await getDBClient();
@@ -29,7 +30,7 @@ describe("integration/DDLManager.watch", () => {
     });
 
     afterEach(async() => {
-        db.end();
+        await db.end();
         DDLManager.stopWatch();
     });
 
@@ -123,11 +124,11 @@ describe("integration/DDLManager.watch", () => {
 
         await DDLManager.watch({
             db: {
-                database: db.database,
-                user: db.user,
-                password: db.password,
-                host: db.host,
-                port: db.port
+                database: dbConfig.database,
+                user: dbConfig.user,
+                password: dbConfig.password,
+                host: dbConfig.host,
+                port: dbConfig.port
             }, 
             folder: folderPath
         });

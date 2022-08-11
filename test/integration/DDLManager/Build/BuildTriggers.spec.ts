@@ -30,7 +30,7 @@ describe("integration/DDLManager.build triggers", () => {
     });
 
     afterEach(async() => {
-        db.end();
+        await db.end();
     });
     
     it("build simple trigger", async() => {

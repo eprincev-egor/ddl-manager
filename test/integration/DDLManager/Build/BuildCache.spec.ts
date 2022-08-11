@@ -28,7 +28,7 @@ describe("integration/DDLManager.build cache", () => {
     });
 
     afterEach(async() => {
-        db.end();
+        await db.end();
     });
     
     it("build simple cache", async() => {

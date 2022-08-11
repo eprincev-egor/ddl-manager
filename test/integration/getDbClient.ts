@@ -45,10 +45,13 @@ export async function getDBClient(dbConfig: IConfig = {
         throw new Error("Connect options does not exists!");
     }
 
-    let dbClient;
+    const pool = new pg.Pool({
+        ...(dbConfig as any),
+        min: 16,
+        max: 100
+    });
     try {
-        dbClient = new pg.Client(dbConfig as any);
-        await dbClient.connect();
+        await pool.query("select 1");
     } catch(err) {
         throw new Error(
             "Failed db connection: " + 
@@ -59,6 +62,6 @@ export async function getDBClient(dbConfig: IConfig = {
         );
     }
 
-    return dbClient;
+    return pool;
 }
 

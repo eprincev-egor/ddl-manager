@@ -1,5 +1,5 @@
 import fs from "fs";
-import { Client } from "pg";
+import { Pool } from "pg";
 import { IDatabaseDriver } from "./interface";
 import { FileParser } from "../parser";
 import { PGTypes } from "./PGTypes";
@@ -33,12 +33,12 @@ const selectAllIndexesSQL = fs.readFileSync(__dirname + "/postgres/select-all-in
 export class PostgresDriver
 implements IDatabaseDriver {
 
-    private pgClient: Client;
+    private pgPool: Pool;
     private fileParser: FileParser;
     private types: PGTypes;
 
-    constructor(pgClient: Client) {
-        this.pgClient = pgClient;
+    constructor(pgClient: Pool) {
+        this.pgPool = pgClient;
         this.fileParser = new FileParser();
         this.types = new PGTypes(pgClient);
     }
@@ -469,13 +469,13 @@ implements IDatabaseDriver {
         await this.query(sql);
     }
 
-    end() {
-        this.pgClient.end();
+    async end() {
+        await this.pgPool.end();
     }
 
     private async query(sql: string) {
         try {
-            return await this.pgClient.query(sql);
+            return await this.pgPool.query(sql);
         } catch(originalErr) {
             // redefine call stack
             const {message, code} = originalErr as any;

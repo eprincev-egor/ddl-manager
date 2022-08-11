@@ -12,6 +12,7 @@ const ROOT_TMP_PATH = __dirname + "/tmp";
 
 describe("integration/DDLManager.build other tests", () => {
     let db: any;
+    const dbConfig = require("../../../../ddl-manager-config");
     
     beforeEach(async() => {
         db = await getDBClient();
@@ -28,7 +29,7 @@ describe("integration/DDLManager.build other tests", () => {
     });
 
     afterEach(async() => {
-        db.end();
+        await db.end();
     });
     
     it("build nonexistent folder", async() => {
@@ -71,14 +72,13 @@ describe("integration/DDLManager.build other tests", () => {
             language plpgsql;
         `);
 
-
         await DDLManager.build({
             db: {
-                database: db.database,
-                user: db.user,
-                password: db.password,
-                host: db.host,
-                port: db.port
+                database: dbConfig.database,
+                user: dbConfig.user,
+                password: dbConfig.password,
+                host: dbConfig.host,
+                port: dbConfig.port
             }, 
             folder: folderPath
         });

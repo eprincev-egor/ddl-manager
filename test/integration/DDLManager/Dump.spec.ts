@@ -14,7 +14,8 @@ const ROOT_TMP_PATH = __dirname + "/tmp";
 
 describe("integration/DDLManager.dump", () => {
     let db: any;
-    
+    const dbConfig = require("../../../ddl-manager-config");
+
     beforeEach(async() => {
         db = await getDBClient();
 
@@ -32,7 +33,7 @@ describe("integration/DDLManager.dump", () => {
     });
 
     afterEach(async() => {
-        db.end();
+        await db.end();
     });
 
     it("dump nonexistent folder", async() => {
@@ -68,11 +69,11 @@ describe("integration/DDLManager.dump", () => {
 
         await DDLManager.dump({
             db: {
-                database: db.database,
-                user: db.user,
-                password: db.password,
-                host: db.host,
-                port: db.port
+                database: dbConfig.database,
+                user: dbConfig.user,
+                password: dbConfig.password,
+                host: dbConfig.host,
+                port: dbConfig.port
             }, 
             folder: ROOT_TMP_PATH
         });
@@ -107,11 +108,11 @@ describe("integration/DDLManager.dump", () => {
 
         await DDLManager.dump({
             db: {
-                database: db.database,
-                user: db.user,
-                password: db.password,
-                host: db.host,
-                port: db.port
+                database: dbConfig.database,
+                user: dbConfig.user,
+                password: dbConfig.password,
+                host: dbConfig.host,
+                port: dbConfig.port
             }, 
             folder: ROOT_TMP_PATH
         });
@@ -1004,11 +1005,11 @@ describe("integration/DDLManager.dump", () => {
 
         await DDLManager.dump({
             db: {
-                database: db.database,
-                user: db.user,
-                password: db.password,
-                host: db.host,
-                port: db.port
+                database: dbConfig.database,
+                user: dbConfig.user,
+                password: dbConfig.password,
+                host: dbConfig.host,
+                port: dbConfig.port
             }, 
             folder: ROOT_TMP_PATH
         });

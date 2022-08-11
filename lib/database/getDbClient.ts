@@ -19,17 +19,15 @@ const defaultConfig: IDBConfig = {
     unfreeze: false
 };
 
-export async function getDbClient(dbConfig: IDBConfig | pg.Client) {
-    if ( dbConfig instanceof pg.Client ) {
+export async function getDbClient(dbConfig: IDBConfig | pg.Pool) {
+    if ( "query" in dbConfig ) {
         return dbConfig;
     }
 
     const config = parseDbConfig(dbConfig);
 
-    const dbClient = new pg.Client(config);
-    await dbClient.connect();
-
-    return dbClient;
+    const pool = new pg.Pool(config);
+    return pool;
 }
 
 function parseDbConfig(inputConfig: IDBConfig) {

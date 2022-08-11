@@ -1,11 +1,11 @@
-import { Client } from "pg";
+import { Pool } from "pg";
 
 export class PGTypes {
-    private db: Client;
+    private db: Pool;
     private typeById: {[key: string]: string};
     private loaded: boolean;
 
-    constructor(db: Client) {
+    constructor(db: Pool) {
         this.db = db;
         this.typeById = {};
         this.loaded = false;

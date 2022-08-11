@@ -1,5 +1,5 @@
 import assert from "assert";
-import { Client } from "pg";
+import { Pool } from "pg";
 import { getDBClient } from "./getDbClient";
 import { MainMigrator } from "../../lib/Migrator/MainMigrator";
 import { DatabaseFunction, IDatabaseFunctionParams } from "../../lib/database/schema/DatabaseFunction";
@@ -16,7 +16,7 @@ import { FilesState } from "../../lib/fs/FilesState";
 use(chaiShallowDeepEqualPlugin);
 
 describe("integration/MainMigrator", () => {
-    let db!: Client;
+    let db!: Pool;
     
     beforeEach(async() => {
         db = await getDBClient();
@@ -28,7 +28,7 @@ describe("integration/MainMigrator", () => {
     });
 
     afterEach(async() => {
-        db.end();
+        await db.end();
     });
 
     interface IMigrationParams {

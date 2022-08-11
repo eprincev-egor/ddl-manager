@@ -19,7 +19,7 @@ import { createTimelineFile } from "./timeline/createTimelineFile";
 
 const watchers: FileWatcher[] = [];
 interface IParams {
-    db: IDBConfig | pg.Client;
+    db: IDBConfig | pg.Pool;
     folder: string | string[];
     throwError?: boolean;
 }
@@ -87,7 +87,7 @@ export class DDLManager {
     private folders: string[];
     private needThrowError: boolean;
     private needCloseConnect: boolean;
-    private dbConfig: IDBConfig | pg.Client;
+    private dbConfig: IDBConfig | pg.Pool;
 
     private constructor(params: IParams) {
 
@@ -102,7 +102,7 @@ export class DDLManager {
             path.normalize(folderPath)
         );
 
-        this.needCloseConnect = !(params.db instanceof pg.Client);
+        this.needCloseConnect = !("query" in params.db);
         this.dbConfig = params.db;
         this.needThrowError = !!params.throwError;
     }
@@ -477,7 +477,7 @@ function readScenario(
 
 async function testTimelineScenario(
     outputPath: string,
-    db: pg.Client,
+    db: pg.Pool,
     scenario = {
         name: "test",
         beforeSQL: "select 1",

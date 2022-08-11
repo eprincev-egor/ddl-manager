@@ -27,7 +27,7 @@ describe("integration/DDLManager.refreshCache", () => {
     });
 
     afterEach(async() => {
-        db.end();
+        await db.end();
     });
 
     it("refresh simple cache", async() => {

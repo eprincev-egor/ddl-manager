@@ -29,7 +29,7 @@ describe("integration/DDLManager.build functions", () => {
     });
 
     afterEach(async() => {
-        db.end();
+        await db.end();
     });
     
     it("build simple function", async() => {

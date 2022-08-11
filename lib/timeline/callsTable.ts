@@ -1,6 +1,6 @@
 import pg from "pg";
 
-export async function createCallsTable(db: pg.Client) {
+export async function createCallsTable(db: pg.Pool) {
     
     console.log("creating temp table");
     await db.query(`
@@ -18,7 +18,7 @@ export async function createCallsTable(db: pg.Client) {
     `);
 }
 
-export async function downloadLogs(db: pg.Client) {
+export async function downloadLogs(db: pg.Pool) {
 
     console.log("download logs");
     let logsResult;
@@ -36,7 +36,7 @@ export async function downloadLogs(db: pg.Client) {
     return logsResult.rows;
 }
 
-export async function clearCallsLogs(db: pg.Client) {
+export async function clearCallsLogs(db: pg.Pool) {
     
     console.log("clear calls from system_calls");
     await db.query(`

@@ -36,7 +36,7 @@ describe("integration/PostgresDriver.loadState", () => {
     });
 
     afterEach(async() => {
-        db.end();
+        await db.end();
     });
 
     async function loadState() {
