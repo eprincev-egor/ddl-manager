@@ -1,6 +1,4 @@
 import { AbstractMigrator } from "./AbstractMigrator";
-import { Select } from "../ast";
-import { TableReference } from "../database/schema/TableReference";
 import { IUpdate } from "./Migration";
 import { TableID } from "../database/schema/TableID";
 
@@ -96,7 +94,7 @@ export class UpdateMigrator extends AbstractMigrator {
         try {
             await this.postgres.updateCacheForRows(
                 update.select, update.forTable,
-                updateIds
+                updateIds, update.cacheName
             );
         } catch(err) {
             const message = (err as any).message;
@@ -134,10 +132,7 @@ export class UpdateMigrator extends AbstractMigrator {
                 `cache: ${update.cacheName} `
             ].join("\n"));
 
-            const updatedCount = await this.tryUpdateCacheLimitedPackage(
-                update.select,
-                update.forTable
-            );
+            const updatedCount = await this.tryUpdateCacheLimitedPackage(update);
             needUpdateMore = updatedCount >= packageSize;
 
             const updatedAlsoCount = await this.updateAlsoRecursions(
@@ -150,15 +145,15 @@ export class UpdateMigrator extends AbstractMigrator {
     }
 
     private async tryUpdateCacheLimitedPackage(
-        selectToUpdate: Select,
-        forTableRef: TableReference,
+        update: IUpdate,
         attemptsNumberAfterDeadlock = 0
     ): Promise<number> {
         try {
             return await this.postgres.updateCacheLimitedPackage(
-                selectToUpdate,
-                forTableRef,
-                packageSize
+                update.select,
+                update.forTable,
+                packageSize,
+                update.cacheName
             );
         } catch(err) {
             const message = (err as any).message;
@@ -171,8 +166,7 @@ export class UpdateMigrator extends AbstractMigrator {
                 await sleep( timeoutOnDeadlock );
 
                 return await this.tryUpdateCacheLimitedPackage(
-                    selectToUpdate,
-                    forTableRef,
+                    update,
                     attemptsNumberAfterDeadlock + 1
                 );
             }
@@ -211,10 +205,7 @@ export class UpdateMigrator extends AbstractMigrator {
             `cache: ${updateAlso.cacheName} `
         ].join("\n"));
 
-        const updatedAlsoCount = await this.tryUpdateCacheLimitedPackage(
-            updateAlso.select,
-            updateAlso.forTable
-        );
+        const updatedAlsoCount = await this.tryUpdateCacheLimitedPackage(updateAlso);
 
         return updatedAlsoCount;
     }

@@ -946,7 +946,8 @@ describe("integration/PostgresDriver.loadState", () => {
         updatedCount = await driver.updateCacheLimitedPackage(
             select,
             companiesTableRef,
-            3
+            3,
+            "test-cache"
         );
 
         assert.strictEqual(updatedCount, 3);
@@ -971,7 +972,8 @@ describe("integration/PostgresDriver.loadState", () => {
         updatedCount = await driver.updateCacheLimitedPackage(
             select,
             companiesTableRef,
-            6
+            6,
+            "test-cache"
         );
 
         assert.strictEqual(updatedCount, 6);
@@ -995,7 +997,8 @@ describe("integration/PostgresDriver.loadState", () => {
         updatedCount = await driver.updateCacheLimitedPackage(
             select,
             companiesTableRef,
-            5
+            5,
+            "test-cache"
         );
 
         assert.strictEqual(updatedCount, 4);

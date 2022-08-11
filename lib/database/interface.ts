@@ -22,8 +22,14 @@ export interface IDatabaseDriver {
     createOrReplaceColumn(column: Column): Promise<void>;
     dropColumn(column: Column): Promise<void>;
     selectIds(table: TableID, offset: number, limit: number): Promise<number[]>;
-    updateCacheForRows(select: Select, forTable: TableReference, ids: number[]): Promise<void>;
-    updateCacheLimitedPackage(select: Select, forTable: TableReference, limit: number): Promise<number>;
+    updateCacheForRows(
+        select: Select, forTable: TableReference, ids: number[],
+        cacheName: string
+    ): Promise<void>;
+    updateCacheLimitedPackage(
+        select: Select, forTable: TableReference, limit: number,
+        cacheName: string
+    ): Promise<number>;
     createOrReplaceHelperFunc(func: DatabaseFunction): Promise<void>;
     dropIndex(index: Index): Promise<void>;
     createOrReplaceIndex(index: Index): Promise<void>;

@@ -330,7 +330,8 @@ implements IDatabaseDriver {
     async updateCacheForRows(
         select: Select,
         forTable: TableReference,
-        ids: number[]
+        ids: number[],
+        cacheName: string
     ) {
         const columnsToUpdate = select.columns.map(column =>
             column.name
@@ -355,7 +356,7 @@ implements IDatabaseDriver {
                 ${ whereRowIsBroken }
         `;
 
-        const sql = `
+        const sql = `-- cache ${cacheName} for ${forTable.table}
             with ddl_manager_tmp as (
                 ${selectBrokenRowsWithLimit}
             )
@@ -381,7 +382,8 @@ implements IDatabaseDriver {
     async updateCacheLimitedPackage(
         select: Select,
         forTable: TableReference,
-        limit: number
+        limit: number,
+        cacheName: string
     ) {
         const columnsToUpdate = select.columns.map(column =>
             column.name
@@ -408,7 +410,7 @@ implements IDatabaseDriver {
             limit ${ limit }
         `;
 
-        const sql = `
+        const sql = `-- cache ${cacheName} for ${forTable.table}
             with ddl_manager_tmp as (
                 ${selectBrokenRowsWithLimit}
             )
