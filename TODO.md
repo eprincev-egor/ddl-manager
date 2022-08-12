@@ -85,3 +85,11 @@
   - multi reference by array 
 - test commutative cache working with insert/deleted ids
   - data fields change and reference fields change
+
+
+parallel threads by min/max
+combine same cache updates
+disable all triggers
+    update also deps caches
+    rename database while pgMigrate
+    rename database back on rollback

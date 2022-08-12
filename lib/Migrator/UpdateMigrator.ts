@@ -2,21 +2,21 @@ import { AbstractMigrator } from "./AbstractMigrator";
 import { IUpdate } from "./Migration";
 import { TableID } from "../database/schema/TableID";
 
-export const packageSize = 1000;
-export const parallelPackagesCount = 16;
+export const packageSize = 5000;
+export const parallelPackagesCount = 8;
 
 export class UpdateMigrator extends AbstractMigrator {
 
-    static timeoutOnDeadlock = 5000;
+    static timeoutOnDeadlock = 1000;
 
     async drop() {}
 
     async create() {
         for (const update of this.migration.toCreate.updates) {
             const updatingTable = update.forTable.table;
-            const notCacheTriggers = this.findNotCacheTriggers(updatingTable);
+            const triggers = this.findTriggers(updatingTable);
 
-            await this.disableTriggers(updatingTable, notCacheTriggers);
+            await this.disableTriggers(updatingTable, triggers);
 
             if ( update.recursionWith.length > 0 ) {
                 await this.updateCacheLimitedPackage(update);
@@ -25,11 +25,11 @@ export class UpdateMigrator extends AbstractMigrator {
                 await this.parallelUpdateCacheByIds(update);
             }
 
-            await this.enableTriggers(updatingTable, notCacheTriggers);
+            await this.enableTriggers(updatingTable, triggers);
         }
     }
 
-    private findNotCacheTriggers(onTable: TableID): string[] {
+    private findTriggers(onTable: TableID): string[] {
         const table = this.database.getTable(onTable);
         if ( !table ) {
             return []
@@ -41,7 +41,7 @@ export class UpdateMigrator extends AbstractMigrator {
                     .some(removed => removed.name == trigger.name)
             );
         const newTriggers = this.migration.toCreate.triggers
-            .filter(trigger => false && trigger.table.equal(onTable));
+            .filter(trigger => trigger.table.equal(onTable));
 
         return [...oldTriggers, ...newTriggers]
             .filter(trigger => !trigger.cacheSignature)
@@ -61,39 +61,54 @@ export class UpdateMigrator extends AbstractMigrator {
         }
     }
 
-    private async parallelUpdateCacheByIds(update: IUpdate, offset = 0) {
-        const limit = packageSize * parallelPackagesCount;
-        const updateIds = await this.postgres.selectIds(
-            update.forTable.table,
-            offset, limit
-        );
-        if ( !updateIds.length ) {
+    private async parallelUpdateCacheByIds(update: IUpdate) {
+        const {min, max} = await this.postgres.selectMinMax(update.forTable.table);
+        if ( min === null || max === null ) {
+            return;
+        }
+        const delta = max - min;
+
+        if ( delta <= packageSize ) {
+            await this.tryUpdateCacheRows(
+                update, min, max + 1
+            );
             return;
         }
 
-        const packageUpdates: Promise<void>[] = [];
-        for (let i = 0; i < Math.min(limit, updateIds.length); i += packageSize) {
+        const threadsPromises: Promise<void>[] = [];
+        const threadStep = Math.ceil(delta / parallelPackagesCount);
+        for (let i = 0; i < parallelPackagesCount; i++) {
+            const startId = min + threadStep * i;
+            const endId = Math.min(startId + threadStep, max + 1);
 
-            const packageIds = updateIds.slice(i, i + packageSize);
-            const updatePromise = this.tryUpdateCacheRows(
-                update, packageIds
+            const threadPromise = this.updateCacheThread(
+                update, startId, endId
             );
-            packageUpdates.push(updatePromise);
+            threadsPromises.push(threadPromise);
         }
-        await Promise.all(packageUpdates);
+        await Promise.all(threadsPromises);
+    }
 
-        await this.parallelUpdateCacheByIds(
-            update, offset + limit
-        );
+    private async updateCacheThread(
+        update: IUpdate,
+        startId: number,
+        endId: number
+    ) {
+        while ( startId < endId ) {
+            await this.tryUpdateCacheRows(update, startId, endId);
+            startId += packageSize;
+        }
     }
 
     private async tryUpdateCacheRows(
-        update: IUpdate, updateIds: number[],
+        update: IUpdate,
+        minId: number,
+        maxId: number,
         attemptsNumberAfterDeadlock = 0
     ) {
         // tslint:disable-next-line: no-console
         console.log([
-            `parallel updating ids ${ updateIds[0] } - ${ updateIds.slice(-1) }`,
+            `parallel updating ids ${minId} - ${maxId}`,
             `table: ${update.forTable}`,
             `columns: ${update.select.columns.map(col => col.name).join(", ")}`,
             `cache: ${update.cacheName} `
@@ -102,7 +117,8 @@ export class UpdateMigrator extends AbstractMigrator {
         try {
             await this.postgres.updateCacheForRows(
                 update.select, update.forTable,
-                updateIds, update.cacheName
+                minId, maxId,
+                update.cacheName
             );
         } catch(err) {
             const message = (err as any).message;
@@ -115,7 +131,7 @@ export class UpdateMigrator extends AbstractMigrator {
                 await sleep( timeoutOnDeadlock );
 
                 await this.tryUpdateCacheRows(
-                    update, updateIds,
+                    update, minId, maxId,
                     attemptsNumberAfterDeadlock + 1
                 );
                 return;

@@ -1,5 +1,5 @@
 import { Select } from "../../lib/ast";
-import { IDatabaseDriver } from "../../lib/database/interface";
+import { IDatabaseDriver, MinMax } from "../../lib/database/interface";
 import { Database } from "../../lib/database/schema/Database";
 import { Table } from "../../lib/database/schema/Table";
 import { DatabaseFunction } from "../../lib/database/schema/DatabaseFunction";
@@ -25,11 +25,11 @@ implements IDatabaseDriver {
 
     private columnsTypes: {[column: string]: string};
     private rowsCountByTable: {[table: string]: number};
-    private updatedPackages: {[table: string]: {
+    private updatedByLimit: {[table: string]: {
         limit: number;
     }[]};
-    private tablesIds: {[table: string]: number[]};
-    private updatedIds: {[table: string]: number[]};
+    private tablesIds: {[table: string]: MinMax};
+    private updatedByMinMax: {[table: string]: string[]};
     private columnsDrops: {[tableColumn: string]: boolean};
 
     constructor(state?: IFileContent) {
@@ -41,8 +41,8 @@ implements IDatabaseDriver {
         this.columns = {};
         this.columnsTypes = {};
         this.rowsCountByTable = {};
-        this.updatedPackages = {};
-        this.updatedIds = {};
+        this.updatedByLimit = {};
+        this.updatedByMinMax = {};
         this.tablesIds = {};
         this.columnsDrops = {};
         this.indexes = {};
@@ -148,24 +148,28 @@ implements IDatabaseDriver {
         this.columnsDrops[ column.getSignature() ] = true;
     }
 
-    async selectIds(tableId: TableID, offset: number, limit: number): Promise<number[]> {
+    async selectMinMax(tableId: TableID): Promise<MinMax> {
         const table = tableId.toString();
-        const allIds = (this.tablesIds[ table ] || []).slice();
-        return allIds.slice(offset, offset + limit);
+        const minMax = this.tablesIds[ table ] || {min: null, max: null};
+        return minMax;
     }
     
-    async updateCacheForRows(select: Select, forTable: TableReference, ids: number[]): Promise<void> {
+    async updateCacheForRows(
+        select: Select, 
+        forTable: TableReference, 
+        minId: number, maxId: number
+    ): Promise<void> {
         const table = forTable.table.toString();
-        const updatedIds = (this.updatedIds[ table ] || []).slice();
-        updatedIds.push(...ids);
+        const updated = (this.updatedByMinMax[ table ] || []).slice();
 
-        this.updatedIds[ table ] = updatedIds;
+        updated.push(`${minId} - ${maxId}`);
+        this.updatedByMinMax[ table ] = updated;
     }
 
     async updateCacheLimitedPackage(select: Select, forTable: TableReference, limit: number): Promise<number> {
         const table = forTable.table.toString();
         
-        const alreadyUpdatedPackages = (this.updatedPackages[table] || []).slice();
+        const alreadyUpdatedPackages = (this.updatedByLimit[table] || []).slice();
         const updateRowsCount = alreadyUpdatedPackages.reduce((total, updated) => 
             total + updated.limit,
             0
@@ -176,7 +180,7 @@ implements IDatabaseDriver {
         alreadyUpdatedPackages.push({
             limit
         });
-        this.updatedPackages[table] = alreadyUpdatedPackages;
+        this.updatedByLimit[table] = alreadyUpdatedPackages;
 
         return Math.min(remainder, limit);
     }
@@ -222,20 +226,23 @@ implements IDatabaseDriver {
     }
 
     getUpdatedPackages(table: string) {
-        return this.updatedPackages[table];
+        return this.updatedByLimit[table];
     }
 
     wasDroppedColumn(table: string, columnName: string): boolean {
         return !!this.columnsDrops[ table + "." + columnName ];
     }
 
-    setTableIds(table: TableID, allTableIds: number[]): void {
-        this.tablesIds[ table.toString() ] = allTableIds;
+    setTableMinMax(table: TableID, min: number, max: number): void {
+        this.tablesIds[ table.toString() ] = {min, max};
     }
 
-    getUpdatedIds(table: TableID) {
-        const updatedIds = (this.updatedIds[ table.toString() ] || []).slice();
-        updatedIds.sort((a, b) => a - b);
+    getUpdates(table: TableID) {
+        const updatedIds = (this.updatedByMinMax[ table.toString() ] || []).slice();
+        updatedIds.sort((a, b) => 
+            Number(a.split("-")[0]) - 
+            Number(b.split("-")[0])
+        );
         return updatedIds;
     }
 }

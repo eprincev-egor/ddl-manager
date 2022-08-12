@@ -18,7 +18,8 @@ describe("ParallelFirstUpdateCache", () => {
 
     const timeoutOnDeadlock = UpdateMigrator.timeoutOnDeadlock;
 
-    const allIds = generateIds(2 * packageSize * parallelPackagesCount);
+    const maxId = 79999;
+
     const someTable = new TableID("public", "some_table");
     const someUpdate: IUpdate = {
         cacheName: "my_cache",
@@ -35,7 +36,7 @@ describe("ParallelFirstUpdateCache", () => {
         fakePostgres = new FakeDatabaseDriver();
         database = new Database();
         
-        fakePostgres.setTableIds(someTable, allIds);
+        fakePostgres.setTableMinMax(someTable, 1, maxId);
 
         migration = Migration.empty();
         migration.create(someUpdateMigration);
@@ -44,9 +45,11 @@ describe("ParallelFirstUpdateCache", () => {
     it("update all rows", async() => {
         await MainMigrator.migrate(fakePostgres, database, migration);
 
-        const actualUpdatedIds = fakePostgres.getUpdatedIds(someTable);
-        assert.strictEqual(actualUpdatedIds.length, allIds.length)
-        assert.deepStrictEqual(actualUpdatedIds, allIds);
+        const actualUpdates = fakePostgres.getUpdates(someTable);
+        assert.strictEqual(
+            actualUpdates.length,
+            Math.ceil(maxId / packageSize)
+        );
     });
 
     it("update all rows when recursionWith is empty array", async() => {
@@ -62,8 +65,25 @@ describe("ParallelFirstUpdateCache", () => {
 
         await MainMigrator.migrate(fakePostgres, database, migration);
 
-        const actualUpdatedIds = fakePostgres.getUpdatedIds(someTable);
-        assert.strictEqual(actualUpdatedIds.length, allIds.length);
+        const actualUpdatedIds = fakePostgres.getUpdates(someTable);
+        assert.deepStrictEqual(actualUpdatedIds, [
+            "1 - 10001",
+            "5001 - 10001",
+            "10001 - 20001",
+            "15001 - 20001",
+            "20001 - 30001",
+            "25001 - 30001",
+            "30001 - 40001",
+            "35001 - 40001",
+            "40001 - 50001",
+            "45001 - 50001",
+            "50001 - 60001",
+            "55001 - 60001",
+            "60001 - 70001",
+            "65001 - 70001",
+            "70001 - 80000",
+            "75001 - 80000"
+        ]);
     });
 
     it("re-try on deadlock", async() => {
@@ -77,8 +97,11 @@ describe("ParallelFirstUpdateCache", () => {
 
         await MainMigrator.migrate(fakePostgres, database, migration);
 
-        const actualUpdatedIds = fakePostgres.getUpdatedIds(someTable);
-        assert.strictEqual(actualUpdatedIds.length, allIds.length);
+        const actualUpdates = fakePostgres.getUpdates(someTable);
+        assert.strictEqual(
+            actualUpdates.length,
+            Math.ceil(maxId / packageSize)
+        );
 
         UpdateMigrator.timeoutOnDeadlock = timeoutOnDeadlock;
     });
@@ -99,13 +122,16 @@ describe("ParallelFirstUpdateCache", () => {
 
         await MainMigrator.migrate(fakePostgres, database, migration);
 
-        assert.deepStrictEqual(calls, [
-            ...repeat("start", parallelPackagesCount),
-            ...repeat("end", parallelPackagesCount),
-
-            ...repeat("start", parallelPackagesCount),
-            ...repeat("end", parallelPackagesCount)
-        ]);
+        assert.deepStrictEqual(
+            calls.slice(0, parallelPackagesCount),
+            repeat("start", parallelPackagesCount),
+            "start parallel"
+        );
+        assert.deepStrictEqual(
+            calls.slice(-parallelPackagesCount),
+            repeat("end", parallelPackagesCount),
+            "end parallel"
+        );
     });
 
     it("update error on invalid select", async() => {

@@ -21,9 +21,12 @@ export interface IDatabaseDriver {
     }>;
     createOrReplaceColumn(column: Column): Promise<void>;
     dropColumn(column: Column): Promise<void>;
-    selectIds(table: TableID, offset: number, limit: number): Promise<number[]>;
+    selectMinMax(table: TableID): Promise<MinMax>;
+    /** update rows where id >= minId and id < maxId */
     updateCacheForRows(
-        select: Select, forTable: TableReference, ids: number[],
+        select: Select,
+        forTable: TableReference,
+        minId: number, maxId: number,
         cacheName: string
     ): Promise<void>;
     updateCacheLimitedPackage(
@@ -36,4 +39,9 @@ export interface IDatabaseDriver {
     end(): void;
     disableTrigger(onTable: TableID, triggerName: string): Promise<void>;
     enableTrigger(onTable: TableID, triggerName: string): Promise<void>;
+}
+
+export interface MinMax {
+    min: number | null;
+    max: number | null;
 }

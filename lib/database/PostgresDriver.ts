@@ -1,6 +1,6 @@
 import fs from "fs";
 import { Pool } from "pg";
-import { IDatabaseDriver } from "./interface";
+import { IDatabaseDriver, MinMax } from "./interface";
 import { FileParser } from "../parser";
 import { PGTypes } from "./PGTypes";
 import { Select } from "../ast";
@@ -315,22 +315,25 @@ implements IDatabaseDriver {
         await this.query(sql);
     }
 
-    async selectIds(table: TableID, offset: number): Promise<number[]> {
+    async selectMinMax(table: TableID): Promise<MinMax> {
+        // need sort by asc, because new rows may be created
         const sql = `
-            select id
+            select
+                min(id) as min,
+                max(id) as max
             from ${table}
-            order by id desc
-            offset ${+offset}
         `;
         const {rows} = await this.query(sql);
-        const ids = rows.map(row => row.id);
-        return ids;
+        return {
+            min: rows[0].min,
+            max: rows[0].max
+        }
     }
 
     async updateCacheForRows(
         select: Select,
         forTable: TableReference,
-        ids: number[],
+        minId: number, maxId: number,
         cacheName: string
     ) {
         const columnsToUpdate = select.columns.map(column =>
@@ -341,7 +344,11 @@ implements IDatabaseDriver {
             `${forTable.getIdentifier()}.${columnName} is distinct from ddl_manager_tmp.${columnName}`
         ).join("\nor\n");
 
-        const selectBrokenRowsWithLimit = `
+        const sets = columnsToUpdate.map(columName => 
+            `${columName} = ddl_manager_tmp.${columName}`
+        );
+
+        const selectBrokenRows = `
             select
                 ${forTable.getIdentifier()}.id,
                 ddl_manager_tmp.*
@@ -352,29 +359,20 @@ implements IDatabaseDriver {
             ) as ddl_manager_tmp on true
 
             where
-                ${forTable.getIdentifier()}.id in (${ids.map(id => +id).join(", ")}) and
+                ${forTable.getIdentifier()}.id >= ${minId} and
+                ${forTable.getIdentifier()}.id < ${maxId} and
                 ${ whereRowIsBroken }
         `;
 
         const sql = `-- cache ${cacheName} for ${forTable.table}
             with ddl_manager_tmp as (
-                ${selectBrokenRowsWithLimit}
+                ${selectBrokenRows}
             )
             update ${forTable} set
-                (
-                    ${ columnsToUpdate.join(", ") }
-                ) = (
-                    select
-                    ${ columnsToUpdate.map(columnName =>
-                        "ddl_manager_tmp." + columnName
-                    ).join(", ") }
-                )
+                ${sets.join(", ")}
             from ddl_manager_tmp
-
             where
                 ddl_manager_tmp.id = ${forTable.getIdentifier()}.id
-            
-            returning ${forTable.getIdentifier()}.id
         `;
         await this.query(sql);
     }
