@@ -326,8 +326,8 @@ implements IDatabaseDriver {
         `;
         const {rows} = await this.query(sql);
         return {
-            min: rows[0].min,
-            max: rows[0].max
+            min: toNumber(rows[0].min),
+            max: toNumber(rows[0].max)
         }
     }
 
@@ -466,6 +466,13 @@ implements IDatabaseDriver {
             throw err;
         }
     }
+}
+
+function toNumber(value: string | number | null | undefined): number | null {
+    if ( value == null ) {
+        return null;
+    }
+    return +value;
 }
 
 // function parseColumnNulls(columnRow: any) {
