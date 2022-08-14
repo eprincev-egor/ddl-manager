@@ -97,7 +97,11 @@ export class UpdateMigrator extends AbstractMigrator {
         endId: number
     ) {
         while ( startId < endId ) {
-            await this.tryUpdateCacheRows(update, startId, endId);
+            await this.tryUpdateCacheRows(
+                update,
+                startId,
+                startId + packageSize
+            );
             startId += packageSize;
         }
     }
