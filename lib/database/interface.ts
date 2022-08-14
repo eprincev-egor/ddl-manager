@@ -6,6 +6,7 @@ import { DatabaseTrigger } from "./schema/DatabaseTrigger";
 import { DatabaseFunction  } from "./schema/DatabaseFunction";
 import { Index } from "./schema/Index";
 import { TableID } from "./schema/TableID";
+import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
 
 // TODO: apply I from SOLID
 export interface IDatabaseDriver {
@@ -24,14 +25,12 @@ export interface IDatabaseDriver {
     selectMinMax(table: TableID): Promise<MinMax>;
     /** update rows where id >= minId and id < maxId */
     updateCacheForRows(
-        select: Select,
-        forTable: TableReference,
-        minId: number, maxId: number,
-        cacheName: string
+        update: CacheUpdate,
+        minId: number, maxId: number
     ): Promise<void>;
     updateCacheLimitedPackage(
-        select: Select, forTable: TableReference, limit: number,
-        cacheName: string
+        update: CacheUpdate,
+        limit: number
     ): Promise<number>;
     createOrReplaceHelperFunc(func: DatabaseFunction): Promise<void>;
     dropIndex(index: Index): Promise<void>;

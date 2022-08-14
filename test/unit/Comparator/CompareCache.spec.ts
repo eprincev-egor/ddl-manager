@@ -77,11 +77,11 @@ describe("Comparator: compare cache", async() => {
 
         assert.strictEqual(toCreate.updates.length, 1, "one update for columns");
         assert.strictEqual(
-            toCreate.updates[0].forTable.toString(),
-            "companies"
+            toCreate.updates[0].table.table.toString(),
+            "public.companies"
         );
         assert.strictEqual(
-            toCreate.updates[0].select.columns[0].toString().trim(),
+            toCreate.updates[0].selects[0].columns[0].toString().trim(),
             "sum(orders.profit) as orders_profit"
         );
 
@@ -334,7 +334,7 @@ describe("Comparator: compare cache", async() => {
 
         assert.strictEqual(toCreate.updates.length, 1, "refresh cache per one update");
         assert.deepStrictEqual(
-            toCreate.updates[0].select.columns.map(column => column.name),
+            toCreate.updates[0].selects[0].columns.map(column => column.name),
             ["some_dates", "max_text_dt_create", "max_text", "sum_text_sum", "sum_text"],
             "refresh cache per one update"
         );

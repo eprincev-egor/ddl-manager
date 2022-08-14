@@ -1,22 +1,15 @@
 import { DatabaseFunction } from "../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
 import { Column } from "../database/schema/Column";
-import { TableReference } from "../database/schema/TableReference";
 import { Index } from "../database/schema/Index";
-import { Select } from "../ast";
-
-export interface IUpdate {
-    cacheName: string;
-    select: Select;
-    forTable: TableReference;
-    recursionWith: IUpdate[];
-}
+import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
+import { flatMap } from "lodash";
 
 export interface IChanges {
     functions: DatabaseFunction[];
     triggers: DatabaseTrigger[];
     columns: Column[];
-    updates: IUpdate[];
+    updates: CacheUpdate[];
     indexes: Index[];
 }
 
@@ -112,8 +105,9 @@ export class Migration {
         });
 
         this.toCreate.updates.forEach((update) => {
-            const columns = update.select.columns.map(column => column.name);
-            console.log(`cache ${update.cacheName}, update ${update.forTable.table} set ${columns.join(", ")}`);
+            const columns = flatMap(update.selects, select => select.columns)
+                .map(column => column.name);
+            console.log(`cache ${update.caches}, update ${update.table.table} set ${columns.join(", ")}`);
         });
     }
     

@@ -1,4 +1,6 @@
 import { Database } from "../database/schema/Database";
+import { TableID } from "../database/schema/TableID";
+import { TableReference } from "../database/schema/TableReference";
 import { AbstractAstElement } from "./AbstractAstElement";
 import { Expression } from "./expression/Expression";
 import { Spaces } from "./Spaces";
@@ -35,6 +37,17 @@ export class SelectColumn extends AbstractAstElement {
         return new SelectColumn({
             name: this.name,
             expression: newExpression
+        });
+    }
+
+    replaceTable(
+        replaceTable: TableReference | TableID,
+        toTable: TableReference
+    ) {
+        return new SelectColumn({
+            name: this.name,
+            expression: this.expression
+                .replaceTable(replaceTable, toTable)
         });
     }
 

@@ -102,6 +102,14 @@ export class Expression extends AbstractExpressionElement {
         }
     }
 
+    isCoalesce() {
+        if ( !this.isFuncCall() ) {
+            return false;
+        }
+        const funcCall = this.getFuncCalls()[0] as FuncCall;
+        return funcCall.name === "coalesce";
+    }
+
     isFuncCall(): boolean {
         const elements = this.getElementsWithoutCasts();
         const firstElem = elements[0];

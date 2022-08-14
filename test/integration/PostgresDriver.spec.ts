@@ -13,6 +13,8 @@ import { From, Select, SelectColumn, Expression, ColumnReference, Operator } fro
 import { FileParser } from "../../lib/parser";
 import { flatMap } from "lodash";
 import { Comment } from "../../lib/database/schema/Comment";
+import { CacheUpdate } from "../../lib/Comparator/graph/CacheUpdate";
+import { CacheColumn } from "../../lib/Comparator/graph/CacheColumn";
 
 use(chaiShallowDeepEqualPlugin);
 
@@ -944,10 +946,15 @@ describe("integration/PostgresDriver.loadState", () => {
         let updatedCount: any;
 
         updatedCount = await driver.updateCacheLimitedPackage(
-            select,
-            companiesTableRef,
-            3,
-            "test-cache"
+            new CacheUpdate([
+                new CacheColumn({
+                    for: companiesTableRef,
+                    name: "orders_profit",
+                    cache: {name: "test-cache", signature: "test-cache for companies"},
+                    select
+                })
+            ]),
+            3
         );
 
         assert.strictEqual(updatedCount, 3);
@@ -970,10 +977,15 @@ describe("integration/PostgresDriver.loadState", () => {
         // also should be update broken rows
         await db.query("update companies set orders_profit = 20 where id in (1,2,3)");
         updatedCount = await driver.updateCacheLimitedPackage(
-            select,
-            companiesTableRef,
-            6,
-            "test-cache"
+            new CacheUpdate([
+                new CacheColumn({
+                    for: companiesTableRef,
+                    name: "orders_profit",
+                    cache: {name: "test-cache", signature: "test-cache for companies"},
+                    select
+                })
+            ]),
+            6
         );
 
         assert.strictEqual(updatedCount, 6);
@@ -995,10 +1007,15 @@ describe("integration/PostgresDriver.loadState", () => {
         
         // last update, all rows should be updated
         updatedCount = await driver.updateCacheLimitedPackage(
-            select,
-            companiesTableRef,
-            5,
-            "test-cache"
+            new CacheUpdate([
+                new CacheColumn({
+                    for: companiesTableRef,
+                    name: "orders_profit",
+                    cache: {name: "test-cache", signature: "test-cache for companies"},
+                    select
+                })
+            ]),
+            5
         );
 
         assert.strictEqual(updatedCount, 4);

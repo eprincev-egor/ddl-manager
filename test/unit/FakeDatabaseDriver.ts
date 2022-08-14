@@ -9,6 +9,7 @@ import { Column } from "../../lib/database/schema/Column";
 import { IFileContent } from "../../lib/fs/File";
 import { Index } from "../../lib/database/schema/Index";
 import { TableID } from "../../lib/database/schema/TableID";
+import { CacheUpdate } from "../../lib/Comparator/graph/CacheUpdate";
 
 export class FakeDatabaseDriver
 implements IDatabaseDriver {
@@ -155,19 +156,22 @@ implements IDatabaseDriver {
     }
     
     async updateCacheForRows(
-        select: Select, 
-        forTable: TableReference, 
-        minId: number, maxId: number
+        update: CacheUpdate,
+        minId: number,
+        maxId: number
     ): Promise<void> {
-        const table = forTable.table.toString();
+        const table = update.table.table.toString();
         const updated = (this.updatedByMinMax[ table ] || []).slice();
 
         updated.push(`${minId} - ${maxId}`);
         this.updatedByMinMax[ table ] = updated;
     }
 
-    async updateCacheLimitedPackage(select: Select, forTable: TableReference, limit: number): Promise<number> {
-        const table = forTable.table.toString();
+    async updateCacheLimitedPackage(
+        update: CacheUpdate,
+        limit: number
+    ): Promise<number> {
+        const table = update.table.table.toString();
         
         const alreadyUpdatedPackages = (this.updatedByLimit[table] || []).slice();
         const updateRowsCount = alreadyUpdatedPackages.reduce((total, updated) => 

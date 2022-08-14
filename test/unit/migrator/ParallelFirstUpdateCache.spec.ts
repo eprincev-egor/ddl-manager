@@ -1,13 +1,15 @@
-import assert from "assert";
+import { UpdateMigrator, packageSize, parallelPackagesCount } from "../../../lib/Migrator/UpdateMigrator";
 import { FakeDatabaseDriver } from "../FakeDatabaseDriver";
 import { MainMigrator } from "../../../lib/Migrator/MainMigrator";
-import { IChanges, IUpdate, Migration } from "../../../lib/Migrator/Migration";
+import { IChanges, Migration } from "../../../lib/Migrator/Migration";
 import { TableID } from "../../../lib/database/schema/TableID";
 import { Select } from "../../../lib/ast";
 import { TableReference } from "../../../lib/database/schema/TableReference";
 import { Database } from "../../../lib/database/schema/Database";
-import { UpdateMigrator, packageSize, parallelPackagesCount } from "../../../lib/Migrator/UpdateMigrator";
+import { CacheUpdate } from "../../../lib/Comparator/graph/CacheUpdate";
+import { CacheColumn } from "../../../lib/Comparator/graph/CacheColumn";
 import { sleep } from "../../integration/sleep";
+import assert from "assert";
 
 
 describe("ParallelFirstUpdateCache", () => {
@@ -18,15 +20,17 @@ describe("ParallelFirstUpdateCache", () => {
 
     const timeoutOnDeadlock = UpdateMigrator.timeoutOnDeadlock;
 
-    const maxId = 79999;
+    const maxId = 159_999;
 
     const someTable = new TableID("public", "some_table");
-    const someUpdate: IUpdate = {
-        cacheName: "my_cache",
-        select: new Select(),
-        forTable: new TableReference(someTable),
-        recursionWith: []
-    };
+    const someUpdate = new CacheUpdate([
+        new CacheColumn({
+            for: new TableReference(someTable),
+            name: "my_column",
+            cache: {name: "my_cache", signature: "my_cache for some_table"},
+            select: new Select()
+        })
+    ]);
     const someUpdateMigration: Partial<IChanges> = {
         updates: [someUpdate]
     };
@@ -55,34 +59,29 @@ describe("ParallelFirstUpdateCache", () => {
     it("update all rows when recursionWith is empty array", async() => {
         migration = Migration.empty();
         migration.create({
-            updates: [{
-                cacheName: "my_cache",
-                select: new Select(),
-                forTable: new TableReference(someTable),
-                recursionWith: []
-            }]
+            updates: [someUpdate]
         });
 
         await MainMigrator.migrate(fakePostgres, database, migration);
 
         const actualUpdatedIds = fakePostgres.getUpdates(someTable);
         assert.deepStrictEqual(actualUpdatedIds, [
-            "1 - 10001",
-            "5001 - 10001",
+            "1 - 20001",
             "10001 - 20001",
-            "15001 - 20001",
-            "20001 - 30001",
-            "25001 - 30001",
+            "20001 - 40001",
             "30001 - 40001",
-            "35001 - 40001",
-            "40001 - 50001",
-            "45001 - 50001",
+            "40001 - 60001",
             "50001 - 60001",
-            "55001 - 60001",
-            "60001 - 70001",
-            "65001 - 70001",
-            "70001 - 80000",
-            "75001 - 80000"
+            "60001 - 80001",
+            "70001 - 80001",
+            "80001 - 100001",
+            "90001 - 100001",
+            "100001 - 120001",
+            "110001 - 120001",
+            "120001 - 140001",
+            "130001 - 140001",
+            "140001 - 160000",
+            "150001 - 160000"
         ]);
     });
 
@@ -140,12 +139,7 @@ describe("ParallelFirstUpdateCache", () => {
         };
 
         migration.create({
-            updates: [{
-                cacheName: "my_cache",
-                select: new Select(),
-                forTable: new TableReference(new TableID("public", "some_table")),
-                recursionWith: []
-            }]
+            updates: [someUpdate]
         });
 
         let actualError = new Error("expected error");
@@ -160,14 +154,6 @@ describe("ParallelFirstUpdateCache", () => {
             "operator does not exist: bigint[] && integer[]"
         );
     });
-
-    function generateIds(quantity: number): number[] {
-        const ids: number[] = [];
-        for (let id = 1; id <= quantity; id++) {
-            ids.push(id);
-        }
-        return ids;
-    }
 
     function repeat(word: string, quantity: number): string[] {
         const words: string[] = [];

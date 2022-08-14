@@ -6,6 +6,7 @@ import { SelectColumn } from "./SelectColumn";
 import { Spaces } from "./Spaces";
 import { TableReference, IReferenceFilter } from "../database/schema/TableReference";
 import { OrderBy } from "./OrderBy";
+import { TableID } from "../database/schema/TableID";
 
 interface ISelectParams {
     columns: SelectColumn[];
@@ -101,6 +102,52 @@ export class Select extends AbstractAstElement {
         return outputTableRef;
     }
 
+    replaceTable(
+        replaceTable: TableReference | TableID,
+        toTable: TableReference
+    ) {
+        return this.cloneWith({
+            columns: this.columns.map(column => 
+                column.replaceTable(replaceTable, toTable)
+            ),
+            from: this.from.map(from =>
+                from.replaceTable(replaceTable, toTable)
+            ),
+            where: (
+                this.where ? 
+                    this.where.replaceTable(replaceTable, toTable) : 
+                    undefined
+            ),
+            orderBy: (
+                this.orderBy ? 
+                    this.orderBy.replaceTable(replaceTable, toTable) : 
+                    undefined
+            ),
+        })
+    }
+
+    equalSource(select: Select) {
+        if ( this.where && select.where ) {
+            this.where.equal(select.where)
+        }
+
+        if ( this.orderBy && select.orderBy ) {
+            this.orderBy.equal(select.orderBy)
+        }
+        return (
+            this.from.length === select.from.length &&
+            this.from.every((fromItem, i) =>
+                fromItem.equal(select.from[i])
+            )
+            &&
+            equal(this.where, select.where)
+            &&
+            equal(this.orderBy, select.orderBy)
+            &&
+            this.limit === select.limit
+        );
+    }
+
     template(spaces: Spaces) {
         return [
             spaces + "select",
@@ -174,4 +221,21 @@ export class Select extends AbstractAstElement {
 
         return allReferences;
     }
+}
+
+interface EqualItem {
+    equal(item: this): boolean;
+}
+
+function equal<T extends EqualItem>(
+    a: T | undefined,
+    b: T | undefined
+) {
+    if ( a && b ) {
+        return a.equal(b);
+    }
+    if ( !a && !b ) {
+        return true;
+    }
+    return false;
 }

@@ -1,5 +1,6 @@
 import { Expression } from "./expression/Expression";
 import { TableReference } from "../database/schema/TableReference";
+import { TableID } from "../database/schema/TableID";
 
 export class Join {
     readonly type: string;
@@ -9,6 +10,25 @@ export class Join {
         this.type = type;
         this.table = table;
         this.on = on;
+    }
+
+    replaceTable(
+        replaceTable: TableReference | TableID,
+        toTable: TableReference
+    ) {
+        return new Join(
+            this.type,
+            this.table.clone(),
+            this.on.replaceTable(replaceTable, toTable)
+        );
+    }
+
+    equal(join: Join) {
+        return (
+            this.type === join.type &&
+            this.table.equal(join.table) &&
+            this.on.equal(join.on)
+        );
     }
 
     clone() {

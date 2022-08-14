@@ -1,4 +1,6 @@
 import { flatMap } from "lodash";
+import { TableID } from "../database/schema/TableID";
+import { TableReference } from "../database/schema/TableReference";
 import { AbstractAstElement } from "./AbstractAstElement";
 import { ConditionElementType } from "./expression";
 import { OrderByItem, CompareRow } from "./OrderByItem";
@@ -15,6 +17,25 @@ export class OrderBy extends AbstractAstElement {
     clone() {
         const newItems = this.items.map(item => item.clone());
         return new OrderBy(newItems);
+    }
+
+    replaceTable(
+        replaceTable: TableReference | TableID,
+        toTable: TableReference
+    ) {
+        const newItems = this.items.map(item => 
+            item.replaceTable(replaceTable, toTable)
+        );
+        return new OrderBy(newItems);
+    }
+
+    equal(orderBy: OrderBy) {
+        return (
+            this.items.length === orderBy.items.length &&
+            this.items.every((item, i) =>
+                item.equal(orderBy.items[i])
+            )
+        );
     }
 
     getColumnReferences() {

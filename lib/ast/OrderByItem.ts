@@ -1,3 +1,5 @@
+import { TableID } from "../database/schema/TableID";
+import { TableReference } from "../database/schema/TableReference";
 import { AbstractAstElement } from "./AbstractAstElement";
 import { ConditionElementType, Expression } from "./expression";
 import { Spaces } from "./Spaces";
@@ -44,6 +46,26 @@ export class OrderByItem extends AbstractAstElement {
             type: this.type,
             nulls: this.nulls
         });
+    }
+
+    replaceTable(
+        replaceTable: TableReference | TableID,
+        toTable: TableReference
+    ) {
+        return new OrderByItem({
+            expression: this.expression
+                .replaceTable(replaceTable, toTable),
+            type: this.type,
+            nulls: this.nulls
+        });
+    }
+
+    equal(item: OrderByItem) {
+        return (
+            this.expression.equal(item.expression) &&
+            this.type == item.type &&
+            this.nulls == item.nulls
+        );
     }
 
     getColumnReferences() {

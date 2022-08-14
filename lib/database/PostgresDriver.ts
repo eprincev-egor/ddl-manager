@@ -18,6 +18,7 @@ import { flatMap } from "lodash";
 import { wrapText } from "./postgres/wrapText";
 import { IFileContent } from "../fs/File";
 import { Index } from "./schema/Index";
+import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
 
 const selectAllFunctionsSQL = fs.readFileSync(__dirname + "/postgres/select-all-functions.sql")
     .toString();
@@ -331,106 +332,85 @@ implements IDatabaseDriver {
     }
 
     async updateCacheForRows(
-        select: Select,
-        forTable: TableReference,
-        minId: number, maxId: number,
-        cacheName: string
+        update: CacheUpdate,
+        minId: number,
+        maxId: number
     ) {
-        const columnsToUpdate = select.columns.map(column =>
-            column.name
-        );
-
-        const whereRowIsBroken = columnsToUpdate.map(columnName =>
-            `${forTable.getIdentifier()}.${columnName} is distinct from ddl_manager_tmp.${columnName}`
-        ).join("\nor\n");
-
-        const sets = columnsToUpdate.map(columName => 
-            `${columName} = ddl_manager_tmp.${columName}`
-        );
-
-        const selectBrokenRows = `
-            select
-                ${forTable.getIdentifier()}.id,
-                ddl_manager_tmp.*
-            from ${forTable}
-
-            left join lateral (
-                ${ select }
-            ) as ddl_manager_tmp on true
-
-            where
-                ${forTable.getIdentifier()}.id >= ${minId} and
-                ${forTable.getIdentifier()}.id < ${maxId} and
-                ${ whereRowIsBroken }
-        `;
-
-        const sql = `-- cache ${cacheName} for ${forTable.table}
-            with ddl_manager_tmp as (
-                ${selectBrokenRows}
-            )
-            update ${forTable} set
-                ${sets.join(", ")}
-            from ddl_manager_tmp
-            where
-                ddl_manager_tmp.id = ${forTable.getIdentifier()}.id
-        `;
+        const sql = this.buildUpdateSql(update, `
+            and
+            ${update.table.getIdentifier()}.id >= ${minId} and
+            ${update.table.getIdentifier()}.id < ${maxId}
+        `);
         await this.query(sql);
     }
 
     async updateCacheLimitedPackage(
-        select: Select,
-        forTable: TableReference,
-        limit: number,
-        cacheName: string
+        update: CacheUpdate,
+        limit: number
     ) {
-        const columnsToUpdate = select.columns.map(column =>
-            column.name
-        );
-
-        const whereRowIsBroken = columnsToUpdate.map(columnName =>
-            `${forTable.getIdentifier()}.${columnName} is distinct from ddl_manager_tmp.${columnName}`
-        ).join("\nor\n");
-
-        const selectBrokenRowsWithLimit = `
-            select
-                ${forTable.getIdentifier()}.id,
-                ddl_manager_tmp.*
-            from ${forTable}
-
-            left join lateral (
-                ${ select }
-            ) as ddl_manager_tmp on true
-
-            where
-                ${ whereRowIsBroken }
-            
-            order by ${forTable.getIdentifier()}.id asc
+        const sql = this.buildUpdateSql(update, `
+            order by ${update.table.getIdentifier()}.id asc
             limit ${ limit }
-        `;
+        `) + `\n returning ${update.table.getIdentifier()}.id`;
+        const {rows} = await this.query(sql);
+        return rows.length;
+    }
+    
+    private buildUpdateSql(
+        update: CacheUpdate,
+        filter: string
+    ) {
+        const sets: string[] = [];
+        const whereRowIsBroken: string[] = [];
+        const joins: string[] = [];
+        const joinsNames: string[] = [];
 
-        const sql = `-- cache ${cacheName} for ${forTable.table}
-            with ddl_manager_tmp as (
-                ${selectBrokenRowsWithLimit}
-            )
-            update ${forTable} set
-                (
-                    ${ columnsToUpdate.join(", ") }
-                ) = (
-                    select
-                    ${ columnsToUpdate.map(columnName =>
-                        "ddl_manager_tmp." + columnName
-                    ).join(", ") }
-                )
-            from ddl_manager_tmp
+        for (let i = 0, n = update.selects.length; i < n; i++) {
+            const select = update.selects[i];
+            const joinName = `expected_${i}`;
+
+            joinsNames.push(joinName);
+
+            for (const column of select.columns) {
+                sets.push(`${column.name} = ddl_manager_tmp.${column.name}`);
+                whereRowIsBroken.push(
+                    `${update.table.getIdentifier()}.${column.name} 
+                        is distinct from 
+                    ${joinName}.${column.name}`
+                );
+            }
+
+            joins.push(`
+                left join lateral (
+                    ${select}
+                ) as ${joinName} on true
+            `);
+        }
+
+        const selectBrokenRows = `
+            select
+                ${update.table.getIdentifier()}.id,
+                ${joinsNames.map(joinName => joinName + ".*").join(",\n")}
+            from ${update.table.toString()}
+            
+            ${joins.join("\n\n")}
 
             where
-                ddl_manager_tmp.id = ${forTable.getIdentifier()}.id
-            
-            returning ${forTable.getIdentifier()}.id
+                (${ whereRowIsBroken.join("\nor\n") })
+                ${filter}
         `;
-        const {rows} = await this.query(sql);
 
-        return rows.length;
+        const sql = `-- cache ${update.caches.join(", ")} for ${update.table.table}
+            with ddl_manager_tmp as (
+                ${selectBrokenRows}
+            )
+            update ${update.table.toString()} set
+                ${sets.join(", ")}
+            from ddl_manager_tmp
+            where
+                ddl_manager_tmp.id = ${update.table.getIdentifier()}.id
+        `;
+        return sql;
     }
 
     async createOrReplaceHelperFunc(func: DatabaseFunction) {

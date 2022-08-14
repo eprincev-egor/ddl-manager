@@ -1,8 +1,9 @@
 import { AbstractMigrator } from "./AbstractMigrator";
-import { IUpdate } from "./Migration";
-import { TableID } from "../database/schema/TableID";
+import { TableReference } from "../database/schema/TableReference";
+import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
+import { flatMap } from "lodash";
 
-export const packageSize = 5000;
+export const packageSize = 10000;
 export const parallelPackagesCount = 8;
 
 export class UpdateMigrator extends AbstractMigrator {
@@ -13,10 +14,9 @@ export class UpdateMigrator extends AbstractMigrator {
 
     async create() {
         for (const update of this.migration.toCreate.updates) {
-            const updatingTable = update.forTable.table;
-            const triggers = this.findTriggers(updatingTable);
+            const triggers = this.findTriggers(update.table);
 
-            await this.disableTriggers(updatingTable, triggers);
+            await this.disableTriggers(update.table, triggers);
 
             if ( update.recursionWith.length > 0 ) {
                 await this.updateCacheLimitedPackage(update);
@@ -25,11 +25,12 @@ export class UpdateMigrator extends AbstractMigrator {
                 await this.parallelUpdateCacheByIds(update);
             }
 
-            await this.enableTriggers(updatingTable, triggers);
+            await this.enableTriggers(update.table, triggers);
         }
     }
 
-    private findTriggers(onTable: TableID): string[] {
+    private findTriggers(onTableRef: TableReference): string[] {
+        const onTable = onTableRef.table;
         const table = this.database.getTable(onTable);
         if ( !table ) {
             return []
@@ -44,25 +45,26 @@ export class UpdateMigrator extends AbstractMigrator {
             .filter(trigger => trigger.table.equal(onTable));
 
         return [...oldTriggers, ...newTriggers]
-            .filter(trigger => !trigger.cacheSignature)
             .filter(trigger => trigger.update || trigger.updateOf)
             .map(trigger => trigger.name);
     }
 
-    private async disableTriggers(onTable: TableID, triggers: string[]) {
+    private async disableTriggers(onTableRef: TableReference, triggers: string[]) {
+        const onTable = onTableRef.table;
         for (const triggerName of triggers) {
             await this.postgres.disableTrigger(onTable, triggerName);
         }
     }
 
-    private async enableTriggers(onTable: TableID, triggers: string[]) {
+    private async enableTriggers(onTableRef: TableReference, triggers: string[]) {
+        const onTable = onTableRef.table;
         for (const triggerName of triggers) {
             await this.postgres.enableTrigger(onTable, triggerName);
         }
     }
 
-    private async parallelUpdateCacheByIds(update: IUpdate) {
-        const {min, max} = await this.postgres.selectMinMax(update.forTable.table);
+    private async parallelUpdateCacheByIds(update: CacheUpdate) {
+        const {min, max} = await this.postgres.selectMinMax(update.table.table);
         if ( min === null || max === null ) {
             return;
         }
@@ -90,7 +92,7 @@ export class UpdateMigrator extends AbstractMigrator {
     }
 
     private async updateCacheThread(
-        update: IUpdate,
+        update: CacheUpdate,
         startId: number,
         endId: number
     ) {
@@ -101,24 +103,17 @@ export class UpdateMigrator extends AbstractMigrator {
     }
 
     private async tryUpdateCacheRows(
-        update: IUpdate,
+        update: CacheUpdate,
         minId: number,
         maxId: number,
         attemptsNumberAfterDeadlock = 0
     ) {
-        // tslint:disable-next-line: no-console
-        console.log([
-            `parallel updating ids ${minId} - ${maxId}`,
-            `table: ${update.forTable}`,
-            `columns: ${update.select.columns.map(col => col.name).join(", ")}`,
-            `cache: ${update.cacheName} `
-        ].join("\n"));
+        logUpdate(update, `parallel updating ids ${minId} - ${maxId}`);
 
         try {
             await this.postgres.updateCacheForRows(
-                update.select, update.forTable,
-                minId, maxId,
-                update.cacheName
+                update,
+                minId, maxId
             );
         } catch(err) {
             const message = (err as any).message;
@@ -142,19 +137,13 @@ export class UpdateMigrator extends AbstractMigrator {
     }
 
     private async updateCacheLimitedPackage(
-        update: IUpdate,
+        update: CacheUpdate,
         packageIndex = 0
     ) {
         let needUpdateMore = false;
 
         do {
-            // tslint:disable-next-line: no-console
-            console.log([
-                `updating #${ ++packageIndex }`,
-                `table: ${update.forTable}`,
-                `columns: ${update.select.columns.map(col => col.name).join(", ")}`,
-                `cache: ${update.cacheName} `
-            ].join("\n"));
+            logUpdate(update, `updating #${ ++packageIndex }`);
 
             const updatedCount = await this.tryUpdateCacheLimitedPackage(update);
             needUpdateMore = updatedCount >= packageSize;
@@ -169,15 +158,13 @@ export class UpdateMigrator extends AbstractMigrator {
     }
 
     private async tryUpdateCacheLimitedPackage(
-        update: IUpdate,
+        update: CacheUpdate,
         attemptsNumberAfterDeadlock = 0
     ): Promise<number> {
         try {
             return await this.postgres.updateCacheLimitedPackage(
-                update.select,
-                update.forTable,
-                packageSize,
-                update.cacheName
+                update,
+                packageSize
             );
         } catch(err) {
             const message = (err as any).message;
@@ -200,7 +187,7 @@ export class UpdateMigrator extends AbstractMigrator {
     }
 
     private async updateAlsoRecursions(
-        update: IUpdate,
+        update: CacheUpdate,
         packageIndex: number
     ) {
         let totalUpdatedCount = 0;
@@ -217,17 +204,10 @@ export class UpdateMigrator extends AbstractMigrator {
     }
 
     private async updateAlsoRecursion(
-        updateAlso: IUpdate,
+        updateAlso: CacheUpdate,
         packageIndex: number
     ) {
-
-        // tslint:disable-next-line: no-console
-        console.log([
-            `recursion updating #${ packageIndex }`,
-            `table: ${updateAlso.forTable}`,
-            `columns: ${updateAlso.select.columns.map(col => col.name).join(", ")}`,
-            `cache: ${updateAlso.cacheName} `
-        ].join("\n"));
+        logUpdate(updateAlso, `recursion updating #${ packageIndex }`);
 
         const updatedAlsoCount = await this.tryUpdateCacheLimitedPackage(updateAlso);
 
@@ -239,4 +219,15 @@ async function sleep(ms: number) {
     return new Promise((resolve) => {
         setTimeout(resolve, ms);
     });
+}
+
+function logUpdate(update: CacheUpdate, theme: string) {
+    // tslint:disable-next-line: no-console
+    console.log([
+        theme,
+        `table: ${update.table.table}`,
+        `columns: ${flatMap(update.selects, select => select.columns)
+                .map(col => col.name).join(", ")}`,
+        `cache: ${update.caches.join(", ")} `
+    ].join("\n"));
 }
