@@ -20,7 +20,7 @@ describe("ParallelFirstUpdateCache", () => {
 
     const timeoutOnDeadlock = UpdateMigrator.timeoutOnDeadlock;
 
-    const maxId = 159_999;
+    const maxId = 1_599_999;
 
     const someTable = new TableID("public", "some_table");
     const someUpdate = new CacheUpdate([
@@ -66,22 +66,22 @@ describe("ParallelFirstUpdateCache", () => {
 
         const actualUpdatedIds = fakePostgres.getUpdates(someTable);
         assert.deepStrictEqual(actualUpdatedIds, [
-            "1 - 10001",
-            "10001 - 20001",
-            "20001 - 30001",
-            "30001 - 40001",
-            "40001 - 50001",
-            "50001 - 60001",
-            "60001 - 70001",
-            "70001 - 80001",
-            "80001 - 90001",
-            "90001 - 100001",
-            "100001 - 110001",
-            "110001 - 120001",
-            "120001 - 130001",
-            "130001 - 140001",
-            "140001 - 150001",
-            "150001 - 160001"
+            "1 - 100001",
+            "100001 - 200001",
+            "200001 - 300001",
+            "300001 - 400001",
+            "400001 - 500001",
+            "500001 - 600001",
+            "600001 - 700001",
+            "700001 - 800001",
+            "800001 - 900001",
+            "900001 - 1000001",
+            "1000001 - 1100001",
+            "1100001 - 1200001",
+            "1200001 - 1300001",
+            "1300001 - 1400001",
+            "1400001 - 1500001",
+            "1500001 - 1600001"
         ]);
     });
 

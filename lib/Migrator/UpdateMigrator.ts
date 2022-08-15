@@ -3,7 +3,7 @@ import { TableReference } from "../database/schema/TableReference";
 import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
 import { flatMap } from "lodash";
 
-export const packageSize = 10000;
+export const packageSize = 100000;
 export const parallelPackagesCount = 8;
 
 export class UpdateMigrator extends AbstractMigrator {
@@ -14,9 +14,9 @@ export class UpdateMigrator extends AbstractMigrator {
 
     async create() {
         for (const update of this.migration.toCreate.updates) {
-            const triggers = this.findTriggers(update.table);
+            const cacheTriggers = this.findCacheTriggers(update.table);
 
-            await this.disableTriggers(update.table, triggers);
+            await this.disableTriggers(update.table, cacheTriggers);
 
             if ( update.recursionWith.length > 0 ) {
                 await this.updateCacheLimitedPackage(update);
@@ -25,11 +25,11 @@ export class UpdateMigrator extends AbstractMigrator {
                 await this.parallelUpdateCacheByIds(update);
             }
 
-            await this.enableTriggers(update.table, triggers);
+            await this.enableTriggers(update.table, cacheTriggers);
         }
     }
 
-    private findTriggers(onTableRef: TableReference): string[] {
+    private findCacheTriggers(onTableRef: TableReference): string[] {
         const onTable = onTableRef.table;
         const table = this.database.getTable(onTable);
         if ( !table ) {
@@ -45,7 +45,7 @@ export class UpdateMigrator extends AbstractMigrator {
             .filter(trigger => trigger.table.equal(onTable));
 
         return [...oldTriggers, ...newTriggers]
-            .filter(trigger => trigger.update || trigger.updateOf)
+            .filter(trigger => trigger.cacheSignature)
             .map(trigger => trigger.name);
     }
 
