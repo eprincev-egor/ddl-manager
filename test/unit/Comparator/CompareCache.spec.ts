@@ -27,6 +27,10 @@ import {
 } from "./fixture/cache-fixture";
 import { FakeDatabaseDriver } from "../FakeDatabaseDriver";
 import { FileParser } from "../../../lib/parser";
+import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import { expect, use } from "chai";
+
+use(chaiShallowDeepEqualPlugin);
 
 describe("Comparator: compare cache", async() => {
     
@@ -273,8 +277,11 @@ describe("Comparator: compare cache", async() => {
 
         const {toCreate} = await MainComparator.compare(postgres, database, fs);
 
-        const actualColumns = toCreate.columns.map(column => column.toJSON());
-        assert.deepStrictEqual(actualColumns, [
+        const actualColumns = toCreate.columns
+            .map(column => column.toJSON())
+            .sort((a, b) => a.name > b.name ? 1 : -1);
+
+        const expectedColumns = [
             {
                 table: {
                     schema: "public",
@@ -283,8 +290,7 @@ describe("Comparator: compare cache", async() => {
                 name: "some_dates",
                 type: "date[]",
                 default: "null",
-                cacheSignature: "cache totals for companies",
-                comment: actualColumns[0].comment
+                cacheSignature: "cache totals for companies"
             },
             {
                 table: {
@@ -294,8 +300,7 @@ describe("Comparator: compare cache", async() => {
                 name: "max_text_dt_create",
                 type: "text[]",
                 default: "null",
-                cacheSignature: "cache totals for companies",
-                comment: actualColumns[1].comment
+                cacheSignature: "cache totals for companies"
             },
             {
                 table: {
@@ -305,8 +310,7 @@ describe("Comparator: compare cache", async() => {
                 name: "max_text",
                 type: "text",
                 default: "null",
-                cacheSignature: "cache totals for companies",
-                comment: actualColumns[2].comment
+                cacheSignature: "cache totals for companies"
             },
             {
                 table: {
@@ -316,8 +320,7 @@ describe("Comparator: compare cache", async() => {
                 name: "sum_text_sum",
                 type: "numeric",
                 default: "null",
-                cacheSignature: "cache totals for companies",
-                comment: actualColumns[3].comment
+                cacheSignature: "cache totals for companies"
             },
             {
                 table: {
@@ -327,15 +330,25 @@ describe("Comparator: compare cache", async() => {
                 name: "sum_text",
                 type: "text",
                 default: "null",
-                cacheSignature: "cache totals for companies",
-                comment: actualColumns[4].comment
+                cacheSignature: "cache totals for companies"
             }
-        ]);
+        ].sort((a, b) => a.name > b.name ? 1 : -1);
+
+        // assert.deepStrictEqual(actualColumns, expectedColumns);
+        expect(actualColumns).to.be.shallowDeepEqual(expectedColumns);
 
         assert.strictEqual(toCreate.updates.length, 1, "refresh cache per one update");
         assert.deepStrictEqual(
-            toCreate.updates[0].selects[0].columns.map(column => column.name),
-            ["some_dates", "max_text_dt_create", "max_text", "sum_text_sum", "sum_text"],
+            toCreate.updates[0].selects[0].columns
+                .map(column => column.name)
+                .sort(),
+            [
+                "some_dates", 
+                "max_text_dt_create", 
+                "max_text", 
+                "sum_text_sum", 
+                "sum_text"
+            ].sort(),
             "refresh cache per one update"
         );
 

@@ -3457,4 +3457,65 @@ describe("integration/DDLManager.build cache", () => {
         ]);
     });
 
+    it("rebuild cache in correct order, when exists ABC A->B, B->C, A->C", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        const profit = 10000;
+
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                profit integer
+            );
+            insert into orders (profit) values (10000);
+        `);
+        // C dependent on A
+        // C dependent on B
+        // B dependent on A
+
+        fs.writeFileSync(folderPath + "/c.sql", `
+            cache c for orders (
+                select
+                    orders.a + orders.b + 1000 as c
+            )
+        `);
+        fs.writeFileSync(folderPath + "/b.sql", `
+            cache b for orders (
+                select
+                    orders.a + 10 as b
+            )
+        `);
+        fs.writeFileSync(folderPath + "/a.sql", `
+            cache a for orders (
+                select
+                    orders.profit + 1 as a
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            select
+                id, profit,
+                a, b, c
+            from orders
+            order by id
+        `);
+
+        const a = profit + 1;
+        const b = a + 10;
+        const c = a + b + 1000;
+
+        expect(result.rows).to.be.shallowDeepEqual([{
+            id: 1,
+            profit,
+            a, b, c
+        }]);
+    });
+
 });

@@ -61,11 +61,13 @@ function addCircularDependencies(level: CacheColumn[]): CacheColumn[] {
 function removeDuplicates(matrix: CacheColumn[][]) {
     const known: Record<string, boolean> = {};
 
-    for (let i = 0, n = matrix.length; i < n; i++) {
+    for (let n = matrix.length, i = n - 1; i >= 0; i--) {
         const line = matrix[i];
         const newLine: CacheColumn[] = [];
 
-        for (const column of line) {
+        for (let m = line.length, j = m - 1; j >= 0; j--) {
+            const column = line[j];
+
             const isDuplicate = column.getId() in known;
             if ( isDuplicate ) {
                 continue;

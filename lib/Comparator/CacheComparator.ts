@@ -242,8 +242,9 @@ export class CacheComparator extends AbstractComparator {
             }
             return existentColumn.comment.cacheSelect !== column.select.toString();
         });
+        const requiredUpdates = this.graph.generateUpdatesFor(changedColumns);
         this.migration.create({
-            updates: this.graph.generateUpdatesFor(changedColumns)
+            updates: requiredUpdates
         });
     }
 
