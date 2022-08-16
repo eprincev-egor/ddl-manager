@@ -3518,4 +3518,98 @@ describe("integration/DDLManager.build cache", () => {
         }]);
     });
 
+    it("column used in two other columns with same name", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                debit integer,
+                credit integer
+            );
+            create table payments (
+                id serial primary key,
+                id_order integer
+            );
+            create table invoices (
+                id serial primary key,
+                id_order integer
+            );
+
+            insert into orders (debit, credit) 
+            values (1000, 600);
+
+            insert into payments (id_order)
+            values (1);
+            insert into invoices (id_order)
+            values (1);
+        `);
+
+        fs.writeFileSync(folderPath + "/profit.sql", `
+            cache profit for orders (
+                select
+                    orders.debit - orders.credit as profit
+            )
+        `);
+        fs.writeFileSync(folderPath + "/payment_order.sql", `
+            cache payment_order for payments (
+                select
+                    orders.profit as order_profit
+                from orders
+                where orders.id = payments.id_order
+            )
+        `);
+        fs.writeFileSync(folderPath + "/invoice_order.sql", `
+            cache invoice_order for invoices (
+                select
+                    orders.profit as order_profit
+                from orders
+                where orders.id = invoices.id_order
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        let result = await db.query(`
+            select
+                orders.profit as order,
+                invoices.order_profit as invoice,
+                payments.order_profit as payment
+            from orders, invoices, payments
+            limit 1
+        `);
+
+        expect(result.rows).to.be.shallowDeepEqual([{
+            order: 400,
+            invoice: 400,
+            payment: 400
+        }]);
+
+
+
+        await db.query(`
+            update orders set
+                credit = debit
+        `);
+
+        result = await db.query(`
+            select
+                orders.profit as order,
+                invoices.order_profit as invoice,
+                payments.order_profit as payment
+            from orders, invoices, payments
+            limit 1
+        `);
+        expect(result.rows).to.be.shallowDeepEqual([{
+            order: 0,
+            invoice: 0,
+            payment: 0
+        }]);
+    });
+
 });

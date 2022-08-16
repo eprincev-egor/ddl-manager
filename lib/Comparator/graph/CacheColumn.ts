@@ -71,12 +71,12 @@ export class CacheColumn {
             dependencyColumn.usedInColumns.push(this);
             dependencyColumn.usedInColumns = uniqBy(
                 dependencyColumn.usedInColumns,
-                (column) => column.name
+                (column) => column.getId()
             );
         }
 
         // assign self dependencies
         this.dependencies.push(...dependencyColumns);
-        this.dependencies = uniqBy(this.dependencies, (column) => column.name);
+        this.dependencies = uniqBy(this.dependencies, (column) => column.getId());
     }
 }
