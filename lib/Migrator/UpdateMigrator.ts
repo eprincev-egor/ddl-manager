@@ -3,7 +3,7 @@ import { TableReference } from "../database/schema/TableReference";
 import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
 import { flatMap } from "lodash";
 
-export const packageSize = 100000;
+export const packageSize = 20000;
 export const parallelPackagesCount = 8;
 
 export class UpdateMigrator extends AbstractMigrator {

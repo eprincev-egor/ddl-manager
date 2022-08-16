@@ -5,4 +5,4 @@ ddl-manager-config.js
 coverage
 .nyc_output
 dist
-test/sandbox.ts
+sandbox.ts

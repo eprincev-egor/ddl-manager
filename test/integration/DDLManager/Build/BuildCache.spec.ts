@@ -3364,4 +3364,97 @@ describe("integration/DDLManager.build cache", () => {
         }]);
     });
 
+    it("two root columns with same name, but different tables", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table invoices (
+                id serial primary key,
+                type text not null,
+                id_payment integer,
+                id_order integer,
+                sum integer
+            );
+            create table payments (
+                id serial primary key,
+                doc_number text
+            );
+            create table orders (
+                id serial primary key,
+                doc_number text
+            );
+
+            insert into orders (doc_number) values ('order 1');
+            insert into payments (doc_number) values ('payment 1');
+            insert into invoices 
+                (type, id_payment, id_order, sum)
+            values
+                ('incoming', 1, 1, 1000);
+        `);
+        fs.writeFileSync(folderPath + "/order_invoices.sql", `
+            cache order_invoices for orders (
+                select
+                    array_agg(invoices.id) as invoices_ids
+                from invoices
+                where
+                    invoices.id_order = orders.id
+            )
+            index gin on (invoices_ids)
+        `);
+        fs.writeFileSync(folderPath + "/payment_invoices.sql", `
+            cache payment_invoices for payments (
+                select
+                    array_agg(invoices.id) as invoices_ids
+                from invoices
+                where
+                    invoices.id_payment = payments.id
+            )
+            index gin on (invoices_ids)
+        `);
+        fs.writeFileSync(folderPath + "/invoice_payments.sql", `
+            cache payments for invoices (
+                select
+                    string_agg( 
+                        distinct payments.doc_number, ', ' 
+                        order by payments.doc_number
+                    ) as payments_numbers
+                from payments
+                where
+                    payments.invoices_ids && array[ invoices.id ]
+            )
+        `);
+        fs.writeFileSync(folderPath + "/invoice_orders.sql", `
+            cache orders for invoices (
+                select
+                    string_agg( 
+                        distinct orders.doc_number, ', ' 
+                        order by orders.doc_number
+                    ) as orders_numbers
+                from orders
+                where
+                    orders.invoices_ids && array[ invoices.id ]
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            select
+                id, 
+                payments_numbers,
+                orders_numbers
+            from invoices
+            order by id
+        `);
+
+        expect(result.rows).to.be.shallowDeepEqual([
+            {id: 1, payments_numbers: "payment 1", orders_numbers: "order 1"}
+        ]);
+    });
+
 });

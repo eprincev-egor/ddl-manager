@@ -71,9 +71,10 @@ export class CacheColumnGraph {
 
             if ( column.isRoot() ) {
                 this.rootColumns.push( column );
-                this.rootColumns = uniqBy(this.rootColumns, (column) => column.name);
             }
         }
+
+        this.rootColumns = uniqBy(this.rootColumns, (column) => column.getId());
     }
 
     private findDependencies(column: CacheColumn) {

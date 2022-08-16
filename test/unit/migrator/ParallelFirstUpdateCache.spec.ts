@@ -20,7 +20,7 @@ describe("ParallelFirstUpdateCache", () => {
 
     const timeoutOnDeadlock = UpdateMigrator.timeoutOnDeadlock;
 
-    const maxId = 1_599_999;
+    const maxId = 2 * packageSize * parallelPackagesCount - 1;
 
     const someTable = new TableID("public", "some_table");
     const someUpdate = new CacheUpdate([
@@ -65,24 +65,14 @@ describe("ParallelFirstUpdateCache", () => {
         await MainMigrator.migrate(fakePostgres, database, migration);
 
         const actualUpdatedIds = fakePostgres.getUpdates(someTable);
-        assert.deepStrictEqual(actualUpdatedIds, [
-            "1 - 100001",
-            "100001 - 200001",
-            "200001 - 300001",
-            "300001 - 400001",
-            "400001 - 500001",
-            "500001 - 600001",
-            "600001 - 700001",
-            "700001 - 800001",
-            "800001 - 900001",
-            "900001 - 1000001",
-            "1000001 - 1100001",
-            "1100001 - 1200001",
-            "1200001 - 1300001",
-            "1300001 - 1400001",
-            "1400001 - 1500001",
-            "1500001 - 1600001"
-        ]);
+
+        const expectedSlices: string[] = [];
+        for (let i = packageSize + 1; i <= maxId + packageSize; i += packageSize) {
+            const startId = i - packageSize;
+            const endId = i;
+            expectedSlices.push(`${startId} - ${endId}`);
+        }
+        assert.deepStrictEqual(actualUpdatedIds, expectedSlices);
     });
 
     it("re-try on deadlock", async() => {
