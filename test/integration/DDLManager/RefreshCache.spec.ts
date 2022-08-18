@@ -187,4 +187,28 @@ describe("integration/DDLManager.refreshCache", () => {
         ]);
     });
 
+    it("compare cache columns when not exists table", async() => {
+        const folderPath = ROOT_TMP_PATH + "/some cache";
+        fs.mkdirSync(folderPath);
+
+        fs.writeFileSync(folderPath + "/new_cache.sql", `
+            cache totals for companies (
+                select
+                    array_agg(orders.name) as orders_names
+                
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+        const changed = await DDLManager.compareCache({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        assert.strictEqual(changed.length, 1);
+        assert.strictEqual(changed[0].name, "orders_names");
+    });
+
 });

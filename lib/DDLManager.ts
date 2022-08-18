@@ -16,6 +16,7 @@ import { FunctionsMigrator } from "./Migrator/FunctionsMigrator";
 import { createCallsTable, clearCallsLogs, downloadLogs } from "./timeline/callsTable";
 import { parseCalls } from "./timeline/Coach";
 import { createTimelineFile } from "./timeline/createTimelineFile";
+import { CacheComparator } from "./Comparator/CacheComparator";
 
 const watchers: FileWatcher[] = [];
 interface IParams {
@@ -41,6 +42,11 @@ export class DDLManager {
         const ddlManager = new DDLManager(params);
         const {migration} = await ddlManager.compareDbAndFs();
         return migration;
+    }
+
+    static async compareCache(params: IParams) {
+        const ddlManager = new DDLManager(params);
+        return await ddlManager.compareCache();
     }
 
     static async timeline(params: ITimelineParams) {
@@ -217,6 +223,21 @@ export class DDLManager {
             migration,
             migrateErrors
         );
+    }
+
+    private async compareCache() {
+        const filesState = this.readFS();
+        const postgres = await this.postgres();
+        const database = await postgres.load();
+
+        const cacheComparator = new CacheComparator(
+            postgres,
+            database,
+            filesState,
+            Migration.empty()
+        );
+        const columns = cacheComparator.findChangedColumns();
+        return columns;
     }
 
     private async compareDbAndFs() {

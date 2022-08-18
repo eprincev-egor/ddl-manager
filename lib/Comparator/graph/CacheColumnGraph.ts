@@ -27,6 +27,10 @@ export class CacheColumnGraph {
         );
     }
 
+    getAllColumns() {
+        return this.allColumns;
+    }
+
     getAllColumnsFromRootToDeps() {
         return flatMap(this.dependencyMatrix);
     }

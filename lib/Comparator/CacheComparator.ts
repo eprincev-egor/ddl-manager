@@ -9,6 +9,7 @@ import { FilesState } from "../fs/FilesState";
 import { CacheColumnParams } from "./graph/CacheColumn";
 import { CacheColumnGraph } from "./graph/CacheColumnGraph";
 import { CacheColumnBuilder } from "./CacheColumnBuilder";
+import { Comment } from "../database/schema/Comment";
 
 export class CacheComparator extends AbstractComparator {
 
@@ -79,6 +80,26 @@ export class CacheComparator extends AbstractComparator {
         this.createTriggers();
         await this.createAllColumns();
         this.updateAllColumns();
+    }
+
+    findChangedColumns() {
+        const allCacheColumns = this.graph.getAllColumns();
+        const changedColumns = allCacheColumns.filter(cacheColumn => {
+            const table = this.database.getTable( cacheColumn.for.table );
+            const dbColumn = table && table.getColumn( cacheColumn.name );
+            if ( !dbColumn ) {
+                return true;
+            }
+
+            const newComment = Comment.fromFs({
+                objectType: "column",
+                cacheSignature: cacheColumn.cache.signature,
+                cacheSelect: cacheColumn.select.toString()
+            });
+
+            return !newComment.equal(dbColumn.comment);
+        });
+        return changedColumns;
     }
 
     async createLogFuncs() {
