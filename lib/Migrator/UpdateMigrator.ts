@@ -14,18 +14,30 @@ export class UpdateMigrator extends AbstractMigrator {
 
     async create() {
         for (const update of this.migration.toCreate.updates) {
+            await this.toggleTriggersAndDoUpdate(update);
+        }
+    }
+
+    private async toggleTriggersAndDoUpdate(update: CacheUpdate) {
+        if ( this.migration.needDisableCacheTriggersOnUpdate() ) {
             const cacheTriggers = this.findCacheTriggers(update.table);
-
             await this.disableTriggers(update.table, cacheTriggers);
-
-            if ( update.recursionWith.length > 0 ) {
-                await this.updateCacheLimitedPackage(update);
-            }
-            else {
-                await this.parallelUpdateCacheByIds(update);
-            }
+    
+            await this.doUpdate(update);
 
             await this.enableTriggers(update.table, cacheTriggers);
+        }
+        else {
+            await this.doUpdate(update);
+        }
+    }
+
+    private async doUpdate(update: CacheUpdate) {
+        if ( update.recursionWith.length > 0 ) {
+            await this.updateCacheLimitedPackage(update);
+        }
+        else {
+            await this.parallelUpdateCacheByIds(update);
         }
     }
 

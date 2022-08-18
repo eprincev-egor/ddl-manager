@@ -17,12 +17,14 @@ export interface IChanges {
 export class Migration {
     readonly toDrop: IChanges;
     readonly toCreate: IChanges;
+    private enabledCacheTriggersOnUpdate: boolean;
 
     static empty() {
         return new Migration();
     }
 
     private constructor() {
+        this.enabledCacheTriggersOnUpdate = false;
         this.toDrop = {
             functions: [], triggers: [], columns: [],
             updates: [], indexes: []
@@ -31,6 +33,14 @@ export class Migration {
             functions: [], triggers: [], columns: [],
             updates: [], indexes: []
         };
+    }
+
+    needDisableCacheTriggersOnUpdate() {
+        return !this.enabledCacheTriggersOnUpdate;
+    }
+
+    enableCacheTriggersOnUpdate() {
+        this.enabledCacheTriggersOnUpdate = true;
     }
 
     drop(state: Partial<IChanges>) {

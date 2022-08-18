@@ -78,8 +78,8 @@ export class CacheComparator extends AbstractComparator {
 
     async create() {
         this.createTriggers();
-        await this.createAllColumns();
-        this.updateAllColumns();
+        await this.createColumns();
+        this.updateColumns();
     }
 
     findChangedColumns() {
@@ -112,12 +112,15 @@ export class CacheComparator extends AbstractComparator {
 
     async createWithoutUpdates() {
         this.createTriggers();
-        await this.createAllColumns();
+        await this.createColumns();
     }
 
     async refreshCache() {
-        await this.createAllColumns();
-        this.forceUpdateAllColumns();
+        await this.createColumns();
+        this.migration.create({
+            updates: this.graph.generateAllUpdates()
+        });
+        this.migration.enableCacheTriggersOnUpdate();
     }
 
     private dropTrashTriggers() {
@@ -200,7 +203,7 @@ export class CacheComparator extends AbstractComparator {
         }
     }
 
-    private async createAllColumns() {
+    private async createColumns() {
         for (const cacheColumn of this.graph.getAllColumnsFromRootToDeps()) {
             const columnToCreate = await this.columnBuilder.build(cacheColumn);
 
@@ -254,7 +257,7 @@ export class CacheComparator extends AbstractComparator {
         }
     }
 
-    private updateAllColumns() {
+    private updateColumns() {
         const changedColumns = this.graph.getAllColumnsFromRootToDeps().filter(column => {
             const existentTable = this.database.getTable(column.for.table);
             const existentColumn = existentTable && existentTable.getColumn(column.name);
@@ -266,12 +269,6 @@ export class CacheComparator extends AbstractComparator {
         const requiredUpdates = this.graph.generateUpdatesFor(changedColumns);
         this.migration.create({
             updates: requiredUpdates
-        });
-    }
-
-    private forceUpdateAllColumns() {
-        this.migration.create({
-            updates: this.graph.generateAllUpdates()
         });
     }
 
