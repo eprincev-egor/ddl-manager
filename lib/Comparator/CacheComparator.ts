@@ -115,11 +115,21 @@ export class CacheComparator extends AbstractComparator {
         await this.createColumns();
     }
 
-    async refreshCache() {
+    async refreshCache(concreteTable?: string) {
         await this.createColumns();
-        this.migration.create({
-            updates: this.graph.generateAllUpdates()
-        });
+
+        if ( concreteTable ) {
+            const tableColumns = this.graph.getColumns(concreteTable);
+            this.migration.create({
+                updates: this.graph.generateUpdatesFor(tableColumns)
+            });
+        }
+        else {
+            this.migration.create({
+                updates: this.graph.generateAllUpdates()
+            });
+        }
+
         this.migration.enableCacheTriggersOnUpdate();
     }
 

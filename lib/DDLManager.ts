@@ -54,9 +54,12 @@ export class DDLManager {
         return await ddlManager.timeline(params);
     }
 
-    static async refreshCache(params: IParams) {
+    static async refreshCache(
+        params: IParams,
+        concreteTable?: string
+    ) {
         const ddlManager = new DDLManager(params);
-        return await ddlManager.refreshCache();
+        return await ddlManager.refreshCache(concreteTable);
     }
 
     static async watch(params: {
@@ -201,7 +204,7 @@ export class DDLManager {
         console.log("success");
     }
 
-    private async refreshCache() {
+    private async refreshCache(concreteTable?: string) {
         const filesState = this.readFS();
         const postgres = await this.postgres();
         const database = await postgres.load();
@@ -209,7 +212,8 @@ export class DDLManager {
         const migration = await MainComparator.refreshCache(
             postgres,
             database,
-            filesState
+            filesState,
+            concreteTable
         );
 
         const migrateErrors = await MainMigrator.migrate(
