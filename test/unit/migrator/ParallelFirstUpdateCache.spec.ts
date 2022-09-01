@@ -81,7 +81,10 @@ describe("ParallelFirstUpdateCache", () => {
         const originalUpdate = fakePostgres.updateCacheForRows;
         fakePostgres.updateCacheForRows = () => {
             fakePostgres.updateCacheForRows = originalUpdate;
-            throw new Error("Deadlock");
+
+            const deadlockError = new Error("dead lock") as any;
+            deadlockError.code = "40P01";
+            throw deadlockError;
         };
 
         await MainMigrator.migrate(fakePostgres, database, migration);

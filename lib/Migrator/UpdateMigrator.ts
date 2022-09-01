@@ -131,9 +131,8 @@ export class UpdateMigrator extends AbstractMigrator {
                 update,
                 minId, maxId
             );
-        } catch(err) {
-            const message = (err as any).message;
-            if ( /deadlock/i.test(message) ) {
+        } catch(err: any) {
+            if ( /deadlock/i.test(err.message) || err.code === "40P01" ) {
                 // next attempt must have more timeout 
                 const timeoutOnDeadlock = (
                     Math.max(attemptsNumberAfterDeadlock, 5) * 
