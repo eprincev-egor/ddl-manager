@@ -51,13 +51,11 @@ export class Column {
         };
     }
 
-    equal(otherColumn: Column) {
+    suit(newColumn: Column) {
         return (
-            this.name === otherColumn.name &&
-            this.table.equal( otherColumn.table ) &&
-            this.type.equal(otherColumn.type) &&
-            equalDefaultValues(this.default, otherColumn.default) &&
-            this.comment.equal( otherColumn.comment )
+            this.type.suit(newColumn.type) &&
+            equalDefaultValues(this.default, newColumn.default) &&
+            this.comment.equal( newColumn.comment )
         );
     }
 

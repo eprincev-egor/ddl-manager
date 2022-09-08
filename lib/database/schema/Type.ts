@@ -1,21 +1,26 @@
 
 export class Type {
+
     readonly value: string;
+    readonly normalized: string;
     constructor(value: string) {
         this.value = value;
+        this.normalized = normalize(value);
     }
 
     isArray() {
         return /\[\]$/.test(this.value);
     }
 
-    equal(otherType: Type | string) {
-        otherType = typeof otherType === "string" ?
-            normalize(otherType) :
-            normalize(otherType.value);
+    suit(newType: Type) {
+        if ( 
+            this.normalized === "bigint" &&
+            newType.normalized === "integer" 
+        ) {
+            return true;
+        }
 
-        const thisType = normalize(this.value);
-        return thisType === otherType;
+        return this.normalized === newType.normalized;
     }
 
     toString() {

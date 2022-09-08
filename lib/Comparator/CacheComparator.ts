@@ -190,7 +190,7 @@ export class CacheComparator extends AbstractComparator {
 
         if ( cacheColumn ) {
             const newColumn = await this.columnBuilder.build(cacheColumn);
-            return column.type.equal(newColumn.type);
+            return column.type.suit(newColumn.type);
         }
         return false;
     }
@@ -221,7 +221,7 @@ export class CacheComparator extends AbstractComparator {
             const existentColumn = table && table.getColumn(cacheColumn.name);
             const existsSameColumn = (
                 existentColumn && 
-                existentColumn.equal( columnToCreate )
+                existentColumn.suit( columnToCreate )
             );
 
             if ( !existsSameColumn ) {
