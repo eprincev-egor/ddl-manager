@@ -3612,4 +3612,83 @@ describe("integration/DDLManager.build cache", () => {
         }]);
     });
 
+    it("case/when with bool_and inside", async() => {
+
+        await db.query(`
+            create table public.order (
+                id serial primary key
+            );
+            create table invoice (
+                id serial primary key,
+                orders_ids bigint[],
+                id_invoice_type integer,
+                deleted smallint default 0,
+                payment_date timestamp without time zone
+            );
+
+            DROP FUNCTION IF EXISTS last_agg(anyelement, anyelement) cascade;
+            CREATE FUNCTION last_agg(anyelement, anyelement) RETURNS anyelement
+                LANGUAGE sql IMMUTABLE STRICT
+                AS $_$
+                    SELECT $2;
+            $_$;
+            CREATE AGGREGATE last(anyelement) (
+                SFUNC = last_agg,
+                STYPE = anyelement
+            );
+            
+            insert into public.order default values;
+
+            insert into invoice (
+                orders_ids, 
+                payment_date, 
+                id_invoice_type
+            )
+            values (array[1], now(), 2);
+        `);
+
+        let folderPath = ROOT_TMP_PATH + "/cache";
+        fs.mkdirSync(folderPath);
+
+        fs.writeFileSync(folderPath + "/invoice_payment_data.sql", `
+            cache invoice_payment_data 
+            for public.order (
+
+                select
+                    case 
+                        when
+                            bool_and(invoice.payment_date is not null)
+                        then last(invoice.id order by invoice.payment_date)
+                        else null
+                    end 
+                    as id_last_outgoing_invoice
+                from invoice
+                where
+                    invoice.id_invoice_type in (2,3) and
+                    invoice.orders_ids && array[ public.order.id ]::bigint[] and
+                    invoice.deleted = 0
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: [
+                folderPath
+            ]
+        });
+
+
+        await db.query(`
+            update invoice set
+                payment_date = now() + interval '1 day';    
+        `);
+        const result = await db.query(`
+            select id_last_outgoing_invoice
+            from public.order
+        `);
+        assert.deepEqual(result.rows[0], {
+            id_last_outgoing_invoice: 1
+        });
+    });
+
 });

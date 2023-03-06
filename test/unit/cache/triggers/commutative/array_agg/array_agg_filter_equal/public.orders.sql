@@ -65,6 +65,13 @@ begin
                         old.id_order_type = 1
                     then
                         cm_array_remove_one_element(fcl_orders_ids, old.id)
+                    when
+                        new.id_order_type = 1
+                    then
+                        array_append(
+                            cm_array_remove_one_element(fcl_orders_ids, old.id),
+                            new.id
+                        )
                     else
                         fcl_orders_ids
                 end,
@@ -81,6 +88,13 @@ begin
                         old.id_order_type = 2
                     then
                         cm_array_remove_one_element(ltl_orders_ids, old.id)
+                    when
+                        new.id_order_type = 2
+                    then
+                        array_append(
+                            cm_array_remove_one_element(ltl_orders_ids, old.id),
+                            new.id
+                        )
                     else
                         ltl_orders_ids
                 end

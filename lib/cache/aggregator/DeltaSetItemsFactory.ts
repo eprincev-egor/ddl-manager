@@ -205,7 +205,10 @@ export class DeltaSetItemsFactory extends SetItemsFactory {
 }
 
 function isImmutableAggCall(aggCall: FuncCall) {
-    const columnReferences = aggCall.args[0].getColumnReferences();
+    const columnReferences = aggCall.name === "count" ? 
+        aggCall.args[0].getColumnReferences() : 
+        aggCall.getColumnReferences();
+
     const onlyImmutableColumns = columnReferences.every(columnRef =>
         columnRef.name === "id"
     );
