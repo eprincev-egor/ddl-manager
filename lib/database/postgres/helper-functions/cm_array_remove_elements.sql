@@ -4,7 +4,11 @@ create or replace function cm_array_remove_elements(
 )
 returns anyarray as $body$
 begin
-    if elements_to_remove is null then
+    if 
+        array_length(elements_to_remove, 1) is null 
+        or
+        array_length(input_arr, 1) is null 
+    then
         return input_arr;
     end if;
 

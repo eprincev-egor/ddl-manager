@@ -5,6 +5,9 @@ create or replace function cm_array_remove_one_element(
 returns anyarray as $body$
 declare element_position integer;
 begin
+    if input_arr is null then
+        return input_arr;
+    end if;
 
     element_position = array_position(
         input_arr,
