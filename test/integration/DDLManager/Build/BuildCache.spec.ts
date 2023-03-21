@@ -3691,4 +3691,68 @@ describe("integration/DDLManager.build cache", () => {
         });
     });
 
+    it("case/when with count(id) and max() inside", async() => {
+
+        await db.query(`
+            create table unit (
+                id serial primary key
+            );
+
+            create table supply_order_position_unit_link (
+                id serial primary key,
+                is_apportionment_parent smallint default 0,
+                id_unit integer,
+                position_deleted smallint default 0
+            );
+
+            insert into unit default values;
+
+            insert into supply_order_position_unit_link
+                (id_unit, is_apportionment_parent)
+            values (1, 1)
+        `);
+
+        let folderPath = ROOT_TMP_PATH + "/cache";
+        fs.mkdirSync(folderPath);
+
+        fs.writeFileSync(folderPath + "/invoice_payment_data.sql", `
+            cache link_totals for unit (
+                select
+                    (
+                        case 
+                            when 
+                                count(link.id) = 1 and max(link.is_apportionment_parent) = 1
+                            then 1
+                            else 0
+                        end
+                    ) as is_single_apportionment_parent
+            
+                from supply_order_position_unit_link as link
+                where
+                    link.id_unit = unit.id and
+                    link.position_deleted = 0
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: [
+                folderPath
+            ]
+        });
+
+
+        await db.query(`
+            update supply_order_position_unit_link set
+                is_apportionment_parent = 0
+        `);
+        const result = await db.query(`
+            select is_single_apportionment_parent
+            from unit
+        `);
+        assert.deepEqual(result.rows[0], {
+            is_single_apportionment_parent: 0
+        });
+    });
+
 });

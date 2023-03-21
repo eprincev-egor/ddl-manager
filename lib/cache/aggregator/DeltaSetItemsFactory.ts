@@ -59,25 +59,29 @@ export class DeltaSetItemsFactory extends SetItemsFactory {
             const agg = aggMap[ columnName ];
 
             // can be helper aggregation array_agg(id) for universal agg
-            const isNoEffect = (
-                !agg.call.where &&
-                isImmutableAggCall(agg.call)
+            const hasEffect = (
+                agg.call.where ||
+                !isImmutableAggCall(agg.call)
             );
-            if ( isNoEffect ) {
-                continue;
+
+            if ( hasEffect ) {
+                const sql = this.deltaAggregate( agg );
+
+                const aggSetItem = new SetItem({
+                    column: columnName,
+                    value: sql
+                });
+                setItems.push(aggSetItem);
+
+                updateExpression = updateExpression.replaceFuncCall(
+                    agg.call, `(${sql})`
+                );
             }
-
-            const sql = this.deltaAggregate( agg );
-
-            const aggSetItem = new SetItem({
-                column: columnName,
-                value: sql
-            });
-            setItems.push(aggSetItem);
-
-            updateExpression = updateExpression.replaceFuncCall(
-                agg.call, `(${sql})`
-            );
+            else {
+                updateExpression = updateExpression.replaceFuncCall(
+                    agg.call, columnName
+                );
+            }
         }
 
         if ( !updateColumn.isAggCall( this.context.database ) ) {
