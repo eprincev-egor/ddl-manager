@@ -56,10 +56,10 @@ export class DatabaseFunction  {
         Object.assign(this, json);
         this.language = json.language || "plpgsql";
 
-        if ( this.name.length > MAX_NAME_LENGTH ) {
-            // tslint:disable-next-line: no-console
-            console.error(`name "${this.name}" too long (> 64 symbols)`);
-        }
+        // if ( this.name.length > MAX_NAME_LENGTH ) {
+        //     // tslint:disable-next-line: no-console
+        //     console.error(`name "${this.name}" too long (> 64 symbols)`);
+        // }
         this.name = this.name.slice(0, MAX_NAME_LENGTH);
 
         if ( !json.comment ) {

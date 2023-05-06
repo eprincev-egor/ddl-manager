@@ -20,10 +20,10 @@ export class Column {
     ) {
         this.table = table;
 
-        if ( name.length > MAX_NAME_LENGTH ) {
-            // tslint:disable-next-line: no-console
-            console.error(`name "${name}" too long (> 64 symbols)`);
-        }
+        // if ( name.length > MAX_NAME_LENGTH ) {
+        //     // tslint:disable-next-line: no-console
+        //     console.error(`name "${name}" too long (> 64 symbols)`);
+        // }
         this.name = name.slice(0, MAX_NAME_LENGTH);
         this.name = name;
 

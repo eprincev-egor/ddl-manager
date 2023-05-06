@@ -116,7 +116,7 @@ export class CacheComparator extends AbstractComparator {
                     ) as tmp on true
                     
                     where
-                        ${column.getId()} is distinct from tmp.${column.name}
+                        ${column.for.getIdentifier()}.${column.name} is distinct from tmp.${column.name}
                 ) as has_broken
             `;
             const {rows} = await this.driver.query(selectHasBroken);

@@ -59,9 +59,9 @@ export class DatabaseTrigger {
     constructor(json: IDatabaseTriggerParams) {
         Object.assign(this, json);
         // tslint:disable-next-line: no-console
-        if ( this.name.length > MAX_NAME_LENGTH ) {
-            console.error(`name "${this.name}" too long (> 64 symbols)`);
-        }
+        // if ( this.name.length > MAX_NAME_LENGTH ) {
+        //     console.error(`name "${this.name}" too long (> 64 symbols)`);
+        // }
         this.name = this.name.slice(0, MAX_NAME_LENGTH);
 
         if ( !(this.table instanceof TableID) ) {
