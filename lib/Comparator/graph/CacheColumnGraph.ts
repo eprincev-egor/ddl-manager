@@ -60,6 +60,10 @@ export class CacheColumnGraph {
     }
 
     getColumns(tableRef: TableReference | TableID | string) {
+        if ( typeof tableRef === "string" ) {
+            tableRef = TableID.fromString(tableRef);
+        }
+
         const tableId = (
             tableRef instanceof TableReference ? 
                 tableRef.table : tableRef

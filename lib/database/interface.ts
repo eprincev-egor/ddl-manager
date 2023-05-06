@@ -10,6 +10,7 @@ import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
 
 // TODO: apply I from SOLID
 export interface IDatabaseDriver {
+    query(sql: string): Promise<{rows: any[]}>;
     load(): Promise<Database>;
     unfreezeAll(dbState: Database): Promise<void>;
     createOrReplaceFunction(func: DatabaseFunction): Promise<void>;

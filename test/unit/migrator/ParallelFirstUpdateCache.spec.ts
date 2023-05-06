@@ -126,7 +126,7 @@ describe("ParallelFirstUpdateCache", () => {
         );
     });
 
-    it("update error on invalid select", async() => {
+    it("ignore update error on invalid select", async() => {
         fakePostgres.updateCacheForRows = () => {
             throw new Error("operator does not exist: bigint[] && integer[]");
         };
@@ -135,17 +135,9 @@ describe("ParallelFirstUpdateCache", () => {
             updates: [someUpdate]
         });
 
-        let actualError = new Error("expected error");
-        try {
-            await MainMigrator.migrate(fakePostgres, database, migration);
-        } catch(err) {
-            actualError = err;
-        }
+        await MainMigrator.migrate(fakePostgres, database, migration);
 
-        assert.strictEqual(
-            actualError.message,
-            "operator does not exist: bigint[] && integer[]"
-        );
+        assert.ok(true, "no errors");
     });
 
     function repeat(word: string, quantity: number): string[] {

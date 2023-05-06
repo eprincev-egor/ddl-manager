@@ -40,10 +40,10 @@ export class MainComparator {
         driver: IDatabaseDriver,
         database: Database,
         fs: FilesState,
-        concreteTable?: string
+        concreteTables?: string
     ) {
         const comparator = new MainComparator(driver, database, fs);
-        return await comparator.refreshCache(concreteTable);
+        return await comparator.refreshCache(concreteTables);
     }
 
     private migration: Migration;
@@ -120,8 +120,8 @@ export class MainComparator {
         return this.migration;
     }
 
-    private async refreshCache(concreteTable?: string) {
-        await this.cache.refreshCache(concreteTable);
+    private async refreshCache(concreteTables?: string) {
+        await this.cache.refreshCache(concreteTables);
         return this.migration;
     }
 

@@ -18,6 +18,7 @@ export class Migration {
     readonly toDrop: IChanges;
     readonly toCreate: IChanges;
     private enabledCacheTriggersOnUpdate: boolean;
+    private updateTimeout?: number;
 
     static empty() {
         return new Migration();
@@ -41,6 +42,14 @@ export class Migration {
 
     enableCacheTriggersOnUpdate() {
         this.enabledCacheTriggersOnUpdate = true;
+    }
+
+    getTimeoutForUpdates() {
+        return this.updateTimeout;
+    }
+
+    setTimeoutForUpdates(timeout: number) {
+        this.updateTimeout = timeout;
     }
 
     drop(state: Partial<IChanges>) {

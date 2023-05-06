@@ -23,12 +23,20 @@ export class UpdateMigrator extends AbstractMigrator {
             const cacheTriggers = this.findCacheTriggers(update.table);
             await this.disableTriggers(update.table, cacheTriggers);
     
-            await this.doUpdate(update);
+            await this.tryUpdate(update);
 
             await this.enableTriggers(update.table, cacheTriggers);
         }
         else {
+            await this.tryUpdate(update);
+        }
+    }
+
+    private async tryUpdate(update: CacheUpdate) {
+        try {
             await this.doUpdate(update);
+        } catch(error) {
+            console.log(error)
         }
     }
 
@@ -149,6 +157,11 @@ export class UpdateMigrator extends AbstractMigrator {
 
             throw err;
         }
+
+        const timeout = this.migration.getTimeoutForUpdates();
+        if ( timeout ) {
+            await sleep(timeout);
+        }
     }
 
     private async updateCacheLimitedPackage(
@@ -156,6 +169,7 @@ export class UpdateMigrator extends AbstractMigrator {
         packageIndex = 0
     ) {
         let needUpdateMore = false;
+        const timeout = this.migration.getTimeoutForUpdates();
 
         do {
             logUpdate(update, `updating #${ ++packageIndex }`);
@@ -168,6 +182,10 @@ export class UpdateMigrator extends AbstractMigrator {
             );
             if ( updatedAlsoCount > 0 ) {
                 needUpdateMore = true;
+
+                if ( timeout ) {
+                    await sleep(timeout);
+                }
             }
         } while( needUpdateMore );
     }

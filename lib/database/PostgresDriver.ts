@@ -451,7 +451,7 @@ implements IDatabaseDriver {
         await this.pgPool.end();
     }
 
-    private async query(sql: string) {
+    async query(sql: string) {
         try {
             return await this.pgPool.query(sql);
         } catch(originalErr) {

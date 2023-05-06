@@ -56,10 +56,19 @@ export class DDLManager {
 
     static async refreshCache(
         params: IParams,
-        concreteTable?: string
+        concreteTables?: string,
+        timeoutOnUpdate?: number
     ) {
         const ddlManager = new DDLManager(params);
-        return await ddlManager.refreshCache(concreteTable);
+        return await ddlManager.refreshCache(
+            concreteTables,
+            timeoutOnUpdate
+        );
+    }
+
+    static async scanBrokenColumns(params: IParams) {
+        const ddlManager = new DDLManager(params);
+        return await ddlManager.scanBrokenColumns();
     }
 
     static async watch(params: {
@@ -204,7 +213,10 @@ export class DDLManager {
         console.log("success");
     }
 
-    private async refreshCache(concreteTable?: string) {
+    private async refreshCache(
+        concreteTables?: string,
+        timeoutOnUpdate?: number
+    ) {
         const filesState = this.readFS();
         const postgres = await this.postgres();
         const database = await postgres.load();
@@ -213,8 +225,11 @@ export class DDLManager {
             postgres,
             database,
             filesState,
-            concreteTable
+            concreteTables
         );
+        if ( timeoutOnUpdate ) {
+            migration.setTimeoutForUpdates(timeoutOnUpdate);
+        }
 
         const migrateErrors = await MainMigrator.migrate(
             postgres,
@@ -241,6 +256,21 @@ export class DDLManager {
             Migration.empty()
         );
         const columns = cacheComparator.findChangedColumns();
+        return columns;
+    }
+
+    private async scanBrokenColumns() {
+        const filesState = this.readFS();
+        const postgres = await this.postgres();
+        const database = await postgres.load();
+
+        const cacheComparator = new CacheComparator(
+            postgres,
+            database,
+            filesState,
+            Migration.empty()
+        );
+        const columns = await cacheComparator.findBrokenColumns();
         return columns;
     }
 

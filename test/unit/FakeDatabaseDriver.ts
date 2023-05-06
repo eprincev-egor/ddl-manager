@@ -65,6 +65,10 @@ implements IDatabaseDriver {
         return database;
     }
 
+    async query(sql: string) {
+        return {rows: []}
+    }
+
     async enableTrigger(onTable: TableID, triggerName: string): Promise<void> {
     }
 

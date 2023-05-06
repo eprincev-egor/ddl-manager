@@ -6,7 +6,7 @@ import { Migration } from "../Migrator/Migration";
 import { IDatabaseDriver } from "../database/interface";
 import { Database } from "../database/schema/Database";
 import { FilesState } from "../fs/FilesState";
-import { CacheColumnParams } from "./graph/CacheColumn";
+import { CacheColumn, CacheColumnParams } from "./graph/CacheColumn";
 import { CacheColumnGraph } from "./graph/CacheColumnGraph";
 import { CacheColumnBuilder } from "./CacheColumnBuilder";
 import { Comment } from "../database/schema/Comment";
@@ -102,6 +102,34 @@ export class CacheComparator extends AbstractComparator {
         return changedColumns;
     }
 
+    async findBrokenColumns() {
+        const allCacheColumns = this.graph.getAllColumns();
+        const brokenColumns: CacheColumn[] = [];
+
+        for (const column of allCacheColumns) {
+            const selectHasBroken = `
+                select exists(
+                    select from ${column.for}
+                    
+                    left join lateral (
+                        ${column.select.toSQL()}
+                    ) as tmp on true
+                    
+                    where
+                        ${column.getId()} is distinct from tmp.${column.name}
+                ) as has_broken
+            `;
+            const {rows} = await this.driver.query(selectHasBroken);
+            const isBroken = rows[0].has_broken;
+
+            if ( isBroken ) {
+                brokenColumns.push(column);
+            }
+        }
+        
+        return brokenColumns;
+    }
+
     async createLogFuncs() {
         for (const trigger of this.allCacheTriggers) {
             this.migration.create({
@@ -115,13 +143,19 @@ export class CacheComparator extends AbstractComparator {
         await this.createColumns();
     }
 
-    async refreshCache(concreteTable?: string) {
+    async refreshCache(concreteTables?: string) {
         await this.createColumns();
 
-        if ( concreteTable ) {
-            const tableColumns = this.graph.getColumns(concreteTable);
+        if ( concreteTables ) {
+            const concreteColumns: CacheColumn[] = [];
+
+            for (const table of concreteTables.split(/\s*,\s*/) ) {
+                const tableColumns = this.graph.getColumns(table);
+                concreteColumns.push(...tableColumns);
+            }
+
             this.migration.create({
-                updates: this.graph.generateUpdatesFor(tableColumns)
+                updates: this.graph.generateUpdatesFor(concreteColumns)
             });
         }
         else {
