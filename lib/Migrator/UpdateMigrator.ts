@@ -35,7 +35,10 @@ export class UpdateMigrator extends AbstractMigrator {
         try {
             await this.doUpdate(update);
         } catch(error) {
-            console.log(error)
+            this.migration.addLog([
+                `[${new Date().toISOString()}]`,
+                (error as Error).message
+            ].join(" "));
         }
     }
 
@@ -133,7 +136,7 @@ export class UpdateMigrator extends AbstractMigrator {
         maxId: number,
         attemptsNumberAfterDeadlock = 0
     ) {
-        logUpdate(update, `parallel updating ids ${minId} - ${maxId}`);
+        this.logUpdate(update, `parallel updating ids ${minId} - ${maxId}`);
 
         try {
             await this.postgres.updateCacheForRows(
@@ -173,7 +176,7 @@ export class UpdateMigrator extends AbstractMigrator {
         const timeout = this.migration.getTimeoutForUpdates();
 
         do {
-            logUpdate(update, `updating #${ ++packageIndex }`);
+            this.logUpdate(update, `updating #${ ++packageIndex }`);
 
             const updatedCount = await this.tryUpdateCacheLimitedPackage(update);
             needUpdateMore = updatedCount >= this.migration.getUpdatePackageSize();
@@ -241,11 +244,22 @@ export class UpdateMigrator extends AbstractMigrator {
         updateAlso: CacheUpdate,
         packageIndex: number
     ) {
-        logUpdate(updateAlso, `recursion updating #${ packageIndex }`);
+        this.logUpdate(updateAlso, `recursion updating #${ packageIndex }`);
 
         const updatedAlsoCount = await this.tryUpdateCacheLimitedPackage(updateAlso);
 
         return updatedAlsoCount;
+    }
+
+    private logUpdate(update: CacheUpdate, theme: string) {
+        this.migration.addLog([
+            `[${new Date().toISOString()}]`,
+            theme,
+            `table: ${update.table.table}`,
+            `columns: ${flatMap(update.selects, select => select.columns)
+                    .map(col => col.name).join(", ")}`,
+            `cache: ${update.caches.join(", ")} `
+        ].join("\n"));
     }
 }
 
@@ -253,15 +267,4 @@ async function sleep(ms: number) {
     return new Promise((resolve) => {
         setTimeout(resolve, ms);
     });
-}
-
-function logUpdate(update: CacheUpdate, theme: string) {
-    // tslint:disable-next-line: no-console
-    console.log([
-        theme,
-        `table: ${update.table.table}`,
-        `columns: ${flatMap(update.selects, select => select.columns)
-                .map(col => col.name).join(", ")}`,
-        `cache: ${update.caches.join(", ")} `
-    ].join("\n"));
 }

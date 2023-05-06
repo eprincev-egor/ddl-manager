@@ -33,8 +33,9 @@ interface ITimelineParams extends IParams {
 
 export interface IRefreshCacheParams extends IParams {
     concreteTables?: string | string[];
-    timeoutOnUpdate?: number
-    updatePackageSize?: number
+    timeoutOnUpdate?: number;
+    updatePackageSize?: number;
+    logToFile?: string;
 }
 
 export class DDLManager {
@@ -213,6 +214,10 @@ export class DDLManager {
     }
 
     private async refreshCache(params: IRefreshCacheParams) {
+        if ( params.logToFile ) {
+            fs.writeFileSync(params.logToFile, `[${new Date().toISOString()}] started\n`);
+        }
+
         const filesState = this.readFS();
         const postgres = await this.postgres();
         const database = await postgres.load();
@@ -230,6 +235,9 @@ export class DDLManager {
         if ( params.updatePackageSize ) {
             migration.setUpdatePackageSize(params.updatePackageSize);
         }
+        if ( params.logToFile ) {
+            migration.logToFile(params.logToFile);
+        }
 
         const migrateErrors = await MainMigrator.migrate(
             postgres,
@@ -242,6 +250,10 @@ export class DDLManager {
             migration,
             migrateErrors
         );
+
+        if ( params.logToFile ) {
+            fs.appendFileSync(params.logToFile, `\n[${new Date().toISOString()}] finished`);
+        }
     }
 
     private async compareCache() {

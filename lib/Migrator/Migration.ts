@@ -4,6 +4,7 @@ import { Column } from "../database/schema/Column";
 import { Index } from "../database/schema/Index";
 import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
 import { flatMap } from "lodash";
+import fs from "fs";
 
 export interface IChanges {
     functions: DatabaseFunction[];
@@ -20,6 +21,7 @@ export class Migration {
     private enabledCacheTriggersOnUpdate: boolean;
     private updateTimeout?: number;
     private updatePackageSize = 20000;
+    private logFilePath?: string;
 
     static empty() {
         return new Migration();
@@ -138,5 +140,16 @@ export class Migration {
             console.log(`cache ${update.caches}, update ${update.table.table} set ${columns.join(", ")}`);
         });
     }
+
+    logToFile(filePath: string) {
+        this.logFilePath = filePath;
+    }
     
+    addLog(log: string) {
+        console.log(log);
+
+        if ( this.logFilePath ){ 
+            fs.appendFileSync(this.logFilePath, log + "\n");
+        }
+    }
 }
