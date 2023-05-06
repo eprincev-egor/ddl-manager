@@ -31,6 +31,12 @@ interface ITimelineParams extends IParams {
     outputPath: string;
 }
 
+export interface IRefreshCacheParams extends IParams {
+    concreteTables?: string | string[];
+    timeoutOnUpdate?: number
+    updatePackageSize?: number
+}
+
 export class DDLManager {
 
     static async build(params: IParams) {
@@ -54,16 +60,9 @@ export class DDLManager {
         return await ddlManager.timeline(params);
     }
 
-    static async refreshCache(
-        params: IParams,
-        concreteTables?: string,
-        timeoutOnUpdate?: number
-    ) {
+    static async refreshCache(params: IRefreshCacheParams) {
         const ddlManager = new DDLManager(params);
-        return await ddlManager.refreshCache(
-            concreteTables,
-            timeoutOnUpdate
-        );
+        return await ddlManager.refreshCache(params);
     }
 
     static async scanBrokenColumns(params: IParams) {
@@ -213,10 +212,7 @@ export class DDLManager {
         console.log("success");
     }
 
-    private async refreshCache(
-        concreteTables?: string,
-        timeoutOnUpdate?: number
-    ) {
+    private async refreshCache(params: IRefreshCacheParams) {
         const filesState = this.readFS();
         const postgres = await this.postgres();
         const database = await postgres.load();
@@ -225,10 +221,14 @@ export class DDLManager {
             postgres,
             database,
             filesState,
-            concreteTables
+            params.concreteTables &&
+                params.concreteTables.toString()
         );
-        if ( timeoutOnUpdate ) {
-            migration.setTimeoutForUpdates(timeoutOnUpdate);
+        if ( params.timeoutOnUpdate ) {
+            migration.setTimeoutForUpdates(params.timeoutOnUpdate);
+        }
+        if ( params.updatePackageSize ) {
+            migration.setUpdatePackageSize(params.updatePackageSize);
         }
 
         const migrateErrors = await MainMigrator.migrate(

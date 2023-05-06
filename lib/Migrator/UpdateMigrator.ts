@@ -3,7 +3,6 @@ import { TableReference } from "../database/schema/TableReference";
 import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
 import { flatMap } from "lodash";
 
-export const packageSize = 20000;
 export const parallelPackagesCount = 8;
 
 export class UpdateMigrator extends AbstractMigrator {
@@ -90,7 +89,7 @@ export class UpdateMigrator extends AbstractMigrator {
         }
         const delta = max - min;
 
-        if ( delta <= packageSize ) {
+        if ( delta <= this.migration.getUpdatePackageSize() ) {
             await this.tryUpdateCacheRows(
                 update, min, max + 1
             );
@@ -116,13 +115,15 @@ export class UpdateMigrator extends AbstractMigrator {
         startId: number,
         endId: number
     ) {
+        const packageSize = this.migration.getUpdatePackageSize();
+
         while ( startId < endId ) {
             await this.tryUpdateCacheRows(
                 update,
-                startId,
-                startId + packageSize
+                endId - packageSize,
+                endId
             );
-            startId += packageSize;
+            endId -= packageSize;
         }
     }
 
@@ -175,7 +176,7 @@ export class UpdateMigrator extends AbstractMigrator {
             logUpdate(update, `updating #${ ++packageIndex }`);
 
             const updatedCount = await this.tryUpdateCacheLimitedPackage(update);
-            needUpdateMore = updatedCount >= packageSize;
+            needUpdateMore = updatedCount >= this.migration.getUpdatePackageSize();
 
             const updatedAlsoCount = await this.updateAlsoRecursions(
                 update, packageIndex
@@ -197,7 +198,7 @@ export class UpdateMigrator extends AbstractMigrator {
         try {
             return await this.postgres.updateCacheLimitedPackage(
                 update,
-                packageSize
+                this.migration.getUpdatePackageSize()
             );
         } catch(err) {
             const message = (err as any).message;

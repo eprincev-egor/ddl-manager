@@ -19,6 +19,7 @@ export class Migration {
     readonly toCreate: IChanges;
     private enabledCacheTriggersOnUpdate: boolean;
     private updateTimeout?: number;
+    private updatePackageSize = 20000;
 
     static empty() {
         return new Migration();
@@ -50,6 +51,14 @@ export class Migration {
 
     setTimeoutForUpdates(timeout: number) {
         this.updateTimeout = timeout;
+    }
+
+    getUpdatePackageSize() {
+        return this.updatePackageSize;
+    }
+
+    setUpdatePackageSize(packageSize: number) {
+        this.updatePackageSize = packageSize;
     }
 
     drop(state: Partial<IChanges>) {

@@ -1,4 +1,4 @@
-import { UpdateMigrator, packageSize, parallelPackagesCount } from "../../../lib/Migrator/UpdateMigrator";
+import { UpdateMigrator, parallelPackagesCount } from "../../../lib/Migrator/UpdateMigrator";
 import { FakeDatabaseDriver } from "../FakeDatabaseDriver";
 import { MainMigrator } from "../../../lib/Migrator/MainMigrator";
 import { IChanges, Migration } from "../../../lib/Migrator/Migration";
@@ -19,7 +19,7 @@ describe("ParallelFirstUpdateCache", () => {
     let database!: Database;
 
     const timeoutOnDeadlock = UpdateMigrator.timeoutOnDeadlock;
-
+    const packageSize = 20000;
     const maxId = 2 * packageSize * parallelPackagesCount - 1;
 
     const someTable = new TableID("public", "some_table");
@@ -56,7 +56,7 @@ describe("ParallelFirstUpdateCache", () => {
         );
     });
 
-    it("update all rows when recursionWith is empty array", async() => {
+    it("update all rows when recursionWith is empty array (parallel update from end to start)", async() => {
         migration = Migration.empty();
         migration.create({
             updates: [someUpdate]
@@ -66,13 +66,25 @@ describe("ParallelFirstUpdateCache", () => {
 
         const actualUpdatedIds = fakePostgres.getUpdates(someTable);
 
-        const expectedSlices: string[] = [];
-        for (let i = packageSize + 1; i <= maxId + packageSize; i += packageSize) {
-            const startId = i - packageSize;
-            const endId = i;
-            expectedSlices.push(`${startId} - ${endId}`);
-        }
-        assert.deepStrictEqual(actualUpdatedIds, expectedSlices);
+        assert.deepStrictEqual(actualUpdatedIds, [
+            "20001 - 40001",
+            "60001 - 80001",
+            "100001 - 120001",
+            "140001 - 160001",
+            "180001 - 200001",
+            "220001 - 240001",
+            "260001 - 280001",
+            "300000 - 320000",
+
+            "1 - 20001",
+            "40001 - 60001",
+            "80001 - 100001",
+            "120001 - 140001",
+            "160001 - 180001",
+            "200001 - 220001",
+            "240001 - 260001",
+            "280000 - 300000"
+        ]);
     });
 
     it("re-try on deadlock", async() => {

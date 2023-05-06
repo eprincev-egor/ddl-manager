@@ -247,10 +247,6 @@ implements IDatabaseDriver {
 
     getUpdates(table: TableID) {
         const updatedIds = (this.updatedByMinMax[ table.toString() ] || []).slice();
-        updatedIds.sort((a, b) => 
-            Number(a.split("-")[0]) - 
-            Number(b.split("-")[0])
-        );
         return updatedIds;
     }
 }
