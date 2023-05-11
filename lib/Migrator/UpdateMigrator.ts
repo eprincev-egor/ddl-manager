@@ -25,6 +25,7 @@ export class UpdateMigrator extends AbstractMigrator {
             await this.tryUpdate(update);
 
             await this.enableTriggers(update.table, cacheTriggers);
+            // TODO: пока шло обновление, могли изменится записи
         }
         else {
             await this.tryUpdate(update);

@@ -102,8 +102,11 @@ export class CacheComparator extends AbstractComparator {
         return changedColumns;
     }
 
-    async findBrokenColumns() {
-        const allCacheColumns = this.graph.getAllColumns();
+    async findBrokenColumns(params: {
+        concreteTables?: string | string[]
+    }) {
+        let allCacheColumns = this.findCacheColumnsForTables(params.concreteTables);
+
         const brokenColumns: CacheColumn[] = [];
 
         for (const column of allCacheColumns) {
@@ -147,12 +150,7 @@ export class CacheComparator extends AbstractComparator {
         await this.createColumns();
 
         if ( concreteTables ) {
-            const concreteColumns: CacheColumn[] = [];
-
-            for (const table of concreteTables.split(/\s*,\s*/) ) {
-                const tableColumns = this.graph.getColumns(table);
-                concreteColumns.push(...tableColumns);
-            }
+            const concreteColumns = this.findCacheColumnsForTables(concreteTables);
 
             this.migration.create({
                 updates: this.graph.generateUpdatesFor(concreteColumns)
@@ -316,4 +314,20 @@ export class CacheComparator extends AbstractComparator {
         });
     }
 
+    private findCacheColumnsForTables(
+        concreteTables?: string | string[]
+    ) {
+        if ( !concreteTables ) {
+            return this.graph.getAllColumns();
+        }
+
+        const concreteColumns: CacheColumn[] = [];
+    
+        for (const table of String(concreteTables).split(/\s*,\s*/) ) {
+            const tableColumns = this.graph.getColumns(table);
+            concreteColumns.push(...tableColumns);
+        }
+
+        return concreteColumns;
+    }
 }

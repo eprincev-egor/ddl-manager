@@ -38,6 +38,10 @@ export interface IRefreshCacheParams extends IParams {
     logToFile?: string;
 }
 
+export interface IScanBrokenParams extends IParams {
+    concreteTables?: string | string[];
+}
+
 export class DDLManager {
 
     static async build(params: IParams) {
@@ -66,9 +70,9 @@ export class DDLManager {
         return await ddlManager.refreshCache(params);
     }
 
-    static async scanBrokenColumns(params: IParams) {
+    static async scanBrokenColumns(params: IScanBrokenParams) {
         const ddlManager = new DDLManager(params);
-        return await ddlManager.scanBrokenColumns();
+        return await ddlManager.scanBrokenColumns(params);
     }
 
     static async watch(params: {
@@ -271,7 +275,7 @@ export class DDLManager {
         return columns;
     }
 
-    private async scanBrokenColumns() {
+    private async scanBrokenColumns(params: IScanBrokenParams) {
         const filesState = this.readFS();
         const postgres = await this.postgres();
         const database = await postgres.load();
@@ -282,7 +286,7 @@ export class DDLManager {
             filesState,
             Migration.empty()
         );
-        const columns = await cacheComparator.findBrokenColumns();
+        const columns = await cacheComparator.findBrokenColumns(params);
         return columns;
     }
 
