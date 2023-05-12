@@ -104,12 +104,33 @@ export class CacheComparator extends AbstractComparator {
 
     async findBrokenColumns(params: {
         concreteTables?: string | string[]
-    }) {
+    } = {}) {
         let allCacheColumns = this.findCacheColumnsForTables(params.concreteTables);
 
         const brokenColumns: CacheColumn[] = [];
 
         for (const column of allCacheColumns) {
+            const columnRef = `${column.for.getIdentifier()}.${column.name}`;
+
+            let whereBroken = `${columnRef} is distinct from tmp.${column.name}`
+
+            const expression = column.select.columns[0].expression;
+            if ( expression.isFuncCall() ) {
+                const [call] = expression.getFuncCalls();
+                if ( call.name === "array_agg" ) {
+                    whereBroken = `
+                        ${columnRef} is distinct from tmp.${column.name} and
+                        not(${columnRef} @> tmp.${column.name} and
+                        ${columnRef} <@ tmp.${column.name})
+                    `
+                }
+
+                if ( call.name === "sum" ) {
+                    whereBroken = `coalesce(${columnRef}, 0) is distinct from coalesce(tmp.${column.name}, 0)`
+                }
+            }
+
+            column.select.columns[0].expression.isFuncCall()
             const selectHasBroken = `
                 select exists(
                     select from ${column.for}
@@ -119,7 +140,7 @@ export class CacheComparator extends AbstractComparator {
                     ) as tmp on true
                     
                     where
-                        ${column.for.getIdentifier()}.${column.name} is distinct from tmp.${column.name}
+                        ${whereBroken}
                 ) as has_broken
             `;
             const {rows} = await this.driver.query(selectHasBroken);
