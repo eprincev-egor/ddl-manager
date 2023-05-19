@@ -3,10 +3,8 @@ returns trigger as $body$
 declare new_totals record;
 begin
 
-    if TG_OP = 'UPDATE' then
-        if new.profit is not distinct from old.profit then
-            return new;
-        end if;
+    if new.profit is not distinct from old.profit then
+        return new;
     end if;
 
 
@@ -35,7 +33,7 @@ $body$
 language plpgsql;
 
 create trigger cache_totals_for_self_on_orders
-after insert or update of profit
+after update of profit
 on public.orders
 for each row
 execute procedure cache_totals_for_self_on_orders();

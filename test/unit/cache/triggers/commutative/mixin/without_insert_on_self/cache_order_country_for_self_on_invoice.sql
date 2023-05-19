@@ -2,10 +2,8 @@ create or replace function cache_order_country_for_self_on_invoice()
 returns trigger as $body$
 begin
 
-    if TG_OP = 'UPDATE' then
-        if cm_equal_arrays(new.orders_ids, old.orders_ids) then
-            return new;
-        end if;
+    if cm_equal_arrays(new.orders_ids, old.orders_ids) then
+        return new;
     end if;
 
 

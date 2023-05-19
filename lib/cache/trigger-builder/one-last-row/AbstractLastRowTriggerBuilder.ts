@@ -6,14 +6,11 @@ import {
     SetSelectItem, Spaces,
     OrderByItem, OrderBy
 } from "../../../ast";
-import { createSelectForUpdate, getOrderByColumnsRefs, helperColumnName } from "../../processor/createSelectForUpdate";
-import { AbstractTriggerBuilder, ICacheTrigger } from "../AbstractTriggerBuilder";
+import { getOrderByColumnsRefs, helperColumnName } from "../../processor/createSelectForUpdate";
+import { AbstractTriggerBuilder } from "../AbstractTriggerBuilder";
 
-export abstract class AbstractLastRowTriggerBuilder extends AbstractTriggerBuilder {
-
-    createHelperTrigger(): ICacheTrigger | undefined {
-        return;
-    }
+export abstract class AbstractLastRowTriggerBuilder 
+extends AbstractTriggerBuilder {
 
     protected getIsLastColumnName() {
         const helperColumnName = [

@@ -57,6 +57,12 @@ export class CacheColumn {
         return this.select.getAllColumnReferences();
     }
 
+    hasForeignTablesDeps() {
+        return this.getColumnRefs().some(columnRef =>
+            !columnRef.tableReference.equal( this.for )
+        );
+    }
+
     getId() {
         return `${this.getTableId()}.${this.name}`;
     }

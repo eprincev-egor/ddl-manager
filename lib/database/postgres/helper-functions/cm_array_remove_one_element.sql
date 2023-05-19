@@ -14,6 +14,11 @@ begin
         element_to_remove
     );
 
+    if element_position is null then
+        return input_arr;
+    end if;
+
+
     return (
         input_arr[:(element_position - 1)] || 
         input_arr[(element_position + 1):]

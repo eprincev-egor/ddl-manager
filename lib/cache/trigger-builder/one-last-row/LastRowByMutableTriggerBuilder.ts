@@ -4,6 +4,15 @@ import { buildOneLastRowByMutableBody } from "../body/buildOneLastRowByMutableBo
 
 export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilder {
 
+    createTriggers() {
+        return [{
+            trigger: this.createDatabaseTrigger(),
+            procedure: this.createDatabaseFunction(
+                this.createBody()
+            )
+        }];
+    }
+
     protected createBody() {
         const {select} = this.context.cache;
         const orderBy = select.orderBy!;

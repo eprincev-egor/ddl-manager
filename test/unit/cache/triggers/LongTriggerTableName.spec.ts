@@ -5,7 +5,7 @@ import assert from "assert";
 describe("try use alias for name if default is long", () => {
 
     it("try use alias for name if default is long", () => {
-        const builder = new CacheTriggersBuilder(
+        const builder = new CacheTriggersBuilder([],
             `cache test_my_very_very_long_cache_name for some_table (
                 select
                     sum(link.profit) as total_profit

@@ -76,10 +76,9 @@ describe("integration/DDLManager.build cache", () => {
             from companies
             where id = 1
         `);
-        const row = result.rows[0];
 
-        expect(row).to.be.shallowDeepEqual({
-            orders_profit: 100
+        assert.deepStrictEqual(result.rows[0], {
+            orders_profit: "100"
         });
     });
 
@@ -1067,16 +1066,18 @@ describe("integration/DDLManager.build cache", () => {
         });
 
         const result = await db.query(`
-            select *
+            select
+                watchers_ids,
+                orders_managers_ids,
+                watchers_or_managers
             from tasks
             where id = 1
         `);
-        const row = result.rows[0];
 
-        expect(row).to.be.shallowDeepEqual({
+        assert.deepStrictEqual(result.rows[0], {
             watchers_ids: [1],
             orders_managers_ids: [2],
-            watchers_or_managers: [1,2]
+            watchers_or_managers: [1, 2]
         });
     });
 
@@ -2603,10 +2604,13 @@ describe("integration/DDLManager.build cache", () => {
         assert.deepStrictEqual(result.rows, [{
             id: 1,
             profit: 10000,
+
             profit_a: 10001,
-            profit_b: 21012,
             profit_c: 10011,
+
+            profit_b: 21012,
             profit_d: 20112,
+
             profit_e: 21112,
             profit_f: 20212
         }]);

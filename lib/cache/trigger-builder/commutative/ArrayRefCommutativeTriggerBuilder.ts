@@ -8,7 +8,17 @@ import { findJoinsMeta } from "../../processor/findJoinsMeta";
 import { buildJoinVariables } from "../../processor/buildJoinVariables";
 import { hasReference } from "../condition/hasReference";
 
-export class ArrayRefCommutativeTriggerBuilder extends AbstractTriggerBuilder {
+export class ArrayRefCommutativeTriggerBuilder
+extends AbstractTriggerBuilder {
+
+    createTriggers() {
+        return [{
+            trigger: this.createDatabaseTrigger(),
+            procedure: this.createDatabaseFunction(
+                this.createBody()
+            )
+        }];
+    }
 
     protected createBody() {
         const deltaSetItems = this.deltaSetItems.delta();

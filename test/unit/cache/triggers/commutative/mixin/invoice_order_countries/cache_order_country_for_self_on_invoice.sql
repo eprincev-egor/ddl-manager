@@ -1,16 +1,9 @@
 create or replace function cache_order_country_for_self_on_invoice()
 returns trigger as $body$
 begin
-    if TG_OP = 'INSERT' then
-        if new.orders_ids is null then
-            return new;
-        end if;
-    end if;
 
-    if TG_OP = 'UPDATE' then
-        if cm_equal_arrays(new.orders_ids, old.orders_ids) then
-            return new;
-        end if;
+    if cm_equal_arrays(new.orders_ids, old.orders_ids) then
+        return new;
     end if;
 
 
@@ -47,7 +40,7 @@ $body$
 language plpgsql;
 
 create trigger cache_order_country_for_self_on_invoice
-after insert or update of orders_ids
+after update of orders_ids
 on public.invoice
 for each row
 execute procedure cache_order_country_for_self_on_invoice();

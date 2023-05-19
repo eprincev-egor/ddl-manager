@@ -23,6 +23,7 @@ export function testWhereBuilder(test: ITest) {
         const triggerTable = new TableID(schemaName, tableName);
 
         const context = new CacheContext(
+            [cache],
             cache,
             triggerTable,
             [],

@@ -2,10 +2,8 @@ create or replace function cache_border_crossing_for_self_on_order()
 returns trigger as $body$
 begin
 
-    if TG_OP = 'UPDATE' then
-        if new.date_delivery is not distinct from old.date_delivery then
-            return new;
-        end if;
+    if new.date_delivery is not distinct from old.date_delivery then
+        return new;
     end if;
 
 
@@ -47,7 +45,7 @@ $body$
 language plpgsql;
 
 create trigger cache_border_crossing_for_self_on_order
-after insert or update of date_delivery
+after update of date_delivery
 on public.order
 for each row
 execute procedure cache_border_crossing_for_self_on_order();

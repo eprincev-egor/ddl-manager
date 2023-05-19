@@ -1,28 +1,17 @@
 create or replace function cache_orders_agg_data_for_self_on_invoice()
 returns trigger as $body$
 begin
-    if TG_OP = 'INSERT' then
-        if new.id_invoice_type is null then
-            return new;
-        end if;
 
-        if not coalesce(new.id_invoice_type = 4, false) then
-            return new;
-        end if;
+    if new.id_invoice_type is not distinct from old.id_invoice_type then
+        return new;
     end if;
 
-    if TG_OP = 'UPDATE' then
-        if new.id_invoice_type is not distinct from old.id_invoice_type then
-            return new;
-        end if;
-
-        if
-            not coalesce(old.id_invoice_type = 4, false)
-            and
-            not coalesce(new.id_invoice_type = 4, false)
-        then
-            return new;
-        end if;
+    if
+        not coalesce(old.id_invoice_type = 4, false)
+        and
+        not coalesce(new.id_invoice_type = 4, false)
+    then
+        return new;
     end if;
 
 
@@ -55,7 +44,7 @@ $body$
 language plpgsql;
 
 create trigger cache_orders_agg_data_for_self_on_invoice
-after insert or update of id_invoice_type
+after update of id_invoice_type
 on public.invoice
 for each row
 execute procedure cache_orders_agg_data_for_self_on_invoice();

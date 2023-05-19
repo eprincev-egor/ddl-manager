@@ -28,18 +28,11 @@ export function buildSelfUpdateBySelfRowBody(
 
             ...(noChanges.isEmpty() ? [] : [
                 new If({
-                    if: new HardCode({
-                        sql: `TG_OP = 'UPDATE'`
-                    }),
+                    if: noChanges,
                     then: [
-                        new If({
-                            if: noChanges,
-                            then: [
-                                new HardCode({
-                                    sql: `return new;`
-                                })
-                            ]
-                        }),
+                        new HardCode({
+                            sql: `return new;`
+                        })
                     ]
                 }),
                 new BlankLine(),

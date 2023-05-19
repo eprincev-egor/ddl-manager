@@ -29,21 +29,27 @@ export interface IOutputTrigger {
 
 export class CacheTriggersBuilder {
 
+    private readonly allCache: Cache[];
     private readonly cache: Cache;
     private readonly builderFactory: TriggerBuilderFactory;
     private readonly database: Database;
 
     constructor(
+        allCache: Cache[],
         cacheOrSQL: string | Cache,
         database: Database
     ) {
+        this.allCache = allCache;
+
         let cache: Cache = cacheOrSQL as Cache;
         if ( typeof cacheOrSQL === "string" ) {
             cache = CacheParser.parse(cacheOrSQL);
         }
+
         this.database = database;
         this.cache = cache;
         this.builderFactory = new TriggerBuilderFactory(
+            this.allCache,
             cache,
             database
         );
@@ -111,6 +117,7 @@ export class CacheTriggersBuilder {
                 col != "id"
             );
             const context = new CacheContext(
+                this.allCache,
                 this.cache,
                 this.cache.for.table,
                 mutableColumns,
@@ -132,13 +139,15 @@ export class CacheTriggersBuilder {
 
             if ( TriggerBuilderConstructor ) {
                 const builder = new TriggerBuilderConstructor(context);
-                const cacheTrigger = builder.createTrigger();
-    
-                output.push({
-                    name: cacheTrigger.trigger.name,
-                    trigger: cacheTrigger.trigger,
-                    function: cacheTrigger.function
-                });
+                const triggers = builder.createTriggers();
+
+                for (const {trigger, procedure} of triggers) {
+                    output.push({
+                        name: trigger.name,
+                        trigger: trigger,
+                        function: procedure
+                    });
+                }
             }
         }
 
@@ -159,19 +168,12 @@ export class CacheTriggersBuilder {
                 continue;
             }
 
-            const result = triggerBuilder.createTrigger();
-            output.push({
-                name: result.trigger.name,
-                trigger: result.trigger,
-                function: result.function
-            });
-
-            const helper = triggerBuilder.createHelperTrigger();
-            if ( helper ) {
+            const triggers = triggerBuilder.createTriggers();
+            for (const {trigger, procedure} of triggers) {
                 output.push({
-                    name: helper.trigger.name,
-                    trigger: helper.trigger,
-                    function: helper.function
+                    name: trigger.name,
+                    trigger: trigger,
+                    function: procedure
                 });
             }
         }

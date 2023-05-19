@@ -6,7 +6,17 @@ import { TableReference } from "../../../database/schema/TableReference";
 import { CoalesceFalseExpression } from "../../../ast/expression/CoalesceFalseExpression";
 import assert from "assert";
 
-export class LastRowByArrayReferenceTriggerBuilder extends AbstractLastRowTriggerBuilder {
+export class LastRowByArrayReferenceTriggerBuilder
+extends AbstractLastRowTriggerBuilder {
+
+    createTriggers() {
+        return [{
+            trigger: this.createDatabaseTrigger(),
+            procedure: this.createDatabaseFunction(
+                this.createBody()
+            )
+        }];
+    }
 
     protected createBody() {
         const arrColumnRef = this.getArrColumnRef();

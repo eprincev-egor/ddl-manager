@@ -9,6 +9,15 @@ type Row = "new" | "old";
 
 export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
 
+    createTriggers() {
+        return [{
+            trigger: this.createDatabaseTrigger(),
+            procedure: this.createDatabaseFunction(
+                this.createBody()
+            )
+        }];
+    }
+
     protected createBody() {
         const body = buildOneRowBody({
             selects: this.buildSelectRecords(),

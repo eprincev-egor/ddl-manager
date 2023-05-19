@@ -1,16 +1,9 @@
 create or replace function cache_renomination_for_self_on_invoice()
 returns trigger as $body$
 begin
-    if TG_OP = 'INSERT' then
-        if new.renomination_invoices is null then
-            return new;
-        end if;
-    end if;
 
-    if TG_OP = 'UPDATE' then
-        if cm_equal_arrays(new.renomination_invoices, old.renomination_invoices) then
-            return new;
-        end if;
+    if cm_equal_arrays(new.renomination_invoices, old.renomination_invoices) then
+        return new;
     end if;
 
 
@@ -55,7 +48,7 @@ $body$
 language plpgsql;
 
 create trigger cache_renomination_for_self_on_invoice
-after insert or update of renomination_invoices
+after update of renomination_invoices
 on public.invoice
 for each row
 execute procedure cache_renomination_for_self_on_invoice();

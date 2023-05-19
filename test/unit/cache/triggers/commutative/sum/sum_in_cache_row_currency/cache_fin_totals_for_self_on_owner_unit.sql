@@ -1,20 +1,13 @@
 create or replace function cache_fin_totals_for_self_on_owner_unit()
 returns trigger as $body$
 begin
-    if TG_OP = 'INSERT' then
-        if new.units_ids is null then
-            return new;
-        end if;
-    end if;
 
-    if TG_OP = 'UPDATE' then
-        if
-            new.id_currency_fin_oper is not distinct from old.id_currency_fin_oper
-            and
-            new.units_ids is not distinct from old.units_ids
-        then
-            return new;
-        end if;
+    if
+        new.id_currency_fin_oper is not distinct from old.id_currency_fin_oper
+        and
+        new.units_ids is not distinct from old.units_ids
+    then
+        return new;
     end if;
 
 
@@ -62,7 +55,7 @@ $body$
 language plpgsql;
 
 create trigger cache_fin_totals_for_self_on_owner_unit
-after insert or update of id_currency_fin_oper, units_ids
+after update of id_currency_fin_oper, units_ids
 on operation.owner_unit
 for each row
 execute procedure cache_fin_totals_for_self_on_owner_unit();

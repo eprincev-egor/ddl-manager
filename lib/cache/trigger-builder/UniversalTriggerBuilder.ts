@@ -6,6 +6,15 @@ import { createSelectForUpdate } from "../processor/createSelectForUpdate";
 
 export class UniversalTriggerBuilder extends AbstractTriggerBuilder {
 
+    createTriggers() {
+        return [{
+            trigger: this.createDatabaseTrigger(),
+            procedure: this.createDatabaseFunction(
+                this.createBody()
+            )
+        }];
+    }
+
     protected createBody() {
 
         const from = buildFrom(this.context);

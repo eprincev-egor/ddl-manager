@@ -1,16 +1,9 @@
 create or replace function cache_payments_for_self_on_invoice()
 returns trigger as $body$
 begin
-    if TG_OP = 'INSERT' then
-        if new.payments_ids is null then
-            return new;
-        end if;
-    end if;
 
-    if TG_OP = 'UPDATE' then
-        if cm_equal_arrays(new.payments_ids, old.payments_ids) then
-            return new;
-        end if;
+    if cm_equal_arrays(new.payments_ids, old.payments_ids) then
+        return new;
     end if;
 
 
@@ -38,7 +31,7 @@ $body$
 language plpgsql;
 
 create trigger cache_payments_for_self_on_invoice
-after insert or update of payments_ids
+after update of payments_ids
 on public.invoice
 for each row
 execute procedure cache_payments_for_self_on_invoice();

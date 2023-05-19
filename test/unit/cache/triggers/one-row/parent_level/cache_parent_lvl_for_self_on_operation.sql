@@ -1,16 +1,9 @@
 create or replace function cache_parent_lvl_for_self_on_operation()
 returns trigger as $body$
 begin
-    if TG_OP = 'INSERT' then
-        if new.id_parent_operation is null then
-            return new;
-        end if;
-    end if;
 
-    if TG_OP = 'UPDATE' then
-        if new.id_parent_operation is not distinct from old.id_parent_operation then
-            return new;
-        end if;
+    if new.id_parent_operation is not distinct from old.id_parent_operation then
+        return new;
     end if;
 
 
@@ -36,7 +29,7 @@ $body$
 language plpgsql;
 
 create trigger cache_parent_lvl_for_self_on_operation
-after insert or update of id_parent_operation
+after update of id_parent_operation
 on operation.operation
 for each row
 execute procedure cache_parent_lvl_for_self_on_operation();

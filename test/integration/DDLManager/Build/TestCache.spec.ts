@@ -2867,6 +2867,367 @@ $$;
         ]);
     });
 
+    it("two caches, one by join, another just array_agg", async() => {
+        const folderPath = ROOT_TMP_PATH + "/test_two_cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table invoice (
+                id serial primary key,
+                vector integer not null 
+                    check (vector IN (1, -1))
+            );
+
+            create table payment (
+                id serial primary key
+            );
+
+            create table invoice_position (
+                id serial primary key,
+                id_invoice integer references invoice,
+                id_payment integer references payment,
+                sum numeric
+            );
+
+
+        `);
+
+        fs.writeFileSync(folderPath + "/invoice.sql", `
+            cache invoice for invoice_position (
+                select
+                    invoice.vector as invoice_vector
+        
+                from invoice
+                where
+                    invoice.id = invoice_position.id_invoice
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/invoices.sql", `
+            cache invoices for payment (
+                select
+                    sum(
+                        invoice_position.sum * 
+                        invoice_position.invoice_vector 
+                    ) as invoices_sum,
+
+                    array_agg( invoice_position.id_invoice ) as invoices_ids
+        
+                from invoice_position
+                where
+                    invoice_position.id_payment = payment.id
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        
+        await db.query(`
+            insert into payment default values;
+            insert into invoice (vector) values (1);
+
+            insert into invoice_position
+                (id_invoice, id_payment, sum)
+            values
+                (1, 1, 100)
+            ;
+        `);
+
+        const actual = await db.query(`
+            select invoices_sum, invoices_ids
+            from payment
+        `);
+        assert.deepStrictEqual(actual.rows, [
+            { invoices_sum: "100", invoices_ids: [1] }
+        ]);
+    });
+
+    it("two caches, one by agg from one table, another just array_agg from other table", async() => {
+        const folderPath = ROOT_TMP_PATH + "/test_two_cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table payment (
+                id serial primary key
+            );
+
+            create table invoice_position (
+                id serial primary key,
+                id_invoice integer,
+                incoming_invoice_positions_ids integer[],
+                id_payment integer references payment,
+                sum numeric
+            );
+
+        `);
+
+        fs.writeFileSync(folderPath + "/incoming.sql", `
+            cache incoming for invoice_position as outgoing_position (
+                select
+                    sum( incoming_position.sum ) as incoming_sum
+        
+                from invoice_position as incoming_position
+                where
+                    incoming_position.id = any(outgoing_position.incoming_invoice_positions_ids)
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/invoices.sql", `
+            cache invoices for payment (
+                select
+                    sum(
+                        coalesce(invoice_position.sum, 0) - 
+                        coalesce(invoice_position.incoming_sum, 0)
+                    ) as invoices_sum,
+
+                    array_agg( invoice_position.id_invoice ) as invoices_ids
+        
+                from invoice_position
+                where
+                    invoice_position.id_payment = payment.id and
+                    invoice_position.incoming_invoice_positions_ids is not null
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        
+        await db.query(`
+            insert into payment default values;
+
+            insert into invoice_position
+                (id_payment, id_invoice, sum, incoming_invoice_positions_ids)
+            values
+                (1, 1, 100, null),
+                (1, 1, 50, null),
+                (1, 1, 610, array[1, 2])
+            ;
+        `);
+
+        const actual = await db.query(`
+            select invoices_sum, invoices_ids
+            from payment
+        `);
+        assert.deepStrictEqual(actual.rows, [
+            { invoices_sum: "460", invoices_ids: [1] }
+        ]);
+    });
+
+    it("two caches, one self calc, another just array_agg from other table", async() => {
+        const folderPath = ROOT_TMP_PATH + "/test_two_cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table payment (
+                id serial primary key
+            );
+
+            create table invoice_position (
+                id serial primary key,
+                id_invoice integer,
+                id_payment integer references payment,
+                debit numeric,
+                credit numeric
+            );
+
+        `);
+
+        fs.writeFileSync(folderPath + "/a_profit.sql", `
+            cache a_profit for invoice_position (
+                select
+                    (
+                        coalesce(invoice_position.debit, 0) -
+                        coalesce(invoice_position.credit, 0)
+                    ) as profit
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/invoices.sql", `
+            cache invoices for payment (
+                select
+                    sum( invoice_position.profit ) as invoices_profit,
+
+                    array_agg( invoice_position.id_invoice ) as invoices_ids
+        
+                from invoice_position
+                where
+                    invoice_position.id_payment = payment.id
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        
+        await db.query(`
+            insert into payment default values;
+
+            insert into invoice_position
+                (id_payment, id_invoice, debit, credit)
+            values
+                (1, 1, 100, null),
+                (1, 2, null, 60)
+            ;
+        `);
+
+        const actual = await db.query(`
+            select invoices_profit, invoices_ids
+            from payment
+        `);
+        assert.deepStrictEqual(actual.rows, [
+            { invoices_profit: "40", invoices_ids: [1, 2] }
+        ]);
+    });
+
+    it("two caches, one-row cache dependent on self cache", async() => {
+        const folderPath = ROOT_TMP_PATH + "/test_two_cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table documents (
+                id serial primary key,
+                doc_number text
+            );
+
+            create table orders (
+                id serial primary key,
+                id_invoice_doc integer
+                    references documents,
+                id_corrected_invoice_doc integer
+                    references documents
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/z_doc.sql", `
+            cache z_doc for orders (
+                select
+                    coalesce(
+                        orders.id_corrected_invoice_doc,
+                        orders.id_invoice_doc
+                    ) as id_total_invoice_doc
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/total_invoice.sql", `
+            cache total_invoice for orders (
+                select
+                    documents.doc_number as total_invoice_doc_number
+                from documents
+                where
+                    documents.id = orders.id_total_invoice_doc
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        
+        await db.query(`
+            insert into documents (doc_number)
+            values ('old invoice'), ('new invoice');
+
+            insert into orders
+                (id_invoice_doc, id_corrected_invoice_doc)
+            values
+                (1, 2)
+            ;
+        `);
+
+        const actual = await db.query(`
+            select total_invoice_doc_number
+            from orders
+        `);
+        assert.deepStrictEqual(actual.rows, [
+            { total_invoice_doc_number: "new invoice" }
+        ]);
+    });
+
+    it("two caches, one of commutative columns dependent on self cache", async() => {
+        const folderPath = ROOT_TMP_PATH + "/test_two_cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                discount numeric default 1,
+                invoices_ids integer[]
+            );
+
+            create table invoices (
+                id serial primary key,
+                credit numeric,
+                debit numeric
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/z.sql", `
+            cache z for orders (
+                select
+                    orders.invoices_credit * orders.discount 
+                        as invoices_credit_with_discount
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/total_invoice.sql", `
+            cache total_invoice for orders (
+                select
+                    sum( invoices.credit ) as invoices_credit,
+                    sum( invoices.debit ) - orders.invoices_credit_with_discount
+                        as invoices_profit
+
+                from invoices
+                where
+                    invoices.id = any( orders.invoices_ids )
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        
+        await db.query(`
+            insert into invoices
+                (credit, debit)
+            values
+                (1000, null),
+                (null, 1000)
+            ;
+
+            insert into orders (discount, invoices_ids)
+            values (0.9, array[1, 2]);
+        `);
+
+        const actual = await db.query(`
+            select invoices_profit
+            from orders
+        `);
+        assert.deepStrictEqual(actual.rows, [
+            { invoices_profit: "100.0" }
+        ]);
+    });
+
     async function sleep(ms: number) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }

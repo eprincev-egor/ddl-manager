@@ -1,16 +1,9 @@
 create or replace function cache_totals_for_self_on_account_date_balance()
 returns trigger as $body$
 begin
-    if TG_OP = 'INSERT' then
-        if new.balance_date is null then
-            return new;
-        end if;
-    end if;
 
-    if TG_OP = 'UPDATE' then
-        if new.balance_date is not distinct from old.balance_date then
-            return new;
-        end if;
+    if new.balance_date is not distinct from old.balance_date then
+        return new;
     end if;
 
 
@@ -36,7 +29,7 @@ $body$
 language plpgsql;
 
 create trigger cache_totals_for_self_on_account_date_balance
-after insert or update of balance_date
+after update of balance_date
 on capital.account_date_balance
 for each row
 execute procedure cache_totals_for_self_on_account_date_balance();

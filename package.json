@@ -1,6 +1,6 @@
 {
   "name": "ddl-manager",
-  "version": "2.1.43-alpha",
+  "version": "2.1.44-alpha",
   "description": "store postgres procedures and triggers in files",
   "main": "dist/DDLManager.js",
   "bin": {

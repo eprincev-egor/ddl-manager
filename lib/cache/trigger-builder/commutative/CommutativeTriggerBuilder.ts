@@ -4,7 +4,17 @@ import { Update, Expression } from "../../../ast";
 import { buildJoinVariables } from "../../processor/buildJoinVariables";
 import { findJoinsMeta } from "../../processor/findJoinsMeta";
 
-export class CommutativeTriggerBuilder extends AbstractTriggerBuilder {
+export class CommutativeTriggerBuilder
+extends AbstractTriggerBuilder {
+
+    createTriggers() {
+        return [{
+            trigger: this.createDatabaseTrigger(),
+            procedure: this.createDatabaseFunction(
+                this.createBody()
+            )
+        }];
+    }
 
     protected createBody() {
         const deltaUpdate = new Update({

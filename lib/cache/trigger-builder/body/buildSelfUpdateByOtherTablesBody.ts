@@ -11,58 +11,26 @@ import { TableReference } from "../../../database/schema/TableReference";
 import { exitIf } from "./util/exitIf";
 
 export function buildSelfUpdateByOtherTablesBody(
-    needInsertCase: boolean,
     updateTable: TableReference,
     noChanges: Expression,
-    hasReference: Expression,
     columnsToUpdate: string[],
     selectNewValues: string,
-    notMatchedFilterOnInsert?: Expression,
     notMatchedFilterOnUpdate?: Expression,
 ) {
     const body = new Body({
         statements: [
-            ...(needInsertCase ? [
-                new If({
-                    if: new HardCode({
-                        sql: `TG_OP = 'INSERT'`
-                    }),
-                    then: [
-                        new If({
-                            if: hasReference,
-                            then: [
-                                new HardCode({
-                                    sql: `return new;`
-                                })
-                            ]
-                        }),
-                        ...exitIf({
-                            if: notMatchedFilterOnInsert,
-                            blanksBefore: [new BlankLine()]
-                        })
-                    ]
-                }),
-            ] : []),
-            
             new BlankLine(),
             new If({
-                if: new HardCode({
-                    sql: `TG_OP = 'UPDATE'`
-                }),
+                if: noChanges,
                 then: [
-                    new If({
-                        if: noChanges,
-                        then: [
-                            new HardCode({
-                                sql: `return new;`
-                            })
-                        ]
-                    }),
-                    ...exitIf({
-                        if: notMatchedFilterOnUpdate,
-                        blanksBefore: [new BlankLine()]
+                    new HardCode({
+                        sql: `return new;`
                     })
                 ]
+            }),
+            ...exitIf({
+                if: notMatchedFilterOnUpdate,
+                blanksBefore: [new BlankLine()]
             }),
             new BlankLine(),
             new BlankLine(),

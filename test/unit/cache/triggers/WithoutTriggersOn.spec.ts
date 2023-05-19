@@ -5,7 +5,7 @@ import assert from "assert";
 describe("TriggerFactory, no triggers for some table", () => {
 
     it("no triggers by table name", () => {
-        const builder = new CacheTriggersBuilder(
+        const builder = new CacheTriggersBuilder([],
             `cache totals for companies (
                 select
                     string_agg(distinct order_type.name, ', ') as orders_types_names
@@ -37,7 +37,7 @@ describe("TriggerFactory, no triggers for some table", () => {
 
 
     it("no triggers for two tables", () => {
-        const builder = new CacheTriggersBuilder(
+        const builder = new CacheTriggersBuilder([],
             `cache totals for companies (
                 select
                     string_agg(distinct order_type.name, ', ') as orders_types_names,
@@ -82,7 +82,7 @@ describe("TriggerFactory, no triggers for some table", () => {
 
     it("error on unknown table", () => {
 
-        const builder = new CacheTriggersBuilder(
+        const builder = new CacheTriggersBuilder([],
             `cache totals for companies (
                 select
                     string_agg(distinct country.name, ', ') as orders_countries_names

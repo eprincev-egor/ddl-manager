@@ -51,15 +51,26 @@ function addNextLevels(
 
 function addCircularDependencies(level: CacheColumn[]): CacheColumn[] {
     const output: CacheColumn[] = [];
+
     for (const column of level) {
-        output.push(column);
-        output.push(...column.findCircularUses());
+        const circularColumns = [
+            column,
+            ...column.findCircularUses()
+        ].sort((columnA, columnB) =>
+            // if no deps to other tables, then be last in array
+            +columnB.hasForeignTablesDeps() -
+            +columnA.hasForeignTablesDeps()
+        );
+
+        output.push(...circularColumns);
     }
+
     return output;
 }
 
 function removeDuplicates(matrix: CacheColumn[][]) {
     const known: Record<string, boolean> = {};
+    let newMatrix: CacheColumn[][] = [];
 
     for (let n = matrix.length, i = n - 1; i >= 0; i--) {
         const line = matrix[i];
@@ -73,13 +84,13 @@ function removeDuplicates(matrix: CacheColumn[][]) {
                 continue;
             }
 
-            newLine.push(column);
+            newLine.unshift(column);
             known[ column.getId() ] = true;
         }
 
-        matrix[i] = newLine;
+        newMatrix[i] = newLine;
     }
 
-    const newMatrix = matrix.filter(line => line.length > 0);
+    newMatrix = newMatrix.filter(line => line.length > 0);
     return newMatrix;
 }

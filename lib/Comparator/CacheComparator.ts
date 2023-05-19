@@ -28,10 +28,11 @@ export class CacheComparator extends AbstractComparator {
         this.allCacheTriggers = [];
 
         const cacheColumns: CacheColumnParams[] = [];
+        const allCache = this.fs.allCache();
 
-        for (const cache of this.fs.allCache()) {
+        for (const cache of allCache) {
             const cacheTriggerFactory = new CacheTriggersBuilder(
-                cache,
+                allCache, cache,
                 this.database
             );
 

@@ -1,18 +1,33 @@
-import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
 import { TableReference } from "../../database/schema/TableReference";
-import { TableID } from "../../database/schema/TableID";
-import { Comment } from "../../database/schema/Comment";
-import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
+import { AbstractTriggerBuilder, ICacheTrigger } from "./AbstractTriggerBuilder";
 import { buildSelfUpdateBySelfRowBody } from "./body/buildSelfUpdateBySelfRowBody";
+import { createSelectForUpdate } from "../processor/createSelectForUpdate";
+import { buildSelfAssignBeforeInsertSelfColumnBody } from "./body/buildSelfAssignBeforeInsertSelfColumnBody";
+import { leadingZero } from "./utils";
 
-export class SelfUpdateBySelfRowTriggerBuilder extends AbstractTriggerBuilder {
+export class SelfUpdateBySelfRowTriggerBuilder 
+extends AbstractTriggerBuilder {
 
-    createBody() {
-        return buildSelfUpdateBySelfRowBody(
-            this.context.cache.for,
-            this.conditions.noChanges(),
-            this.buildSelectValues()
-        );
+    createTriggers(): ICacheTrigger[] {
+        const updateOfColumns = this.buildUpdateOfColumns();
+        if ( updateOfColumns.length === 0 ) {
+            return this.createBeforeInsertTriggers();
+        }
+
+        return [{
+            trigger: this.createDatabaseTrigger({
+                after: true,
+                insert: false,
+                delete: false,
+            }),
+            procedure: this.createDatabaseFunction(
+                buildSelfUpdateBySelfRowBody(
+                    this.context.cache.for,
+                    this.conditions.noChanges(),
+                    this.buildSelectValues()
+                )
+            )
+        }, ...this.createBeforeInsertTriggers()];
     }
 
     private buildSelectValues() {
@@ -34,36 +49,52 @@ export class SelfUpdateBySelfRowTriggerBuilder extends AbstractTriggerBuilder {
         return selectValues;
     }
 
+    private createBeforeInsertTriggers(): ICacheTrigger[] {
+        const {cache} = this.context;
+        const newRow = new TableReference(
+            cache.for.table,
+            "new"
+        );
 
-    protected createDatabaseTrigger() {
-        
-        const updateOfColumns = this.buildUpdateOfColumns();
-        
-        const trigger = new DatabaseTrigger({
-            name: this.generateTriggerName(),
-            after: true,
-            insert: true,
-            
-            delete: false,
+        const selectValues = createSelectForUpdate(
+            this.context.database,
+            this.context.cache
+        ).replaceTable(cache.for, newRow);
 
-            update: updateOfColumns.length > 0,
-            updateOf: updateOfColumns,
-            procedure: {
-                schema: "public",
-                name: this.generateTriggerName(),
-                args: []
-            },
-            table: new TableID(
-                this.context.triggerTable.schema || "public",
-                this.context.triggerTable.name
-            ),
-            comment: Comment.fromFs({
-                objectType: "trigger",
-                cacheSignature: this.context.cache.getSignature()
-            })
+        return selectValues.columns.map(selectColumn => {
+            const dependencyIndex = this.context.getDependencyIndex(
+                selectColumn.name
+            );
+            const triggerName = [
+                `cache${leadingZero(dependencyIndex, 3)}`,
+                cache.for.table.name,
+                selectColumn.name,
+                "bef_ins"
+            ].join("_");
+    
+            return {
+                trigger: this.createDatabaseTrigger({
+                    after: false,
+                    delete: false,
+                    update: false,
+                    updateOf: undefined,
+
+                    name: triggerName,
+                    before: true,
+                    insert: true,
+                    procedure: {
+                        schema: "public",
+                        name: triggerName,
+                        args: []
+                    }
+                }),
+                procedure: this.createDatabaseFunction(
+                    buildSelfAssignBeforeInsertSelfColumnBody(
+                        selectColumn
+                    ),
+                    triggerName
+                )
+            }
         });
-
-        return trigger;
     }
-
 }

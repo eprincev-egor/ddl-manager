@@ -1,4 +1,4 @@
-import { AbstractExpressionElement, Cache, Expression } from "../../ast";
+import { Cache } from "../../ast";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { CommutativeTriggerBuilder } from "./commutative/CommutativeTriggerBuilder";
 import { ArrayRefCommutativeTriggerBuilder } from "./commutative/ArrayRefCommutativeTriggerBuilder";
@@ -15,13 +15,16 @@ import { LastRowByArrayReferenceTriggerBuilder } from "./one-last-row/LastRowByA
 import { buildArrVars } from "../processor/buildArrVars";
 
 export class TriggerBuilderFactory {
+    private readonly allCache: Cache[];
     private readonly cache: Cache;
     private readonly database: Database;
 
     constructor(
+        allCache: Cache[],
         cache: Cache,
         database: Database,
     ) {
+        this.allCache = allCache;
         this.cache = cache;
         this.database = database;
     }
@@ -32,6 +35,7 @@ export class TriggerBuilderFactory {
     ): AbstractTriggerBuilder | undefined {
 
         const context = new CacheContext(
+            this.allCache,
             this.cache,
             triggerTable,
             triggerTableColumns,

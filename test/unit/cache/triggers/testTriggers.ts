@@ -3,6 +3,7 @@ import path from "path";
 import assert from "assert";
 import { CacheTriggersBuilder } from "../../../../lib/cache/CacheTriggersBuilder";
 import { testDatabase } from "./testDatabase";
+import { CacheParser } from "../../../../lib/parser";
 
 export interface ITest {
     testDir: string;
@@ -13,24 +14,25 @@ export function testTriggers(test: ITest) {
     
     const cacheFilePath = path.join(test.testDir, "cache.sql");
     const cacheSQL = fs.readFileSync(cacheFilePath).toString();
+    const cache = CacheParser.parse(cacheSQL);
 
 
     const builder = new CacheTriggersBuilder(
-        cacheSQL,
+        [cache], cache,
         testDatabase
     );
     const triggers = builder.createTriggers();
 
-    for (let schemaTable of test.tables) {
-        const triggerFilePath = path.join(test.testDir, schemaTable + ".sql");
+    for (let fileName of test.tables) {
+        const triggerFilePath = path.join(test.testDir, fileName + ".sql");
         const expectedTriggerDDL = fs.readFileSync(triggerFilePath).toString();
 
-        schemaTable = schemaTable.split(".").slice(0, 2).join(".");
+        const triggerName = fileName.replace(".sql", "");
 
         const output = triggers.find(trigger => 
             expectedTriggerDDL.includes(trigger.name)
         );
-        assert.ok(output, "should be trigger for table: " + schemaTable);
+        assert.ok(output, "should be trigger: " + triggerName);
 
         const actualTriggerDDL = (
             output.function.toSQL() + 
@@ -39,9 +41,11 @@ export function testTriggers(test: ITest) {
             ";"
         );
 
+        // fs.writeFileSync(triggerFilePath, actualTriggerDDL);
         assert.strictEqual(
             actualTriggerDDL,
             expectedTriggerDDL
         )
     }
+    // TODO: throw error on missed test for trigger
 }

@@ -3,16 +3,14 @@ returns trigger as $body$
 declare new_totals record;
 begin
 
-    if TG_OP = 'UPDATE' then
-        if
-            new.date_clear is not distinct from old.date_clear
-            and
-            new.date_conditional_clear is not distinct from old.date_conditional_clear
-            and
-            new.date_release_for_procuring is not distinct from old.date_release_for_procuring
-        then
-            return new;
-        end if;
+    if
+        new.date_clear is not distinct from old.date_clear
+        and
+        new.date_conditional_clear is not distinct from old.date_conditional_clear
+        and
+        new.date_release_for_procuring is not distinct from old.date_release_for_procuring
+    then
+        return new;
     end if;
 
 
@@ -39,7 +37,7 @@ $body$
 language plpgsql;
 
 create trigger cache_self_dates_for_self_on_list_gtd
-after insert or update of date_clear, date_conditional_clear, date_release_for_procuring
+after update of date_clear, date_conditional_clear, date_release_for_procuring
 on public.list_gtd
 for each row
 execute procedure cache_self_dates_for_self_on_list_gtd();

@@ -5,7 +5,7 @@ import {
 } from "../../ast";
 import { Comment } from "../../database/schema/Comment";
 import { DatabaseFunction } from "../../database/schema/DatabaseFunction";
-import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
+import { DatabaseTrigger, IDatabaseTriggerParams } from "../../database/schema/DatabaseTrigger";
 import { TableID } from "../../database/schema/TableID";
 import { TableReference } from "../../database/schema/TableReference";
 import { DeltaSetItemsFactory } from "../aggregator/DeltaSetItemsFactory";
@@ -15,10 +15,11 @@ import { ConditionBuilder } from "./condition/ConditionBuilder";
 
 export interface ICacheTrigger {
     trigger: DatabaseTrigger;
-    function: DatabaseFunction;
+    procedure: DatabaseFunction;
 }
 
 export abstract class AbstractTriggerBuilder {
+
     protected readonly context: CacheContext;
     protected readonly conditions: ConditionBuilder;
     protected readonly setItems: SetItemsFactory;
@@ -31,44 +32,23 @@ export abstract class AbstractTriggerBuilder {
         this.deltaSetItems = new DeltaSetItemsFactory(context);
     }
 
-    createTrigger(): ICacheTrigger {
-        return {
-            trigger: this.createDatabaseTrigger(),
-            function: this.createDatabaseFunction()
-        };
-    }
+    abstract createTriggers(): ICacheTrigger[];
 
-    createHelperTrigger(): ICacheTrigger | undefined {
-        return;
-    }
-
-    private createDatabaseFunction() {
-
-        const func = new DatabaseFunction({
-            schema: "public",
-            name: this.generateTriggerName(),
-            body: "\n" + this.createBody().toSQL() + "\n",
-            comment: Comment.fromFs({
-                objectType: "function",
-                cacheSignature: this.context.cache.getSignature()
-            }),
-            args: [],
-            returns: {type: "trigger"}
-        });
-        return func;
-    }
-
-    protected createDatabaseTrigger() {
-        
+    protected createDatabaseTrigger(
+        json: Partial<IDatabaseTriggerParams> = {}
+    ) {
         const updateOfColumns = this.buildUpdateOfColumns();
-        
+
         const trigger = new DatabaseTrigger({
             name: this.generateTriggerName(),
+
             after: true,
             insert: this.needListenInsert(),
             delete: true,
+
             update: updateOfColumns.length > 0,
             updateOf: updateOfColumns,
+
             procedure: {
                 schema: "public",
                 name: this.generateTriggerName(),
@@ -81,10 +61,29 @@ export abstract class AbstractTriggerBuilder {
             comment: Comment.fromFs({
                 objectType: "trigger",
                 cacheSignature: this.context.cache.getSignature()
-            })
-        });
+            }),
 
+            ...json
+        });
         return trigger;
+    }
+
+    protected createDatabaseFunction(
+        body: AbstractAstElement,
+        name = this.generateTriggerName()
+    ) {
+        const func = new DatabaseFunction({
+            schema: "public",
+            name,
+            body: "\n" + body.toSQL() + "\n",
+            comment: Comment.fromFs({
+                objectType: "function",
+                cacheSignature: this.context.cache.getSignature()
+            }),
+            args: [],
+            returns: {type: "trigger"}
+        });
+        return func;
     }
 
     // can be redefined
@@ -105,11 +104,9 @@ export abstract class AbstractTriggerBuilder {
         );
     }
 
-    protected generateTriggerName() {
-        return this.context.generateTriggerName();
+    protected generateTriggerName(postfix?: string) {
+        return this.context.generateTriggerName(postfix);
     }
-
-    protected abstract createBody(): AbstractAstElement;
 
     protected buildUpdateOfColumns() {
 

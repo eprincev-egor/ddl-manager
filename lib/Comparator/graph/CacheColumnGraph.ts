@@ -71,6 +71,22 @@ export class CacheColumnGraph {
         return this.tables[ tableId.toString() ] || [];
     }
 
+    getDependencyLevel(column: CacheColumn) {
+        return this.dependencyMatrix.findIndex(level =>
+            level.some(levelColumn => 
+                levelColumn.name === column.name &&
+                levelColumn.for.table.equal(column.for.table)
+            )
+        );
+    }
+
+    getDependencyIndex(column: CacheColumn) {
+        return flatMap(this.dependencyMatrix).findIndex(levelColumn =>
+            levelColumn.name === column.name &&
+            levelColumn.for.table.equal(column.for.table)
+        );
+    }
+
     private assignAllDependencies() {
         const allColumns = flatMap(Object.values(this.tables));
         for (const column of allColumns) {

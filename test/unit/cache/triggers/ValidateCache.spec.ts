@@ -5,7 +5,7 @@ import assert from "assert";
 describe("TriggerFactory, validate cache", () => {
 
     it("error on: order by without limit 1", () => {
-        const builder = new CacheTriggersBuilder(
+        const builder = new CacheTriggersBuilder([],
             `cache totals for companies (
                 select orders.date as order_date
                 from orders
@@ -21,7 +21,7 @@ describe("TriggerFactory, validate cache", () => {
     });
 
     it("error on: limit 1 without order by", () => {
-        const builder = new CacheTriggersBuilder(
+        const builder = new CacheTriggersBuilder([],
             `cache totals for companies (
                 select orders.date as order_date
                 from orders
@@ -37,7 +37,7 @@ describe("TriggerFactory, validate cache", () => {
     });
 
     it("error on: invalid limit 1", () => {
-        const builder = new CacheTriggersBuilder(
+        const builder = new CacheTriggersBuilder([],
             `cache totals for companies (
                 select orders.date as order_date
                 from orders
@@ -54,7 +54,7 @@ describe("TriggerFactory, validate cache", () => {
     });
 
     it("error on: many items order by", () => {
-        const builder = new CacheTriggersBuilder(
+        const builder = new CacheTriggersBuilder([],
             `cache totals for companies (
                 select orders.date as order_date
                 from orders
@@ -71,7 +71,7 @@ describe("TriggerFactory, validate cache", () => {
     });
 
     it("error on: multi from", () => {
-        const builder = new CacheTriggersBuilder(
+        const builder = new CacheTriggersBuilder([],
             `cache totals for companies (
                 select companies.name as name_1
 
@@ -88,7 +88,7 @@ describe("TriggerFactory, validate cache", () => {
     });
 
     it("error on: joins", () => {
-        const builder = new CacheTriggersBuilder(
+        const builder = new CacheTriggersBuilder([],
             `cache totals for companies (
                 select orders.date as order_date
                 from orders
@@ -109,7 +109,7 @@ describe("TriggerFactory, validate cache", () => {
     });
 
     it("error on: multi from", () => {
-        const builder = new CacheTriggersBuilder(
+        const builder = new CacheTriggersBuilder([],
             `cache totals for companies (
                 select orders.date as order_date
                 from orders, fin_operations

@@ -1,3 +1,5 @@
+import { CacheColumnParams } from "../../Comparator/graph/CacheColumn";
+import { CacheColumnGraph } from "../../Comparator/graph/CacheColumnGraph";
 import {
     Expression,
     Cache,
@@ -7,6 +9,8 @@ import { MAX_NAME_LENGTH } from "../../database/postgres/constants";
 import { Database } from "../../database/schema/Database";
 import { TableID } from "../../database/schema/TableID";
 import { TableReference } from "../../database/schema/TableReference";
+import { strict } from "assert";
+import { createSelectForUpdate } from "../processor/createSelectForUpdate";
 
 export interface IReferenceMeta {
     columns: string[];
@@ -17,6 +21,7 @@ export interface IReferenceMeta {
 }
 
 export class CacheContext {
+    readonly graph: CacheColumnGraph;
     readonly cache: Cache;
     readonly triggerTable: TableID;
     readonly triggerTableColumns: string[];
@@ -25,6 +30,7 @@ export class CacheContext {
     readonly excludeRef: TableReference | false
     
     constructor(
+        allCache: Cache[],
         cache: Cache,
         triggerTable: TableID,
         triggerTableColumns: string[],
@@ -32,12 +38,49 @@ export class CacheContext {
         // TODO: split to two classes
         excludeRef: boolean = true
     ) {
+        const allCacheForTable = allCache.filter(someCache =>
+            someCache.for.table.equal(cache.for.table)
+        );
+        const allCacheColumns: CacheColumnParams[] = [];
+
+        for (const cache of allCacheForTable) {
+            const selectForUpdate = createSelectForUpdate(database, cache);
+
+            for (const selectColumn of selectForUpdate.columns) {
+                allCacheColumns.push({
+                    for: cache.for,
+                    name: selectColumn.name,
+                    cache: {
+                        name: cache.name,
+                        signature: cache.getSignature()
+                    },
+                    select: selectForUpdate.cloneWith({
+                        columns: [
+                            selectColumn
+                        ]
+                    })
+                })
+            }
+        }
+        this.graph = new CacheColumnGraph(allCacheColumns);
+
+
         this.cache = cache;
         this.triggerTable = triggerTable;
         this.triggerTableColumns = triggerTableColumns;
         this.database = database;
         this.excludeRef = excludeRef ? cache.for : false;
         this.referenceMeta = this.buildReferenceMeta();
+    }
+
+    getDependencyLevel(columnName: string) {
+        const column = this.getGraphColumn(columnName);
+        return this.graph.getDependencyLevel(column);
+    }
+
+    getDependencyIndex(columnName: string) {
+        const column = this.getGraphColumn(columnName);
+        return this.graph.getDependencyIndex(column);
     }
 
     getTableReferencesToTriggerTable() {
@@ -57,7 +100,7 @@ export class CacheContext {
         );
     }
 
-    generateTriggerName() {
+    generateTriggerName(postfix?: string) {
         const defaultTriggerName = [
             "cache",
             this.cache.name,
@@ -65,9 +108,10 @@ export class CacheContext {
             this.excludeRef ?
                 this.cache.for.table.name :
                 "self",
+            postfix,
             "on",
             this.triggerTable.name
-        ].join("_");
+        ].filter(value => !!value).join("_");
 
         if ( defaultTriggerName.length >= MAX_NAME_LENGTH ) {
             const tableRef = this.cache.select
@@ -181,6 +225,15 @@ export class CacheContext {
         return (this.cache.withoutInserts || []).includes(
             this.triggerTable.toString() 
         );
+    }
+
+    private getGraphColumn(columnName: string) {
+        const column = this.graph.getAllColumns().find(column => 
+            column.name == columnName
+        );
+    
+        strict.ok(column, "unknown column: " + columnName);
+        return column;
     }
 }
 

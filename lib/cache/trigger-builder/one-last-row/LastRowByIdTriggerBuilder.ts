@@ -13,12 +13,12 @@ import { Exists } from "../../../ast/expression/Exists";
 import { Comment } from "../../../database/schema/Comment";
 import { DatabaseFunction } from "../../../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../../../database/schema/DatabaseTrigger";
-import { ICacheTrigger } from "../AbstractTriggerBuilder";
 import { AbstractLastRowTriggerBuilder } from "./AbstractLastRowTriggerBuilder";
 import { buildOneLastRowByIdBody } from "../body/buildOneLastRowByIdBody";
 import { TableReference } from "../../../database/schema/TableReference";
 
-export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
+export class LastRowByIdTriggerBuilder 
+extends AbstractLastRowTriggerBuilder {
 
     createSelectForUpdateHelperColumn() {
         const fromTable = this.context.triggerTable;
@@ -76,10 +76,19 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
         };
     }
 
-    createHelperTrigger(): ICacheTrigger | undefined {
+    createTriggers() {
+        return [{
+            trigger: this.createDatabaseTrigger(),
+            procedure: this.createDatabaseFunction(
+                this.createBody()
+            )
+        }, ...this.createHelperTriggers()];
+    }
+
+    protected createHelperTriggers() {
         const orderBy = this.context.cache.select.orderBy!.items[0]!;
         if ( orderBy.type === "asc" ) {
-            return;
+            return [];
         }
 
         const isLastColumnName = this.getIsLastColumnName();
@@ -110,9 +119,9 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
             })
         });
 
-        return {
+        return [{
             trigger,
-            function: new DatabaseFunction({
+            procedure: new DatabaseFunction({
                 schema: "public",
                 name: helperTriggerName,
                 body: `
@@ -134,7 +143,7 @@ export class LastRowByIdTriggerBuilder extends AbstractLastRowTriggerBuilder {
                 args: [],
                 returns: {type: "trigger"}
             })
-        };
+        }];
     }
 
     protected createBody() {
