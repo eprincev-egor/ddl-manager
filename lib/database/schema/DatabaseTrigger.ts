@@ -89,11 +89,11 @@ export class DatabaseTrigger {
 
     equal(otherTrigger: DatabaseTrigger) {
         return (
-            this.name === otherTrigger.name &&
+            this.name.slice(0, MAX_NAME_LENGTH) === otherTrigger.name.slice(0, MAX_NAME_LENGTH) &&
             this.table.schema === otherTrigger.table.schema &&
             this.table.name === otherTrigger.table.name &&
             this.procedure.schema === otherTrigger.procedure.schema &&
-            this.procedure.name === otherTrigger.procedure.name &&
+            this.procedure.name.slice(0, MAX_NAME_LENGTH) === otherTrigger.procedure.name.slice(0, MAX_NAME_LENGTH) &&
             this.procedure.args.join(",") === otherTrigger.procedure.args.join(",") &&
             !!this.before === !!otherTrigger.before &&
             !!this.after === !!otherTrigger.after &&

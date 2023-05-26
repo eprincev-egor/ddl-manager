@@ -70,8 +70,8 @@ export class Migration {
     }
 
     unCreateTrigger(trigger: DatabaseTrigger) {
-        this.toCreate.triggers = this.toCreate.triggers.filter(droppedTrigger =>
-            droppedTrigger.getSignature() !== trigger.getSignature()
+        this.toCreate.triggers = this.toCreate.triggers.filter(createdTrigger =>
+            createdTrigger.getSignature() !== trigger.getSignature()
         );
     }
 

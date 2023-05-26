@@ -51,6 +51,17 @@ export class Column {
         };
     }
 
+    equalName(column: {name: string} | string) {
+        const otherName = typeof column === "string" ? 
+            column : column.name;
+
+        return (
+            this.name.slice(0, MAX_NAME_LENGTH) 
+            ==
+            otherName.slice(0, MAX_NAME_LENGTH)
+        )
+    }
+
     suit(newColumn: Column) {
         return (
             this.type.suit(newColumn.type) &&

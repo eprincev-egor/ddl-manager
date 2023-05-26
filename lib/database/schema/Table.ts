@@ -22,7 +22,9 @@ export class Table extends TableID {
     }
 
     getColumn(name: string) {
-        return this.columns.find(column => column.name === name);
+        return this.columns.find(column => 
+            column.equalName(name)
+        );
     }
 
     addColumn(column: Column) {
@@ -55,7 +57,7 @@ export class Table extends TableID {
 
     removeColumn(dropColumn: Column) {
         const columnIndex = this.columns.findIndex(existentColumn => 
-            existentColumn.name === dropColumn.name
+            existentColumn.equalName(dropColumn)
         );
         
         if ( columnIndex !== -1 ) {

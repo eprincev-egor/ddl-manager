@@ -240,7 +240,7 @@ export class CacheComparator extends AbstractComparator {
 
     private async existsCacheWithSameColumn(column: Column) {
         const cacheColumn = this.graph.getColumns(column.table)
-            .find(cacheColumn => cacheColumn.name === column.name);
+            .find(cacheColumn => column.equalName(cacheColumn));
 
         if ( cacheColumn ) {
             const newColumn = await this.columnBuilder.build(cacheColumn);
@@ -350,7 +350,7 @@ export class CacheComparator extends AbstractComparator {
                 .some(triggerDepsColumnName => {
                     const thisColumnNeedDrop = this.migration.toDrop.columns
                         .some(columnToDrop =>
-                            triggerDepsColumnName === columnToDrop.name &&
+                            columnToDrop.equalName(triggerDepsColumnName) &&
                             columnToDrop.table.equal(table)
                         );
                     return thisColumnNeedDrop;

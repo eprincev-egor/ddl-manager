@@ -164,7 +164,7 @@ export class CacheColumnBuilder {
         }
 
         const maybeIsCreatingNow = this.migration.toCreate.columns.find(newColumn =>
-            newColumn.name === columnRef.name &&
+            newColumn.equalName(columnRef) &&
             newColumn.table.equal(columnRef.tableReference.table)
         );
         if ( maybeIsCreatingNow ) {
@@ -187,7 +187,7 @@ export class CacheColumnBuilder {
                 }
 
                 const maybeIsCreatingNow = this.migration.toCreate.columns.find(newColumn =>
-                    newColumn.name === columnRef.name &&
+                    newColumn.equalName(columnRef) &&
                     newColumn.table.equal(columnRef.tableReference.table)
                 );
                 if ( maybeIsCreatingNow ) {

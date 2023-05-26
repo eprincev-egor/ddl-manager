@@ -3396,6 +3396,10 @@ $$;
     // TODO: test about twice points (max_point_date and last point)
     // TODO: test when custom trigger update current row
     // TODO: test about extrude brackets (a + b) / (c - d)
+    // TODO: test when commutative dependent on one-row trigger (need before update trigger instead of current SelfUpdateByOtherTablesTriggerBuilder)
+    // TODO: https://git.g-soft.ru/logos/logisitc-web/merge_requests/4577/diffs
+    // TODO: update-ddl-cache in watcher mode
+    // TODO: bugs from ryabkov
 
     async function sleep(ms: number) {
         return new Promise(resolve => setTimeout(resolve, ms));
