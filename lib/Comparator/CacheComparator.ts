@@ -293,10 +293,13 @@ export class CacheComparator extends AbstractComparator {
                         .concat(alsoNeedListenColumns)
                 )
             });
-            const existsSameInDb = this.database
-                .getTable(fixedTrigger.table)
-                ?.getTrigger(fixedTrigger.name)
-                ?.equal(fixedTrigger);
+
+            const dbTrigger = this.database
+                .getTable(fixedTrigger.table)!
+                .getTrigger(fixedTrigger.name);
+
+            const existsSameInDb = dbTrigger && 
+                dbTrigger.equal(fixedTrigger);
             
             if ( !existsSameInDb ) {
                 this.migration.drop({triggers: [trigger]});

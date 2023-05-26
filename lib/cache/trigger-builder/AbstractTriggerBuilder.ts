@@ -125,7 +125,7 @@ export abstract class AbstractTriggerBuilder {
         for (const beforeUpdateTrigger of beforeUpdateTriggers) {
             const dbFunction = this.context.getTriggerFunction(beforeUpdateTrigger);
 
-            const changedColumns = dbFunction?.findAssignColumns() || [];
+            const changedColumns = dbFunction.findAssignColumns() || [];
             const hasDepsColumns = changedColumns.some(columnName =>
                 updateOfColumns.includes(columnName)
             );

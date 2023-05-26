@@ -148,9 +148,9 @@ export class CacheContext {
     }
 
     getBeforeUpdateTriggers() {
-        const triggerDbTable = this.database.getTable(this.triggerTable);
+        const triggerDbTable = this.database.getTable(this.triggerTable) || {triggers: []};
 
-        const beforeUpdateTriggers = triggerDbTable?.triggers.filter(trigger =>
+        const beforeUpdateTriggers = triggerDbTable.triggers.filter(trigger =>
             trigger.before &&
             trigger.update
         );
