@@ -130,6 +130,32 @@ export class DatabaseTrigger {
         return `${this.name} on ${ this.table.schema }.${ this.table.name }`;
     }
 
+    clone(changes: Partial<IDatabaseTriggerParams> = {}) {
+        return new DatabaseTrigger({
+            name: this.name,
+            table: this.table,
+            procedure: this.procedure,
+        
+            before: this.before,
+            after: this.after,
+            insert: this.insert,
+            delete: this.delete,
+            update: this.update,
+            updateOf: this.updateOf,
+            when: this.when,
+            
+            constraint: this.constraint,
+            deferrable: this.deferrable,
+            notDeferrable: this.notDeferrable,
+            statement: this.statement,
+            initially: this.initially,
+        
+            comment: this.comment,
+
+            ... changes
+        });
+    }
+
     toSQL() {
         let out = "create ";
 

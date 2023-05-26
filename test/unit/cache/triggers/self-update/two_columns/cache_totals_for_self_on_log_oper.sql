@@ -33,11 +33,8 @@ begin
         new_totals.sale_vat is distinct from new.sale_vat
     then
 
-        update log_oper set
-            buy_vat = new_totals.buy_vat,
-            sale_vat = new_totals.sale_vat
-        where
-            public.log_oper.id = new.id;
+        new.buy_vat = new_totals.buy_vat;
+        new.sale_vat = new_totals.sale_vat;
 
     end if;
 
@@ -47,7 +44,7 @@ $body$
 language plpgsql;
 
 create trigger cache_totals_for_self_on_log_oper
-after update of buy_vat_type, buy_vat_value, sale_vat_type, sale_vat_value
+before update of buy_vat_type, buy_vat_value, sale_vat_type, sale_vat_value
 on public.log_oper
 for each row
 execute procedure cache_totals_for_self_on_log_oper();

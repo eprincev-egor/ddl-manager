@@ -3,6 +3,7 @@ import { Cache } from "../ast";
 import { DatabaseFunction } from "../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
 import { File, IFileParams } from "./File";
+import { TableID } from "../database/schema/TableID";
 
 export class FilesState {
     readonly files: File[];
@@ -13,6 +14,17 @@ export class FilesState {
 
     allCache() {
         return flatMap(this.files, file => file.content.cache)    
+    }
+
+    allTriggers() {
+        return flatMap(this.files, file => file.content.triggers);
+    }
+
+    getTableTriggers(table: TableID) {
+        const tableTriggers = this.allTriggers().filter(trigger => 
+            trigger.table.equal(table)
+        );
+        return tableTriggers;
     }
 
     addFile(fileOrParams: File | IFileParams) {

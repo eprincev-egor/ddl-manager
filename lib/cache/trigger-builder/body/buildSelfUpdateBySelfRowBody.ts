@@ -3,16 +3,13 @@ import {
     If,
     HardCode,
     BlankLine,
-    Update,
     Expression,
     Declare,
     Select,
-    SetItem
+    AssignVariable
 } from "../../../ast";
-import { TableReference } from "../../../database/schema/TableReference";
 
 export function buildSelfUpdateBySelfRowBody(
-    updateTable: TableReference,
     noChanges: Expression,
     selectNewValues: Select
 ) {
@@ -53,21 +50,13 @@ export function buildSelfUpdateBySelfRowBody(
                 ),
                 then: [
                     new BlankLine(),
-                    
-                    new Update({
-                        table: updateTable.toString(),
-                        set: selectNewValues.columns.map(updateColumn => 
-                            new SetItem({
-                                column: updateColumn.name,
-                                value: new HardCode({
-                                    sql: `new_totals.${updateColumn.name}`
-                                })
-                            })
-                        ),
-                        where: new HardCode({
-                            sql: `${updateTable.getIdentifier()}.id = new.id`
+
+                    ...selectNewValues.columns.map(column => 
+                        new AssignVariable({
+                            variable: `new.${column.name}`,
+                            value: new HardCode({sql: `new_totals.${column.name}`})
                         })
-                    }),
+                    ),
 
                     new BlankLine()
                 ]

@@ -126,6 +126,17 @@ export class DatabaseFunction  {
         return `${ this.schema }.${ this.name }(${ argsTypes.join(", ") })`;
     }
 
+    findAssignColumns() {
+        const matches = this.body.match(/new\.\w+\s*=/g) || [];
+        const assignedColumns = matches.map(str =>
+            str
+                .replace(/^new\./, "")
+                .replace(/\s*=$/, "")
+                .toLowerCase()
+        );
+        return assignedColumns;
+    }
+
     toSQL(body = this.body) {
         let additionalParams = "";
         

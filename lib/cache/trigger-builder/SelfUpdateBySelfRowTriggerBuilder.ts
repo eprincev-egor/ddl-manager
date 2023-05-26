@@ -16,13 +16,13 @@ extends AbstractTriggerBuilder {
 
         return [{
             trigger: this.createDatabaseTrigger({
-                after: true,
+                after: false,
+                before: true,
                 insert: false,
                 delete: false,
             }),
             procedure: this.createDatabaseFunction(
                 buildSelfUpdateBySelfRowBody(
-                    this.context.cache.for,
                     this.conditions.noChanges(),
                     this.buildSelectValues()
                 )

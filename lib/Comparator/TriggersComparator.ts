@@ -1,8 +1,8 @@
 import { AbstractComparator } from "./AbstractComparator";
-import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
 import { flatMap } from "lodash";
 
-export class TriggersComparator extends AbstractComparator {
+export class TriggersComparator 
+extends AbstractComparator {
 
     drop() {
         for (const table of this.database.tables) {
@@ -15,7 +15,9 @@ export class TriggersComparator extends AbstractComparator {
                     continue;
                 }
 
-                const existsSameTriggerFromFile = flatMap(this.fs.files, file => file.content.triggers).some(fileTrigger =>
+                const existsSameTriggerFromFile = flatMap(this.fs.files, file => 
+                    file.content.triggers
+                ).some(fileTrigger =>
                     fileTrigger.equal(dbTrigger)
                 );
 
@@ -29,13 +31,7 @@ export class TriggersComparator extends AbstractComparator {
     }
 
     create() {
-        for (const file of this.fs.files) {
-            this.createNewTriggers( file.content.triggers );
-        }
-    }
-
-    private createNewTriggers(triggers: DatabaseTrigger[]) {
-        for (const trigger of triggers) {
+        for (const trigger of this.fs.allTriggers()) {
 
             const dbTable = this.database.getTable(trigger.table);
 

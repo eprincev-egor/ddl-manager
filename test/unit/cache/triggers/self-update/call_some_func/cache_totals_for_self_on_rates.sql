@@ -25,10 +25,7 @@ begin
 
     if new_totals.total is distinct from new.total then
 
-        update rates set
-            total = new_totals.total
-        where
-            public.rates.id = new.id;
+        new.total = new_totals.total;
 
     end if;
 
@@ -38,7 +35,7 @@ $body$
 language plpgsql;
 
 create trigger cache_totals_for_self_on_rates
-after update of price, quantity, vat_type, vat_value
+before update of price, quantity, vat_type, vat_value
 on public.rates
 for each row
 execute procedure cache_totals_for_self_on_rates();

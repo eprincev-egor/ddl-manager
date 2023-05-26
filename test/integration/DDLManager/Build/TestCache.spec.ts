@@ -3228,6 +3228,169 @@ $$;
         ]);
     });
 
+    it("two caches, one of commutative columns dependent on self cache", async() => {
+        const folderPath = ROOT_TMP_PATH + "/test_two_cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key
+            );
+
+            create table units (
+                id serial primary key,
+                id_order integer
+            );
+
+            create table declarations (
+                id serial primary key,
+                start_date date,
+                finish_date date,
+                id_unit integer
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/a_unit_declarations.sql", `
+            cache a_unit_declarations for units (
+                select
+                    min( declarations.start_date ) as min_declaration_start_date,
+                    max( declarations.finish_date ) as max_declaration_finish_date
+
+                from declarations
+                where
+                    declarations.id_unit = units.id
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/b_unit_declaration_status.sql", `
+            cache b_unit_declaration_status for units (
+                select
+                    (case
+                        when units.max_declaration_finish_date is not null
+                        then 'finished'
+                        
+                        when units.min_declaration_start_date is not null
+                        then 'started'
+                    end) as declaration_status
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/c_order_declaration_status.sql", `
+            cache c_order_declaration_status for orders (
+                select
+                    string_agg(distinct units.declaration_status, ', ') as declaration_status,
+                    min( units.min_declaration_start_date ) as min_declaration_start_date,
+                    max( units.max_declaration_finish_date ) as max_declaration_finish_date
+                from units
+                where
+                    units.id_order = orders.id
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        
+        await db.query(`
+            insert into orders default values;
+            insert into units (id_order) values (1);
+            insert into declarations (id_unit, start_date) values (1, now());
+
+            update declarations set
+                finish_date = now()
+        `);
+
+        const actual = await db.query(`
+            select declaration_status
+            from orders
+        `);
+        assert.deepStrictEqual(actual.rows, [
+            { declaration_status: "finished" }
+        ]);
+    });
+
+    it("custom trigger dependent on self cache", async() => {
+        const folderPath = ROOT_TMP_PATH + "/test_two_cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                total_weight numeric
+            );
+
+            create table units (
+                id serial primary key,
+                id_order integer,
+                box_weight numeric,
+                quantity_boxes integer
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/total_weight.sql", `
+            cache total_weight for units (
+                select
+                    units.box_weight * 
+                    coalesce(units.quantity_boxes, 1) as total_weight
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/order_total_weight.sql", `
+            create or replace function set_order_total()
+            returns trigger as $body$
+            begin
+                update orders set
+                    total_weight = (
+                        select sum(units.total_weight)
+                        from units
+                        where units.id_order = orders.id
+                    )
+                where orders.id = new.id_order;
+
+                return new;
+            end
+            $body$ language plpgsql;
+
+            create trigger set_order_total
+            after update of total_weight
+            on units
+            for each row
+            execute procedure set_order_total()
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        
+        await db.query(`
+            insert into orders default values;
+            insert into units (id_order) values (1);
+
+            update units set
+                box_weight = 100.34;
+        `);
+
+        const actual = await db.query(`
+            select total_weight
+            from orders
+        `);
+        assert.deepStrictEqual(actual.rows, [
+            { total_weight: "100.34" }
+        ]);
+    });
+
+    // TODO: test about twice points (max_point_date and last point)
+    // TODO: test when custom trigger update current row
+    // TODO: test about extrude brackets (a + b) / (c - d)
+
     async function sleep(ms: number) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }

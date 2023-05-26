@@ -37,6 +37,10 @@ export class Cache {
         );
     }
 
+    hasForeignTablesDeps() {
+        return this.select.from.length > 0;
+    }
+
     getSignature() {
         return `cache ${this.name} for ${this.for}`;
     }

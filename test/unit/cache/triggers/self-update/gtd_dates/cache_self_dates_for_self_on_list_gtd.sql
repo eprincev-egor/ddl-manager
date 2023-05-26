@@ -24,10 +24,7 @@ begin
 
     if new_totals.clear_date_total is distinct from new.clear_date_total then
 
-        update list_gtd set
-            clear_date_total = new_totals.clear_date_total
-        where
-            public.list_gtd.id = new.id;
+        new.clear_date_total = new_totals.clear_date_total;
 
     end if;
 
@@ -37,7 +34,7 @@ $body$
 language plpgsql;
 
 create trigger cache_self_dates_for_self_on_list_gtd
-after update of date_clear, date_conditional_clear, date_release_for_procuring
+before update of date_clear, date_conditional_clear, date_release_for_procuring
 on public.list_gtd
 for each row
 execute procedure cache_self_dates_for_self_on_list_gtd();

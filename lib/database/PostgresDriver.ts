@@ -452,17 +452,23 @@ implements IDatabaseDriver {
     }
 
     async query(sql: string) {
+        const stack = new Error().stack;
+
         try {
             return await this.pgPool.query(sql);
         } catch(originalErr) {
             // redefine call stack
             const {message, code} = originalErr as any;
+
             const err = new Error(message);
             (err as any).sql = sql;
             (err as any).code = code;
             (err as any).originalError = originalErr;
+            (err as any).stack = stack;
+
             console.error(originalErr);
             console.error(sql);
+
             throw err;
         }
     }

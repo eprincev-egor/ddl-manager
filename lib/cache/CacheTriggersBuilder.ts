@@ -1,9 +1,6 @@
 import { CacheParser } from "../parser";
 import { Cache, Select } from "../ast";
-import {
-    findDependencies,
-    findDependenciesToCacheTable
-} from "./processor/findDependencies";
+import { findDependencies, findDependenciesToCacheTable } from "./processor/findDependencies";
 import { Database } from "../database/schema/Database";
 import { DatabaseFunction } from "../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
@@ -130,10 +127,10 @@ export class CacheTriggersBuilder {
                 typeof SelfUpdateByOtherTablesTriggerBuilder |
                 undefined
             );
-            if ( this.cache.select.from.length === 0 ) {
+            if ( !this.cache.hasForeignTablesDeps() ) {
                 TriggerBuilderConstructor = SelfUpdateBySelfRowTriggerBuilder;
             }
-            else if ( mutableColumns.length ) {
+            else if ( context.triggerTableColumns.length ) {
                 TriggerBuilderConstructor = SelfUpdateByOtherTablesTriggerBuilder;
             }
 

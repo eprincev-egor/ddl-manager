@@ -9,8 +9,9 @@ import { MAX_NAME_LENGTH } from "../../database/postgres/constants";
 import { Database } from "../../database/schema/Database";
 import { TableID } from "../../database/schema/TableID";
 import { TableReference } from "../../database/schema/TableReference";
-import { strict } from "assert";
 import { createSelectForUpdate } from "../processor/createSelectForUpdate";
+import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
+import { strict } from "assert";
 
 export interface IReferenceMeta {
     columns: string[];
@@ -23,6 +24,8 @@ export interface IReferenceMeta {
 export class CacheContext {
     readonly graph: CacheColumnGraph;
     readonly cache: Cache;
+    readonly allCacheForTriggerTable: Cache[];
+    readonly allCacheForCacheTable: Cache[];
     readonly triggerTable: TableID;
     readonly triggerTableColumns: string[];
     readonly database: Database;
@@ -32,18 +35,24 @@ export class CacheContext {
     constructor(
         allCache: Cache[],
         cache: Cache,
+
+        // TODO: calculate it automatically
         triggerTable: TableID,
         triggerTableColumns: string[],
+
         database: Database,
         // TODO: split to two classes
         excludeRef: boolean = true
     ) {
-        const allCacheForTable = allCache.filter(someCache =>
+        this.allCacheForTriggerTable = allCache.filter(someCache =>
+            someCache.for.table.equal(triggerTable)
+        );
+        this.allCacheForCacheTable = allCache.filter(someCache =>
             someCache.for.table.equal(cache.for.table)
         );
         const allCacheColumns: CacheColumnParams[] = [];
 
-        for (const cache of allCacheForTable) {
+        for (const cache of this.allCacheForCacheTable) {
             const selectForUpdate = createSelectForUpdate(database, cache);
 
             for (const selectColumn of selectForUpdate.columns) {
@@ -136,6 +145,26 @@ export class CacheContext {
         }
 
         return defaultTriggerName;
+    }
+
+    getBeforeUpdateTriggers() {
+        const triggerDbTable = this.database.getTable(this.triggerTable);
+
+        const beforeUpdateTriggers = triggerDbTable?.triggers.filter(trigger =>
+            trigger.before &&
+            trigger.update
+        );
+        return beforeUpdateTriggers || [];
+    }
+
+    getTriggerFunction(trigger: DatabaseTrigger) {
+        const dbFunction = this.database.functions.find(func =>
+            func.name === trigger.procedure.name &&
+            func.schema === trigger.procedure.schema
+        );
+
+        strict.ok(dbFunction);
+        return dbFunction
     }
 
     private buildReferenceMeta(): IReferenceMeta {

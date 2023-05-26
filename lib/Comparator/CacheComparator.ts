@@ -1,7 +1,7 @@
 import { AbstractComparator } from "./AbstractComparator";
 import { Column } from "../database/schema/Column";
 import { CacheTriggersBuilder, IOutputTrigger } from "../cache/CacheTriggersBuilder";
-import { flatMap } from "lodash";
+import { flatMap, uniq } from "lodash";
 import { Migration } from "../Migrator/Migration";
 import { IDatabaseDriver } from "../database/interface";
 import { Database } from "../database/schema/Database";
@@ -265,6 +265,44 @@ export class CacheComparator extends AbstractComparator {
                 functions: existFunc ? [] : [func]
             });
         }
+
+        for (const trigger of this.fs.allTriggers()) {
+            if ( !trigger.updateOf ) {
+                continue;
+            }
+
+            const beforeUpdateTriggers = this.allCacheTriggers.filter(item =>
+                item.trigger.before &&
+                item.trigger.updateOf &&
+                item.trigger.table.equal(trigger.table) &&
+                item.function.findAssignColumns().some(column =>
+                    trigger.updateOf!.includes(column)
+                )
+            );
+            if ( beforeUpdateTriggers.length === 0 ) {
+                continue;
+            }
+
+            const alsoNeedListenColumns = flatMap(beforeUpdateTriggers, ({trigger}) => 
+                trigger.updateOf!
+            );
+
+            const fixedTrigger = trigger.clone({
+                updateOf: uniq(
+                    trigger.updateOf
+                        .concat(alsoNeedListenColumns)
+                )
+            });
+            const existsSameInDb = this.database
+                .getTable(fixedTrigger.table)
+                ?.getTrigger(fixedTrigger.name)
+                ?.equal(fixedTrigger);
+            
+            if ( !existsSameInDb ) {
+                this.migration.drop({triggers: [trigger]});
+                this.migration.create({triggers: [fixedTrigger]});
+            }
+        }
     }
 
     private async createColumns() {
@@ -285,11 +323,11 @@ export class CacheComparator extends AbstractComparator {
             }
         }
 
-        this.recreateDepsTriggers();
+        this.recreateDepsTriggersToChangedColumns();
     }
 
     // fix: cannot drop column because other objects depend on it
-    private recreateDepsTriggers() {
+    private recreateDepsTriggersToChangedColumns() {
         const allTriggers = flatMap(this.database.tables, table => table.triggers)
             .filter(dbTrigger => !dbTrigger.frozen)
             .filter(dbTrigger => !this.migration.toDrop.triggers

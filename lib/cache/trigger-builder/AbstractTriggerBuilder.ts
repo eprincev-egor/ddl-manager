@@ -12,6 +12,7 @@ import { DeltaSetItemsFactory } from "../aggregator/DeltaSetItemsFactory";
 import { SetItemsFactory } from "../aggregator/SetItemsFactory";
 import { CacheContext } from "./CacheContext";
 import { ConditionBuilder } from "./condition/ConditionBuilder";
+import { findDependenciesToCacheTable } from "../processor/findDependencies";
 
 export interface ICacheTrigger {
     trigger: DatabaseTrigger;
@@ -109,48 +110,40 @@ export abstract class AbstractTriggerBuilder {
     }
 
     protected buildUpdateOfColumns() {
-
-        let updateOfColumns = this.context.triggerTableColumns
+        const updateOfColumns = this.context.triggerTableColumns
             .filter(column =>  column !== "id" );
-        
-        const triggerDbTable = this.context.database.getTable(
-            this.context.triggerTable
-        );
-        if ( triggerDbTable ) {
-            const beforeUpdateTriggers = triggerDbTable.triggers
-                .filter(trigger =>
-                    trigger.before &&
-                    trigger.update
-                );
 
-            for (const beforeUpdateTrigger of beforeUpdateTriggers) {
-                const dbFunction = this.context.database.functions
-                    .find(func =>
-                        func.name === beforeUpdateTrigger.procedure.name &&
-                        func.schema === beforeUpdateTrigger.procedure.schema
-                    );
-                if ( dbFunction ) {
-                    const matches = dbFunction.body.match(/new\.\w+\s*=/g) || [];
-                    const changedColumns = matches.map(str =>
-                        str
-                            .replace(/^new\./, "")
-                            .replace(/\s*=$/, "")
-                            .toLowerCase()
-                    );
-                    const hasDepsColumns = changedColumns.some(columnName =>
-                        updateOfColumns.includes(columnName)
-                    );
+        this.addCustomBeforeUpdateTriggerDeps(updateOfColumns);
+        this.addCacheBeforeUpdateTriggerDeps(updateOfColumns);
 
-                    if ( hasDepsColumns ) {
-                        updateOfColumns = updateOfColumns.concat(
-                            (beforeUpdateTrigger.updateOf || [])
-                        );
-                    }
-                }
+        return uniq(updateOfColumns).sort();
+    }
+
+    private addCustomBeforeUpdateTriggerDeps(updateOfColumns: string[]) {
+        const beforeUpdateTriggers = this.context.getBeforeUpdateTriggers();
+
+        for (const beforeUpdateTrigger of beforeUpdateTriggers) {
+            const dbFunction = this.context.getTriggerFunction(beforeUpdateTrigger);
+
+            const changedColumns = dbFunction?.findAssignColumns() || [];
+            const hasDepsColumns = changedColumns.some(columnName =>
+                updateOfColumns.includes(columnName)
+            );
+
+            if ( hasDepsColumns && beforeUpdateTrigger.updateOf ) {
+                updateOfColumns.push(...beforeUpdateTrigger.updateOf);
             }
         }
-        updateOfColumns = uniq(updateOfColumns).sort();
-        
-        return updateOfColumns;
+    }
+
+    private addCacheBeforeUpdateTriggerDeps(updateOfColumns: string[]) {
+        const selfCaches = this.context.allCacheForTriggerTable.filter(cache =>
+            !cache.hasForeignTablesDeps()
+        );
+        for (const cache of selfCaches) {
+            const depsColumns = findDependenciesToCacheTable(cache) 
+                .columns.filter(column => column != "id");
+            updateOfColumns.push( ...depsColumns );
+        }
     }
 }

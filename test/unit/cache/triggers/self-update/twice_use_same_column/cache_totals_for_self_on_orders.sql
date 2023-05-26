@@ -19,11 +19,8 @@ begin
         new_totals.profit_200 is distinct from new.profit_200
     then
 
-        update orders set
-            profit_100 = new_totals.profit_100,
-            profit_200 = new_totals.profit_200
-        where
-            public.orders.id = new.id;
+        new.profit_100 = new_totals.profit_100;
+        new.profit_200 = new_totals.profit_200;
 
     end if;
 
@@ -33,7 +30,7 @@ $body$
 language plpgsql;
 
 create trigger cache_totals_for_self_on_orders
-after update of profit
+before update of profit
 on public.orders
 for each row
 execute procedure cache_totals_for_self_on_orders();

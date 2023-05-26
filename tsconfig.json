@@ -3,7 +3,7 @@
         "rootDir": "./lib",
         "outDir": "./dist",
         "sourceMap": true,
-        "target": "esnext",
+        "target": "ES2015",
         "module": "commonjs",
         "esModuleInterop": true,
         "strict": true,

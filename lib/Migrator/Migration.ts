@@ -80,12 +80,6 @@ export class Migration {
     }
 
     create(state: Partial<IChanges>) {
-        this.toCreate.functions.push(
-            ...(state.functions || [])
-        );
-        this.toCreate.triggers.push(
-            ...(state.triggers || [])
-        );
         this.toCreate.columns.push(
             ...(state.columns || [])
         );
@@ -95,6 +89,21 @@ export class Migration {
         this.toCreate.indexes.push(
             ...(state.indexes || [])
         );
+
+        for (const newFunc of (state.functions || [])) {
+            this.toCreate.functions = this.toCreate.functions.filter(func =>
+                func.getSignature() !== newFunc.getSignature()
+            );
+            this.toCreate.functions.push(newFunc);
+        }
+
+        for (const newTrigger of (state.triggers || [])) {
+            this.toCreate.triggers = this.toCreate.triggers.filter(trigger =>
+                trigger.getSignature() !== newTrigger.getSignature()
+            );
+            this.toCreate.triggers.push(newTrigger);
+        }
+
         return this;
     }
 

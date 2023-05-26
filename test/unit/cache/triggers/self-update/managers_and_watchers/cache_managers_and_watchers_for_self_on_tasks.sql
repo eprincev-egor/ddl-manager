@@ -18,10 +18,7 @@ begin
 
     if new_totals.watchers_or_managers is distinct from new.watchers_or_managers then
 
-        update tasks set
-            watchers_or_managers = new_totals.watchers_or_managers
-        where
-            public.tasks.id = new.id;
+        new.watchers_or_managers = new_totals.watchers_or_managers;
 
     end if;
 
@@ -31,7 +28,7 @@ $body$
 language plpgsql;
 
 create trigger cache_managers_and_watchers_for_self_on_tasks
-after update of orders_managers_ids, watchers_ids
+before update of orders_managers_ids, watchers_ids
 on public.tasks
 for each row
 execute procedure cache_managers_and_watchers_for_self_on_tasks();

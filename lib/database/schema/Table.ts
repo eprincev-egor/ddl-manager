@@ -37,6 +37,12 @@ export class Table extends TableID {
         this.indexes.push(index);
     }
 
+    getTrigger(triggerName: string) {
+        return this.triggers.find(trigger => 
+            trigger.name === triggerName
+        );
+    }
+
     removeTrigger(dropTrigger: DatabaseTrigger) {
         const triggerIndex = this.triggers.findIndex(existentTrigger => 
             existentTrigger.equal(dropTrigger)
