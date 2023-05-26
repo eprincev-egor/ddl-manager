@@ -3369,6 +3369,12 @@ $$;
             throwError: true
         });
 
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
         
         await db.query(`
             insert into orders default values;

@@ -299,7 +299,13 @@ implements IDatabaseDriver {
 
     async createOrReplaceColumn(column: Column) {
         let sql = `
-            alter table ${column.table} add column if not exists ${column.name} ${column.type} default ${ column.default };
+            alter table ${column.table} 
+                add column if not exists ${column.name} ${column.type}
+                    default ${ column.default };
+
+            alter table ${column.table} 
+                alter column ${column.name}
+                    set default ${ column.default };
         `;
         if ( !column.comment.isEmpty() ) {
             sql += `comment on column ${ column.getSignature() } is ${wrapText( column.comment.toString() )}`;

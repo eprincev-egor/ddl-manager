@@ -291,6 +291,7 @@ export class CacheComparator extends AbstractComparator {
                 updateOf: uniq(
                     trigger.updateOf
                         .concat(alsoNeedListenColumns)
+                        .sort()
                 )
             });
 
@@ -300,8 +301,12 @@ export class CacheComparator extends AbstractComparator {
 
             const existsSameInDb = dbTrigger && 
                 dbTrigger.equal(fixedTrigger);
-            
-            if ( !existsSameInDb ) {
+
+
+            if ( existsSameInDb ) {
+                this.migration.unDropTrigger(trigger);
+                this.migration.unCreateTrigger(trigger);
+            } else {
                 this.migration.drop({triggers: [trigger]});
                 this.migration.create({triggers: [fixedTrigger]});
             }

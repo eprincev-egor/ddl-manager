@@ -63,6 +63,18 @@ export class Migration {
         this.updatePackageSize = packageSize;
     }
 
+    unDropTrigger(trigger: DatabaseTrigger) {
+        this.toDrop.triggers = this.toDrop.triggers.filter(droppedTrigger =>
+            droppedTrigger.getSignature() !== trigger.getSignature()
+        );
+    }
+
+    unCreateTrigger(trigger: DatabaseTrigger) {
+        this.toCreate.triggers = this.toCreate.triggers.filter(droppedTrigger =>
+            droppedTrigger.getSignature() !== trigger.getSignature()
+        );
+    }
+
     drop(state: Partial<IChanges>) {
         this.toDrop.functions.push(
             ...(state.functions || [])
