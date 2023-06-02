@@ -16,27 +16,14 @@ begin
     end if;
 
 
-    select
-        calc_vat(
-            new.buy_vat_type,
-            new.buy_vat_value
-        ) as buy_vat,
-        calc_vat(
-            new.sale_vat_type,
-            new.sale_vat_value
-        ) as sale_vat
-    into new_totals;
-
-    if
-        new_totals.buy_vat is distinct from new.buy_vat
-        or
-        new_totals.sale_vat is distinct from new.sale_vat
-    then
-
-        new.buy_vat = new_totals.buy_vat;
-        new.sale_vat = new_totals.sale_vat;
-
-    end if;
+    new.buy_vat = calc_vat(
+        new.buy_vat_type,
+        new.buy_vat_value
+    );
+    new.sale_vat = calc_vat(
+        new.sale_vat_type,
+        new.sale_vat_value
+    );
 
     return new;
 end

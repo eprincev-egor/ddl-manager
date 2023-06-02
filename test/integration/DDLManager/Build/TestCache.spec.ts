@@ -3393,6 +3393,153 @@ $$;
         ]);
     });
 
+    it("correct sort dependencies", async() => {
+        const folderPath = ROOT_TMP_PATH + "/sort-deps";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                profit integer
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/a.sql", `
+            cache a for orders (
+                select
+                    orders.profit + 1 as profit_a
+            )
+        `);
+        fs.writeFileSync(folderPath + "/b.sql", `
+            cache b for orders (
+                select
+                    orders.profit_c + 1000 + orders.profit_a as profit_b
+            )
+        `);
+        fs.writeFileSync(folderPath + "/c.sql", `
+            cache c for orders (
+                select
+                    orders.profit_a + 10 as profit_c
+            )
+        `);
+        fs.writeFileSync(folderPath + "/d.sql", `
+            cache d for orders (
+                select
+                    orders.profit_c + 100 + orders.profit_a as profit_d
+            )
+        `);
+        fs.writeFileSync(folderPath + "/e.sql", `
+            cache e for orders (
+                select
+                    orders.profit_b + 100 as profit_e
+            )
+        `);
+        fs.writeFileSync(folderPath + "/f.sql", `
+            cache f for orders (
+                select
+                    orders.profit_d + 100 as profit_f
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`insert into orders (profit) values (10000)`);
+
+        let result = await db.query(`select * from orders`);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            profit: 10000,
+
+            profit_a: 10001,
+            profit_c: 10011,
+
+            profit_b: 21012,
+            profit_d: 20112,
+
+            profit_e: 21112,
+            profit_f: 20212
+        }]);
+
+
+        await db.query(`update orders set profit = 20000`);
+
+        result = await db.query(`select * from orders`);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            profit: 20000,
+
+            profit_a: 20001,
+            profit_c: 20011,
+
+            profit_b: 31012,
+            profit_d: 40112,
+
+            profit_e: 31112,
+            profit_f: 40212
+        }]);
+    });
+
+    it("one self cache with two columns and one column dependent on other", async() => {
+        const folderPath = ROOT_TMP_PATH + "/sort-deps";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                vat_value numeric,
+                profit numeric(14, 2)
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/self.sql", `
+            cache self for orders (
+                select
+                    (orders.profit - orders.profit_vat)::numeric(14, 2) as profit_after_vat,
+                    (orders.profit * orders.vat_value)::numeric(14, 2) as profit_vat
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into orders 
+            (profit, vat_value) 
+            values (1000, 0.20)
+        `);
+
+        let result = await db.query(`select * from orders`);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            vat_value: "0.20",
+            profit: "1000.00",
+            profit_vat: "200.00",
+            profit_after_vat: "800.00"
+        }]);
+
+
+        await db.query(`update orders set vat_value = 0.16`);
+
+        result = await db.query(`select * from orders`);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            vat_value: "0.16",
+            profit: "1000.00",
+            profit_vat: "160.00",
+            profit_after_vat: "840.00"
+        }]);
+    });
+
+    // TODO: custom trigger before update a, b, c - dependent on cache
     // TODO: test about twice points (max_point_date and last point)
     // TODO: test when custom trigger update current row
     // TODO: test about extrude brackets (a + b) / (c - d)

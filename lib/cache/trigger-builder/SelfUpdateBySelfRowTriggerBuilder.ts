@@ -42,11 +42,10 @@ extends AbstractTriggerBuilder {
             const newColumn = column.replaceExpression(newExpression);
             return newColumn;
         });
-
-        const selectValues = cache.select.cloneWith({
-            columns
-        })
-        return selectValues;
+        return columns.sort((columnA, columnB) =>
+            this.context.getDependencyIndex(columnA.name) -
+            this.context.getDependencyIndex(columnB.name)
+        );
     }
 
     private createBeforeInsertTriggers(): ICacheTrigger[] {

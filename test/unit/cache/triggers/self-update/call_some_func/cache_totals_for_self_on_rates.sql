@@ -16,18 +16,10 @@ begin
     end if;
 
 
-    select
-        new.quantity * new.price * calc_vat(
-            new.vat_type,
-            new.vat_value
-        ) as total
-    into new_totals;
-
-    if new_totals.total is distinct from new.total then
-
-        new.total = new_totals.total;
-
-    end if;
+    new.total = new.quantity * new.price * calc_vat(
+        new.vat_type,
+        new.vat_value
+    );
 
     return new;
 end

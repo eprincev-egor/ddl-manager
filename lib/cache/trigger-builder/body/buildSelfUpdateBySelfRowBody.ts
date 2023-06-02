@@ -5,13 +5,13 @@ import {
     BlankLine,
     Expression,
     Declare,
-    Select,
-    AssignVariable
+    AssignVariable,
+    SelectColumn
 } from "../../../ast";
 
 export function buildSelfUpdateBySelfRowBody(
     noChanges: Expression,
-    selectNewValues: Select
+    selectNewValues: SelectColumn[]
 ) {
     const body = new Body({
         declares: [
@@ -36,32 +36,11 @@ export function buildSelfUpdateBySelfRowBody(
                 new BlankLine(),
             ]),
 
-            selectNewValues.cloneWith({
-                intoRow: "new_totals"
-            }),
+            ...selectNewValues.map(column => new AssignVariable({
+                variable: `new.${column.name}`,
+                value: column.expression
+            })),
 
-            new BlankLine(),
-
-            new If({
-                if: Expression.or(
-                    selectNewValues.columns.map(updateColumn => 
-                        `new_totals.${updateColumn.name} is distinct from new.${updateColumn.name}`
-                    )
-                ),
-                then: [
-                    new BlankLine(),
-
-                    ...selectNewValues.columns.map(column => 
-                        new AssignVariable({
-                            variable: `new.${column.name}`,
-                            value: new HardCode({sql: `new_totals.${column.name}`})
-                        })
-                    ),
-
-                    new BlankLine()
-                ]
-            }),
-            
             new BlankLine(),
             new HardCode({
                 sql: `return new;`

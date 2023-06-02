@@ -12,15 +12,7 @@ begin
     end if;
 
 
-    select
-        new.watchers_ids || new.orders_managers_ids as watchers_or_managers
-    into new_totals;
-
-    if new_totals.watchers_or_managers is distinct from new.watchers_or_managers then
-
-        new.watchers_or_managers = new_totals.watchers_or_managers;
-
-    end if;
+    new.watchers_or_managers = new.watchers_ids || new.orders_managers_ids;
 
     return new;
 end

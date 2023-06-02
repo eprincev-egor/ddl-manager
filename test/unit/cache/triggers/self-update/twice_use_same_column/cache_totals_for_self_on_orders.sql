@@ -8,21 +8,8 @@ begin
     end if;
 
 
-    select
-        new.profit > 100 as profit_100,
-        new.profit > 200 as profit_200
-    into new_totals;
-
-    if
-        new_totals.profit_100 is distinct from new.profit_100
-        or
-        new_totals.profit_200 is distinct from new.profit_200
-    then
-
-        new.profit_100 = new_totals.profit_100;
-        new.profit_200 = new_totals.profit_200;
-
-    end if;
+    new.profit_100 = new.profit > 100;
+    new.profit_200 = new.profit > 200;
 
     return new;
 end

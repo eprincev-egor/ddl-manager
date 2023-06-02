@@ -14,19 +14,11 @@ begin
     end if;
 
 
-    select
-        coalesce(
-            new.date_clear,
-            new.date_conditional_clear,
-            new.date_release_for_procuring
-        ) as clear_date_total
-    into new_totals;
-
-    if new_totals.clear_date_total is distinct from new.clear_date_total then
-
-        new.clear_date_total = new_totals.clear_date_total;
-
-    end if;
+    new.clear_date_total = coalesce(
+        new.date_clear,
+        new.date_conditional_clear,
+        new.date_release_for_procuring
+    );
 
     return new;
 end
