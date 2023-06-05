@@ -1,7 +1,6 @@
 import { TableReference } from "../../database/schema/TableReference";
 import { AbstractTriggerBuilder, ICacheTrigger } from "./AbstractTriggerBuilder";
 import { buildSelfUpdateBySelfRowBody } from "./body/buildSelfUpdateBySelfRowBody";
-import { createSelectForUpdate } from "../processor/createSelectForUpdate";
 import { buildSelfAssignBeforeInsertSelfColumnBody } from "./body/buildSelfAssignBeforeInsertSelfColumnBody";
 import { leadingZero } from "./utils";
 
@@ -31,17 +30,7 @@ extends AbstractTriggerBuilder {
     }
 
     private buildSelectValues() {
-        const {cache} = this.context;
-        const newRow = new TableReference(
-            cache.for.table,
-            "new"
-        );
-
-        const columns = cache.select.columns.map(column => {
-            const newExpression = column.expression.replaceTable(cache.for, newRow);
-            const newColumn = column.replaceExpression(newExpression);
-            return newColumn;
-        });
+        const columns = this.context.createSelectForUpdateNewRow().columns;
         return columns.sort((columnA, columnB) =>
             this.context.getDependencyIndex(columnA.name) -
             this.context.getDependencyIndex(columnB.name)
@@ -49,16 +38,7 @@ extends AbstractTriggerBuilder {
     }
 
     private createBeforeInsertTriggers(): ICacheTrigger[] {
-        const {cache} = this.context;
-        const newRow = new TableReference(
-            cache.for.table,
-            "new"
-        );
-
-        const selectValues = createSelectForUpdate(
-            this.context.database,
-            this.context.cache
-        ).replaceTable(cache.for, newRow);
+        const selectValues = this.context.createSelectForUpdateNewRow();
 
         return selectValues.columns.map(selectColumn => {
             const dependencyIndex = this.context.getDependencyIndex(
@@ -66,7 +46,7 @@ extends AbstractTriggerBuilder {
             );
             const triggerName = [
                 `cache${leadingZero(dependencyIndex, 3)}`,
-                cache.for.table.name,
+                this.context.cache.for.table.name,
                 selectColumn.name,
                 "bef_ins"
             ].join("_");

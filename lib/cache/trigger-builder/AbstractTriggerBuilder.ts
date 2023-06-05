@@ -52,7 +52,7 @@ export abstract class AbstractTriggerBuilder {
 
             procedure: {
                 schema: "public",
-                name: this.generateTriggerName(),
+                name: json.name || this.generateTriggerName(),
                 args: []
             },
             table: new TableID(

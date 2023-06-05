@@ -3,21 +3,25 @@ import {
     If,
     HardCode,
     BlankLine,
-    Update,
-    SetSelectItem,
-    Expression
+    Expression,
+    Declare,
+    Select,
+    AssignVariable
 } from "../../../ast";
-import { TableReference } from "../../../database/schema/TableReference";
 import { exitIf } from "./util/exitIf";
 
 export function buildSelfUpdateByOtherTablesBody(
-    updateTable: TableReference,
     noChanges: Expression,
-    columnsToUpdate: string[],
-    selectNewValues: string,
+    selectNewValues: Select,
     notMatchedFilterOnUpdate?: Expression,
 ) {
     const body = new Body({
+        declares: [
+            new Declare({
+                name: "new_totals",
+                type: "record"
+            })
+        ],
         statements: [
             new BlankLine(),
             new If({
@@ -35,17 +39,17 @@ export function buildSelfUpdateByOtherTablesBody(
             new BlankLine(),
             new BlankLine(),
             
-            new Update({
-                table: updateTable.toString(),
-                set: [new SetSelectItem({
-                    columns: columnsToUpdate,
-                    select: selectNewValues
-                })],
-
-                where: new HardCode({
-                    sql: `${updateTable.getIdentifier()}.id = new.id`
-                })
+            selectNewValues.cloneWith({
+                intoRow: "new_totals"
             }),
+            new BlankLine(),
+            new BlankLine(),
+            ...selectNewValues.columns.map(column => 
+                new AssignVariable({
+                    variable: `new.${column.name}`,
+                    value: new HardCode({sql: `new_totals.${column.name}`})
+                })
+            ),
             
             new BlankLine(),
             new BlankLine(),

@@ -6,6 +6,7 @@ import { DDLManager } from "../../../lib/DDLManager";
 import { FileParser } from "../../../lib/parser/FileParser";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import { DatabaseTrigger } from "../../../lib/database/schema/DatabaseTrigger";
 
 
 use(chaiShallowDeepEqualPlugin);
@@ -242,6 +243,10 @@ describe("integration/DDLManager.dump", () => {
 
         const sql = fs.readFileSync(ROOT_TMP_PATH + "/public/company/some_func.sql").toString();
         const content = FileParser.parse(sql) as any;
+
+        content.triggers.sort((triggerA: DatabaseTrigger, triggerB: DatabaseTrigger) =>
+            triggerA.name < triggerB.name ? -1 : 1
+        );
 
         expect(content).to.be.shallowDeepEqual({
             functions: [{

@@ -101,6 +101,14 @@ export class CacheContext {
         return tableReferences;
     }
 
+    newRow() {
+        const newRow = new TableReference(
+            this.cache.for.table,
+            "new"
+        );
+        return newRow;
+    }
+
     isColumnRefToTriggerTable(columnRef: ColumnReference) {
         return columnRef.tableReference.table.equal(this.triggerTable) && (
             !this.excludeRef
@@ -165,6 +173,18 @@ export class CacheContext {
 
         strict.ok(dbFunction);
         return dbFunction
+    }
+
+    createSelectForUpdate() {
+        return createSelectForUpdate(
+            this.database,
+            this.cache
+        );
+    }
+
+    createSelectForUpdateNewRow() {
+        return this.createSelectForUpdate()
+            .replaceTable(this.cache.for, this.newRow());
     }
 
     private buildReferenceMeta(): IReferenceMeta {

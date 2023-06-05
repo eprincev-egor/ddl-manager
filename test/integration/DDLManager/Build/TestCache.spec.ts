@@ -3160,7 +3160,7 @@ $$;
         ]);
     });
 
-    it("two caches, one of commutative columns dependent on self cache", async() => {
+    it("two caches, one of commutative columns dependent on self cache", async() => { 
         const folderPath = ROOT_TMP_PATH + "/test_two_cache";
         fs.mkdirSync(folderPath);
 
@@ -3539,15 +3539,231 @@ $$;
         }]);
     });
 
-    // TODO: custom trigger before update a, b, c - dependent on cache
+    it("custom before trigger dependent on cache column", async() => {
+        const folderPath = ROOT_TMP_PATH + "/sort-deps";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                vat_value numeric,
+                profit numeric(14, 2),
+                profit_after_vat numeric(14, 2)
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/self.sql", `
+            cache self for orders (
+                select
+                    (orders.profit * orders.vat_value)::numeric(14, 2) as profit_vat
+            )
+        `);
+        fs.writeFileSync(folderPath + "/custom.sql", `
+            create or replace function z_before_trigger()
+            returns trigger as $body$
+            begin
+                new.profit_after_vat = new.profit - new.profit_vat;
+                return new;
+            end
+            $body$ language plpgsql;
+
+            create trigger z_before_trigger
+            before update of profit_vat
+            on orders
+            for each row
+            execute procedure z_before_trigger();
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into orders 
+            (profit, vat_value) 
+            values (1000, 0);
+
+            update orders set
+                vat_value = 0.18
+        `);
+
+        let result = await db.query(`select * from orders`);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            vat_value: "0.18",
+            profit: "1000.00",
+            profit_vat: "180.00",
+            profit_after_vat: "820.00"
+        }]);
+    });
+
+    it("commutative dependent on one-row trigger", async() => {
+        const folderPath = ROOT_TMP_PATH + "/sort-deps";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key
+            );
+
+            create table goods (
+                id serial primary key,
+                id_order integer,
+                comment text,
+                quantity integer,
+                id_type integer
+            );
+            
+            create table good_types (
+                id serial primary key,
+                weight numeric
+            );
+
+        `);
+        
+        fs.writeFileSync(folderPath + "/total_weight.sql", `
+            cache a_total_weight for goods (
+                select
+                    good_types.weight * goods.quantity as total_weight
+                from good_types
+                where
+                    good_types.id = goods.id_type
+            )
+        `);
+        
+        fs.writeFileSync(folderPath + "/order_goods.sql", `
+            cache b_order_goods for orders (
+                select
+                    string_agg(distinct goods.comment, '; ') as comments,
+                    sum( goods.total_weight ) as total_weight
+                from goods
+                where
+                    goods.id_order = orders.id
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into orders default values;
+
+            insert into good_types
+                (weight)
+            values
+                (100),
+                (200);
+
+            insert into goods (id_order, quantity, id_type)
+            values (1, 1, 1);
+
+            update goods set
+                comment = 'test-x',
+                quantity = 10,
+                id_type = 2;
+
+            update goods set
+                comment = 'test-y',
+                quantity = 11,
+                id_type = 1;
+        `);
+
+        let result = await db.query(`
+            select id, comments, total_weight 
+            from orders
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            comments: "test-y",
+            total_weight: "1100"
+        }]);
+    });
+
+    it("one-row cache where one column dependent on other", async() => {
+        const folderPath = ROOT_TMP_PATH + "/sort-deps";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table goods (
+                id serial primary key,
+                quantity integer,
+                id_type integer,
+                bonus numeric default 1 not null
+            );
+            
+            create table good_types (
+                id serial primary key,
+                price numeric(14, 2),
+                bonus_quantity integer
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/cost.sql", `
+            cache cost for goods (
+                select
+                    (good_types.price * goods.quantity)::numeric(14, 2) as cost,
+
+                    (case
+                        when goods.quantity >= good_types.bonus_quantity
+                        then goods.bonus * goods.cost
+                        else goods.cost
+                    end)::numeric(14, 2) as total_cost
+
+                from good_types
+                where
+                    good_types.id = goods.id_type
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into good_types
+                (price, bonus_quantity)
+            values
+                (100, 11),
+                (200, 6);
+
+            insert into goods (quantity, id_type, bonus)
+            values (1, 1, 1);
+
+            update goods set
+                id_type = 2,
+                bonus = 0.9,
+                quantity = 7
+        `);
+
+        let result = await db.query(`
+            select id, cost, total_cost
+            from goods
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            cost: "1400.00",
+            total_cost: "1260.00"
+        }]);
+    });
+
+    // TODO: check all before triggers, where exists self cache (logos)
     // TODO: test about twice points (max_point_date and last point)
     // TODO: test when custom trigger update current row
     // TODO: test about extrude brackets (a + b) / (c - d)
-    // TODO: test when commutative dependent on one-row trigger (need before update trigger instead of current SelfUpdateByOtherTablesTriggerBuilder)
     // TODO: https://git.g-soft.ru/logos/logisitc-web/merge_requests/4577/diffs
     // TODO: update-ddl-cache in watcher mode
     // TODO: bugs from ryabkov
-
+    
     async function sleep(ms: number) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }

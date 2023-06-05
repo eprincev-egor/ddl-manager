@@ -1,136 +1,96 @@
-import { Expression, NotExpression } from "../../ast";
-import { TableReference } from "../../database/schema/TableReference";
-import { TableID } from "../../database/schema/TableID";
-import { Comment } from "../../database/schema/Comment";
-import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
+import { Expression, NotExpression, Select } from "../../ast";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { buildSelfUpdateByOtherTablesBody } from "./body/buildSelfUpdateByOtherTablesBody";
 import { buildSelfAssignBeforeInsertByOtherTablesBody } from "./body/buildSelfAssignBeforeInsertByOtherTablesBody";
-import { createSelectForUpdate } from "../processor/createSelectForUpdate";
-import { DatabaseFunction } from "../../database/schema/DatabaseFunction";
 import { leadingZero } from "./utils";
-import { groupBy, uniq } from "lodash";
+import { groupBy } from "lodash";
 
-export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilder {
+export class SelfUpdateByOtherTablesTriggerBuilder 
+extends AbstractTriggerBuilder {
 
     createTriggers() {
-        const updateOfColumns = this.buildUpdateOfColumns();
-        if ( updateOfColumns.length === 0 ) {
-            return this.createHelperTriggers();
-        }
-
-        return [{
-            trigger: this.createDatabaseTrigger({
-                after: true,
-                insert: false,
-                delete: false,
-            }),
-            procedure: this.createDatabaseFunction(
-                this.createBody()
-            )
-        }, ...this.createHelperTriggers()];
+        return [
+            ...this.createOnInsertTriggers(),
+            ...this.createOnUpdateTriggers(), 
+        ];
     }
 
-    private createHelperTriggers() {
+    private createOnInsertTriggers() {
         if ( !this.needInsertCase() ) {
             return [];
         }
 
-        const {notMatchedFilterOnInsert} = this.buildNotMatchedConditions();
-        
-        const {cache} = this.context;
-        const newRow = new TableReference(
-            cache.for.table,
-            "new"
-        );
-
-        const selectValues = createSelectForUpdate(
-            this.context.database,
-            this.context.cache
-        ).replaceTable(cache.for, newRow);
-
-        const columnsByLevel = groupBy(selectValues.columns, column => 
-            this.context.getDependencyLevel(column.name)
-        );
-
-        return Object.values(columnsByLevel).map(columns => {
-            const dependencyIndexes = columns.map(column =>
-                this.context.getDependencyIndex(column.name)
+        const selects = this.buildSelects();
+        return selects.map(select => {
+            const triggerName = this.generateTriggerNameBySelect(
+                select, "bef_ins"
             );
-            const minDependencyIndex = Math.min(...dependencyIndexes);
-
-            const triggerName = [
-                `cache${leadingZero(minDependencyIndex, 3)}`,
-                cache.name,
-                "for",
-                cache.for.table.name,
-                "bef_ins"
-            ].join("_");
-
-
             return {
-                trigger: new DatabaseTrigger({
+                trigger: this.createDatabaseTrigger({
                     name: triggerName,
+                    after: false,
+                    delete: false,
+                    update: false,
+
                     before: true,
                     insert: true,
-        
-                    procedure: {
-                        schema: "public",
-                        name: triggerName,
-                        args: []
-                    },
-                    table: new TableID(
-                        this.context.triggerTable.schema || "public",
-                        this.context.triggerTable.name
-                    ),
-                    comment: Comment.fromFs({
-                        objectType: "trigger",
-                        cacheSignature: this.context.cache.getSignature()
-                    })
                 }),
-                procedure: new DatabaseFunction({
-                    schema: "public",
-                    name: triggerName,
-                    body: "\n" + buildSelfAssignBeforeInsertByOtherTablesBody(
-                        selectValues.cloneWith({
-                            columns
-                        }),
-                        notMatchedFilterOnInsert
-                    ).toSQL() + "\n",
-                    comment: Comment.fromFs({
-                        objectType: "function",
-                        cacheSignature: this.context.cache.getSignature()
-                    }),
-                    args: [],
-                    returns: {type: "trigger"}
-                })
+                procedure: this.createDatabaseFunction(
+                    buildSelfAssignBeforeInsertByOtherTablesBody(
+                        select,
+                        this.buildNotMatchedConditions().notMatchedFilterOnInsert
+                    ),
+                    triggerName
+                )
             }
         })
     }
 
-    private createBody() {
-        let hasReference = this.conditions.hasNoReference("new") as Expression;
-        hasReference = hasReference.replaceTable(
-            this.context.cache.for,
-            new TableReference(
-                this.context.triggerTable,
-                "new"
-            )
+    private createOnUpdateTriggers() {
+        const updateOfColumns = this.buildUpdateOfColumns();
+        if ( updateOfColumns.length === 0 ) {
+            return [];
+        }
+
+        const selects = this.buildSelects();
+        return selects.map(select => {
+            const triggerName = this.generateTriggerNameBySelect(
+                select, "bef_upd"
+            );
+            return {
+                // TODO: filter updateOf columns by select
+                trigger: this.createDatabaseTrigger({
+                    name: triggerName,
+                    after: false,
+                    before: true,
+                    insert: false,
+                    delete: false,
+                }),
+                procedure: this.createDatabaseFunction(
+                    buildSelfUpdateByOtherTablesBody(
+                        this.conditions.noChanges(),
+                        select,
+                        this.buildNotMatchedConditions().notMatchedFilterOnUpdate
+                    ),
+                    triggerName
+                )
+            }
+        });
+    }
+
+    private buildSelects() {
+        const selectValues = this.context.createSelectForUpdateNewRow();
+        const columnsByLevel = groupBy(selectValues.columns, column => 
+            this.context.getDependencyLevel(column.name)
+        );
+        const levels = Object.keys(columnsByLevel).sort((lvlA, lvlB) => 
+            +lvlA - +lvlB
         );
 
-        const {notMatchedFilterOnUpdate} = this.buildNotMatchedConditions();
-
-        const selectToUpdate = createSelectForUpdate(
-            this.context.database,
-            this.context.cache
-        );
-
-        return buildSelfUpdateByOtherTablesBody(
-            this.context.cache.for,
-            this.conditions.noChanges(),
-            selectToUpdate.columns.map(col => col.name),
-            selectToUpdate.toString(),
-            notMatchedFilterOnUpdate
+        return levels.map(level => 
+            selectValues.cloneWith({
+                columns: columnsByLevel[level]
+            })
         );
     }
 
@@ -175,5 +135,24 @@ export class SelfUpdateByOtherTablesTriggerBuilder extends AbstractTriggerBuilde
         }
 
         return true;
+    }
+
+    private generateTriggerNameBySelect(
+        select: Select,
+        postfix: string
+    ) {
+        const dependencyIndexes = select.columns.map(column =>
+            this.context.getDependencyIndex(column.name)
+        );
+        const minDependencyIndex = Math.min(...dependencyIndexes);
+
+        const triggerName = [
+            `cache${leadingZero(minDependencyIndex, 3)}`,
+            this.context.cache.name,
+            "for",
+            this.context.cache.for.table.name,
+            postfix
+        ].join("_");
+        return triggerName;
     }
 }
