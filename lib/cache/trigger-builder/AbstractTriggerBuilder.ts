@@ -38,10 +38,11 @@ export abstract class AbstractTriggerBuilder {
     protected createDatabaseTrigger(
         json: Partial<IDatabaseTriggerParams> = {}
     ) {
+        const triggerName = json.name || this.context.generateTriggerName();
         const updateOfColumns = this.buildUpdateOfColumns();
 
         const trigger = new DatabaseTrigger({
-            name: this.context.generateTriggerName(),
+            name: triggerName,
 
             after: true,
             insert: this.needListenInsert(),
@@ -52,7 +53,7 @@ export abstract class AbstractTriggerBuilder {
 
             procedure: {
                 schema: "public",
-                name: json.name || this.context.generateTriggerName(),
+                name: triggerName,
                 args: []
             },
             table: new TableID(

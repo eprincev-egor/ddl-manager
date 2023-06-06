@@ -1,4 +1,4 @@
-create or replace function cache_totals_for_self_on_orders()
+create or replace function cache000_totals_for_orders_bef_upd()
 returns trigger as $body$
 declare new_totals record;
 begin
@@ -16,8 +16,8 @@ end
 $body$
 language plpgsql;
 
-create trigger cache_totals_for_self_on_orders
+create trigger cache000_totals_for_orders_bef_upd
 before update of profit
 on public.orders
 for each row
-execute procedure cache_totals_for_self_on_orders();
+execute procedure cache000_totals_for_orders_bef_upd();

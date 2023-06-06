@@ -1,4 +1,4 @@
-create or replace function cache000_rates_total_bef_ins()
+create or replace function cache000_totals_for_rates_bef_ins()
 returns trigger as $body$
 begin
     new.total = new.quantity * new.price * calc_vat(
@@ -11,8 +11,8 @@ end
 $body$
 language plpgsql;
 
-create trigger cache000_rates_total_bef_ins
+create trigger cache000_totals_for_rates_bef_ins
 before insert
 on public.rates
 for each row
-execute procedure cache000_rates_total_bef_ins();
+execute procedure cache000_totals_for_rates_bef_ins();

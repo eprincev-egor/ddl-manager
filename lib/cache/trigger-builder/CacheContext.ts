@@ -3,7 +3,8 @@ import { CacheColumnGraph } from "../../Comparator/graph/CacheColumnGraph";
 import {
     Expression,
     Cache,
-    ColumnReference
+    ColumnReference,
+    SelectColumn
 } from "../../ast";
 import { MAX_NAME_LENGTH } from "../../database/postgres/constants";
 import { Database } from "../../database/schema/Database";
@@ -11,7 +12,9 @@ import { TableID } from "../../database/schema/TableID";
 import { TableReference } from "../../database/schema/TableReference";
 import { createSelectForUpdate } from "../processor/createSelectForUpdate";
 import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
+import { leadingZero } from "./utils";
 import { strict } from "assert";
+import { groupBy } from "lodash";
 
 export interface IReferenceMeta {
     columns: string[];
@@ -155,6 +158,25 @@ export class CacheContext {
         return defaultTriggerName;
     }
 
+    generateOrderedTriggerName(
+        columns: SelectColumn[],
+        postfix: string
+    ) {
+        const dependencyIndexes = columns.map(column =>
+            this.getDependencyIndex(column.name)
+        );
+        const minDependencyIndex = Math.min(...dependencyIndexes);
+
+        const triggerName = [
+            `cache${leadingZero(minDependencyIndex, 3)}`,
+            this.cache.name,
+            "for",
+            this.cache.for.table.name,
+            postfix
+        ].join("_");
+        return triggerName;
+    }
+
     getBeforeUpdateTriggers() {
         const triggerDbTable = this.database.getTable(this.triggerTable) || {triggers: []};
 
@@ -185,6 +207,25 @@ export class CacheContext {
     createSelectForUpdateNewRow() {
         return this.createSelectForUpdate()
             .replaceTable(this.cache.for, this.newRow());
+    }
+
+    groupBySelectsForUpdateByLevel() {
+        const selectValues = this.createSelectForUpdateNewRow();
+        const columnsByLevel = groupBy(selectValues.columns, column => 
+            this.getDependencyLevel(column.name)
+        );
+        const levels = Object.keys(columnsByLevel).sort((lvlA, lvlB) => 
+            +lvlA - +lvlB
+        );
+
+        return levels.map(level => 
+            selectValues.cloneWith({
+                columns: columnsByLevel[level].sort((columnA, columnB) =>
+                    this.getDependencyIndex(columnA.name) >
+                    this.getDependencyIndex(columnB.name) ? 1 : -1
+                )
+            })
+        );
     }
 
     private buildReferenceMeta(): IReferenceMeta {

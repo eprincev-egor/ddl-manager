@@ -1,4 +1,4 @@
-create or replace function cache000_list_gtd_clear_date_total_bef_ins()
+create or replace function cache000_self_dates_for_list_gtd_bef_ins()
 returns trigger as $body$
 begin
     new.clear_date_total = coalesce(
@@ -12,8 +12,8 @@ end
 $body$
 language plpgsql;
 
-create trigger cache000_list_gtd_clear_date_total_bef_ins
+create trigger cache000_self_dates_for_list_gtd_bef_ins
 before insert
 on public.list_gtd
 for each row
-execute procedure cache000_list_gtd_clear_date_total_bef_ins();
+execute procedure cache000_self_dates_for_list_gtd_bef_ins();

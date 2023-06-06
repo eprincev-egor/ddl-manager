@@ -1,4 +1,4 @@
-create or replace function cache_self_dates_for_self_on_list_gtd()
+create or replace function cache000_self_dates_for_list_gtd_bef_upd()
 returns trigger as $body$
 declare new_totals record;
 begin
@@ -25,8 +25,8 @@ end
 $body$
 language plpgsql;
 
-create trigger cache_self_dates_for_self_on_list_gtd
+create trigger cache000_self_dates_for_list_gtd_bef_upd
 before update of date_clear, date_conditional_clear, date_release_for_procuring
 on public.list_gtd
 for each row
-execute procedure cache_self_dates_for_self_on_list_gtd();
+execute procedure cache000_self_dates_for_list_gtd_bef_upd();

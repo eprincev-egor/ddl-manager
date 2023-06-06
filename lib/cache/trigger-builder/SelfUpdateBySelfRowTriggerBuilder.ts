@@ -1,56 +1,55 @@
-import { TableReference } from "../../database/schema/TableReference";
 import { AbstractTriggerBuilder, ICacheTrigger } from "./AbstractTriggerBuilder";
 import { buildSelfUpdateBySelfRowBody } from "./body/buildSelfUpdateBySelfRowBody";
 import { buildSelfAssignBeforeInsertSelfColumnBody } from "./body/buildSelfAssignBeforeInsertSelfColumnBody";
-import { leadingZero } from "./utils";
 
 export class SelfUpdateBySelfRowTriggerBuilder 
 extends AbstractTriggerBuilder {
 
     createTriggers(): ICacheTrigger[] {
+        return [
+            ...this.createOnUpdateTriggers(),
+            ...this.createOnInsertTriggers()
+        ];
+    }
+
+    private createOnUpdateTriggers() {
         const updateOfColumns = this.buildUpdateOfColumns();
         if ( updateOfColumns.length === 0 ) {
-            return this.createBeforeInsertTriggers();
+            return []
         }
 
-        return [{
-            trigger: this.createDatabaseTrigger({
-                after: false,
-                before: true,
-                insert: false,
-                delete: false,
-            }),
-            procedure: this.createDatabaseFunction(
-                buildSelfUpdateBySelfRowBody(
-                    this.conditions.noChanges(),
-                    this.buildSelectValues()
-                )
-            )
-        }, ...this.createBeforeInsertTriggers()];
-    }
-
-    private buildSelectValues() {
-        const columns = this.context.createSelectForUpdateNewRow().columns;
-        return columns.sort((columnA, columnB) =>
-            this.context.getDependencyIndex(columnA.name) -
-            this.context.getDependencyIndex(columnB.name)
-        );
-    }
-
-    private createBeforeInsertTriggers(): ICacheTrigger[] {
-        const selectValues = this.context.createSelectForUpdateNewRow();
-
-        return selectValues.columns.map(selectColumn => {
-            const dependencyIndex = this.context.getDependencyIndex(
-                selectColumn.name
+        const selects = this.context.groupBySelectsForUpdateByLevel();
+        return selects.map(select => {
+            const triggerName = this.context.generateOrderedTriggerName(
+                select.columns, "bef_upd"
             );
-            const triggerName = [
-                `cache${leadingZero(dependencyIndex, 3)}`,
-                this.context.cache.for.table.name,
-                selectColumn.name,
-                "bef_ins"
-            ].join("_");
-    
+
+            return {
+                trigger: this.createDatabaseTrigger({
+                    name: triggerName,
+                    after: false,
+                    before: true,
+                    insert: false,
+                    delete: false,
+                }),
+                procedure: this.createDatabaseFunction(
+                    buildSelfUpdateBySelfRowBody(
+                        this.conditions.noChanges(),
+                        this.buildSelectValues()
+                    ),
+                    triggerName
+                )
+            }
+        });
+    }
+
+    private createOnInsertTriggers(): ICacheTrigger[] {
+        const selects = this.context.groupBySelectsForUpdateByLevel();
+        return selects.map(select => {
+            const triggerName = this.context.generateOrderedTriggerName(
+                select.columns, "bef_ins"
+            );
+
             return {
                 trigger: this.createDatabaseTrigger({
                     after: false,
@@ -69,11 +68,19 @@ extends AbstractTriggerBuilder {
                 }),
                 procedure: this.createDatabaseFunction(
                     buildSelfAssignBeforeInsertSelfColumnBody(
-                        selectColumn
+                        select.columns
                     ),
                     triggerName
                 )
             }
         });
+    }
+
+    private buildSelectValues() {
+        const columns = this.context.createSelectForUpdateNewRow().columns;
+        return columns.sort((columnA, columnB) =>
+            this.context.getDependencyIndex(columnA.name) -
+            this.context.getDependencyIndex(columnB.name)
+        );
     }
 }

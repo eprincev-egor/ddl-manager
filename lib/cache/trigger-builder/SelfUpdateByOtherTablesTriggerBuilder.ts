@@ -2,7 +2,6 @@ import { Expression, NotExpression, Select } from "../../ast";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { buildSelfUpdateByOtherTablesBody } from "./body/buildSelfUpdateByOtherTablesBody";
 import { buildSelfAssignBeforeInsertByOtherTablesBody } from "./body/buildSelfAssignBeforeInsertByOtherTablesBody";
-import { leadingZero } from "./utils";
 import { groupBy } from "lodash";
 
 export class SelfUpdateByOtherTablesTriggerBuilder 
@@ -20,10 +19,10 @@ extends AbstractTriggerBuilder {
             return [];
         }
 
-        const selects = this.buildSelects();
+        const selects = this.context.groupBySelectsForUpdateByLevel();
         return selects.map(select => {
-            const triggerName = this.generateTriggerNameBySelect(
-                select, "bef_ins"
+            const triggerName = this.context.generateOrderedTriggerName(
+                select.columns, "bef_ins"
             );
             return {
                 trigger: this.createDatabaseTrigger({
@@ -52,10 +51,10 @@ extends AbstractTriggerBuilder {
             return [];
         }
 
-        const selects = this.buildSelects();
+        const selects = this.context.groupBySelectsForUpdateByLevel();
         return selects.map(select => {
-            const triggerName = this.generateTriggerNameBySelect(
-                select, "bef_upd"
+            const triggerName = this.context.generateOrderedTriggerName(
+                select.columns, "bef_upd"
             );
             return {
                 // TODO: filter updateOf columns by select
@@ -76,22 +75,6 @@ extends AbstractTriggerBuilder {
                 )
             }
         });
-    }
-
-    private buildSelects() {
-        const selectValues = this.context.createSelectForUpdateNewRow();
-        const columnsByLevel = groupBy(selectValues.columns, column => 
-            this.context.getDependencyLevel(column.name)
-        );
-        const levels = Object.keys(columnsByLevel).sort((lvlA, lvlB) => 
-            +lvlA - +lvlB
-        );
-
-        return levels.map(level => 
-            selectValues.cloneWith({
-                columns: columnsByLevel[level]
-            })
-        );
     }
 
     protected buildNotMatchedConditions() {
@@ -135,24 +118,5 @@ extends AbstractTriggerBuilder {
         }
 
         return true;
-    }
-
-    private generateTriggerNameBySelect(
-        select: Select,
-        postfix: string
-    ) {
-        const dependencyIndexes = select.columns.map(column =>
-            this.context.getDependencyIndex(column.name)
-        );
-        const minDependencyIndex = Math.min(...dependencyIndexes);
-
-        const triggerName = [
-            `cache${leadingZero(minDependencyIndex, 3)}`,
-            this.context.cache.name,
-            "for",
-            this.context.cache.for.table.name,
-            postfix
-        ].join("_");
-        return triggerName;
     }
 }

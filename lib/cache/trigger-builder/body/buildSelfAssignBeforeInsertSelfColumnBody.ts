@@ -7,14 +7,16 @@ import {
 } from "../../../ast";
 
 export function buildSelfAssignBeforeInsertSelfColumnBody(
-    selectNewValue: SelectColumn
+    selectColumns: SelectColumn[]
 ) {
     const body = new Body({
         statements: [
-            new AssignVariable({
-                variable: `new.${selectNewValue.name}`,
-                value: selectNewValue.expression
-            }),
+            ...selectColumns.map(column => 
+                new AssignVariable({
+                    variable: `new.${column.name}`,
+                    value: column.expression
+                })
+            ),
 
             new BlankLine(),
             new HardCode({

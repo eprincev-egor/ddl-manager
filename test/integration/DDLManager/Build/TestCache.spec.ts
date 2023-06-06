@@ -3422,6 +3422,7 @@ $$;
                     orders.profit_a + 10 as profit_c
             )
         `);
+
         fs.writeFileSync(folderPath + "/d.sql", `
             cache d for orders (
                 select
@@ -3476,10 +3477,10 @@ $$;
             profit_a: 20001,
             profit_c: 20011,
 
-            profit_b: 31012,
+            profit_b: 41012,
             profit_d: 40112,
 
-            profit_e: 31112,
+            profit_e: 41112,
             profit_f: 40212
         }]);
     });
@@ -3810,6 +3811,74 @@ $$;
                 balance = 100
         `);
         assert.ok(true, "no errors");
+    });
+
+    it("commutative cache dependent on self cache, do update", async() => {
+        const folderPath = ROOT_TMP_PATH + "/sort-deps";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table accounts (
+                id serial primary key,
+                children_accounts_ids integer[]
+            );
+            create table operations (
+                id serial primary key,
+                id_account integer,
+                sum numeric(14, 2)
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/self.sql", `
+            cache self for accounts (
+                select array_append(
+                    accounts.children_accounts_ids,
+                    accounts.id
+                ) as my_accounts_ids
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/balance.sql", `
+            cache balance for accounts (
+                select sum( operations.sum )::numeric(14, 2) as balance
+                from operations
+                where
+                    operations.id_account = any(accounts.my_accounts_ids)
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into accounts default values;
+            insert into accounts default values;
+
+            insert into operations
+                (id_account, sum)
+            values
+                (1, 100),
+                (2, 200);
+            
+            update accounts set
+                children_accounts_ids = array[2]
+            where id = 1
+        `);
+
+        let result = await db.query(`
+            select id, balance
+            from accounts
+            where id = 1
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            balance: "300.00"
+        }]);
     });
 
     // TODO: test about twice points (max_point_date and last point)

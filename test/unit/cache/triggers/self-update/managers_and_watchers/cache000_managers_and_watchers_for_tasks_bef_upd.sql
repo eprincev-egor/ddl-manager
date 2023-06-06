@@ -1,4 +1,4 @@
-create or replace function cache_managers_and_watchers_for_self_on_tasks()
+create or replace function cache000_managers_and_watchers_for_tasks_bef_upd()
 returns trigger as $body$
 declare new_totals record;
 begin
@@ -19,8 +19,8 @@ end
 $body$
 language plpgsql;
 
-create trigger cache_managers_and_watchers_for_self_on_tasks
+create trigger cache000_managers_and_watchers_for_tasks_bef_upd
 before update of orders_managers_ids, watchers_ids
 on public.tasks
 for each row
-execute procedure cache_managers_and_watchers_for_self_on_tasks();
+execute procedure cache000_managers_and_watchers_for_tasks_bef_upd();
