@@ -546,6 +546,22 @@ describe("DatabaseFunction", () => {
             end`, ["column_x"]);
         });
 
+        it("ignore inline comments before assign", () => {
+            shouldBeAssignedColumns(`
+            begin
+                -- comment
+                new.column_x = 19;
+            end`, ["column_x"]);
+        });
+
+        it("ignore multiline comments before assign", () => {
+            shouldBeAssignedColumns(`
+            begin
+                /* comment */
+                new.column_x = 19;
+            end`, ["column_x"]);
+        });
+
 
         function shouldBeAssignedColumns(
             body: string, columns: string[]
