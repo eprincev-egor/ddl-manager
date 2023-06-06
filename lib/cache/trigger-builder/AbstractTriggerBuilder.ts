@@ -41,7 +41,7 @@ export abstract class AbstractTriggerBuilder {
         const updateOfColumns = this.buildUpdateOfColumns();
 
         const trigger = new DatabaseTrigger({
-            name: this.generateTriggerName(),
+            name: this.context.generateTriggerName(),
 
             after: true,
             insert: this.needListenInsert(),
@@ -52,7 +52,7 @@ export abstract class AbstractTriggerBuilder {
 
             procedure: {
                 schema: "public",
-                name: json.name || this.generateTriggerName(),
+                name: json.name || this.context.generateTriggerName(),
                 args: []
             },
             table: new TableID(
@@ -71,7 +71,7 @@ export abstract class AbstractTriggerBuilder {
 
     protected createDatabaseFunction(
         body: AbstractAstElement,
-        name = this.generateTriggerName()
+        name = this.context.generateTriggerName()
     ) {
         const func = new DatabaseFunction({
             schema: "public",
@@ -103,10 +103,6 @@ export abstract class AbstractTriggerBuilder {
                 row
             )
         );
-    }
-
-    protected generateTriggerName(postfix?: string) {
-        return this.context.generateTriggerName(postfix);
     }
 
     protected buildUpdateOfColumns() {
