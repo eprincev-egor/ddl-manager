@@ -3756,14 +3756,69 @@ $$;
         }]);
     });
 
-    // TODO: check all before triggers, where exists self cache (logos)
+    it("custom trigger without dependency on cache", async() => {
+        const folderPath = ROOT_TMP_PATH + "/sort-deps";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table accounts (
+                id serial primary key,
+                vector smallint not null,
+                balance numeric(14, 2)
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/cache.sql", `
+            cache has_50k for accounts (
+                select (case
+                    when accounts.vector = 1
+                    then accounts.balance > 50000
+                    else accounts.balance < 50000
+                end) as has_50k
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/validate_vector.sql", `
+            create or replace function validate_vector()
+            returns trigger as $body$
+            begin
+                raise exception 'vector is constant';
+            end
+            $body$ language plpgsql;
+
+            create trigger validate_vector
+            before update of vector
+            on accounts
+            for each row
+            execute procedure validate_vector();
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into accounts
+                (vector)
+            values
+                (1);
+
+            update accounts set
+                balance = 100
+        `);
+        assert.ok(true, "no errors");
+    });
+
     // TODO: test about twice points (max_point_date and last point)
     // TODO: test when custom trigger update current row
     // TODO: test about extrude brackets (a + b) / (c - d)
     // TODO: https://git.g-soft.ru/logos/logisitc-web/merge_requests/4577/diffs
     // TODO: update-ddl-cache in watcher mode
     // TODO: bugs from ryabkov
-    
+
     async function sleep(ms: number) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }

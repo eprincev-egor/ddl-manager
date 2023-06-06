@@ -489,4 +489,81 @@ describe("DatabaseFunction", () => {
         assert.ok( func2.equal(func1), "func2 == func1" );
     });
 
+    describe("findAssignColumns", () => {
+
+        it("empty function", () => {
+            shouldBeAssignedColumns(
+                "begin\nend",
+                []
+            );
+        });
+
+        it("assign one column", () => {
+            shouldBeAssignedColumns(`
+            begin
+                new.my_column = 123;
+            end`, ["my_column"]);
+        });
+
+        it("ignore case", () => {
+            shouldBeAssignedColumns(`
+            begin
+                new.MY_COLUMN = 123;
+            end`, ["my_column"]);
+        });
+
+        it("assign two columns", () => {
+            shouldBeAssignedColumns(`
+            begin
+                new.column_a = 123;
+                new.column_b = 123;
+            end`, ["column_a", "column_b"]);
+        });
+
+        it("dont repeat columns", () => {
+            shouldBeAssignedColumns(`
+            begin
+                new.column_x = 123;
+                new.column_x = 123;
+            end`, ["column_x"]);
+        });
+
+        it("ignore if condition", () => {
+            shouldBeAssignedColumns(`
+            begin
+                if new.column_x = 1 or new.column_y = 1 then
+                    new.column_z = 123;
+                end if;
+            end`, ["column_z"]);
+        });
+
+        it("assign inside loop", () => {
+            shouldBeAssignedColumns(`
+            begin
+                for ... loop
+                    new.column_x = 19;
+                end loop;
+            end`, ["column_x"]);
+        });
+
+
+        function shouldBeAssignedColumns(
+            body: string, columns: string[]
+        ) {
+            const func = new DatabaseFunction({
+                schema: "public",
+                name: "my_func",
+                args: [],
+                returns: {type: "bigint"},
+                body
+            });
+
+            assert.deepStrictEqual(
+                func.findAssignColumns(),
+                columns
+            );
+        }
+
+    });
+
 })

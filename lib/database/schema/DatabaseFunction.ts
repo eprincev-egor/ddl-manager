@@ -1,6 +1,7 @@
 import { wrapText } from "../postgres/wrapText";
 import { MAX_NAME_LENGTH } from "../postgres/constants";
 import { Comment } from "./Comment";
+import { uniq } from "lodash";
 
 export interface IDatabaseFunctionParams {
     schema: string;
@@ -127,14 +128,15 @@ export class DatabaseFunction  {
     }
 
     findAssignColumns() {
-        const matches = this.body.match(/new\.\w+\s*=/g) || [];
+        const matches = this.body.match(/((begin|then|loop)\s*;?|;)\s*new\.(\w+)\s*=/g) || [];
         const assignedColumns = matches.map(str =>
             str
-                .replace(/^new\./, "")
+                .replace(/^((begin|then|loop)\s*;?|;)\s*new\./, "")
                 .replace(/\s*=$/, "")
                 .toLowerCase()
         );
-        return assignedColumns;
+
+        return uniq(assignedColumns).sort();
     }
 
     toSQL(body = this.body) {
