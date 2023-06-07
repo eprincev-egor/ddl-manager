@@ -383,6 +383,19 @@ describe("DatabaseFunction", () => {
                     default: " 'both' "
                 }, 
                 equal: true
+            },
+            {
+                argA: {
+                    name: "name",
+                    type: "text[]",
+                    default: "'both' :: text[]"
+                },
+                argB: {
+                    name: "name",
+                    type: "text[]",
+                    default: " 'both' "
+                }, 
+                equal: true
             }
         ];
 

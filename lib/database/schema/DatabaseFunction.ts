@@ -342,7 +342,7 @@ function equalArgumentDefault(argA: IDatabaseFunctionArgument, argB: IDatabaseFu
 function formatDefault(someArg: IDatabaseFunctionArgument) {
     let someDefault = ("" + someArg.default).trim().toLowerCase();
 
-    someDefault = someDefault.replace(/\s*::\s*([\w\s]+|numeric\([\d\s,]+\))$/, "");
+    someDefault = someDefault.replace(/\s*::\s*([\w\s]+|numeric\([\d\s,]+\))(\[])?$/, "");
 
     const type = formatType(someArg.type);
     someDefault += "::" + type;
