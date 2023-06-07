@@ -3,6 +3,7 @@ import { MAX_NAME_LENGTH } from "../postgres/constants";
 import { Comment } from "./Comment";
 import { uniq } from "lodash";
 import { replaceComments } from "../../parser/replaceComments";
+import { formatType } from "./Type";
 
 export interface IDatabaseFunctionParams {
     schema: string;
@@ -354,23 +355,6 @@ function formatDefault(someArg: IDatabaseFunctionArgument) {
     return someDefault;
 }
 
-function formatType(someType?: string) {
-    if ( !someType ) {
-        return null;
-    }
-
-    someType = someType.trim().toLowerCase().replace(/\s+/g, " ");
-
-    if ( someType.startsWith("numeric") ) {
-        return "numeric";
-    }
-
-    if ( someType === "timestamp" ) {
-        return "timestamp without time zone";
-    }
-
-    return someType;
-}
 
 function equalReturns(returnsA: IDatabaseFunctionReturns, returnsB: IDatabaseFunctionReturns) {
     return (

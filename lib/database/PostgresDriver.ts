@@ -147,9 +147,13 @@ implements IDatabaseDriver {
 
             const triggerJson = fileContent.triggers[0];
             if ( triggerJson ) {
+                const rawComment = row.comment || "";
+                const [comment, originalWhen] = rawComment.split("\noriginal-when: ");
+
                 const trigger = new DatabaseTrigger({
                     ...triggerJson,
-                    comment: Comment.fromTotalString( "trigger", row.comment )
+                    comment: Comment.fromTotalString( "trigger", comment ),
+                    when: originalWhen || triggerJson.when
                 });
                 objects.push(trigger);
             }
@@ -259,7 +263,15 @@ implements IDatabaseDriver {
         ddlSql += trigger.toSQL();
 
         if ( !trigger.comment.isEmpty() ) {
-            ddlSql += `;\ncomment on trigger ${trigger.getSignature()} is ${wrapText(trigger.comment.toString())}`
+            let comment = trigger.comment.toString();
+            if ( trigger.when ) {
+                comment += "\noriginal-when: ";
+                comment += trigger.when;
+            }
+            
+            ddlSql += `;
+            comment on trigger ${trigger.getSignature()} 
+            is ${wrapText(comment)}`
         }
 
         await this.query(ddlSql);

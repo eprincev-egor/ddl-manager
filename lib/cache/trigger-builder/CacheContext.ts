@@ -167,13 +167,33 @@ export class CacheContext {
         );
         const minDependencyIndex = Math.min(...dependencyIndexes);
 
-        const triggerName = [
+        let triggerName = [
             `cache${leadingZero(minDependencyIndex, 3)}`,
             this.cache.name,
             "for",
             this.cache.for.table.name,
             postfix
         ].join("_");
+        
+        if ( triggerName.length > MAX_NAME_LENGTH  ) {
+            const tableRef = this.cache.select
+                .getAllTableReferences()
+                .find(fromTableRef =>
+                    fromTableRef.table.equal(this.triggerTable)
+                );
+
+            triggerName = [
+                `cache${leadingZero(minDependencyIndex, 3)}`,
+
+                shortName(this.cache.name),
+
+                shortName(tableRef && tableRef.alias || 
+                    this.cache.for.table.name),
+
+                postfix
+            ].join("_")
+        }
+
         return triggerName;
     }
 
@@ -361,4 +381,16 @@ function isUnknownExpression(expression: Expression): boolean {
     }
 
     return true;
+}
+
+function shortName(longName: string) {
+    const halfLength = Math.min(
+        Math.floor(longName.length / 2),
+        10
+    );
+
+    const leftSide = longName.slice(0, halfLength);
+    const rightSide = longName.slice(-halfLength);
+
+    return leftSide + rightSide;
 }

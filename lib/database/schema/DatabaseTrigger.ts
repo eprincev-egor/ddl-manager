@@ -100,14 +100,7 @@ export class DatabaseTrigger {
             !!this.insert === !!otherTrigger.insert &&
             !!this.delete === !!otherTrigger.delete &&
             !!this.update === !!otherTrigger.update &&
-            (
-                this.updateOf && otherTrigger.updateOf &&
-                this.updateOf.join(",") === otherTrigger.updateOf.join(",")
-                ||
-                // null == undefined
-                // tslint:disable-next-line: triple-equals
-                this.updateOf == otherTrigger.updateOf
-            ) &&
+            (this.updateOf || []).join(",") === (otherTrigger.updateOf || []).join(",") &&
             this.comment.equal(otherTrigger.comment) &&
             // null == undefined
             // tslint:disable-next-line: triple-equals

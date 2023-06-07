@@ -5,7 +5,7 @@ export class Type {
     readonly normalized: string;
     constructor(value: string) {
         this.value = value;
-        this.normalized = normalize(value);
+        this.normalized = formatType(value) as string;
     }
 
     isArray() {
@@ -28,30 +28,41 @@ export class Type {
     }
 }
 
-function normalize(type: string) {
-    if ( type === "int8" ) {
+export function formatType(someType?: string) {
+    if ( !someType ) {
+        return null;
+    }
+
+    someType = someType.trim().toLowerCase().replace(/\s+/g, " ");
+
+    if ( someType.startsWith("numeric") ) {
+        return "numeric";
+    }
+
+    if ( someType === "timestamp" ) {
+        return "timestamp without time zone";
+    }
+    if ( someType === "int8" ) {
         return "bigint";
     }
-    if ( type === "int4" ) {
+    if ( someType === "int4" ) {
         return "integer";
     }
-    if ( type === "int2" ) {
+    if ( someType === "int2" ) {
         return "smallint";
     }
 
-    if ( type === "int8[]" ) {
+    if ( someType === "int8[]" ) {
         return "bigint[]";
     }
-    if ( type === "int4[]" ) {
+    if ( someType === "int4[]" ) {
         return "integer[]";
     }
-    if ( type === "int2[]" ) {
+    if ( someType === "int2[]" ) {
         return "smallint[]";
     }
-
-    if ( type === "bool" ) {
+    if ( someType === "bool" ) {
         return "boolean";
     }
-
-    return type;
+    return someType;
 }

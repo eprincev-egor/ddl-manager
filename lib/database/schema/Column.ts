@@ -1,5 +1,5 @@
 import { TableID } from "./TableID";
-import { Type } from "./Type";
+import { Type, formatType } from "./Type";
 import { Comment } from "./Comment";
 import { MAX_NAME_LENGTH } from "../postgres/constants";
 
@@ -65,7 +65,13 @@ export class Column {
     suit(newColumn: Column) {
         return (
             this.type.suit(newColumn.type) &&
-            equalDefaultValues(this.default, newColumn.default) &&
+            formatDefault({
+                type: this.type.value,
+                default: this.default
+            }) === formatDefault({
+                type: newColumn.type.value,
+                default: newColumn.default
+            }) &&
             this.comment.equal( newColumn.comment )
         );
     }
@@ -81,12 +87,15 @@ export class Column {
     }
 }
 
-function equalDefaultValues(default1: string | null, default2: string | null) {
-    if ( default1 == null ) {
-        default1 = "null";
+export function formatDefault(arg: {type?: string, default?: string | null}) {
+    let someDefault = ("" + arg.default).trim().toLowerCase();
+
+    someDefault = someDefault.replace(/\s*::\s*([\w\s]+|numeric\([\d\s,]+\))(\[])?$/, "");
+    someDefault = someDefault.trim();
+
+    if ( someDefault === "{}" ) {
+        someDefault = "'{}'";
     }
-    if ( default2 == null ) {
-        default2 = "null";
-    }
-    return default1 === default2;
+
+    return someDefault;
 }

@@ -4056,6 +4056,63 @@ $$;
         }]);
     });
 
+    it("self cache with long name", async() => {
+        const folderPath = ROOT_TMP_PATH + "/sort-deps";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table this_is_long_name_of_test_table (
+                id serial primary key,
+                quantity integer,
+                weight float
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/long.sql", `
+            cache this_is_long_name_of_test_cache
+            for this_is_long_name_of_test_table (
+                select
+                    this_is_long_name_of_test_table.quantity * 
+                    this_is_long_name_of_test_table.weight as total_weight
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into this_is_long_name_of_test_table
+                (quantity, weight)
+            values (2, 100);
+        `);
+        let result = await db.query(`
+            select id, total_weight
+            from this_is_long_name_of_test_table
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            total_weight: 200
+        }]);
+
+        await db.query(`
+            update this_is_long_name_of_test_table set
+                quantity = 10,
+                weight = 300;
+        `);
+        result = await db.query(`
+            select id, total_weight
+            from this_is_long_name_of_test_table
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            total_weight: 3000
+        }]);
+    });
+
     // TODO: test about twice points (max_point_date and last point)
     // TODO: test when custom trigger update current row
     // TODO: test about extrude brackets (a + b) / (c - d)
