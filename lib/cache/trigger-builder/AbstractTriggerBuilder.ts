@@ -35,21 +35,33 @@ export abstract class AbstractTriggerBuilder {
 
     abstract createTriggers(): ICacheTrigger[];
 
+    protected createDatabaseTriggerOnDIU() {
+        const updateOfColumns = this.buildUpdateOfColumns();
+
+        return this.createDatabaseTrigger({
+            name: this.context.generateTriggerName(),
+
+            after: true,
+            insert: this.needListenInsert(),
+            update: updateOfColumns.length > 0,
+            updateOf: updateOfColumns,
+            delete: true,
+        });
+    }
+
     protected createDatabaseTrigger(
         json: Partial<IDatabaseTriggerParams> = {}
     ) {
         const triggerName = json.name || this.context.generateTriggerName();
-        const updateOfColumns = this.buildUpdateOfColumns();
 
         const trigger = new DatabaseTrigger({
             name: triggerName,
 
-            after: true,
-            insert: this.needListenInsert(),
-            delete: true,
-
-            update: updateOfColumns.length > 0,
-            updateOf: updateOfColumns,
+            before: false,
+            after: false,
+            insert: false,
+            update: false,
+            delete: false,
 
             procedure: {
                 schema: "public",

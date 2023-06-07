@@ -7,7 +7,7 @@ export class UniversalTriggerBuilder extends AbstractTriggerBuilder {
 
     createTriggers() {
         return [{
-            trigger: this.createDatabaseTrigger(),
+            trigger: this.createDatabaseTriggerOnDIU(),
             procedure: this.createDatabaseFunction(
                 this.createBody()
             )

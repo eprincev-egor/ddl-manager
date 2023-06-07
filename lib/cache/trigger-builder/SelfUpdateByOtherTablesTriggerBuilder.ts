@@ -2,7 +2,6 @@ import { Expression, NotExpression, Select } from "../../ast";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { buildSelfUpdateByOtherTablesBody } from "./body/buildSelfUpdateByOtherTablesBody";
 import { buildSelfAssignBeforeInsertByOtherTablesBody } from "./body/buildSelfAssignBeforeInsertByOtherTablesBody";
-import { groupBy } from "lodash";
 
 export class SelfUpdateByOtherTablesTriggerBuilder 
 extends AbstractTriggerBuilder {
@@ -27,10 +26,6 @@ extends AbstractTriggerBuilder {
             return {
                 trigger: this.createDatabaseTrigger({
                     name: triggerName,
-                    after: false,
-                    delete: false,
-                    update: false,
-
                     before: true,
                     insert: true,
                 }),
@@ -60,10 +55,9 @@ extends AbstractTriggerBuilder {
                 // TODO: filter updateOf columns by select
                 trigger: this.createDatabaseTrigger({
                     name: triggerName,
-                    after: false,
                     before: true,
-                    insert: false,
-                    delete: false,
+                    update: true,
+                    updateOf: this.buildUpdateOfColumns()
                 }),
                 procedure: this.createDatabaseFunction(
                     buildSelfUpdateByOtherTablesBody(

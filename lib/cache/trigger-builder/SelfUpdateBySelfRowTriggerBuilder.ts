@@ -27,10 +27,9 @@ extends AbstractTriggerBuilder {
             return {
                 trigger: this.createDatabaseTrigger({
                     name: triggerName,
-                    after: false,
                     before: true,
-                    insert: false,
-                    delete: false,
+                    update: true,
+                    updateOf: this.buildUpdateOfColumns()
                 }),
                 procedure: this.createDatabaseFunction(
                     buildSelfUpdateBySelfRowBody(
@@ -52,19 +51,9 @@ extends AbstractTriggerBuilder {
 
             return {
                 trigger: this.createDatabaseTrigger({
-                    after: false,
-                    delete: false,
-                    update: false,
-                    updateOf: undefined,
-
                     name: triggerName,
                     before: true,
                     insert: true,
-                    procedure: {
-                        schema: "public",
-                        name: triggerName,
-                        args: []
-                    }
                 }),
                 procedure: this.createDatabaseFunction(
                     buildSelfAssignBeforeInsertSelfColumnBody(
