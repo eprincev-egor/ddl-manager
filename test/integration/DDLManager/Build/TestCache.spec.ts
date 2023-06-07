@@ -3219,12 +3219,26 @@ $$;
             values (0.9, array[1, 2]);
         `);
 
-        const actual = await db.query(`
+        let actual = await db.query(`
             select invoices_profit
             from orders
         `);
         assert.deepStrictEqual(actual.rows, [
             { invoices_profit: "100.0" }
+        ]);
+
+
+        await db.query(`
+            update invoices set
+                credit = credit * 2,
+                debit = debit * 2;
+        `);
+        actual = await db.query(`
+            select invoices_profit
+            from orders
+        `);
+        assert.deepStrictEqual(actual.rows, [
+            { invoices_profit: "200.0" }
         ]);
     });
 
@@ -3404,18 +3418,15 @@ $$;
             );
         `);
         
+        // level 0, no deps
         fs.writeFileSync(folderPath + "/a.sql", `
             cache a for orders (
                 select
                     orders.profit + 1 as profit_a
             )
         `);
-        fs.writeFileSync(folderPath + "/b.sql", `
-            cache b for orders (
-                select
-                    orders.profit_c + 1000 + orders.profit_a as profit_b
-            )
-        `);
+    
+        // level 1, dependent on a
         fs.writeFileSync(folderPath + "/c.sql", `
             cache c for orders (
                 select
@@ -3423,18 +3434,29 @@ $$;
             )
         `);
 
+        // level 2, dependent on a and c
+        fs.writeFileSync(folderPath + "/b.sql", `
+            cache b for orders (
+                select
+                    orders.profit_c + 1000 + orders.profit_a as profit_b
+            )
+        `);
+        // level 2, dependent on a and c
         fs.writeFileSync(folderPath + "/d.sql", `
             cache d for orders (
                 select
                     orders.profit_c + 100 + orders.profit_a as profit_d
             )
         `);
+
+        // level 3, dependent on b
         fs.writeFileSync(folderPath + "/e.sql", `
             cache e for orders (
                 select
                     orders.profit_b + 100 as profit_e
             )
         `);
+        // level 3, dependent on d
         fs.writeFileSync(folderPath + "/f.sql", `
             cache f for orders (
                 select
@@ -3456,12 +3478,16 @@ $$;
             id: 1,
             profit: 10000,
 
+            // level 0
             profit_a: 10001,
+            // level 1
             profit_c: 10011,
 
+            // level 2
             profit_b: 21012,
             profit_d: 20112,
 
+            // level 3
             profit_e: 21112,
             profit_f: 20212
         }]);
@@ -3474,12 +3500,16 @@ $$;
             id: 1,
             profit: 20000,
 
+            // level 0
             profit_a: 20001,
+            // level 1
             profit_c: 20011,
 
+            // level 2
             profit_b: 41012,
             profit_d: 40112,
 
+            // level 3
             profit_e: 41112,
             profit_f: 40212
         }]);
@@ -3878,6 +3908,151 @@ $$;
         assert.deepStrictEqual(result.rows, [{
             id: 1,
             balance: "300.00"
+        }]);
+    });
+
+    it("commutative cache dependent on self cache on source table", async() => {
+        const folderPath = ROOT_TMP_PATH + "/sort-deps";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table accounts (
+                id serial primary key
+            );
+            create table operations (
+                id serial primary key,
+                id_account integer,
+                debit numeric(14, 2),
+                credit numeric(14, 2)
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/sum.sql", `
+            cache sum for operations (
+                select coalesce(
+                    operations.debit,
+                    -operations.credit
+                )::numeric(14, 2) as sum
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/balance.sql", `
+            cache balance for accounts (
+                select sum( operations.sum )::numeric(14, 2) as balance
+                from operations
+                where
+                    operations.id_account = accounts.id
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into accounts default values;
+
+            insert into operations
+                (id_account, debit, credit)
+            values
+                (1, null, 100),
+                (1, 200, null);
+            
+            update operations set
+                debit = debit * 2,
+                credit = credit * 2
+
+        `);
+
+        let result = await db.query(`
+            select id, balance
+            from accounts
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            balance: "200.00"
+        }]);
+    });
+
+    it("commutative cache dependent on commutative cache with mutable target column", async() => {
+        const folderPath = ROOT_TMP_PATH + "/sort-deps";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key
+            );
+            create table units (
+                id serial primary key,
+                id_order integer,
+                container_weight float
+            );
+            create table goods (
+                id serial primary key,
+                id_unit integer,
+                quantity integer,
+                weight float
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/goods.sql", `
+            cache goods for units (
+                select
+                    units.container_weight + sum( goods.quantity * goods.weight )
+                        as total_weight
+                from goods
+                where
+                    goods.id_unit = units.id
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/units.sql", `
+            cache units for orders (
+                select
+                    sum( units.total_weight ) as total_weight
+                from units
+                where
+                    units.id_order = orders.id
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into orders default values;
+            insert into units (id_order, container_weight)
+            values (1, 1000);
+
+            insert into goods (id_unit, quantity, weight)
+            values
+                (1, 1000, 10),
+                (1, 1500, 20);
+            
+            update units set
+                container_weight = 1001
+        `);
+
+        let result = await db.query(`
+            select id, total_weight
+            from orders
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            total_weight: String(
+                1001 + 
+                1000 * 10 + 
+                1500 * 20
+            )
         }]);
     });
 

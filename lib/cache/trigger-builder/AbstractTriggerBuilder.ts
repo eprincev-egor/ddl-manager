@@ -1,4 +1,4 @@
-import { uniq } from "lodash";
+import { flatMap, uniq } from "lodash";
 import {
     AbstractAstElement,
     Expression
@@ -134,13 +134,23 @@ export abstract class AbstractTriggerBuilder {
     }
 
     private addCacheBeforeUpdateTriggerDeps(updateOfColumns: string[]) {
-        const selfCaches = this.context.allCacheForTriggerTable.filter(cache =>
-            !cache.hasForeignTablesDeps()
+        const depsCaches = this.context.allCacheForTriggerTable.filter(cache =>
+            cache.select.columns.some(column => 
+                updateOfColumns.includes(column.name)
+            )
         );
-        for (const cache of selfCaches) {
-            const depsColumns = findDependenciesToCacheTable(cache) 
-                .columns.filter(column => column != "id");
+
+        const depsColumns = flatMap(depsCaches, cache =>
+            cache.getTargetTablesDepsColumns()
+        ).filter(column => column != "id");
+
+        const newColumns = depsColumns.filter(depColumn =>
+            !updateOfColumns.includes(depColumn)
+        );
+        if ( newColumns.length ) {
             updateOfColumns.push( ...depsColumns );
+
+            this.addCacheBeforeUpdateTriggerDeps(updateOfColumns)
         }
     }
 }

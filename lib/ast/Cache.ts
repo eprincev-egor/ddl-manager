@@ -1,6 +1,7 @@
 import { Select } from "./Select";
 import { TableReference } from "../database/schema/TableReference";
 import { CacheIndex } from "./CacheIndex";
+import { findDependenciesToCacheTable } from "../cache/processor/findDependencies";
 
 export class Cache {
     readonly name: string;
@@ -39,6 +40,10 @@ export class Cache {
 
     hasForeignTablesDeps() {
         return this.select.from.length > 0;
+    }
+
+    getTargetTablesDepsColumns() {
+        return findDependenciesToCacheTable(this).columns;
     }
 
     getSignature() {

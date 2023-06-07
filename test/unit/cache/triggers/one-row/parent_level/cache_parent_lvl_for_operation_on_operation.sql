@@ -48,7 +48,7 @@ $body$
 language plpgsql;
 
 create trigger cache_parent_lvl_for_operation_on_operation
-after insert or update of lvl or delete
+after insert or update of id_parent_operation, lvl or delete
 on operation.operation
 for each row
 execute procedure cache_parent_lvl_for_operation_on_operation();
