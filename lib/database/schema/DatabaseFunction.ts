@@ -2,7 +2,6 @@ import { wrapText } from "../postgres/wrapText";
 import { MAX_NAME_LENGTH } from "../postgres/constants";
 import { Comment } from "./Comment";
 import { uniq } from "lodash";
-import { replaceComments } from "../../parser/replaceComments";
 import { formatType } from "./Type";
 
 export interface IDatabaseFunctionParams {
@@ -130,7 +129,14 @@ export class DatabaseFunction  {
     }
 
     findAssignColumns() {
-        const body = replaceComments(this.body).str;
+        if ( !this.body.includes("new.") ) {
+            return []
+        }
+
+        const body = this.body
+            .replace(/--[^\n\r]+/g, "")
+            .replace(/\/\*.+?\*\//g, "");
+
         const matches = body.match(/((begin|then|loop)\s*;?|;)\s*new\.(\w+)\s*=/g) || [];
         const assignedColumns = matches.map(str =>
             str

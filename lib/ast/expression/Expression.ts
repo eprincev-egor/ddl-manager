@@ -188,7 +188,7 @@ export class Expression extends AbstractExpressionElement {
             const elem = this.elements[i];
             const nextElem = this.elements[i + 1];
 
-            if ( nextElem && nextElem.toString() === "::" ) {
+            if ( nextElem instanceof Operator && nextElem.toString() === "::" ) {
                 const castOperator = nextElem;
                 const castType = this.elements[i + 2];
 
@@ -219,7 +219,7 @@ export class Expression extends AbstractExpressionElement {
         for (let i = 0, n = expressionElementsWithoutCasts.length; i < n; i++) {
             const elem = expressionElementsWithoutCasts[i];
 
-            if ( elem.toString() === "::" ) {
+            if ( elem instanceof Operator && elem.toString() === "::" ) {
                 expressionElementsWithoutCasts.splice(i, 2);
                 n -= 2;
                 i--;
@@ -326,6 +326,7 @@ export class Expression extends AbstractExpressionElement {
         for (const elem of this.elements) {
 
             const isConditionOperator = (
+                elem instanceof Operator &&
                 ["and", "or"].includes(elem.toString())
             );
             if ( isConditionOperator ) {

@@ -4,7 +4,8 @@ import {
     Expression,
     Cache,
     ColumnReference,
-    SelectColumn
+    SelectColumn,
+    Select
 } from "../../ast";
 import { MAX_NAME_LENGTH } from "../../database/postgres/constants";
 import { Database } from "../../database/schema/Database";
@@ -25,7 +26,6 @@ export interface IReferenceMeta {
 }
 
 export class CacheContext {
-    readonly graph: CacheColumnGraph;
     readonly cache: Cache;
     readonly allCacheForTriggerTable: Cache[];
     readonly allCacheForCacheTable: Cache[];
@@ -34,6 +34,8 @@ export class CacheContext {
     readonly database: Database;
     readonly referenceMeta: IReferenceMeta;
     readonly excludeRef: TableReference | false
+    private graph?: CacheColumnGraph;
+    private selectForUpdate?: Select;
     
     constructor(
         allCache: Cache[],
@@ -53,30 +55,6 @@ export class CacheContext {
         this.allCacheForCacheTable = allCache.filter(someCache =>
             someCache.for.table.equal(cache.for.table)
         );
-        const allCacheColumns: CacheColumnParams[] = [];
-
-        for (const cache of this.allCacheForCacheTable) {
-            const selectForUpdate = createSelectForUpdate(database, cache);
-
-            for (const selectColumn of selectForUpdate.columns) {
-                allCacheColumns.push({
-                    for: cache.for,
-                    name: selectColumn.name,
-                    cache: {
-                        name: cache.name,
-                        signature: cache.getSignature()
-                    },
-                    select: selectForUpdate.cloneWith({
-                        columns: [
-                            selectColumn
-                        ]
-                    })
-                })
-            }
-        }
-        this.graph = new CacheColumnGraph(allCacheColumns);
-
-
         this.cache = cache;
         this.triggerTable = triggerTable;
         this.triggerTableColumns = triggerTableColumns;
@@ -85,14 +63,14 @@ export class CacheContext {
         this.referenceMeta = this.buildReferenceMeta();
     }
 
-    getDependencyLevel(columnName: string) {
+    private getDependencyLevel(columnName: string) {
         const column = this.getGraphColumn(columnName);
-        return this.graph.getDependencyLevel(column);
+        return this.getGraph().getDependencyLevel(column);
     }
 
     getDependencyIndex(columnName: string) {
         const column = this.getGraphColumn(columnName);
-        return this.graph.getDependencyIndex(column);
+        return this.getGraph().getDependencyIndex(column);
     }
 
     getTableReferencesToTriggerTable() {
@@ -218,10 +196,14 @@ export class CacheContext {
     }
 
     createSelectForUpdate() {
-        return createSelectForUpdate(
-            this.database,
-            this.cache
-        );
+        if ( !this.selectForUpdate ) {
+            this.selectForUpdate = createSelectForUpdate(
+                this.database,
+                this.cache
+            );
+        }
+
+        return this.selectForUpdate;
     }
 
     createSelectForUpdateNewRow() {
@@ -338,12 +320,40 @@ export class CacheContext {
     }
 
     private getGraphColumn(columnName: string) {
-        const column = this.graph.getAllColumns().find(column => 
+        const column = this.getGraph().getAllColumns().find(column => 
             column.name == columnName
         );
     
         strict.ok(column, "unknown column: " + columnName);
         return column;
+    }
+
+    private getGraph() {
+        if ( !this.graph ) {
+            const allCacheColumns: CacheColumnParams[] = [];
+            for (const cache of this.allCacheForCacheTable) {
+                const selectForUpdate = createSelectForUpdate(this.database, cache);
+
+                for (const selectColumn of selectForUpdate.columns) {
+                    allCacheColumns.push({
+                        for: cache.for,
+                        name: selectColumn.name,
+                        cache: {
+                            name: cache.name,
+                            signature: cache.getSignature()
+                        },
+                        select: selectForUpdate.cloneWith({
+                            columns: [
+                                selectColumn
+                            ]
+                        })
+                    })
+                }
+            }
+            this.graph = new CacheColumnGraph(allCacheColumns);
+        }
+
+        return this.graph;
     }
 }
 
