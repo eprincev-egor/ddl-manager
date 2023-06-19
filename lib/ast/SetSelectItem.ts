@@ -1,4 +1,5 @@
 import { AbstractAstElement } from "./AbstractAstElement";
+import { Select } from "./Select";
 import { Spaces } from "./Spaces";
 
 interface SetSelectItemRow {
@@ -9,7 +10,7 @@ interface SetSelectItemRow {
 export class SetSelectItem extends AbstractAstElement {
 
     readonly columns!: string[];
-    readonly select!: string;
+    readonly select!: Select | string;
 
     constructor(row: SetSelectItemRow) {
         super();
@@ -47,35 +48,37 @@ export class SetSelectItem extends AbstractAstElement {
     private printSelect(spaces: Spaces) {
         let select = this.select;
 
-        // TODO: use parsed/Select
+        if ( typeof select === "string" ) {
+            select = select.replace(
+                /select\s+/, 
+                "select\n" + spaces.plusOneLevel()
+            );
+            select = select.replace(
+                / as (\w+),\s*/, 
+                " as $1,\n" + spaces.plusOneLevel()
+            );
+            select = select.replace(
+                /\s+from\s+/,
+                `\n\n${spaces}from `
+            );
+            select = select.replace(
+                /\s+(\w+) join\s+/g,
+                `\n\n${spaces}$1 join `
+            );
+            select = select.replace(
+                /\s+on\s+/g,
+                ` on\n${spaces.plusOneLevel()}`
+            );
+            select = select.replace(
+                /\s+where\s+/,
+                `\n\n${spaces}where\n${spaces.plusOneLevel()}`
+            );
+    
+            select = select.replace(/[ ]+$/mg, "");
+    
+            return spaces + select;
+        }
 
-        select = select.replace(
-            /select\s+/, 
-            "select\n" + spaces.plusOneLevel()
-        );
-        select = select.replace(
-            / as (\w+),\s*/, 
-            " as $1,\n" + spaces.plusOneLevel()
-        );
-        select = select.replace(
-            /\s+from\s+/,
-            `\n\n${spaces}from `
-        );
-        select = select.replace(
-            /\s+(\w+) join\s+/g,
-            `\n\n${spaces}$1 join `
-        );
-        select = select.replace(
-            /\s+on\s+/g,
-            ` on\n${spaces.plusOneLevel()}`
-        );
-        select = select.replace(
-            /\s+where\s+/,
-            `\n\n${spaces}where\n${spaces.plusOneLevel()}`
-        );
-
-        select = select.replace(/[ ]+$/mg, "");
-
-        return spaces + select;
+        return select.toSQL(spaces);
     }
 }

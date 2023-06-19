@@ -21,7 +21,7 @@ export function buildConditionsMatrix(cache: Cache) {
     for (const rootFromItem of cache.select.from) {
         for (const join of rootFromItem.joins) {
 
-            const tableName = join.table.table.toString();
+            const tableName = join.getTableId().toString();
             const joinOrConditions = join.on.splitBy("or");
 
             const tableConditionsMatrix = onConditionsByTable[ tableName ] || [];

@@ -51,7 +51,7 @@ export class CacheComparator extends AbstractComparator {
                             name: cache.name,
                             signature: cache.getSignature()
                         },
-                        select: toUpdate.select.cloneWith({
+                        select: toUpdate.select.clone({
                             columns: [
                                 updateColumn
                             ]

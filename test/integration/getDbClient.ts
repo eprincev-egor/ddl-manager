@@ -62,6 +62,18 @@ export async function getDBClient(dbConfig: IConfig = {
         );
     }
 
+    // redefine errors callstack
+    const query = pool.query as any;
+    pool.query = async function(...args: any[]) {
+        const stack = new Error().stack;
+        try {
+            return await query.call(pool, ...args);
+        } catch(error) {
+            error.stack = stack;
+            throw error;
+        }
+    } as any;
+
     return pool;
 }
 

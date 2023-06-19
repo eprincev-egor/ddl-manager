@@ -221,7 +221,7 @@ export class CacheContext {
         );
 
         return levels.map(level => 
-            selectValues.cloneWith({
+            selectValues.clone({
                 columns: columnsByLevel[level].sort((columnA, columnB) =>
                     this.getDependencyIndex(columnA.name) >
                     this.getDependencyIndex(columnB.name) ? 1 : -1
@@ -258,7 +258,7 @@ export class CacheContext {
             );
 
             const fromTriggerTable = this.cache.select.from.find(from =>
-                from.table.equal(this.triggerTable)
+                from.source.toString() === this.triggerTable.toString()
             );
             const leftJoinsOverTriggerTable = (fromTriggerTable || {joins: []}).joins
                 .filter(join => 
@@ -270,7 +270,7 @@ export class CacheContext {
             
             const columnsFromTriggerTableOverLeftJoin = conditionColumns.filter(columnRef =>
                 leftJoinsOverTriggerTable.some(join =>
-                    join.table.equal(columnRef.tableReference.table)
+                    join.getTable().equal(columnRef.tableReference.table)
                 )
             );
 
@@ -319,6 +319,10 @@ export class CacheContext {
         );
     }
 
+    hasAgg() {
+        return this.cache.hasAgg(this.database)
+    }
+
     private getGraphColumn(columnName: string) {
         const column = this.getGraph().getAllColumns().find(column => 
             column.name == columnName
@@ -342,7 +346,7 @@ export class CacheContext {
                             name: cache.name,
                             signature: cache.getSignature()
                         },
-                        select: selectForUpdate.cloneWith({
+                        select: selectForUpdate.clone({
                             columns: [
                                 selectColumn
                             ]

@@ -3,9 +3,12 @@ import { buildCommutativeBody } from "../body/buildCommutativeBody";
 import { Update, Expression } from "../../../ast";
 import { buildJoinVariables } from "../../processor/buildJoinVariables";
 import { findJoinsMeta } from "../../processor/findJoinsMeta";
+import { SetItemsFactory } from "../../processor/SetItemsFactory";
 
 export class CommutativeTriggerBuilder
 extends AbstractTriggerBuilder {
+
+    private setItems = new SetItemsFactory(this.context);
 
     createTriggers() {
         return [{
@@ -19,7 +22,7 @@ extends AbstractTriggerBuilder {
     protected createBody() {
         const deltaUpdate = new Update({
             table: this.context.cache.for.toString(),
-            set: this.deltaSetItems.delta(),
+            set: this.setItems.plus(),
             where: this.conditions.simpleWhere("new")
         });
 
@@ -77,6 +80,7 @@ extends AbstractTriggerBuilder {
         if ( this.context.withoutInsertCase() ) {
             return false;
         }
+        
         const isReferenceByTriggerTableId = this.context.referenceMeta
             .expressions.some(condition => {
                 if ( !condition.isBinary("=") ) {

@@ -7,6 +7,7 @@ import { Spaces } from "./Spaces";
 import { TableReference, IReferenceFilter } from "../database/schema/TableReference";
 import { OrderBy } from "./OrderBy";
 import { TableID } from "../database/schema/TableID";
+import { strict } from "assert";
 
 interface ISelectParams {
     columns: SelectColumn[];
@@ -42,7 +43,7 @@ export class Select extends AbstractAstElement {
     }
 
     addColumn(newColumn: SelectColumn): Select {
-        const clone = this.cloneWith({
+        const clone = this.clone({
             columns: [
                 ...this.columns.map(column => column.clone()),
                 newColumn
@@ -52,7 +53,7 @@ export class Select extends AbstractAstElement {
     }
 
     addFrom(newFrom: From): Select {
-        const clone = this.cloneWith({
+        const clone = this.clone({
             from: [
                 ...this.from.map(from => from.clone()),
                 newFrom
@@ -62,27 +63,27 @@ export class Select extends AbstractAstElement {
     }
 
     addWhere(newWhere: Expression) {
-        const clone = this.cloneWith({
+        const clone = this.clone({
             where: newWhere
         });
         return clone;
     }
 
     addOrderBy(orderBy: OrderBy) {
-        const clone = this.cloneWith({
+        const clone = this.clone({
             orderBy
         });
         return clone;
     }
 
     setLimit(limit: number) {
-        const clone = this.cloneWith({
+        const clone = this.clone({
             limit
         });
         return clone;
     }
 
-    cloneWith(params: Partial<ISelectParams>) {
+    clone(params: Partial<ISelectParams> = {}): Select {
         const clone = new Select({
             columns: this.columns.map(column => column.clone()),
             from: this.from.map(from => from.clone()),
@@ -106,7 +107,7 @@ export class Select extends AbstractAstElement {
         replaceTable: TableReference | TableID,
         toTable: TableReference
     ) {
-        return this.cloneWith({
+        return this.clone({
             columns: this.columns.map(column => 
                 column.replaceTable(replaceTable, toTable)
             ),
@@ -152,13 +153,9 @@ export class Select extends AbstractAstElement {
         return [
             spaces + "select",
 
-            this.columns.map(column =>
-                column.toSQL( spaces )
-            ).join(",\n"),
+            ...this.printColumns(spaces),
 
-            ...(this.from.length ? [
-                spaces + "from " + this.from.join(", "),
-            ]: []),
+            ...this.printFrom(spaces),
 
             ...(this.where ? [
                 spaces + "where",
@@ -182,6 +179,41 @@ export class Select extends AbstractAstElement {
                 spaces + `into ${ this.intoRow };`
             ]: [])
         ];
+    }
+
+    private printColumns(spaces: Spaces) {
+        if ( this.columns.length === 0 ) {
+            return [];
+        }
+
+        const nextSpaces = spaces.plusOneLevel();
+        const output = this.columns[0].template(nextSpaces);
+        
+        for (const column of this.columns.slice(1)) {
+            output[ output.length - 1 ] = output[ output.length - 1 ] + ",";
+
+            output.push(...column.template(nextSpaces));
+        }
+
+        return output;
+    }
+
+    private printFrom(spaces: Spaces) {
+        if ( this.from.length === 0 ) {
+            return [];
+        }
+
+        const output = [
+            ...this.from[0].template(spaces)
+        ];
+        output[0] = `${spaces}from ${output[0]}`;
+
+        for (const from of this.from.slice(1)) {
+            output.push(spaces + ",");
+            output.push(...from.template(spaces));
+        }
+
+        return output;
     }
 
     getAllColumnReferences() {
@@ -212,14 +244,29 @@ export class Select extends AbstractAstElement {
         const allReferences: TableReference[] = [];
 
         for (const fromItem of this.from) {
-            allReferences.push( fromItem.table );
+            if ( fromItem.source instanceof TableReference ) {
+                allReferences.push( fromItem.source );
+            }
 
             for (const join of fromItem.joins) {
-                allReferences.push( join.table );
+                if ( join.table instanceof TableReference ) {
+                    allReferences.push( join.table );
+                }
             }
         }
 
         return allReferences;
+    }
+
+    getFromTableId() {
+        return this.getFromTable().table
+    }
+
+    getFromTable(): TableReference {
+        strict.equal(this.from.length, 1, "expected only one from");
+        strict.ok(this.from[0].source instanceof TableReference, "expected from table");
+
+        return this.from[0].source;
     }
 }
 

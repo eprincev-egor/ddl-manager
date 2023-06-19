@@ -71,7 +71,7 @@ export class CacheTriggersBuilder {
         );
         if ( needLastRowColumn ) {
             const allDeps = findDependencies(this.cache, false);
-            const fromTable = cacheSelect.from[0].table.table;
+            const fromTable = cacheSelect.getFromTableId();
             const fromTableDeps = allDeps[ fromTable.toString() ]!;
 
             const lastRowBuilder = this.builderFactory.tryCreateBuilder(

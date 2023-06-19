@@ -8,7 +8,6 @@ import {
     ColumnReference,
     UnknownExpressionElement
 } from "../ast";
-import { AggFactory } from "../cache/aggregator";
 import { Migration } from "../Migrator/Migration";
 import { IDatabaseDriver } from "../database/interface";
 import { Database } from "../database/schema/Database";
@@ -215,7 +214,7 @@ export class CacheColumnBuilder {
             columnRef: ColumnReference,
             columnType: string
         ) {
-            replacedSelect = replacedSelect.cloneWith({
+            replacedSelect = replacedSelect.clone({
                 columns: replacedSelect.columns.map(selectColumn => {
                     const newExpression = selectColumn.expression.replaceColumn(
                         columnRef,
@@ -235,23 +234,14 @@ export class CacheColumnBuilder {
     private getColumnDefault(select: Select) {
         const selectColumn = select.columns[0] as SelectColumn;
 
-        const aggFactory = new AggFactory(
-            this.database,
-            selectColumn
-        );
-        const aggregations = aggFactory.createAggregations();
-        const agg = Object.values(aggregations)[0];
-
-        if ( agg ) {
-            const defaultExpression = agg.default();
-            return defaultExpression;
+        if ( selectColumn.expression.isThatFuncCall("count") ) {
+            return "0";
         }
-        else if ( /not exists/.test(selectColumn.expression.toString()) ) {
+        if ( selectColumn.expression.isNotExists() ) {
             return "false";
         }
-        else {
-            // TODO: detect coalesce(x, some)
-            return "null";
-        }
+
+        // TODO: detect coalesce(x, some)
+        return "null";
     }
 }

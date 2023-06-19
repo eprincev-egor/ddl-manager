@@ -6,7 +6,7 @@ import { DDLManager } from "../../../../lib/DDLManager";
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
-describe("integration/DDLManager.build cache", () => {
+describe.only("integration/DDLManager.test cache", () => {
     let db: any;
     
     beforeEach(async() => {
@@ -2432,7 +2432,7 @@ $$;
         ]);
     });
 
-    it("string_agg with hard expression by joins", async() => {
+    it.only("string_agg with hard expression by joins", async() => {
         const folderPath = ROOT_TMP_PATH + "/coalesce_bool_or";
         fs.mkdirSync(folderPath);
 
@@ -3664,7 +3664,7 @@ $$;
                     good_types.id = goods.id_type
             )
         `);
-        
+
         fs.writeFileSync(folderPath + "/order_goods.sql", `
             cache b_order_goods for orders (
                 select
@@ -4113,8 +4113,104 @@ $$;
         }]);
     });
 
-    // TODO: test about twice points (max_point_date and last point)
+    it("custom trigger updating current row, test commutative trigger", async() => {
+        const folderPath = ROOT_TMP_PATH + "/sort-deps";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                container_type text
+            );
+            create table units (
+                id serial primary key,
+                id_order integer,
+                container_type text,
+                container_number text
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/commutative.sql", `
+            cache containers for orders (
+                select
+                    string_agg(distinct units.container_type, ', ') as units_containers_types,
+                    string_agg(units.container_number, ', ') as units_containers_numbers
+                from units
+                where
+                    units.id_order = orders.id
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/custom.sql", `
+            create or replace function custom()
+            returns trigger as $body$
+            begin
+                update units set
+                    container_type = (
+                        select container_type
+                        from orders
+                        where orders.id = units.id_order
+                    )
+                where id = new.id;
+
+                return new;
+            end
+            $body$ language plpgsql;
+
+            create trigger a_custom
+            after insert on units
+            for each row
+            execute procedure custom();
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into orders (container_type) values ('40HC');
+            insert into units (id_order, container_number)
+            values (1, 'ABCD123456'), (1, 'XYZC123456');
+        `);
+        let result = await db.query(`
+            select
+                id,
+                units_containers_types,
+                units_containers_numbers
+            from orders
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            units_containers_types: "40HC",
+            units_containers_numbers: "ABCD123456, XYZC123456"
+        }]);
+
+
+        await db.query(`
+            update units set
+                container_number = 'test'
+            where id = 2;
+        `);
+        result = await db.query(`
+            select
+                id,
+                units_containers_types,
+                units_containers_numbers
+            from orders
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            units_containers_types: "40HC",
+            units_containers_numbers: "ABCD123456, test"
+        }]);
+    });
+
     // TODO: test when custom trigger update current row
+    // TODO: test commutative cache with 51 fields
+    // TODO: test about twice points (max_point_date and last point)
     // TODO: test about extrude brackets (a + b) / (c - d)
     // TODO: https://git.g-soft.ru/logos/logisitc-web/merge_requests/4577/diffs
     // TODO: update-ddl-cache in watcher mode

@@ -54,12 +54,9 @@ export class TriggerBuilderFactory {
     private chooseConstructor(context: CacheContext) {
         const from = buildFrom(context);
         const isTriggerOnCacheTable = context.triggerTable.equal(context.cache.for.table);
-        const hasAgg = context.cache.select.columns.some(column => 
-            column.getAggregations(context.database).length > 0
-        );
         const joins = flatMap(context.cache.select.from, fromItem => fromItem.joins);
         const isFromJoin = joins.some(join =>
-            join.table.table.equal(context.triggerTable)
+            join.getTableId().equal(context.triggerTable)
         );
         const hasNotLeftJoin = joins.some(join => 
             join.type !== "left join"
@@ -75,7 +72,7 @@ export class TriggerBuilderFactory {
         if ( needUniversalTrigger ) {
             return UniversalTriggerBuilder;
         }
-        else if ( hasAgg ) {
+        else if ( context.hasAgg() ) {
             const noDepsToCacheTable = context.cache.select
                 .getAllTableReferences()
                 .every(tableRef =>

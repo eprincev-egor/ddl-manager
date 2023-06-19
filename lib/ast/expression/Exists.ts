@@ -32,7 +32,7 @@ export class Exists extends AbstractExpressionElement {
 
     clone() {
         return new Exists({
-            select: this.select.cloneWith({})
+            select: this.select.clone({})
         });
     }
 

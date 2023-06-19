@@ -933,7 +933,9 @@ describe("integration/PostgresDriver.loadState", () => {
                 })
             ],
             from: [
-                new From( ordersTableRef )
+                new From({
+                    source: ordersTableRef
+                })
             ],
             where: new Expression([
                 new ColumnReference(ordersTableRef, "id_client"),

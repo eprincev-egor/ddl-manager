@@ -7,9 +7,12 @@ import { TableReference } from "../../../database/schema/TableReference";
 import { findJoinsMeta } from "../../processor/findJoinsMeta";
 import { buildJoinVariables } from "../../processor/buildJoinVariables";
 import { hasReference } from "../condition/hasReference";
+import { SetItemsFactory } from "../../processor/SetItemsFactory";
 
 export class ArrayRefCommutativeTriggerBuilder
 extends AbstractTriggerBuilder {
+
+    private setItems = new SetItemsFactory(this.context);
 
     createTriggers() {
         return [{
@@ -21,7 +24,7 @@ extends AbstractTriggerBuilder {
     }
 
     protected createBody() {
-        const deltaSetItems = this.deltaSetItems.delta();
+        const deltaSetItems = this.setItems.plus();
 
         const insertedArrElements = buildArrVars(this.context, "inserted_");
         const notChangedArrElements = deltaSetItems.length ?

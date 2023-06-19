@@ -38,7 +38,7 @@ extends AbstractLastRowTriggerBuilder {
                         select: new Select({
                             columns: [],
                             from: [
-                                new From(prevRef)
+                                new From({source: prevRef})
                             ],
                             where: Expression.and([
                                 ...this.context.referenceMeta.columns.map(column =>
@@ -168,14 +168,14 @@ extends AbstractLastRowTriggerBuilder {
             columns: [
                 `${ orderBy.type == "desc" ? "max" : "min" }( ${ triggerTable }.id )`
             ],
-            from: this.context.cache.select.from[0]!.table,
+            from: this.context.cache.select.getFromTable(),
             where: this.filterTriggerTable("new", [
                 `${triggerTable}.id <> new.id`
             ])
         });
 
         const existsPrevRow = new Exists({
-            select: this.context.cache.select.cloneWith({
+            select: this.context.cache.select.clone({
                 columns: [],
                 where: this.filterTriggerTable("new", [
                     `${triggerTable}.id < new.id`

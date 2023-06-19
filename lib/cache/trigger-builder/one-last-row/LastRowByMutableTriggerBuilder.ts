@@ -107,7 +107,9 @@ export class LastRowByMutableTriggerBuilder extends AbstractLastRowTriggerBuilde
                     })
                 )
             ],
-            from: [new From(this.context.cache.for)],
+            from: [new From({
+                source: this.context.cache.for
+            })],
             where: this.conditions.simpleWhere(row)!,
             forUpdate: true,
             intoRow: "cache_row"

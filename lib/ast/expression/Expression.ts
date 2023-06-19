@@ -124,6 +124,21 @@ export class Expression extends AbstractExpressionElement {
         );
     }
 
+    isThatFuncCall(funcName: string): boolean {
+        const elements = this.getElementsWithoutCasts();
+        const firstElem = elements[0];
+        return (
+            elements.length === 1 &&
+            (
+                firstElem instanceof FuncCall &&
+                firstElem.name === funcName
+                ||
+                firstElem instanceof Expression &&
+                firstElem.isThatFuncCall(funcName)
+            )
+        );
+    }
+
     isColumnReference() {
         return (
             this.elements.length === 1 &&

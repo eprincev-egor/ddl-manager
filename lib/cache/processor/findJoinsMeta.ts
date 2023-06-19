@@ -25,14 +25,14 @@ export function findJoinsMeta(select: Select) {
         // TODO: join by two columns?
         // example: documents.table_name && documents.table_id
         const joinByColumn = join.on.getColumnReferences().find(joinConditionColumn =>
-            !joinConditionColumn.tableReference.equal(join.table)
+            !joinConditionColumn.tableReference.equal(join.getTable())
         );
         if ( !joinByColumn ) {
             continue;
         }
 
         const joinMeta: IJoinMeta = {
-            joinedTable: join.table,
+            joinedTable: join.getTable(),
             joinedColumns: [],
             joinByColumn
         };
@@ -40,7 +40,7 @@ export function findJoinsMeta(select: Select) {
         // TODO: need More test
         const columnRefsToJoin = allColumnsRefs.filter(columnRef =>
             columnRef.name !== "id" &&
-            columnRef.tableReference.equal(join.table)
+            columnRef.tableReference.equal(join.getTable())
         );
         for (const columnRef of columnRefsToJoin) {
             const alreadyExists = joinMeta.joinedColumns.some(existentColumn => 

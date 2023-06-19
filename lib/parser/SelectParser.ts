@@ -107,7 +107,7 @@ export class SelectParser {
         assert.ok(tableLink, "sub queries are not supported");
 
         const tableRef = this.tableParser.parse(tableLink, alias);
-        let fromTable = new From(tableRef);
+        let fromTable = new From({source: tableRef});
 
         const joinsSyntaxes = fromItem.get("joins") || [];
         joinsSyntaxes.forEach(joinSyntax =>  {
@@ -135,9 +135,9 @@ export class SelectParser {
             select,
             [
                 cacheFor, 
-                from.table, 
+                from.source as TableReference, 
                 ...from.joins.map(prevJoin =>
-                    prevJoin.table
+                    prevJoin.getTable()
                 ),
                 tableRef
             ],

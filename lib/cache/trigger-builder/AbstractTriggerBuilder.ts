@@ -8,11 +8,8 @@ import { DatabaseFunction } from "../../database/schema/DatabaseFunction";
 import { DatabaseTrigger, IDatabaseTriggerParams } from "../../database/schema/DatabaseTrigger";
 import { TableID } from "../../database/schema/TableID";
 import { TableReference } from "../../database/schema/TableReference";
-import { DeltaSetItemsFactory } from "../aggregator/DeltaSetItemsFactory";
-import { SetItemsFactory } from "../aggregator/SetItemsFactory";
 import { CacheContext } from "./CacheContext";
 import { ConditionBuilder } from "./condition/ConditionBuilder";
-import { findDependenciesToCacheTable } from "../processor/findDependencies";
 
 export interface ICacheTrigger {
     trigger: DatabaseTrigger;
@@ -23,14 +20,10 @@ export abstract class AbstractTriggerBuilder {
 
     protected readonly context: CacheContext;
     protected readonly conditions: ConditionBuilder;
-    protected readonly setItems: SetItemsFactory;
-    protected readonly deltaSetItems: DeltaSetItemsFactory;
 
     constructor(context: CacheContext) {
         this.context = context;
         this.conditions = new ConditionBuilder(context);
-        this.setItems = new SetItemsFactory(context);
-        this.deltaSetItems = new DeltaSetItemsFactory(context);
     }
 
     abstract createTriggers(): ICacheTrigger[];

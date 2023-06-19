@@ -45,3 +45,7 @@ export const CM_ARRAY_REMOVE_ELEMENTS = fs.readFileSync(
 export const CM_DISTINCT_ARRAY = fs.readFileSync(
     __dirname + "/cm_distinct_array.sql"
 ).toString();
+
+export const CM_MERGE_JSON = fs.readFileSync(
+    __dirname + "/cm_merge_json.sql"
+).toString();

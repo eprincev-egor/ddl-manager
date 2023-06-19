@@ -29,6 +29,13 @@ export class HardCode extends AbstractAstElement {
         return lines;
     }
 
+    clone() {
+        return new HardCode({
+            sql: typeof this.sql === "string" ?
+                this.sql : this.sql.slice()
+        })
+    }
+
     private prepareLines(): string[] {
         if ( typeof this.sql === "string" ) {
             return [this.sql];

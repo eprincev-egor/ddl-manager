@@ -1,4 +1,6 @@
+import { uniq } from "lodash";
 import { Cache, ColumnReference } from "../../ast";
+import { TableReference } from "../../database/schema/TableReference";
 
 export interface IDependencies {
     [table: string]: ITableDependencies;
@@ -43,6 +45,27 @@ export function findDependenciesToCacheTable(cache: Cache): ITableDependencies {
     }
 
     return tableDependencies;
+}
+
+export function findDependenciesTo(
+    cache: Cache,
+    table: TableReference,
+    additionalColumns: string[] = []
+): string[] {
+    const columns: string[] = [];
+
+    for (const columnRef of cache.select.getAllColumnReferences()) {
+        if ( !columnRef.tableReference.equal(table) ) {
+            continue;
+        }
+
+        if ( !columns.includes(columnRef.name) ) {
+            columns.push(columnRef.name);
+        }
+    }
+
+    columns.push(...additionalColumns);
+    return uniq(columns).sort();
 }
 
 function addColumnReference(

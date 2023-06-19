@@ -1,7 +1,8 @@
 import { Select } from "./Select";
 import { TableReference } from "../database/schema/TableReference";
 import { CacheIndex } from "./CacheIndex";
-import { findDependenciesToCacheTable } from "../cache/processor/findDependencies";
+import { findDependenciesTo, findDependenciesToCacheTable } from "../cache/processor/findDependencies";
+import { Database } from "../database/schema/Database";
 
 export class Cache {
     readonly name: string;
@@ -44,6 +45,35 @@ export class Cache {
 
     getTargetTablesDepsColumns() {
         return findDependenciesToCacheTable(this).columns;
+    }
+
+    jsonColumnName() {
+        return `__${this.name}_json__`
+    }
+
+    getSourceRowJson(recordAlias?: string) {
+        const from = this.select.getFromTable().getIdentifier();
+        const deps = this.getSourceJsonDeps();
+
+        return `jsonb_build_object(
+            ${deps.map(column =>
+                `'${column}', ${recordAlias || from}.${column}`
+            )}
+        )`;
+    }
+
+    getSourceJsonDeps() {
+        const deps = findDependenciesTo(
+            this, this.select.getFromTable(),
+            ["id"]
+        );
+        return deps;
+    }
+
+    hasAgg(database: Database) {
+        return this.select.columns.some(column => 
+            column.getAggregations(database).length > 0
+        );
     }
 
     getSignature() {

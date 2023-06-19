@@ -281,7 +281,7 @@ export class OneRowTriggerBuilder extends AbstractTriggerBuilder {
 
     private columnRefToTriggerTable(columnRef: ColumnReference) {
         return columnRef.tableReference.equal(
-            this.context.cache.select.from[0]!.table
+            this.context.cache.select.getFromTable()
         );
     }
 

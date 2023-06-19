@@ -194,7 +194,7 @@ export class FuncCall extends AbstractExpressionElement {
                 }
 
                 const arg = this.args[i];
-                sql += arg.toSQL( spaces.plusOneLevel() );
+                sql += arg.toSQL( Spaces.level(1) );
             }
 
             sql += "\n";
@@ -205,18 +205,20 @@ export class FuncCall extends AbstractExpressionElement {
         }
 
         if ( this.orderBy ) {
-            sql += this.orderBy.toSQL( spaces.plusOneLevel() ) + "\n";
+            sql += this.orderBy.toSQL( Spaces.level(1) ) + "\n";
         }
 
         sql += ")";
 
         if ( this.where ) {
             sql += " filter (where ";
-            sql += this.where.toString();
+            sql += Spaces.level(1) + this.where.toString();
             sql += ")";
         }
 
-        return sql.split("\n");
+        return sql.split("\n").map(line =>
+            spaces + line
+        );
     }
 
     private cloneOrderBy() {

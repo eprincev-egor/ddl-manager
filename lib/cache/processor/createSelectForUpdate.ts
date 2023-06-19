@@ -5,46 +5,46 @@ import {
     ColumnReference,
     Select
 } from "../../ast";
-import { AggFactory } from "../aggregator";
-import { flatMap } from "lodash";
 import { Database } from "../../database/schema/Database";
 
 export function createSelectForUpdate(
     database: Database,
     cache: Cache
 ) {
+    let selectToUpdate = cache.select;
 
-    const columnsToUpdate = flatMap(cache.select.columns, selectColumn => {
-        const aggFactory = new AggFactory(database, selectColumn);
-        const aggregations = aggFactory.createAggregations();
-        
-        const columns = Object.keys(aggregations).map(aggColumnName => {
-            const agg = aggregations[ aggColumnName ];
+    if ( cache.hasAgg(database) ) {
+        const fromRef = cache.select.getFromTable();
+        const from = fromRef.getIdentifier();
 
-            const column = new SelectColumn({
-                name: aggColumnName,
-                expression: new Expression([
-                    agg.call
-                ])
-            });
-            return column;
+        const rowJson = cache.getSourceRowJson();
+        const deps = cache.getSourceJsonDeps().map(column =>
+            new ColumnReference(fromRef, column)
+        );
+        const depsMap = Object.fromEntries(deps.map(column =>
+            [column.toString(), column]
+        ));
+
+        selectToUpdate = selectToUpdate.clone({
+            columns: [
+                ...selectToUpdate.columns,
+                new SelectColumn({
+                    name: cache.jsonColumnName(),
+                    expression: new Expression([
+                        Expression.unknown(`
+                            ('{' || string_agg(
+                                '"' || ${from}.id::text || '":' || ${rowJson}::text,
+                                ','
+                            ) || '}')
+                        `, depsMap),
+                        Expression.unknown("::"),
+                        Expression.unknown("jsonb")
+                    ])
+                })
+            ]
         });
+    }
 
-        const needCreateMainColumn = (
-            Object.keys(aggregations).length === 0
-            ||
-            !selectColumn.isAggCall( database )
-        )
-        if ( needCreateMainColumn ) {
-            columns.push(selectColumn);
-        }
-
-        return columns;
-    });
-
-    let selectToUpdate = cache.select.cloneWith({
-        columns: columnsToUpdate
-    });
     if ( cache.select.orderBy ) {
         selectToUpdate = addHelperColumns(cache, selectToUpdate);
     }
@@ -58,14 +58,14 @@ export function addHelperColumns(cache: Cache, select: Select) {
             name: helperColumnName(cache, columnRef.name),
             expression: new Expression([
                 new ColumnReference(
-                    select.from[0].table,
+                    select.getFromTable(),
                     columnRef.name
                 )
             ])
         })
     );
 
-    return select.cloneWith({
+    return select.clone({
         columns: [
             ...select.columns,
             ...helperColumns
@@ -80,7 +80,7 @@ export function getOrderByColumnsRefs(select: Select) {
     if ( !hasId ) {
         orderByColumns.unshift(
             new ColumnReference(
-                select.from[0].table,
+                select.getFromTable(),
                 "id"
             )
         );

@@ -55,7 +55,7 @@ export class SelectColumn extends AbstractAstElement {
         const expression = this.expression.toSQL(
             spaces.plusOneLevel()
         );
-        if ( expression.trim() === this.name ) {
+        if ( expression.trim() === this.name || this.name === "*" ) {
             return [expression];
         }
 

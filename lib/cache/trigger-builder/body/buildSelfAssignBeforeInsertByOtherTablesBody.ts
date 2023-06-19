@@ -29,7 +29,7 @@ export function buildSelfAssignBeforeInsertByOtherTablesBody(
             new BlankLine(),
             new BlankLine(),
 
-            selectNewValues.cloneWith({
+            selectNewValues.clone({
                 intoRow: "new_totals"
             }),
             new BlankLine(),

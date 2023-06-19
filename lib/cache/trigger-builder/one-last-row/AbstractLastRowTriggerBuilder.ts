@@ -140,7 +140,7 @@ extends AbstractTriggerBuilder {
     }
 
     protected selectPrevRowByOrder() {
-        return this.context.cache.select.cloneWith({
+        return this.context.cache.select.clone({
             columns: this.allPrevRowColumns(),
             where: this.filterTriggerTable("old"),
             intoRow: "prev_row"
@@ -163,8 +163,7 @@ extends AbstractTriggerBuilder {
     }
 
     protected fromTable() {
-        const from = this.context.cache.select.from[0]!;
-        return from.table;
+        return this.context.cache.select.getFromTable();
     }
 
     protected triggerTableAlias() {
@@ -222,7 +221,7 @@ extends AbstractTriggerBuilder {
             );
         }
 
-        const reselect = select.cloneWith({
+        const reselect = select.clone({
             columns: [
                 ...this.getOrderByColumnsRefs().map(columnRef =>
                     new SelectColumn({

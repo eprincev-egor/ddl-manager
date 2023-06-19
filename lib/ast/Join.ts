@@ -1,12 +1,19 @@
 import { Expression } from "./expression/Expression";
 import { TableReference } from "../database/schema/TableReference";
 import { TableID } from "../database/schema/TableID";
+import { HardCode } from "./HardCode";
+import { strict } from "assert";
+import { Spaces } from "./Spaces";
 
 export class Join {
     readonly type: string;
-    readonly table: TableReference;
+    readonly table: TableReference | HardCode;
     readonly on: Expression;
-    constructor(type: string, table: TableReference, on: Expression) {
+    constructor(
+        type: string,
+        table: TableReference | HardCode,
+        on: Expression
+    ) {
         this.type = type;
         this.table = table;
         this.on = on;
@@ -26,7 +33,7 @@ export class Join {
     equal(join: Join) {
         return (
             this.type === join.type &&
-            this.table.equal(join.table) &&
+            this.table.toString() === join.table.toString() &&
             this.on.equal(join.on)
         );
     }
@@ -39,7 +46,23 @@ export class Join {
         );
     }
 
+    template(spaces: Spaces) {
+        return [
+            spaces + `${this.type} ${this.table} on`,
+            spaces.plusOneLevel() + this.on.toString()
+        ];
+    }
+
     toString() {
         return `${this.type} ${this.table} on\n${this.on}`;
+    }
+
+    getTableId() {
+        return this.getTable().table;
+    }
+
+    getTable(): TableReference {
+        strict.ok(this.table instanceof TableReference, "expected join table");
+        return this.table;
     }
 }

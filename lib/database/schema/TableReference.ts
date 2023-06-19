@@ -6,7 +6,7 @@ export interface IReferenceFilter {
 }
 
 export class TableReference {
-    
+
     static identifier2filter(identifier: string): IReferenceFilter {
         if ( identifier.includes(".") ) {
             return {
