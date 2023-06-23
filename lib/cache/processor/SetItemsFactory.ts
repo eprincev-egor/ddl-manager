@@ -42,7 +42,8 @@ export class SetItemsFactory {
 
     private setSelect(nextJson: string) {
         const cache = this.context.cache;
-        const sourceAlias = cache.name;
+        const fromRef = cache.select.getFromTable()
+        const sourceAlias = fromRef.alias || fromRef.table.name;
 
         return [
             new SetItem({
@@ -72,15 +73,18 @@ export class SetItemsFactory {
                                 ),
                                 as: "json_entry",
 
-                                joins: [new Join("left join lateral", new HardCode({
-                                    sql: `jsonb_populate_record(null::${this.context.triggerTable}, json_entry.value) as record`
-                                }), Expression.unknown("true"))]
+                                joins: [
+                                    new Join("left join lateral", new HardCode({
+                                        sql: `jsonb_populate_record(null::${this.context.triggerTable}, json_entry.value) as record`
+                                    }), Expression.unknown("true"))
+                                ]
                             })]
                         }),
-                        as: sourceAlias
+                        as: sourceAlias,
+                        joins: cache.select.from[0].joins
                     })]
                 }).replaceTable(
-                    this.context.triggerTable,
+                    fromRef,
                     new TableReference(
                         this.context.triggerTable,
                         sourceAlias

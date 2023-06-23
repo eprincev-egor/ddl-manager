@@ -69,7 +69,7 @@ export async function getDBClient(dbConfig: IConfig = {
         try {
             return await query.call(pool, ...args);
         } catch(error) {
-            error.stack = stack;
+            error.stack = (error.where || "") + stack;
             throw error;
         }
     } as any;

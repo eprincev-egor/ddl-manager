@@ -3,15 +3,11 @@ import {
     If,
     HardCode,
     BlankLine,
-    Expression,
-    Declare
+    Expression
 } from "../../../ast";
 import { doIf } from "./util/doIf";
 import { exitIf } from "./util/exitIf";
 import { Update } from "../../../ast/Update";
-import { IJoin } from "../../processor/buildJoinVariables";
-import { assignVariables } from "./util/assignVariables";
-import { reassignVariables } from "./util/reassignVariables";
 
 export interface ICase {
     hasReferenceWithoutJoins?: Expression,
@@ -35,32 +31,15 @@ export function buildCommutativeBody(
     needInsertCase: boolean,
     hasMutableColumns: boolean,
     noChanges: Expression,
-    oldJoins: IJoin[],
-    newJoins: IJoin[],
     oldCase: ICase,
     newCase: ICase,
     deltaCase: IDeltaCase
 ) {
     const body = new Body({
-        declares: [
-            ...oldJoins.map(join =>
-                new Declare({
-                    name: join.variable.name,
-                    type: join.variable.type
-                })
-            ),
-            ...newJoins.map(join => 
-                new Declare({
-                    name: join.variable.name,
-                    type: join.variable.type
-                })
-            )
-        ],
         statements: [
             ...buildInsertOrDeleteCase(
                 "DELETE",
                 oldCase,
-                oldJoins,
                 "old"
             ),
 
@@ -69,8 +48,6 @@ export function buildCommutativeBody(
                     if: new HardCode({sql: "TG_OP = 'UPDATE'"}),
                     then: buildUpdateCaseBody(
                         noChanges,
-                        oldJoins,
-                        newJoins,
                         deltaCase
                     )
                 })
@@ -79,7 +56,6 @@ export function buildCommutativeBody(
             ...(needInsertCase ? buildInsertOrDeleteCase(
                 "INSERT",
                 newCase,
-                newJoins,
                 "new"
             ): [])
         ]
@@ -91,7 +67,6 @@ export function buildCommutativeBody(
 function buildInsertOrDeleteCase(
     caseName: "INSERT" | "DELETE",
     simpleCase: ICase,
-    joins: IJoin[],
     returnRow: "new" | "old"
 ) {
     return [
@@ -104,7 +79,6 @@ function buildInsertOrDeleteCase(
                 new BlankLine(),
 
                 ...doIf(simpleCase.hasReferenceWithoutJoins, [
-                    ...assignVariables(joins, returnRow),
                     ...doIf(
                         simpleCase.needUpdate,
                         [simpleCase.update]
@@ -123,8 +97,6 @@ function buildInsertOrDeleteCase(
 
 function buildUpdateCaseBody(
     noChanges: Expression,
-    oldJoins: IJoin[],
-    newJoins: IJoin[],
     deltaCase: IDeltaCase
 ) {
     const oldUpdate = deltaCase.old.update;
@@ -140,12 +112,6 @@ function buildUpdateCaseBody(
             ]
         }),
         new BlankLine(),
-
-        ...assignVariables(oldJoins, "old"),
-        ...reassignVariables(
-            newJoins,
-            oldJoins
-        ),
 
         ...buildDeltaUpdate(deltaCase),
 

@@ -4,8 +4,6 @@ import { ColumnReference, Expression, Update } from "../../../ast";
 import { buildArrVars, IArrVar } from "../../processor/buildArrVars";
 import { CoalesceFalseExpression } from "../../../ast/expression/CoalesceFalseExpression";
 import { TableReference } from "../../../database/schema/TableReference";
-import { findJoinsMeta } from "../../processor/findJoinsMeta";
-import { buildJoinVariables } from "../../processor/buildJoinVariables";
 import { hasReference } from "../condition/hasReference";
 import { SetItemsFactory } from "../../processor/SetItemsFactory";
 
@@ -97,9 +95,7 @@ extends AbstractTriggerBuilder {
             deletedArrElements,
             needMatching: this.context.referenceMeta.filters.length > 0,
             matchedNew: this.matched("new"),
-            matchedOld: this.matched("old"),
-            oldJoins: this.buildJoins("old"),
-            newJoins: this.buildJoins("new")
+            matchedOld: this.matched("old")
         });
         
         return body;
@@ -117,12 +113,7 @@ extends AbstractTriggerBuilder {
         );
         return this.conditions.replaceTriggerTableRefsTo(matchedExpression, row)!;
     }
-
-    private buildJoins(row: "new" | "old") {
-        const joins = findJoinsMeta(this.context.cache.select);
-        return buildJoinVariables(this.context.database, joins, row);
-    }
-
+    
     private hasReferenceWithArrVars(arrVars: IArrVar[]) {
         const refCondition = this.conditions.replaceTriggerTableRefsTo(
             hasReference(this.context)!, "new"

@@ -39,7 +39,7 @@ describe("integration/FileReader parse cache", () => {
                         schema: "public",
                         name: "companies"
                     },
-                    as: undefined
+                    alias: undefined
                 },
                 select: {
                     columns: [
@@ -52,7 +52,7 @@ describe("integration/FileReader parse cache", () => {
                                                 schema: "public",
                                                 name: "orders"
                                             },
-                                            as: undefined
+                                            alias: undefined
                                         }, name: "profit"}
                                     ]}
                                 ]}
@@ -61,12 +61,12 @@ describe("integration/FileReader parse cache", () => {
                         }
                     ],
                     from: [{
-                        table: {
+                        source: {
                             table: {
                                 schema: "public",
                                 name: "orders"
                             },
-                            as: undefined
+                            alias: undefined
                         },
                         joins: []
                     }],
@@ -76,7 +76,7 @@ describe("integration/FileReader parse cache", () => {
                                 schema: "public",
                                 name: "orders"
                             },
-                            as: undefined
+                            alias: undefined
                         }, name: "id_client"},
                         {operator: "="},
                         {tableReference: {
@@ -84,7 +84,7 @@ describe("integration/FileReader parse cache", () => {
                                 schema: "public",
                                 name: "companies"
                             },
-                            as: undefined
+                            alias: undefined
                         }, name: "id"}
                     ]}
                 }

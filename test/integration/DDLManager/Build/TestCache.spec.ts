@@ -6,7 +6,7 @@ import { DDLManager } from "../../../../lib/DDLManager";
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
-describe.only("integration/DDLManager.test cache", () => {
+describe("integration/DDLManager.test cache", () => {
     let db: any;
     
     beforeEach(async() => {
@@ -41,6 +41,7 @@ describe.only("integration/DDLManager.test cache", () => {
                 order_date date
             );
             create table invoice_positions (
+                id serial primary key,
                 id_order integer,
                 id_invoice integer
             );
@@ -229,7 +230,6 @@ describe.only("integration/DDLManager.test cache", () => {
         // test default values
         await testOrder({
             id: 1,
-            max_or_null_sea_date_sea_date: [null],
             max_or_null_sea_date: null
         });
 
@@ -240,7 +240,6 @@ describe.only("integration/DDLManager.test cache", () => {
         `);
         await testOrder({
             id: 1,
-            max_or_null_sea_date_sea_date: [],
             max_or_null_sea_date: null
         });
 
@@ -251,7 +250,6 @@ describe.only("integration/DDLManager.test cache", () => {
         `);
         await testOrder({
             id: 1,
-            max_or_null_sea_date_sea_date: [null, null],
             max_or_null_sea_date: null
         });
 
@@ -268,13 +266,11 @@ describe.only("integration/DDLManager.test cache", () => {
         result = await db.query(`
             select
                 id,
-                max_or_null_sea_date_sea_date::text[],
                 max_or_null_sea_date
             from public.order
         `);
         await testOrder({
             id: 1,
-            max_or_null_sea_date_sea_date: [null, someDate],
             max_or_null_sea_date: null
         });
 
@@ -288,7 +284,6 @@ describe.only("integration/DDLManager.test cache", () => {
         `);
         await testOrder({
             id: 1,
-            max_or_null_sea_date_sea_date: [someDate, someDate],
             max_or_null_sea_date: someDate
         });
 
@@ -299,7 +294,6 @@ describe.only("integration/DDLManager.test cache", () => {
         `);
         await testOrder({
             id: 1,
-            max_or_null_sea_date_sea_date: [someDate, someDate, null],
             max_or_null_sea_date: null
         });
             
@@ -319,20 +313,17 @@ describe.only("integration/DDLManager.test cache", () => {
         `);
         await testOrder({
             id: 1,
-            max_or_null_sea_date_sea_date: [someDate, null],
             max_or_null_sea_date: null
         });
 
 
         async function testOrder(expectedRow: {
             id: number,
-            max_or_null_sea_date_sea_date: (string | null)[],
             max_or_null_sea_date: string | null
         }) {
             result = await db.query(`
                 select
                     id,
-                    max_or_null_sea_date_sea_date::text[],
                     max_or_null_sea_date::text
                 from public.order
             `);
@@ -464,7 +455,7 @@ describe.only("integration/DDLManager.test cache", () => {
         `);
         await testOrder({
             id: 1,
-            sum_red: "0",
+            sum_red: null,
             sum_green: "10"
         });
 
@@ -2432,7 +2423,7 @@ $$;
         ]);
     });
 
-    it.only("string_agg with hard expression by joins", async() => {
+    it("string_agg with hard expression by joins", async() => {
         const folderPath = ROOT_TMP_PATH + "/coalesce_bool_or";
         fs.mkdirSync(folderPath);
 

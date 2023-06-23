@@ -1,8 +1,6 @@
 import { AbstractTriggerBuilder } from "../AbstractTriggerBuilder";
 import { buildCommutativeBody } from "../body/buildCommutativeBody";
 import { Update, Expression } from "../../../ast";
-import { buildJoinVariables } from "../../processor/buildJoinVariables";
-import { findJoinsMeta } from "../../processor/findJoinsMeta";
 import { SetItemsFactory } from "../../processor/SetItemsFactory";
 
 export class CommutativeTriggerBuilder
@@ -30,8 +28,6 @@ extends AbstractTriggerBuilder {
             this.needListenInsert(),
             this.conditions.hasMutableColumns(),
             this.conditions.noChanges(),
-            this.buildJoins("old"),
-            this.buildJoins("new"),
             {
                 hasReferenceWithoutJoins: this.conditions.hasReferenceWithoutJoins("old"),
                 needUpdate: this.conditions.filtersWithJoins("old"),
@@ -114,10 +110,5 @@ extends AbstractTriggerBuilder {
             hasCondition ||
             hasUnknownReferenceExpressions
         );
-    }
-
-    private buildJoins(row: "new" | "old") {
-        const joins = findJoinsMeta(this.context.cache.select);
-        return buildJoinVariables(this.context.database, joins, row);
     }
 }

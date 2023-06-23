@@ -53,7 +53,7 @@ describe("integration/FileWatcher watch change cache", () => {
         assert.equal(counter, 1);
         assert.strictEqual(migration.toCreate.functions.length, 1, "one func to create");
         assert.strictEqual(migration.toCreate.triggers.length, 1, "one trigger to create");
-        assert.strictEqual(migration.toCreate.columns.length, 1, "one column to create");
+        assert.strictEqual(migration.toCreate.columns.length, 2, "columns to create"); // 2 because exists helper column
         assert.strictEqual(migration.toCreate.updates.length, 0, "no updates to create");
     });
 
@@ -81,7 +81,7 @@ describe("integration/FileWatcher watch change cache", () => {
         assert.strictEqual(counter, 1);
         assert.strictEqual(migration.toDrop.functions.length, 1, "one func to drop");
         assert.strictEqual(migration.toDrop.triggers.length, 1, "one trigger to drop");
-        assert.strictEqual(migration.toDrop.columns.length, 1, "one column to drop");
+        assert.strictEqual(migration.toDrop.columns.length, 2, "columns to drop"); // 2 because exists helper column
     });
 
 });

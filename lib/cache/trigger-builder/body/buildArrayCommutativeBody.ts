@@ -12,8 +12,6 @@ import { doIf } from "./util/doIf";
 import { Update } from "../../../ast/Update";
 import { IArrVar } from "../../processor/buildArrVars";
 import { IJoin } from "../../processor/buildJoinVariables";
-import { assignVariables } from "./util/assignVariables";
-import { reassignVariables } from "./util/reassignVariables";
 
 export interface ICase {
     hasReference?: Expression,
@@ -49,25 +47,11 @@ export interface ArrayCommutativeAst {
     insertedArrElements: IArrVar[];
     notChangedArrElements: IArrVar[];
     deletedArrElements: IArrVar[];
-    oldJoins: IJoin[];
-    newJoins: IJoin[];
 }
 
 export function buildArrayCommutativeBody(ast: ArrayCommutativeAst) {
     const body = new Body({
         declares: [
-            ...ast.oldJoins.map(join =>
-                new Declare({
-                    name: join.variable.name,
-                    type: join.variable.type
-                })
-            ),
-            ...ast.newJoins.map(join => 
-                new Declare({
-                    name: join.variable.name,
-                    type: join.variable.type
-                })
-            ),
             ...(
                 ast.needMatching ? [
                     new Declare({
@@ -103,7 +87,6 @@ export function buildArrayCommutativeBody(ast: ArrayCommutativeAst) {
             ...buildInsertOrDeleteCase(
                 "DELETE",
                 ast.deleteCase,
-                ast.oldJoins,
                 "old"
             ),
 
@@ -117,7 +100,6 @@ export function buildArrayCommutativeBody(ast: ArrayCommutativeAst) {
             ...(ast.needInsertCase ? buildInsertOrDeleteCase(
                 "INSERT",
                 ast.insertCase,
-                ast.newJoins,
                 "new"
             ): [])
         ]
@@ -129,7 +111,6 @@ export function buildArrayCommutativeBody(ast: ArrayCommutativeAst) {
 function buildInsertOrDeleteCase(
     caseName: "INSERT" | "DELETE",
     simpleCase: ICase,
-    joins: IJoin[],
     returnRow: "new" | "old"
 ) {
     return [
@@ -142,7 +123,6 @@ function buildInsertOrDeleteCase(
                 new BlankLine(),
 
                 ...doIf(simpleCase.hasReference, [
-                    ...assignVariables(joins, returnRow),
                     ...doIf(
                         simpleCase.needUpdate,
                         [simpleCase.update]
@@ -170,12 +150,6 @@ function buildUpdateCaseBody(ast: ArrayCommutativeAst) {
             ]
         }),
         new BlankLine(),
-
-        ...assignVariables(ast.oldJoins, "old"),
-        ...reassignVariables(
-            ast.newJoins,
-            ast.oldJoins
-        ),
 
         ...(ast.needMatching ? [
 

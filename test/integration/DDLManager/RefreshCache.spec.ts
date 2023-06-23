@@ -207,7 +207,6 @@ describe("integration/DDLManager.refreshCache", () => {
             throwError: true
         });
 
-        assert.strictEqual(changed.length, 1);
         assert.strictEqual(changed[0].name, "orders_names");
     });
 

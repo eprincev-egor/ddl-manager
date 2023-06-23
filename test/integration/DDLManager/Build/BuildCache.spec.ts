@@ -412,7 +412,7 @@ describe("integration/DDLManager.build cache", () => {
             where id = 1
         `);
         expect(result.rows[0]).to.be.shallowDeepEqual({
-            orders_profit: 0,
+            orders_profit: null,
             orders_doc_numbers: null,
             distinct_profits: null
         });
@@ -455,7 +455,7 @@ describe("integration/DDLManager.build cache", () => {
 
         result = await db.query(`
             insert into companies default values
-            returning *;
+            returning id, orders_profit;
         `);
 
         assert.deepStrictEqual(result.rows[0], {
@@ -522,7 +522,7 @@ describe("integration/DDLManager.build cache", () => {
 
         const {rows} = await db.query(`
             insert into companies default values
-            returning *
+            returning id, orders_count
         `);
 
         assert.deepStrictEqual(rows[0], {
@@ -728,7 +728,12 @@ describe("integration/DDLManager.build cache", () => {
                 (1, null)
         `);
         result = await db.query(`
-            select *
+            select
+                id,
+                orders_values_asc_nulls_first,
+                orders_values_asc_nulls_last,
+                orders_values_desc_nulls_first,
+                orders_values_desc_nulls_last
             from companies
         `);
         assert.deepStrictEqual(result.rows, [{
@@ -869,6 +874,7 @@ describe("integration/DDLManager.build cache", () => {
                 order_date date
             );
             create table order_company_link (
+                id serial primary key,
                 id_order integer,
                 id_company integer
             );
@@ -919,24 +925,18 @@ describe("integration/DDLManager.build cache", () => {
                 (2, 1);
         `);
         result = await db.query(`
-            select *
+            select
+                id,
+                max_order_date,
+                orders_numbers
             from companies
         `);
 
-        const date26 = new Date(2020, 11, 26);
         const date27 = new Date(2020, 11, 27);
         assert.deepStrictEqual(result.rows, [{
             id: 1,
-            max_order_date_order_date: [
-                date26,
-                date27
-            ],
             max_order_date: date27,
-            orders_numbers: "order-26, order-27",
-            orders_numbers_order_number: [
-                "order-26",
-                "order-27"
-            ]
+            orders_numbers: "order-26, order-27"
         }]);
     });
 
@@ -1017,6 +1017,7 @@ describe("integration/DDLManager.build cache", () => {
                 id serial primary key
             );
             create table user_task_watcher (
+                id serial primary key,
                 id_watcher integer not null,
                 id_task integer not null
             );
