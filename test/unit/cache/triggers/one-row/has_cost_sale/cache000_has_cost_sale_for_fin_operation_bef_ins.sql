@@ -6,9 +6,9 @@ begin
 
 
     select
-        operation.operation.cost_sale is not null
-        and
-        operation.operation.deleted = 0 as is_cost_sale
+            operation.operation.cost_sale is not null
+            and
+            operation.operation.deleted = 0 as is_cost_sale
     from operation.operation
     where
         operation.operation.id = new.id_source_operation_sale

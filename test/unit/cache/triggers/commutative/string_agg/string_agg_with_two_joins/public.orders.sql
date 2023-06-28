@@ -1,64 +1,37 @@
 create or replace function cache_totals_for_companies_on_orders()
 returns trigger as $body$
-declare old_country_from_name text;
-declare old_country_to_name text;
-declare new_country_from_name text;
-declare new_country_to_name text;
 begin
 
     if TG_OP = 'DELETE' then
 
         if old.id_client is not null then
-            if old.id_country_from is not null then
-                old_country_from_name = (
-                    select
-                        countries.name
-                    from countries
-                    where
-                        countries.id = old.id_country_from
-                );
-            end if;
-
-            if old.id_country_to is not null then
-                old_country_to_name = (
-                    select
-                        countries.name
-                    from countries
-                    where
-                        countries.id = old.id_country_to
-                );
-            end if;
-
             update companies set
-                from_countries_name = cm_array_remove_one_element(
-                    from_countries_name,
-                    old_country_from_name
-                ),
-                from_countries = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    from_countries,
+                    to_countries
+                ) = (
                     select
-                        string_agg(item.name, ', ')
+                            string_agg(country_from.name, ', ') as from_countries,
+                            string_agg(country_to.name, ', ') as to_countries
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            from_countries_name,
-                            old_country_from_name
-                        )
-                    ) as item(name)
-                ),
-                to_countries_name = cm_array_remove_one_element(
-                    to_countries_name,
-                    old_country_to_name
-                ),
-                to_countries = (
-                    select
-                        string_agg(item.name, ', ')
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            to_countries_name,
-                            old_country_to_name
-                        )
-                    ) as item(name)
+                    left join countries as country_from on
+                        country_from.id = source_row.id_country_from
+
+                    left join countries as country_to on
+                        source_row.id_country_to = country_to.id
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 old.id_client = companies.id;
@@ -78,101 +51,52 @@ begin
             return new;
         end if;
 
-        if old.id_country_from is not null then
-            old_country_from_name = (
-                select
-                    countries.name
-                from countries
-                where
-                    countries.id = old.id_country_from
-            );
-        end if;
-
-        if old.id_country_to is not null then
-            old_country_to_name = (
-                select
-                    countries.name
-                from countries
-                where
-                    countries.id = old.id_country_to
-            );
-        end if;
-
-        if new.id_country_from is not distinct from old.id_country_from then
-            new_country_from_name = old_country_from_name;
-        else
-            if new.id_country_from is not null then
-                new_country_from_name = (
-                    select
-                        countries.name
-                    from countries
-                    where
-                        countries.id = new.id_country_from
-                );
-            end if;
-        end if;
-
-        if new.id_country_to is not distinct from old.id_country_to then
-            new_country_to_name = old_country_to_name;
-        else
-            if new.id_country_to is not null then
-                new_country_to_name = (
-                    select
-                        countries.name
-                    from countries
-                    where
-                        countries.id = new.id_country_to
-                );
-            end if;
-        end if;
-
         if new.id_client is not distinct from old.id_client then
             if new.id_client is null then
                 return new;
             end if;
 
             update companies set
-                from_countries_name = array_append(
-                    cm_array_remove_one_element(
-                        from_countries_name,
-                        old_country_from_name
-                    ),
-                    new_country_from_name
-                ),
-                from_countries = (
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_country_from', new.id_country_from,'id_country_to', new.id_country_to
+        ),
+            TG_OP
+        ),
+                (
+                    from_countries,
+                    to_countries
+                ) = (
                     select
-                        string_agg(item.name, ', ')
+                            string_agg(country_from.name, ', ') as from_countries,
+                            string_agg(country_to.name, ', ') as to_countries
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_country_from', new.id_country_from,'id_country_to', new.id_country_to
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                    from unnest(
-                        array_append(
-                            cm_array_remove_one_element(
-                                from_countries_name,
-                                old_country_from_name
-                            ),
-                            new_country_from_name
-                        )
-                    ) as item(name)
-                ),
-                to_countries_name = array_append(
-                    cm_array_remove_one_element(
-                        to_countries_name,
-                        old_country_to_name
-                    ),
-                    new_country_to_name
-                ),
-                to_countries = (
-                    select
-                        string_agg(item.name, ', ')
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
 
-                    from unnest(
-                        array_append(
-                            cm_array_remove_one_element(
-                                to_countries_name,
-                                old_country_to_name
-                            ),
-                            new_country_to_name
-                        )
-                    ) as item(name)
+                    left join countries as country_from on
+                        country_from.id = source_row.id_country_from
+
+                    left join countries as country_to on
+                        source_row.id_country_to = country_to.id
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 new.id_client = companies.id;
@@ -182,35 +106,32 @@ begin
 
         if old.id_client is not null then
             update companies set
-                from_countries_name = cm_array_remove_one_element(
-                    from_countries_name,
-                    old_country_from_name
-                ),
-                from_countries = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    from_countries,
+                    to_countries
+                ) = (
                     select
-                        string_agg(item.name, ', ')
+                            string_agg(country_from.name, ', ') as from_countries,
+                            string_agg(country_to.name, ', ') as to_countries
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            from_countries_name,
-                            old_country_from_name
-                        )
-                    ) as item(name)
-                ),
-                to_countries_name = cm_array_remove_one_element(
-                    to_countries_name,
-                    old_country_to_name
-                ),
-                to_countries = (
-                    select
-                        string_agg(item.name, ', ')
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            to_countries_name,
-                            old_country_to_name
-                        )
-                    ) as item(name)
+                    left join countries as country_from on
+                        country_from.id = source_row.id_country_from
+
+                    left join countries as country_to on
+                        source_row.id_country_to = country_to.id
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 old.id_client = companies.id;
@@ -218,31 +139,46 @@ begin
 
         if new.id_client is not null then
             update companies set
-                from_countries_name = array_append(
-                    from_countries_name,
-                    new_country_from_name
-                ),
-                from_countries = coalesce(
-                    from_countries ||
-                    coalesce(
-                        ', '
-                        || new_country_from_name,
-                        ''
-                    ),
-                    new_country_from_name
-                ),
-                to_countries_name = array_append(
-                    to_countries_name,
-                    new_country_to_name
-                ),
-                to_countries = coalesce(
-                    to_countries ||
-                    coalesce(
-                        ', '
-                        || new_country_to_name,
-                        ''
-                    ),
-                    new_country_to_name
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_country_from', new.id_country_from,'id_country_to', new.id_country_to
+        ),
+            TG_OP
+        ),
+                (
+                    from_countries,
+                    to_countries
+                ) = (
+                    select
+                            string_agg(country_from.name, ', ') as from_countries,
+                            string_agg(country_to.name, ', ') as to_countries
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_country_from', new.id_country_from,'id_country_to', new.id_country_to
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join countries as country_from on
+                        country_from.id = source_row.id_country_from
+
+                    left join countries as country_to on
+                        source_row.id_country_to = country_to.id
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 new.id_client = companies.id;
@@ -254,52 +190,47 @@ begin
     if TG_OP = 'INSERT' then
 
         if new.id_client is not null then
-            if new.id_country_from is not null then
-                new_country_from_name = (
-                    select
-                        countries.name
-                    from countries
-                    where
-                        countries.id = new.id_country_from
-                );
-            end if;
-
-            if new.id_country_to is not null then
-                new_country_to_name = (
-                    select
-                        countries.name
-                    from countries
-                    where
-                        countries.id = new.id_country_to
-                );
-            end if;
-
             update companies set
-                from_countries_name = array_append(
-                    from_countries_name,
-                    new_country_from_name
-                ),
-                from_countries = coalesce(
-                    from_countries ||
-                    coalesce(
-                        ', '
-                        || new_country_from_name,
-                        ''
-                    ),
-                    new_country_from_name
-                ),
-                to_countries_name = array_append(
-                    to_countries_name,
-                    new_country_to_name
-                ),
-                to_countries = coalesce(
-                    to_countries ||
-                    coalesce(
-                        ', '
-                        || new_country_to_name,
-                        ''
-                    ),
-                    new_country_to_name
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_country_from', new.id_country_from,'id_country_to', new.id_country_to
+        ),
+            TG_OP
+        ),
+                (
+                    from_countries,
+                    to_countries
+                ) = (
+                    select
+                            string_agg(country_from.name, ', ') as from_countries,
+                            string_agg(country_to.name, ', ') as to_countries
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_country_from', new.id_country_from,'id_country_to', new.id_country_to
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join countries as country_from on
+                        country_from.id = source_row.id_country_from
+
+                    left join countries as country_to on
+                        source_row.id_country_to = country_to.id
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 new.id_client = companies.id;

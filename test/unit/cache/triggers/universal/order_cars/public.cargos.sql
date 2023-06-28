@@ -28,13 +28,19 @@ begin
         )
     update orders set
         (
-            cars_numbers_car_number,
-            cars_numbers
+            cars_numbers,
+            __totals_json__
         ) = (
             select
-                array_agg(cars.car_number) as cars_numbers_car_number,
-                string_agg(cars.car_number, ', ') as cars_numbers
-
+                    string_agg(cars.car_number, ', ') as cars_numbers,
+                    ('{' || string_agg(
+                                                    '"' || public.cargos.id::text || '":' || jsonb_build_object(
+                                'id', public.cargos.id,'id_order', public.cargos.id_order
+                            )::text,
+                                                    ','
+                                                ) || '}')
+                    ::
+                    jsonb as __totals_json__
             from cargos
 
             inner join cargo_unit_link as link on
@@ -42,7 +48,6 @@ begin
 
             inner join cars on
                 cars.id = link.id_car
-
             where
                 cargos.id_order = orders.id
         )

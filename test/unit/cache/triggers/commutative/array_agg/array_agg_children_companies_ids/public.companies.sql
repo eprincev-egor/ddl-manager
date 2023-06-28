@@ -6,9 +6,24 @@ begin
 
         if old.id_parent_company is not null then
             update companies as main_company set
-                child_companies_ids = cm_array_remove_one_element(
-                    child_companies_ids,
-                    old.id
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    child_companies_ids
+                ) = (
+                    select
+                            array_agg(source_row.id) as child_companies_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.companies, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_parent_company = main_company.id
                 )
             where
                 old.id_parent_company = main_company.id;
@@ -22,13 +37,71 @@ begin
             return new;
         end if;
 
+        if new.id_parent_company is not distinct from old.id_parent_company then
+            if new.id_parent_company is null then
+                return new;
+            end if;
 
+            update companies as main_company set
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_parent_company', new.id_parent_company
+        ),
+            TG_OP
+        ),
+                (
+                    child_companies_ids
+                ) = (
+                    select
+                            array_agg(source_row.id) as child_companies_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_parent_company', new.id_parent_company
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.companies, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_parent_company = main_company.id
+                )
+            where
+                new.id_parent_company = main_company.id;
+
+            return new;
+        end if;
 
         if old.id_parent_company is not null then
             update companies as main_company set
-                child_companies_ids = cm_array_remove_one_element(
-                    child_companies_ids,
-                    old.id
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    child_companies_ids
+                ) = (
+                    select
+                            array_agg(source_row.id) as child_companies_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.companies, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_parent_company = main_company.id
                 )
             where
                 old.id_parent_company = main_company.id;
@@ -36,9 +109,38 @@ begin
 
         if new.id_parent_company is not null then
             update companies as main_company set
-                child_companies_ids = array_append(
-                    child_companies_ids,
-                    new.id
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_parent_company', new.id_parent_company
+        ),
+            TG_OP
+        ),
+                (
+                    child_companies_ids
+                ) = (
+                    select
+                            array_agg(source_row.id) as child_companies_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_parent_company', new.id_parent_company
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.companies, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_parent_company = main_company.id
                 )
             where
                 new.id_parent_company = main_company.id;
@@ -51,9 +153,38 @@ begin
 
         if new.id_parent_company is not null then
             update companies as main_company set
-                child_companies_ids = array_append(
-                    child_companies_ids,
-                    new.id
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_parent_company', new.id_parent_company
+        ),
+            TG_OP
+        ),
+                (
+                    child_companies_ids
+                ) = (
+                    select
+                            array_agg(source_row.id) as child_companies_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_parent_company', new.id_parent_company
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.companies, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_parent_company = main_company.id
                 )
             where
                 new.id_parent_company = main_company.id;

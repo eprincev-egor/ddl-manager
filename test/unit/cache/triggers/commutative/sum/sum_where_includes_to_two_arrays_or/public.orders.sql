@@ -22,7 +22,31 @@ begin
             old.deleted = 0
         then
             update companies set
-                orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0)
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    orders_total
+                ) = (
+                    select
+                            sum(source_row.profit) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        (
+                            source_row.clients_ids && ARRAY[companies.id]
+                            or
+                            source_row.partners_ids && ARRAY[companies.id]
+                        )
+                        and
+                        source_row.deleted = 0
+                )
             where
                 companies.id = any( old.clients_ids )
                 or
@@ -101,7 +125,45 @@ begin
             not_changed_partners_ids is not null
         then
             update companies set
-                orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    orders_total
+                ) = (
+                    select
+                            sum(source_row.profit) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        (
+                            source_row.clients_ids && ARRAY[companies.id]
+                            or
+                            source_row.partners_ids && ARRAY[companies.id]
+                        )
+                        and
+                        source_row.deleted = 0
+                )
             where
                 companies.id = any( not_changed_clients_ids )
                 or
@@ -114,7 +176,31 @@ begin
             deleted_partners_ids is not null
         then
             update companies set
-                orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0)
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    orders_total
+                ) = (
+                    select
+                            sum(source_row.profit) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        (
+                            source_row.clients_ids && ARRAY[companies.id]
+                            or
+                            source_row.partners_ids && ARRAY[companies.id]
+                        )
+                        and
+                        source_row.deleted = 0
+                )
             where
                 companies.id = any( deleted_clients_ids )
                 or
@@ -127,7 +213,45 @@ begin
             inserted_partners_ids is not null
         then
             update companies set
-                orders_total = coalesce(orders_total, 0) + coalesce(new.profit, 0)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    orders_total
+                ) = (
+                    select
+                            sum(source_row.profit) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        (
+                            source_row.clients_ids && ARRAY[companies.id]
+                            or
+                            source_row.partners_ids && ARRAY[companies.id]
+                        )
+                        and
+                        source_row.deleted = 0
+                )
             where
                 companies.id = any( inserted_clients_ids )
                 or
@@ -149,7 +273,45 @@ begin
             new.deleted = 0
         then
             update companies set
-                orders_total = coalesce(orders_total, 0) + coalesce(new.profit, 0)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    orders_total
+                ) = (
+                    select
+                            sum(source_row.profit) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        (
+                            source_row.clients_ids && ARRAY[companies.id]
+                            or
+                            source_row.partners_ids && ARRAY[companies.id]
+                        )
+                        and
+                        source_row.deleted = 0
+                )
             where
                 companies.id = any( new.clients_ids )
                 or

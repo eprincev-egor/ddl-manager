@@ -15,20 +15,26 @@ begin
             old.deleted = 0
         then
             update operation.unit set
-                train_numbers_number = cm_array_remove_one_element(
-                    train_numbers_number,
-                    old.number
-                ),
-                train_numbers = (
+                __trains_json__ = __trains_json__ - old.id::text,
+                (
+                    train_numbers
+                ) = (
                     select
-                        string_agg(distinct item.number, ', ')
+                            string_agg(distinct source_row.number, ', ') as train_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __trains_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            train_numbers_number,
-                            old.number
-                        )
-                    ) as item(number)
+                        left join lateral jsonb_populate_record(null::public.train, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && ARRAY[operation.unit.id] :: bigint[]
+                        and
+                        source_row.deleted = 0
                 )
             where
                 operation.unit.id = any( old.units_ids::bigint[] );
@@ -91,26 +97,40 @@ begin
 
         if not_changed_units_ids is not null then
             update operation.unit set
-                train_numbers_number = array_append(
-                    cm_array_remove_one_element(
-                        train_numbers_number,
-                        old.number
-                    ),
-                    new.number
-                ),
-                train_numbers = (
+                __trains_json__ = cm_merge_json(
+            __trains_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
+        ),
+            TG_OP
+        ),
+                (
+                    train_numbers
+                ) = (
                     select
-                        string_agg(distinct item.number, ', ')
+                            string_agg(distinct source_row.number, ', ') as train_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __trains_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                    from unnest(
-                        array_append(
-                            cm_array_remove_one_element(
-                                train_numbers_number,
-                                old.number
-                            ),
-                            new.number
-                        )
-                    ) as item(number)
+                        left join lateral jsonb_populate_record(null::public.train, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && ARRAY[operation.unit.id] :: bigint[]
+                        and
+                        source_row.deleted = 0
                 )
             where
                 operation.unit.id = any( not_changed_units_ids::bigint[] );
@@ -118,20 +138,26 @@ begin
 
         if deleted_units_ids is not null then
             update operation.unit set
-                train_numbers_number = cm_array_remove_one_element(
-                    train_numbers_number,
-                    old.number
-                ),
-                train_numbers = (
+                __trains_json__ = __trains_json__ - old.id::text,
+                (
+                    train_numbers
+                ) = (
                     select
-                        string_agg(distinct item.number, ', ')
+                            string_agg(distinct source_row.number, ', ') as train_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __trains_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            train_numbers_number,
-                            old.number
-                        )
-                    ) as item(number)
+                        left join lateral jsonb_populate_record(null::public.train, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && ARRAY[operation.unit.id] :: bigint[]
+                        and
+                        source_row.deleted = 0
                 )
             where
                 operation.unit.id = any( deleted_units_ids::bigint[] );
@@ -139,27 +165,41 @@ begin
 
         if inserted_units_ids is not null then
             update operation.unit set
-                train_numbers_number = array_append(
-                    train_numbers_number,
-                    new.number
-                ),
-                train_numbers = case
-                    when
-                        array_position(
-                            train_numbers_number,
-                            new.number
-                        )
-                        is null
-                    then
-                        coalesce(
-                            train_numbers ||
-                            coalesce(', '
-|| new.number, ''),
-                            new.number
-                        )
-                    else
-                        train_numbers
-                end
+                __trains_json__ = cm_merge_json(
+            __trains_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
+        ),
+            TG_OP
+        ),
+                (
+                    train_numbers
+                ) = (
+                    select
+                            string_agg(distinct source_row.number, ', ') as train_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __trains_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.train, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && ARRAY[operation.unit.id] :: bigint[]
+                        and
+                        source_row.deleted = 0
+                )
             where
                 operation.unit.id = any( inserted_units_ids::bigint[] );
         end if;
@@ -175,27 +215,41 @@ begin
             new.deleted = 0
         then
             update operation.unit set
-                train_numbers_number = array_append(
-                    train_numbers_number,
-                    new.number
-                ),
-                train_numbers = case
-                    when
-                        array_position(
-                            train_numbers_number,
-                            new.number
-                        )
-                        is null
-                    then
-                        coalesce(
-                            train_numbers ||
-                            coalesce(', '
-|| new.number, ''),
-                            new.number
-                        )
-                    else
-                        train_numbers
-                end
+                __trains_json__ = cm_merge_json(
+            __trains_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
+        ),
+            TG_OP
+        ),
+                (
+                    train_numbers
+                ) = (
+                    select
+                            string_agg(distinct source_row.number, ', ') as train_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __trains_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.train, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && ARRAY[operation.unit.id] :: bigint[]
+                        and
+                        source_row.deleted = 0
+                )
             where
                 operation.unit.id = any( new.units_ids::bigint[] );
         end if;

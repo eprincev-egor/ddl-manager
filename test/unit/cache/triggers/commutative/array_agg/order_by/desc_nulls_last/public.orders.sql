@@ -6,9 +6,28 @@ begin
 
         if old.id_client is not null then
             update companies set
-                orders_dates = cm_array_remove_one_element(
-                    orders_dates,
-                    old.order_date
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    orders_dates
+                ) = (
+                    select
+                            array_agg(
+                                source_row.order_date
+                                                            order by
+                                    source_row.order_date desc nulls last
+                            ) as orders_dates
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 old.id_client = companies.id;
@@ -32,12 +51,42 @@ begin
             end if;
 
             update companies set
-                orders_dates = cm_array_append_order_by_desc_nulls_last(
-                    cm_array_remove_one_element(
-                        orders_dates,
-                        old.order_date
-                    ),
-                    new.order_date
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'order_date', new.order_date
+        ),
+            TG_OP
+        ),
+                (
+                    orders_dates
+                ) = (
+                    select
+                            array_agg(
+                                source_row.order_date
+                                                            order by
+                                    source_row.order_date desc nulls last
+                            ) as orders_dates
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'order_date', new.order_date
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 new.id_client = companies.id;
@@ -47,9 +96,28 @@ begin
 
         if old.id_client is not null then
             update companies set
-                orders_dates = cm_array_remove_one_element(
-                    orders_dates,
-                    old.order_date
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    orders_dates
+                ) = (
+                    select
+                            array_agg(
+                                source_row.order_date
+                                                            order by
+                                    source_row.order_date desc nulls last
+                            ) as orders_dates
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 old.id_client = companies.id;
@@ -57,9 +125,42 @@ begin
 
         if new.id_client is not null then
             update companies set
-                orders_dates = cm_array_append_order_by_desc_nulls_last(
-                    orders_dates,
-                    new.order_date
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'order_date', new.order_date
+        ),
+            TG_OP
+        ),
+                (
+                    orders_dates
+                ) = (
+                    select
+                            array_agg(
+                                source_row.order_date
+                                                            order by
+                                    source_row.order_date desc nulls last
+                            ) as orders_dates
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'order_date', new.order_date
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 new.id_client = companies.id;
@@ -72,9 +173,42 @@ begin
 
         if new.id_client is not null then
             update companies set
-                orders_dates = cm_array_append_order_by_desc_nulls_last(
-                    orders_dates,
-                    new.order_date
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'order_date', new.order_date
+        ),
+            TG_OP
+        ),
+                (
+                    orders_dates
+                ) = (
+                    select
+                            array_agg(
+                                source_row.order_date
+                                                            order by
+                                    source_row.order_date desc nulls last
+                            ) as orders_dates
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'order_date', new.order_date
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 new.id_client = companies.id;

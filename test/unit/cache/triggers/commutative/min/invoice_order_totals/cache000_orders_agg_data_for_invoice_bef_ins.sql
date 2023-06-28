@@ -10,10 +10,19 @@ begin
 
 
     select
-        array_agg(orders.some_date) as order_some_date_some_date,
-        min(orders.some_date) as order_some_date
-    from invoice_positions left join public.order as orders on
-orders.id = invoice_positions.id_order
+            min(orders.some_date) as order_some_date,
+            ('{' || string_agg(
+                                            '"' || public.invoice_positions.id::text || '":' || jsonb_build_object(
+                        'id', public.invoice_positions.id,'id_invoice', public.invoice_positions.id_invoice,'id_order', public.invoice_positions.id_order
+                    )::text,
+                                            ','
+                                        ) || '}')
+            ::
+            jsonb as __orders_agg_data_json__
+    from invoice_positions
+
+    left join public.order as orders on
+        orders.id = invoice_positions.id_order
     where
         new.id_invoice_type = 4
         and
@@ -21,8 +30,8 @@ orders.id = invoice_positions.id_order
     into new_totals;
 
 
-    new.order_some_date_some_date = new_totals.order_some_date_some_date;
     new.order_some_date = new_totals.order_some_date;
+    new.__orders_agg_data_json__ = new_totals.__orders_agg_data_json__;
 
 
     return new;

@@ -6,14 +6,24 @@ begin
 
         if old.id_client is not null then
             update companies set
-                min_order_id_id = cm_array_remove_one_element(min_order_id_id, old.id),
-                min_order_id = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    min_order_id
+                ) = (
                     select
-                        min(item.id)
+                            min(source_row.id) as min_order_id
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(min_order_id_id, old.id)
-                    ) as item(id)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 old.id_client = companies.id;
@@ -27,18 +37,71 @@ begin
             return new;
         end if;
 
+        if new.id_client is not distinct from old.id_client then
+            if new.id_client is null then
+                return new;
+            end if;
 
+            update companies set
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client
+        ),
+            TG_OP
+        ),
+                (
+                    min_order_id
+                ) = (
+                    select
+                            min(source_row.id) as min_order_id
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
+            where
+                new.id_client = companies.id;
+
+            return new;
+        end if;
 
         if old.id_client is not null then
             update companies set
-                min_order_id_id = cm_array_remove_one_element(min_order_id_id, old.id),
-                min_order_id = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    min_order_id
+                ) = (
                     select
-                        min(item.id)
+                            min(source_row.id) as min_order_id
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(min_order_id_id, old.id)
-                    ) as item(id)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 old.id_client = companies.id;
@@ -46,8 +109,39 @@ begin
 
         if new.id_client is not null then
             update companies set
-                min_order_id_id = array_append(min_order_id_id, new.id),
-                min_order_id = least(min_order_id, new.id)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client
+        ),
+            TG_OP
+        ),
+                (
+                    min_order_id
+                ) = (
+                    select
+                            min(source_row.id) as min_order_id
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
         end if;
@@ -59,8 +153,39 @@ begin
 
         if new.id_client is not null then
             update companies set
-                min_order_id_id = array_append(min_order_id_id, new.id),
-                min_order_id = least(min_order_id, new.id)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client
+        ),
+            TG_OP
+        ),
+                (
+                    min_order_id
+                ) = (
+                    select
+                            min(source_row.id) as min_order_id
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
         end if;

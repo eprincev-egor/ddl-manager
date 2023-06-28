@@ -10,25 +10,29 @@ begin
             coalesce(old.profit > 0, false)
         then
             update companies set
-                orders_numbers_doc_number = cm_array_remove_one_element(
-                    orders_numbers_doc_number,
-                    old.doc_number
-                ),
-                orders_numbers = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    orders_numbers
+                ) = (
                     select
-                        string_agg(distinct 
-                            item.doc_number,
-                            ', '
-                            order by
-                                item.doc_number asc nulls last
-                        )
+                            string_agg(distinct 
+                                source_row.doc_number,
+                                ', '
+                                                            order by
+                                    source_row.doc_number asc nulls last
+                            ) filter (where     source_row.profit > 0) as orders_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            orders_numbers_doc_number,
-                            old.doc_number
-                        )
-                    ) as item(doc_number)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 old.id_client = companies.id;
@@ -54,106 +58,44 @@ begin
             end if;
 
             update companies set
-                orders_numbers_doc_number = case
-                    when
-                        new.profit > 0
-                        and
-                        not coalesce(old.profit > 0, false)
-                    then
-                        array_append(
-                            orders_numbers_doc_number,
-                            new.doc_number
-                        )
-                    when
-                        not coalesce(new.profit > 0, false)
-                        and
-                        old.profit > 0
-                    then
-                        cm_array_remove_one_element(
-                            orders_numbers_doc_number,
-                            old.doc_number
-                        )
-                    when
-                        new.profit > 0
-                    then
-                        array_append(
-                            cm_array_remove_one_element(
-                                orders_numbers_doc_number,
-                                old.doc_number
-                            ),
-                            new.doc_number
-                        )
-                    else
-                        orders_numbers_doc_number
-                end,
-                orders_numbers = case
-                    when
-                        new.profit > 0
-                        and
-                        not coalesce(old.profit > 0, false)
-                    then
-                        (
-                            select
-                                string_agg(distinct 
-                                    item.doc_number,
-                                    ', '
-                                    order by
-                                        item.doc_number asc nulls last
-                                )
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'doc_number', new.doc_number,'id', new.id,'id_client', new.id_client,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    orders_numbers
+                ) = (
+                    select
+                            string_agg(distinct 
+                                source_row.doc_number,
+                                ', '
+                                                            order by
+                                    source_row.doc_number asc nulls last
+                            ) filter (where     source_row.profit > 0) as orders_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'doc_number', new.doc_number,'id', new.id,'id_client', new.id_client,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                            from unnest(
-                                array_append(
-                                    orders_numbers_doc_number,
-                                    new.doc_number
-                                )
-                            ) as item(doc_number)
-                        )
-                    when
-                        not coalesce(new.profit > 0, false)
-                        and
-                        old.profit > 0
-                    then
-                        (
-                            select
-                                string_agg(distinct 
-                                    item.doc_number,
-                                    ', '
-                                    order by
-                                        item.doc_number asc nulls last
-                                )
-
-                            from unnest(
-                                cm_array_remove_one_element(
-                                    orders_numbers_doc_number,
-                                    old.doc_number
-                                )
-                            ) as item(doc_number)
-                        )
-                    when
-                        new.profit > 0
-                    then
-                        (
-                            select
-                                string_agg(distinct 
-                                    item.doc_number,
-                                    ', '
-                                    order by
-                                        item.doc_number asc nulls last
-                                )
-
-                            from unnest(
-                                array_append(
-                                    cm_array_remove_one_element(
-                                        orders_numbers_doc_number,
-                                        old.doc_number
-                                    ),
-                                    new.doc_number
-                                )
-                            ) as item(doc_number)
-                        )
-                    else
-                        orders_numbers
-                end
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
 
@@ -166,25 +108,29 @@ begin
             coalesce(old.profit > 0, false)
         then
             update companies set
-                orders_numbers_doc_number = cm_array_remove_one_element(
-                    orders_numbers_doc_number,
-                    old.doc_number
-                ),
-                orders_numbers = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    orders_numbers
+                ) = (
                     select
-                        string_agg(distinct 
-                            item.doc_number,
-                            ', '
-                            order by
-                                item.doc_number asc nulls last
-                        )
+                            string_agg(distinct 
+                                source_row.doc_number,
+                                ', '
+                                                            order by
+                                    source_row.doc_number asc nulls last
+                            ) filter (where     source_row.profit > 0) as orders_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            orders_numbers_doc_number,
-                            old.doc_number
-                        )
-                    ) as item(doc_number)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 old.id_client = companies.id;
@@ -196,25 +142,43 @@ begin
             coalesce(new.profit > 0, false)
         then
             update companies set
-                orders_numbers_doc_number = array_append(
-                    orders_numbers_doc_number,
-                    new.doc_number
-                ),
-                orders_numbers = (
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'doc_number', new.doc_number,'id', new.id,'id_client', new.id_client,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    orders_numbers
+                ) = (
                     select
-                        string_agg(distinct 
-                            item.doc_number,
-                            ', '
-                            order by
-                                item.doc_number asc nulls last
-                        )
+                            string_agg(distinct 
+                                source_row.doc_number,
+                                ', '
+                                                            order by
+                                    source_row.doc_number asc nulls last
+                            ) filter (where     source_row.profit > 0) as orders_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'doc_number', new.doc_number,'id', new.id,'id_client', new.id_client,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                    from unnest(
-                        array_append(
-                            orders_numbers_doc_number,
-                            new.doc_number
-                        )
-                    ) as item(doc_number)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 new.id_client = companies.id;
@@ -231,25 +195,43 @@ begin
             coalesce(new.profit > 0, false)
         then
             update companies set
-                orders_numbers_doc_number = array_append(
-                    orders_numbers_doc_number,
-                    new.doc_number
-                ),
-                orders_numbers = (
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'doc_number', new.doc_number,'id', new.id,'id_client', new.id_client,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    orders_numbers
+                ) = (
                     select
-                        string_agg(distinct 
-                            item.doc_number,
-                            ', '
-                            order by
-                                item.doc_number asc nulls last
-                        )
+                            string_agg(distinct 
+                                source_row.doc_number,
+                                ', '
+                                                            order by
+                                    source_row.doc_number asc nulls last
+                            ) filter (where     source_row.profit > 0) as orders_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'doc_number', new.doc_number,'id', new.id,'id_client', new.id_client,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                    from unnest(
-                        array_append(
-                            orders_numbers_doc_number,
-                            new.doc_number
-                        )
-                    ) as item(doc_number)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 new.id_client = companies.id;

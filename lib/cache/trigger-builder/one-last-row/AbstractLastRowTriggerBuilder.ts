@@ -201,8 +201,6 @@ extends AbstractTriggerBuilder {
                 )
             ],
             select: this.reselect()
-                .toSQL( Spaces.level(3) )
-                .trim()
         });
     }
 

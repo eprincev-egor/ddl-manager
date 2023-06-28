@@ -43,7 +43,7 @@ export class SetItemsFactory {
     private setSelect(nextJson: string) {
         const cache = this.context.cache;
         const fromRef = cache.select.getFromTable()
-        const sourceAlias = fromRef.alias || fromRef.table.name;
+        const sourceAlias = "source_row";
 
         return [
             new SetItem({
@@ -89,7 +89,7 @@ export class SetItemsFactory {
                         this.context.triggerTable,
                         sourceAlias
                     )
-                ).toString()
+                )
             })
         ];
     }

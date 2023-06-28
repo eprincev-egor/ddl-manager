@@ -5,7 +5,25 @@ begin
     if TG_OP = 'DELETE' then
 
         update companies set
-            orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0)
+            __totals_json__ = __totals_json__ - old.id::text,
+            (
+                orders_total
+            ) = (
+                select
+                        sum(source_row.profit) as orders_total
+                from (
+                    select
+                            record.*
+                    from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                    left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                        true
+                ) as source_row
+                where
+                    source_row.id = any (companies.bigint_orders_ids)
+            )
         where
             companies.bigint_orders_ids && ARRAY[ old.id ]::bigint[];
 
@@ -18,7 +36,39 @@ begin
         end if;
 
         update companies set
-            orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+            __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'profit', new.profit
+        ),
+            TG_OP
+        ),
+            (
+                orders_total
+            ) = (
+                select
+                        sum(source_row.profit) as orders_total
+                from (
+                    select
+                            record.*
+                    from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                    left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                        true
+                ) as source_row
+                where
+                    source_row.id = any (companies.bigint_orders_ids)
+            )
         where
             companies.bigint_orders_ids && ARRAY[ new.id ]::bigint[];
 

@@ -6,18 +6,27 @@ begin
 
         if old.id_client is not null then
             update companies set
-                general_orders_ids = case
-                    when
-                        old.id_order_type in (1, 2, 3)
-                    then
-                        cm_array_remove_one_element(
-                            general_orders_ids,
-                            old.id
-                        )
-                    else
-                        general_orders_ids
-                end,
-                all_orders_ids = cm_array_remove_one_element(all_orders_ids, old.id)
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    general_orders_ids,
+                    all_orders_ids
+                ) = (
+                    select
+                            array_agg(source_row.id) filter (where     source_row.id_order_type in (1, 2, 3)) as general_orders_ids,
+                            array_agg(source_row.id) as all_orders_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 old.id_client = companies.id;
         end if;
@@ -40,38 +49,41 @@ begin
             end if;
 
             update companies set
-                general_orders_ids = case
-                    when
-                        new.id_order_type in (1, 2, 3)
-                        and
-                        not coalesce(old.id_order_type in (1, 2, 3), false)
-                    then
-                        array_append(
-                            general_orders_ids,
-                            new.id
-                        )
-                    when
-                        not coalesce(new.id_order_type in (1, 2, 3), false)
-                        and
-                        old.id_order_type in (1, 2, 3)
-                    then
-                        cm_array_remove_one_element(
-                            general_orders_ids,
-                            old.id
-                        )
-                    when
-                        new.id_order_type in (1, 2, 3)
-                    then
-                        array_append(
-                            cm_array_remove_one_element(
-                                general_orders_ids,
-                                old.id
-                            ),
-                            new.id
-                        )
-                    else
-                        general_orders_ids
-                end
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+        ),
+            TG_OP
+        ),
+                (
+                    general_orders_ids,
+                    all_orders_ids
+                ) = (
+                    select
+                            array_agg(source_row.id) filter (where     source_row.id_order_type in (1, 2, 3)) as general_orders_ids,
+                            array_agg(source_row.id) as all_orders_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
 
@@ -80,36 +92,68 @@ begin
 
         if old.id_client is not null then
             update companies set
-                general_orders_ids = case
-                    when
-                        old.id_order_type in (1, 2, 3)
-                    then
-                        cm_array_remove_one_element(
-                            general_orders_ids,
-                            old.id
-                        )
-                    else
-                        general_orders_ids
-                end,
-                all_orders_ids = cm_array_remove_one_element(all_orders_ids, old.id)
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    general_orders_ids,
+                    all_orders_ids
+                ) = (
+                    select
+                            array_agg(source_row.id) filter (where     source_row.id_order_type in (1, 2, 3)) as general_orders_ids,
+                            array_agg(source_row.id) as all_orders_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 old.id_client = companies.id;
         end if;
 
         if new.id_client is not null then
             update companies set
-                general_orders_ids = case
-                    when
-                        new.id_order_type in (1, 2, 3)
-                    then
-                        array_append(
-                            general_orders_ids,
-                            new.id
-                        )
-                    else
-                        general_orders_ids
-                end,
-                all_orders_ids = array_append(all_orders_ids, new.id)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+        ),
+            TG_OP
+        ),
+                (
+                    general_orders_ids,
+                    all_orders_ids
+                ) = (
+                    select
+                            array_agg(source_row.id) filter (where     source_row.id_order_type in (1, 2, 3)) as general_orders_ids,
+                            array_agg(source_row.id) as all_orders_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
         end if;
@@ -121,18 +165,41 @@ begin
 
         if new.id_client is not null then
             update companies set
-                general_orders_ids = case
-                    when
-                        new.id_order_type in (1, 2, 3)
-                    then
-                        array_append(
-                            general_orders_ids,
-                            new.id
-                        )
-                    else
-                        general_orders_ids
-                end,
-                all_orders_ids = array_append(all_orders_ids, new.id)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+        ),
+            TG_OP
+        ),
+                (
+                    general_orders_ids,
+                    all_orders_ids
+                ) = (
+                    select
+                            array_agg(source_row.id) filter (where     source_row.id_order_type in (1, 2, 3)) as general_orders_ids,
+                            array_agg(source_row.id) as all_orders_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
         end if;

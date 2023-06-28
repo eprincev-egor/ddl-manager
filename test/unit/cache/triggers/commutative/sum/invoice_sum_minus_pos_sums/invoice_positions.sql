@@ -10,20 +10,32 @@ begin
             old.deleted = 0
         then
             update invoice set
-                balance_sum = coalesce(balance_sum, 0) - coalesce(
-                    round(
-                        old.total_sum_with_vat_in_curs :: numeric,
-                        - 2
-                    ),
-                    0
-                ),
-                balance = invoice.invoice_summ - (coalesce(balance_sum, 0) - coalesce(
-                    round(
-                        old.total_sum_with_vat_in_curs :: numeric,
-                        - 2
-                    ),
-                    0
-                ))
+                __balance_json__ = __balance_json__ - old.id::text,
+                (
+                    balance
+                ) = (
+                    select
+                            invoice.invoice_summ -                             sum(
+                                round(
+                                    source_row.total_sum_with_vat_in_curs :: numeric,
+                                    - 2
+                                    )
+                                                        ) as balance
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __balance_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.invoice_positions, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_invoice = invoice.id
+                        and
+                        source_row.deleted = 0
+                )
             where
                 old.id_invoice = invoice.id;
         end if;
@@ -56,32 +68,46 @@ begin
             end if;
 
             update invoice set
-                balance_sum = coalesce(balance_sum, 0) - coalesce(
-                    round(
-                        old.total_sum_with_vat_in_curs :: numeric,
-                        - 2
-                    ),
-                    0
-                ) + coalesce(
-                    round(
-                        new.total_sum_with_vat_in_curs :: numeric,
-                        - 2
-                    ),
-                    0
-                ),
-                balance = invoice.invoice_summ - (coalesce(balance_sum, 0) - coalesce(
-                    round(
-                        old.total_sum_with_vat_in_curs :: numeric,
-                        - 2
-                    ),
-                    0
-                ) + coalesce(
-                    round(
-                        new.total_sum_with_vat_in_curs :: numeric,
-                        - 2
-                    ),
-                    0
-                ))
+                __balance_json__ = cm_merge_json(
+            __balance_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
+        ),
+            TG_OP
+        ),
+                (
+                    balance
+                ) = (
+                    select
+                            invoice.invoice_summ -                             sum(
+                                round(
+                                    source_row.total_sum_with_vat_in_curs :: numeric,
+                                    - 2
+                                    )
+                                                        ) as balance
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __balance_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.invoice_positions, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_invoice = invoice.id
+                        and
+                        source_row.deleted = 0
+                )
             where
                 new.id_invoice = invoice.id;
 
@@ -94,20 +120,32 @@ begin
             old.deleted = 0
         then
             update invoice set
-                balance_sum = coalesce(balance_sum, 0) - coalesce(
-                    round(
-                        old.total_sum_with_vat_in_curs :: numeric,
-                        - 2
-                    ),
-                    0
-                ),
-                balance = invoice.invoice_summ - (coalesce(balance_sum, 0) - coalesce(
-                    round(
-                        old.total_sum_with_vat_in_curs :: numeric,
-                        - 2
-                    ),
-                    0
-                ))
+                __balance_json__ = __balance_json__ - old.id::text,
+                (
+                    balance
+                ) = (
+                    select
+                            invoice.invoice_summ -                             sum(
+                                round(
+                                    source_row.total_sum_with_vat_in_curs :: numeric,
+                                    - 2
+                                    )
+                                                        ) as balance
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __balance_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.invoice_positions, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_invoice = invoice.id
+                        and
+                        source_row.deleted = 0
+                )
             where
                 old.id_invoice = invoice.id;
         end if;
@@ -118,20 +156,46 @@ begin
             new.deleted = 0
         then
             update invoice set
-                balance_sum = coalesce(balance_sum, 0) + coalesce(
-                    round(
-                        new.total_sum_with_vat_in_curs :: numeric,
-                        - 2
-                    ),
-                    0
-                ),
-                balance = invoice.invoice_summ - (coalesce(balance_sum, 0) + coalesce(
-                    round(
-                        new.total_sum_with_vat_in_curs :: numeric,
-                        - 2
-                    ),
-                    0
-                ))
+                __balance_json__ = cm_merge_json(
+            __balance_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
+        ),
+            TG_OP
+        ),
+                (
+                    balance
+                ) = (
+                    select
+                            invoice.invoice_summ -                             sum(
+                                round(
+                                    source_row.total_sum_with_vat_in_curs :: numeric,
+                                    - 2
+                                    )
+                                                        ) as balance
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __balance_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.invoice_positions, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_invoice = invoice.id
+                        and
+                        source_row.deleted = 0
+                )
             where
                 new.id_invoice = invoice.id;
         end if;
@@ -147,20 +211,46 @@ begin
             new.deleted = 0
         then
             update invoice set
-                balance_sum = coalesce(balance_sum, 0) + coalesce(
-                    round(
-                        new.total_sum_with_vat_in_curs :: numeric,
-                        - 2
-                    ),
-                    0
-                ),
-                balance = invoice.invoice_summ - (coalesce(balance_sum, 0) + coalesce(
-                    round(
-                        new.total_sum_with_vat_in_curs :: numeric,
-                        - 2
-                    ),
-                    0
-                ))
+                __balance_json__ = cm_merge_json(
+            __balance_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
+        ),
+            TG_OP
+        ),
+                (
+                    balance
+                ) = (
+                    select
+                            invoice.invoice_summ -                             sum(
+                                round(
+                                    source_row.total_sum_with_vat_in_curs :: numeric,
+                                    - 2
+                                    )
+                                                        ) as balance
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __balance_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.invoice_positions, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_invoice = invoice.id
+                        and
+                        source_row.deleted = 0
+                )
             where
                 new.id_invoice = invoice.id;
         end if;

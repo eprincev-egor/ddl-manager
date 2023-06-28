@@ -10,9 +10,9 @@ begin
             old.deleted = 0
         then
             select
-                operations.id as id,
-                operations.__first_point_id as __first_point_id,
-                operations.__first_point_sort as __first_point_sort
+                    operations.id as id,
+                    operations.__first_point_id as __first_point_id,
+                    operations.__first_point_sort as __first_point_sort
             from operations
             where
                 old.id_operation = operations.id
@@ -29,22 +29,20 @@ begin
                         first_point_id_point
                     ) = (
                         select
-                            first_point.id as __first_point_id,
-                            first_point.sort as __first_point_sort,
-                first_point.actual_date as first_point_actual_date,
-                first_point.expected_date as first_point_expected_date,
-                first_point.id_point as first_point_id_point
-
+                                first_point.id as __first_point_id,
+                                first_point.sort as __first_point_sort,
+                                first_point.actual_date as first_point_actual_date,
+                                first_point.expected_date as first_point_expected_date,
+                                first_point.id_point as first_point_id_point
                         from arrival_points as first_point
-
                         where
                             first_point.id_operation = operations.id
-                and
-                first_point.deleted = 0
-            order by
-                first_point.sort asc nulls first,
-                first_point.id asc nulls last
-            limit 1
+                            and
+                            first_point.deleted = 0
+                        order by
+                            first_point.sort asc nulls first,
+                            first_point.id asc nulls last
+                        limit 1
                     )
                 where
                     operations.id = cache_row.id;
@@ -86,9 +84,9 @@ begin
 
             if new.sort is distinct from old.sort then
                 select
-                    operations.id as id,
-                    operations.__first_point_id as __first_point_id,
-                    operations.__first_point_sort as __first_point_sort
+                        operations.id as id,
+                        operations.__first_point_id as __first_point_id,
+                        operations.__first_point_sort as __first_point_sort
                 from operations
                 where
                     old.id_operation = operations.id
@@ -137,22 +135,20 @@ begin
                                 first_point_id_point
                             ) = (
                                 select
-                                    first_point.id as __first_point_id,
-                                    first_point.sort as __first_point_sort,
-                first_point.actual_date as first_point_actual_date,
-                first_point.expected_date as first_point_expected_date,
-                first_point.id_point as first_point_id_point
-
+                                        first_point.id as __first_point_id,
+                                        first_point.sort as __first_point_sort,
+                                        first_point.actual_date as first_point_actual_date,
+                                        first_point.expected_date as first_point_expected_date,
+                                        first_point.id_point as first_point_id_point
                                 from arrival_points as first_point
-
                                 where
                                     first_point.id_operation = operations.id
-                and
-                first_point.deleted = 0
-            order by
-                first_point.sort asc nulls first,
-                first_point.id asc nulls last
-            limit 1
+                                    and
+                                    first_point.deleted = 0
+                                order by
+                                    first_point.sort asc nulls first,
+                                    first_point.id asc nulls last
+                                limit 1
                             )
                         where
                             operations.id = cache_row.id;
@@ -186,9 +182,9 @@ begin
             old.deleted = 0
         then
             select
-                operations.id as id,
-                operations.__first_point_id as __first_point_id,
-                operations.__first_point_sort as __first_point_sort
+                    operations.id as id,
+                    operations.__first_point_id as __first_point_id,
+                    operations.__first_point_sort as __first_point_sort
             from operations
             where
                 old.id_operation = operations.id
@@ -205,22 +201,20 @@ begin
                         first_point_id_point
                     ) = (
                         select
-                            first_point.id as __first_point_id,
-                            first_point.sort as __first_point_sort,
-                first_point.actual_date as first_point_actual_date,
-                first_point.expected_date as first_point_expected_date,
-                first_point.id_point as first_point_id_point
-
+                                first_point.id as __first_point_id,
+                                first_point.sort as __first_point_sort,
+                                first_point.actual_date as first_point_actual_date,
+                                first_point.expected_date as first_point_expected_date,
+                                first_point.id_point as first_point_id_point
                         from arrival_points as first_point
-
                         where
                             first_point.id_operation = operations.id
-                and
-                first_point.deleted = 0
-            order by
-                first_point.sort asc nulls first,
-                first_point.id asc nulls last
-            limit 1
+                            and
+                            first_point.deleted = 0
+                        order by
+                            first_point.sort asc nulls first,
+                            first_point.id asc nulls last
+                        limit 1
                     )
                 where
                     operations.id = cache_row.id;
@@ -233,9 +227,9 @@ begin
             new.deleted = 0
         then
             select
-                operations.id as id,
-                operations.__first_point_id as __first_point_id,
-                operations.__first_point_sort as __first_point_sort
+                    operations.id as id,
+                    operations.__first_point_id as __first_point_id,
+                    operations.__first_point_sort as __first_point_sort
             from operations
             where
                 new.id_operation = operations.id
@@ -276,9 +270,9 @@ begin
             new.deleted = 0
         then
             select
-                operations.id as id,
-                operations.__first_point_id as __first_point_id,
-                operations.__first_point_sort as __first_point_sort
+                    operations.id as id,
+                    operations.__first_point_id as __first_point_id,
+                    operations.__first_point_sort as __first_point_sort
             from operations
             where
                 new.id_operation = operations.id

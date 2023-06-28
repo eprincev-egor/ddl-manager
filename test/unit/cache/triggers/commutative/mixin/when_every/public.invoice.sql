@@ -17,43 +17,38 @@ begin
             old.deleted = 0
         then
             update public.order set
-                all_invoices_has_payment_every_payment_date = cm_array_remove_one_element(
-                    all_invoices_has_payment_every_payment_date,
-                    old.payment_date
-                ),
-                all_invoices_has_payment_every = (
+                __test_json__ = __test_json__ - old.id::text,
+                (
+                    all_invoices_has_payment
+                ) = (
                     select
-                        every(
-                            item.payment_date is not null
-                        )
+                            case
+                                when
+                                    every(
+                                        source_row.payment_date is not null
+                                                                        )
+                                then
+                                    1
+                                else
+                                    0
+                            end as all_invoices_has_payment
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __test_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            all_invoices_has_payment_every_payment_date,
-                            old.payment_date
-                        )
-                    ) as item(payment_date)
-                ),
-                all_invoices_has_payment = case
-                    when
-                        ((
-                            select
-                                every(
-                                    item.payment_date is not null
-                                )
-
-                            from unnest(
-                                cm_array_remove_one_element(
-                                    all_invoices_has_payment_every_payment_date,
-                                    old.payment_date
-                                )
-                            ) as item(payment_date)
-                        ))
-                    then
-                        1
-                    else
-                        0
-                end
+                        left join lateral jsonb_populate_record(null::public.invoice, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.orders_ids && ARRAY[public.order.id] :: bigint[]
+                        and
+                        source_row.id_invoice_type = 2
+                        and
+                        source_row.deleted = 0
+                )
             where
                 public.order.id = any( old.orders_ids::bigint[] );
         end if;
@@ -121,118 +116,142 @@ begin
 
         if not_changed_orders_ids is not null then
             update public.order set
-                all_invoices_has_payment_every_payment_date = array_append(
-                    cm_array_remove_one_element(
-                        all_invoices_has_payment_every_payment_date,
-                        old.payment_date
-                    ),
-                    new.payment_date
-                ),
-                all_invoices_has_payment_every = (
+                __test_json__ = cm_merge_json(
+            __test_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'payment_date', new.payment_date
+        ),
+            TG_OP
+        ),
+                (
+                    all_invoices_has_payment
+                ) = (
                     select
-                        every(
-                            item.payment_date is not null
-                        )
+                            case
+                                when
+                                    every(
+                                        source_row.payment_date is not null
+                                                                        )
+                                then
+                                    1
+                                else
+                                    0
+                            end as all_invoices_has_payment
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __test_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'payment_date', new.payment_date
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                    from unnest(
-                        array_append(
-                            cm_array_remove_one_element(
-                                all_invoices_has_payment_every_payment_date,
-                                old.payment_date
-                            ),
-                            new.payment_date
-                        )
-                    ) as item(payment_date)
-                ),
-                all_invoices_has_payment = case
-                    when
-                        ((
-                            select
-                                every(
-                                    item.payment_date is not null
-                                )
-
-                            from unnest(
-                                array_append(
-                                    cm_array_remove_one_element(
-                                        all_invoices_has_payment_every_payment_date,
-                                        old.payment_date
-                                    ),
-                                    new.payment_date
-                                )
-                            ) as item(payment_date)
-                        ))
-                    then
-                        1
-                    else
-                        0
-                end
+                        left join lateral jsonb_populate_record(null::public.invoice, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.orders_ids && ARRAY[public.order.id] :: bigint[]
+                        and
+                        source_row.id_invoice_type = 2
+                        and
+                        source_row.deleted = 0
+                )
             where
                 public.order.id = any( not_changed_orders_ids::bigint[] );
         end if;
 
         if deleted_orders_ids is not null then
             update public.order set
-                all_invoices_has_payment_every_payment_date = cm_array_remove_one_element(
-                    all_invoices_has_payment_every_payment_date,
-                    old.payment_date
-                ),
-                all_invoices_has_payment_every = (
+                __test_json__ = __test_json__ - old.id::text,
+                (
+                    all_invoices_has_payment
+                ) = (
                     select
-                        every(
-                            item.payment_date is not null
-                        )
+                            case
+                                when
+                                    every(
+                                        source_row.payment_date is not null
+                                                                        )
+                                then
+                                    1
+                                else
+                                    0
+                            end as all_invoices_has_payment
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __test_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            all_invoices_has_payment_every_payment_date,
-                            old.payment_date
-                        )
-                    ) as item(payment_date)
-                ),
-                all_invoices_has_payment = case
-                    when
-                        ((
-                            select
-                                every(
-                                    item.payment_date is not null
-                                )
-
-                            from unnest(
-                                cm_array_remove_one_element(
-                                    all_invoices_has_payment_every_payment_date,
-                                    old.payment_date
-                                )
-                            ) as item(payment_date)
-                        ))
-                    then
-                        1
-                    else
-                        0
-                end
+                        left join lateral jsonb_populate_record(null::public.invoice, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.orders_ids && ARRAY[public.order.id] :: bigint[]
+                        and
+                        source_row.id_invoice_type = 2
+                        and
+                        source_row.deleted = 0
+                )
             where
                 public.order.id = any( deleted_orders_ids::bigint[] );
         end if;
 
         if inserted_orders_ids is not null then
             update public.order set
-                all_invoices_has_payment_every_payment_date = array_append(
-                    all_invoices_has_payment_every_payment_date,
-                    new.payment_date
-                ),
-                all_invoices_has_payment_every = all_invoices_has_payment_every
-                and
-                new.payment_date is not null,
-                all_invoices_has_payment = case
-                    when
-                        (all_invoices_has_payment_every
+                __test_json__ = cm_merge_json(
+            __test_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'payment_date', new.payment_date
+        ),
+            TG_OP
+        ),
+                (
+                    all_invoices_has_payment
+                ) = (
+                    select
+                            case
+                                when
+                                    every(
+                                        source_row.payment_date is not null
+                                                                        )
+                                then
+                                    1
+                                else
+                                    0
+                            end as all_invoices_has_payment
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __test_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'payment_date', new.payment_date
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.invoice, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.orders_ids && ARRAY[public.order.id] :: bigint[]
                         and
-                        new.payment_date is not null)
-                    then
-                        1
-                    else
-                        0
-                end
+                        source_row.id_invoice_type = 2
+                        and
+                        source_row.deleted = 0
+                )
             where
                 public.order.id = any( inserted_orders_ids::bigint[] );
         end if;
@@ -250,23 +269,52 @@ begin
             new.deleted = 0
         then
             update public.order set
-                all_invoices_has_payment_every_payment_date = array_append(
-                    all_invoices_has_payment_every_payment_date,
-                    new.payment_date
-                ),
-                all_invoices_has_payment_every = all_invoices_has_payment_every
-                and
-                new.payment_date is not null,
-                all_invoices_has_payment = case
-                    when
-                        (all_invoices_has_payment_every
+                __test_json__ = cm_merge_json(
+            __test_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'payment_date', new.payment_date
+        ),
+            TG_OP
+        ),
+                (
+                    all_invoices_has_payment
+                ) = (
+                    select
+                            case
+                                when
+                                    every(
+                                        source_row.payment_date is not null
+                                                                        )
+                                then
+                                    1
+                                else
+                                    0
+                            end as all_invoices_has_payment
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __test_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'payment_date', new.payment_date
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.invoice, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.orders_ids && ARRAY[public.order.id] :: bigint[]
                         and
-                        new.payment_date is not null)
-                    then
-                        1
-                    else
-                        0
-                end
+                        source_row.id_invoice_type = 2
+                        and
+                        source_row.deleted = 0
+                )
             where
                 public.order.id = any( new.orders_ids::bigint[] );
         end if;

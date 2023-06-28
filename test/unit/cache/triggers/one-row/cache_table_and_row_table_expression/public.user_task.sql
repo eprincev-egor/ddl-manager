@@ -8,11 +8,11 @@ begin
                 target_query_name = coalesce(
                     (null::text),
                     comments.query_name
-                ),
+                                ),
                 target_row_id = coalesce(
                     (null::int8),
                     comments.row_id
-                )
+                                )
             where
                 old.id = comments.row_id
                 and
@@ -58,7 +58,7 @@ begin
                         coalesce(
                             new.query_name,
                             comments.query_name
-                        )
+                                                )
                     else
                         null
                 end,
@@ -69,7 +69,7 @@ begin
                         coalesce(
                             new.row_id,
                             comments.row_id
-                        )
+                                                )
                     else
                         null
                 end
@@ -86,7 +86,7 @@ begin
                             coalesce(
                                 new.query_name,
                                 comments.query_name
-                            )
+                                    )
                         else
                             null
                     end)
@@ -98,7 +98,7 @@ begin
                             coalesce(
                                 new.row_id,
                                 comments.row_id
-                            )
+                                    )
                         else
                             null
                     end)

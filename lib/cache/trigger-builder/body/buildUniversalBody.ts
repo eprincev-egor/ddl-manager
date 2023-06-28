@@ -10,7 +10,8 @@ import {
     SetSelectItem,
     Update,
     With,
-    WithQuery
+    WithQuery,
+    Select
 } from "../../../ast";
 import { TableReference } from "../../../database/schema/TableReference";
 import { TableID } from "../../../database/schema/TableID";
@@ -20,7 +21,7 @@ export interface IUniversalAST {
     triggerTable: TableID;
     from: string[];
     where?: Expression;
-    select: string;
+    select: Select;
     updateColumns: string[];
     triggerTableColumns: string[];
 }

@@ -4,13 +4,13 @@ import { Spaces } from "./Spaces";
 
 interface SetSelectItemRow {
     columns: string[];
-    select: string;
+    select: Select;
 }
 
 export class SetSelectItem extends AbstractAstElement {
 
     readonly columns!: string[];
-    readonly select!: Select | string;
+    readonly select!: Select;
 
     constructor(row: SetSelectItemRow) {
         super();
@@ -36,49 +36,12 @@ export class SetSelectItem extends AbstractAstElement {
         
         lines.push(spaces + ") = (");
         lines.push(
-            this.printSelect(
+            ...this.select.template(
                 spaces.plusOneLevel()
             )
         );
         lines.push(spaces + ")");
 
         return lines;
-    }
-
-    private printSelect(spaces: Spaces) {
-        let select = this.select;
-
-        if ( typeof select === "string" ) {
-            select = select.replace(
-                /select\s+/, 
-                "select\n" + spaces.plusOneLevel()
-            );
-            select = select.replace(
-                / as (\w+),\s*/, 
-                " as $1,\n" + spaces.plusOneLevel()
-            );
-            select = select.replace(
-                /\s+from\s+/,
-                `\n\n${spaces}from `
-            );
-            select = select.replace(
-                /\s+(\w+) join\s+/g,
-                `\n\n${spaces}$1 join `
-            );
-            select = select.replace(
-                /\s+on\s+/g,
-                ` on\n${spaces.plusOneLevel()}`
-            );
-            select = select.replace(
-                /\s+where\s+/,
-                `\n\n${spaces}where\n${spaces.plusOneLevel()}`
-            );
-    
-            select = select.replace(/[ ]+$/mg, "");
-    
-            return spaces + select;
-        }
-
-        return select.toSQL(spaces);
     }
 }

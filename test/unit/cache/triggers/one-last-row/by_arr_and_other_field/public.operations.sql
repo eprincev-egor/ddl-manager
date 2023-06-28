@@ -23,22 +23,20 @@ begin
                     id_last_auto_doc
                 ) = (
                     select
-                        last_auto_doc.id as __last_auto_doc_id,
-                        last_auto_doc.id as id_last_auto_doc
-
+                            last_auto_doc.id as __last_auto_doc_id,
+                            last_auto_doc.id as id_last_auto_doc
                     from operations as last_auto_doc
-
                     where
                         last_auto_doc.id_doc_parent_operation = units.id_last_auto
-                and
-                last_auto_doc.id_operation_type = 1
-                and
-                last_auto_doc.deleted = 0
-                and
-                last_auto_doc.units_ids && ARRAY[units.id] :: bigint[]
-            order by
-                last_auto_doc.id desc nulls first
-            limit 1
+                        and
+                        last_auto_doc.id_operation_type = 1
+                        and
+                        last_auto_doc.deleted = 0
+                        and
+                        last_auto_doc.units_ids && ARRAY[units.id] :: bigint[]
+                    order by
+                        last_auto_doc.id desc nulls first
+                    limit 1
                 )
             where
                 units.id = any( old.units_ids )
@@ -130,22 +128,20 @@ begin
                     id_last_auto_doc
                 ) = (
                     select
-                        last_auto_doc.id as __last_auto_doc_id,
-                        last_auto_doc.id as id_last_auto_doc
-
+                            last_auto_doc.id as __last_auto_doc_id,
+                            last_auto_doc.id as id_last_auto_doc
                     from operations as last_auto_doc
-
                     where
                         last_auto_doc.id_doc_parent_operation = units.id_last_auto
-                and
-                last_auto_doc.id_operation_type = 1
-                and
-                last_auto_doc.deleted = 0
-                and
-                last_auto_doc.units_ids && ARRAY[units.id] :: bigint[]
-            order by
-                last_auto_doc.id desc nulls first
-            limit 1
+                        and
+                        last_auto_doc.id_operation_type = 1
+                        and
+                        last_auto_doc.deleted = 0
+                        and
+                        last_auto_doc.units_ids && ARRAY[units.id] :: bigint[]
+                    order by
+                        last_auto_doc.id desc nulls first
+                    limit 1
                 )
             where
                 units.id = any( deleted_units_ids )

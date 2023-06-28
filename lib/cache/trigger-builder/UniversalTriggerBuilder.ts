@@ -26,7 +26,7 @@ export class UniversalTriggerBuilder extends AbstractTriggerBuilder {
             forTable: this.context.cache.for.toString(),
             updateColumns: select.columns
                 .map(col => col.name),
-            select: select.toString(),
+            select,
 
             from,
             where,

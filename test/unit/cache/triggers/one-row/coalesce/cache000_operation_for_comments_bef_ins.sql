@@ -10,11 +10,11 @@ begin
 
 
     select
-        coalesce(
-            operation.operation.doc_parent_id_order,
-            operation.operation.id_order
-        ) as operation_id_order,
-        operation.operation.id_operation_type as operation_type_id
+            coalesce(
+                operation.operation.doc_parent_id_order,
+                operation.operation.id_order
+                        ) as operation_id_order,
+            operation.operation.id_operation_type as operation_type_id
     from operation.operation
     where
         operation.operation.id = new.row_id

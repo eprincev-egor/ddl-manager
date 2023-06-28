@@ -1,7 +1,5 @@
 create or replace function cache_totals_for_companies_on_orders()
 returns trigger as $body$
-declare old_order_type_name text;
-declare new_order_type_name text;
 begin
 
     if TG_OP = 'DELETE' then
@@ -11,22 +9,35 @@ begin
             and
             old.deleted = 0
         then
-            if old.id_order_type is not null then
-                old_order_type_name = (
+            update companies set
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    orders_total
+                ) = (
                     select
-                        order_type.name
-                    from order_type
-                    where
-                        order_type.id = old.id_order_type
-                );
-            end if;
+                            sum(source_row.profit) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-            if old_order_type_name in ('LCL', 'LTL') then
-                update companies set
-                    orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0)
-                where
-                    old.id_client = companies.id;
-            end if;
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join order_type on
+                        order_type.id = source_row.id_order_type
+                    where
+                        source_row.id_client = companies.id
+                        and
+                        source_row.deleted = 0
+                        and
+                        order_type.name in ('LCL', 'LTL')
+                )
+            where
+                old.id_client = companies.id;
         end if;
 
         return old;
@@ -45,49 +56,60 @@ begin
             return new;
         end if;
 
-        if old.id_order_type is not null then
-            old_order_type_name = (
-                select
-                    order_type.name
-                from order_type
-                where
-                    order_type.id = old.id_order_type
-            );
-        end if;
-
-        if new.id_order_type is not distinct from old.id_order_type then
-            new_order_type_name = old_order_type_name;
-        else
-            if new.id_order_type is not null then
-                new_order_type_name = (
-                    select
-                        order_type.name
-                    from order_type
-                    where
-                        order_type.id = new.id_order_type
-                );
-            end if;
-        end if;
-
         if
             new.id_client is not distinct from old.id_client
             and
             new.deleted is not distinct from old.deleted
-            and
-            new_order_type_name is not distinct from old_order_type_name
         then
             if
                 new.id_client is null
                 or
                 not coalesce(new.deleted = 0, false)
-                or
-                not coalesce(new_order_type_name in ('LCL', 'LTL'), false)
             then
                 return new;
             end if;
 
             update companies set
-                orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    orders_total
+                ) = (
+                    select
+                            sum(source_row.profit) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join order_type on
+                        order_type.id = source_row.id_order_type
+                    where
+                        source_row.id_client = companies.id
+                        and
+                        source_row.deleted = 0
+                        and
+                        order_type.name in ('LCL', 'LTL')
+                )
             where
                 new.id_client = companies.id;
 
@@ -98,11 +120,34 @@ begin
             old.id_client is not null
             and
             old.deleted = 0
-            and
-            old_order_type_name in ('LCL', 'LTL')
         then
             update companies set
-                orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0)
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    orders_total
+                ) = (
+                    select
+                            sum(source_row.profit) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join order_type on
+                        order_type.id = source_row.id_order_type
+                    where
+                        source_row.id_client = companies.id
+                        and
+                        source_row.deleted = 0
+                        and
+                        order_type.name in ('LCL', 'LTL')
+                )
             where
                 old.id_client = companies.id;
         end if;
@@ -111,11 +156,48 @@ begin
             new.id_client is not null
             and
             new.deleted = 0
-            and
-            new_order_type_name in ('LCL', 'LTL')
         then
             update companies set
-                orders_total = coalesce(orders_total, 0) + coalesce(new.profit, 0)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    orders_total
+                ) = (
+                    select
+                            sum(source_row.profit) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join order_type on
+                        order_type.id = source_row.id_order_type
+                    where
+                        source_row.id_client = companies.id
+                        and
+                        source_row.deleted = 0
+                        and
+                        order_type.name in ('LCL', 'LTL')
+                )
             where
                 new.id_client = companies.id;
         end if;
@@ -130,22 +212,49 @@ begin
             and
             new.deleted = 0
         then
-            if new.id_order_type is not null then
-                new_order_type_name = (
+            update companies set
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    orders_total
+                ) = (
                     select
-                        order_type.name
-                    from order_type
-                    where
-                        order_type.id = new.id_order_type
-                );
-            end if;
+                            sum(source_row.profit) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
 
-            if new_order_type_name in ('LCL', 'LTL') then
-                update companies set
-                    orders_total = coalesce(orders_total, 0) + coalesce(new.profit, 0)
-                where
-                    new.id_client = companies.id;
-            end if;
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join order_type on
+                        order_type.id = source_row.id_order_type
+                    where
+                        source_row.id_client = companies.id
+                        and
+                        source_row.deleted = 0
+                        and
+                        order_type.name in ('LCL', 'LTL')
+                )
+            where
+                new.id_client = companies.id;
         end if;
 
         return new;

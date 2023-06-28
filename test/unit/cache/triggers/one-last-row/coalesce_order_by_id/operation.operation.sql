@@ -19,12 +19,12 @@ begin
             end if;
 
             select
-                deleted,
-                end_expected_date,
-                id,
-                id_doc_parent_operation,
-                id_order,
-                is_border_crossing
+                    deleted,
+                    end_expected_date,
+                    id,
+                    id_doc_parent_operation,
+                    id_order,
+                    is_border_crossing
             from operation.operation as border_crossing
             where
                 border_crossing.id_order = old.id_order
@@ -51,7 +51,7 @@ begin
                 date_delivery = coalesce(
                     prev_row.end_expected_date,
                     orders.date_delivery
-                )
+                                )
             where
                 old.id_order = orders.id
                 and
@@ -114,7 +114,7 @@ begin
                 date_delivery = coalesce(
                     new.end_expected_date,
                     orders.date_delivery
-                )
+                                )
             where
                 new.id_order = orders.id
                 and
@@ -142,12 +142,12 @@ begin
             old.__border_crossing_for_order
         then
             select
-                deleted,
-                end_expected_date,
-                id,
-                id_doc_parent_operation,
-                id_order,
-                is_border_crossing
+                    deleted,
+                    end_expected_date,
+                    id,
+                    id_doc_parent_operation,
+                    id_order,
+                    is_border_crossing
             from operation.operation as border_crossing
             where
                 border_crossing.id_order = old.id_order
@@ -174,7 +174,7 @@ begin
                 date_delivery = coalesce(
                     prev_row.end_expected_date,
                     orders.date_delivery
-                )
+                                )
             where
                 old.id_order = orders.id
                 and
@@ -239,7 +239,7 @@ begin
                     date_delivery = coalesce(
                         new.end_expected_date,
                         orders.date_delivery
-                    )
+                                        )
                 where
                     new.id_order = orders.id
                     and
@@ -287,7 +287,7 @@ begin
                 date_delivery = coalesce(
                     new.end_expected_date,
                     orders.date_delivery
-                )
+                                )
             where
                 new.id_order = orders.id
                 and

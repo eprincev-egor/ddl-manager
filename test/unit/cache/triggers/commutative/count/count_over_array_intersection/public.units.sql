@@ -1,6 +1,7 @@
 create or replace function cache_totals_for_gtd_on_units()
 returns trigger as $body$
 declare inserted_orders_ids bigint[];
+declare not_changed_orders_ids bigint[];
 declare deleted_orders_ids bigint[];
 begin
 
@@ -8,7 +9,25 @@ begin
 
         if old.orders_ids is not null then
             update gtd set
-                units_count = units_count - 1
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    units_count
+                ) = (
+                    select
+                            count(*) as units_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.units, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.orders_ids && gtd.orders_ids
+                )
             where
                 old.orders_ids && gtd.orders_ids;
         end if;
@@ -22,19 +41,108 @@ begin
         end if;
 
         inserted_orders_ids = cm_get_inserted_elements(old.orders_ids, new.orders_ids);
+        not_changed_orders_ids = cm_get_not_changed_elements(old.orders_ids, new.orders_ids);
         deleted_orders_ids = cm_get_deleted_elements(old.orders_ids, new.orders_ids);
 
+        if not_changed_orders_ids is not null then
+            update gtd set
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'orders_ids', new.orders_ids
+        ),
+            TG_OP
+        ),
+                (
+                    units_count
+                ) = (
+                    select
+                            count(*) as units_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'orders_ids', new.orders_ids
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.units, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.orders_ids && gtd.orders_ids
+                )
+            where
+                not_changed_orders_ids && gtd.orders_ids;
+        end if;
 
         if deleted_orders_ids is not null then
             update gtd set
-                units_count = units_count - 1
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    units_count
+                ) = (
+                    select
+                            count(*) as units_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.units, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.orders_ids && gtd.orders_ids
+                )
             where
                 deleted_orders_ids && gtd.orders_ids;
         end if;
 
         if inserted_orders_ids is not null then
             update gtd set
-                units_count = units_count + 1
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'orders_ids', new.orders_ids
+        ),
+            TG_OP
+        ),
+                (
+                    units_count
+                ) = (
+                    select
+                            count(*) as units_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'orders_ids', new.orders_ids
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.units, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.orders_ids && gtd.orders_ids
+                )
             where
                 inserted_orders_ids && gtd.orders_ids;
         end if;
@@ -46,7 +154,39 @@ begin
 
         if new.orders_ids is not null then
             update gtd set
-                units_count = units_count + 1
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'orders_ids', new.orders_ids
+        ),
+            TG_OP
+        ),
+                (
+                    units_count
+                ) = (
+                    select
+                            count(*) as units_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'orders_ids', new.orders_ids
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.units, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.orders_ids && gtd.orders_ids
+                )
             where
                 new.orders_ids && gtd.orders_ids;
         end if;

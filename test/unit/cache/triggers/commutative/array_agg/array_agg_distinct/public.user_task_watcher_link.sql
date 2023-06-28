@@ -6,20 +6,24 @@ begin
 
         if old.id_user_task is not null then
             update user_task set
-                watchers_users_ids_id_user = cm_array_remove_one_element(
-                    watchers_users_ids_id_user,
-                    old.id_user
-                ),
-                watchers_users_ids = (
+                __watchers_json__ = __watchers_json__ - old.id::text,
+                (
+                    watchers_users_ids
+                ) = (
                     select
-                        array_agg(distinct item.id_user)
+                            array_agg(distinct source_row.id_user) as watchers_users_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __watchers_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            watchers_users_ids_id_user,
-                            old.id_user
-                        )
-                    ) as item(id_user)
+                        left join lateral jsonb_populate_record(null::public.user_task_watcher_link, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_user_task = user_task.id
                 )
             where
                 old.id_user_task = user_task.id;
@@ -43,26 +47,38 @@ begin
             end if;
 
             update user_task set
-                watchers_users_ids_id_user = array_append(
-                    cm_array_remove_one_element(
-                        watchers_users_ids_id_user,
-                        old.id_user
-                    ),
-                    new.id_user
-                ),
-                watchers_users_ids = (
+                __watchers_json__ = cm_merge_json(
+            __watchers_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
+        ),
+            TG_OP
+        ),
+                (
+                    watchers_users_ids
+                ) = (
                     select
-                        array_agg(distinct item.id_user)
+                            array_agg(distinct source_row.id_user) as watchers_users_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __watchers_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                    from unnest(
-                        array_append(
-                            cm_array_remove_one_element(
-                                watchers_users_ids_id_user,
-                                old.id_user
-                            ),
-                            new.id_user
-                        )
-                    ) as item(id_user)
+                        left join lateral jsonb_populate_record(null::public.user_task_watcher_link, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_user_task = user_task.id
                 )
             where
                 new.id_user_task = user_task.id;
@@ -72,20 +88,24 @@ begin
 
         if old.id_user_task is not null then
             update user_task set
-                watchers_users_ids_id_user = cm_array_remove_one_element(
-                    watchers_users_ids_id_user,
-                    old.id_user
-                ),
-                watchers_users_ids = (
+                __watchers_json__ = __watchers_json__ - old.id::text,
+                (
+                    watchers_users_ids
+                ) = (
                     select
-                        array_agg(distinct item.id_user)
+                            array_agg(distinct source_row.id_user) as watchers_users_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __watchers_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            watchers_users_ids_id_user,
-                            old.id_user
-                        )
-                    ) as item(id_user)
+                        left join lateral jsonb_populate_record(null::public.user_task_watcher_link, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_user_task = user_task.id
                 )
             where
                 old.id_user_task = user_task.id;
@@ -93,25 +113,39 @@ begin
 
         if new.id_user_task is not null then
             update user_task set
-                watchers_users_ids_id_user = array_append(
-                    watchers_users_ids_id_user,
-                    new.id_user
-                ),
-                watchers_users_ids = case
-                    when
-                        array_position(
-                            watchers_users_ids,
-                            new.id_user
-                        )
-                        is null
-                    then
-                        array_append(
-                            watchers_users_ids,
-                            new.id_user
-                        )
-                    else
-                        watchers_users_ids
-                end
+                __watchers_json__ = cm_merge_json(
+            __watchers_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
+        ),
+            TG_OP
+        ),
+                (
+                    watchers_users_ids
+                ) = (
+                    select
+                            array_agg(distinct source_row.id_user) as watchers_users_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __watchers_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.user_task_watcher_link, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_user_task = user_task.id
+                )
             where
                 new.id_user_task = user_task.id;
         end if;
@@ -123,25 +157,39 @@ begin
 
         if new.id_user_task is not null then
             update user_task set
-                watchers_users_ids_id_user = array_append(
-                    watchers_users_ids_id_user,
-                    new.id_user
-                ),
-                watchers_users_ids = case
-                    when
-                        array_position(
-                            watchers_users_ids,
-                            new.id_user
-                        )
-                        is null
-                    then
-                        array_append(
-                            watchers_users_ids,
-                            new.id_user
-                        )
-                    else
-                        watchers_users_ids
-                end
+                __watchers_json__ = cm_merge_json(
+            __watchers_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
+        ),
+            TG_OP
+        ),
+                (
+                    watchers_users_ids
+                ) = (
+                    select
+                            array_agg(distinct source_row.id_user) as watchers_users_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __watchers_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.user_task_watcher_link, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_user_task = user_task.id
+                )
             where
                 new.id_user_task = user_task.id;
         end if;

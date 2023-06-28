@@ -6,7 +6,25 @@ begin
 
         if old.transfer_date is not null then
             update capital.account_date_balance as date_balance set
-                transfers_sum = coalesce(transfers_sum, 0) - coalesce(old.delta, 0)
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    transfers_sum
+                ) = (
+                    select
+                            sum(source_row.delta) as transfers_sum
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::capital.transfer, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.transfer_date = date_balance.balance_date
+                )
             where
                 old.transfer_date = date_balance.balance_date;
         end if;
@@ -29,7 +47,39 @@ begin
             end if;
 
             update capital.account_date_balance as date_balance set
-                transfers_sum = coalesce(transfers_sum, 0) - coalesce(old.delta, 0) + coalesce(new.delta, 0)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'delta', new.delta,'id', new.id,'transfer_date', new.transfer_date
+        ),
+            TG_OP
+        ),
+                (
+                    transfers_sum
+                ) = (
+                    select
+                            sum(source_row.delta) as transfers_sum
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'delta', new.delta,'id', new.id,'transfer_date', new.transfer_date
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::capital.transfer, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.transfer_date = date_balance.balance_date
+                )
             where
                 new.transfer_date = date_balance.balance_date;
 
@@ -38,14 +88,64 @@ begin
 
         if old.transfer_date is not null then
             update capital.account_date_balance as date_balance set
-                transfers_sum = coalesce(transfers_sum, 0) - coalesce(old.delta, 0)
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    transfers_sum
+                ) = (
+                    select
+                            sum(source_row.delta) as transfers_sum
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::capital.transfer, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.transfer_date = date_balance.balance_date
+                )
             where
                 old.transfer_date = date_balance.balance_date;
         end if;
 
         if new.transfer_date is not null then
             update capital.account_date_balance as date_balance set
-                transfers_sum = coalesce(transfers_sum, 0) + coalesce(new.delta, 0)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'delta', new.delta,'id', new.id,'transfer_date', new.transfer_date
+        ),
+            TG_OP
+        ),
+                (
+                    transfers_sum
+                ) = (
+                    select
+                            sum(source_row.delta) as transfers_sum
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'delta', new.delta,'id', new.id,'transfer_date', new.transfer_date
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::capital.transfer, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.transfer_date = date_balance.balance_date
+                )
             where
                 new.transfer_date = date_balance.balance_date;
         end if;
@@ -57,7 +157,39 @@ begin
 
         if new.transfer_date is not null then
             update capital.account_date_balance as date_balance set
-                transfers_sum = coalesce(transfers_sum, 0) + coalesce(new.delta, 0)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'delta', new.delta,'id', new.id,'transfer_date', new.transfer_date
+        ),
+            TG_OP
+        ),
+                (
+                    transfers_sum
+                ) = (
+                    select
+                            sum(source_row.delta) as transfers_sum
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'delta', new.delta,'id', new.id,'transfer_date', new.transfer_date
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::capital.transfer, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.transfer_date = date_balance.balance_date
+                )
             where
                 new.transfer_date = date_balance.balance_date;
         end if;

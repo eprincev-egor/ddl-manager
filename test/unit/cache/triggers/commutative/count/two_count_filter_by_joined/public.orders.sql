@@ -1,44 +1,40 @@
 create or replace function cache_totals_for_companies_on_orders()
 returns trigger as $body$
-declare old_country_code text;
-declare new_country_code text;
 begin
 
     if TG_OP = 'DELETE' then
 
         if old.id_client is not null then
-            if old.id_country is not null then
-                old_country_code = (
-                    select
-                        countries.code
-                    from countries
-                    where
-                        countries.id = old.id_country
-                );
-            end if;
-
             if
                 coalesce(old_country_code = 'RUS', false)
                 or
                 coalesce(old_country_code = 'ENG', false)
             then
                 update companies set
-                    rus_orders_count = case
-                        when
-                            old_country_code = 'RUS'
-                        then
-                            rus_orders_count - 1
-                        else
-                            rus_orders_count
-                    end,
-                    eng_orders_count = case
-                        when
-                            old_country_code = 'ENG'
-                        then
-                            eng_orders_count - 1
-                        else
-                            eng_orders_count
-                    end
+                    __totals_json__ = __totals_json__ - old.id::text,
+                    (
+                        rus_orders_count,
+                        eng_orders_count
+                    ) = (
+                        select
+                                count(*) filter (where     countries.code = 'RUS') as rus_orders_count,
+                                count(*) filter (where     countries.code = 'ENG') as eng_orders_count
+                        from (
+                            select
+                                    record.*
+                            from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                            left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                                true
+                        ) as source_row
+
+                        left join countries on
+                            countries.id = source_row.id_country
+                        where
+                            source_row.id_client = companies.id
+                    )
                 where
                     old.id_client = companies.id;
             end if;
@@ -56,68 +52,50 @@ begin
             return new;
         end if;
 
-        if old.id_country is not null then
-            old_country_code = (
-                select
-                    countries.code
-                from countries
-                where
-                    countries.id = old.id_country
-            );
-        end if;
-
-        if new.id_country is not distinct from old.id_country then
-            new_country_code = old_country_code;
-        else
-            if new.id_country is not null then
-                new_country_code = (
-                    select
-                        countries.code
-                    from countries
-                    where
-                        countries.id = new.id_country
-                );
-            end if;
-        end if;
-
         if new.id_client is not distinct from old.id_client then
             if new.id_client is null then
                 return new;
             end if;
 
             update companies set
-                rus_orders_count = case
-                    when
-                        new_country_code = 'RUS'
-                        and
-                        not coalesce(old_country_code = 'RUS', false)
-                    then
-                        rus_orders_count + 1
-                    when
-                        not coalesce(new_country_code = 'RUS', false)
-                        and
-                        old_country_code = 'RUS'
-                    then
-                        rus_orders_count - 1
-                    else
-                        rus_orders_count
-                end,
-                eng_orders_count = case
-                    when
-                        new_country_code = 'ENG'
-                        and
-                        not coalesce(old_country_code = 'ENG', false)
-                    then
-                        eng_orders_count + 1
-                    when
-                        not coalesce(new_country_code = 'ENG', false)
-                        and
-                        old_country_code = 'ENG'
-                    then
-                        eng_orders_count - 1
-                    else
-                        eng_orders_count
-                end
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_country', new.id_country
+        ),
+            TG_OP
+        ),
+                (
+                    rus_orders_count,
+                    eng_orders_count
+                ) = (
+                    select
+                            count(*) filter (where     countries.code = 'RUS') as rus_orders_count,
+                            count(*) filter (where     countries.code = 'ENG') as eng_orders_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_country', new.id_country
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join countries on
+                        countries.id = source_row.id_country
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
 
@@ -134,22 +112,30 @@ begin
             )
         then
             update companies set
-                rus_orders_count = case
-                    when
-                        old_country_code = 'RUS'
-                    then
-                        rus_orders_count - 1
-                    else
-                        rus_orders_count
-                end,
-                eng_orders_count = case
-                    when
-                        old_country_code = 'ENG'
-                    then
-                        eng_orders_count - 1
-                    else
-                        eng_orders_count
-                end
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    rus_orders_count,
+                    eng_orders_count
+                ) = (
+                    select
+                            count(*) filter (where     countries.code = 'RUS') as rus_orders_count,
+                            count(*) filter (where     countries.code = 'ENG') as eng_orders_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join countries on
+                        countries.id = source_row.id_country
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 old.id_client = companies.id;
         end if;
@@ -164,22 +150,44 @@ begin
             )
         then
             update companies set
-                rus_orders_count = case
-                    when
-                        new_country_code = 'RUS'
-                    then
-                        rus_orders_count + 1
-                    else
-                        rus_orders_count
-                end,
-                eng_orders_count = case
-                    when
-                        new_country_code = 'ENG'
-                    then
-                        eng_orders_count + 1
-                    else
-                        eng_orders_count
-                end
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_country', new.id_country
+        ),
+            TG_OP
+        ),
+                (
+                    rus_orders_count,
+                    eng_orders_count
+                ) = (
+                    select
+                            count(*) filter (where     countries.code = 'RUS') as rus_orders_count,
+                            count(*) filter (where     countries.code = 'ENG') as eng_orders_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_country', new.id_country
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join countries on
+                        countries.id = source_row.id_country
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
         end if;
@@ -190,38 +198,50 @@ begin
     if TG_OP = 'INSERT' then
 
         if new.id_client is not null then
-            if new.id_country is not null then
-                new_country_code = (
-                    select
-                        countries.code
-                    from countries
-                    where
-                        countries.id = new.id_country
-                );
-            end if;
-
             if
                 coalesce(new_country_code = 'RUS', false)
                 or
                 coalesce(new_country_code = 'ENG', false)
             then
                 update companies set
-                    rus_orders_count = case
-                        when
-                            new_country_code = 'RUS'
-                        then
-                            rus_orders_count + 1
-                        else
-                            rus_orders_count
-                    end,
-                    eng_orders_count = case
-                        when
-                            new_country_code = 'ENG'
-                        then
-                            eng_orders_count + 1
-                        else
-                            eng_orders_count
-                    end
+                    __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_country', new.id_country
+        ),
+            TG_OP
+        ),
+                    (
+                        rus_orders_count,
+                        eng_orders_count
+                    ) = (
+                        select
+                                count(*) filter (where     countries.code = 'RUS') as rus_orders_count,
+                                count(*) filter (where     countries.code = 'ENG') as eng_orders_count
+                        from (
+                            select
+                                    record.*
+                            from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_country', new.id_country
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                            left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                                true
+                        ) as source_row
+
+                        left join countries on
+                            countries.id = source_row.id_country
+                        where
+                            source_row.id_client = companies.id
+                    )
                 where
                     new.id_client = companies.id;
             end if;

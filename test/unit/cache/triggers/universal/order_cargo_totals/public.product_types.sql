@@ -29,19 +29,24 @@ begin
     update orders set
         (
             cargos_weight,
-            cargos_products_names_name,
-            cargos_products_names
+            cargos_products_names,
+            __cargo_totals_json__
         ) = (
             select
-                sum(cargos.total_weight) as cargos_weight,
-                array_agg(product_types.name) as cargos_products_names_name,
-    string_agg(product_types.name, ', ') as cargos_products_names
-
+                    sum(cargos.total_weight) as cargos_weight,
+                    string_agg(product_types.name, ', ') as cargos_products_names,
+                    ('{' || string_agg(
+                                                    '"' || public.cargos.id::text || '":' || jsonb_build_object(
+                                'id', public.cargos.id,'id_order', public.cargos.id_order,'id_product_type', public.cargos.id_product_type,'total_weight', public.cargos.total_weight
+                            )::text,
+                                                    ','
+                                                ) || '}')
+                    ::
+                    jsonb as __cargo_totals_json__
             from cargos
 
             left join product_types on
                 product_types.id = cargos.id_product_type
-
             where
                 cargos.id_order = orders.id
         )

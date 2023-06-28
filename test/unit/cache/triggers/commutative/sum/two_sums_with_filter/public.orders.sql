@@ -14,49 +14,25 @@ begin
             )
         then
             update companies set
-                orders_profit_sum_total_is_sale = case
-                    when
-                        old.is_sale
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_sale,
-                            0
-                        ) - coalesce(old.total, 0)
-                    else
-                        orders_profit_sum_total_is_sale
-                end,
-                orders_profit_sum_total_is_buy = case
-                    when
-                        old.is_buy
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_buy,
-                            0
-                        ) - coalesce(old.total, 0)
-                    else
-                        orders_profit_sum_total_is_buy
-                end,
-                orders_profit = (case
-                    when
-                        old.is_sale
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_sale,
-                            0
-                        ) - coalesce(old.total, 0)
-                    else
-                        orders_profit_sum_total_is_sale
-                end) - (case
-                    when
-                        old.is_buy
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_buy,
-                            0
-                        ) - coalesce(old.total, 0)
-                    else
-                        orders_profit_sum_total_is_buy
-                end)
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    orders_profit
+                ) = (
+                    select
+                            sum(source_row.total) filter (where     source_row.is_sale) -                             sum(source_row.total) filter (where     source_row.is_buy) as orders_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 old.id_client = companies.id;
         end if;
@@ -83,121 +59,39 @@ begin
             end if;
 
             update companies set
-                orders_profit_sum_total_is_sale = case
-                    when
-                        new.is_sale
-                        and
-                        not coalesce(old.is_sale, false)
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_sale,
-                            0
-                        ) + coalesce(new.total, 0)
-                    when
-                        not coalesce(new.is_sale, false)
-                        and
-                        old.is_sale
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_sale,
-                            0
-                        ) - coalesce(old.total, 0)
-                    when
-                        new.is_sale
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_sale,
-                            0
-                        ) - coalesce(old.total, 0) + coalesce(new.total, 0)
-                    else
-                        orders_profit_sum_total_is_sale
-                end,
-                orders_profit_sum_total_is_buy = case
-                    when
-                        new.is_buy
-                        and
-                        not coalesce(old.is_buy, false)
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_buy,
-                            0
-                        ) + coalesce(new.total, 0)
-                    when
-                        not coalesce(new.is_buy, false)
-                        and
-                        old.is_buy
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_buy,
-                            0
-                        ) - coalesce(old.total, 0)
-                    when
-                        new.is_buy
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_buy,
-                            0
-                        ) - coalesce(old.total, 0) + coalesce(new.total, 0)
-                    else
-                        orders_profit_sum_total_is_buy
-                end,
-                orders_profit = (case
-                    when
-                        new.is_sale
-                        and
-                        not coalesce(old.is_sale, false)
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_sale,
-                            0
-                        ) + coalesce(new.total, 0)
-                    when
-                        not coalesce(new.is_sale, false)
-                        and
-                        old.is_sale
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_sale,
-                            0
-                        ) - coalesce(old.total, 0)
-                    when
-                        new.is_sale
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_sale,
-                            0
-                        ) - coalesce(old.total, 0) + coalesce(new.total, 0)
-                    else
-                        orders_profit_sum_total_is_sale
-                end) - (case
-                    when
-                        new.is_buy
-                        and
-                        not coalesce(old.is_buy, false)
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_buy,
-                            0
-                        ) + coalesce(new.total, 0)
-                    when
-                        not coalesce(new.is_buy, false)
-                        and
-                        old.is_buy
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_buy,
-                            0
-                        ) - coalesce(old.total, 0)
-                    when
-                        new.is_buy
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_buy,
-                            0
-                        ) - coalesce(old.total, 0) + coalesce(new.total, 0)
-                    else
-                        orders_profit_sum_total_is_buy
-                end)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
+        ),
+            TG_OP
+        ),
+                (
+                    orders_profit
+                ) = (
+                    select
+                            sum(source_row.total) filter (where     source_row.is_sale) -                             sum(source_row.total) filter (where     source_row.is_buy) as orders_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
 
@@ -214,49 +108,25 @@ begin
             )
         then
             update companies set
-                orders_profit_sum_total_is_sale = case
-                    when
-                        old.is_sale
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_sale,
-                            0
-                        ) - coalesce(old.total, 0)
-                    else
-                        orders_profit_sum_total_is_sale
-                end,
-                orders_profit_sum_total_is_buy = case
-                    when
-                        old.is_buy
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_buy,
-                            0
-                        ) - coalesce(old.total, 0)
-                    else
-                        orders_profit_sum_total_is_buy
-                end,
-                orders_profit = (case
-                    when
-                        old.is_sale
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_sale,
-                            0
-                        ) - coalesce(old.total, 0)
-                    else
-                        orders_profit_sum_total_is_sale
-                end) - (case
-                    when
-                        old.is_buy
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_buy,
-                            0
-                        ) - coalesce(old.total, 0)
-                    else
-                        orders_profit_sum_total_is_buy
-                end)
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    orders_profit
+                ) = (
+                    select
+                            sum(source_row.total) filter (where     source_row.is_sale) -                             sum(source_row.total) filter (where     source_row.is_buy) as orders_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 old.id_client = companies.id;
         end if;
@@ -271,49 +141,39 @@ begin
             )
         then
             update companies set
-                orders_profit_sum_total_is_sale = case
-                    when
-                        new.is_sale
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_sale,
-                            0
-                        ) + coalesce(new.total, 0)
-                    else
-                        orders_profit_sum_total_is_sale
-                end,
-                orders_profit_sum_total_is_buy = case
-                    when
-                        new.is_buy
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_buy,
-                            0
-                        ) + coalesce(new.total, 0)
-                    else
-                        orders_profit_sum_total_is_buy
-                end,
-                orders_profit = (case
-                    when
-                        new.is_sale
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_sale,
-                            0
-                        ) + coalesce(new.total, 0)
-                    else
-                        orders_profit_sum_total_is_sale
-                end) - (case
-                    when
-                        new.is_buy
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_buy,
-                            0
-                        ) + coalesce(new.total, 0)
-                    else
-                        orders_profit_sum_total_is_buy
-                end)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
+        ),
+            TG_OP
+        ),
+                (
+                    orders_profit
+                ) = (
+                    select
+                            sum(source_row.total) filter (where     source_row.is_sale) -                             sum(source_row.total) filter (where     source_row.is_buy) as orders_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
         end if;
@@ -333,49 +193,39 @@ begin
             )
         then
             update companies set
-                orders_profit_sum_total_is_sale = case
-                    when
-                        new.is_sale
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_sale,
-                            0
-                        ) + coalesce(new.total, 0)
-                    else
-                        orders_profit_sum_total_is_sale
-                end,
-                orders_profit_sum_total_is_buy = case
-                    when
-                        new.is_buy
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_buy,
-                            0
-                        ) + coalesce(new.total, 0)
-                    else
-                        orders_profit_sum_total_is_buy
-                end,
-                orders_profit = (case
-                    when
-                        new.is_sale
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_sale,
-                            0
-                        ) + coalesce(new.total, 0)
-                    else
-                        orders_profit_sum_total_is_sale
-                end) - (case
-                    when
-                        new.is_buy
-                    then
-                        coalesce(
-                            orders_profit_sum_total_is_buy,
-                            0
-                        ) + coalesce(new.total, 0)
-                    else
-                        orders_profit_sum_total_is_buy
-                end)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
+        ),
+            TG_OP
+        ),
+                (
+                    orders_profit
+                ) = (
+                    select
+                            sum(source_row.total) filter (where     source_row.is_sale) -                             sum(source_row.total) filter (where     source_row.is_buy) as orders_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
         end if;

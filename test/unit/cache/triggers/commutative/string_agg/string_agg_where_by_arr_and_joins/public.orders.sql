@@ -1,7 +1,5 @@
 create or replace function cache_totals_for_companies_on_orders()
 returns trigger as $body$
-declare old_country_name text;
-declare new_country_name text;
 declare matched_old boolean;
 declare matched_new boolean;
 declare inserted_clients_ids integer[];
@@ -16,31 +14,30 @@ begin
             and
             old.deleted = 0
         then
-            if old.id_country is not null then
-                old_country_name = (
-                    select
-                        countries.name
-                    from countries
-                    where
-                        countries.id = old.id_country
-                );
-            end if;
-
             update companies set
-                countries_names_name = cm_array_remove_one_element(
-                    countries_names_name,
-                    old_country_name
-                ),
-                countries_names = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    countries_names
+                ) = (
                     select
-                        string_agg(item.name, ', ')
+                            string_agg(country.name, ', ') as countries_names
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            countries_names_name,
-                            old_country_name
-                        )
-                    ) as item(name)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join countries as country on
+                        country.id = source_row.id_country
+                    where
+                        source_row.clients_ids && ARRAY[companies.id]
+                        and
+                        source_row.deleted = 0
                 )
             where
                 companies.id = any( old.clients_ids );
@@ -58,30 +55,6 @@ begin
             new.id_country is not distinct from old.id_country
         then
             return new;
-        end if;
-
-        if old.id_country is not null then
-            old_country_name = (
-                select
-                    countries.name
-                from countries
-                where
-                    countries.id = old.id_country
-            );
-        end if;
-
-        if new.id_country is not distinct from old.id_country then
-            new_country_name = old_country_name;
-        else
-            if new.id_country is not null then
-                new_country_name = (
-                    select
-                        countries.name
-                    from countries
-                    where
-                        countries.id = new.id_country
-                );
-            end if;
         end if;
 
         matched_old = coalesce(old.deleted = 0, false);
@@ -127,26 +100,43 @@ begin
 
         if not_changed_clients_ids is not null then
             update companies set
-                countries_names_name = array_append(
-                    cm_array_remove_one_element(
-                        countries_names_name,
-                        old_country_name
-                    ),
-                    new_country_name
-                ),
-                countries_names = (
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
+        ),
+            TG_OP
+        ),
+                (
+                    countries_names
+                ) = (
                     select
-                        string_agg(item.name, ', ')
+                            string_agg(country.name, ', ') as countries_names
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                    from unnest(
-                        array_append(
-                            cm_array_remove_one_element(
-                                countries_names_name,
-                                old_country_name
-                            ),
-                            new_country_name
-                        )
-                    ) as item(name)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join countries as country on
+                        country.id = source_row.id_country
+                    where
+                        source_row.clients_ids && ARRAY[companies.id]
+                        and
+                        source_row.deleted = 0
                 )
             where
                 companies.id = any( not_changed_clients_ids );
@@ -154,20 +144,29 @@ begin
 
         if deleted_clients_ids is not null then
             update companies set
-                countries_names_name = cm_array_remove_one_element(
-                    countries_names_name,
-                    old_country_name
-                ),
-                countries_names = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    countries_names
+                ) = (
                     select
-                        string_agg(item.name, ', ')
+                            string_agg(country.name, ', ') as countries_names
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            countries_names_name,
-                            old_country_name
-                        )
-                    ) as item(name)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join countries as country on
+                        country.id = source_row.id_country
+                    where
+                        source_row.clients_ids && ARRAY[companies.id]
+                        and
+                        source_row.deleted = 0
                 )
             where
                 companies.id = any( deleted_clients_ids );
@@ -175,18 +174,43 @@ begin
 
         if inserted_clients_ids is not null then
             update companies set
-                countries_names_name = array_append(
-                    countries_names_name,
-                    new_country_name
-                ),
-                countries_names = coalesce(
-                    countries_names ||
-                    coalesce(
-                        ', '
-                        || new_country_name,
-                        ''
-                    ),
-                    new_country_name
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
+        ),
+            TG_OP
+        ),
+                (
+                    countries_names
+                ) = (
+                    select
+                            string_agg(country.name, ', ') as countries_names
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join countries as country on
+                        country.id = source_row.id_country
+                    where
+                        source_row.clients_ids && ARRAY[companies.id]
+                        and
+                        source_row.deleted = 0
                 )
             where
                 companies.id = any( inserted_clients_ids );
@@ -202,29 +226,44 @@ begin
             and
             new.deleted = 0
         then
-            if new.id_country is not null then
-                new_country_name = (
-                    select
-                        countries.name
-                    from countries
-                    where
-                        countries.id = new.id_country
-                );
-            end if;
-
             update companies set
-                countries_names_name = array_append(
-                    countries_names_name,
-                    new_country_name
-                ),
-                countries_names = coalesce(
-                    countries_names ||
-                    coalesce(
-                        ', '
-                        || new_country_name,
-                        ''
-                    ),
-                    new_country_name
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
+        ),
+            TG_OP
+        ),
+                (
+                    countries_names
+                ) = (
+                    select
+                            string_agg(country.name, ', ') as countries_names
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join countries as country on
+                        country.id = source_row.id_country
+                    where
+                        source_row.clients_ids && ARRAY[companies.id]
+                        and
+                        source_row.deleted = 0
                 )
             where
                 companies.id = any( new.clients_ids );

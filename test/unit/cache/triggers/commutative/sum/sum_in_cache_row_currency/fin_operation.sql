@@ -15,18 +15,43 @@ begin
             old.deleted = 0
         then
             update operation.owner_unit as own_unit set
-                fin_sum = coalesce(fin_sum, 0) - coalesce(
-                    round(
-                        coalesce(old.sum_vat, 0 :: bigint) :: numeric * get_curs(
-                            old.id_currency,
-                            own_unit.id_currency_fin_oper,
-                            old.curs,
-                            coalesce(old.doc_date, now_utc()),
-                            old.is_euro_zone_curs
-                        ) :: numeric,
-                        - 2
-                    ) :: bigint / array_length(old.units_ids, 1),
-                    0
+                __fin_totals_json__ = __fin_totals_json__ - old.id::text,
+                (
+                    fin_sum
+                ) = (
+                    select
+                            sum(
+                                round(
+                                    coalesce(
+                                        source_row.sum_vat,
+                                        0 :: bigint
+                                        ) :: numeric *     get_curs(
+                                        source_row.id_currency,
+                                        own_unit.id_currency_fin_oper,
+                                        source_row.curs,
+                                        coalesce(
+                                            source_row.doc_date,
+                                            now_utc()
+                                            ),
+                                        source_row.is_euro_zone_curs
+                                        ) :: numeric,
+                                    - 2
+                                    ) :: bigint /     array_length(source_row.units_ids, 1)
+                                                        ) as fin_sum
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __fin_totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.fin_operation, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && own_unit.units_ids
+                        and
+                        source_row.deleted = 0
                 )
             where
                 old.units_ids && own_unit.units_ids;
@@ -97,30 +122,57 @@ begin
 
         if not_changed_units_ids is not null then
             update operation.owner_unit as own_unit set
-                fin_sum = coalesce(fin_sum, 0) - coalesce(
-                    round(
-                        coalesce(old.sum_vat, 0 :: bigint) :: numeric * get_curs(
-                            old.id_currency,
-                            own_unit.id_currency_fin_oper,
-                            old.curs,
-                            coalesce(old.doc_date, now_utc()),
-                            old.is_euro_zone_curs
-                        ) :: numeric,
-                        - 2
-                    ) :: bigint / array_length(old.units_ids, 1),
-                    0
-                ) + coalesce(
-                    round(
-                        coalesce(new.sum_vat, 0 :: bigint) :: numeric * get_curs(
-                            new.id_currency,
-                            own_unit.id_currency_fin_oper,
-                            new.curs,
-                            coalesce(new.doc_date, now_utc()),
-                            new.is_euro_zone_curs
-                        ) :: numeric,
-                        - 2
-                    ) :: bigint / array_length(new.units_ids, 1),
-                    0
+                __fin_totals_json__ = cm_merge_json(
+            __fin_totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
+        ),
+            TG_OP
+        ),
+                (
+                    fin_sum
+                ) = (
+                    select
+                            sum(
+                                round(
+                                    coalesce(
+                                        source_row.sum_vat,
+                                        0 :: bigint
+                                        ) :: numeric *     get_curs(
+                                        source_row.id_currency,
+                                        own_unit.id_currency_fin_oper,
+                                        source_row.curs,
+                                        coalesce(
+                                            source_row.doc_date,
+                                            now_utc()
+                                            ),
+                                        source_row.is_euro_zone_curs
+                                        ) :: numeric,
+                                    - 2
+                                    ) :: bigint /     array_length(source_row.units_ids, 1)
+                                                        ) as fin_sum
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __fin_totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.fin_operation, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && own_unit.units_ids
+                        and
+                        source_row.deleted = 0
                 )
             where
                 not_changed_units_ids && own_unit.units_ids;
@@ -128,18 +180,43 @@ begin
 
         if deleted_units_ids is not null then
             update operation.owner_unit as own_unit set
-                fin_sum = coalesce(fin_sum, 0) - coalesce(
-                    round(
-                        coalesce(old.sum_vat, 0 :: bigint) :: numeric * get_curs(
-                            old.id_currency,
-                            own_unit.id_currency_fin_oper,
-                            old.curs,
-                            coalesce(old.doc_date, now_utc()),
-                            old.is_euro_zone_curs
-                        ) :: numeric,
-                        - 2
-                    ) :: bigint / array_length(old.units_ids, 1),
-                    0
+                __fin_totals_json__ = __fin_totals_json__ - old.id::text,
+                (
+                    fin_sum
+                ) = (
+                    select
+                            sum(
+                                round(
+                                    coalesce(
+                                        source_row.sum_vat,
+                                        0 :: bigint
+                                        ) :: numeric *     get_curs(
+                                        source_row.id_currency,
+                                        own_unit.id_currency_fin_oper,
+                                        source_row.curs,
+                                        coalesce(
+                                            source_row.doc_date,
+                                            now_utc()
+                                            ),
+                                        source_row.is_euro_zone_curs
+                                        ) :: numeric,
+                                    - 2
+                                    ) :: bigint /     array_length(source_row.units_ids, 1)
+                                                        ) as fin_sum
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __fin_totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.fin_operation, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && own_unit.units_ids
+                        and
+                        source_row.deleted = 0
                 )
             where
                 deleted_units_ids && own_unit.units_ids;
@@ -147,18 +224,57 @@ begin
 
         if inserted_units_ids is not null then
             update operation.owner_unit as own_unit set
-                fin_sum = coalesce(fin_sum, 0) + coalesce(
-                    round(
-                        coalesce(new.sum_vat, 0 :: bigint) :: numeric * get_curs(
-                            new.id_currency,
-                            own_unit.id_currency_fin_oper,
-                            new.curs,
-                            coalesce(new.doc_date, now_utc()),
-                            new.is_euro_zone_curs
-                        ) :: numeric,
-                        - 2
-                    ) :: bigint / array_length(new.units_ids, 1),
-                    0
+                __fin_totals_json__ = cm_merge_json(
+            __fin_totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
+        ),
+            TG_OP
+        ),
+                (
+                    fin_sum
+                ) = (
+                    select
+                            sum(
+                                round(
+                                    coalesce(
+                                        source_row.sum_vat,
+                                        0 :: bigint
+                                        ) :: numeric *     get_curs(
+                                        source_row.id_currency,
+                                        own_unit.id_currency_fin_oper,
+                                        source_row.curs,
+                                        coalesce(
+                                            source_row.doc_date,
+                                            now_utc()
+                                            ),
+                                        source_row.is_euro_zone_curs
+                                        ) :: numeric,
+                                    - 2
+                                    ) :: bigint /     array_length(source_row.units_ids, 1)
+                                                        ) as fin_sum
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __fin_totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.fin_operation, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && own_unit.units_ids
+                        and
+                        source_row.deleted = 0
                 )
             where
                 inserted_units_ids && own_unit.units_ids;
@@ -175,18 +291,57 @@ begin
             new.deleted = 0
         then
             update operation.owner_unit as own_unit set
-                fin_sum = coalesce(fin_sum, 0) + coalesce(
-                    round(
-                        coalesce(new.sum_vat, 0 :: bigint) :: numeric * get_curs(
-                            new.id_currency,
-                            own_unit.id_currency_fin_oper,
-                            new.curs,
-                            coalesce(new.doc_date, now_utc()),
-                            new.is_euro_zone_curs
-                        ) :: numeric,
-                        - 2
-                    ) :: bigint / array_length(new.units_ids, 1),
-                    0
+                __fin_totals_json__ = cm_merge_json(
+            __fin_totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
+        ),
+            TG_OP
+        ),
+                (
+                    fin_sum
+                ) = (
+                    select
+                            sum(
+                                round(
+                                    coalesce(
+                                        source_row.sum_vat,
+                                        0 :: bigint
+                                        ) :: numeric *     get_curs(
+                                        source_row.id_currency,
+                                        own_unit.id_currency_fin_oper,
+                                        source_row.curs,
+                                        coalesce(
+                                            source_row.doc_date,
+                                            now_utc()
+                                            ),
+                                        source_row.is_euro_zone_curs
+                                        ) :: numeric,
+                                    - 2
+                                    ) :: bigint /     array_length(source_row.units_ids, 1)
+                                                        ) as fin_sum
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __fin_totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.fin_operation, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && own_unit.units_ids
+                        and
+                        source_row.deleted = 0
                 )
             where
                 new.units_ids && own_unit.units_ids;

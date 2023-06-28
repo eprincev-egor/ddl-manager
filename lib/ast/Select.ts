@@ -206,11 +206,13 @@ export class Select extends AbstractAstElement {
         const output = [
             ...this.from[0].template(spaces)
         ];
-        output[0] = `${spaces}from ${output[0]}`;
+        output[0] = `${spaces}from ${output[0].trim()}`;
 
         for (const from of this.from.slice(1)) {
             output.push(spaces + ",");
-            output.push(...from.template(spaces));
+            output.push(...from.template(
+                spaces.plusOneLevel()
+            ));
         }
 
         return output;

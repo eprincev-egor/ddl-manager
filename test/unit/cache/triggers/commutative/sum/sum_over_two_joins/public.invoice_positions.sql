@@ -1,9 +1,5 @@
 create or replace function cache_pos_rate_for_invoice_on_invoice_positions()
 returns trigger as $body$
-declare old_operation_rate_expense_type_id_rate_expense_category text;
-declare old_rate_expense_category_base_cost text;
-declare new_operation_rate_expense_type_id_rate_expense_category text;
-declare new_rate_expense_category_base_cost text;
 begin
 
     if TG_OP = 'DELETE' then
@@ -13,30 +9,33 @@ begin
             and
             old.deleted = 0
         then
-            if old.id_operation_rate_expense_type is not null then
-                old_operation_rate_expense_type_id_rate_expense_category = (
-                    select
-                        operation.rate_expense_type.id_rate_expense_category
-                    from operation.rate_expense_type
-                    where
-                        operation.rate_expense_type.id = old.id_operation_rate_expense_type
-                );
-            end if;
-
-            if old_operation_rate_expense_type_id_rate_expense_category is not null then
-                old_rate_expense_category_base_cost = (
-                    select
-                        operation.rate_expense_category.base_cost
-                    from operation.rate_expense_category
-                    where
-                        operation.rate_expense_category.id = old_operation_rate_expense_type_id_rate_expense_category
-                );
-            end if;
-
             update invoice set
-                total_base_cost = coalesce(total_base_cost, 0) - coalesce(
-                    old_rate_expense_category_base_cost,
-                    0
+                __pos_rate_json__ = __pos_rate_json__ - old.id::text,
+                (
+                    total_base_cost
+                ) = (
+                    select
+                            sum(rate_category.base_cost) as total_base_cost
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __pos_rate_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.invoice_positions, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join operation.rate_expense_type as rate_type on
+                        rate_type.id = source_row.id_operation_rate_expense_type
+
+                    left join operation.rate_expense_category as rate_category on
+                        rate_category.id = rate_type.id_rate_expense_category
+                    where
+                        source_row.id_invoice = invoice.id
+                        and
+                        source_row.deleted = 0
                 )
             where
                 old.id_invoice = invoice.id;
@@ -56,54 +55,6 @@ begin
             return new;
         end if;
 
-        if old.id_operation_rate_expense_type is not null then
-            old_operation_rate_expense_type_id_rate_expense_category = (
-                select
-                    operation.rate_expense_type.id_rate_expense_category
-                from operation.rate_expense_type
-                where
-                    operation.rate_expense_type.id = old.id_operation_rate_expense_type
-            );
-        end if;
-
-        if old_operation_rate_expense_type_id_rate_expense_category is not null then
-            old_rate_expense_category_base_cost = (
-                select
-                    operation.rate_expense_category.base_cost
-                from operation.rate_expense_category
-                where
-                    operation.rate_expense_category.id = old_operation_rate_expense_type_id_rate_expense_category
-            );
-        end if;
-
-        if new.id_operation_rate_expense_type is not distinct from old.id_operation_rate_expense_type then
-            new_operation_rate_expense_type_id_rate_expense_category = old_operation_rate_expense_type_id_rate_expense_category;
-        else
-            if new.id_operation_rate_expense_type is not null then
-                new_operation_rate_expense_type_id_rate_expense_category = (
-                    select
-                        operation.rate_expense_type.id_rate_expense_category
-                    from operation.rate_expense_type
-                    where
-                        operation.rate_expense_type.id = new.id_operation_rate_expense_type
-                );
-            end if;
-        end if;
-
-        if new_operation_rate_expense_type_id_rate_expense_category is not distinct from old_operation_rate_expense_type_id_rate_expense_category then
-            new_rate_expense_category_base_cost = old_rate_expense_category_base_cost;
-        else
-            if new_operation_rate_expense_type_id_rate_expense_category is not null then
-                new_rate_expense_category_base_cost = (
-                    select
-                        operation.rate_expense_category.base_cost
-                    from operation.rate_expense_category
-                    where
-                        operation.rate_expense_category.id = new_operation_rate_expense_type_id_rate_expense_category
-                );
-            end if;
-        end if;
-
         if
             new.id_invoice is not distinct from old.id_invoice
             and
@@ -118,12 +69,46 @@ begin
             end if;
 
             update invoice set
-                total_base_cost = coalesce(total_base_cost, 0) - coalesce(
-                    old_rate_expense_category_base_cost,
-                    0
-                ) + coalesce(
-                    new_rate_expense_category_base_cost,
-                    0
+                __pos_rate_json__ = cm_merge_json(
+            __pos_rate_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
+        ),
+            TG_OP
+        ),
+                (
+                    total_base_cost
+                ) = (
+                    select
+                            sum(rate_category.base_cost) as total_base_cost
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __pos_rate_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.invoice_positions, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join operation.rate_expense_type as rate_type on
+                        rate_type.id = source_row.id_operation_rate_expense_type
+
+                    left join operation.rate_expense_category as rate_category on
+                        rate_category.id = rate_type.id_rate_expense_category
+                    where
+                        source_row.id_invoice = invoice.id
+                        and
+                        source_row.deleted = 0
                 )
             where
                 new.id_invoice = invoice.id;
@@ -137,9 +122,32 @@ begin
             old.deleted = 0
         then
             update invoice set
-                total_base_cost = coalesce(total_base_cost, 0) - coalesce(
-                    old_rate_expense_category_base_cost,
-                    0
+                __pos_rate_json__ = __pos_rate_json__ - old.id::text,
+                (
+                    total_base_cost
+                ) = (
+                    select
+                            sum(rate_category.base_cost) as total_base_cost
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __pos_rate_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.invoice_positions, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join operation.rate_expense_type as rate_type on
+                        rate_type.id = source_row.id_operation_rate_expense_type
+
+                    left join operation.rate_expense_category as rate_category on
+                        rate_category.id = rate_type.id_rate_expense_category
+                    where
+                        source_row.id_invoice = invoice.id
+                        and
+                        source_row.deleted = 0
                 )
             where
                 old.id_invoice = invoice.id;
@@ -151,9 +159,46 @@ begin
             new.deleted = 0
         then
             update invoice set
-                total_base_cost = coalesce(total_base_cost, 0) + coalesce(
-                    new_rate_expense_category_base_cost,
-                    0
+                __pos_rate_json__ = cm_merge_json(
+            __pos_rate_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
+        ),
+            TG_OP
+        ),
+                (
+                    total_base_cost
+                ) = (
+                    select
+                            sum(rate_category.base_cost) as total_base_cost
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __pos_rate_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.invoice_positions, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join operation.rate_expense_type as rate_type on
+                        rate_type.id = source_row.id_operation_rate_expense_type
+
+                    left join operation.rate_expense_category as rate_category on
+                        rate_category.id = rate_type.id_rate_expense_category
+                    where
+                        source_row.id_invoice = invoice.id
+                        and
+                        source_row.deleted = 0
                 )
             where
                 new.id_invoice = invoice.id;
@@ -169,30 +214,47 @@ begin
             and
             new.deleted = 0
         then
-            if new.id_operation_rate_expense_type is not null then
-                new_operation_rate_expense_type_id_rate_expense_category = (
-                    select
-                        operation.rate_expense_type.id_rate_expense_category
-                    from operation.rate_expense_type
-                    where
-                        operation.rate_expense_type.id = new.id_operation_rate_expense_type
-                );
-            end if;
-
-            if new_operation_rate_expense_type_id_rate_expense_category is not null then
-                new_rate_expense_category_base_cost = (
-                    select
-                        operation.rate_expense_category.base_cost
-                    from operation.rate_expense_category
-                    where
-                        operation.rate_expense_category.id = new_operation_rate_expense_type_id_rate_expense_category
-                );
-            end if;
-
             update invoice set
-                total_base_cost = coalesce(total_base_cost, 0) + coalesce(
-                    new_rate_expense_category_base_cost,
-                    0
+                __pos_rate_json__ = cm_merge_json(
+            __pos_rate_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
+        ),
+            TG_OP
+        ),
+                (
+                    total_base_cost
+                ) = (
+                    select
+                            sum(rate_category.base_cost) as total_base_cost
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __pos_rate_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.invoice_positions, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join operation.rate_expense_type as rate_type on
+                        rate_type.id = source_row.id_operation_rate_expense_type
+
+                    left join operation.rate_expense_category as rate_category on
+                        rate_category.id = rate_type.id_rate_expense_category
+                    where
+                        source_row.id_invoice = invoice.id
+                        and
+                        source_row.deleted = 0
                 )
             where
                 new.id_invoice = invoice.id;

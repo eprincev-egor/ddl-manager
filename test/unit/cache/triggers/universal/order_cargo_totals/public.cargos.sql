@@ -1,38 +1,34 @@
 create or replace function cache_cargo_totals_for_orders_on_cargos()
 returns trigger as $body$
-declare old_product_type_name text;
-declare new_product_type_name text;
 begin
 
     if TG_OP = 'DELETE' then
 
         if old.id_order is not null then
-            if old.id_product_type is not null then
-                old_product_type_name = (
-                    select
-                        product_types.name
-                    from product_types
-                    where
-                        product_types.id = old.id_product_type
-                );
-            end if;
-
             update orders set
-                cargos_weight = coalesce(cargos_weight, 0) - coalesce(old.total_weight, 0),
-                cargos_products_names_name = cm_array_remove_one_element(
-                    cargos_products_names_name,
-                    old_product_type_name
-                ),
-                cargos_products_names = (
+                __cargo_totals_json__ = __cargo_totals_json__ - old.id::text,
+                (
+                    cargos_weight,
+                    cargos_products_names
+                ) = (
                     select
-                        string_agg(item.name, ', ')
+                            sum(source_row.total_weight) as cargos_weight,
+                            string_agg(product_types.name, ', ') as cargos_products_names
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __cargo_totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            cargos_products_names_name,
-                            old_product_type_name
-                        )
-                    ) as item(name)
+                        left join lateral jsonb_populate_record(null::public.cargos, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join product_types on
+                        product_types.id = source_row.id_product_type
+                    where
+                        source_row.id_order = orders.id
                 )
             where
                 old.id_order = orders.id;
@@ -52,57 +48,49 @@ begin
             return new;
         end if;
 
-        if old.id_product_type is not null then
-            old_product_type_name = (
-                select
-                    product_types.name
-                from product_types
-                where
-                    product_types.id = old.id_product_type
-            );
-        end if;
-
-        if new.id_product_type is not distinct from old.id_product_type then
-            new_product_type_name = old_product_type_name;
-        else
-            if new.id_product_type is not null then
-                new_product_type_name = (
-                    select
-                        product_types.name
-                    from product_types
-                    where
-                        product_types.id = new.id_product_type
-                );
-            end if;
-        end if;
-
         if new.id_order is not distinct from old.id_order then
             if new.id_order is null then
                 return new;
             end if;
 
             update orders set
-                cargos_weight = coalesce(cargos_weight, 0) - coalesce(old.total_weight, 0) + coalesce(new.total_weight, 0),
-                cargos_products_names_name = array_append(
-                    cm_array_remove_one_element(
-                        cargos_products_names_name,
-                        old_product_type_name
-                    ),
-                    new_product_type_name
-                ),
-                cargos_products_names = (
+                __cargo_totals_json__ = cm_merge_json(
+            __cargo_totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
+        ),
+            TG_OP
+        ),
+                (
+                    cargos_weight,
+                    cargos_products_names
+                ) = (
                     select
-                        string_agg(item.name, ', ')
+                            sum(source_row.total_weight) as cargos_weight,
+                            string_agg(product_types.name, ', ') as cargos_products_names
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __cargo_totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                    from unnest(
-                        array_append(
-                            cm_array_remove_one_element(
-                                cargos_products_names_name,
-                                old_product_type_name
-                            ),
-                            new_product_type_name
-                        )
-                    ) as item(name)
+                        left join lateral jsonb_populate_record(null::public.cargos, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join product_types on
+                        product_types.id = source_row.id_product_type
+                    where
+                        source_row.id_order = orders.id
                 )
             where
                 new.id_order = orders.id;
@@ -112,21 +100,29 @@ begin
 
         if old.id_order is not null then
             update orders set
-                cargos_weight = coalesce(cargos_weight, 0) - coalesce(old.total_weight, 0),
-                cargos_products_names_name = cm_array_remove_one_element(
-                    cargos_products_names_name,
-                    old_product_type_name
-                ),
-                cargos_products_names = (
+                __cargo_totals_json__ = __cargo_totals_json__ - old.id::text,
+                (
+                    cargos_weight,
+                    cargos_products_names
+                ) = (
                     select
-                        string_agg(item.name, ', ')
+                            sum(source_row.total_weight) as cargos_weight,
+                            string_agg(product_types.name, ', ') as cargos_products_names
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __cargo_totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            cargos_products_names_name,
-                            old_product_type_name
-                        )
-                    ) as item(name)
+                        left join lateral jsonb_populate_record(null::public.cargos, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join product_types on
+                        product_types.id = source_row.id_product_type
+                    where
+                        source_row.id_order = orders.id
                 )
             where
                 old.id_order = orders.id;
@@ -134,19 +130,43 @@ begin
 
         if new.id_order is not null then
             update orders set
-                cargos_weight = coalesce(cargos_weight, 0) + coalesce(new.total_weight, 0),
-                cargos_products_names_name = array_append(
-                    cargos_products_names_name,
-                    new_product_type_name
-                ),
-                cargos_products_names = coalesce(
-                    cargos_products_names ||
-                    coalesce(
-                        ', '
-                        || new_product_type_name,
-                        ''
-                    ),
-                    new_product_type_name
+                __cargo_totals_json__ = cm_merge_json(
+            __cargo_totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
+        ),
+            TG_OP
+        ),
+                (
+                    cargos_weight,
+                    cargos_products_names
+                ) = (
+                    select
+                            sum(source_row.total_weight) as cargos_weight,
+                            string_agg(product_types.name, ', ') as cargos_products_names
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __cargo_totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.cargos, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join product_types on
+                        product_types.id = source_row.id_product_type
+                    where
+                        source_row.id_order = orders.id
                 )
             where
                 new.id_order = orders.id;
@@ -158,30 +178,44 @@ begin
     if TG_OP = 'INSERT' then
 
         if new.id_order is not null then
-            if new.id_product_type is not null then
-                new_product_type_name = (
-                    select
-                        product_types.name
-                    from product_types
-                    where
-                        product_types.id = new.id_product_type
-                );
-            end if;
-
             update orders set
-                cargos_weight = coalesce(cargos_weight, 0) + coalesce(new.total_weight, 0),
-                cargos_products_names_name = array_append(
-                    cargos_products_names_name,
-                    new_product_type_name
-                ),
-                cargos_products_names = coalesce(
-                    cargos_products_names ||
-                    coalesce(
-                        ', '
-                        || new_product_type_name,
-                        ''
-                    ),
-                    new_product_type_name
+                __cargo_totals_json__ = cm_merge_json(
+            __cargo_totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
+        ),
+            TG_OP
+        ),
+                (
+                    cargos_weight,
+                    cargos_products_names
+                ) = (
+                    select
+                            sum(source_row.total_weight) as cargos_weight,
+                            string_agg(product_types.name, ', ') as cargos_products_names
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __cargo_totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.cargos, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join product_types on
+                        product_types.id = source_row.id_product_type
+                    where
+                        source_row.id_order = orders.id
                 )
             where
                 new.id_order = orders.id;

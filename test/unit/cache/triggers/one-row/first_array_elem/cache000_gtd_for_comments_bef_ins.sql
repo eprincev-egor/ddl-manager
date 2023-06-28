@@ -10,7 +10,7 @@ begin
 
 
     select
-        gtd.orders_ids [1] * 3 as gtd_order_id
+            gtd.orders_ids [1] * 3 as gtd_order_id
     from list_gtd as gtd
     where
         gtd.id = new.row_id

@@ -23,23 +23,21 @@ begin
                     first_auto_outgoing_date
                 ) = (
                     select
-                        first_auto.id as __first_auto_id,
-                        first_auto.lvl as __first_auto_lvl,
-                first_auto.incoming_date as first_auto_incoming_date,
-                first_auto.outgoing_date as first_auto_outgoing_date
-
+                            first_auto.id as __first_auto_id,
+                            first_auto.lvl as __first_auto_lvl,
+                            first_auto.incoming_date as first_auto_incoming_date,
+                            first_auto.outgoing_date as first_auto_outgoing_date
                     from operations as first_auto
-
                     where
                         first_auto.units_ids && ARRAY[units.id] :: bigint[]
-                and
-                first_auto.type = 'auto'
-                and
-                first_auto.deleted = 0
-            order by
-                first_auto.lvl asc nulls last,
-                first_auto.id asc nulls last
-            limit 1
+                        and
+                        first_auto.type = 'auto'
+                        and
+                        first_auto.deleted = 0
+                    order by
+                        first_auto.lvl asc nulls last,
+                        first_auto.id asc nulls last
+                    limit 1
                 )
             where
                 units.id = any( old.units_ids )
@@ -181,23 +179,21 @@ begin
                             first_auto_outgoing_date
                         ) = (
                             select
-                                first_auto.id as __first_auto_id,
-                                first_auto.lvl as __first_auto_lvl,
-                first_auto.incoming_date as first_auto_incoming_date,
-                first_auto.outgoing_date as first_auto_outgoing_date
-
+                                    first_auto.id as __first_auto_id,
+                                    first_auto.lvl as __first_auto_lvl,
+                                    first_auto.incoming_date as first_auto_incoming_date,
+                                    first_auto.outgoing_date as first_auto_outgoing_date
                             from operations as first_auto
-
                             where
                                 first_auto.units_ids && ARRAY[units.id] :: bigint[]
-                and
-                first_auto.type = 'auto'
-                and
-                first_auto.deleted = 0
-            order by
-                first_auto.lvl asc nulls last,
-                first_auto.id asc nulls last
-            limit 1
+                                and
+                                first_auto.type = 'auto'
+                                and
+                                first_auto.deleted = 0
+                            order by
+                                first_auto.lvl asc nulls last,
+                                first_auto.id asc nulls last
+                            limit 1
                         )
                     where
                         units.id = any( not_changed_units_ids );
@@ -214,23 +210,21 @@ begin
                     first_auto_outgoing_date
                 ) = (
                     select
-                        first_auto.id as __first_auto_id,
-                        first_auto.lvl as __first_auto_lvl,
-                first_auto.incoming_date as first_auto_incoming_date,
-                first_auto.outgoing_date as first_auto_outgoing_date
-
+                            first_auto.id as __first_auto_id,
+                            first_auto.lvl as __first_auto_lvl,
+                            first_auto.incoming_date as first_auto_incoming_date,
+                            first_auto.outgoing_date as first_auto_outgoing_date
                     from operations as first_auto
-
                     where
                         first_auto.units_ids && ARRAY[units.id] :: bigint[]
-                and
-                first_auto.type = 'auto'
-                and
-                first_auto.deleted = 0
-            order by
-                first_auto.lvl asc nulls last,
-                first_auto.id asc nulls last
-            limit 1
+                        and
+                        first_auto.type = 'auto'
+                        and
+                        first_auto.deleted = 0
+                    order by
+                        first_auto.lvl asc nulls last,
+                        first_auto.id asc nulls last
+                    limit 1
                 )
             where
                 units.id = any( deleted_units_ids )

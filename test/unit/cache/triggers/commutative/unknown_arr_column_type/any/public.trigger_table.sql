@@ -9,7 +9,25 @@ begin
 
         if old.unknown_ids is not null then
             update cache_table set
-                total_profit = coalesce(total_profit, 0) - coalesce(old.profit, 0)
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    total_profit
+                ) = (
+                    select
+                            sum(source_row.profit) as total_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.trigger_table, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        cache_table.id = any (source_row.unknown_ids)
+                )
             where
                 cache_table.id = any (old.unknown_ids);
         end if;
@@ -32,21 +50,103 @@ begin
 
         if not_changed_unknown_ids is not null then
             update cache_table set
-                total_profit = coalesce(total_profit, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
+        ),
+            TG_OP
+        ),
+                (
+                    total_profit
+                ) = (
+                    select
+                            sum(source_row.profit) as total_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.trigger_table, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        cache_table.id = any (source_row.unknown_ids)
+                )
             where
                 cache_table.id = any (not_changed_unknown_ids);
         end if;
 
         if deleted_unknown_ids is not null then
             update cache_table set
-                total_profit = coalesce(total_profit, 0) - coalesce(old.profit, 0)
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    total_profit
+                ) = (
+                    select
+                            sum(source_row.profit) as total_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.trigger_table, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        cache_table.id = any (source_row.unknown_ids)
+                )
             where
                 cache_table.id = any (deleted_unknown_ids);
         end if;
 
         if inserted_unknown_ids is not null then
             update cache_table set
-                total_profit = coalesce(total_profit, 0) + coalesce(new.profit, 0)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
+        ),
+            TG_OP
+        ),
+                (
+                    total_profit
+                ) = (
+                    select
+                            sum(source_row.profit) as total_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.trigger_table, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        cache_table.id = any (source_row.unknown_ids)
+                )
             where
                 cache_table.id = any (inserted_unknown_ids);
         end if;
@@ -58,7 +158,39 @@ begin
 
         if new.unknown_ids is not null then
             update cache_table set
-                total_profit = coalesce(total_profit, 0) + coalesce(new.profit, 0)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
+        ),
+            TG_OP
+        ),
+                (
+                    total_profit
+                ) = (
+                    select
+                            sum(source_row.profit) as total_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.trigger_table, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        cache_table.id = any (source_row.unknown_ids)
+                )
             where
                 cache_table.id = any (new.unknown_ids);
         end if;

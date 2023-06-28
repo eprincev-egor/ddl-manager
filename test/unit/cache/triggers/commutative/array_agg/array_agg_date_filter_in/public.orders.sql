@@ -10,9 +10,24 @@ begin
             coalesce(old.id_order_type in (1, 2, 3), false)
         then
             update companies set
-                general_orders_dates = cm_array_remove_one_element(
-                    general_orders_dates,
-                    old.date
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    general_orders_dates
+                ) = (
+                    select
+                            array_agg(source_row.date) filter (where     source_row.id_order_type in (1, 2, 3)) as general_orders_dates
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 old.id_client = companies.id;
@@ -38,38 +53,39 @@ begin
             end if;
 
             update companies set
-                general_orders_dates = case
-                    when
-                        new.id_order_type in (1, 2, 3)
-                        and
-                        not coalesce(old.id_order_type in (1, 2, 3), false)
-                    then
-                        array_append(
-                            general_orders_dates,
-                            new.date
-                        )
-                    when
-                        not coalesce(new.id_order_type in (1, 2, 3), false)
-                        and
-                        old.id_order_type in (1, 2, 3)
-                    then
-                        cm_array_remove_one_element(
-                            general_orders_dates,
-                            old.date
-                        )
-                    when
-                        new.id_order_type in (1, 2, 3)
-                    then
-                        array_append(
-                            cm_array_remove_one_element(
-                                general_orders_dates,
-                                old.date
-                            ),
-                            new.date
-                        )
-                    else
-                        general_orders_dates
-                end
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'date', new.date,'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+        ),
+            TG_OP
+        ),
+                (
+                    general_orders_dates
+                ) = (
+                    select
+                            array_agg(source_row.date) filter (where     source_row.id_order_type in (1, 2, 3)) as general_orders_dates
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'date', new.date,'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
 
@@ -82,9 +98,24 @@ begin
             coalesce(old.id_order_type in (1, 2, 3), false)
         then
             update companies set
-                general_orders_dates = cm_array_remove_one_element(
-                    general_orders_dates,
-                    old.date
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    general_orders_dates
+                ) = (
+                    select
+                            array_agg(source_row.date) filter (where     source_row.id_order_type in (1, 2, 3)) as general_orders_dates
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 old.id_client = companies.id;
@@ -96,9 +127,38 @@ begin
             coalesce(new.id_order_type in (1, 2, 3), false)
         then
             update companies set
-                general_orders_dates = array_append(
-                    general_orders_dates,
-                    new.date
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'date', new.date,'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+        ),
+            TG_OP
+        ),
+                (
+                    general_orders_dates
+                ) = (
+                    select
+                            array_agg(source_row.date) filter (where     source_row.id_order_type in (1, 2, 3)) as general_orders_dates
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'date', new.date,'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 new.id_client = companies.id;
@@ -115,9 +175,38 @@ begin
             coalesce(new.id_order_type in (1, 2, 3), false)
         then
             update companies set
-                general_orders_dates = array_append(
-                    general_orders_dates,
-                    new.date
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'date', new.date,'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+        ),
+            TG_OP
+        ),
+                (
+                    general_orders_dates
+                ) = (
+                    select
+                            array_agg(source_row.date) filter (where     source_row.id_order_type in (1, 2, 3)) as general_orders_dates
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'date', new.date,'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 new.id_client = companies.id;

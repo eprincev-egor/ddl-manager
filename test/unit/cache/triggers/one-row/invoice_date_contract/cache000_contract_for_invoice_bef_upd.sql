@@ -9,7 +9,7 @@ begin
 
 
     select
-        list_contracts.date_contract as date_contract
+            list_contracts.date_contract as date_contract
     from list_contracts
     where
         list_contracts.id = new.id_list_contracts

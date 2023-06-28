@@ -9,12 +9,12 @@ begin
 
 
     select
-        border_crossing.id as id_border_crossing,
-        coalesce(
-            border_crossing.end_expected_date,
-            new.date_delivery
-        ) as date_delivery,
-        border_crossing.id as __border_crossing_id
+            border_crossing.id as id_border_crossing,
+            coalesce(
+                border_crossing.end_expected_date,
+                new.date_delivery
+                        ) as date_delivery,
+            border_crossing.id as __border_crossing_id
     from operation.operation as border_crossing
     where
         border_crossing.id_order = new.id

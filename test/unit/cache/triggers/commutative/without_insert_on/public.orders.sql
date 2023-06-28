@@ -6,7 +6,25 @@ begin
 
         if old.id_client is not null then
             update companies set
-                orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0)
+                __sum_without_insert_json__ = __sum_without_insert_json__ - old.id::text,
+                (
+                    orders_total
+                ) = (
+                    select
+                            sum(source_row.profit) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __sum_without_insert_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 old.id_client = companies.id;
         end if;
@@ -29,7 +47,39 @@ begin
             end if;
 
             update companies set
-                orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+                __sum_without_insert_json__ = cm_merge_json(
+            __sum_without_insert_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    orders_total
+                ) = (
+                    select
+                            sum(source_row.profit) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __sum_without_insert_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
 
@@ -38,14 +88,64 @@ begin
 
         if old.id_client is not null then
             update companies set
-                orders_total = coalesce(orders_total, 0) - coalesce(old.profit, 0)
+                __sum_without_insert_json__ = __sum_without_insert_json__ - old.id::text,
+                (
+                    orders_total
+                ) = (
+                    select
+                            sum(source_row.profit) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __sum_without_insert_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 old.id_client = companies.id;
         end if;
 
         if new.id_client is not null then
             update companies set
-                orders_total = coalesce(orders_total, 0) + coalesce(new.profit, 0)
+                __sum_without_insert_json__ = cm_merge_json(
+            __sum_without_insert_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    orders_total
+                ) = (
+                    select
+                            sum(source_row.profit) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __sum_without_insert_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
         end if;

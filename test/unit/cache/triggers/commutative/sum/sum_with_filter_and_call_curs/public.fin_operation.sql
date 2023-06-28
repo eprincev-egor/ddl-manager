@@ -16,34 +16,39 @@ begin
             )
         then
             update orders set
-                fin_operation_buys = case
-                    when
-                        old.id_fin_operation_type = 1
-                    then
-                        coalesce(fin_operation_buys, 0) - coalesce(
-                            old.sum * get_curs(
-                                old.date,
-                                old.id_currency
-                            ),
-                            0
-                        )
-                    else
-                        fin_operation_buys
-                end,
-                fin_operation_sales = case
-                    when
-                        old.id_fin_operation_type = 2
-                    then
-                        coalesce(fin_operation_sales, 0) - coalesce(
-                            old.sum * get_curs(
-                                old.date,
-                                old.id_currency
-                            ),
-                            0
-                        )
-                    else
-                        fin_operation_sales
-                end
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    fin_operation_buys,
+                    fin_operation_sales
+                ) = (
+                    select
+                            sum(
+                                source_row.sum *     get_curs(
+                                    source_row.date,
+                                    source_row.id_currency
+                                    )
+                                                        ) filter (where     source_row.id_fin_operation_type = 1) as fin_operation_buys,
+                            sum(
+                                source_row.sum *     get_curs(
+                                    source_row.date,
+                                    source_row.id_currency
+                                    )
+                                                        ) filter (where     source_row.id_fin_operation_type = 2) as fin_operation_sales
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.fin_operation, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_order = orders.id
+                        and
+                        source_row.deleted = 0
+                )
             where
                 old.id_order = orders.id;
         end if;
@@ -82,94 +87,53 @@ begin
             end if;
 
             update orders set
-                fin_operation_buys = case
-                    when
-                        new.id_fin_operation_type = 1
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'date', new.date,'deleted', new.deleted,'id', new.id,'id_currency', new.id_currency,'id_fin_operation_type', new.id_fin_operation_type,'id_order', new.id_order,'sum', new.sum
+        ),
+            TG_OP
+        ),
+                (
+                    fin_operation_buys,
+                    fin_operation_sales
+                ) = (
+                    select
+                            sum(
+                                source_row.sum *     get_curs(
+                                    source_row.date,
+                                    source_row.id_currency
+                                    )
+                                                        ) filter (where     source_row.id_fin_operation_type = 1) as fin_operation_buys,
+                            sum(
+                                source_row.sum *     get_curs(
+                                    source_row.date,
+                                    source_row.id_currency
+                                    )
+                                                        ) filter (where     source_row.id_fin_operation_type = 2) as fin_operation_sales
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'date', new.date,'deleted', new.deleted,'id', new.id,'id_currency', new.id_currency,'id_fin_operation_type', new.id_fin_operation_type,'id_order', new.id_order,'sum', new.sum
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.fin_operation, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_order = orders.id
                         and
-                        not coalesce(old.id_fin_operation_type = 1, false)
-                    then
-                        coalesce(fin_operation_buys, 0) + coalesce(
-                            new.sum * get_curs(
-                                new.date,
-                                new.id_currency
-                            ),
-                            0
-                        )
-                    when
-                        not coalesce(new.id_fin_operation_type = 1, false)
-                        and
-                        old.id_fin_operation_type = 1
-                    then
-                        coalesce(fin_operation_buys, 0) - coalesce(
-                            old.sum * get_curs(
-                                old.date,
-                                old.id_currency
-                            ),
-                            0
-                        )
-                    when
-                        new.id_fin_operation_type = 1
-                    then
-                        coalesce(fin_operation_buys, 0) - coalesce(
-                            old.sum * get_curs(
-                                old.date,
-                                old.id_currency
-                            ),
-                            0
-                        ) + coalesce(
-                            new.sum * get_curs(
-                                new.date,
-                                new.id_currency
-                            ),
-                            0
-                        )
-                    else
-                        fin_operation_buys
-                end,
-                fin_operation_sales = case
-                    when
-                        new.id_fin_operation_type = 2
-                        and
-                        not coalesce(old.id_fin_operation_type = 2, false)
-                    then
-                        coalesce(fin_operation_sales, 0) + coalesce(
-                            new.sum * get_curs(
-                                new.date,
-                                new.id_currency
-                            ),
-                            0
-                        )
-                    when
-                        not coalesce(new.id_fin_operation_type = 2, false)
-                        and
-                        old.id_fin_operation_type = 2
-                    then
-                        coalesce(fin_operation_sales, 0) - coalesce(
-                            old.sum * get_curs(
-                                old.date,
-                                old.id_currency
-                            ),
-                            0
-                        )
-                    when
-                        new.id_fin_operation_type = 2
-                    then
-                        coalesce(fin_operation_sales, 0) - coalesce(
-                            old.sum * get_curs(
-                                old.date,
-                                old.id_currency
-                            ),
-                            0
-                        ) + coalesce(
-                            new.sum * get_curs(
-                                new.date,
-                                new.id_currency
-                            ),
-                            0
-                        )
-                    else
-                        fin_operation_sales
-                end
+                        source_row.deleted = 0
+                )
             where
                 new.id_order = orders.id;
 
@@ -188,34 +152,39 @@ begin
             )
         then
             update orders set
-                fin_operation_buys = case
-                    when
-                        old.id_fin_operation_type = 1
-                    then
-                        coalesce(fin_operation_buys, 0) - coalesce(
-                            old.sum * get_curs(
-                                old.date,
-                                old.id_currency
-                            ),
-                            0
-                        )
-                    else
-                        fin_operation_buys
-                end,
-                fin_operation_sales = case
-                    when
-                        old.id_fin_operation_type = 2
-                    then
-                        coalesce(fin_operation_sales, 0) - coalesce(
-                            old.sum * get_curs(
-                                old.date,
-                                old.id_currency
-                            ),
-                            0
-                        )
-                    else
-                        fin_operation_sales
-                end
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    fin_operation_buys,
+                    fin_operation_sales
+                ) = (
+                    select
+                            sum(
+                                source_row.sum *     get_curs(
+                                    source_row.date,
+                                    source_row.id_currency
+                                    )
+                                                        ) filter (where     source_row.id_fin_operation_type = 1) as fin_operation_buys,
+                            sum(
+                                source_row.sum *     get_curs(
+                                    source_row.date,
+                                    source_row.id_currency
+                                    )
+                                                        ) filter (where     source_row.id_fin_operation_type = 2) as fin_operation_sales
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.fin_operation, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_order = orders.id
+                        and
+                        source_row.deleted = 0
+                )
             where
                 old.id_order = orders.id;
         end if;
@@ -232,34 +201,53 @@ begin
             )
         then
             update orders set
-                fin_operation_buys = case
-                    when
-                        new.id_fin_operation_type = 1
-                    then
-                        coalesce(fin_operation_buys, 0) + coalesce(
-                            new.sum * get_curs(
-                                new.date,
-                                new.id_currency
-                            ),
-                            0
-                        )
-                    else
-                        fin_operation_buys
-                end,
-                fin_operation_sales = case
-                    when
-                        new.id_fin_operation_type = 2
-                    then
-                        coalesce(fin_operation_sales, 0) + coalesce(
-                            new.sum * get_curs(
-                                new.date,
-                                new.id_currency
-                            ),
-                            0
-                        )
-                    else
-                        fin_operation_sales
-                end
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'date', new.date,'deleted', new.deleted,'id', new.id,'id_currency', new.id_currency,'id_fin_operation_type', new.id_fin_operation_type,'id_order', new.id_order,'sum', new.sum
+        ),
+            TG_OP
+        ),
+                (
+                    fin_operation_buys,
+                    fin_operation_sales
+                ) = (
+                    select
+                            sum(
+                                source_row.sum *     get_curs(
+                                    source_row.date,
+                                    source_row.id_currency
+                                    )
+                                                        ) filter (where     source_row.id_fin_operation_type = 1) as fin_operation_buys,
+                            sum(
+                                source_row.sum *     get_curs(
+                                    source_row.date,
+                                    source_row.id_currency
+                                    )
+                                                        ) filter (where     source_row.id_fin_operation_type = 2) as fin_operation_sales
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'date', new.date,'deleted', new.deleted,'id', new.id,'id_currency', new.id_currency,'id_fin_operation_type', new.id_fin_operation_type,'id_order', new.id_order,'sum', new.sum
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.fin_operation, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_order = orders.id
+                        and
+                        source_row.deleted = 0
+                )
             where
                 new.id_order = orders.id;
         end if;
@@ -281,34 +269,53 @@ begin
             )
         then
             update orders set
-                fin_operation_buys = case
-                    when
-                        new.id_fin_operation_type = 1
-                    then
-                        coalesce(fin_operation_buys, 0) + coalesce(
-                            new.sum * get_curs(
-                                new.date,
-                                new.id_currency
-                            ),
-                            0
-                        )
-                    else
-                        fin_operation_buys
-                end,
-                fin_operation_sales = case
-                    when
-                        new.id_fin_operation_type = 2
-                    then
-                        coalesce(fin_operation_sales, 0) + coalesce(
-                            new.sum * get_curs(
-                                new.date,
-                                new.id_currency
-                            ),
-                            0
-                        )
-                    else
-                        fin_operation_sales
-                end
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'date', new.date,'deleted', new.deleted,'id', new.id,'id_currency', new.id_currency,'id_fin_operation_type', new.id_fin_operation_type,'id_order', new.id_order,'sum', new.sum
+        ),
+            TG_OP
+        ),
+                (
+                    fin_operation_buys,
+                    fin_operation_sales
+                ) = (
+                    select
+                            sum(
+                                source_row.sum *     get_curs(
+                                    source_row.date,
+                                    source_row.id_currency
+                                    )
+                                                        ) filter (where     source_row.id_fin_operation_type = 1) as fin_operation_buys,
+                            sum(
+                                source_row.sum *     get_curs(
+                                    source_row.date,
+                                    source_row.id_currency
+                                    )
+                                                        ) filter (where     source_row.id_fin_operation_type = 2) as fin_operation_sales
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'date', new.date,'deleted', new.deleted,'id', new.id,'id_currency', new.id_currency,'id_fin_operation_type', new.id_fin_operation_type,'id_order', new.id_order,'sum', new.sum
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.fin_operation, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_order = orders.id
+                        and
+                        source_row.deleted = 0
+                )
             where
                 new.id_order = orders.id;
         end if;

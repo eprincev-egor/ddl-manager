@@ -3,6 +3,7 @@ returns trigger as $body$
 declare matched_old boolean;
 declare matched_new boolean;
 declare inserted_orders_ids bigint[];
+declare not_changed_orders_ids bigint[];
 declare deleted_orders_ids bigint[];
 begin
 
@@ -14,7 +15,27 @@ begin
             old.deleted = 0
         then
             update gtd set
-                units_count = units_count - 1
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    units_count
+                ) = (
+                    select
+                            count(*) as units_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.units, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.orders_ids && gtd.orders_ids
+                        and
+                        source_row.deleted = 0
+                )
             where
                 old.orders_ids && gtd.orders_ids;
         end if;
@@ -48,6 +69,7 @@ begin
             not matched_new
         then
             inserted_orders_ids = null;
+            not_changed_orders_ids = null;
             deleted_orders_ids = old.orders_ids;
         end if;
 
@@ -57,6 +79,7 @@ begin
             matched_new
         then
             inserted_orders_ids = new.orders_ids;
+            not_changed_orders_ids = null;
             deleted_orders_ids = null;
         end if;
 
@@ -66,20 +89,115 @@ begin
             matched_new
         then
             inserted_orders_ids = cm_get_inserted_elements(old.orders_ids, new.orders_ids);
+            not_changed_orders_ids = cm_get_not_changed_elements(old.orders_ids, new.orders_ids);
             deleted_orders_ids = cm_get_deleted_elements(old.orders_ids, new.orders_ids);
         end if;
 
+        if not_changed_orders_ids is not null then
+            update gtd set
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'orders_ids', new.orders_ids
+        ),
+            TG_OP
+        ),
+                (
+                    units_count
+                ) = (
+                    select
+                            count(*) as units_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'orders_ids', new.orders_ids
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.units, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.orders_ids && gtd.orders_ids
+                        and
+                        source_row.deleted = 0
+                )
+            where
+                not_changed_orders_ids && gtd.orders_ids;
+        end if;
 
         if deleted_orders_ids is not null then
             update gtd set
-                units_count = units_count - 1
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    units_count
+                ) = (
+                    select
+                            count(*) as units_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.units, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.orders_ids && gtd.orders_ids
+                        and
+                        source_row.deleted = 0
+                )
             where
                 deleted_orders_ids && gtd.orders_ids;
         end if;
 
         if inserted_orders_ids is not null then
             update gtd set
-                units_count = units_count + 1
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'orders_ids', new.orders_ids
+        ),
+            TG_OP
+        ),
+                (
+                    units_count
+                ) = (
+                    select
+                            count(*) as units_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'orders_ids', new.orders_ids
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.units, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.orders_ids && gtd.orders_ids
+                        and
+                        source_row.deleted = 0
+                )
             where
                 inserted_orders_ids && gtd.orders_ids;
         end if;
@@ -95,7 +213,41 @@ begin
             new.deleted = 0
         then
             update gtd set
-                units_count = units_count + 1
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'orders_ids', new.orders_ids
+        ),
+            TG_OP
+        ),
+                (
+                    units_count
+                ) = (
+                    select
+                            count(*) as units_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'orders_ids', new.orders_ids
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.units, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.orders_ids && gtd.orders_ids
+                        and
+                        source_row.deleted = 0
+                )
             where
                 new.orders_ids && gtd.orders_ids;
         end if;

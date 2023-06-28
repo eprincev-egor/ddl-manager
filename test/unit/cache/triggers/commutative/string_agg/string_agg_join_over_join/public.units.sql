@@ -1,68 +1,37 @@
 create or replace function cache_totals_for_orders_on_units()
 returns trigger as $body$
-declare old_unit_type_name text;
-declare old_unit_type_id_category integer;
-declare old_category_name text;
-declare new_unit_type_name text;
-declare new_unit_type_id_category integer;
-declare new_category_name text;
 begin
 
     if TG_OP = 'DELETE' then
 
         if old.id_order is not null then
-            if old.id_unit_type is not null then
-                select
-                    unit_type.name,
-                    unit_type.id_category
-                into
-                    old_unit_type_name,
-                    old_unit_type_id_category
-                from unit_type
-                where
-                    unit_type.id = old.id_unit_type;
-            end if;
-
-            if old_unit_type_id_category is not null then
-                old_category_name = (
-                    select
-                        unit_category.name
-                    from unit_category
-                    where
-                        unit_category.id = old_unit_type_id_category
-                );
-            end if;
-
             update orders set
-                units_types_name = cm_array_remove_one_element(
-                    units_types_name,
-                    old_unit_type_name
-                ),
-                units_types = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    units_types,
+                    units_categories
+                ) = (
                     select
-                        string_agg(distinct item.name, ', ')
+                            string_agg(distinct unit_type.name, ', ') as units_types,
+                            string_agg(distinct unit_category.name, ', ') as units_categories
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            units_types_name,
-                            old_unit_type_name
-                        )
-                    ) as item(name)
-                ),
-                units_categories_name = cm_array_remove_one_element(
-                    units_categories_name,
-                    old_category_name
-                ),
-                units_categories = (
-                    select
-                        string_agg(distinct item.name, ', ')
+                        left join lateral jsonb_populate_record(null::public.units, json_entry.value) as record on
+                            true
+                    ) as source_row
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            units_categories_name,
-                            old_category_name
-                        )
-                    ) as item(name)
+                    left join unit_type on
+                        unit_type.id = source_row.id_unit_type
+
+                    left join unit_category on
+                        unit_category.id = unit_type.id_category
+                    where
+                        source_row.id_order = orders.id
                 )
             where
                 old.id_order = orders.id;
@@ -80,106 +49,52 @@ begin
             return new;
         end if;
 
-        if old.id_unit_type is not null then
-            select
-                unit_type.name,
-                unit_type.id_category
-            into
-                old_unit_type_name,
-                old_unit_type_id_category
-            from unit_type
-            where
-                unit_type.id = old.id_unit_type;
-        end if;
-
-        if old_unit_type_id_category is not null then
-            old_category_name = (
-                select
-                    unit_category.name
-                from unit_category
-                where
-                    unit_category.id = old_unit_type_id_category
-            );
-        end if;
-
-        if new.id_unit_type is not distinct from old.id_unit_type then
-            new_unit_type_name = old_unit_type_name;
-            new_unit_type_id_category = old_unit_type_id_category;
-        else
-            if new.id_unit_type is not null then
-                select
-                    unit_type.name,
-                    unit_type.id_category
-                into
-                    new_unit_type_name,
-                    new_unit_type_id_category
-                from unit_type
-                where
-                    unit_type.id = new.id_unit_type;
-            end if;
-        end if;
-
-        if new_unit_type_id_category is not distinct from old_unit_type_id_category then
-            new_category_name = old_category_name;
-        else
-            if new_unit_type_id_category is not null then
-                new_category_name = (
-                    select
-                        unit_category.name
-                    from unit_category
-                    where
-                        unit_category.id = new_unit_type_id_category
-                );
-            end if;
-        end if;
-
         if new.id_order is not distinct from old.id_order then
             if new.id_order is null then
                 return new;
             end if;
 
             update orders set
-                units_types_name = array_append(
-                    cm_array_remove_one_element(
-                        units_types_name,
-                        old_unit_type_name
-                    ),
-                    new_unit_type_name
-                ),
-                units_types = (
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
+        ),
+            TG_OP
+        ),
+                (
+                    units_types,
+                    units_categories
+                ) = (
                     select
-                        string_agg(distinct item.name, ', ')
+                            string_agg(distinct unit_type.name, ', ') as units_types,
+                            string_agg(distinct unit_category.name, ', ') as units_categories
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                    from unnest(
-                        array_append(
-                            cm_array_remove_one_element(
-                                units_types_name,
-                                old_unit_type_name
-                            ),
-                            new_unit_type_name
-                        )
-                    ) as item(name)
-                ),
-                units_categories_name = array_append(
-                    cm_array_remove_one_element(
-                        units_categories_name,
-                        old_category_name
-                    ),
-                    new_category_name
-                ),
-                units_categories = (
-                    select
-                        string_agg(distinct item.name, ', ')
+                        left join lateral jsonb_populate_record(null::public.units, json_entry.value) as record on
+                            true
+                    ) as source_row
 
-                    from unnest(
-                        array_append(
-                            cm_array_remove_one_element(
-                                units_categories_name,
-                                old_category_name
-                            ),
-                            new_category_name
-                        )
-                    ) as item(name)
+                    left join unit_type on
+                        unit_type.id = source_row.id_unit_type
+
+                    left join unit_category on
+                        unit_category.id = unit_type.id_category
+                    where
+                        source_row.id_order = orders.id
                 )
             where
                 new.id_order = orders.id;
@@ -189,35 +104,32 @@ begin
 
         if old.id_order is not null then
             update orders set
-                units_types_name = cm_array_remove_one_element(
-                    units_types_name,
-                    old_unit_type_name
-                ),
-                units_types = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    units_types,
+                    units_categories
+                ) = (
                     select
-                        string_agg(distinct item.name, ', ')
+                            string_agg(distinct unit_type.name, ', ') as units_types,
+                            string_agg(distinct unit_category.name, ', ') as units_categories
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            units_types_name,
-                            old_unit_type_name
-                        )
-                    ) as item(name)
-                ),
-                units_categories_name = cm_array_remove_one_element(
-                    units_categories_name,
-                    old_category_name
-                ),
-                units_categories = (
-                    select
-                        string_agg(distinct item.name, ', ')
+                        left join lateral jsonb_populate_record(null::public.units, json_entry.value) as record on
+                            true
+                    ) as source_row
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            units_categories_name,
-                            old_category_name
-                        )
-                    ) as item(name)
+                    left join unit_type on
+                        unit_type.id = source_row.id_unit_type
+
+                    left join unit_category on
+                        unit_category.id = unit_type.id_category
+                    where
+                        source_row.id_order = orders.id
                 )
             where
                 old.id_order = orders.id;
@@ -225,54 +137,47 @@ begin
 
         if new.id_order is not null then
             update orders set
-                units_types_name = array_append(
-                    units_types_name,
-                    new_unit_type_name
-                ),
-                units_types = case
-                    when
-                        array_position(
-                            units_types_name,
-                            new_unit_type_name
-                        )
-                        is null
-                    then
-                        coalesce(
-                            units_types ||
-                            coalesce(
-                                ', '
-                                || new_unit_type_name,
-                                ''
-                            ),
-                            new_unit_type_name
-                        )
-                    else
-                        units_types
-                end,
-                units_categories_name = array_append(
-                    units_categories_name,
-                    new_category_name
-                ),
-                units_categories = case
-                    when
-                        array_position(
-                            units_categories_name,
-                            new_category_name
-                        )
-                        is null
-                    then
-                        coalesce(
-                            units_categories ||
-                            coalesce(
-                                ', '
-                                || new_category_name,
-                                ''
-                            ),
-                            new_category_name
-                        )
-                    else
-                        units_categories
-                end
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
+        ),
+            TG_OP
+        ),
+                (
+                    units_types,
+                    units_categories
+                ) = (
+                    select
+                            string_agg(distinct unit_type.name, ', ') as units_types,
+                            string_agg(distinct unit_category.name, ', ') as units_categories
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.units, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join unit_type on
+                        unit_type.id = source_row.id_unit_type
+
+                    left join unit_category on
+                        unit_category.id = unit_type.id_category
+                    where
+                        source_row.id_order = orders.id
+                )
             where
                 new.id_order = orders.id;
         end if;
@@ -283,77 +188,48 @@ begin
     if TG_OP = 'INSERT' then
 
         if new.id_order is not null then
-            if new.id_unit_type is not null then
-                select
-                    unit_type.name,
-                    unit_type.id_category
-                into
-                    new_unit_type_name,
-                    new_unit_type_id_category
-                from unit_type
-                where
-                    unit_type.id = new.id_unit_type;
-            end if;
-
-            if new_unit_type_id_category is not null then
-                new_category_name = (
-                    select
-                        unit_category.name
-                    from unit_category
-                    where
-                        unit_category.id = new_unit_type_id_category
-                );
-            end if;
-
             update orders set
-                units_types_name = array_append(
-                    units_types_name,
-                    new_unit_type_name
-                ),
-                units_types = case
-                    when
-                        array_position(
-                            units_types_name,
-                            new_unit_type_name
-                        )
-                        is null
-                    then
-                        coalesce(
-                            units_types ||
-                            coalesce(
-                                ', '
-                                || new_unit_type_name,
-                                ''
-                            ),
-                            new_unit_type_name
-                        )
-                    else
-                        units_types
-                end,
-                units_categories_name = array_append(
-                    units_categories_name,
-                    new_category_name
-                ),
-                units_categories = case
-                    when
-                        array_position(
-                            units_categories_name,
-                            new_category_name
-                        )
-                        is null
-                    then
-                        coalesce(
-                            units_categories ||
-                            coalesce(
-                                ', '
-                                || new_category_name,
-                                ''
-                            ),
-                            new_category_name
-                        )
-                    else
-                        units_categories
-                end
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
+        ),
+            TG_OP
+        ),
+                (
+                    units_types,
+                    units_categories
+                ) = (
+                    select
+                            string_agg(distinct unit_type.name, ', ') as units_types,
+                            string_agg(distinct unit_category.name, ', ') as units_categories
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.units, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join unit_type on
+                        unit_type.id = source_row.id_unit_type
+
+                    left join unit_category on
+                        unit_category.id = unit_type.id_category
+                    where
+                        source_row.id_order = orders.id
+                )
             where
                 new.id_order = orders.id;
         end if;

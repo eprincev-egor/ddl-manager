@@ -10,7 +10,7 @@ begin
 
 
     select
-        gtd.orders_ids as gtd_orders_ids
+            gtd.orders_ids as gtd_orders_ids
     from list_gtd as gtd
     where
         gtd.id = new.table_id

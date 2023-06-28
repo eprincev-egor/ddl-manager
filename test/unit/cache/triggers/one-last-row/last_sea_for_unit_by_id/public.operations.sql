@@ -22,21 +22,19 @@ begin
                     last_sea_outgoing_date
                 ) = (
                     select
-                        last_sea.id as __last_sea_id,
-                        last_sea.incoming_date as last_sea_incoming_date,
-                last_sea.outgoing_date as last_sea_outgoing_date
-
+                            last_sea.id as __last_sea_id,
+                            last_sea.incoming_date as last_sea_incoming_date,
+                            last_sea.outgoing_date as last_sea_outgoing_date
                     from operations as last_sea
-
                     where
                         last_sea.units_ids && ARRAY[units.id] :: bigint[]
-                and
-                last_sea.type = 'sea'
-                and
-                last_sea.deleted = 0
-            order by
-                last_sea.id desc nulls first
-            limit 1
+                        and
+                        last_sea.type = 'sea'
+                        and
+                        last_sea.deleted = 0
+                    order by
+                        last_sea.id desc nulls first
+                    limit 1
                 )
             where
                 units.id = any( old.units_ids )
@@ -140,21 +138,19 @@ begin
                     last_sea_outgoing_date
                 ) = (
                     select
-                        last_sea.id as __last_sea_id,
-                        last_sea.incoming_date as last_sea_incoming_date,
-                last_sea.outgoing_date as last_sea_outgoing_date
-
+                            last_sea.id as __last_sea_id,
+                            last_sea.incoming_date as last_sea_incoming_date,
+                            last_sea.outgoing_date as last_sea_outgoing_date
                     from operations as last_sea
-
                     where
                         last_sea.units_ids && ARRAY[units.id] :: bigint[]
-                and
-                last_sea.type = 'sea'
-                and
-                last_sea.deleted = 0
-            order by
-                last_sea.id desc nulls first
-            limit 1
+                        and
+                        last_sea.type = 'sea'
+                        and
+                        last_sea.deleted = 0
+                    order by
+                        last_sea.id desc nulls first
+                    limit 1
                 )
             where
                 units.id = any( deleted_units_ids )

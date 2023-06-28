@@ -74,17 +74,22 @@ export class From {
         const output: string[] = [];
 
         if ( this.source instanceof TableReference ) {
-            output.push(this.source.toString());
+            output.push(spaces + this.source.toString());
         }
         else if ( this.source instanceof Select ) {
-            output.push(`(`);
+            output.push(`${spaces}(`);
             output.push(
-                ...this.source.template(spaces.plusOneLevel())
+                ...this.source.template(
+                    spaces.plusOneLevel()
+                )
             );
             output.push(`${spaces}) as ${this.as}`);
         }
         else {
-            output.push(this.source.toString() + ` as ${this.as}`);
+            output.push(
+                spaces +
+                this.source.toString() + ` as ${this.as}`
+            );
         }
 
         for (const join of this.joins) {
@@ -93,17 +98,5 @@ export class From {
         }
 
         return output;
-    }
-
-    toString() {
-        let sql = this.source instanceof TableReference ? 
-            this.source : `(${this.source}) as ${this.as}`;
-
-        if ( this.joins.length ) {
-            sql += " ";
-            sql += this.joins.join("\n");
-        }
-
-        return sql;
     }
 }

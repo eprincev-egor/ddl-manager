@@ -6,31 +6,36 @@ begin
 
 
     select
-        sum(renomination_invoice.sum) as renomination_sum,
-        array_agg(
-            renomination_invoice.account_no_doc_number
-        ) as renomination_link_account_no_doc_number,
-        string_agg(
-            renomination_invoice.account_no_doc_number,
-            ', '
-        ) as renomination_link,
-        array_agg(list_currency.charcode) as renomination_currencies_charcode,
-        string_agg(distinct 
-            list_currency.charcode,
-            ', '
-        ) as renomination_currencies
-    from invoice as renomination_invoice left join list_currency on
-list_currency.id = renomination_invoice.id_list_currency
+            sum(renomination_invoice.sum) as renomination_sum,
+            string_agg(
+                renomination_invoice.account_no_doc_number,
+                ', '
+                        ) as renomination_link,
+            string_agg(distinct 
+                list_currency.charcode,
+                ', '
+                        ) as renomination_currencies,
+            ('{' || string_agg(
+                                            '"' || renomination_invoice.id::text || '":' || jsonb_build_object(
+                        'account_no_doc_number', renomination_invoice.account_no_doc_number,'id', renomination_invoice.id,'id_list_currency', renomination_invoice.id_list_currency,'sum', renomination_invoice.sum
+                    )::text,
+                                            ','
+                                        ) || '}')
+            ::
+            jsonb as __renomination_json__
+    from invoice as renomination_invoice
+
+    left join list_currency on
+        list_currency.id = renomination_invoice.id_list_currency
     where
         renomination_invoice.id = any (new.renomination_invoices)
     into new_totals;
 
 
     new.renomination_sum = new_totals.renomination_sum;
-    new.renomination_link_account_no_doc_number = new_totals.renomination_link_account_no_doc_number;
     new.renomination_link = new_totals.renomination_link;
-    new.renomination_currencies_charcode = new_totals.renomination_currencies_charcode;
     new.renomination_currencies = new_totals.renomination_currencies;
+    new.__renomination_json__ = new_totals.__renomination_json__;
 
 
     return new;

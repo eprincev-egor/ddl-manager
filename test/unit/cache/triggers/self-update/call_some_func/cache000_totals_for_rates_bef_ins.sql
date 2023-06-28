@@ -1,10 +1,10 @@
 create or replace function cache000_totals_for_rates_bef_ins()
 returns trigger as $body$
 begin
-    new.total = new.quantity * new.price * calc_vat(
+    new.total = new.quantity * new.price *     calc_vat(
         new.vat_type,
         new.vat_value
-    );
+        );
 
     return new;
 end

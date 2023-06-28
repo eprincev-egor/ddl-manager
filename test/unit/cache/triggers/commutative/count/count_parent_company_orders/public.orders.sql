@@ -6,7 +6,25 @@ begin
 
         if old.id_client is not null then
             update companies as child_company set
-                parent_company_orders_count = parent_company_orders_count - 1
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    parent_company_orders_count
+                ) = (
+                    select
+                            count(*) as parent_company_orders_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = child_company.id_parent_company
+                )
             where
                 old.id_client = child_company.id_parent_company;
         end if;
@@ -19,18 +37,111 @@ begin
             return new;
         end if;
 
+        if new.id_client is not distinct from old.id_client then
+            if new.id_client is null then
+                return new;
+            end if;
 
+            update companies as child_company set
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client
+        ),
+            TG_OP
+        ),
+                (
+                    parent_company_orders_count
+                ) = (
+                    select
+                            count(*) as parent_company_orders_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = child_company.id_parent_company
+                )
+            where
+                new.id_client = child_company.id_parent_company;
+
+            return new;
+        end if;
 
         if old.id_client is not null then
             update companies as child_company set
-                parent_company_orders_count = parent_company_orders_count - 1
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    parent_company_orders_count
+                ) = (
+                    select
+                            count(*) as parent_company_orders_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = child_company.id_parent_company
+                )
             where
                 old.id_client = child_company.id_parent_company;
         end if;
 
         if new.id_client is not null then
             update companies as child_company set
-                parent_company_orders_count = parent_company_orders_count + 1
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client
+        ),
+            TG_OP
+        ),
+                (
+                    parent_company_orders_count
+                ) = (
+                    select
+                            count(*) as parent_company_orders_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = child_company.id_parent_company
+                )
             where
                 new.id_client = child_company.id_parent_company;
         end if;
@@ -42,7 +153,39 @@ begin
 
         if new.id_client is not null then
             update companies as child_company set
-                parent_company_orders_count = parent_company_orders_count + 1
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client
+        ),
+            TG_OP
+        ),
+                (
+                    parent_company_orders_count
+                ) = (
+                    select
+                            count(*) as parent_company_orders_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = child_company.id_parent_company
+                )
             where
                 new.id_client = child_company.id_parent_company;
         end if;

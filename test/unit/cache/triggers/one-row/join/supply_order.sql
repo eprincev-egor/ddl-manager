@@ -47,7 +47,7 @@ begin
                         coalesce(
                             country_start_row.has_surveyor_inspection,
                             0
-                        )
+                                                )
                     else
                         null
                 end
@@ -61,7 +61,7 @@ begin
                         coalesce(
                             country_start_row.has_surveyor_inspection,
                             0
-                        )
+                                )
                     else
                         null
                 end);
@@ -85,7 +85,7 @@ begin
                 has_surveyor_inspection = coalesce(
                     country_start_row.has_surveyor_inspection,
                     0
-                )
+                                )
             where
                 new.id = positions.id_supply_order
                 and

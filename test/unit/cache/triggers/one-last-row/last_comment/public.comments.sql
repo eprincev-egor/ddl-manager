@@ -11,9 +11,9 @@ begin
             end if;
 
             select
-                id,
-                message,
-                unit_id
+                    id,
+                    message,
+                    unit_id
             from comments
             where
                 comments.unit_id = old.unit_id
@@ -75,9 +75,9 @@ begin
             old.__last_comment_for_unit
         then
             select
-                id,
-                message,
-                unit_id
+                    id,
+                    message,
+                    unit_id
             from comments
             where
                 comments.unit_id = old.unit_id

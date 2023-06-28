@@ -14,64 +14,27 @@ begin
             )
         then
             update companies set
-                max_general_order_date_order_date = case
-                    when
-                        old.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                    then
-                        cm_array_remove_one_element(
-                            max_general_order_date_order_date,
-                            old.order_date
-                        )
-                    else
-                        max_general_order_date_order_date
-                end,
-                max_general_order_date = case
-                    when
-                        old.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                    then
-                        (
-                            select
-                                max(item.order_date)
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    max_general_order_date,
+                    max_combiner_order_date
+                ) = (
+                    select
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[1, 2, 3, 4] :: bigint[])) as max_general_order_date,
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[5, 6, 7, 8] :: bigint[])) as max_combiner_order_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                            from unnest(
-                                cm_array_remove_one_element(
-                                    max_general_order_date_order_date,
-                                    old.order_date
-                                )
-                            ) as item(order_date)
-                        )
-                    else
-                        max_general_order_date
-                end,
-                max_combiner_order_date_order_date = case
-                    when
-                        old.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                    then
-                        cm_array_remove_one_element(
-                            max_combiner_order_date_order_date,
-                            old.order_date
-                        )
-                    else
-                        max_combiner_order_date_order_date
-                end,
-                max_combiner_order_date = case
-                    when
-                        old.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                    then
-                        (
-                            select
-                                max(item.order_date)
-
-                            from unnest(
-                                cm_array_remove_one_element(
-                                    max_combiner_order_date_order_date,
-                                    old.order_date
-                                )
-                            ) as item(order_date)
-                        )
-                    else
-                        max_combiner_order_date
-                end
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 old.id_client = companies.id;
         end if;
@@ -96,162 +59,41 @@ begin
             end if;
 
             update companies set
-                max_general_order_date_order_date = case
-                    when
-                        new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                        and
-                        not coalesce(old.id_order_type = any (array[1, 2, 3, 4] :: bigint[]), false)
-                    then
-                        array_append(
-                            max_general_order_date_order_date,
-                            new.order_date
-                        )
-                    when
-                        not coalesce(new.id_order_type = any (array[1, 2, 3, 4] :: bigint[]), false)
-                        and
-                        old.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                    then
-                        cm_array_remove_one_element(
-                            max_general_order_date_order_date,
-                            old.order_date
-                        )
-                    when
-                        new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                    then
-                        array_append(
-                            cm_array_remove_one_element(
-                                max_general_order_date_order_date,
-                                old.order_date
-                            ),
-                            new.order_date
-                        )
-                    else
-                        max_general_order_date_order_date
-                end,
-                max_general_order_date = case
-                    when
-                        new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                        and
-                        not coalesce(old.id_order_type = any (array[1, 2, 3, 4] :: bigint[]), false)
-                    then
-                        greatest(
-                            max_general_order_date,
-                            new.order_date
-                        )
-                    when
-                        not coalesce(new.id_order_type = any (array[1, 2, 3, 4] :: bigint[]), false)
-                        and
-                        old.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                    then
-                        (
-                            select
-                                max(item.order_date)
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'order_date', new.order_date
+        ),
+            TG_OP
+        ),
+                (
+                    max_general_order_date,
+                    max_combiner_order_date
+                ) = (
+                    select
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[1, 2, 3, 4] :: bigint[])) as max_general_order_date,
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[5, 6, 7, 8] :: bigint[])) as max_combiner_order_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'order_date', new.order_date
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                            from unnest(
-                                cm_array_remove_one_element(
-                                    max_general_order_date_order_date,
-                                    old.order_date
-                                )
-                            ) as item(order_date)
-                        )
-                    when
-                        new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                    then
-                        (
-                            select
-                                max(item.order_date)
-
-                            from unnest(
-                                array_append(
-                                    cm_array_remove_one_element(
-                                        max_general_order_date_order_date,
-                                        old.order_date
-                                    ),
-                                    new.order_date
-                                )
-                            ) as item(order_date)
-                        )
-                    else
-                        max_general_order_date
-                end,
-                max_combiner_order_date_order_date = case
-                    when
-                        new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                        and
-                        not coalesce(old.id_order_type = any (array[5, 6, 7, 8] :: bigint[]), false)
-                    then
-                        array_append(
-                            max_combiner_order_date_order_date,
-                            new.order_date
-                        )
-                    when
-                        not coalesce(new.id_order_type = any (array[5, 6, 7, 8] :: bigint[]), false)
-                        and
-                        old.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                    then
-                        cm_array_remove_one_element(
-                            max_combiner_order_date_order_date,
-                            old.order_date
-                        )
-                    when
-                        new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                    then
-                        array_append(
-                            cm_array_remove_one_element(
-                                max_combiner_order_date_order_date,
-                                old.order_date
-                            ),
-                            new.order_date
-                        )
-                    else
-                        max_combiner_order_date_order_date
-                end,
-                max_combiner_order_date = case
-                    when
-                        new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                        and
-                        not coalesce(old.id_order_type = any (array[5, 6, 7, 8] :: bigint[]), false)
-                    then
-                        greatest(
-                            max_combiner_order_date,
-                            new.order_date
-                        )
-                    when
-                        not coalesce(new.id_order_type = any (array[5, 6, 7, 8] :: bigint[]), false)
-                        and
-                        old.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                    then
-                        (
-                            select
-                                max(item.order_date)
-
-                            from unnest(
-                                cm_array_remove_one_element(
-                                    max_combiner_order_date_order_date,
-                                    old.order_date
-                                )
-                            ) as item(order_date)
-                        )
-                    when
-                        new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                    then
-                        (
-                            select
-                                max(item.order_date)
-
-                            from unnest(
-                                array_append(
-                                    cm_array_remove_one_element(
-                                        max_combiner_order_date_order_date,
-                                        old.order_date
-                                    ),
-                                    new.order_date
-                                )
-                            ) as item(order_date)
-                        )
-                    else
-                        max_combiner_order_date
-                end
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
 
@@ -268,64 +110,27 @@ begin
             )
         then
             update companies set
-                max_general_order_date_order_date = case
-                    when
-                        old.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                    then
-                        cm_array_remove_one_element(
-                            max_general_order_date_order_date,
-                            old.order_date
-                        )
-                    else
-                        max_general_order_date_order_date
-                end,
-                max_general_order_date = case
-                    when
-                        old.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                    then
-                        (
-                            select
-                                max(item.order_date)
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    max_general_order_date,
+                    max_combiner_order_date
+                ) = (
+                    select
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[1, 2, 3, 4] :: bigint[])) as max_general_order_date,
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[5, 6, 7, 8] :: bigint[])) as max_combiner_order_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                            from unnest(
-                                cm_array_remove_one_element(
-                                    max_general_order_date_order_date,
-                                    old.order_date
-                                )
-                            ) as item(order_date)
-                        )
-                    else
-                        max_general_order_date
-                end,
-                max_combiner_order_date_order_date = case
-                    when
-                        old.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                    then
-                        cm_array_remove_one_element(
-                            max_combiner_order_date_order_date,
-                            old.order_date
-                        )
-                    else
-                        max_combiner_order_date_order_date
-                end,
-                max_combiner_order_date = case
-                    when
-                        old.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                    then
-                        (
-                            select
-                                max(item.order_date)
-
-                            from unnest(
-                                cm_array_remove_one_element(
-                                    max_combiner_order_date_order_date,
-                                    old.order_date
-                                )
-                            ) as item(order_date)
-                        )
-                    else
-                        max_combiner_order_date
-                end
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 old.id_client = companies.id;
         end if;
@@ -340,50 +145,41 @@ begin
             )
         then
             update companies set
-                max_general_order_date_order_date = case
-                    when
-                        new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                    then
-                        array_append(
-                            max_general_order_date_order_date,
-                            new.order_date
-                        )
-                    else
-                        max_general_order_date_order_date
-                end,
-                max_general_order_date = case
-                    when
-                        new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                    then
-                        greatest(
-                            max_general_order_date,
-                            new.order_date
-                        )
-                    else
-                        max_general_order_date
-                end,
-                max_combiner_order_date_order_date = case
-                    when
-                        new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                    then
-                        array_append(
-                            max_combiner_order_date_order_date,
-                            new.order_date
-                        )
-                    else
-                        max_combiner_order_date_order_date
-                end,
-                max_combiner_order_date = case
-                    when
-                        new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                    then
-                        greatest(
-                            max_combiner_order_date,
-                            new.order_date
-                        )
-                    else
-                        max_combiner_order_date
-                end
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'order_date', new.order_date
+        ),
+            TG_OP
+        ),
+                (
+                    max_general_order_date,
+                    max_combiner_order_date
+                ) = (
+                    select
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[1, 2, 3, 4] :: bigint[])) as max_general_order_date,
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[5, 6, 7, 8] :: bigint[])) as max_combiner_order_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'order_date', new.order_date
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
         end if;
@@ -403,50 +199,41 @@ begin
             )
         then
             update companies set
-                max_general_order_date_order_date = case
-                    when
-                        new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                    then
-                        array_append(
-                            max_general_order_date_order_date,
-                            new.order_date
-                        )
-                    else
-                        max_general_order_date_order_date
-                end,
-                max_general_order_date = case
-                    when
-                        new.id_order_type = any (array[1, 2, 3, 4] :: bigint[])
-                    then
-                        greatest(
-                            max_general_order_date,
-                            new.order_date
-                        )
-                    else
-                        max_general_order_date
-                end,
-                max_combiner_order_date_order_date = case
-                    when
-                        new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                    then
-                        array_append(
-                            max_combiner_order_date_order_date,
-                            new.order_date
-                        )
-                    else
-                        max_combiner_order_date_order_date
-                end,
-                max_combiner_order_date = case
-                    when
-                        new.id_order_type = any (array[5, 6, 7, 8] :: bigint[])
-                    then
-                        greatest(
-                            max_combiner_order_date,
-                            new.order_date
-                        )
-                    else
-                        max_combiner_order_date
-                end
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'order_date', new.order_date
+        ),
+            TG_OP
+        ),
+                (
+                    max_general_order_date,
+                    max_combiner_order_date
+                ) = (
+                    select
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[1, 2, 3, 4] :: bigint[])) as max_general_order_date,
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[5, 6, 7, 8] :: bigint[])) as max_combiner_order_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'order_date', new.order_date
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
         end if;

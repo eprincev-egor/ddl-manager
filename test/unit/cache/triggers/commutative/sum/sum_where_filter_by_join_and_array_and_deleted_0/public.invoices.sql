@@ -1,7 +1,5 @@
 create or replace function cache_invoices_for_orders_on_invoice()
 returns trigger as $body$
-declare old_invoice_type_code text;
-declare new_invoice_type_code text;
 declare matched_old boolean;
 declare matched_new boolean;
 declare inserted_orders_ids bigint[];
@@ -16,22 +14,35 @@ begin
             and
             old.deleted = 0
         then
-            if old.id_invoice_type is not null then
-                old_invoice_type_code = (
+            update orders set
+                __invoices_json__ = __invoices_json__ - old.id::text,
+                (
+                    invoices_profit
+                ) = (
                     select
-                        invoice_type.code
-                    from invoice_type
-                    where
-                        invoice_type.id = old.id_invoice_type
-                );
-            end if;
+                            sum(source_row.profit) as invoices_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __invoices_json__ - old.id::text
+) as json_entry
 
-            if old_invoice_type_code in ('incoming', 'outgoung') then
-                update orders set
-                    invoices_profit = coalesce(invoices_profit, 0) - coalesce(old.profit, 0)
-                where
-                    orders.id = any( old.orders_ids::bigint[] );
-            end if;
+                        left join lateral jsonb_populate_record(null::public.invoice, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join invoice_type on
+                        invoice_type.id = source_row.id_invoice_type
+                    where
+                        source_row.orders_ids @> ARRAY[orders.id] :: bigint[]
+                        and
+                        source_row.deleted = 0
+                        and
+                        invoice_type.code in ('incoming', 'outgoung')
+                )
+            where
+                orders.id = any( old.orders_ids::bigint[] );
         end if;
 
         return old;
@@ -50,36 +61,8 @@ begin
             return new;
         end if;
 
-        if old.id_invoice_type is not null then
-            old_invoice_type_code = (
-                select
-                    invoice_type.code
-                from invoice_type
-                where
-                    invoice_type.id = old.id_invoice_type
-            );
-        end if;
-
-        if new.id_invoice_type is not distinct from old.id_invoice_type then
-            new_invoice_type_code = old_invoice_type_code;
-        else
-            if new.id_invoice_type is not null then
-                new_invoice_type_code = (
-                    select
-                        invoice_type.code
-                    from invoice_type
-                    where
-                        invoice_type.id = new.id_invoice_type
-                );
-            end if;
-        end if;
-
-        matched_old = coalesce(old.deleted = 0
-            and
-            old_invoice_type_code in ('incoming', 'outgoung'), false);
-        matched_new = coalesce(new.deleted = 0
-            and
-            new_invoice_type_code in ('incoming', 'outgoung'), false);
+        matched_old = coalesce(old.deleted = 0, false);
+        matched_new = coalesce(new.deleted = 0, false);
 
         if
             not matched_old
@@ -121,21 +104,124 @@ begin
 
         if not_changed_orders_ids is not null then
             update orders set
-                invoices_profit = coalesce(invoices_profit, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
+                __invoices_json__ = cm_merge_json(
+            __invoices_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    invoices_profit
+                ) = (
+                    select
+                            sum(source_row.profit) as invoices_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __invoices_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.invoice, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join invoice_type on
+                        invoice_type.id = source_row.id_invoice_type
+                    where
+                        source_row.orders_ids @> ARRAY[orders.id] :: bigint[]
+                        and
+                        source_row.deleted = 0
+                        and
+                        invoice_type.code in ('incoming', 'outgoung')
+                )
             where
                 orders.id = any( not_changed_orders_ids::bigint[] );
         end if;
 
         if deleted_orders_ids is not null then
             update orders set
-                invoices_profit = coalesce(invoices_profit, 0) - coalesce(old.profit, 0)
+                __invoices_json__ = __invoices_json__ - old.id::text,
+                (
+                    invoices_profit
+                ) = (
+                    select
+                            sum(source_row.profit) as invoices_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __invoices_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.invoice, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join invoice_type on
+                        invoice_type.id = source_row.id_invoice_type
+                    where
+                        source_row.orders_ids @> ARRAY[orders.id] :: bigint[]
+                        and
+                        source_row.deleted = 0
+                        and
+                        invoice_type.code in ('incoming', 'outgoung')
+                )
             where
                 orders.id = any( deleted_orders_ids::bigint[] );
         end if;
 
         if inserted_orders_ids is not null then
             update orders set
-                invoices_profit = coalesce(invoices_profit, 0) + coalesce(new.profit, 0)
+                __invoices_json__ = cm_merge_json(
+            __invoices_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    invoices_profit
+                ) = (
+                    select
+                            sum(source_row.profit) as invoices_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __invoices_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.invoice, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join invoice_type on
+                        invoice_type.id = source_row.id_invoice_type
+                    where
+                        source_row.orders_ids @> ARRAY[orders.id] :: bigint[]
+                        and
+                        source_row.deleted = 0
+                        and
+                        invoice_type.code in ('incoming', 'outgoung')
+                )
             where
                 orders.id = any( inserted_orders_ids::bigint[] );
         end if;
@@ -150,22 +236,49 @@ begin
             and
             new.deleted = 0
         then
-            if new.id_invoice_type is not null then
-                new_invoice_type_code = (
+            update orders set
+                __invoices_json__ = cm_merge_json(
+            __invoices_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    invoices_profit
+                ) = (
                     select
-                        invoice_type.code
-                    from invoice_type
-                    where
-                        invoice_type.id = new.id_invoice_type
-                );
-            end if;
+                            sum(source_row.profit) as invoices_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __invoices_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
 
-            if new_invoice_type_code in ('incoming', 'outgoung') then
-                update orders set
-                    invoices_profit = coalesce(invoices_profit, 0) + coalesce(new.profit, 0)
-                where
-                    orders.id = any( new.orders_ids::bigint[] );
-            end if;
+                        left join lateral jsonb_populate_record(null::public.invoice, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join invoice_type on
+                        invoice_type.id = source_row.id_invoice_type
+                    where
+                        source_row.orders_ids @> ARRAY[orders.id] :: bigint[]
+                        and
+                        source_row.deleted = 0
+                        and
+                        invoice_type.code in ('incoming', 'outgoung')
+                )
+            where
+                orders.id = any( new.orders_ids::bigint[] );
         end if;
 
         return new;

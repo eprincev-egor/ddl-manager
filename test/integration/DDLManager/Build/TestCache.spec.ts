@@ -4199,7 +4199,51 @@ $$;
         }]);
     });
 
-    // TODO: test when custom trigger update current row
+    it("table name is keyword", async() => {
+        const folderPath = ROOT_TMP_PATH + "/cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table public.order (
+                id serial primary key,
+                id_prev_order integer,
+                name text
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/prev_order.sql", `
+            cache prev_order for public.order as next_order (
+                select
+                    string_agg(public.order.name, ', ') as prev_name
+                from public.order
+                where
+                    next_order.id_prev_order = public.order.id
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        await db.query(`
+            insert into public.order (id_prev_order, name)
+            values (null, 'prev'), (1, 'next')
+        `);
+        const result = await db.query(`
+            select id, name, prev_name
+            from public.order
+            order by id
+        `);
+
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, name: "prev", prev_name: null},
+            {id: 2, name: "next", prev_name: "prev"}
+        ]);
+    });
+
+
     // TODO: test commutative cache with 51 fields
     // TODO: test about twice points (max_point_date and last point)
     // TODO: test about extrude brackets (a + b) / (c - d)

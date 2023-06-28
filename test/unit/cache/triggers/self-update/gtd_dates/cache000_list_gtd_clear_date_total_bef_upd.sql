@@ -18,7 +18,7 @@ begin
         new.date_clear,
         new.date_conditional_clear,
         new.date_release_for_procuring
-    );
+        );
 
     return new;
 end

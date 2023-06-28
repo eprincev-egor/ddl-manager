@@ -28,25 +28,28 @@ begin
         )
     update companies set
         (
-            max_order_date_order_date,
             max_order_date,
-            orders_numbers_order_number,
-            orders_numbers
+            orders_numbers,
+            __totals_json__
         ) = (
             select
-                array_agg(orders.order_date) as max_order_date_order_date,
-                max(orders.order_date) as max_order_date,
-    array_agg(orders.order_number) as orders_numbers_order_number,
-    string_agg(distinct
-        orders.order_number,
-        ', '
-    ) as orders_numbers
-
+                    max(orders.order_date) as max_order_date,
+                    string_agg(distinct 
+                        orders.order_number,
+                        ', '
+                                        ) as orders_numbers,
+                    ('{' || string_agg(
+                                                    '"' || link.id::text || '":' || jsonb_build_object(
+                                'id', link.id,'id_company', link.id_company,'id_order', link.id_order
+                            )::text,
+                                                    ','
+                                                ) || '}')
+                    ::
+                    jsonb as __totals_json__
             from order_company_link as link
 
             left join orders on
                 orders.id = link.id_order
-
             where
                 link.id_company = companies.id
         )

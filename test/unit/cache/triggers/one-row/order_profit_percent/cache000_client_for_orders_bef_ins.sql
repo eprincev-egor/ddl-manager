@@ -6,7 +6,7 @@ begin
 
 
     select
-        100 * new.profit / client.total_profit as percent_of_client_profit
+            100 * new.profit / client.total_profit as percent_of_client_profit
     from companies as client
     where
         client.id = new.id_client

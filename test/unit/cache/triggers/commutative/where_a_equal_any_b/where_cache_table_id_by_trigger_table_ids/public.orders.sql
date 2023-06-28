@@ -15,20 +15,29 @@ begin
             old.deleted = 0
         then
             update companies set
-                orders_numbers_doc_number = cm_array_remove_one_element(
-                    orders_numbers_doc_number,
-                    old.doc_number
-                ),
-                orders_numbers = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    orders_numbers
+                ) = (
                     select
-                        string_agg(distinct item.doc_number, ', ')
+                            string_agg(distinct 
+                                source_row.doc_number,
+                                ', '
+                                                        ) as orders_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            orders_numbers_doc_number,
-                            old.doc_number
-                        )
-                    ) as item(doc_number)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        companies.id = any (source_row.companies_ids)
+                        and
+                        source_row.deleted = 0
                 )
             where
                 companies.id = any (old.companies_ids);
@@ -91,26 +100,43 @@ begin
 
         if not_changed_companies_ids is not null then
             update companies set
-                orders_numbers_doc_number = array_append(
-                    cm_array_remove_one_element(
-                        orders_numbers_doc_number,
-                        old.doc_number
-                    ),
-                    new.doc_number
-                ),
-                orders_numbers = (
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
+        ),
+            TG_OP
+        ),
+                (
+                    orders_numbers
+                ) = (
                     select
-                        string_agg(distinct item.doc_number, ', ')
+                            string_agg(distinct 
+                                source_row.doc_number,
+                                ', '
+                                                        ) as orders_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                    from unnest(
-                        array_append(
-                            cm_array_remove_one_element(
-                                orders_numbers_doc_number,
-                                old.doc_number
-                            ),
-                            new.doc_number
-                        )
-                    ) as item(doc_number)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        companies.id = any (source_row.companies_ids)
+                        and
+                        source_row.deleted = 0
                 )
             where
                 companies.id = any (not_changed_companies_ids);
@@ -118,20 +144,29 @@ begin
 
         if deleted_companies_ids is not null then
             update companies set
-                orders_numbers_doc_number = cm_array_remove_one_element(
-                    orders_numbers_doc_number,
-                    old.doc_number
-                ),
-                orders_numbers = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    orders_numbers
+                ) = (
                     select
-                        string_agg(distinct item.doc_number, ', ')
+                            string_agg(distinct 
+                                source_row.doc_number,
+                                ', '
+                                                        ) as orders_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            orders_numbers_doc_number,
-                            old.doc_number
-                        )
-                    ) as item(doc_number)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        companies.id = any (source_row.companies_ids)
+                        and
+                        source_row.deleted = 0
                 )
             where
                 companies.id = any (deleted_companies_ids);
@@ -139,30 +174,44 @@ begin
 
         if inserted_companies_ids is not null then
             update companies set
-                orders_numbers_doc_number = array_append(
-                    orders_numbers_doc_number,
-                    new.doc_number
-                ),
-                orders_numbers = case
-                    when
-                        array_position(
-                            orders_numbers_doc_number,
-                            new.doc_number
-                        )
-                        is null
-                    then
-                        coalesce(
-                            orders_numbers ||
-                            coalesce(
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
+        ),
+            TG_OP
+        ),
+                (
+                    orders_numbers
+                ) = (
+                    select
+                            string_agg(distinct 
+                                source_row.doc_number,
                                 ', '
-                                || new.doc_number,
-                                ''
-                            ),
-                            new.doc_number
-                        )
-                    else
-                        orders_numbers
-                end
+                                                        ) as orders_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        companies.id = any (source_row.companies_ids)
+                        and
+                        source_row.deleted = 0
+                )
             where
                 companies.id = any (inserted_companies_ids);
         end if;
@@ -178,30 +227,44 @@ begin
             new.deleted = 0
         then
             update companies set
-                orders_numbers_doc_number = array_append(
-                    orders_numbers_doc_number,
-                    new.doc_number
-                ),
-                orders_numbers = case
-                    when
-                        array_position(
-                            orders_numbers_doc_number,
-                            new.doc_number
-                        )
-                        is null
-                    then
-                        coalesce(
-                            orders_numbers ||
-                            coalesce(
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
+        ),
+            TG_OP
+        ),
+                (
+                    orders_numbers
+                ) = (
+                    select
+                            string_agg(distinct 
+                                source_row.doc_number,
                                 ', '
-                                || new.doc_number,
-                                ''
-                            ),
-                            new.doc_number
-                        )
-                    else
-                        orders_numbers
-                end
+                                                        ) as orders_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        companies.id = any (source_row.companies_ids)
+                        and
+                        source_row.deleted = 0
+                )
             where
                 companies.id = any (new.companies_ids);
         end if;

@@ -1,44 +1,40 @@
 create or replace function cache_totals_for_companies_on_orders()
 returns trigger as $body$
-declare old_order_type_name text;
-declare new_order_type_name text;
 begin
 
     if TG_OP = 'DELETE' then
 
         if old.id_client is not null then
-            if old.id_order_type is not null then
-                old_order_type_name = (
-                    select
-                        order_type.name
-                    from order_type
-                    where
-                        order_type.id = old.id_order_type
-                );
-            end if;
-
             if
                 coalesce(old_order_type_name = 'LTL', false)
                 or
                 coalesce(old_order_type_name = 'FTL', false)
             then
                 update companies set
-                    ltl_profit = case
-                        when
-                            old_order_type_name = 'LTL'
-                        then
-                            coalesce(ltl_profit, 0) - coalesce(old.profit, 0)
-                        else
-                            ltl_profit
-                    end,
-                    ftl_orders_profit = case
-                        when
-                            old_order_type_name = 'FTL'
-                        then
-                            coalesce(ftl_orders_profit, 0) - coalesce(old.profit, 0)
-                        else
-                            ftl_orders_profit
-                    end
+                    __totals_json__ = __totals_json__ - old.id::text,
+                    (
+                        ltl_profit,
+                        ftl_orders_profit
+                    ) = (
+                        select
+                                sum(source_row.profit) filter (where     order_type.name = 'LTL') as ltl_profit,
+                                sum(source_row.profit) filter (where     order_type.name = 'FTL') as ftl_orders_profit
+                        from (
+                            select
+                                    record.*
+                            from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                            left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                                true
+                        ) as source_row
+
+                        left join order_type on
+                            order_type.id = source_row.id_order_type
+                        where
+                            source_row.id_client = companies.id
+                    )
                 where
                     old.id_client = companies.id;
             end if;
@@ -58,76 +54,50 @@ begin
             return new;
         end if;
 
-        if old.id_order_type is not null then
-            old_order_type_name = (
-                select
-                    order_type.name
-                from order_type
-                where
-                    order_type.id = old.id_order_type
-            );
-        end if;
-
-        if new.id_order_type is not distinct from old.id_order_type then
-            new_order_type_name = old_order_type_name;
-        else
-            if new.id_order_type is not null then
-                new_order_type_name = (
-                    select
-                        order_type.name
-                    from order_type
-                    where
-                        order_type.id = new.id_order_type
-                );
-            end if;
-        end if;
-
         if new.id_client is not distinct from old.id_client then
             if new.id_client is null then
                 return new;
             end if;
 
             update companies set
-                ltl_profit = case
-                    when
-                        new_order_type_name = 'LTL'
-                        and
-                        not coalesce(old_order_type_name = 'LTL', false)
-                    then
-                        coalesce(ltl_profit, 0) + coalesce(new.profit, 0)
-                    when
-                        not coalesce(new_order_type_name = 'LTL', false)
-                        and
-                        old_order_type_name = 'LTL'
-                    then
-                        coalesce(ltl_profit, 0) - coalesce(old.profit, 0)
-                    when
-                        new_order_type_name = 'LTL'
-                    then
-                        coalesce(ltl_profit, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
-                    else
-                        ltl_profit
-                end,
-                ftl_orders_profit = case
-                    when
-                        new_order_type_name = 'FTL'
-                        and
-                        not coalesce(old_order_type_name = 'FTL', false)
-                    then
-                        coalesce(ftl_orders_profit, 0) + coalesce(new.profit, 0)
-                    when
-                        not coalesce(new_order_type_name = 'FTL', false)
-                        and
-                        old_order_type_name = 'FTL'
-                    then
-                        coalesce(ftl_orders_profit, 0) - coalesce(old.profit, 0)
-                    when
-                        new_order_type_name = 'FTL'
-                    then
-                        coalesce(ftl_orders_profit, 0) - coalesce(old.profit, 0) + coalesce(new.profit, 0)
-                    else
-                        ftl_orders_profit
-                end
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    ltl_profit,
+                    ftl_orders_profit
+                ) = (
+                    select
+                            sum(source_row.profit) filter (where     order_type.name = 'LTL') as ltl_profit,
+                            sum(source_row.profit) filter (where     order_type.name = 'FTL') as ftl_orders_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join order_type on
+                        order_type.id = source_row.id_order_type
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
 
@@ -144,22 +114,30 @@ begin
             )
         then
             update companies set
-                ltl_profit = case
-                    when
-                        old_order_type_name = 'LTL'
-                    then
-                        coalesce(ltl_profit, 0) - coalesce(old.profit, 0)
-                    else
-                        ltl_profit
-                end,
-                ftl_orders_profit = case
-                    when
-                        old_order_type_name = 'FTL'
-                    then
-                        coalesce(ftl_orders_profit, 0) - coalesce(old.profit, 0)
-                    else
-                        ftl_orders_profit
-                end
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    ltl_profit,
+                    ftl_orders_profit
+                ) = (
+                    select
+                            sum(source_row.profit) filter (where     order_type.name = 'LTL') as ltl_profit,
+                            sum(source_row.profit) filter (where     order_type.name = 'FTL') as ftl_orders_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join order_type on
+                        order_type.id = source_row.id_order_type
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 old.id_client = companies.id;
         end if;
@@ -174,22 +152,44 @@ begin
             )
         then
             update companies set
-                ltl_profit = case
-                    when
-                        new_order_type_name = 'LTL'
-                    then
-                        coalesce(ltl_profit, 0) + coalesce(new.profit, 0)
-                    else
-                        ltl_profit
-                end,
-                ftl_orders_profit = case
-                    when
-                        new_order_type_name = 'FTL'
-                    then
-                        coalesce(ftl_orders_profit, 0) + coalesce(new.profit, 0)
-                    else
-                        ftl_orders_profit
-                end
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    ltl_profit,
+                    ftl_orders_profit
+                ) = (
+                    select
+                            sum(source_row.profit) filter (where     order_type.name = 'LTL') as ltl_profit,
+                            sum(source_row.profit) filter (where     order_type.name = 'FTL') as ftl_orders_profit
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join order_type on
+                        order_type.id = source_row.id_order_type
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
         end if;
@@ -200,38 +200,50 @@ begin
     if TG_OP = 'INSERT' then
 
         if new.id_client is not null then
-            if new.id_order_type is not null then
-                new_order_type_name = (
-                    select
-                        order_type.name
-                    from order_type
-                    where
-                        order_type.id = new.id_order_type
-                );
-            end if;
-
             if
                 coalesce(new_order_type_name = 'LTL', false)
                 or
                 coalesce(new_order_type_name = 'FTL', false)
             then
                 update companies set
-                    ltl_profit = case
-                        when
-                            new_order_type_name = 'LTL'
-                        then
-                            coalesce(ltl_profit, 0) + coalesce(new.profit, 0)
-                        else
-                            ltl_profit
-                    end,
-                    ftl_orders_profit = case
-                        when
-                            new_order_type_name = 'FTL'
-                        then
-                            coalesce(ftl_orders_profit, 0) + coalesce(new.profit, 0)
-                        else
-                            ftl_orders_profit
-                    end
+                    __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                    (
+                        ltl_profit,
+                        ftl_orders_profit
+                    ) = (
+                        select
+                                sum(source_row.profit) filter (where     order_type.name = 'LTL') as ltl_profit,
+                                sum(source_row.profit) filter (where     order_type.name = 'FTL') as ftl_orders_profit
+                        from (
+                            select
+                                    record.*
+                            from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                            left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                                true
+                        ) as source_row
+
+                        left join order_type on
+                            order_type.id = source_row.id_order_type
+                        where
+                            source_row.id_client = companies.id
+                    )
                 where
                     new.id_client = companies.id;
             end if;

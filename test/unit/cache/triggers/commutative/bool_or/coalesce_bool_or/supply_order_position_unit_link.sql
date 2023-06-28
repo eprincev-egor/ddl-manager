@@ -6,38 +6,29 @@ begin
 
         if old.id_position is not null then
             update supply_order_weight_position as position set
-                is_3pl_shipped_bool_or_actual_netto_or_pcs = cm_array_remove_one_element(
-                    is_3pl_shipped_bool_or_actual_netto_or_pcs,
-                    old.actual_netto_or_pcs
-                ),
-                is_3pl_shipped_bool_or = (
+                __is_3pl_shipped_json__ = __is_3pl_shipped_json__ - old.id::text,
+                (
+                    is_3pl_shipped
+                ) = (
                     select
-                        bool_or(
-                            item.actual_netto_or_pcs is not null
-                        )
-
-                    from unnest(
-                        cm_array_remove_one_element(
-                            is_3pl_shipped_bool_or_actual_netto_or_pcs,
-                            old.actual_netto_or_pcs
-                        )
-                    ) as item(actual_netto_or_pcs)
-                ),
-                is_3pl_shipped = coalesce(
-                    ((
+                            coalesce(
+                                bool_or(
+                                    source_row.actual_netto_or_pcs is not null
+                                    ),
+                                false
+                                                        ) as is_3pl_shipped
+                    from (
                         select
-                            bool_or(
-                                item.actual_netto_or_pcs is not null
-                            )
+                                record.*
+                        from jsonb_each(
+    __is_3pl_shipped_json__ - old.id::text
+) as json_entry
 
-                        from unnest(
-                            cm_array_remove_one_element(
-                                is_3pl_shipped_bool_or_actual_netto_or_pcs,
-                                old.actual_netto_or_pcs
-                            )
-                        ) as item(actual_netto_or_pcs)
-                    )),
-                    false
+                        left join lateral jsonb_populate_record(null::public.supply_order_position_unit_link, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_position = position.id
                 )
             where
                 old.id_position = position.id;
@@ -61,47 +52,43 @@ begin
             end if;
 
             update supply_order_weight_position as position set
-                is_3pl_shipped_bool_or_actual_netto_or_pcs = array_append(
-                    cm_array_remove_one_element(
-                        is_3pl_shipped_bool_or_actual_netto_or_pcs,
-                        old.actual_netto_or_pcs
-                    ),
-                    new.actual_netto_or_pcs
-                ),
-                is_3pl_shipped_bool_or = (
+                __is_3pl_shipped_json__ = cm_merge_json(
+            __is_3pl_shipped_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
+        ),
+            TG_OP
+        ),
+                (
+                    is_3pl_shipped
+                ) = (
                     select
-                        bool_or(
-                            item.actual_netto_or_pcs is not null
-                        )
-
-                    from unnest(
-                        array_append(
-                            cm_array_remove_one_element(
-                                is_3pl_shipped_bool_or_actual_netto_or_pcs,
-                                old.actual_netto_or_pcs
-                            ),
-                            new.actual_netto_or_pcs
-                        )
-                    ) as item(actual_netto_or_pcs)
-                ),
-                is_3pl_shipped = coalesce(
-                    ((
+                            coalesce(
+                                bool_or(
+                                    source_row.actual_netto_or_pcs is not null
+                                    ),
+                                false
+                                                        ) as is_3pl_shipped
+                    from (
                         select
-                            bool_or(
-                                item.actual_netto_or_pcs is not null
-                            )
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __is_3pl_shipped_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                        from unnest(
-                            array_append(
-                                cm_array_remove_one_element(
-                                    is_3pl_shipped_bool_or_actual_netto_or_pcs,
-                                    old.actual_netto_or_pcs
-                                ),
-                                new.actual_netto_or_pcs
-                            )
-                        ) as item(actual_netto_or_pcs)
-                    )),
-                    false
+                        left join lateral jsonb_populate_record(null::public.supply_order_position_unit_link, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_position = position.id
                 )
             where
                 new.id_position = position.id;
@@ -111,38 +98,29 @@ begin
 
         if old.id_position is not null then
             update supply_order_weight_position as position set
-                is_3pl_shipped_bool_or_actual_netto_or_pcs = cm_array_remove_one_element(
-                    is_3pl_shipped_bool_or_actual_netto_or_pcs,
-                    old.actual_netto_or_pcs
-                ),
-                is_3pl_shipped_bool_or = (
+                __is_3pl_shipped_json__ = __is_3pl_shipped_json__ - old.id::text,
+                (
+                    is_3pl_shipped
+                ) = (
                     select
-                        bool_or(
-                            item.actual_netto_or_pcs is not null
-                        )
-
-                    from unnest(
-                        cm_array_remove_one_element(
-                            is_3pl_shipped_bool_or_actual_netto_or_pcs,
-                            old.actual_netto_or_pcs
-                        )
-                    ) as item(actual_netto_or_pcs)
-                ),
-                is_3pl_shipped = coalesce(
-                    ((
+                            coalesce(
+                                bool_or(
+                                    source_row.actual_netto_or_pcs is not null
+                                    ),
+                                false
+                                                        ) as is_3pl_shipped
+                    from (
                         select
-                            bool_or(
-                                item.actual_netto_or_pcs is not null
-                            )
+                                record.*
+                        from jsonb_each(
+    __is_3pl_shipped_json__ - old.id::text
+) as json_entry
 
-                        from unnest(
-                            cm_array_remove_one_element(
-                                is_3pl_shipped_bool_or_actual_netto_or_pcs,
-                                old.actual_netto_or_pcs
-                            )
-                        ) as item(actual_netto_or_pcs)
-                    )),
-                    false
+                        left join lateral jsonb_populate_record(null::public.supply_order_position_unit_link, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_position = position.id
                 )
             where
                 old.id_position = position.id;
@@ -150,18 +128,43 @@ begin
 
         if new.id_position is not null then
             update supply_order_weight_position as position set
-                is_3pl_shipped_bool_or_actual_netto_or_pcs = array_append(
-                    is_3pl_shipped_bool_or_actual_netto_or_pcs,
-                    new.actual_netto_or_pcs
-                ),
-                is_3pl_shipped_bool_or = is_3pl_shipped_bool_or
-                or
-                new.actual_netto_or_pcs is not null,
-                is_3pl_shipped = coalesce(
-                    (is_3pl_shipped_bool_or
-                    or
-                    new.actual_netto_or_pcs is not null),
-                    false
+                __is_3pl_shipped_json__ = cm_merge_json(
+            __is_3pl_shipped_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
+        ),
+            TG_OP
+        ),
+                (
+                    is_3pl_shipped
+                ) = (
+                    select
+                            coalesce(
+                                bool_or(
+                                    source_row.actual_netto_or_pcs is not null
+                                    ),
+                                false
+                                                        ) as is_3pl_shipped
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __is_3pl_shipped_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.supply_order_position_unit_link, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_position = position.id
                 )
             where
                 new.id_position = position.id;
@@ -174,18 +177,43 @@ begin
 
         if new.id_position is not null then
             update supply_order_weight_position as position set
-                is_3pl_shipped_bool_or_actual_netto_or_pcs = array_append(
-                    is_3pl_shipped_bool_or_actual_netto_or_pcs,
-                    new.actual_netto_or_pcs
-                ),
-                is_3pl_shipped_bool_or = is_3pl_shipped_bool_or
-                or
-                new.actual_netto_or_pcs is not null,
-                is_3pl_shipped = coalesce(
-                    (is_3pl_shipped_bool_or
-                    or
-                    new.actual_netto_or_pcs is not null),
-                    false
+                __is_3pl_shipped_json__ = cm_merge_json(
+            __is_3pl_shipped_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
+        ),
+            TG_OP
+        ),
+                (
+                    is_3pl_shipped
+                ) = (
+                    select
+                            coalesce(
+                                bool_or(
+                                    source_row.actual_netto_or_pcs is not null
+                                    ),
+                                false
+                                                        ) as is_3pl_shipped
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __is_3pl_shipped_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.supply_order_position_unit_link, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_position = position.id
                 )
             where
                 new.id_position = position.id;

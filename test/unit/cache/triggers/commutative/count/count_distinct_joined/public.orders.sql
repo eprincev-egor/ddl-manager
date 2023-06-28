@@ -1,37 +1,32 @@
 create or replace function cache_totals_for_companies_on_orders()
 returns trigger as $body$
-declare old_order_type_name text;
-declare new_order_type_name text;
 begin
 
     if TG_OP = 'DELETE' then
 
         if old.id_client is not null then
-            if old.id_order_type is not null then
-                old_order_type_name = (
-                    select
-                        order_type.name
-                    from order_type
-                    where
-                        order_type.id = old.id_order_type
-                );
-            end if;
-
             update companies set
-                orders_count_name = cm_array_remove_one_element(
-                    orders_count_name,
-                    old_order_type_name
-                ),
-                orders_count = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    orders_count
+                ) = (
                     select
-                        count(distinct item.name)
+                            count(distinct order_type.name) as orders_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            orders_count_name,
-                            old_order_type_name
-                        )
-                    ) as item(name)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join order_type on
+                        order_type.id = source_row.id_order_type
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 old.id_client = companies.id;
@@ -49,56 +44,47 @@ begin
             return new;
         end if;
 
-        if old.id_order_type is not null then
-            old_order_type_name = (
-                select
-                    order_type.name
-                from order_type
-                where
-                    order_type.id = old.id_order_type
-            );
-        end if;
-
-        if new.id_order_type is not distinct from old.id_order_type then
-            new_order_type_name = old_order_type_name;
-        else
-            if new.id_order_type is not null then
-                new_order_type_name = (
-                    select
-                        order_type.name
-                    from order_type
-                    where
-                        order_type.id = new.id_order_type
-                );
-            end if;
-        end if;
-
         if new.id_client is not distinct from old.id_client then
             if new.id_client is null then
                 return new;
             end if;
 
             update companies set
-                orders_count_name = array_append(
-                    cm_array_remove_one_element(
-                        orders_count_name,
-                        old_order_type_name
-                    ),
-                    new_order_type_name
-                ),
-                orders_count = (
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+        ),
+            TG_OP
+        ),
+                (
+                    orders_count
+                ) = (
                     select
-                        count(distinct item.name)
+                            count(distinct order_type.name) as orders_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                    from unnest(
-                        array_append(
-                            cm_array_remove_one_element(
-                                orders_count_name,
-                                old_order_type_name
-                            ),
-                            new_order_type_name
-                        )
-                    ) as item(name)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join order_type on
+                        order_type.id = source_row.id_order_type
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 new.id_client = companies.id;
@@ -108,20 +94,27 @@ begin
 
         if old.id_client is not null then
             update companies set
-                orders_count_name = cm_array_remove_one_element(
-                    orders_count_name,
-                    old_order_type_name
-                ),
-                orders_count = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    orders_count
+                ) = (
                     select
-                        count(distinct item.name)
+                            count(distinct order_type.name) as orders_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            orders_count_name,
-                            old_order_type_name
-                        )
-                    ) as item(name)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join order_type on
+                        order_type.id = source_row.id_order_type
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 old.id_client = companies.id;
@@ -129,20 +122,41 @@ begin
 
         if new.id_client is not null then
             update companies set
-                orders_count_name = array_append(
-                    orders_count_name,
-                    new_order_type_name
-                ),
-                orders_count = (
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+        ),
+            TG_OP
+        ),
+                (
+                    orders_count
+                ) = (
                     select
-                        count(distinct item.name)
+                            count(distinct order_type.name) as orders_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                    from unnest(
-                        array_append(
-                            orders_count_name,
-                            new_order_type_name
-                        )
-                    ) as item(name)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join order_type on
+                        order_type.id = source_row.id_order_type
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 new.id_client = companies.id;
@@ -154,31 +168,42 @@ begin
     if TG_OP = 'INSERT' then
 
         if new.id_client is not null then
-            if new.id_order_type is not null then
-                new_order_type_name = (
-                    select
-                        order_type.name
-                    from order_type
-                    where
-                        order_type.id = new.id_order_type
-                );
-            end if;
-
             update companies set
-                orders_count_name = array_append(
-                    orders_count_name,
-                    new_order_type_name
-                ),
-                orders_count = (
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+        ),
+            TG_OP
+        ),
+                (
+                    orders_count
+                ) = (
                     select
-                        count(distinct item.name)
+                            count(distinct order_type.name) as orders_count
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                    from unnest(
-                        array_append(
-                            orders_count_name,
-                            new_order_type_name
-                        )
-                    ) as item(name)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join order_type on
+                        order_type.id = source_row.id_order_type
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 new.id_client = companies.id;

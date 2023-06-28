@@ -6,9 +6,9 @@ begin
     if TG_OP = 'DELETE' then
         if old.id_operation is not null then
             select
-                operations.id as id,
-                operations.__last_point_id as __last_point_id,
-                operations.__last_point_sort as __last_point_sort
+                    operations.id as id,
+                    operations.__last_point_id as __last_point_id,
+                    operations.__last_point_sort as __last_point_sort
             from operations
             where
                 old.id_operation = operations.id
@@ -25,20 +25,18 @@ begin
                         last_point_id_point
                     ) = (
                         select
-                            arrival_points.id as __last_point_id,
-                            arrival_points.sort as __last_point_sort,
-                arrival_points.actual_date as last_point_actual_date,
-                arrival_points.expected_date as last_point_expected_date,
-                arrival_points.id_point as last_point_id_point
-
+                                arrival_points.id as __last_point_id,
+                                arrival_points.sort as __last_point_sort,
+                                arrival_points.actual_date as last_point_actual_date,
+                                arrival_points.expected_date as last_point_expected_date,
+                                arrival_points.id_point as last_point_id_point
                         from arrival_points
-
                         where
                             arrival_points.id_operation = operations.id
-            order by
-                arrival_points.sort desc nulls first,
-                public.arrival_points.id desc nulls first
-            limit 1
+                        order by
+                            arrival_points.sort desc nulls first,
+                            public.arrival_points.id desc nulls first
+                        limit 1
                     )
                 where
                     operations.id = cache_row.id;
@@ -70,9 +68,9 @@ begin
 
             if new.sort is distinct from old.sort then
                 select
-                    operations.id as id,
-                    operations.__last_point_id as __last_point_id,
-                    operations.__last_point_sort as __last_point_sort
+                        operations.id as id,
+                        operations.__last_point_id as __last_point_id,
+                        operations.__last_point_sort as __last_point_sort
                 from operations
                 where
                     old.id_operation = operations.id
@@ -121,20 +119,18 @@ begin
                                 last_point_id_point
                             ) = (
                                 select
-                                    arrival_points.id as __last_point_id,
-                                    arrival_points.sort as __last_point_sort,
-                arrival_points.actual_date as last_point_actual_date,
-                arrival_points.expected_date as last_point_expected_date,
-                arrival_points.id_point as last_point_id_point
-
+                                        arrival_points.id as __last_point_id,
+                                        arrival_points.sort as __last_point_sort,
+                                        arrival_points.actual_date as last_point_actual_date,
+                                        arrival_points.expected_date as last_point_expected_date,
+                                        arrival_points.id_point as last_point_id_point
                                 from arrival_points
-
                                 where
                                     arrival_points.id_operation = operations.id
-            order by
-                arrival_points.sort desc nulls first,
-                public.arrival_points.id desc nulls first
-            limit 1
+                                order by
+                                    arrival_points.sort desc nulls first,
+                                    public.arrival_points.id desc nulls first
+                                limit 1
                             )
                         where
                             operations.id = cache_row.id;
@@ -164,9 +160,9 @@ begin
 
         if old.id_operation is not null then
             select
-                operations.id as id,
-                operations.__last_point_id as __last_point_id,
-                operations.__last_point_sort as __last_point_sort
+                    operations.id as id,
+                    operations.__last_point_id as __last_point_id,
+                    operations.__last_point_sort as __last_point_sort
             from operations
             where
                 old.id_operation = operations.id
@@ -183,20 +179,18 @@ begin
                         last_point_id_point
                     ) = (
                         select
-                            arrival_points.id as __last_point_id,
-                            arrival_points.sort as __last_point_sort,
-                arrival_points.actual_date as last_point_actual_date,
-                arrival_points.expected_date as last_point_expected_date,
-                arrival_points.id_point as last_point_id_point
-
+                                arrival_points.id as __last_point_id,
+                                arrival_points.sort as __last_point_sort,
+                                arrival_points.actual_date as last_point_actual_date,
+                                arrival_points.expected_date as last_point_expected_date,
+                                arrival_points.id_point as last_point_id_point
                         from arrival_points
-
                         where
                             arrival_points.id_operation = operations.id
-            order by
-                arrival_points.sort desc nulls first,
-                public.arrival_points.id desc nulls first
-            limit 1
+                        order by
+                            arrival_points.sort desc nulls first,
+                            public.arrival_points.id desc nulls first
+                        limit 1
                     )
                 where
                     operations.id = cache_row.id;
@@ -205,9 +199,9 @@ begin
 
         if new.id_operation is not null then
             select
-                operations.id as id,
-                operations.__last_point_id as __last_point_id,
-                operations.__last_point_sort as __last_point_sort
+                    operations.id as id,
+                    operations.__last_point_id as __last_point_id,
+                    operations.__last_point_sort as __last_point_sort
             from operations
             where
                 new.id_operation = operations.id
@@ -244,9 +238,9 @@ begin
     if TG_OP = 'INSERT' then
         if new.id_operation is not null then
             select
-                operations.id as id,
-                operations.__last_point_id as __last_point_id,
-                operations.__last_point_sort as __last_point_sort
+                    operations.id as id,
+                    operations.__last_point_id as __last_point_id,
+                    operations.__last_point_sort as __last_point_sort
             from operations
             where
                 new.id_operation = operations.id

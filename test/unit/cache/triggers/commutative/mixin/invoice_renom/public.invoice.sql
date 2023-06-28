@@ -1,55 +1,41 @@
 create or replace function cache_renomination_for_invoice_on_invoice()
 returns trigger as $body$
-declare old_list_currency_charcode text;
-declare new_list_currency_charcode text;
 begin
 
     if TG_OP = 'DELETE' then
 
-        if old.id_list_currency is not null then
-            old_list_currency_charcode = (
-                select
-                    list_currency.charcode
-                from list_currency
-                where
-                    list_currency.id = old.id_list_currency
-            );
-        end if;
-
         update invoice set
-            renomination_sum = coalesce(renomination_sum, 0) - coalesce(old.sum, 0),
-            renomination_link_account_no_doc_number = cm_array_remove_one_element(
-                renomination_link_account_no_doc_number,
-                old.account_no_doc_number
-            ),
-            renomination_link = (
+            __renomination_json__ = __renomination_json__ - old.id::text,
+            (
+                renomination_sum,
+                renomination_link,
+                renomination_currencies
+            ) = (
                 select
-                    string_agg(
-                        item.account_no_doc_number,
-                        ', '
-                    )
+                        sum(source_row.sum) as renomination_sum,
+                        string_agg(
+                            source_row.account_no_doc_number,
+                            ', '
+                                                ) as renomination_link,
+                        string_agg(distinct 
+                            list_currency.charcode,
+                            ', '
+                                                ) as renomination_currencies
+                from (
+                    select
+                            record.*
+                    from jsonb_each(
+    __renomination_json__ - old.id::text
+) as json_entry
 
-                from unnest(
-                    cm_array_remove_one_element(
-                        renomination_link_account_no_doc_number,
-                        old.account_no_doc_number
-                    )
-                ) as item(account_no_doc_number)
-            ),
-            renomination_currencies_charcode = cm_array_remove_one_element(
-                renomination_currencies_charcode,
-                old_list_currency_charcode
-            ),
-            renomination_currencies = (
-                select
-                    string_agg(distinct item.charcode, ', ')
+                    left join lateral jsonb_populate_record(null::public.invoice, json_entry.value) as record on
+                        true
+                ) as source_row
 
-                from unnest(
-                    cm_array_remove_one_element(
-                        renomination_currencies_charcode,
-                        old_list_currency_charcode
-                    )
-                ) as item(charcode)
+                left join list_currency on
+                    list_currency.id = source_row.id_list_currency
+                where
+                    source_row.id = any (invoice.renomination_invoices)
             )
         where
             invoice.renomination_invoices && ARRAY[ old.id ]::int8[];
@@ -68,76 +54,52 @@ begin
             return new;
         end if;
 
-        if old.id_list_currency is not null then
-            old_list_currency_charcode = (
-                select
-                    list_currency.charcode
-                from list_currency
-                where
-                    list_currency.id = old.id_list_currency
-            );
-        end if;
-
-        if new.id_list_currency is not distinct from old.id_list_currency then
-            new_list_currency_charcode = old_list_currency_charcode;
-        else
-            if new.id_list_currency is not null then
-                new_list_currency_charcode = (
-                    select
-                        list_currency.charcode
-                    from list_currency
-                    where
-                        list_currency.id = new.id_list_currency
-                );
-            end if;
-        end if;
-
         update invoice set
-            renomination_sum = coalesce(renomination_sum, 0) - coalesce(old.sum, 0) + coalesce(new.sum, 0),
-            renomination_link_account_no_doc_number = array_append(
-                cm_array_remove_one_element(
-                    renomination_link_account_no_doc_number,
-                    old.account_no_doc_number
-                ),
-                new.account_no_doc_number
-            ),
-            renomination_link = (
+            __renomination_json__ = cm_merge_json(
+            __renomination_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'account_no_doc_number', new.account_no_doc_number,'id', new.id,'id_list_currency', new.id_list_currency,'sum', new.sum
+        ),
+            TG_OP
+        ),
+            (
+                renomination_sum,
+                renomination_link,
+                renomination_currencies
+            ) = (
                 select
-                    string_agg(
-                        item.account_no_doc_number,
-                        ', '
-                    )
-
-                from unnest(
-                    array_append(
-                        cm_array_remove_one_element(
-                            renomination_link_account_no_doc_number,
-                            old.account_no_doc_number
-                        ),
-                        new.account_no_doc_number
-                    )
-                ) as item(account_no_doc_number)
+                        sum(source_row.sum) as renomination_sum,
+                        string_agg(
+                            source_row.account_no_doc_number,
+                            ', '
+                                                ) as renomination_link,
+                        string_agg(distinct 
+                            list_currency.charcode,
+                            ', '
+                                                ) as renomination_currencies
+                from (
+                    select
+                            record.*
+                    from jsonb_each(
+    cm_merge_json(
+                __renomination_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'account_no_doc_number', new.account_no_doc_number,'id', new.id,'id_list_currency', new.id_list_currency,'sum', new.sum
             ),
-            renomination_currencies_charcode = array_append(
-                cm_array_remove_one_element(
-                    renomination_currencies_charcode,
-                    old_list_currency_charcode
-                ),
-                new_list_currency_charcode
-            ),
-            renomination_currencies = (
-                select
-                    string_agg(distinct item.charcode, ', ')
+                TG_OP
+            )
+) as json_entry
 
-                from unnest(
-                    array_append(
-                        cm_array_remove_one_element(
-                            renomination_currencies_charcode,
-                            old_list_currency_charcode
-                        ),
-                        new_list_currency_charcode
-                    )
-                ) as item(charcode)
+                    left join lateral jsonb_populate_record(null::public.invoice, json_entry.value) as record on
+                        true
+                ) as source_row
+
+                left join list_currency on
+                    list_currency.id = source_row.id_list_currency
+                where
+                    source_row.id = any (invoice.renomination_invoices)
             )
         where
             invoice.renomination_invoices && ARRAY[ new.id ]::int8[];

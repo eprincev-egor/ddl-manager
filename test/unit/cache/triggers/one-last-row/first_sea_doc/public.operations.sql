@@ -18,12 +18,12 @@ begin
             end if;
 
             select
-                deleted,
-                doc_number,
-                id,
-                id_order,
-                incoming_date,
-                type
+                    deleted,
+                    doc_number,
+                    id,
+                    id_order,
+                    incoming_date,
+                    type
             from operations as first_sea_doc
             where
                 first_sea_doc.id_order = old.id_order
@@ -121,12 +121,12 @@ begin
             old.__first_sea_doc_for_order
         then
             select
-                deleted,
-                doc_number,
-                id,
-                id_order,
-                incoming_date,
-                type
+                    deleted,
+                    doc_number,
+                    id,
+                    id_order,
+                    incoming_date,
+                    type
             from operations as first_sea_doc
             where
                 first_sea_doc.id_order = old.id_order
@@ -228,7 +228,6 @@ begin
         then
             is_not_first = exists(
                 select
-
                 from operations as first_sea_doc
                 where
                     first_sea_doc.id_order = new.id_order

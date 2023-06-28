@@ -1,56 +1,37 @@
 create or replace function cache_totals_for_companies_on_order_company_link()
 returns trigger as $body$
-declare old_order_order_date date;
-declare old_order_order_number text;
-declare new_order_order_date date;
-declare new_order_order_number text;
 begin
 
     if TG_OP = 'DELETE' then
 
         if old.id_company is not null then
-            if old.id_order is not null then
-                select
-                    orders.order_date,
-                    orders.order_number
-                into
-                    old_order_order_date,
-                    old_order_order_number
-                from orders
-                where
-                    orders.id = old.id_order;
-            end if;
-
             update companies set
-                max_order_date_order_date = cm_array_remove_one_element(
-                    max_order_date_order_date,
-                    old_order_order_date
-                ),
-                max_order_date = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    max_order_date,
+                    orders_numbers
+                ) = (
                     select
-                        max(item.order_date)
+                            max(orders.order_date) as max_order_date,
+                            string_agg(distinct 
+                                orders.order_number,
+                                ', '
+                                                        ) as orders_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            max_order_date_order_date,
-                            old_order_order_date
-                        )
-                    ) as item(order_date)
-                ),
-                orders_numbers_order_number = cm_array_remove_one_element(
-                    orders_numbers_order_number,
-                    old_order_order_number
-                ),
-                orders_numbers = (
-                    select
-                        string_agg(distinct item.order_number, ', ')
+                        left join lateral jsonb_populate_record(null::public.order_company_link, json_entry.value) as record on
+                            true
+                    ) as source_row
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            orders_numbers_order_number,
-                            old_order_order_number
-                        )
-                    ) as item(order_number)
+                    left join orders on
+                        orders.id = source_row.id_order
+                    where
+                        source_row.id_company = companies.id
                 )
             where
                 old.id_company = companies.id;
@@ -68,82 +49,52 @@ begin
             return new;
         end if;
 
-        if old.id_order is not null then
-            select
-                orders.order_date,
-                orders.order_number
-            into
-                old_order_order_date,
-                old_order_order_number
-            from orders
-            where
-                orders.id = old.id_order;
-        end if;
-
-        if new.id_order is not distinct from old.id_order then
-            new_order_order_date = old_order_order_date;
-            new_order_order_number = old_order_order_number;
-        else
-            if new.id_order is not null then
-                select
-                    orders.order_date,
-                    orders.order_number
-                into
-                    new_order_order_date,
-                    new_order_order_number
-                from orders
-                where
-                    orders.id = new.id_order;
-            end if;
-        end if;
-
         if new.id_company is not distinct from old.id_company then
             if new.id_company is null then
                 return new;
             end if;
 
             update companies set
-                max_order_date_order_date = array_append(
-                    cm_array_remove_one_element(
-                        max_order_date_order_date,
-                        old_order_order_date
-                    ),
-                    new_order_order_date
-                ),
-                max_order_date = (
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_company', new.id_company,'id_order', new.id_order
+        ),
+            TG_OP
+        ),
+                (
+                    max_order_date,
+                    orders_numbers
+                ) = (
                     select
-                        max(item.order_date)
+                            max(orders.order_date) as max_order_date,
+                            string_agg(distinct 
+                                orders.order_number,
+                                ', '
+                                                        ) as orders_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_company', new.id_company,'id_order', new.id_order
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                    from unnest(
-                        array_append(
-                            cm_array_remove_one_element(
-                                max_order_date_order_date,
-                                old_order_order_date
-                            ),
-                            new_order_order_date
-                        )
-                    ) as item(order_date)
-                ),
-                orders_numbers_order_number = array_append(
-                    cm_array_remove_one_element(
-                        orders_numbers_order_number,
-                        old_order_order_number
-                    ),
-                    new_order_order_number
-                ),
-                orders_numbers = (
-                    select
-                        string_agg(distinct item.order_number, ', ')
+                        left join lateral jsonb_populate_record(null::public.order_company_link, json_entry.value) as record on
+                            true
+                    ) as source_row
 
-                    from unnest(
-                        array_append(
-                            cm_array_remove_one_element(
-                                orders_numbers_order_number,
-                                old_order_order_number
-                            ),
-                            new_order_order_number
-                        )
-                    ) as item(order_number)
+                    left join orders on
+                        orders.id = source_row.id_order
+                    where
+                        source_row.id_company = companies.id
                 )
             where
                 new.id_company = companies.id;
@@ -153,35 +104,32 @@ begin
 
         if old.id_company is not null then
             update companies set
-                max_order_date_order_date = cm_array_remove_one_element(
-                    max_order_date_order_date,
-                    old_order_order_date
-                ),
-                max_order_date = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    max_order_date,
+                    orders_numbers
+                ) = (
                     select
-                        max(item.order_date)
+                            max(orders.order_date) as max_order_date,
+                            string_agg(distinct 
+                                orders.order_number,
+                                ', '
+                                                        ) as orders_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            max_order_date_order_date,
-                            old_order_order_date
-                        )
-                    ) as item(order_date)
-                ),
-                orders_numbers_order_number = cm_array_remove_one_element(
-                    orders_numbers_order_number,
-                    old_order_order_number
-                ),
-                orders_numbers = (
-                    select
-                        string_agg(distinct item.order_number, ', ')
+                        left join lateral jsonb_populate_record(null::public.order_company_link, json_entry.value) as record on
+                            true
+                    ) as source_row
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            orders_numbers_order_number,
-                            old_order_order_number
-                        )
-                    ) as item(order_number)
+                    left join orders on
+                        orders.id = source_row.id_order
+                    where
+                        source_row.id_company = companies.id
                 )
             where
                 old.id_company = companies.id;
@@ -189,38 +137,47 @@ begin
 
         if new.id_company is not null then
             update companies set
-                max_order_date_order_date = array_append(
-                    max_order_date_order_date,
-                    new_order_order_date
-                ),
-                max_order_date = greatest(
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_company', new.id_company,'id_order', new.id_order
+        ),
+            TG_OP
+        ),
+                (
                     max_order_date,
-                    new_order_order_date
-                ),
-                orders_numbers_order_number = array_append(
-                    orders_numbers_order_number,
-                    new_order_order_number
-                ),
-                orders_numbers = case
-                    when
-                        array_position(
-                            orders_numbers_order_number,
-                            new_order_order_number
-                        )
-                        is null
-                    then
-                        coalesce(
-                            orders_numbers ||
-                            coalesce(
+                    orders_numbers
+                ) = (
+                    select
+                            max(orders.order_date) as max_order_date,
+                            string_agg(distinct 
+                                orders.order_number,
                                 ', '
-                                || new_order_order_number,
-                                ''
-                            ),
-                            new_order_order_number
-                        )
-                    else
-                        orders_numbers
-                end
+                                                        ) as orders_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_company', new.id_company,'id_order', new.id_order
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.order_company_link, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join orders on
+                        orders.id = source_row.id_order
+                    where
+                        source_row.id_company = companies.id
+                )
             where
                 new.id_company = companies.id;
         end if;
@@ -231,51 +188,48 @@ begin
     if TG_OP = 'INSERT' then
 
         if new.id_company is not null then
-            if new.id_order is not null then
-                select
-                    orders.order_date,
-                    orders.order_number
-                into
-                    new_order_order_date,
-                    new_order_order_number
-                from orders
-                where
-                    orders.id = new.id_order;
-            end if;
-
             update companies set
-                max_order_date_order_date = array_append(
-                    max_order_date_order_date,
-                    new_order_order_date
-                ),
-                max_order_date = greatest(
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_company', new.id_company,'id_order', new.id_order
+        ),
+            TG_OP
+        ),
+                (
                     max_order_date,
-                    new_order_order_date
-                ),
-                orders_numbers_order_number = array_append(
-                    orders_numbers_order_number,
-                    new_order_order_number
-                ),
-                orders_numbers = case
-                    when
-                        array_position(
-                            orders_numbers_order_number,
-                            new_order_order_number
-                        )
-                        is null
-                    then
-                        coalesce(
-                            orders_numbers ||
-                            coalesce(
+                    orders_numbers
+                ) = (
+                    select
+                            max(orders.order_date) as max_order_date,
+                            string_agg(distinct 
+                                orders.order_number,
                                 ', '
-                                || new_order_order_number,
-                                ''
-                            ),
-                            new_order_order_number
-                        )
-                    else
-                        orders_numbers
-                end
+                                                        ) as orders_numbers
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_company', new.id_company,'id_order', new.id_order
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.order_company_link, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join orders on
+                        orders.id = source_row.id_order
+                    where
+                        source_row.id_company = companies.id
+                )
             where
                 new.id_company = companies.id;
         end if;

@@ -1,26 +1,34 @@
 create or replace function cache_totals_for_companies_on_orders()
 returns trigger as $body$
-declare old_vat_vat_value numeric;
-declare new_vat_vat_value numeric;
 begin
 
     if TG_OP = 'DELETE' then
 
         if old.id_client is not null then
-            if old.id_vat is not null then
-                old_vat_vat_value = (
-                    select
-                        vats.vat_value
-                    from vats
-                    where
-                        vats.id = old.id_vat
-                );
-            end if;
-
             update companies set
-                orders_total = coalesce(orders_total, 0) - coalesce(
-                    old.profit * old_vat_vat_value,
-                    0
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    orders_total
+                ) = (
+                    select
+                            sum(
+                                source_row.profit * vats.vat_value
+                                                        ) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join vats on
+                        vats.id = source_row.id_vat
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 old.id_client = companies.id;
@@ -40,42 +48,49 @@ begin
             return new;
         end if;
 
-        if old.id_vat is not null then
-            old_vat_vat_value = (
-                select
-                    vats.vat_value
-                from vats
-                where
-                    vats.id = old.id_vat
-            );
-        end if;
-
-        if new.id_vat is not distinct from old.id_vat then
-            new_vat_vat_value = old_vat_vat_value;
-        else
-            if new.id_vat is not null then
-                new_vat_vat_value = (
-                    select
-                        vats.vat_value
-                    from vats
-                    where
-                        vats.id = new.id_vat
-                );
-            end if;
-        end if;
-
         if new.id_client is not distinct from old.id_client then
             if new.id_client is null then
                 return new;
             end if;
 
             update companies set
-                orders_total = coalesce(orders_total, 0) - coalesce(
-                    old.profit * old_vat_vat_value,
-                    0
-                ) + coalesce(
-                    new.profit * new_vat_vat_value,
-                    0
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    orders_total
+                ) = (
+                    select
+                            sum(
+                                source_row.profit * vats.vat_value
+                                                        ) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join vats on
+                        vats.id = source_row.id_vat
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 new.id_client = companies.id;
@@ -85,9 +100,29 @@ begin
 
         if old.id_client is not null then
             update companies set
-                orders_total = coalesce(orders_total, 0) - coalesce(
-                    old.profit * old_vat_vat_value,
-                    0
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    orders_total
+                ) = (
+                    select
+                            sum(
+                                source_row.profit * vats.vat_value
+                                                        ) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join vats on
+                        vats.id = source_row.id_vat
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 old.id_client = companies.id;
@@ -95,9 +130,43 @@ begin
 
         if new.id_client is not null then
             update companies set
-                orders_total = coalesce(orders_total, 0) + coalesce(
-                    new.profit * new_vat_vat_value,
-                    0
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    orders_total
+                ) = (
+                    select
+                            sum(
+                                source_row.profit * vats.vat_value
+                                                        ) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join vats on
+                        vats.id = source_row.id_vat
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 new.id_client = companies.id;
@@ -109,20 +178,44 @@ begin
     if TG_OP = 'INSERT' then
 
         if new.id_client is not null then
-            if new.id_vat is not null then
-                new_vat_vat_value = (
-                    select
-                        vats.vat_value
-                    from vats
-                    where
-                        vats.id = new.id_vat
-                );
-            end if;
-
             update companies set
-                orders_total = coalesce(orders_total, 0) + coalesce(
-                    new.profit * new_vat_vat_value,
-                    0
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
+        ),
+            TG_OP
+        ),
+                (
+                    orders_total
+                ) = (
+                    select
+                            sum(
+                                source_row.profit * vats.vat_value
+                                                        ) as orders_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+
+                    left join vats on
+                        vats.id = source_row.id_vat
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 new.id_client = companies.id;

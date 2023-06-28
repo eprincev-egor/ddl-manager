@@ -19,7 +19,7 @@ begin
                 operation_id_order = coalesce(
                     (null::bigint),
                     (null::bigint)
-                ),
+                                ),
                 operation_type_id = null
             where
                 old.id = comments.row_id
@@ -65,7 +65,7 @@ begin
                         coalesce(
                             new.doc_parent_id_order,
                             new.id_order
-                        )
+                                                )
                     else
                         null
                 end,
@@ -90,7 +90,7 @@ begin
                             coalesce(
                                 new.doc_parent_id_order,
                                 new.id_order
-                            )
+                                    )
                         else
                             null
                     end)
@@ -126,7 +126,7 @@ begin
                 operation_id_order = coalesce(
                     new.doc_parent_id_order,
                     new.id_order
-                ),
+                                ),
                 operation_type_id = new.id_operation_type
             where
                 new.id = comments.row_id

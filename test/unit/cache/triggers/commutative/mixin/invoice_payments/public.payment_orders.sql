@@ -6,7 +6,27 @@ begin
 
         if old.deleted = 0 then
             update invoice set
-                payments_total = coalesce(payments_total, 0) - coalesce(old.total, 0)
+                __payments_json__ = __payments_json__ - old.id::text,
+                (
+                    payments_total
+                ) = (
+                    select
+                            sum(source_row.total) as payments_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __payments_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.payment_orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.deleted = 0
+                        and
+                        source_row.id = any (invoice.payments_ids)
+                )
             where
                 invoice.payments_ids && ARRAY[ old.id ]::int8[];
         end if;
@@ -29,7 +49,41 @@ begin
             end if;
 
             update invoice set
-                payments_total = coalesce(payments_total, 0) - coalesce(old.total, 0) + coalesce(new.total, 0)
+                __payments_json__ = cm_merge_json(
+            __payments_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'total', new.total
+        ),
+            TG_OP
+        ),
+                (
+                    payments_total
+                ) = (
+                    select
+                            sum(source_row.total) as payments_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __payments_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'total', new.total
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.payment_orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.deleted = 0
+                        and
+                        source_row.id = any (invoice.payments_ids)
+                )
             where
                 invoice.payments_ids && ARRAY[ new.id ]::int8[];
 
@@ -38,14 +92,68 @@ begin
 
         if old.deleted = 0 then
             update invoice set
-                payments_total = coalesce(payments_total, 0) - coalesce(old.total, 0)
+                __payments_json__ = __payments_json__ - old.id::text,
+                (
+                    payments_total
+                ) = (
+                    select
+                            sum(source_row.total) as payments_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __payments_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.payment_orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.deleted = 0
+                        and
+                        source_row.id = any (invoice.payments_ids)
+                )
             where
                 invoice.payments_ids && ARRAY[ old.id ]::int8[];
         end if;
 
         if new.deleted = 0 then
             update invoice set
-                payments_total = coalesce(payments_total, 0) + coalesce(new.total, 0)
+                __payments_json__ = cm_merge_json(
+            __payments_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'total', new.total
+        ),
+            TG_OP
+        ),
+                (
+                    payments_total
+                ) = (
+                    select
+                            sum(source_row.total) as payments_total
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __payments_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'total', new.total
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.payment_orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.deleted = 0
+                        and
+                        source_row.id = any (invoice.payments_ids)
+                )
             where
                 invoice.payments_ids && ARRAY[ new.id ]::int8[];
         end if;

@@ -14,17 +14,15 @@ begin
                     last_operation_outgoing_date
                 ) = (
                     select
-                        last_operation.id as __last_operation_id,
-                        last_operation.incoming_date as last_operation_incoming_date,
-                last_operation.outgoing_date as last_operation_outgoing_date
-
+                            last_operation.id as __last_operation_id,
+                            last_operation.incoming_date as last_operation_incoming_date,
+                            last_operation.outgoing_date as last_operation_outgoing_date
                     from operations as last_operation
-
                     where
                         last_operation.units_ids && ARRAY[units.id] :: bigint[]
-            order by
-                last_operation.id desc nulls first
-            limit 1
+                    order by
+                        last_operation.id desc nulls first
+                    limit 1
                 )
             where
                 units.id = any( old.units_ids )
@@ -83,17 +81,15 @@ begin
                     last_operation_outgoing_date
                 ) = (
                     select
-                        last_operation.id as __last_operation_id,
-                        last_operation.incoming_date as last_operation_incoming_date,
-                last_operation.outgoing_date as last_operation_outgoing_date
-
+                            last_operation.id as __last_operation_id,
+                            last_operation.incoming_date as last_operation_incoming_date,
+                            last_operation.outgoing_date as last_operation_outgoing_date
                     from operations as last_operation
-
                     where
                         last_operation.units_ids && ARRAY[units.id] :: bigint[]
-            order by
-                last_operation.id desc nulls first
-            limit 1
+                    order by
+                        last_operation.id desc nulls first
+                    limit 1
                 )
             where
                 units.id = any( deleted_units_ids )

@@ -6,20 +6,24 @@ begin
 
         if old.id_client is not null then
             update companies set
-                all_orders_is_lcl_is_lcl = cm_array_remove_one_element(
-                    all_orders_is_lcl_is_lcl,
-                    old.is_lcl
-                ),
-                all_orders_is_lcl = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    all_orders_is_lcl
+                ) = (
                     select
-                        bool_and(item.is_lcl)
+                            bool_and(source_row.is_lcl) as all_orders_is_lcl
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            all_orders_is_lcl_is_lcl,
-                            old.is_lcl
-                        )
-                    ) as item(is_lcl)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 old.id_client = companies.id;
@@ -43,26 +47,38 @@ begin
             end if;
 
             update companies set
-                all_orders_is_lcl_is_lcl = array_append(
-                    cm_array_remove_one_element(
-                        all_orders_is_lcl_is_lcl,
-                        old.is_lcl
-                    ),
-                    new.is_lcl
-                ),
-                all_orders_is_lcl = (
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'is_lcl', new.is_lcl
+        ),
+            TG_OP
+        ),
+                (
+                    all_orders_is_lcl
+                ) = (
                     select
-                        bool_and(item.is_lcl)
+                            bool_and(source_row.is_lcl) as all_orders_is_lcl
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'is_lcl', new.is_lcl
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                    from unnest(
-                        array_append(
-                            cm_array_remove_one_element(
-                                all_orders_is_lcl_is_lcl,
-                                old.is_lcl
-                            ),
-                            new.is_lcl
-                        )
-                    ) as item(is_lcl)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 new.id_client = companies.id;
@@ -72,20 +88,24 @@ begin
 
         if old.id_client is not null then
             update companies set
-                all_orders_is_lcl_is_lcl = cm_array_remove_one_element(
-                    all_orders_is_lcl_is_lcl,
-                    old.is_lcl
-                ),
-                all_orders_is_lcl = (
+                __totals_json__ = __totals_json__ - old.id::text,
+                (
+                    all_orders_is_lcl
+                ) = (
                     select
-                        bool_and(item.is_lcl)
+                            bool_and(source_row.is_lcl) as all_orders_is_lcl
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __totals_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            all_orders_is_lcl_is_lcl,
-                            old.is_lcl
-                        )
-                    ) as item(is_lcl)
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
                 )
             where
                 old.id_client = companies.id;
@@ -93,13 +113,39 @@ begin
 
         if new.id_client is not null then
             update companies set
-                all_orders_is_lcl_is_lcl = array_append(
-                    all_orders_is_lcl_is_lcl,
-                    new.is_lcl
-                ),
-                all_orders_is_lcl = all_orders_is_lcl
-                and
-                new.is_lcl
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'is_lcl', new.is_lcl
+        ),
+            TG_OP
+        ),
+                (
+                    all_orders_is_lcl
+                ) = (
+                    select
+                            bool_and(source_row.is_lcl) as all_orders_is_lcl
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'is_lcl', new.is_lcl
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
         end if;
@@ -111,13 +157,39 @@ begin
 
         if new.id_client is not null then
             update companies set
-                all_orders_is_lcl_is_lcl = array_append(
-                    all_orders_is_lcl_is_lcl,
-                    new.is_lcl
-                ),
-                all_orders_is_lcl = all_orders_is_lcl
-                and
-                new.is_lcl
+                __totals_json__ = cm_merge_json(
+            __totals_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'id', new.id,'id_client', new.id_client,'is_lcl', new.is_lcl
+        ),
+            TG_OP
+        ),
+                (
+                    all_orders_is_lcl
+                ) = (
+                    select
+                            bool_and(source_row.is_lcl) as all_orders_is_lcl
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __totals_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'id', new.id,'id_client', new.id_client,'is_lcl', new.is_lcl
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.orders, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_client = companies.id
+                )
             where
                 new.id_client = companies.id;
         end if;

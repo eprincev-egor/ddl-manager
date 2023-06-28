@@ -10,20 +10,26 @@ begin
             old.deleted = 0
         then
             update list_gtd as gtd set
-                by_unit_invoices_ids_id_invoice = cm_array_remove_one_element(
-                    by_unit_invoices_ids_id_invoice,
-                    old.id_invoice
-                ),
-                by_unit_invoices_ids = (
+                __invoices_json__ = __invoices_json__ - old.id::text,
+                (
+                    by_unit_invoices_ids
+                ) = (
                     select
-                        array_agg(distinct item.id_invoice)
+                            array_agg(distinct source_row.id_invoice) as by_unit_invoices_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __invoices_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            by_unit_invoices_ids_id_invoice,
-                            old.id_invoice
-                        )
-                    ) as item(id_invoice)
+                        left join lateral jsonb_populate_record(null::public.invoice_positions, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_operation_unit = any (gtd.operation_units_ids)
+                        and
+                        source_row.deleted = 0
                 )
             where
                 gtd.operation_units_ids && ARRAY[ old.id_operation_unit ]::bigint[];
@@ -57,26 +63,40 @@ begin
             end if;
 
             update list_gtd as gtd set
-                by_unit_invoices_ids_id_invoice = array_append(
-                    cm_array_remove_one_element(
-                        by_unit_invoices_ids_id_invoice,
-                        old.id_invoice
-                    ),
-                    new.id_invoice
-                ),
-                by_unit_invoices_ids = (
+                __invoices_json__ = cm_merge_json(
+            __invoices_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
+        ),
+            TG_OP
+        ),
+                (
+                    by_unit_invoices_ids
+                ) = (
                     select
-                        array_agg(distinct item.id_invoice)
+                            array_agg(distinct source_row.id_invoice) as by_unit_invoices_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __invoices_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
+            ),
+                TG_OP
+            )
+) as json_entry
 
-                    from unnest(
-                        array_append(
-                            cm_array_remove_one_element(
-                                by_unit_invoices_ids_id_invoice,
-                                old.id_invoice
-                            ),
-                            new.id_invoice
-                        )
-                    ) as item(id_invoice)
+                        left join lateral jsonb_populate_record(null::public.invoice_positions, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_operation_unit = any (gtd.operation_units_ids)
+                        and
+                        source_row.deleted = 0
                 )
             where
                 gtd.operation_units_ids && ARRAY[ new.id_operation_unit ]::bigint[];
@@ -90,20 +110,26 @@ begin
             old.deleted = 0
         then
             update list_gtd as gtd set
-                by_unit_invoices_ids_id_invoice = cm_array_remove_one_element(
-                    by_unit_invoices_ids_id_invoice,
-                    old.id_invoice
-                ),
-                by_unit_invoices_ids = (
+                __invoices_json__ = __invoices_json__ - old.id::text,
+                (
+                    by_unit_invoices_ids
+                ) = (
                     select
-                        array_agg(distinct item.id_invoice)
+                            array_agg(distinct source_row.id_invoice) as by_unit_invoices_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __invoices_json__ - old.id::text
+) as json_entry
 
-                    from unnest(
-                        cm_array_remove_one_element(
-                            by_unit_invoices_ids_id_invoice,
-                            old.id_invoice
-                        )
-                    ) as item(id_invoice)
+                        left join lateral jsonb_populate_record(null::public.invoice_positions, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_operation_unit = any (gtd.operation_units_ids)
+                        and
+                        source_row.deleted = 0
                 )
             where
                 gtd.operation_units_ids && ARRAY[ old.id_operation_unit ]::bigint[];
@@ -115,25 +141,41 @@ begin
             new.deleted = 0
         then
             update list_gtd as gtd set
-                by_unit_invoices_ids_id_invoice = array_append(
-                    by_unit_invoices_ids_id_invoice,
-                    new.id_invoice
-                ),
-                by_unit_invoices_ids = case
-                    when
-                        array_position(
-                            by_unit_invoices_ids,
-                            new.id_invoice
-                        )
-                        is null
-                    then
-                        array_append(
-                            by_unit_invoices_ids,
-                            new.id_invoice
-                        )
-                    else
-                        by_unit_invoices_ids
-                end
+                __invoices_json__ = cm_merge_json(
+            __invoices_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
+        ),
+            TG_OP
+        ),
+                (
+                    by_unit_invoices_ids
+                ) = (
+                    select
+                            array_agg(distinct source_row.id_invoice) as by_unit_invoices_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __invoices_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.invoice_positions, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_operation_unit = any (gtd.operation_units_ids)
+                        and
+                        source_row.deleted = 0
+                )
             where
                 gtd.operation_units_ids && ARRAY[ new.id_operation_unit ]::bigint[];
         end if;
@@ -149,25 +191,41 @@ begin
             new.deleted = 0
         then
             update list_gtd as gtd set
-                by_unit_invoices_ids_id_invoice = array_append(
-                    by_unit_invoices_ids_id_invoice,
-                    new.id_invoice
-                ),
-                by_unit_invoices_ids = case
-                    when
-                        array_position(
-                            by_unit_invoices_ids,
-                            new.id_invoice
-                        )
-                        is null
-                    then
-                        array_append(
-                            by_unit_invoices_ids,
-                            new.id_invoice
-                        )
-                    else
-                        by_unit_invoices_ids
-                end
+                __invoices_json__ = cm_merge_json(
+            __invoices_json__,
+            null::jsonb,
+            jsonb_build_object(
+            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
+        ),
+            TG_OP
+        ),
+                (
+                    by_unit_invoices_ids
+                ) = (
+                    select
+                            array_agg(distinct source_row.id_invoice) as by_unit_invoices_ids
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __invoices_json__,
+                null::jsonb,
+                jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
+            ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.invoice_positions, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_operation_unit = any (gtd.operation_units_ids)
+                        and
+                        source_row.deleted = 0
+                )
             where
                 gtd.operation_units_ids && ARRAY[ new.id_operation_unit ]::bigint[];
         end if;
