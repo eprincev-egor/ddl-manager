@@ -55,11 +55,20 @@ export class Cache {
         const from = this.select.getFromTable().getIdentifier();
         const deps = this.getSourceJsonDeps();
 
-        return `jsonb_build_object(
-            ${deps.map(column =>
-                `'${column}', ${recordAlias || from}.${column}`
-            )}
-        )`;
+        const maxColumnsPerCall = 50;
+        const calls: string[] = [];
+
+        for (let i = 0, n = deps.length; i < n; i += maxColumnsPerCall) {
+            const depsPackage = deps.slice(i, i + maxColumnsPerCall);
+
+            calls.push(`jsonb_build_object(
+                ${depsPackage.map(column =>
+                    `'${column}', ${recordAlias || from}.${column}`
+                )}
+            )`);
+        }
+
+        return calls.join(" || ");
     }
 
     getSourceJsonDeps() {

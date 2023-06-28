@@ -4243,8 +4243,68 @@ $$;
         ]);
     });
 
+    it("using 101 column in commutative cache", async() => {
+        const folderPath = ROOT_TMP_PATH + "/cache";
+        fs.mkdirSync(folderPath);
 
-    // TODO: test commutative cache with 51 fields
+        const columns: string[] = [];
+        for (let i = 1; i <= 101; i++) {
+            columns.push(`value${i}`);
+        }
+
+        await db.query(`
+            create table public.order (
+                id serial primary key,
+                id_parent_order integer,
+                ${columns.map(column => 
+                    `${column} integer`
+                ).join(
+                    ", "
+                )}
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/children.sql", `
+            cache children for public.order as parent (
+                select
+                    ${columns.map(column => 
+                        `sum( child.${column} ) as child_${column}`
+                    ).join(
+                        ", "
+                    )}
+                from public.order as child
+                where
+                    child.id_parent_order = parent.id
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        await db.query(`
+            insert into public.order default values;
+            insert into public.order (id_parent_order, ${columns})
+            values
+                (1, ${columns.map((column, i) => i + 1)})
+        `);
+        const result = await db.query(`
+            select *
+            from public.order
+            where id = 1
+        `);
+        
+        const parentOrder = result.rows[0];
+        for (let i = 0; i <= columns.length; i++) {
+            assert.strictEqual(
+                parentOrder["child_" + (i + 1)],
+                i + 1
+            );
+        }
+    });
+
     // TODO: test about twice points (max_point_date and last point)
     // TODO: test about extrude brackets (a + b) / (c - d)
     // TODO: https://git.g-soft.ru/logos/logisitc-web/merge_requests/4577/diffs
