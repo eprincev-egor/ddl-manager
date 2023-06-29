@@ -101,8 +101,8 @@ begin
             __trains_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
-        ),
+                'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
+            ),
             TG_OP
         ),
                 (
@@ -118,8 +118,8 @@ begin
                 __trains_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
-            ),
+                    'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -169,8 +169,8 @@ begin
             __trains_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
-        ),
+                'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
+            ),
             TG_OP
         ),
                 (
@@ -186,8 +186,8 @@ begin
                 __trains_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
-            ),
+                    'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -219,8 +219,8 @@ begin
             __trains_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
-        ),
+                'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
+            ),
             TG_OP
         ),
                 (
@@ -236,8 +236,8 @@ begin
                 __trains_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
-            ),
+                    'deleted', new.deleted,'id', new.id,'number', new.number,'units_ids', new.units_ids
+                ),
                 TG_OP
             )
 ) as json_entry

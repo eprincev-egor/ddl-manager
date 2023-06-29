@@ -63,8 +63,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
-        ),
+                'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
+            ),
             TG_OP
         ),
                 (
@@ -80,8 +80,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
-            ),
+                    'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -145,8 +145,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
-        ),
+                'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
+            ),
             TG_OP
         ),
                 (
@@ -162,8 +162,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
-            ),
+                    'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -197,8 +197,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
-        ),
+                'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
+            ),
             TG_OP
         ),
                 (
@@ -214,8 +214,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
-            ),
+                    'id', new.id,'id_client', new.id_client,'is_buy', new.is_buy,'is_sale', new.is_sale,'total', new.total
+                ),
                 TG_OP
             )
 ) as json_entry

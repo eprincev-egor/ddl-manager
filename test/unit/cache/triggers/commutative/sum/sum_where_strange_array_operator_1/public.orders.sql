@@ -101,8 +101,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
-        ),
+                'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
+            ),
             TG_OP
         ),
                 (
@@ -118,8 +118,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
-            ),
+                    'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -133,7 +133,8 @@ begin
                         source_row.deleted = 0
                 )
             where
-                not_changed_companies_ids <@ ARRAY[companies.id];
+                not_changed_companies_ids
+                <@ ARRAY[companies.id];
         end if;
 
         if deleted_companies_ids is not null then
@@ -160,7 +161,8 @@ begin
                         source_row.deleted = 0
                 )
             where
-                deleted_companies_ids <@ ARRAY[companies.id];
+                deleted_companies_ids
+                <@ ARRAY[companies.id];
         end if;
 
         if inserted_companies_ids is not null then
@@ -169,8 +171,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
-        ),
+                'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
+            ),
             TG_OP
         ),
                 (
@@ -186,8 +188,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
-            ),
+                    'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -201,7 +203,8 @@ begin
                         source_row.deleted = 0
                 )
             where
-                inserted_companies_ids <@ ARRAY[companies.id];
+                inserted_companies_ids
+                <@ ARRAY[companies.id];
         end if;
 
         return new;
@@ -219,8 +222,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
-        ),
+                'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
+            ),
             TG_OP
         ),
                 (
@@ -236,8 +239,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
-            ),
+                    'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
+                ),
                 TG_OP
             )
 ) as json_entry

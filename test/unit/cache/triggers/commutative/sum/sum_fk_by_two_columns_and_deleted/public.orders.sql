@@ -34,9 +34,9 @@ begin
                         source_row.deleted = 0
                         and
                         (
-                            source_row.id_client = companies.id
+                            (source_row.id_client = companies.id
                             or
-                            source_row.id_partner = companies.id
+                            source_row.id_partner = companies.id)
                         )
                 )
             where
@@ -85,8 +85,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_partner', new.id_partner,'profit', new.profit
-        ),
+                'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_partner', new.id_partner,'profit', new.profit
+            ),
             TG_OP
         ),
                 (
@@ -102,8 +102,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_partner', new.id_partner,'profit', new.profit
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_partner', new.id_partner,'profit', new.profit
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -115,9 +115,9 @@ begin
                         source_row.deleted = 0
                         and
                         (
-                            source_row.id_client = companies.id
+                            (source_row.id_client = companies.id
                             or
-                            source_row.id_partner = companies.id
+                            source_row.id_partner = companies.id)
                         )
                 )
             where
@@ -158,9 +158,9 @@ begin
                         source_row.deleted = 0
                         and
                         (
-                            source_row.id_client = companies.id
+                            (source_row.id_client = companies.id
                             or
-                            source_row.id_partner = companies.id
+                            source_row.id_partner = companies.id)
                         )
                 )
             where
@@ -183,8 +183,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_partner', new.id_partner,'profit', new.profit
-        ),
+                'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_partner', new.id_partner,'profit', new.profit
+            ),
             TG_OP
         ),
                 (
@@ -200,8 +200,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_partner', new.id_partner,'profit', new.profit
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_partner', new.id_partner,'profit', new.profit
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -213,9 +213,9 @@ begin
                         source_row.deleted = 0
                         and
                         (
-                            source_row.id_client = companies.id
+                            (source_row.id_client = companies.id
                             or
-                            source_row.id_partner = companies.id
+                            source_row.id_partner = companies.id)
                         )
                 )
             where
@@ -243,8 +243,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_partner', new.id_partner,'profit', new.profit
-        ),
+                'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_partner', new.id_partner,'profit', new.profit
+            ),
             TG_OP
         ),
                 (
@@ -260,8 +260,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_partner', new.id_partner,'profit', new.profit
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'id_partner', new.id_partner,'profit', new.profit
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -273,9 +273,9 @@ begin
                         source_row.deleted = 0
                         and
                         (
-                            source_row.id_client = companies.id
+                            (source_row.id_client = companies.id
                             or
-                            source_row.id_partner = companies.id
+                            source_row.id_partner = companies.id)
                         )
                 )
             where

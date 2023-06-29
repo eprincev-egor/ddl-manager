@@ -15,12 +15,12 @@ begin
                     balance
                 ) = (
                     select
-                            invoice.invoice_summ -                             sum(
+                            (invoice.invoice_summ -                             sum(
                                 round(
                                     source_row.total_sum_with_vat_in_curs :: numeric,
                                     - 2
                                     )
-                                                        ) as balance
+                                                        )) as balance
                     from (
                         select
                                 record.*
@@ -72,20 +72,20 @@ begin
             __balance_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
-        ),
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
+            ),
             TG_OP
         ),
                 (
                     balance
                 ) = (
                     select
-                            invoice.invoice_summ -                             sum(
+                            (invoice.invoice_summ -                             sum(
                                 round(
                                     source_row.total_sum_with_vat_in_curs :: numeric,
                                     - 2
                                     )
-                                                        ) as balance
+                                                        )) as balance
                     from (
                         select
                                 record.*
@@ -94,8 +94,8 @@ begin
                 __balance_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -125,12 +125,12 @@ begin
                     balance
                 ) = (
                     select
-                            invoice.invoice_summ -                             sum(
+                            (invoice.invoice_summ -                             sum(
                                 round(
                                     source_row.total_sum_with_vat_in_curs :: numeric,
                                     - 2
                                     )
-                                                        ) as balance
+                                                        )) as balance
                     from (
                         select
                                 record.*
@@ -160,20 +160,20 @@ begin
             __balance_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
-        ),
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
+            ),
             TG_OP
         ),
                 (
                     balance
                 ) = (
                     select
-                            invoice.invoice_summ -                             sum(
+                            (invoice.invoice_summ -                             sum(
                                 round(
                                     source_row.total_sum_with_vat_in_curs :: numeric,
                                     - 2
                                     )
-                                                        ) as balance
+                                                        )) as balance
                     from (
                         select
                                 record.*
@@ -182,8 +182,8 @@ begin
                 __balance_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -215,20 +215,20 @@ begin
             __balance_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
-        ),
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
+            ),
             TG_OP
         ),
                 (
                     balance
                 ) = (
                     select
-                            invoice.invoice_summ -                             sum(
+                            (invoice.invoice_summ -                             sum(
                                 round(
                                     source_row.total_sum_with_vat_in_curs :: numeric,
                                     - 2
                                     )
-                                                        ) as balance
+                                                        )) as balance
                     from (
                         select
                                 record.*
@@ -237,8 +237,8 @@ begin
                 __balance_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
+                ),
                 TG_OP
             )
 ) as json_entry

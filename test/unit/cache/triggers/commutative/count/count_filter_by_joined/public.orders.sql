@@ -56,8 +56,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_client', new.id_client,'id_country', new.id_country
-        ),
+                'id', new.id,'id_client', new.id_client,'id_country', new.id_country
+            ),
             TG_OP
         ),
                 (
@@ -73,8 +73,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_client', new.id_client,'id_country', new.id_country
-            ),
+                    'id', new.id,'id_client', new.id_client,'id_country', new.id_country
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -136,8 +136,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_client', new.id_client,'id_country', new.id_country
-        ),
+                'id', new.id,'id_client', new.id_client,'id_country', new.id_country
+            ),
             TG_OP
         ),
                 (
@@ -153,8 +153,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_client', new.id_client,'id_country', new.id_country
-            ),
+                    'id', new.id,'id_client', new.id_client,'id_country', new.id_country
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -184,8 +184,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_client', new.id_client,'id_country', new.id_country
-        ),
+                'id', new.id,'id_client', new.id_client,'id_country', new.id_country
+            ),
             TG_OP
         ),
                     (
@@ -201,8 +201,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_client', new.id_client,'id_country', new.id_country
-            ),
+                    'id', new.id,'id_client', new.id_client,'id_country', new.id_country
+                ),
                 TG_OP
             )
 ) as json_entry

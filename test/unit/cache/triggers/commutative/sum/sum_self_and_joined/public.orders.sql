@@ -58,8 +58,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
-        ),
+                'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
+            ),
             TG_OP
         ),
                 (
@@ -77,8 +77,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
-            ),
+                    'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -134,8 +134,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
-        ),
+                'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
+            ),
             TG_OP
         ),
                 (
@@ -153,8 +153,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
-            ),
+                    'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -183,8 +183,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
-        ),
+                'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
+            ),
             TG_OP
         ),
                 (
@@ -202,8 +202,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
-            ),
+                    'id', new.id,'id_client', new.id_client,'id_vat', new.id_vat,'profit', new.profit
+                ),
                 TG_OP
             )
 ) as json_entry

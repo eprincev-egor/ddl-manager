@@ -53,8 +53,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'buys', new.buys,'id', new.id,'id_client', new.id_client,'sales', new.sales
-        ),
+                'buys', new.buys,'id', new.id,'id_client', new.id_client,'sales', new.sales
+            ),
             TG_OP
         ),
                 (
@@ -70,8 +70,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'buys', new.buys,'id', new.id,'id_client', new.id_client,'sales', new.sales
-            ),
+                    'buys', new.buys,'id', new.id,'id_client', new.id_client,'sales', new.sales
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -119,8 +119,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'buys', new.buys,'id', new.id,'id_client', new.id_client,'sales', new.sales
-        ),
+                'buys', new.buys,'id', new.id,'id_client', new.id_client,'sales', new.sales
+            ),
             TG_OP
         ),
                 (
@@ -136,8 +136,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'buys', new.buys,'id', new.id,'id_client', new.id_client,'sales', new.sales
-            ),
+                    'buys', new.buys,'id', new.id,'id_client', new.id_client,'sales', new.sales
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -163,8 +163,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'buys', new.buys,'id', new.id,'id_client', new.id_client,'sales', new.sales
-        ),
+                'buys', new.buys,'id', new.id,'id_client', new.id_client,'sales', new.sales
+            ),
             TG_OP
         ),
                 (
@@ -180,8 +180,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'buys', new.buys,'id', new.id,'id_client', new.id_client,'sales', new.sales
-            ),
+                    'buys', new.buys,'id', new.id,'id_client', new.id_client,'sales', new.sales
+                ),
                 TG_OP
             )
 ) as json_entry

@@ -51,8 +51,8 @@ begin
             __watchers_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
-        ),
+                'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
+            ),
             TG_OP
         ),
                 (
@@ -68,8 +68,8 @@ begin
                 __watchers_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
-            ),
+                    'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -117,8 +117,8 @@ begin
             __watchers_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
-        ),
+                'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
+            ),
             TG_OP
         ),
                 (
@@ -134,8 +134,8 @@ begin
                 __watchers_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
-            ),
+                    'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -161,8 +161,8 @@ begin
             __watchers_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
-        ),
+                'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
+            ),
             TG_OP
         ),
                 (
@@ -178,8 +178,8 @@ begin
                 __watchers_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
-            ),
+                    'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
+                ),
                 TG_OP
             )
 ) as json_entry

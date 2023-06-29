@@ -104,8 +104,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
-        ),
+                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
+            ),
             TG_OP
         ),
                 (
@@ -121,8 +121,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
-            ),
+                    'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -178,8 +178,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
-        ),
+                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
+            ),
             TG_OP
         ),
                 (
@@ -195,8 +195,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
-            ),
+                    'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -231,8 +231,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
-        ),
+                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
+            ),
             TG_OP
         ),
                 (
@@ -248,8 +248,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
-            ),
+                    'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'id_country', new.id_country
+                ),
                 TG_OP
             )
 ) as json_entry

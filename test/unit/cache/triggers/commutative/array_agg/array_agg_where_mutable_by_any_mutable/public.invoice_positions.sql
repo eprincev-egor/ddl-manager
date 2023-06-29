@@ -67,8 +67,8 @@ begin
             __invoices_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
-        ),
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
+            ),
             TG_OP
         ),
                 (
@@ -84,8 +84,8 @@ begin
                 __invoices_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -145,8 +145,8 @@ begin
             __invoices_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
-        ),
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
+            ),
             TG_OP
         ),
                 (
@@ -162,8 +162,8 @@ begin
                 __invoices_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -195,8 +195,8 @@ begin
             __invoices_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
-        ),
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
+            ),
             TG_OP
         ),
                 (
@@ -212,8 +212,8 @@ begin
                 __invoices_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
+                ),
                 TG_OP
             )
 ) as json_entry

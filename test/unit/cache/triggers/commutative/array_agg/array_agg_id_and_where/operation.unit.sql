@@ -65,8 +65,8 @@ begin
             __operation_units_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
-        ),
+                'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
+            ),
             TG_OP
         ),
                 (
@@ -82,8 +82,8 @@ begin
                 __operation_units_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -143,8 +143,8 @@ begin
             __operation_units_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
-        ),
+                'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
+            ),
             TG_OP
         ),
                 (
@@ -160,8 +160,8 @@ begin
                 __operation_units_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -193,8 +193,8 @@ begin
             __operation_units_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
-        ),
+                'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
+            ),
             TG_OP
         ),
                 (
@@ -210,8 +210,8 @@ begin
                 __operation_units_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
+                ),
                 TG_OP
             )
 ) as json_entry

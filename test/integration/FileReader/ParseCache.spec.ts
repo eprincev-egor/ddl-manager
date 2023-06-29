@@ -480,7 +480,7 @@ describe("integration/FileReader parse cache", () => {
         );
         assert.strictEqual(
             actualCache.indexes[1].on.toString(),
-            "orders.last_order_id + 1",
+            "(orders.last_order_id + 1)",
             "second index.on is [expression]"
         );
     });

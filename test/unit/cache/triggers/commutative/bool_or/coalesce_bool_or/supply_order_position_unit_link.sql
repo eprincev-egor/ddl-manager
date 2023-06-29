@@ -56,8 +56,8 @@ begin
             __is_3pl_shipped_json__,
             null::jsonb,
             jsonb_build_object(
-            'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
-        ),
+                'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
+            ),
             TG_OP
         ),
                 (
@@ -78,8 +78,8 @@ begin
                 __is_3pl_shipped_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
-            ),
+                    'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -132,8 +132,8 @@ begin
             __is_3pl_shipped_json__,
             null::jsonb,
             jsonb_build_object(
-            'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
-        ),
+                'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
+            ),
             TG_OP
         ),
                 (
@@ -154,8 +154,8 @@ begin
                 __is_3pl_shipped_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
-            ),
+                    'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -181,8 +181,8 @@ begin
             __is_3pl_shipped_json__,
             null::jsonb,
             jsonb_build_object(
-            'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
-        ),
+                'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
+            ),
             TG_OP
         ),
                 (
@@ -203,8 +203,8 @@ begin
                 __is_3pl_shipped_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
-            ),
+                    'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
+                ),
                 TG_OP
             )
 ) as json_entry

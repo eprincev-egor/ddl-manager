@@ -58,8 +58,8 @@ begin
             __cargo_totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
-        ),
+                'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
+            ),
             TG_OP
         ),
                 (
@@ -77,8 +77,8 @@ begin
                 __cargo_totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
-            ),
+                    'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -134,8 +134,8 @@ begin
             __cargo_totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
-        ),
+                'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
+            ),
             TG_OP
         ),
                 (
@@ -153,8 +153,8 @@ begin
                 __cargo_totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
-            ),
+                    'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -183,8 +183,8 @@ begin
             __cargo_totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
-        ),
+                'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
+            ),
             TG_OP
         ),
                 (
@@ -202,8 +202,8 @@ begin
                 __cargo_totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
-            ),
+                    'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
+                ),
                 TG_OP
             )
 ) as json_entry

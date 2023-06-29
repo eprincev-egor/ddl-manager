@@ -50,8 +50,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'orders_ids', new.orders_ids
-        ),
+                'id', new.id,'orders_ids', new.orders_ids
+            ),
             TG_OP
         ),
                 (
@@ -67,8 +67,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'orders_ids', new.orders_ids
-            ),
+                    'id', new.id,'orders_ids', new.orders_ids
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -80,7 +80,8 @@ begin
                         source_row.orders_ids && gtd.orders_ids
                 )
             where
-                not_changed_orders_ids && gtd.orders_ids;
+                not_changed_orders_ids
+                && gtd.orders_ids;
         end if;
 
         if deleted_orders_ids is not null then
@@ -105,7 +106,8 @@ begin
                         source_row.orders_ids && gtd.orders_ids
                 )
             where
-                deleted_orders_ids && gtd.orders_ids;
+                deleted_orders_ids
+                && gtd.orders_ids;
         end if;
 
         if inserted_orders_ids is not null then
@@ -114,8 +116,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'orders_ids', new.orders_ids
-        ),
+                'id', new.id,'orders_ids', new.orders_ids
+            ),
             TG_OP
         ),
                 (
@@ -131,8 +133,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'orders_ids', new.orders_ids
-            ),
+                    'id', new.id,'orders_ids', new.orders_ids
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -144,7 +146,8 @@ begin
                         source_row.orders_ids && gtd.orders_ids
                 )
             where
-                inserted_orders_ids && gtd.orders_ids;
+                inserted_orders_ids
+                && gtd.orders_ids;
         end if;
 
         return new;
@@ -158,8 +161,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'orders_ids', new.orders_ids
-        ),
+                'id', new.id,'orders_ids', new.orders_ids
+            ),
             TG_OP
         ),
                 (
@@ -175,8 +178,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'orders_ids', new.orders_ids
-            ),
+                    'id', new.id,'orders_ids', new.orders_ids
+                ),
                 TG_OP
             )
 ) as json_entry

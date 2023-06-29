@@ -4295,18 +4295,66 @@ $$;
             from public.order
             where id = 1
         `);
-        
+
         const parentOrder = result.rows[0];
-        for (let i = 0; i <= columns.length; i++) {
+        for (let i = 0; i < columns.length; i++) {
+            const column = columns[i];
+            const cacheColumn = `child_${column}`;
+
             assert.strictEqual(
-                parentOrder["child_" + (i + 1)],
-                i + 1
+                +parentOrder[cacheColumn],
+                i + 1,
+                cacheColumn
             );
         }
     });
 
+    it("correct brackets", async() => {
+        const folderPath = ROOT_TMP_PATH + "/cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table public.order (
+                id serial primary key,
+                a integer,
+                b integer,
+                c integer,
+                d integer
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/x.sql", `
+            cache x for public.order as item (
+                select
+                    (item.a + item.b) / (item.c + item.d) as x
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        await db.query(`
+            insert into public.order
+                (a,b,c,d)
+            values
+                (50, 150, 4, 6)
+        `);
+        const result = await db.query(`
+            select x
+            from public.order
+            where id = 1
+        `);
+
+        assert.deepStrictEqual(
+            result.rows[0],
+            {x: 20}
+        );
+    });
+
     // TODO: test about twice points (max_point_date and last point)
-    // TODO: test about extrude brackets (a + b) / (c - d)
     // TODO: https://git.g-soft.ru/logos/logisitc-web/merge_requests/4577/diffs
     // TODO: update-ddl-cache in watcher mode
     // TODO: bugs from ryabkov

@@ -73,8 +73,8 @@ begin
             __pos_rate_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
-        ),
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
+            ),
             TG_OP
         ),
                 (
@@ -90,8 +90,8 @@ begin
                 __pos_rate_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -163,8 +163,8 @@ begin
             __pos_rate_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
-        ),
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
+            ),
             TG_OP
         ),
                 (
@@ -180,8 +180,8 @@ begin
                 __pos_rate_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -219,8 +219,8 @@ begin
             __pos_rate_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
-        ),
+                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
+            ),
             TG_OP
         ),
                 (
@@ -236,8 +236,8 @@ begin
                 __pos_rate_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
+                ),
                 TG_OP
             )
 ) as json_entry

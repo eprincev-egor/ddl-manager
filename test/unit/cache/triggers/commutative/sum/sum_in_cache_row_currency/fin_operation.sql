@@ -126,8 +126,8 @@ begin
             __fin_totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
-        ),
+                'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
+            ),
             TG_OP
         ),
                 (
@@ -160,8 +160,8 @@ begin
                 __fin_totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
-            ),
+                    'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -175,7 +175,8 @@ begin
                         source_row.deleted = 0
                 )
             where
-                not_changed_units_ids && own_unit.units_ids;
+                not_changed_units_ids
+                && own_unit.units_ids;
         end if;
 
         if deleted_units_ids is not null then
@@ -219,7 +220,8 @@ begin
                         source_row.deleted = 0
                 )
             where
-                deleted_units_ids && own_unit.units_ids;
+                deleted_units_ids
+                && own_unit.units_ids;
         end if;
 
         if inserted_units_ids is not null then
@@ -228,8 +230,8 @@ begin
             __fin_totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
-        ),
+                'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
+            ),
             TG_OP
         ),
                 (
@@ -262,8 +264,8 @@ begin
                 __fin_totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
-            ),
+                    'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -277,7 +279,8 @@ begin
                         source_row.deleted = 0
                 )
             where
-                inserted_units_ids && own_unit.units_ids;
+                inserted_units_ids
+                && own_unit.units_ids;
         end if;
 
         return new;
@@ -295,8 +298,8 @@ begin
             __fin_totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
-        ),
+                'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
+            ),
             TG_OP
         ),
                 (
@@ -329,8 +332,8 @@ begin
                 __fin_totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
-            ),
+                    'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
+                ),
                 TG_OP
             )
 ) as json_entry

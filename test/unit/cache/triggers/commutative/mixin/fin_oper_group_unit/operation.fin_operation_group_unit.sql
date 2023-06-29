@@ -109,8 +109,8 @@ begin
             __fin_oper_group_unit_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
-        ),
+                'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
+            ),
             TG_OP
         ),
                 (
@@ -148,8 +148,8 @@ begin
                 __fin_oper_group_unit_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
-            ),
+                    'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -243,8 +243,8 @@ begin
             __fin_oper_group_unit_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
-        ),
+                'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
+            ),
             TG_OP
         ),
                 (
@@ -282,8 +282,8 @@ begin
                 __fin_oper_group_unit_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
-            ),
+                    'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -321,8 +321,8 @@ begin
             __fin_oper_group_unit_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
-        ),
+                'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
+            ),
             TG_OP
         ),
                 (
@@ -360,8 +360,8 @@ begin
                 __fin_oper_group_unit_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
-            ),
+                    'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
+                ),
                 TG_OP
             )
 ) as json_entry

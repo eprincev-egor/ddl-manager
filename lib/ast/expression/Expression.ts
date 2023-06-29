@@ -57,10 +57,15 @@ export class Expression extends AbstractExpressionElement {
         return new Expression(elements).extrude();
     }
 
+    readonly brackets: boolean;
     readonly elements: IExpressionElement[];
-    constructor(elements: IExpressionElement[] = []) {
+    constructor(
+        elements: IExpressionElement[] = [],
+        brackets = false
+    ) {
         super();
         this.elements = elements;
+        this.brackets = brackets;
     }
 
     children() {
@@ -263,7 +268,7 @@ export class Expression extends AbstractExpressionElement {
         const newElements = this.elements.map(elem => 
             elem.replaceFuncCall(replaceFunc, toSql)
         );
-        return new Expression(newElements);
+        return this.clone(newElements);
     }
 
     replaceTable(
@@ -273,14 +278,14 @@ export class Expression extends AbstractExpressionElement {
         const newElements = this.elements.map(elem => 
             elem.replaceTable(replaceTable, toTable)
         );
-        return new Expression(newElements);
+        return this.clone(newElements);
     }
 
     replaceColumn(replaceColumn: ColumnReference, toSql: IExpressionElement): Expression {
         const newElements = this.elements.map(elem => 
             elem.replaceColumn(replaceColumn, toSql)
         );
-        return new Expression(newElements);
+        return this.clone(newElements);
     }
 
     splitBy(operator: string) {
@@ -324,7 +329,8 @@ export class Expression extends AbstractExpressionElement {
 
     clone(newElements?: IExpressionElement[]) {
         return new Expression(
-            newElements || this.elements.map(elem => elem.clone())
+            newElements || this.elements.map(elem => elem.clone()),
+            this.brackets
         );
     }
 
@@ -335,7 +341,7 @@ export class Expression extends AbstractExpressionElement {
     }
 
     template(spaces: Spaces) {
-        const lines: string[] = [];
+        let lines: string[] = [];
 
         let line = "";
         for (const elem of this.elements) {
@@ -352,40 +358,26 @@ export class Expression extends AbstractExpressionElement {
             }
 
             if ( elem instanceof Expression ) {
-                // TODO: maybe exists another operators?
-                if ( elem.hasOperator("-") ) {
-                    line += ` (${ elem })`;
-                    continue;
-                }
-                if ( /^[\w\.]+$/i.test(elem.toString()) ) {
-                    line += ` ${ elem }`;
-                    continue;
-                }
-
                 if ( line.trim() ) {
                     lines.push( spaces + line.trim() );
                 }
+                line = "";
 
-                const subExpression = elem;
-
-                if ( subExpression.hasOperator("or") ) {
-                    
+                if ( elem.hasOperator("or") ) {
                     lines.push(spaces + "(");
                     lines.push(
-                        ...subExpression.template(
+                        ...elem.template(
                             spaces.plusOneLevel()
                         )
                     );
-                    lines.push(spaces + ")");
-
+                    lines.push(spaces + ")");    
                 }
                 else {
                     lines.push(
-                        ...subExpression.template( spaces )
+                        ...elem.template(spaces)
                     );
                 }
 
-                line = "";
                 continue;
             }
             else {
@@ -397,7 +389,15 @@ export class Expression extends AbstractExpressionElement {
             lines.push( spaces + line.trim() );
         }
 
-        return lines.filter(someLine => !!someLine.trim());
+        lines = lines.filter(someLine => !!someLine.trim());
+
+        if ( this.brackets ) {
+            const n = lines.length;
+            lines[0] = spaces + "(" + lines[0].trim();
+            lines[n - 1] = lines[n - 1] + ")";
+        }
+
+        return lines;
     }
 
     private onlyOperators(onlyOperator: string) {

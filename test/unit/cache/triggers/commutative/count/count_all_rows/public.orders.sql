@@ -34,8 +34,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id
-        ),
+                'id', new.id
+            ),
             TG_OP
         ),
             (
@@ -51,8 +51,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id
-            ),
+                    'id', new.id
+                ),
                 TG_OP
             )
 ) as json_entry

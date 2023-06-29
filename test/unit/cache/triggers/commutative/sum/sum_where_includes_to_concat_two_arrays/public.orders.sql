@@ -123,8 +123,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
-        ),
+                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
+            ),
             TG_OP
         ),
                 (
@@ -140,8 +140,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
-            ),
+                    'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -199,8 +199,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
-        ),
+                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
+            ),
             TG_OP
         ),
                 (
@@ -216,8 +216,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
-            ),
+                    'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -253,8 +253,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
-        ),
+                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
+            ),
             TG_OP
         ),
                 (
@@ -270,8 +270,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
-            ),
+                    'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
+                ),
                 TG_OP
             )
 ) as json_entry

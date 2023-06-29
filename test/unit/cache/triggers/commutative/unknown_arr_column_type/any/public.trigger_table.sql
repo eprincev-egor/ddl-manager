@@ -54,8 +54,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
-        ),
+                'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
+            ),
             TG_OP
         ),
                 (
@@ -71,8 +71,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
-            ),
+                    'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -118,8 +118,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
-        ),
+                'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
+            ),
             TG_OP
         ),
                 (
@@ -135,8 +135,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
-            ),
+                    'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -162,8 +162,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
-        ),
+                'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
+            ),
             TG_OP
         ),
                 (
@@ -179,8 +179,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
-            ),
+                    'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
+                ),
                 TG_OP
             )
 ) as json_entry

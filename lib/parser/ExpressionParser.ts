@@ -122,7 +122,10 @@ export class ExpressionParser {
             elements.push(elem);
         }
 
-        const expression = new Expression(elements);
+        const expression = new Expression(
+            elements,
+            !!sql.row.brackets
+        );
         return expression;
     }
 

@@ -35,8 +35,8 @@ begin
                     string_agg(cars.car_number, ', ') as cars_numbers,
                     ('{' || string_agg(
                                                     '"' || public.cargos.id::text || '":' || jsonb_build_object(
-                                'id', public.cargos.id,'id_order', public.cargos.id_order
-                            )::text,
+                                    'id', public.cargos.id,'id_order', public.cargos.id_order
+                                )::text,
                                                     ','
                                                 ) || '}')
                     ::

@@ -65,8 +65,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'profit', new.profit
-        ),
+                'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'profit', new.profit
+            ),
             TG_OP
         ),
                 (
@@ -82,8 +82,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'profit', new.profit
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'profit', new.profit
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -147,8 +147,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'profit', new.profit
-        ),
+                'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'profit', new.profit
+            ),
             TG_OP
         ),
                 (
@@ -164,8 +164,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'profit', new.profit
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'profit', new.profit
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -199,8 +199,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'profit', new.profit
-        ),
+                'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'profit', new.profit
+            ),
             TG_OP
         ),
                 (
@@ -216,8 +216,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'profit', new.profit
-            ),
+                    'deleted', new.deleted,'id', new.id,'id_client', new.id_client,'profit', new.profit
+                ),
                 TG_OP
             )
 ) as json_entry

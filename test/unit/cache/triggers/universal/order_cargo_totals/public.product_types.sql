@@ -37,8 +37,8 @@ begin
                     string_agg(product_types.name, ', ') as cargos_products_names,
                     ('{' || string_agg(
                                                     '"' || public.cargos.id::text || '":' || jsonb_build_object(
-                                'id', public.cargos.id,'id_order', public.cargos.id_order,'id_product_type', public.cargos.id_product_type,'total_weight', public.cargos.total_weight
-                            )::text,
+                                    'id', public.cargos.id,'id_order', public.cargos.id_order,'id_product_type', public.cargos.id_product_type,'total_weight', public.cargos.total_weight
+                                )::text,
                                                     ','
                                                 ) || '}')
                     ::

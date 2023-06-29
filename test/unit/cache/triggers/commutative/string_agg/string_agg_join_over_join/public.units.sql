@@ -59,8 +59,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
-        ),
+                'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
+            ),
             TG_OP
         ),
                 (
@@ -78,8 +78,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
-            ),
+                    'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -141,8 +141,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
-        ),
+                'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
+            ),
             TG_OP
         ),
                 (
@@ -160,8 +160,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
-            ),
+                    'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -193,8 +193,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
-        ),
+                'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
+            ),
             TG_OP
         ),
                 (
@@ -212,8 +212,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
-            ),
+                    'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
+                ),
                 TG_OP
             )
 ) as json_entry

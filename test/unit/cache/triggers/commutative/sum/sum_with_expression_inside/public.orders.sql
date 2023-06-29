@@ -12,7 +12,8 @@ begin
                 ) = (
                     select
                             sum(
-                                (source_row.debet - source_row.credit) * source_row.quantity
+                                (source_row.debet - source_row.credit)
+                                * source_row.quantity
                                                         ) as orders_total
                     from (
                         select
@@ -57,8 +58,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
-        ),
+                'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
+            ),
             TG_OP
         ),
                 (
@@ -66,7 +67,8 @@ begin
                 ) = (
                     select
                             sum(
-                                (source_row.debet - source_row.credit) * source_row.quantity
+                                (source_row.debet - source_row.credit)
+                                * source_row.quantity
                                                         ) as orders_total
                     from (
                         select
@@ -76,8 +78,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
-            ),
+                    'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -102,7 +104,8 @@ begin
                 ) = (
                     select
                             sum(
-                                (source_row.debet - source_row.credit) * source_row.quantity
+                                (source_row.debet - source_row.credit)
+                                * source_row.quantity
                                                         ) as orders_total
                     from (
                         select
@@ -127,8 +130,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
-        ),
+                'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
+            ),
             TG_OP
         ),
                 (
@@ -136,7 +139,8 @@ begin
                 ) = (
                     select
                             sum(
-                                (source_row.debet - source_row.credit) * source_row.quantity
+                                (source_row.debet - source_row.credit)
+                                * source_row.quantity
                                                         ) as orders_total
                     from (
                         select
@@ -146,8 +150,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
-            ),
+                    'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -173,8 +177,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
-        ),
+                'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
+            ),
             TG_OP
         ),
                 (
@@ -182,7 +186,8 @@ begin
                 ) = (
                     select
                             sum(
-                                (source_row.debet - source_row.credit) * source_row.quantity
+                                (source_row.debet - source_row.credit)
+                                * source_row.quantity
                                                         ) as orders_total
                     from (
                         select
@@ -192,8 +197,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
-            ),
+                    'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
+                ),
                 TG_OP
             )
 ) as json_entry

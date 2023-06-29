@@ -59,8 +59,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_company', new.id_company,'id_order', new.id_order
-        ),
+                'id', new.id,'id_company', new.id_company,'id_order', new.id_order
+            ),
             TG_OP
         ),
                 (
@@ -81,8 +81,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_company', new.id_company,'id_order', new.id_order
-            ),
+                    'id', new.id,'id_company', new.id_company,'id_order', new.id_order
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -141,8 +141,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_company', new.id_company,'id_order', new.id_order
-        ),
+                'id', new.id,'id_company', new.id_company,'id_order', new.id_order
+            ),
             TG_OP
         ),
                 (
@@ -163,8 +163,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_company', new.id_company,'id_order', new.id_order
-            ),
+                    'id', new.id,'id_company', new.id_company,'id_order', new.id_order
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -193,8 +193,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_company', new.id_company,'id_order', new.id_order
-        ),
+                'id', new.id,'id_company', new.id_company,'id_order', new.id_order
+            ),
             TG_OP
         ),
                 (
@@ -215,8 +215,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_company', new.id_company,'id_order', new.id_order
-            ),
+                    'id', new.id,'id_company', new.id_company,'id_order', new.id_order
+                ),
                 TG_OP
             )
 ) as json_entry

@@ -12,8 +12,8 @@ begin
             string_agg(distinct country.name, ', ') as order_countries,
             ('{' || string_agg(
                                             '"' || public.orders.id::text || '":' || jsonb_build_object(
-                        'id', public.orders.id,'id_country', public.orders.id_country,'id_order_type', public.orders.id_order_type
-                    )::text,
+                            'id', public.orders.id,'id_country', public.orders.id_country,'id_order_type', public.orders.id_order_type
+                        )::text,
                                             ','
                                         ) || '}')
             ::
@@ -26,9 +26,9 @@ begin
         orders.id = any (new.orders_ids)
         and
         (
-            orders.id_order_type = 1
+            (orders.id_order_type = 1
             or
-            orders.id_order_type = 2
+            orders.id_order_type = 2)
         )
     into new_totals;
 

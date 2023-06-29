@@ -54,8 +54,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'doc_number', new.doc_number,'id', new.id,'id_country', new.id_country
-        ),
+                'doc_number', new.doc_number,'id', new.id,'id_country', new.id_country
+            ),
             TG_OP
         ),
                 (
@@ -74,8 +74,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'doc_number', new.doc_number,'id', new.id,'id_country', new.id_country
-            ),
+                    'doc_number', new.doc_number,'id', new.id,'id_country', new.id_country
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -126,8 +126,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'doc_number', new.doc_number,'id', new.id,'id_country', new.id_country
-        ),
+                'doc_number', new.doc_number,'id', new.id,'id_country', new.id_country
+            ),
             TG_OP
         ),
                 (
@@ -146,8 +146,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'doc_number', new.doc_number,'id', new.id,'id_country', new.id_country
-            ),
+                    'doc_number', new.doc_number,'id', new.id,'id_country', new.id_country
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -173,8 +173,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'doc_number', new.doc_number,'id', new.id,'id_country', new.id_country
-        ),
+                'doc_number', new.doc_number,'id', new.id,'id_country', new.id_country
+            ),
             TG_OP
         ),
                 (
@@ -193,8 +193,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'doc_number', new.doc_number,'id', new.id,'id_country', new.id_country
-            ),
+                    'doc_number', new.doc_number,'id', new.id,'id_country', new.id_country
+                ),
                 TG_OP
             )
 ) as json_entry

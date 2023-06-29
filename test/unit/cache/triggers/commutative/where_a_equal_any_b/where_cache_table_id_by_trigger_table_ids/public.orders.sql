@@ -104,8 +104,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
-        ),
+                'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
+            ),
             TG_OP
         ),
                 (
@@ -124,8 +124,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
-            ),
+                    'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -178,8 +178,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
-        ),
+                'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
+            ),
             TG_OP
         ),
                 (
@@ -198,8 +198,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
-            ),
+                    'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -231,8 +231,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
-        ),
+                'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
+            ),
             TG_OP
         ),
                 (
@@ -251,8 +251,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
-            ),
+                    'companies_ids', new.companies_ids,'deleted', new.deleted,'doc_number', new.doc_number,'id', new.id
+                ),
                 TG_OP
             )
 ) as json_entry

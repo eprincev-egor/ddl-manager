@@ -60,8 +60,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'archive_date', new.archive_date,'id', new.id,'id_client', new.id_client,'order_date', new.order_date
-        ),
+                'archive_date', new.archive_date,'id', new.id,'id_client', new.id_client,'order_date', new.order_date
+            ),
             TG_OP
         ),
                 (
@@ -84,8 +84,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'archive_date', new.archive_date,'id', new.id,'id_client', new.id_client,'order_date', new.order_date
-            ),
+                    'archive_date', new.archive_date,'id', new.id,'id_client', new.id_client,'order_date', new.order_date
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -140,8 +140,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'archive_date', new.archive_date,'id', new.id,'id_client', new.id_client,'order_date', new.order_date
-        ),
+                'archive_date', new.archive_date,'id', new.id,'id_client', new.id_client,'order_date', new.order_date
+            ),
             TG_OP
         ),
                 (
@@ -164,8 +164,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'archive_date', new.archive_date,'id', new.id,'id_client', new.id_client,'order_date', new.order_date
-            ),
+                    'archive_date', new.archive_date,'id', new.id,'id_client', new.id_client,'order_date', new.order_date
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -191,8 +191,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'archive_date', new.archive_date,'id', new.id,'id_client', new.id_client,'order_date', new.order_date
-        ),
+                'archive_date', new.archive_date,'id', new.id,'id_client', new.id_client,'order_date', new.order_date
+            ),
             TG_OP
         ),
                 (
@@ -215,8 +215,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'archive_date', new.archive_date,'id', new.id,'id_client', new.id_client,'order_date', new.order_date
-            ),
+                    'archive_date', new.archive_date,'id', new.id,'id_client', new.id_client,'order_date', new.order_date
+                ),
                 TG_OP
             )
 ) as json_entry

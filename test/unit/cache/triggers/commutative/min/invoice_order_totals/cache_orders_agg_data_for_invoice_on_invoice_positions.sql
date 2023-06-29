@@ -58,8 +58,8 @@ begin
             __orders_agg_data_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
-        ),
+                'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
+            ),
             TG_OP
         ),
                 (
@@ -75,8 +75,8 @@ begin
                 __orders_agg_data_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
-            ),
+                    'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -138,8 +138,8 @@ begin
             __orders_agg_data_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
-        ),
+                'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
+            ),
             TG_OP
         ),
                 (
@@ -155,8 +155,8 @@ begin
                 __orders_agg_data_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
-            ),
+                    'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -189,8 +189,8 @@ begin
             __orders_agg_data_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
-        ),
+                'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
+            ),
             TG_OP
         ),
                 (
@@ -206,8 +206,8 @@ begin
                 __orders_agg_data_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
-            ),
+                    'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
+                ),
                 TG_OP
             )
 ) as json_entry

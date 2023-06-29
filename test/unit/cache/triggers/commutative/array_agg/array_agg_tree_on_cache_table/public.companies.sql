@@ -47,8 +47,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_parent_company', new.id_parent_company
-        ),
+                'id', new.id,'id_parent_company', new.id_parent_company
+            ),
             TG_OP
         ),
                 (
@@ -64,8 +64,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_parent_company', new.id_parent_company
-            ),
+                    'id', new.id,'id_parent_company', new.id_parent_company
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -113,8 +113,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_parent_company', new.id_parent_company
-        ),
+                'id', new.id,'id_parent_company', new.id_parent_company
+            ),
             TG_OP
         ),
                 (
@@ -130,8 +130,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_parent_company', new.id_parent_company
-            ),
+                    'id', new.id,'id_parent_company', new.id_parent_company
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -157,8 +157,8 @@ begin
             __totals_json__,
             null::jsonb,
             jsonb_build_object(
-            'id', new.id,'id_parent_company', new.id_parent_company
-        ),
+                'id', new.id,'id_parent_company', new.id_parent_company
+            ),
             TG_OP
         ),
                 (
@@ -174,8 +174,8 @@ begin
                 __totals_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'id', new.id,'id_parent_company', new.id_parent_company
-            ),
+                    'id', new.id,'id_parent_company', new.id_parent_company
+                ),
                 TG_OP
             )
 ) as json_entry

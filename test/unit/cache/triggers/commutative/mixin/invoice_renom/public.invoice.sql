@@ -59,8 +59,8 @@ begin
             __renomination_json__,
             null::jsonb,
             jsonb_build_object(
-            'account_no_doc_number', new.account_no_doc_number,'id', new.id,'id_list_currency', new.id_list_currency,'sum', new.sum
-        ),
+                'account_no_doc_number', new.account_no_doc_number,'id', new.id,'id_list_currency', new.id_list_currency,'sum', new.sum
+            ),
             TG_OP
         ),
             (
@@ -86,8 +86,8 @@ begin
                 __renomination_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'account_no_doc_number', new.account_no_doc_number,'id', new.id,'id_list_currency', new.id_list_currency,'sum', new.sum
-            ),
+                    'account_no_doc_number', new.account_no_doc_number,'id', new.id,'id_list_currency', new.id_list_currency,'sum', new.sum
+                ),
                 TG_OP
             )
 ) as json_entry

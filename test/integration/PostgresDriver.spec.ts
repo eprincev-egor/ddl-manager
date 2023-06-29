@@ -515,7 +515,7 @@ describe("integration/PostgresDriver.loadState", () => {
                     insert: true,
                     updateOf: ["name", "note"],
                     delete: true,
-                    when: "pg_trigger_depth() = 0",
+                    when: "(pg_trigger_depth() = 0)",
                     procedure: {
                         schema: "public",
                         name: "test_func"

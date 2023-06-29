@@ -53,8 +53,8 @@ begin
             __payments_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'total', new.total
-        ),
+                'deleted', new.deleted,'id', new.id,'total', new.total
+            ),
             TG_OP
         ),
                 (
@@ -70,8 +70,8 @@ begin
                 __payments_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'total', new.total
-            ),
+                    'deleted', new.deleted,'id', new.id,'total', new.total
+                ),
                 TG_OP
             )
 ) as json_entry
@@ -123,8 +123,8 @@ begin
             __payments_json__,
             null::jsonb,
             jsonb_build_object(
-            'deleted', new.deleted,'id', new.id,'total', new.total
-        ),
+                'deleted', new.deleted,'id', new.id,'total', new.total
+            ),
             TG_OP
         ),
                 (
@@ -140,8 +140,8 @@ begin
                 __payments_json__,
                 null::jsonb,
                 jsonb_build_object(
-                'deleted', new.deleted,'id', new.id,'total', new.total
-            ),
+                    'deleted', new.deleted,'id', new.id,'total', new.total
+                ),
                 TG_OP
             )
 ) as json_entry
