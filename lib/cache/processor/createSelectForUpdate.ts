@@ -6,6 +6,7 @@ import {
     Select
 } from "../../ast";
 import { Database } from "../../database/schema/Database";
+import { fromPairs } from "lodash";
 
 export function createSelectForUpdate(
     database: Database,
@@ -21,7 +22,7 @@ export function createSelectForUpdate(
         const deps = cache.getSourceJsonDeps().map(column =>
             new ColumnReference(fromRef, column)
         );
-        const depsMap = Object.fromEntries(deps.map(column =>
+        const depsMap = fromPairs(deps.map(column =>
             [column.toString(), column]
         ));
 
