@@ -20,11 +20,22 @@ export class FilesState {
         return flatMap(this.files, file => file.content.triggers);
     }
 
+    allFunctions() {
+        return flatMap(this.files, file => file.content.functions);
+    }
+
     getTableTriggers(table: TableID) {
         const tableTriggers = this.allTriggers().filter(trigger => 
             trigger.table.equal(table)
         );
         return tableTriggers;
+    }
+
+    getTriggerFunction(trigger: DatabaseTrigger) {
+        return this.allFunctions().find(func =>
+            func.name === trigger.procedure.name &&
+            func.schema === trigger.procedure.schema
+        );
     }
 
     addFile(fileOrParams: File | IFileParams) {

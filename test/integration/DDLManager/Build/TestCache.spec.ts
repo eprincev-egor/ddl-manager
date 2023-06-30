@@ -4354,6 +4354,74 @@ $$;
         );
     });
 
+    it("cache trigger dependent on custom before trigger", async() => {
+        const folderPath = ROOT_TMP_PATH + "/sort-deps";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                a integer,
+                b integer
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/self.sql", `
+            cache self for orders (
+                select
+                    orders.b * 10 as c
+            )
+        `);
+        fs.writeFileSync(folderPath + "/custom.sql", `
+            create or replace function before_trigger()
+            returns trigger as $body$
+            begin
+                new.b = new.a * 2;
+
+                return new;
+            end
+            $body$ language plpgsql;
+
+            create trigger before_trigger
+            before insert or update of a
+            on orders
+            for each row
+            execute procedure before_trigger();
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into orders (a)
+            values (100);
+        `);
+
+        let result = await db.query(`select a, b, c from orders`);
+        assert.deepStrictEqual(result.rows, [{
+            a: 100,
+            b: 200,
+            c: 2000
+        }]);
+
+
+        await db.query(`
+            update orders set
+                a = 10
+        `);
+
+        result = await db.query(`select a, b, c from orders`);
+        assert.deepStrictEqual(result.rows, [{
+            a: 10,
+            b: 20,
+            c: 200
+        }]);
+    });
+
     // TODO: test about twice points (max_point_date and last point)
     // TODO: https://git.g-soft.ru/logos/logisitc-web/merge_requests/4577/diffs
     // TODO: update-ddl-cache in watcher mode

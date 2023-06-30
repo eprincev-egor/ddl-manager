@@ -13,20 +13,24 @@ import { LastRowByIdTriggerBuilder } from "./one-last-row/LastRowByIdTriggerBuil
 import { LastRowByMutableTriggerBuilder } from "./one-last-row/LastRowByMutableTriggerBuilder";
 import { LastRowByArrayReferenceTriggerBuilder } from "./one-last-row/LastRowByArrayReferenceTriggerBuilder";
 import { buildArrVars } from "../processor/buildArrVars";
+import { FilesState } from "../../fs/FilesState";
 
 export class TriggerBuilderFactory {
     private readonly allCache: Cache[];
     private readonly cache: Cache;
     private readonly database: Database;
+    private readonly fs: FilesState;
 
     constructor(
         allCache: Cache[],
         cache: Cache,
         database: Database,
+        fs: FilesState,
     ) {
         this.allCache = allCache;
         this.cache = cache;
         this.database = database;
+        this.fs = fs;
     }
 
     tryCreateBuilder(
@@ -39,7 +43,8 @@ export class TriggerBuilderFactory {
             this.cache,
             triggerTable,
             triggerTableColumns,
-            this.database
+            this.database,
+            this.fs
         );
 
         const Builder = this.chooseConstructor(context);

@@ -15,7 +15,8 @@ import { createSelectForUpdate } from "../processor/createSelectForUpdate";
 import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
 import { leadingZero } from "./utils";
 import { strict } from "assert";
-import { groupBy } from "lodash";
+import {  groupBy } from "lodash";
+import { FilesState } from "../../fs/FilesState";
 
 export interface IReferenceMeta {
     columns: string[];
@@ -32,6 +33,7 @@ export class CacheContext {
     readonly triggerTable: TableID;
     readonly triggerTableColumns: string[];
     readonly database: Database;
+    readonly fs: FilesState;
     readonly referenceMeta: IReferenceMeta;
     readonly excludeRef: TableReference | false
     private graph?: CacheColumnGraph;
@@ -46,6 +48,8 @@ export class CacheContext {
         triggerTableColumns: string[],
 
         database: Database,
+        fs: FilesState,
+
         // TODO: split to two classes
         excludeRef: boolean = true
     ) {
@@ -59,6 +63,7 @@ export class CacheContext {
         this.triggerTable = triggerTable;
         this.triggerTableColumns = triggerTableColumns;
         this.database = database;
+        this.fs = fs;
         this.excludeRef = excludeRef ? cache.for : false;
         this.referenceMeta = this.buildReferenceMeta();
     }
@@ -178,11 +183,16 @@ export class CacheContext {
     getBeforeUpdateTriggers() {
         const triggerDbTable = this.database.getTable(this.triggerTable) || {triggers: []};
 
-        const beforeUpdateTriggers = triggerDbTable.triggers.filter(trigger =>
+        const dbBeforeUpdateTriggers = triggerDbTable.triggers.filter(trigger =>
             trigger.before &&
             trigger.update
         );
-        return beforeUpdateTriggers || [];
+        const fsBeforeUpdateTriggers = this.fs.getTableTriggers(this.triggerTable).filter(trigger => 
+            trigger.before &&
+            trigger.update
+        );
+
+        return [...fsBeforeUpdateTriggers, ...dbBeforeUpdateTriggers];
     }
 
     getTriggerFunction(trigger: DatabaseTrigger) {
@@ -190,9 +200,12 @@ export class CacheContext {
             func.name === trigger.procedure.name &&
             func.schema === trigger.procedure.schema
         );
+        const fsFunction = this.fs.getTriggerFunction(trigger);
 
-        strict.ok(dbFunction);
-        return dbFunction
+        const func = dbFunction || fsFunction;
+
+        strict.ok(func);
+        return func;
     }
 
     createSelectForUpdate() {

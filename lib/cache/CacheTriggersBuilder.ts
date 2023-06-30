@@ -12,6 +12,7 @@ import { CacheContext } from "./trigger-builder/CacheContext";
 import { SelfUpdateBySelfRowTriggerBuilder } from "./trigger-builder/SelfUpdateBySelfRowTriggerBuilder";
 import { TableReference } from "../database/schema/TableReference";
 import { LastRowByIdTriggerBuilder } from "./trigger-builder/one-last-row/LastRowByIdTriggerBuilder";
+import { FilesState } from "../fs/FilesState";
 
 export interface ISelectForUpdate {
     for: TableReference;
@@ -30,11 +31,13 @@ export class CacheTriggersBuilder {
     private readonly cache: Cache;
     private readonly builderFactory: TriggerBuilderFactory;
     private readonly database: Database;
+    private readonly fs: FilesState;
 
     constructor(
         allCache: Cache[],
         cacheOrSQL: string | Cache,
-        database: Database
+        database: Database,
+        fs: FilesState = new FilesState()
     ) {
         this.allCache = allCache;
 
@@ -44,11 +47,13 @@ export class CacheTriggersBuilder {
         }
 
         this.database = database;
+        this.fs = fs;
         this.cache = cache;
         this.builderFactory = new TriggerBuilderFactory(
             this.allCache,
             cache,
-            database
+            database,
+            this.fs
         );
     }
 
@@ -119,6 +124,7 @@ export class CacheTriggersBuilder {
                 this.cache.for.table,
                 mutableColumns,
                 this.database,
+                this.fs,
                 false
             );
 

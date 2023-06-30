@@ -33,7 +33,8 @@ export class CacheComparator extends AbstractComparator {
         for (const cache of allCache) {
             const cacheTriggerFactory = new CacheTriggersBuilder(
                 allCache, cache,
-                this.database
+                this.database,
+                this.fs
             );
 
             const cacheTriggers = cacheTriggerFactory.createTriggers();
