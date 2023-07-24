@@ -72,7 +72,6 @@ export class TriggerBuilderFactory {
             from.length > 1 || 
             from.length === 1 && isFromJoin
         );
-        const arrayVars = buildArrVars(context);
 
         if ( needUniversalTrigger ) {
             return UniversalTriggerBuilder;
@@ -88,6 +87,7 @@ export class TriggerBuilderFactory {
                 return;
             }
 
+            const arrayVars = buildArrVars(context);
             if ( arrayVars.length ) {
                 return ArrayRefCommutativeTriggerBuilder;
             }
@@ -96,13 +96,14 @@ export class TriggerBuilderFactory {
             }
         }
         else if ( this.oneLastRow(context) ) {
-            const orderBy = context.cache.select.orderBy!;
-            const orderByColumns = orderBy.getColumnReferences();
-            const firstOrderColumn = orderByColumns[0];
-
+            const arrayVars = buildArrVars(context);
             if ( arrayVars.length ) {
                 return LastRowByArrayReferenceTriggerBuilder;
             }
+
+            const orderBy = context.cache.select.orderBy!;
+            const orderByColumns = orderBy.getColumnReferences();
+            const firstOrderColumn = orderByColumns[0];
 
             const byId = (
                 orderByColumns.length === 1 &&

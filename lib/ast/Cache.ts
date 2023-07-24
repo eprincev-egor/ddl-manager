@@ -47,6 +47,10 @@ export class Cache {
         return findDependenciesToCacheTable(this).columns;
     }
 
+    getFromTable() {
+        return this.select.getFromTable().table;
+    }
+
     jsonColumnName() {
         return `__${this.name}_json__`
     }

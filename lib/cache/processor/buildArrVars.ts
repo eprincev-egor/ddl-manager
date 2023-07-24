@@ -1,7 +1,6 @@
 import { uniq } from "lodash";
-import { Expression } from "../../ast";
-import { ArrayElement } from "../../ast/expression/ArrayElement";
 import { CacheContext } from "../trigger-builder/CacheContext";
+import { findTriggerTableArrayColumns } from "./findTriggerTableArrayColumns";
 
 export interface IArrVar {
     name: string;
@@ -14,7 +13,11 @@ export function buildArrVars(
     prefix: string = "__"
 ): IArrVar[] {
 
-    const arrayColumns = findTriggerTableArrayColumns(context);
+    const arrayColumns = findTriggerTableArrayColumns(
+        context.cache,
+        context.triggerTable,
+        context.referenceMeta.expressions
+    );
 
     const dbTable = context.database.getTable(context.triggerTable);
     context.referenceMeta.columns.forEach(columnName => {
@@ -37,77 +40,4 @@ export function buildArrVars(
     });
 
     return arrVars;
-}
-
-function findTriggerTableArrayColumns(
-    context: CacheContext,
-    expressions = context.referenceMeta.expressions,
-    arrayColumns: string[] = []
-) {
-    for (const expression of expressions) {
-        if ( isArrayBinary(expression) ) {
-            if ( expression.isEqualAny() ) {
-                const [left] = expression.splitBy("=");
-                const isTriggerTableColumnEqualAny = (
-                    left.getColumnReferences().every(columnRef =>
-                        context.isColumnRefToTriggerTable(columnRef)
-                    )
-                );
-                if ( isTriggerTableColumnEqualAny ) {
-                    continue;
-                }
-            }
-
-            if ( expression.isBinary("&&") ) {
-                const notArrExpressions = expression.elements.filter(item =>
-                    !(item instanceof ArrayElement)
-                );
-
-                for (const notArrayExpression of notArrExpressions) {
-                    const mutableColumns = notArrayExpression.getColumnReferences()
-                    .filter(columnRef =>
-                        columnRef.name !== "id" &&
-                        context.isColumnRefToTriggerTable(columnRef)
-                    )
-                    .map(columnRef =>
-                        columnRef.name
-                    );
-
-                    arrayColumns.push( ...mutableColumns );
-                }
-
-                continue;
-            }
-
-            const mutableColumns = expression.getColumnReferences()
-                .filter(columnRef =>
-                    columnRef.name !== "id" &&
-                    context.isColumnRefToTriggerTable(columnRef)
-                )
-                .map(columnRef =>
-                    columnRef.name
-                );
-
-            arrayColumns.push( ...mutableColumns );
-        }
-
-        if ( expression.isBinary("or") ) {
-            findTriggerTableArrayColumns(
-                context,
-                expression.splitBy("or"),
-                arrayColumns
-            );
-        }
-    }
-
-    return arrayColumns;
-}
-
-function isArrayBinary(expression: Expression): boolean {
-    return (
-        expression.isBinary("&&") ||
-        expression.isBinary("@>") ||
-        expression.isBinary("<@") ||
-        expression.isEqualAny()
-    );
 }

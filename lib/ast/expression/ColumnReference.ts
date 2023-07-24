@@ -3,6 +3,7 @@ import { AbstractExpressionElement } from "./AbstractExpressionElement";
 import { TableID } from "../../database/schema/TableID";
 import { TableReference } from "../../database/schema/TableReference";
 import { IExpressionElement } from "./interface";
+import { Cache } from "../Cache";
 
 export class ColumnReference extends AbstractExpressionElement {
     readonly tableReference: TableReference;
@@ -44,6 +45,19 @@ export class ColumnReference extends AbstractExpressionElement {
 
     clone() {
         return new ColumnReference(this.tableReference.clone(), this.name);
+    }
+
+    isRefTo(
+        cache: Cache,
+        triggerTable: TableID,
+        excludeRef: TableReference | false = cache.for
+    ) {
+        return (
+            this.tableReference.table.equal(triggerTable) && (
+                !excludeRef ||
+                !this.tableReference.equal(excludeRef)
+            )
+        );
     }
 
     template(spaces: Spaces) {

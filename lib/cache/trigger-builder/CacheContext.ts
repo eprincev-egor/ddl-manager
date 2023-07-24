@@ -1,7 +1,6 @@
 import { CacheColumnParams } from "../../Comparator/graph/CacheColumn";
 import { CacheColumnGraph } from "../../Comparator/graph/CacheColumnGraph";
 import {
-    Expression,
     Cache,
     ColumnReference,
     SelectColumn,
@@ -14,17 +13,10 @@ import { TableReference } from "../../database/schema/TableReference";
 import { createSelectForUpdate } from "../processor/createSelectForUpdate";
 import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
 import { leadingZero } from "./utils";
-import { strict } from "assert";
-import {  groupBy } from "lodash";
+import { groupBy } from "lodash";
 import { FilesState } from "../../fs/FilesState";
-
-export interface IReferenceMeta {
-    columns: string[];
-    expressions: Expression[];
-    unknownExpressions: Expression[];
-    filters: Expression[];
-    cacheTableFilters: Expression[];
-}
+import { buildReferenceMeta, IReferenceMeta } from "../processor/buildReferenceMeta";
+import { strict } from "assert";
 
 export class CacheContext {
     readonly cache: Cache;
@@ -65,7 +57,11 @@ export class CacheContext {
         this.database = database;
         this.fs = fs;
         this.excludeRef = excludeRef ? cache.for : false;
-        this.referenceMeta = this.buildReferenceMeta();
+
+        this.referenceMeta = buildReferenceMeta(
+            cache, triggerTable,
+            this.excludeRef
+        );
     }
 
     private getDependencyLevel(columnName: string) {
@@ -96,10 +92,9 @@ export class CacheContext {
     }
 
     isColumnRefToTriggerTable(columnRef: ColumnReference) {
-        return columnRef.tableReference.table.equal(this.triggerTable) && (
-            !this.excludeRef
-            ||
-            !columnRef.tableReference.equal(this.excludeRef)
+        return columnRef.isRefTo(
+            this.cache, this.triggerTable,
+            this.excludeRef
         );
     }
 
@@ -243,89 +238,6 @@ export class CacheContext {
         );
     }
 
-    private buildReferenceMeta(): IReferenceMeta {
-
-        const referenceMeta: IReferenceMeta = {
-            columns: [],
-            filters: [],
-            expressions: [],
-            unknownExpressions: [],
-            cacheTableFilters: []
-        };
-
-        const where = this.cache.select.where;
-        if ( !where ) {
-            return referenceMeta;
-        }
-
-        for (let andCondition of where.splitBy("and")) {
-            andCondition = andCondition.extrude();
-
-            const conditionColumns = andCondition.getColumnReferences();
-
-            const columnsFromCacheTable = conditionColumns.filter(columnRef =>
-                columnRef.tableReference.equal(this.cache.for)
-            );
-            const columnsFromTriggerTable = conditionColumns.filter(columnRef =>
-                this.isColumnRefToTriggerTable(columnRef)
-            );
-
-            const fromTriggerTable = this.cache.select.from.find(from =>
-                from.source.toString() === this.triggerTable.toString()
-            );
-            const leftJoinsOverTriggerTable = (fromTriggerTable || {joins: []}).joins
-                .filter(join => 
-                    join.on.getColumnReferences()
-                        .some(columnRef =>
-                            columnRef.tableReference.table.equal(this.triggerTable)
-                        )
-                );
-            
-            const columnsFromTriggerTableOverLeftJoin = conditionColumns.filter(columnRef =>
-                leftJoinsOverTriggerTable.some(join =>
-                    join.getTable().equal(columnRef.tableReference.table)
-                )
-            );
-
-            if ( columnsFromCacheTable.length === conditionColumns.length ) {
-                referenceMeta.cacheTableFilters.push( andCondition );
-            }
-
-            const isReference = (
-                columnsFromCacheTable.length
-                &&
-                columnsFromTriggerTable.length
-            );
-
-            if ( isReference ) {
-                if ( isUnknownExpression(andCondition) ) {
-                    referenceMeta.unknownExpressions.push(
-                        andCondition
-                    );
-                }
-                else {
-                    referenceMeta.expressions.push(
-                        andCondition
-                    );
-                }
-
-                referenceMeta.columns.push(
-                    ...columnsFromTriggerTable.map(columnRef =>
-                        columnRef.name
-                    )
-                );
-            }
-            else if (
-                columnsFromTriggerTableOverLeftJoin.length ||
-                columnsFromTriggerTable.length 
-            ) {
-                referenceMeta.filters.push( andCondition );
-            }
-        }
-
-        return referenceMeta;
-    }
-
     withoutInsertCase(): boolean {
         return (this.cache.withoutInserts || []).includes(
             this.triggerTable.toString() 
@@ -372,42 +284,6 @@ export class CacheContext {
 
         return this.graph;
     }
-}
-
-function isUnknownExpression(expression: Expression): boolean {
-    expression = expression.extrude();
-
-    if ( expression.isBinary("=") ) {
-        return false;
-    }
-    if ( expression.isBinary("&&") ) {
-        return false;
-    }
-    if ( expression.isBinary("@>") ) {
-        return false;
-    }
-    if ( expression.isBinary("<@") ) {
-        return false;
-    }
-    if ( expression.isIn() ) {
-        return false;
-    }
-
-    const orConditions = expression.splitBy("or");
-    if ( orConditions.length > 1 ) {
-        return orConditions.some(subExpression => 
-            isUnknownExpression(subExpression)
-        );
-    }
-
-    const andConditions = expression.splitBy("and");
-    if ( andConditions.length > 1 ) {
-        return andConditions.some(subExpression => 
-            isUnknownExpression(subExpression)
-        );
-    }
-
-    return true;
 }
 
 function shortName(longName: string) {
