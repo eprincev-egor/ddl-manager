@@ -8,6 +8,7 @@ declare deleted_units_ids bigint[];
 begin
 
     if TG_OP = 'DELETE' then
+
         if
             old.id_doc_parent_operation is not null
             and
@@ -18,31 +19,38 @@ begin
             old.deleted = 0
         then
             update units set
+                __last_auto_doc_json__ = __last_auto_doc_json__ - old.id::text,
                 (
-                    __last_auto_doc_id,
                     id_last_auto_doc
                 ) = (
                     select
-                            last_auto_doc.id as __last_auto_doc_id,
-                            last_auto_doc.id as id_last_auto_doc
-                    from operations as last_auto_doc
+                            source_row.id as id_last_auto_doc
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __last_auto_doc_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
                     where
-                        last_auto_doc.id_doc_parent_operation = units.id_last_auto
+                        source_row.id_doc_parent_operation = units.id_last_auto
                         and
-                        last_auto_doc.id_operation_type = 1
+                        source_row.id_operation_type = 1
                         and
-                        last_auto_doc.deleted = 0
+                        source_row.deleted = 0
                         and
-                        last_auto_doc.units_ids && ARRAY[units.id] :: bigint[]
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
                     order by
-                        last_auto_doc.id desc nulls first
+                        source_row.id desc nulls first
                     limit 1
                 )
             where
-                units.id = any( old.units_ids )
+                old.id_doc_parent_operation = units.id_last_auto
                 and
-                units.__last_auto_doc_id = old.id;
-
+                units.id = any( old.units_ids::bigint[] );
         end if;
 
         return old;
@@ -106,69 +114,155 @@ begin
             deleted_units_ids = cm_get_deleted_elements(old.units_ids, new.units_ids);
         end if;
 
-
-        if not_changed_units_ids is not null then
-            if new.id is distinct from old.id then
-                update units set
-                    __last_auto_doc_id = new.id,
-                    id_last_auto_doc = new.id
-                where
-                    units.id = any( not_changed_units_ids )
-                    and
-                    units.__last_auto_doc_id = new.id
-                    and
-                    units.id_last_auto_doc is distinct from new.id;
-            end if;
-        end if;
-
-        if deleted_units_ids is not null then
+        if
+            new.id_doc_parent_operation is not null
+            and
+            not_changed_units_ids is not null
+        then
             update units set
+                __last_auto_doc_json__ = cm_merge_json(
+            __last_auto_doc_json__,
+            jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_doc_parent_operation', new.id_doc_parent_operation,'id_operation_type', new.id_operation_type,'units_ids', new.units_ids
+            ),
+            TG_OP
+        ),
                 (
-                    __last_auto_doc_id,
                     id_last_auto_doc
                 ) = (
                     select
-                            last_auto_doc.id as __last_auto_doc_id,
-                            last_auto_doc.id as id_last_auto_doc
-                    from operations as last_auto_doc
+                            source_row.id as id_last_auto_doc
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __last_auto_doc_json__,
+                jsonb_build_object(
+                    'deleted', new.deleted,'id', new.id,'id_doc_parent_operation', new.id_doc_parent_operation,'id_operation_type', new.id_operation_type,'units_ids', new.units_ids
+                ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
                     where
-                        last_auto_doc.id_doc_parent_operation = units.id_last_auto
+                        source_row.id_doc_parent_operation = units.id_last_auto
                         and
-                        last_auto_doc.id_operation_type = 1
+                        source_row.id_operation_type = 1
                         and
-                        last_auto_doc.deleted = 0
+                        source_row.deleted = 0
                         and
-                        last_auto_doc.units_ids && ARRAY[units.id] :: bigint[]
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
                     order by
-                        last_auto_doc.id desc nulls first
+                        source_row.id desc nulls first
                     limit 1
                 )
             where
-                units.id = any( deleted_units_ids )
+                new.id_doc_parent_operation = units.id_last_auto
                 and
-                units.__last_auto_doc_id = new.id;
+                units.id = any( not_changed_units_ids::bigint[] );
         end if;
 
-        if inserted_units_ids is not null then
+        if
+            new.id_doc_parent_operation is not null
+            and
+            deleted_units_ids is not null
+        then
             update units set
-                __last_auto_doc_id = new.id,
-                id_last_auto_doc = new.id
+                __last_auto_doc_json__ = __last_auto_doc_json__ - old.id::text,
+                (
+                    id_last_auto_doc
+                ) = (
+                    select
+                            source_row.id as id_last_auto_doc
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __last_auto_doc_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_doc_parent_operation = units.id_last_auto
+                        and
+                        source_row.id_operation_type = 1
+                        and
+                        source_row.deleted = 0
+                        and
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
+                    order by
+                        source_row.id desc nulls first
+                    limit 1
+                )
+            where
+                old.id_doc_parent_operation = units.id_last_auto
+                and
+                units.id = any( deleted_units_ids::bigint[] );
+        end if;
+
+        if
+            new.id_doc_parent_operation is not null
+            and
+            inserted_units_ids is not null
+        then
+            update units set
+                __last_auto_doc_json__ = cm_merge_json(
+            __last_auto_doc_json__,
+            jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_doc_parent_operation', new.id_doc_parent_operation,'id_operation_type', new.id_operation_type,'units_ids', new.units_ids
+            ),
+            TG_OP
+        ),
+                (
+                    id_last_auto_doc
+                ) = (
+                    select
+                            source_row.id as id_last_auto_doc
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __last_auto_doc_json__,
+                jsonb_build_object(
+                    'deleted', new.deleted,'id', new.id,'id_doc_parent_operation', new.id_doc_parent_operation,'id_operation_type', new.id_operation_type,'units_ids', new.units_ids
+                ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_doc_parent_operation = units.id_last_auto
+                        and
+                        source_row.id_operation_type = 1
+                        and
+                        source_row.deleted = 0
+                        and
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
+                    order by
+                        source_row.id desc nulls first
+                    limit 1
+                )
             where
                 new.id_doc_parent_operation = units.id_last_auto
                 and
-                units.id = any( inserted_units_ids )
-                and
-                (
-                    units.__last_auto_doc_id is null
-                    or
-                    units.__last_auto_doc_id < new.id
-                );
+                units.id = any( inserted_units_ids::bigint[] );
         end if;
 
         return new;
     end if;
 
     if TG_OP = 'INSERT' then
+
         if
             new.id_doc_parent_operation is not null
             and
@@ -179,13 +273,50 @@ begin
             new.deleted = 0
         then
             update units set
-                __last_auto_doc_id = new.id,
-                id_last_auto_doc = new.id
+                __last_auto_doc_json__ = cm_merge_json(
+            __last_auto_doc_json__,
+            jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'id_doc_parent_operation', new.id_doc_parent_operation,'id_operation_type', new.id_operation_type,'units_ids', new.units_ids
+            ),
+            TG_OP
+        ),
+                (
+                    id_last_auto_doc
+                ) = (
+                    select
+                            source_row.id as id_last_auto_doc
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __last_auto_doc_json__,
+                jsonb_build_object(
+                    'deleted', new.deleted,'id', new.id,'id_doc_parent_operation', new.id_doc_parent_operation,'id_operation_type', new.id_operation_type,'units_ids', new.units_ids
+                ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.id_doc_parent_operation = units.id_last_auto
+                        and
+                        source_row.id_operation_type = 1
+                        and
+                        source_row.deleted = 0
+                        and
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
+                    order by
+                        source_row.id desc nulls first
+                    limit 1
+                )
             where
                 new.id_doc_parent_operation = units.id_last_auto
                 and
-                units.id = any( new.units_ids );
-
+                units.id = any( new.units_ids::bigint[] );
         end if;
 
         return new;

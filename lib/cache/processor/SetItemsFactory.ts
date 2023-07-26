@@ -32,7 +32,6 @@ export class SetItemsFactory {
 
         const nextJson = `cm_merge_json(
             ${this.jsonColumnName()},
-            null::jsonb,
             ${cache.getSourceRowJson("new")},
             TG_OP
         )`;
@@ -44,6 +43,7 @@ export class SetItemsFactory {
         const cache = this.context.cache;
         const fromRef = cache.select.getFromTable()
         const sourceAlias = "source_row";
+        const orderBy = cache.select.getDeterministicOrderBy();
 
         return [
             new SetItem({
@@ -82,7 +82,8 @@ export class SetItemsFactory {
                         }),
                         as: sourceAlias,
                         joins: cache.select.from[0].joins
-                    })]
+                    })],
+                    orderBy
                 }).replaceTable(
                     fromRef,
                     new TableReference(

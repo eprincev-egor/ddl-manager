@@ -70,7 +70,6 @@ begin
             update invoice set
                 __balance_json__ = cm_merge_json(
             __balance_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
             ),
@@ -92,7 +91,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __balance_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
                 ),
@@ -158,7 +156,6 @@ begin
             update invoice set
                 __balance_json__ = cm_merge_json(
             __balance_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
             ),
@@ -180,7 +177,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __balance_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
                 ),
@@ -213,7 +209,6 @@ begin
             update invoice set
                 __balance_json__ = cm_merge_json(
             __balance_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
             ),
@@ -235,7 +230,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __balance_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'total_sum_with_vat_in_curs', new.total_sum_with_vat_in_curs
                 ),

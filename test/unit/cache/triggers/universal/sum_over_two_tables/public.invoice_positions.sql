@@ -34,11 +34,11 @@ begin
             select
                     sum(invoice_positions.cost) as invoice_positions_cost,
                     ('{' || string_agg(
-                                                    '"' || public.invoice_positions.id::text || '":' || jsonb_build_object(
+                                                '"' || public.invoice_positions.id::text || '":' || jsonb_build_object(
                                     'cost', public.invoice_positions.cost,'id', public.invoice_positions.id,'invoice_id', public.invoice_positions.invoice_id
                                 )::text,
-                                                    ','
-                                                ) || '}')
+                                                ','
+                                            ) || '}')
                     ::
                     jsonb as __totals_json__
             from invoice_positions

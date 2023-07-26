@@ -65,7 +65,6 @@ begin
             update list_gtd as gtd set
                 __invoices_json__ = cm_merge_json(
             __invoices_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
             ),
@@ -82,7 +81,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __invoices_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
                 ),
@@ -143,7 +141,6 @@ begin
             update list_gtd as gtd set
                 __invoices_json__ = cm_merge_json(
             __invoices_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
             ),
@@ -160,7 +157,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __invoices_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
                 ),
@@ -193,7 +189,6 @@ begin
             update list_gtd as gtd set
                 __invoices_json__ = cm_merge_json(
             __invoices_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
             ),
@@ -210,7 +205,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __invoices_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_unit', new.id_operation_unit
                 ),

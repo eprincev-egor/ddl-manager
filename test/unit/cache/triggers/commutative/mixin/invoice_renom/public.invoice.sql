@@ -57,7 +57,6 @@ begin
         update invoice set
             __renomination_json__ = cm_merge_json(
             __renomination_json__,
-            null::jsonb,
             jsonb_build_object(
                 'account_no_doc_number', new.account_no_doc_number,'id', new.id,'id_list_currency', new.id_list_currency,'sum', new.sum
             ),
@@ -84,7 +83,6 @@ begin
                     from jsonb_each(
     cm_merge_json(
                 __renomination_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'account_no_doc_number', new.account_no_doc_number,'id', new.id,'id_list_currency', new.id_list_currency,'sum', new.sum
                 ),

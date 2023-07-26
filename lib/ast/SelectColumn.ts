@@ -26,10 +26,11 @@ export class SelectColumn extends AbstractAstElement {
         Object.assign(this, params);
     }
 
-    clone() {
+    clone(params: Partial<ISelectColumnParams> = {}) {
         return new SelectColumn({
             name: this.name,
-            expression: this.expression.clone()
+            expression: this.expression.clone(),
+            ...params
         });
     }
 

@@ -124,7 +124,6 @@ begin
             update operation.owner_unit as own_unit set
                 __fin_totals_json__ = cm_merge_json(
             __fin_totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
             ),
@@ -158,7 +157,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __fin_totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
                 ),
@@ -228,7 +226,6 @@ begin
             update operation.owner_unit as own_unit set
                 __fin_totals_json__ = cm_merge_json(
             __fin_totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
             ),
@@ -262,7 +259,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __fin_totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
                 ),
@@ -296,7 +292,6 @@ begin
             update operation.owner_unit as own_unit set
                 __fin_totals_json__ = cm_merge_json(
             __fin_totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
             ),
@@ -330,7 +325,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __fin_totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'curs', new.curs,'deleted', new.deleted,'doc_date', new.doc_date,'id', new.id,'id_currency', new.id_currency,'is_euro_zone_curs', new.is_euro_zone_curs,'sum_vat', new.sum_vat,'units_ids', new.units_ids
                 ),

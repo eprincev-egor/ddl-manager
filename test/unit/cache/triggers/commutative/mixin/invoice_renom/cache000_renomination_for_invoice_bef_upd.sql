@@ -19,11 +19,11 @@ begin
                 ', '
                         ) as renomination_currencies,
             ('{' || string_agg(
-                                            '"' || renomination_invoice.id::text || '":' || jsonb_build_object(
+                                        '"' || renomination_invoice.id::text || '":' || jsonb_build_object(
                             'account_no_doc_number', renomination_invoice.account_no_doc_number,'id', renomination_invoice.id,'id_list_currency', renomination_invoice.id_list_currency,'sum', renomination_invoice.sum
                         )::text,
-                                            ','
-                                        ) || '}')
+                                        ','
+                                    ) || '}')
             ::
             jsonb as __renomination_json__
     from invoice as renomination_invoice

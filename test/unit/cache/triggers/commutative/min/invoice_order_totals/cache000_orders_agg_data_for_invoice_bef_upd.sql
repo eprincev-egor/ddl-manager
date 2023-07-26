@@ -19,11 +19,11 @@ begin
     select
             min(orders.some_date) as order_some_date,
             ('{' || string_agg(
-                                            '"' || public.invoice_positions.id::text || '":' || jsonb_build_object(
+                                        '"' || public.invoice_positions.id::text || '":' || jsonb_build_object(
                             'id', public.invoice_positions.id,'id_invoice', public.invoice_positions.id_invoice,'id_order', public.invoice_positions.id_order
                         )::text,
-                                            ','
-                                        ) || '}')
+                                        ','
+                                    ) || '}')
             ::
             jsonb as __orders_agg_data_json__
     from invoice_positions

@@ -121,7 +121,6 @@ begin
             update companies set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
             ),
@@ -138,7 +137,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
                 ),
@@ -197,7 +195,6 @@ begin
             update companies set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
             ),
@@ -214,7 +211,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
                 ),
@@ -251,7 +247,6 @@ begin
             update companies set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
             ),
@@ -268,7 +263,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'clients_ids', new.clients_ids,'deleted', new.deleted,'id', new.id,'partners_ids', new.partners_ids,'profit', new.profit
                 ),

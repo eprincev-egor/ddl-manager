@@ -118,7 +118,6 @@ begin
             update public.order set
                 __test_json__ = cm_merge_json(
             __test_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'payment_date', new.payment_date
             ),
@@ -144,7 +143,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __test_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'payment_date', new.payment_date
                 ),
@@ -208,7 +206,6 @@ begin
             update public.order set
                 __test_json__ = cm_merge_json(
             __test_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'payment_date', new.payment_date
             ),
@@ -234,7 +231,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __test_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'payment_date', new.payment_date
                 ),
@@ -271,7 +267,6 @@ begin
             update public.order set
                 __test_json__ = cm_merge_json(
             __test_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'payment_date', new.payment_date
             ),
@@ -297,7 +292,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __test_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'payment_date', new.payment_date
                 ),

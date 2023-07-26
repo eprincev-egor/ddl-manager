@@ -49,7 +49,6 @@ begin
             update user_task set
                 __watchers_json__ = cm_merge_json(
             __watchers_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
             ),
@@ -66,7 +65,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __watchers_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
                 ),
@@ -115,7 +113,6 @@ begin
             update user_task set
                 __watchers_json__ = cm_merge_json(
             __watchers_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
             ),
@@ -132,7 +129,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __watchers_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
                 ),
@@ -159,7 +155,6 @@ begin
             update user_task set
                 __watchers_json__ = cm_merge_json(
             __watchers_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
             ),
@@ -176,7 +171,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __watchers_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_user', new.id_user,'id_user_task', new.id_user_task
                 ),

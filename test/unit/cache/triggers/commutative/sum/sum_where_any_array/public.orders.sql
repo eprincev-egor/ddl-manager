@@ -99,7 +99,6 @@ begin
             update companies set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
             ),
@@ -116,7 +115,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
                 ),
@@ -167,7 +165,6 @@ begin
             update companies set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
             ),
@@ -184,7 +181,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
                 ),
@@ -217,7 +213,6 @@ begin
             update companies set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
             ),
@@ -234,7 +229,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'companies_ids', new.companies_ids,'deleted', new.deleted,'id', new.id,'profit', new.profit
                 ),

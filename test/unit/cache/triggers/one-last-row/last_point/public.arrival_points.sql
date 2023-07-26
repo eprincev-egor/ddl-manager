@@ -7,8 +7,8 @@ begin
         if old.id_operation is not null then
             select
                     operations.id as id,
-                    operations.__last_point_id as __last_point_id,
-                    operations.__last_point_sort as __last_point_sort
+                    operations.__last_point_sort as __last_point_sort,
+                    operations.__last_point_id as __last_point_id
             from operations
             where
                 old.id_operation = operations.id
@@ -18,15 +18,15 @@ begin
             if cache_row.__last_point_id = old.id then
                 update operations set
                     (
-                        __last_point_id,
                         __last_point_sort,
+                        __last_point_id,
                         last_point_actual_date,
                         last_point_expected_date,
                         last_point_id_point
                     ) = (
                         select
-                                arrival_points.id as __last_point_id,
                                 arrival_points.sort as __last_point_sort,
+                                arrival_points.id as __last_point_id,
                                 arrival_points.actual_date as last_point_actual_date,
                                 arrival_points.expected_date as last_point_expected_date,
                                 arrival_points.id_point as last_point_id_point
@@ -69,8 +69,8 @@ begin
             if new.sort is distinct from old.sort then
                 select
                         operations.id as id,
-                        operations.__last_point_id as __last_point_id,
-                        operations.__last_point_sort as __last_point_sort
+                        operations.__last_point_sort as __last_point_sort,
+                        operations.__last_point_id as __last_point_id
                 from operations
                 where
                     old.id_operation = operations.id
@@ -100,8 +100,8 @@ begin
                         new.sort > cache_row.__last_point_sort
                     then
                         update operations set
-                            __last_point_id = new.id,
                             __last_point_sort = new.sort,
+                            __last_point_id = new.id,
                             last_point_actual_date = new.actual_date,
                             last_point_expected_date = new.expected_date,
                             last_point_id_point = new.id_point
@@ -112,15 +112,15 @@ begin
                     if cache_row.__last_point_id = new.id then
                         update operations set
                             (
-                                __last_point_id,
                                 __last_point_sort,
+                                __last_point_id,
                                 last_point_actual_date,
                                 last_point_expected_date,
                                 last_point_id_point
                             ) = (
                                 select
-                                        arrival_points.id as __last_point_id,
                                         arrival_points.sort as __last_point_sort,
+                                        arrival_points.id as __last_point_id,
                                         arrival_points.actual_date as last_point_actual_date,
                                         arrival_points.expected_date as last_point_expected_date,
                                         arrival_points.id_point as last_point_id_point
@@ -161,8 +161,8 @@ begin
         if old.id_operation is not null then
             select
                     operations.id as id,
-                    operations.__last_point_id as __last_point_id,
-                    operations.__last_point_sort as __last_point_sort
+                    operations.__last_point_sort as __last_point_sort,
+                    operations.__last_point_id as __last_point_id
             from operations
             where
                 old.id_operation = operations.id
@@ -172,15 +172,15 @@ begin
             if cache_row.__last_point_id = old.id then
                 update operations set
                     (
-                        __last_point_id,
                         __last_point_sort,
+                        __last_point_id,
                         last_point_actual_date,
                         last_point_expected_date,
                         last_point_id_point
                     ) = (
                         select
-                                arrival_points.id as __last_point_id,
                                 arrival_points.sort as __last_point_sort,
+                                arrival_points.id as __last_point_id,
                                 arrival_points.actual_date as last_point_actual_date,
                                 arrival_points.expected_date as last_point_expected_date,
                                 arrival_points.id_point as last_point_id_point
@@ -200,8 +200,8 @@ begin
         if new.id_operation is not null then
             select
                     operations.id as id,
-                    operations.__last_point_id as __last_point_id,
-                    operations.__last_point_sort as __last_point_sort
+                    operations.__last_point_sort as __last_point_sort,
+                    operations.__last_point_id as __last_point_id
             from operations
             where
                 new.id_operation = operations.id
@@ -209,8 +209,8 @@ begin
             into cache_row;
 
             update operations set
-                __last_point_id = new.id,
                 __last_point_sort = new.sort,
+                __last_point_id = new.id,
                 last_point_actual_date = new.actual_date,
                 last_point_expected_date = new.expected_date,
                 last_point_id_point = new.id_point
@@ -239,8 +239,8 @@ begin
         if new.id_operation is not null then
             select
                     operations.id as id,
-                    operations.__last_point_id as __last_point_id,
-                    operations.__last_point_sort as __last_point_sort
+                    operations.__last_point_sort as __last_point_sort,
+                    operations.__last_point_id as __last_point_id
             from operations
             where
                 new.id_operation = operations.id
@@ -248,8 +248,8 @@ begin
             into cache_row;
 
             update operations set
-                __last_point_id = new.id,
                 __last_point_sort = new.sort,
+                __last_point_id = new.id,
                 last_point_actual_date = new.actual_date,
                 last_point_expected_date = new.expected_date,
                 last_point_id_point = new.id_point

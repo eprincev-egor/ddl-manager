@@ -11,11 +11,11 @@ begin
     select
             sum(capital.transfer.delta) as transfers_sum,
             ('{' || string_agg(
-                                            '"' || capital.transfer.id::text || '":' || jsonb_build_object(
+                                        '"' || capital.transfer.id::text || '":' || jsonb_build_object(
                             'delta', capital.transfer.delta,'id', capital.transfer.id,'transfer_date', capital.transfer.transfer_date
                         )::text,
-                                            ','
-                                        ) || '}')
+                                        ','
+                                    ) || '}')
             ::
             jsonb as __totals_json__
     from capital.transfer

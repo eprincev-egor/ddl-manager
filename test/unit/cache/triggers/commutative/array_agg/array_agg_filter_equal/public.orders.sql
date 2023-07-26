@@ -59,7 +59,6 @@ begin
             update companies set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
             ),
@@ -78,7 +77,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
                 ),
@@ -145,7 +143,6 @@ begin
             update companies set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
             ),
@@ -164,7 +161,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
                 ),
@@ -199,7 +195,6 @@ begin
             update companies set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
             ),
@@ -218,7 +213,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_client', new.id_client,'id_order_type', new.id_order_type
                 ),

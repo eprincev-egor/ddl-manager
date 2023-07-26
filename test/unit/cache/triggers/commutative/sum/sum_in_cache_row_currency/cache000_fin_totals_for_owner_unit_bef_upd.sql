@@ -35,11 +35,11 @@ begin
                     )
                         ) as fin_sum,
             ('{' || string_agg(
-                                            '"' || public.fin_operation.id::text || '":' || jsonb_build_object(
+                                        '"' || public.fin_operation.id::text || '":' || jsonb_build_object(
                             'curs', public.fin_operation.curs,'deleted', public.fin_operation.deleted,'doc_date', public.fin_operation.doc_date,'id', public.fin_operation.id,'id_currency', public.fin_operation.id_currency,'is_euro_zone_curs', public.fin_operation.is_euro_zone_curs,'sum_vat', public.fin_operation.sum_vat,'units_ids', public.fin_operation.units_ids
                         )::text,
-                                            ','
-                                        ) || '}')
+                                        ','
+                                    ) || '}')
             ::
             jsonb as __fin_totals_json__
     from fin_operation

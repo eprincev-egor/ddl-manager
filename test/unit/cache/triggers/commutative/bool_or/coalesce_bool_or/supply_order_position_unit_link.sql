@@ -54,7 +54,6 @@ begin
             update supply_order_weight_position as position set
                 __is_3pl_shipped_json__ = cm_merge_json(
             __is_3pl_shipped_json__,
-            null::jsonb,
             jsonb_build_object(
                 'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
             ),
@@ -76,7 +75,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __is_3pl_shipped_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
                 ),
@@ -130,7 +128,6 @@ begin
             update supply_order_weight_position as position set
                 __is_3pl_shipped_json__ = cm_merge_json(
             __is_3pl_shipped_json__,
-            null::jsonb,
             jsonb_build_object(
                 'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
             ),
@@ -152,7 +149,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __is_3pl_shipped_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
                 ),
@@ -179,7 +175,6 @@ begin
             update supply_order_weight_position as position set
                 __is_3pl_shipped_json__ = cm_merge_json(
             __is_3pl_shipped_json__,
-            null::jsonb,
             jsonb_build_object(
                 'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
             ),
@@ -201,7 +196,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __is_3pl_shipped_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'actual_netto_or_pcs', new.actual_netto_or_pcs,'id', new.id,'id_position', new.id_position
                 ),

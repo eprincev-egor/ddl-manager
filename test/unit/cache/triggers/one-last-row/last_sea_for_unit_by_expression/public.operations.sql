@@ -8,6 +8,7 @@ declare deleted_units_ids bigint[];
 begin
 
     if TG_OP = 'DELETE' then
+
         if
             old.units_ids is not null
             and
@@ -16,39 +17,40 @@ begin
             old.deleted = 0
         then
             update units set
+                __last_sea_json__ = __last_sea_json__ - old.id::text,
                 (
-                    __last_sea_id,
-                    __last_sea_lvl,
-                    __last_sea_parent_lvl,
                     last_sea_incoming_date,
                     last_sea_outgoing_date
                 ) = (
                     select
-                            last_sea.id as __last_sea_id,
-                            last_sea.lvl as __last_sea_lvl,
-                            last_sea.parent_lvl as __last_sea_parent_lvl,
-                            last_sea.incoming_date as last_sea_incoming_date,
-                            last_sea.outgoing_date as last_sea_outgoing_date
-                    from operations as last_sea
+                            source_row.incoming_date as last_sea_incoming_date,
+                            source_row.outgoing_date as last_sea_outgoing_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __last_sea_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
                     where
-                        last_sea.units_ids && ARRAY[units.id] :: bigint[]
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
                         and
-                        last_sea.type = 'sea'
+                        source_row.type = 'sea'
                         and
-                        last_sea.deleted = 0
+                        source_row.deleted = 0
                     order by
                         coalesce(
-                            last_sea.lvl,
-                            last_sea.parent_lvl
+                            source_row.lvl,
+                            source_row.parent_lvl
                                                 ) desc nulls first,
-                        last_sea.id desc nulls first
+                        source_row.id desc nulls first
                     limit 1
                 )
             where
-                units.id = any( old.units_ids )
-                and
-                units.__last_sea_id = old.id;
-
+                units.id = any( old.units_ids::bigint[] );
         end if;
 
         return old;
@@ -118,190 +120,149 @@ begin
             deleted_units_ids = cm_get_deleted_elements(old.units_ids, new.units_ids);
         end if;
 
-
         if not_changed_units_ids is not null then
-            if
-                new.lvl is not distinct from old.lvl
-                and
-                new.parent_lvl is not distinct from old.parent_lvl
-            then
-                if
-                    new.incoming_date is distinct from old.incoming_date
-                    or
-                    new.outgoing_date is distinct from old.outgoing_date
-                then
-                    update units set
-                        __last_sea_id = new.id,
-                        __last_sea_lvl = new.lvl,
-                        __last_sea_parent_lvl = new.parent_lvl,
-                        last_sea_incoming_date = new.incoming_date,
-                        last_sea_outgoing_date = new.outgoing_date
-                    where
-                        units.id = any( not_changed_units_ids )
-                        and
-                        units.__last_sea_id = new.id
-                        and
-                        (
-                            units.last_sea_incoming_date is distinct from new.incoming_date
-                            or
-                            units.last_sea_outgoing_date is distinct from new.outgoing_date
-                        );
-                end if;
-            else
-                if
-                    coalesce(new.lvl, new.parent_lvl) is not distinct from coalesce(old.lvl, old.parent_lvl)
-                    and
-                    new.id > old.id
-                    or
-                    coalesce(new.lvl, new.parent_lvl) is null
-                    and
-                    coalesce(old.lvl, old.parent_lvl) is not null
-                    or
-                    coalesce(new.lvl, new.parent_lvl) > coalesce(old.lvl, old.parent_lvl)
-                then
-                    update units set
-                        __last_sea_id = new.id,
-                        __last_sea_lvl = new.lvl,
-                        __last_sea_parent_lvl = new.parent_lvl,
-                        last_sea_incoming_date = new.incoming_date,
-                        last_sea_outgoing_date = new.outgoing_date
-                    where
-                        units.id = any( not_changed_units_ids )
-                        and
-                        (
-                            units.__last_sea_id = new.id
-                            or
-                            units.__last_sea_id is null
-                            or
-                            coalesce(
-                                units.__last_sea_lvl,
-                                units.__last_sea_parent_lvl
-                            ) is not distinct from coalesce(new.lvl, new.parent_lvl)
-                            and
-                            units.__last_sea_id < new.id
-                            or
-                            coalesce(
-                                units.__last_sea_lvl,
-                                units.__last_sea_parent_lvl
-                            ) is not null
-                            and
-                            coalesce(new.lvl, new.parent_lvl) is null
-                            or
-                            coalesce(
-                                units.__last_sea_lvl,
-                                units.__last_sea_parent_lvl
-                            ) < coalesce(new.lvl, new.parent_lvl)
-                        );
-                else
-                    update units set
-                        (
-                            __last_sea_id,
-                            __last_sea_lvl,
-                            __last_sea_parent_lvl,
-                            last_sea_incoming_date,
-                            last_sea_outgoing_date
-                        ) = (
-                            select
-                                    last_sea.id as __last_sea_id,
-                                    last_sea.lvl as __last_sea_lvl,
-                                    last_sea.parent_lvl as __last_sea_parent_lvl,
-                                    last_sea.incoming_date as last_sea_incoming_date,
-                                    last_sea.outgoing_date as last_sea_outgoing_date
-                            from operations as last_sea
-                            where
-                                last_sea.units_ids && ARRAY[units.id] :: bigint[]
-                                and
-                                last_sea.type = 'sea'
-                                and
-                                last_sea.deleted = 0
-                            order by
-                                coalesce(
-                                    last_sea.lvl,
-                                    last_sea.parent_lvl
-                                                                ) desc nulls first,
-                                last_sea.id desc nulls first
-                            limit 1
-                        )
-                    where
-                        units.id = any( not_changed_units_ids );
-                end if;
-            end if;
-        end if;
-
-        if deleted_units_ids is not null then
             update units set
+                __last_sea_json__ = cm_merge_json(
+            __last_sea_json__,
+            jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'incoming_date', new.incoming_date,'lvl', new.lvl,'outgoing_date', new.outgoing_date,'parent_lvl', new.parent_lvl,'type', new.type,'units_ids', new.units_ids
+            ),
+            TG_OP
+        ),
                 (
-                    __last_sea_id,
-                    __last_sea_lvl,
-                    __last_sea_parent_lvl,
                     last_sea_incoming_date,
                     last_sea_outgoing_date
                 ) = (
                     select
-                            last_sea.id as __last_sea_id,
-                            last_sea.lvl as __last_sea_lvl,
-                            last_sea.parent_lvl as __last_sea_parent_lvl,
-                            last_sea.incoming_date as last_sea_incoming_date,
-                            last_sea.outgoing_date as last_sea_outgoing_date
-                    from operations as last_sea
+                            source_row.incoming_date as last_sea_incoming_date,
+                            source_row.outgoing_date as last_sea_outgoing_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __last_sea_json__,
+                jsonb_build_object(
+                    'deleted', new.deleted,'id', new.id,'incoming_date', new.incoming_date,'lvl', new.lvl,'outgoing_date', new.outgoing_date,'parent_lvl', new.parent_lvl,'type', new.type,'units_ids', new.units_ids
+                ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
                     where
-                        last_sea.units_ids && ARRAY[units.id] :: bigint[]
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
                         and
-                        last_sea.type = 'sea'
+                        source_row.type = 'sea'
                         and
-                        last_sea.deleted = 0
+                        source_row.deleted = 0
                     order by
                         coalesce(
-                            last_sea.lvl,
-                            last_sea.parent_lvl
+                            source_row.lvl,
+                            source_row.parent_lvl
                                                 ) desc nulls first,
-                        last_sea.id desc nulls first
+                        source_row.id desc nulls first
                     limit 1
                 )
             where
-                units.id = any( deleted_units_ids )
-                and
-                units.__last_sea_id = new.id;
+                units.id = any( not_changed_units_ids::bigint[] );
+        end if;
+
+        if deleted_units_ids is not null then
+            update units set
+                __last_sea_json__ = __last_sea_json__ - old.id::text,
+                (
+                    last_sea_incoming_date,
+                    last_sea_outgoing_date
+                ) = (
+                    select
+                            source_row.incoming_date as last_sea_incoming_date,
+                            source_row.outgoing_date as last_sea_outgoing_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __last_sea_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
+                        and
+                        source_row.type = 'sea'
+                        and
+                        source_row.deleted = 0
+                    order by
+                        coalesce(
+                            source_row.lvl,
+                            source_row.parent_lvl
+                                                ) desc nulls first,
+                        source_row.id desc nulls first
+                    limit 1
+                )
+            where
+                units.id = any( deleted_units_ids::bigint[] );
         end if;
 
         if inserted_units_ids is not null then
             update units set
-                __last_sea_id = new.id,
-                __last_sea_lvl = new.lvl,
-                __last_sea_parent_lvl = new.parent_lvl,
-                last_sea_incoming_date = new.incoming_date,
-                last_sea_outgoing_date = new.outgoing_date
-            where
-                units.id = any( inserted_units_ids )
-                and
+                __last_sea_json__ = cm_merge_json(
+            __last_sea_json__,
+            jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'incoming_date', new.incoming_date,'lvl', new.lvl,'outgoing_date', new.outgoing_date,'parent_lvl', new.parent_lvl,'type', new.type,'units_ids', new.units_ids
+            ),
+            TG_OP
+        ),
                 (
-                    units.__last_sea_id is null
-                    or
-                    coalesce(
-                        units.__last_sea_lvl,
-                        units.__last_sea_parent_lvl
-                    ) is not distinct from coalesce(new.lvl, new.parent_lvl)
-                    and
-                    units.__last_sea_id < new.id
-                    or
-                    coalesce(
-                        units.__last_sea_lvl,
-                        units.__last_sea_parent_lvl
-                    ) is not null
-                    and
-                    coalesce(new.lvl, new.parent_lvl) is null
-                    or
-                    coalesce(
-                        units.__last_sea_lvl,
-                        units.__last_sea_parent_lvl
-                    ) < coalesce(new.lvl, new.parent_lvl)
-                );
+                    last_sea_incoming_date,
+                    last_sea_outgoing_date
+                ) = (
+                    select
+                            source_row.incoming_date as last_sea_incoming_date,
+                            source_row.outgoing_date as last_sea_outgoing_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __last_sea_json__,
+                jsonb_build_object(
+                    'deleted', new.deleted,'id', new.id,'incoming_date', new.incoming_date,'lvl', new.lvl,'outgoing_date', new.outgoing_date,'parent_lvl', new.parent_lvl,'type', new.type,'units_ids', new.units_ids
+                ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
+                        and
+                        source_row.type = 'sea'
+                        and
+                        source_row.deleted = 0
+                    order by
+                        coalesce(
+                            source_row.lvl,
+                            source_row.parent_lvl
+                                                ) desc nulls first,
+                        source_row.id desc nulls first
+                    limit 1
+                )
+            where
+                units.id = any( inserted_units_ids::bigint[] );
         end if;
 
         return new;
     end if;
 
     if TG_OP = 'INSERT' then
+
         if
             new.units_ids is not null
             and
@@ -310,37 +271,52 @@ begin
             new.deleted = 0
         then
             update units set
-                __last_sea_id = new.id,
-                __last_sea_lvl = new.lvl,
-                __last_sea_parent_lvl = new.parent_lvl,
-                last_sea_incoming_date = new.incoming_date,
-                last_sea_outgoing_date = new.outgoing_date
-            where
-                units.id = any( new.units_ids )
-                and
+                __last_sea_json__ = cm_merge_json(
+            __last_sea_json__,
+            jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'incoming_date', new.incoming_date,'lvl', new.lvl,'outgoing_date', new.outgoing_date,'parent_lvl', new.parent_lvl,'type', new.type,'units_ids', new.units_ids
+            ),
+            TG_OP
+        ),
                 (
-                    units.__last_sea_id is null
-                    or
-                    coalesce(
-                        units.__last_sea_lvl,
-                        units.__last_sea_parent_lvl
-                    ) is not distinct from coalesce(new.lvl, new.parent_lvl)
-                    and
-                    units.__last_sea_id < new.id
-                    or
-                    coalesce(
-                        units.__last_sea_lvl,
-                        units.__last_sea_parent_lvl
-                    ) is not null
-                    and
-                    coalesce(new.lvl, new.parent_lvl) is null
-                    or
-                    coalesce(
-                        units.__last_sea_lvl,
-                        units.__last_sea_parent_lvl
-                    ) < coalesce(new.lvl, new.parent_lvl)
-                );
+                    last_sea_incoming_date,
+                    last_sea_outgoing_date
+                ) = (
+                    select
+                            source_row.incoming_date as last_sea_incoming_date,
+                            source_row.outgoing_date as last_sea_outgoing_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __last_sea_json__,
+                jsonb_build_object(
+                    'deleted', new.deleted,'id', new.id,'incoming_date', new.incoming_date,'lvl', new.lvl,'outgoing_date', new.outgoing_date,'parent_lvl', new.parent_lvl,'type', new.type,'units_ids', new.units_ids
+                ),
+                TG_OP
+            )
+) as json_entry
 
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
+                        and
+                        source_row.type = 'sea'
+                        and
+                        source_row.deleted = 0
+                    order by
+                        coalesce(
+                            source_row.lvl,
+                            source_row.parent_lvl
+                                                ) desc nulls first,
+                        source_row.id desc nulls first
+                    limit 1
+                )
+            where
+                units.id = any( new.units_ids::bigint[] );
         end if;
 
         return new;

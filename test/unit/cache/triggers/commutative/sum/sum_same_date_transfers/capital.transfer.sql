@@ -49,7 +49,6 @@ begin
             update capital.account_date_balance as date_balance set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'delta', new.delta,'id', new.id,'transfer_date', new.transfer_date
             ),
@@ -66,7 +65,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'delta', new.delta,'id', new.id,'transfer_date', new.transfer_date
                 ),
@@ -115,7 +113,6 @@ begin
             update capital.account_date_balance as date_balance set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'delta', new.delta,'id', new.id,'transfer_date', new.transfer_date
             ),
@@ -132,7 +129,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'delta', new.delta,'id', new.id,'transfer_date', new.transfer_date
                 ),
@@ -159,7 +155,6 @@ begin
             update capital.account_date_balance as date_balance set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'delta', new.delta,'id', new.id,'transfer_date', new.transfer_date
             ),
@@ -176,7 +171,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'delta', new.delta,'id', new.id,'transfer_date', new.transfer_date
                 ),

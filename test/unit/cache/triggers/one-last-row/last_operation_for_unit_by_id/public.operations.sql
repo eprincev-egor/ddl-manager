@@ -6,29 +6,35 @@ declare deleted_units_ids bigint[];
 begin
 
     if TG_OP = 'DELETE' then
+
         if old.units_ids is not null then
             update units set
+                __last_operation_json__ = __last_operation_json__ - old.id::text,
                 (
-                    __last_operation_id,
                     last_operation_incoming_date,
                     last_operation_outgoing_date
                 ) = (
                     select
-                            last_operation.id as __last_operation_id,
-                            last_operation.incoming_date as last_operation_incoming_date,
-                            last_operation.outgoing_date as last_operation_outgoing_date
-                    from operations as last_operation
+                            source_row.incoming_date as last_operation_incoming_date,
+                            source_row.outgoing_date as last_operation_outgoing_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __last_operation_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
                     where
-                        last_operation.units_ids && ARRAY[units.id] :: bigint[]
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
                     order by
-                        last_operation.id desc nulls first
+                        source_row.id desc nulls first
                     limit 1
                 )
             where
-                units.id = any( old.units_ids )
-                and
-                units.__last_operation_id = old.id;
-
+                units.id = any( old.units_ids::bigint[] );
         end if;
 
         return old;
@@ -49,81 +55,165 @@ begin
         not_changed_units_ids = cm_get_not_changed_elements(old.units_ids, new.units_ids);
         deleted_units_ids = cm_get_deleted_elements(old.units_ids, new.units_ids);
 
-
         if not_changed_units_ids is not null then
-            if
-                new.incoming_date is distinct from old.incoming_date
-                or
-                new.outgoing_date is distinct from old.outgoing_date
-            then
-                update units set
-                    __last_operation_id = new.id,
-                    last_operation_incoming_date = new.incoming_date,
-                    last_operation_outgoing_date = new.outgoing_date
-                where
-                    units.id = any( not_changed_units_ids )
-                    and
-                    units.__last_operation_id = new.id
-                    and
-                    (
-                        units.last_operation_incoming_date is distinct from new.incoming_date
-                        or
-                        units.last_operation_outgoing_date is distinct from new.outgoing_date
-                    );
-            end if;
-        end if;
-
-        if deleted_units_ids is not null then
             update units set
+                __last_operation_json__ = cm_merge_json(
+            __last_operation_json__,
+            jsonb_build_object(
+                'id', new.id,'incoming_date', new.incoming_date,'outgoing_date', new.outgoing_date,'units_ids', new.units_ids
+            ),
+            TG_OP
+        ),
                 (
-                    __last_operation_id,
                     last_operation_incoming_date,
                     last_operation_outgoing_date
                 ) = (
                     select
-                            last_operation.id as __last_operation_id,
-                            last_operation.incoming_date as last_operation_incoming_date,
-                            last_operation.outgoing_date as last_operation_outgoing_date
-                    from operations as last_operation
+                            source_row.incoming_date as last_operation_incoming_date,
+                            source_row.outgoing_date as last_operation_outgoing_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __last_operation_json__,
+                jsonb_build_object(
+                    'id', new.id,'incoming_date', new.incoming_date,'outgoing_date', new.outgoing_date,'units_ids', new.units_ids
+                ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
                     where
-                        last_operation.units_ids && ARRAY[units.id] :: bigint[]
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
                     order by
-                        last_operation.id desc nulls first
+                        source_row.id desc nulls first
                     limit 1
                 )
             where
-                units.id = any( deleted_units_ids )
-                and
-                units.__last_operation_id = new.id;
+                units.id = any( not_changed_units_ids::bigint[] );
+        end if;
+
+        if deleted_units_ids is not null then
+            update units set
+                __last_operation_json__ = __last_operation_json__ - old.id::text,
+                (
+                    last_operation_incoming_date,
+                    last_operation_outgoing_date
+                ) = (
+                    select
+                            source_row.incoming_date as last_operation_incoming_date,
+                            source_row.outgoing_date as last_operation_outgoing_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __last_operation_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
+                    order by
+                        source_row.id desc nulls first
+                    limit 1
+                )
+            where
+                units.id = any( deleted_units_ids::bigint[] );
         end if;
 
         if inserted_units_ids is not null then
             update units set
-                __last_operation_id = new.id,
-                last_operation_incoming_date = new.incoming_date,
-                last_operation_outgoing_date = new.outgoing_date
-            where
-                units.id = any( inserted_units_ids )
-                and
+                __last_operation_json__ = cm_merge_json(
+            __last_operation_json__,
+            jsonb_build_object(
+                'id', new.id,'incoming_date', new.incoming_date,'outgoing_date', new.outgoing_date,'units_ids', new.units_ids
+            ),
+            TG_OP
+        ),
                 (
-                    units.__last_operation_id is null
-                    or
-                    units.__last_operation_id < new.id
-                );
+                    last_operation_incoming_date,
+                    last_operation_outgoing_date
+                ) = (
+                    select
+                            source_row.incoming_date as last_operation_incoming_date,
+                            source_row.outgoing_date as last_operation_outgoing_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __last_operation_json__,
+                jsonb_build_object(
+                    'id', new.id,'incoming_date', new.incoming_date,'outgoing_date', new.outgoing_date,'units_ids', new.units_ids
+                ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
+                    order by
+                        source_row.id desc nulls first
+                    limit 1
+                )
+            where
+                units.id = any( inserted_units_ids::bigint[] );
         end if;
 
         return new;
     end if;
 
     if TG_OP = 'INSERT' then
+
         if new.units_ids is not null then
             update units set
-                __last_operation_id = new.id,
-                last_operation_incoming_date = new.incoming_date,
-                last_operation_outgoing_date = new.outgoing_date
-            where
-                units.id = any( new.units_ids );
+                __last_operation_json__ = cm_merge_json(
+            __last_operation_json__,
+            jsonb_build_object(
+                'id', new.id,'incoming_date', new.incoming_date,'outgoing_date', new.outgoing_date,'units_ids', new.units_ids
+            ),
+            TG_OP
+        ),
+                (
+                    last_operation_incoming_date,
+                    last_operation_outgoing_date
+                ) = (
+                    select
+                            source_row.incoming_date as last_operation_incoming_date,
+                            source_row.outgoing_date as last_operation_outgoing_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __last_operation_json__,
+                jsonb_build_object(
+                    'id', new.id,'incoming_date', new.incoming_date,'outgoing_date', new.outgoing_date,'units_ids', new.units_ids
+                ),
+                TG_OP
+            )
+) as json_entry
 
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
+                    order by
+                        source_row.id desc nulls first
+                    limit 1
+                )
+            where
+                units.id = any( new.units_ids::bigint[] );
         end if;
 
         return new;

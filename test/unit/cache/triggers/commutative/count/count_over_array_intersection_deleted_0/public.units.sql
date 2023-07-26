@@ -97,7 +97,6 @@ begin
             update gtd set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'orders_ids', new.orders_ids
             ),
@@ -114,7 +113,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'orders_ids', new.orders_ids
                 ),
@@ -167,7 +165,6 @@ begin
             update gtd set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'orders_ids', new.orders_ids
             ),
@@ -184,7 +181,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'orders_ids', new.orders_ids
                 ),
@@ -218,7 +214,6 @@ begin
             update gtd set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'orders_ids', new.orders_ids
             ),
@@ -235,7 +230,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'orders_ids', new.orders_ids
                 ),

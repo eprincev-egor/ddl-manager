@@ -84,6 +84,13 @@ export class OrderByItem extends AbstractAstElement {
         return this.getColumnReferences()[0];
     }
 
+    isIdSort() {
+        return (
+            this.expression.isColumnReference() &&
+            this.getFirstColumnRef().name === "id"
+        );
+    }
+
     compareRowsByOrder(
         leftRow: CompareRow,
         vector: "above" | "below",

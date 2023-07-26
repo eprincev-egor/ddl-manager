@@ -39,11 +39,11 @@ begin
                         ', '
                                         ) as orders_numbers,
                     ('{' || string_agg(
-                                                    '"' || link.id::text || '":' || jsonb_build_object(
+                                                '"' || link.id::text || '":' || jsonb_build_object(
                                     'id', link.id,'id_company', link.id_company,'id_order', link.id_order
                                 )::text,
-                                                    ','
-                                                ) || '}')
+                                                ','
+                                            ) || '}')
                     ::
                     jsonb as __totals_json__
             from order_company_link as link

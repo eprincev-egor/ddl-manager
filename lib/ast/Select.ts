@@ -270,6 +270,16 @@ export class Select extends AbstractAstElement {
 
         return this.from[0].source;
     }
+    
+    getDeterministicOrderBy() {
+        const orderBy = this.orderBy;
+        if ( !orderBy || orderBy.hasIdSort() ) {
+            return orderBy;
+        }
+
+        const from = this.getFromTable();
+        return orderBy.addIdSort(from);
+    }
 }
 
 interface EqualItem {

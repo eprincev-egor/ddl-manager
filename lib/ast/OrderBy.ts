@@ -2,7 +2,7 @@ import { flatMap } from "lodash";
 import { TableID } from "../database/schema/TableID";
 import { TableReference } from "../database/schema/TableReference";
 import { AbstractAstElement } from "./AbstractAstElement";
-import { ConditionElementType } from "./expression";
+import { ColumnReference, ConditionElementType, Expression } from "./expression";
 import { OrderByItem, CompareRow } from "./OrderByItem";
 import { Spaces } from "./Spaces";
 
@@ -14,8 +14,9 @@ export class OrderBy extends AbstractAstElement {
         this.items = items;
     }
 
-    clone() {
-        const newItems = this.items.map(item => item.clone());
+    clone(newItems = this.items.map(item => 
+        item.clone()
+    )) {
         return new OrderBy(newItems);
     }
 
@@ -53,6 +54,24 @@ export class OrderBy extends AbstractAstElement {
                 )
             )
         ];
+    }
+
+    hasIdSort() {
+        return this.items.some(item =>
+            item.isIdSort()
+        );
+    }
+
+    addIdSort(from: TableReference) {
+        return this.clone([
+            ...this.items,
+            new OrderByItem({
+                expression: new Expression([
+                    new ColumnReference(from, "id")
+                ]),
+                type: "desc"
+            })
+        ])
     }
 
     isOnlyId() {

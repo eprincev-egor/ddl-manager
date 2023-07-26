@@ -71,7 +71,6 @@ begin
             update invoice set
                 __pos_rate_json__ = cm_merge_json(
             __pos_rate_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
             ),
@@ -88,7 +87,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __pos_rate_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
                 ),
@@ -161,7 +159,6 @@ begin
             update invoice set
                 __pos_rate_json__ = cm_merge_json(
             __pos_rate_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
             ),
@@ -178,7 +175,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __pos_rate_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
                 ),
@@ -217,7 +213,6 @@ begin
             update invoice set
                 __pos_rate_json__ = cm_merge_json(
             __pos_rate_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
             ),
@@ -234,7 +229,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __pos_rate_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_invoice', new.id_invoice,'id_operation_rate_expense_type', new.id_operation_rate_expense_type
                 ),

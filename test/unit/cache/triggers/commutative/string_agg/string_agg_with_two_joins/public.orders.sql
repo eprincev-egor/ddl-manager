@@ -59,7 +59,6 @@ begin
             update companies set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_client', new.id_client,'id_country_from', new.id_country_from,'id_country_to', new.id_country_to
             ),
@@ -78,7 +77,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_client', new.id_client,'id_country_from', new.id_country_from,'id_country_to', new.id_country_to
                 ),
@@ -141,7 +139,6 @@ begin
             update companies set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_client', new.id_client,'id_country_from', new.id_country_from,'id_country_to', new.id_country_to
             ),
@@ -160,7 +157,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_client', new.id_client,'id_country_from', new.id_country_from,'id_country_to', new.id_country_to
                 ),
@@ -193,7 +189,6 @@ begin
             update companies set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_client', new.id_client,'id_country_from', new.id_country_from,'id_country_to', new.id_country_to
             ),
@@ -212,7 +207,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_client', new.id_client,'id_country_from', new.id_country_from,'id_country_to', new.id_country_to
                 ),

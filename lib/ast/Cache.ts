@@ -3,6 +3,7 @@ import { TableReference } from "../database/schema/TableReference";
 import { CacheIndex } from "./CacheIndex";
 import { findDependenciesTo, findDependenciesToCacheTable } from "../cache/processor/findDependencies";
 import { Database } from "../database/schema/Database";
+import { findTriggerTableArrayColumns } from "../cache/processor/findTriggerTableArrayColumns";
 
 export class Cache {
     readonly name: string;
@@ -51,6 +52,10 @@ export class Cache {
         return this.select.getFromTable().table;
     }
 
+    getFromTableRef() {
+        return this.select.getFromTable();
+    }
+
     jsonColumnName() {
         return `__${this.name}_json__`
     }
@@ -81,6 +86,22 @@ export class Cache {
             ["id"]
         );
         return deps;
+    }
+
+    hasArrayReference(database: Database) {
+        const arrayExprColumns = findTriggerTableArrayColumns(this);
+        if ( arrayExprColumns.length === 0 ) {
+            return false;
+        }
+
+        const dbTable = database.getTable(this.getFromTable());
+
+        const arrayColumns = arrayExprColumns.filter(columnName => {
+            const dbColumn = dbTable && dbTable.getColumn(columnName);
+            return dbColumn && dbColumn.type.isArray();
+        });
+
+        return arrayColumns.length > 0;
     }
 
     hasAgg(database: Database) {

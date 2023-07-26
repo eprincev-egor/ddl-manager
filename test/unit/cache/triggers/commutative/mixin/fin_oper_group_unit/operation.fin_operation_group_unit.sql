@@ -107,7 +107,6 @@ begin
             update operation.unit set
                 __fin_oper_group_unit_json__ = cm_merge_json(
             __fin_oper_group_unit_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
             ),
@@ -146,7 +145,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __fin_oper_group_unit_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
                 ),
@@ -241,7 +239,6 @@ begin
             update operation.unit set
                 __fin_oper_group_unit_json__ = cm_merge_json(
             __fin_oper_group_unit_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
             ),
@@ -280,7 +277,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __fin_oper_group_unit_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
                 ),
@@ -319,7 +315,6 @@ begin
             update operation.unit set
                 __fin_oper_group_unit_json__ = cm_merge_json(
             __fin_oper_group_unit_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
             ),
@@ -358,7 +353,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __fin_oper_group_unit_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'gross_weight', new.gross_weight,'id', new.id,'id_company_buyer', new.id_company_buyer,'id_operation_unit', new.id_operation_unit,'id_point_delivery', new.id_point_delivery,'ldm', new.ldm,'netto_weight', new.netto_weight,'quantity', new.quantity,'quantity_pallet', new.quantity_pallet,'volume', new.volume
                 ),

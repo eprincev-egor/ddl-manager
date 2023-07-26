@@ -52,7 +52,6 @@ begin
             update cache_table set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
             ),
@@ -69,7 +68,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
                 ),
@@ -116,7 +114,6 @@ begin
             update cache_table set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
             ),
@@ -133,7 +130,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
                 ),
@@ -160,7 +156,6 @@ begin
             update cache_table set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
             ),
@@ -177,7 +172,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'profit', new.profit,'unknown_ids', new.unknown_ids
                 ),

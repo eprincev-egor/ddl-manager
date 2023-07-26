@@ -3,7 +3,8 @@ import {
     Cache,
     SelectColumn,
     ColumnReference,
-    Select
+    Select,
+    FuncCall
 } from "../../ast";
 import { Database } from "../../database/schema/Database";
 import { fromPairs } from "lodash";
@@ -12,48 +13,80 @@ export function createSelectForUpdate(
     database: Database,
     cache: Cache
 ) {
-    let selectToUpdate = cache.select;
+    let select = cache.select;
+
+    if ( select.orderBy && cache.hasArrayReference(database) ) {
+        select = replaceOrderByLimitToArrayAgg(select);
+        select = addAggHelperColumns(cache, select);
+        return select;
+    }
 
     if ( cache.hasAgg(database) ) {
-        const fromRef = cache.select.getFromTable();
-        const from = fromRef.getIdentifier();
-
-        const rowJson = cache.getSourceRowJson();
-        const deps = cache.getSourceJsonDeps().map(column =>
-            new ColumnReference(fromRef, column)
-        );
-        const depsMap = fromPairs(deps.map(column =>
-            [column.toString(), column]
-        ));
-
-        selectToUpdate = selectToUpdate.clone({
-            columns: [
-                ...selectToUpdate.columns,
-                new SelectColumn({
-                    name: cache.jsonColumnName(),
-                    expression: new Expression([
-                        Expression.unknown(`
-                            ('{' || string_agg(
-                                '"' || ${from}.id::text || '":' || ${rowJson}::text,
-                                ','
-                            ) || '}')
-                        `, depsMap),
-                        Expression.unknown("::"),
-                        Expression.unknown("jsonb")
-                    ])
-                })
-            ]
-        });
+        return addAggHelperColumns(cache, select);
     }
 
     if ( cache.select.orderBy ) {
-        selectToUpdate = addHelperColumns(cache, selectToUpdate);
+        return addOrderByHelperColumns(cache, select);
     }
 
-    return selectToUpdate;
+    return select;
 }
 
-export function addHelperColumns(cache: Cache, select: Select) {
+function replaceOrderByLimitToArrayAgg(select: Select) {
+    const orderBy = select.getDeterministicOrderBy();
+    return select.clone({
+        columns: select.columns.map(selectColumn => 
+            selectColumn.clone({
+                // building expression (like are order by/limit 1):
+                // (array_agg( source.column order by source.sort ))[1]
+                expression: new Expression([
+                    new Expression([
+                        new FuncCall("array_agg", [
+                            selectColumn.expression
+                        ], undefined, false, orderBy),
+                    ], true),
+                    Expression.unknown("[1]")
+                ])
+            })
+        ),
+        orderBy: undefined,
+        limit: undefined
+    });
+}
+
+function addAggHelperColumns(cache: Cache, select: Select) {
+    const fromRef = cache.select.getFromTable();
+    const from = fromRef.getIdentifier();
+
+    const rowJson = cache.getSourceRowJson();
+    const deps = cache.getSourceJsonDeps().map(column =>
+        new ColumnReference(fromRef, column)
+    );
+    const depsMap = fromPairs(deps.map(column =>
+        [column.toString(), column]
+    ));
+
+    return select.clone({
+        columns: [
+            ...select.columns,
+            new SelectColumn({
+                name: cache.jsonColumnName(),
+                expression: new Expression([
+                    Expression.unknown(`
+                        ('{' || string_agg(
+                            '"' || ${from}.id::text || '":' || ${rowJson}::text,
+                            ','
+                        ) || '}')
+                    `, depsMap),
+                    Expression.unknown("::"),
+                    Expression.unknown("jsonb")
+                ])
+            })
+        ]
+    });
+}
+
+function addOrderByHelperColumns(cache: Cache, select: Select) {
     const helperColumns = getOrderByColumnsRefs(select).map(columnRef =>
         new SelectColumn({
             name: helperColumnName(cache, columnRef.name),
@@ -75,19 +108,8 @@ export function addHelperColumns(cache: Cache, select: Select) {
 }
 
 export function getOrderByColumnsRefs(select: Select) {
-    const orderByColumns = select.orderBy!.getColumnReferences();
-    
-    const hasId = orderByColumns.some(columnRef => columnRef.name === "id");
-    if ( !hasId ) {
-        orderByColumns.unshift(
-            new ColumnReference(
-                select.getFromTable(),
-                "id"
-            )
-        );
-    }
-
-    return orderByColumns;
+    const orderBy = select.getDeterministicOrderBy()!;
+    return orderBy.getColumnReferences();
 }
 
 export function helperColumnName(cache: Cache, columnName: string) {

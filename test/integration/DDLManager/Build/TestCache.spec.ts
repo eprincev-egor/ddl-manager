@@ -1516,7 +1516,6 @@ $$;
                 string_agg(
                     '    id: ' || units.id || E'\n' ||
                     '    name: ' || coalesce(units.name, '<NULL>') || E'\n' ||
-                    '    __last_sea_id: ' || coalesce(units.__last_sea_id::text, '<NULL>') || E'\n' ||
                     '    should_be: ' || coalesce(should_be.last_sea_incoming_date, '<NULL>') || E'\n' ||
                     '    actual: ' || coalesce(units.last_sea_incoming_date, '<NULL>')
         
@@ -1529,7 +1528,6 @@ $$;
         
             left join lateral (
                 select
-                    last_sea.id as __last_sea_id,
                     last_sea.incoming_date as last_sea_incoming_date,
                     last_sea.outgoing_date as last_sea_outgoing_date
         
@@ -1544,11 +1542,7 @@ $$;
                 limit 1
             ) as should_be on true
             where
-                (
-                    should_be.last_sea_incoming_date is distinct from units.last_sea_incoming_date
-                    or
-                    should_be.__last_sea_id is distinct from units.__last_sea_id
-                );
+                should_be.last_sea_incoming_date is distinct from units.last_sea_incoming_date;
         
         
             if invalid_units is not null then
@@ -1697,14 +1691,10 @@ $$;
                 string_agg(
                     '    id: ' || units.id || E'\n' ||
                     '    name: ' || coalesce(units.name, '<NULL>') || E'\n' ||
-                    '    __last_sea_id: ' || coalesce(units.__last_sea_id::text, '<NULL>') || E'\n' ||
-                    '    __last_sea_lvl: ' || coalesce(units.__last_sea_lvl::text, '<NULL>') || E'\n' ||
                     '    incoming_date: should_be: ' || coalesce(should_be.last_sea_incoming_date, '<NULL>') || E'\n' ||
                     '    incoming_date: actual: ' || coalesce(units.last_sea_incoming_date, '<NULL>') || E'\n' ||
-                    '    last lvl: should_be: ' || coalesce(should_be.__last_sea_lvl::text, '<NULL>') || E'\n' ||
-                    '    last lvl: actual: ' || coalesce(units.__last_sea_lvl::text, '<NULL>') || E'\n' ||
-                    '    last id: should_be: ' || coalesce(should_be.__last_sea_id::text, '<NULL>') || E'\n' ||
-                    '    last id: actual: ' || coalesce(units.__last_sea_id::text, '<NULL>')
+                    '    outgoing_date: should_be: ' || coalesce(should_be.last_sea_outgoing_date, '<NULL>') || E'\n' ||
+                    '    incoming_date: actual: ' || coalesce(units.last_sea_outgoing_date, '<NULL>') || E'\n'
         
                     , E'\n\n'
                 )
@@ -1715,8 +1705,6 @@ $$;
         
             left join lateral (
                 select
-                    last_sea.id as __last_sea_id,
-                    last_sea.lvl as __last_sea_lvl,
                     last_sea.incoming_date as last_sea_incoming_date,
                     last_sea.outgoing_date as last_sea_outgoing_date
         
@@ -1735,9 +1723,7 @@ $$;
                 (
                     should_be.last_sea_incoming_date is distinct from units.last_sea_incoming_date
                     or
-                    should_be.__last_sea_id is distinct from units.__last_sea_id
-                    or
-                    should_be.__last_sea_lvl is distinct from units.__last_sea_lvl
+                    should_be.last_sea_outgoing_date is distinct from units.last_sea_outgoing_date
                 );
         
         
@@ -1754,7 +1740,8 @@ $$;
                             '    units_ids: ' || coalesce(operations.units_ids::text, '<NULL>') || E',\n' ||
                             '    type: ' || coalesce(operations.type, '<NULL>') || E',\n' ||
                             '    deleted: ' || coalesce(operations.deleted::text, '<NULL>') || E',\n' ||
-                            '    incoming_date: ' || coalesce(operations.incoming_date::text, '<NULL>')
+                            '    incoming_date: ' || coalesce(operations.incoming_date::text, '<NULL>') || E',\n' ||
+                            '    outgoing_date: ' || coalesce(operations.outgoing_date::text, '<NULL>')
                             , E'\n\n'
                         )
                         from operations
@@ -4422,7 +4409,589 @@ $$;
         }]);
     });
 
-    // TODO: test about twice points (max_point_date and last point)
+    it("last row sort by agg cache column and filter by array", async() => {
+        // 11595
+        const folderPath = ROOT_TMP_PATH + "/cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table declarations (
+                id serial primary key,
+                units_ids integer[]
+            );
+
+            create table operations (
+                id serial primary key,
+                units_ids integer[]
+            );
+
+            create table points (
+                id serial primary key,
+                id_operation integer,
+                actual_date text
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/max_date.sql", `
+            cache max_date for operations (
+                select
+                    max( points.actual_date ) as max_date
+                from points
+                where
+                    points.id_operation = operations.id
+            )
+        `);
+        fs.writeFileSync(folderPath + "/last_operation.sql", `
+            cache last_operation for declarations (
+                select 
+                last_operation.id as last_operation_id
+                from operations as last_operation
+                where
+                    last_operation.units_ids && declarations.units_ids
+
+                order by 
+                    last_operation.max_date desc
+                limit 1
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into declarations (units_ids)
+            values (array[2, 4]);
+
+            insert into operations (units_ids)
+            values (array[1, 2]);
+
+            insert into points (id_operation, actual_date)
+            values
+                (1, '22.10.2022'),
+                (1, '23.10.2022');
+        `);
+        let result = await db.query(`
+            select id, last_operation_id
+            from declarations
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            last_operation_id: 1
+        }], "created first operation");
+
+
+        await db.query(`
+            insert into operations (units_ids)
+            values (array[2, 3]);
+
+            insert into points (id_operation, actual_date)
+            values
+                (2, '21.10.2022'),
+                (2, '22.10.2022');
+        `);
+        result = await db.query(`
+            select id, last_operation_id
+            from declarations
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            last_operation_id: 1
+        }], "created second operation");
+
+
+        await db.query(`
+            update points set
+                actual_date = '24.10.2022'
+            where id_operation = 2 and id = 3;
+        `);
+        result = await db.query(`
+            select id, last_operation_id
+            from declarations
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            last_operation_id: 2
+        }], "update first point in second operation");
+    });
+
+    it("last row sort by agg cache column and filter by mutable column", async() => {
+        // 11595
+        const folderPath = ROOT_TMP_PATH + "/cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table declarations (
+                id serial primary key,
+                id_order integer
+            );
+
+            create table operations (
+                id serial primary key,
+                id_order integer
+            );
+
+            create table points (
+                id serial primary key,
+                id_operation integer,
+                actual_date text
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/max_date.sql", `
+            cache max_date for operations (
+                select
+                    max( points.actual_date ) as max_date
+                from points
+                where
+                    points.id_operation = operations.id
+            )
+        `);
+        fs.writeFileSync(folderPath + "/last_operation.sql", `
+            cache last_operation for declarations (
+                select 
+                last_operation.id as last_operation_id
+                from operations as last_operation
+                where
+                    last_operation.id_order = declarations.id_order
+
+                order by 
+                    last_operation.max_date desc
+                limit 1
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into declarations (id_order)
+            values (101);
+
+            insert into operations (id_order)
+            values (101);
+
+            insert into points (id_operation, actual_date)
+            values
+                (1, '22.10.2022'),
+                (1, '23.10.2022');
+        `);
+        let result = await db.query(`
+            select id, last_operation_id
+            from declarations
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            last_operation_id: 1
+        }], "created first operation");
+
+
+        await db.query(`
+            insert into operations (id_order)
+            values (101);
+
+            insert into points (id_operation, actual_date)
+            values
+                (2, '21.10.2022'),
+                (2, '22.10.2022');
+        `);
+        result = await db.query(`
+            select id, last_operation_id
+            from declarations
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            last_operation_id: 1
+        }], "created second operation");
+
+
+        await db.query(`
+            update points set
+                actual_date = '24.10.2022'
+            where id_operation = 2 and id = 3;
+        `);
+        result = await db.query(`
+            select id, last_operation_id
+            from declarations
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            last_operation_id: 2
+        }], "update first point in second operation");
+    });
+
+    it("last row sort by agg cache column and filter by two cache columns", async() => {
+        // 11595
+        const folderPath = ROOT_TMP_PATH + "/cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key
+            );
+
+            create table operations (
+                id serial primary key,
+                id_order integer
+            );
+
+            create table points (
+                id serial primary key,
+                id_operation integer,
+                sort integer,
+                actual_date text
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/max_date.sql", `
+            cache max_date for operations (
+                select
+                    max( points.actual_date ) as max_date
+                from points
+                where
+                    points.id_operation = operations.id
+            )
+        `);
+        fs.writeFileSync(folderPath + "/end_date.sql", `
+            cache end_date for operations (
+                select
+                    points.actual_date as end_date
+                from points
+                where
+                    points.id_operation = operations.id
+
+                order by points.sort desc
+                limit 1
+            )
+        `);
+        fs.writeFileSync(folderPath + "/end_operation_date.sql", `
+            cache end_operation_date for orders (
+                select 
+                    last_operation.end_date as end_operation_date
+                from operations as last_operation
+                where
+                    last_operation.id_order = orders.id and
+                    last_operation.max_date is not null and
+                    last_operation.end_date is not null
+
+                order by 
+                    last_operation.max_date desc
+                limit 1
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into orders default values;
+
+            insert into operations (id_order)
+            values (1);
+
+            insert into points (id_operation, sort, actual_date)
+            values
+                (1, 1, '22.10.2022'),
+                (1, 2, '23.10.2022');
+        `);
+        let result = await db.query(`
+            select id, end_operation_date
+            from orders
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            end_operation_date: "23.10.2022"
+        }], "created operation");
+
+
+        await db.query(`
+            update points set
+                actual_date = '24.10.2022',
+                sort = 3
+            where sort = 1;
+        `);
+        result = await db.query(`
+            select id, end_operation_date
+            from orders
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            end_operation_date: "24.10.2022"
+        }], "update first point in operation");
+    });
+
+    it("last row sort by agg cache column and filter by cache columns, also update current row by custom trigger", async() => {
+        // 11595
+        const folderPath = ROOT_TMP_PATH + "/cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key
+            );
+
+            create table operations (
+                id serial primary key,
+                id_order integer
+            );
+
+            create table points (
+                id serial primary key,
+                id_operation integer,
+                sort integer,
+                actual_date text,
+                is_last boolean
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/some_custom_trigger.sql", `
+            create or replace function set_is_last()
+            returns trigger as $body$
+            begin
+
+                update points as current_point set
+                    is_last = not exists(
+                        select from points as next_point
+                        where
+                            next_point.id_operation = current_point.id_operation and
+                            next_point.sort > current_point.sort
+                    )
+                where id = new.id;
+
+                return new;
+            end
+            $body$ language plpgsql;
+
+            create trigger a_set_is_last
+            after insert or update of id_operation, sort
+            on points
+            for each row
+            execute procedure set_is_last();
+        `);
+
+        fs.writeFileSync(folderPath + "/max_date.sql", `
+            cache max_date for operations (
+                select
+                    max( points.actual_date ) as max_date
+                from points
+                where
+                    points.id_operation = operations.id
+            )
+        `);
+        fs.writeFileSync(folderPath + "/end_date.sql", `
+            cache end_date for operations (
+                select
+                    points.actual_date as end_date
+                from points
+                where
+                    points.id_operation = operations.id
+
+                order by points.sort desc
+                limit 1
+            )
+        `);
+        fs.writeFileSync(folderPath + "/end_operation_date.sql", `
+            cache end_operation_date for orders (
+                select 
+                    last_operation.end_date as end_operation_date
+                from operations as last_operation
+                where
+                    last_operation.id_order = orders.id and
+                    last_operation.max_date is not null and
+                    last_operation.end_date is not null
+
+                order by 
+                    last_operation.max_date desc
+                limit 1
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into orders default values;
+
+            insert into operations (id_order)
+            values (1);
+
+            insert into points (id_operation, sort, actual_date)
+            values
+                (1, 1, '22.10.2022'),
+                (1, 2, '23.10.2022');
+        `);
+        let result = await db.query(`
+            select id, end_operation_date
+            from orders
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            end_operation_date: "23.10.2022"
+        }], "created operation");
+
+
+        await db.query(`
+            update points set
+                actual_date = '24.10.2022',
+                sort = 3
+            where sort = 1;
+        `);
+        result = await db.query(`
+            select id, end_operation_date
+            from orders
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            end_operation_date: "24.10.2022"
+        }], "update first point in operation");
+    });
+
+    it("last row sort by agg cache column and filter by cache column and custom trigger column", async() => {
+        // 11595
+        const folderPath = ROOT_TMP_PATH + "/cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key
+            );
+
+            create table operations (
+                id serial primary key,
+                id_order integer
+            );
+
+            create table points (
+                id serial primary key,
+                id_operation integer,
+                sort integer,
+                actual_date text,
+                is_last boolean
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/some_custom_trigger.sql", `
+            create or replace function set_is_last()
+            returns trigger as $body$
+            begin
+
+                update points as current_point set
+                    is_last = not exists(
+                        select from points as next_point
+                        where
+                            next_point.id_operation = current_point.id_operation and
+                            next_point.sort > current_point.sort
+                    )
+                where id = new.id;
+
+                return new;
+            end
+            $body$ language plpgsql;
+
+            create trigger set_is_last
+            after insert or update of id_operation, sort
+            on points
+            for each row
+            execute procedure set_is_last();
+        `);
+        fs.writeFileSync(folderPath + "/max_date.sql", `
+            cache max_date for operations (
+                select
+                    max( points.actual_date ) as max_date
+                from points
+                where
+                    points.id_operation = operations.id
+            )
+        `);
+        fs.writeFileSync(folderPath + "/last_date.sql", `
+            cache last_date for operations (
+                select
+                    points.actual_date as last_date
+                from points
+                where
+                    points.id_operation = operations.id and
+                    points.is_last
+
+                order by points.id desc
+                limit 1
+            )
+        `);
+
+        fs.writeFileSync(folderPath + "/max_operation_date.sql", `
+            cache end_operation_date for orders (
+                select 
+                    last_operation.max_date as max_operation_date
+                from operations as last_operation
+                where
+                    last_operation.id_order = orders.id and
+                    last_operation.max_date is not null and
+                    last_operation.last_date is not null
+
+                order by 
+                    last_operation.max_date desc
+                limit 1
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into orders default values;
+
+            insert into operations (id_order)
+            values (1);
+
+            insert into points (id_operation, sort, actual_date)
+            values
+                (1, 1, '22.10.2022'),
+                (1, 2, '23.10.2022');
+        `);
+        let result = await db.query(`
+            select id, max_operation_date
+            from orders
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            max_operation_date: "23.10.2022"
+        }], "created operation");
+
+
+        await db.query(`
+            update points set
+                actual_date = '24.10.2022',
+                sort = 3
+            where sort = 1;
+        `);
+        result = await db.query(`
+            select id, max_operation_date
+            from orders
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            max_operation_date: "24.10.2022"
+        }], "update first point in operation");
+    });
+
     // TODO: https://git.g-soft.ru/logos/logisitc-web/merge_requests/4577/diffs
     // TODO: update-ddl-cache in watcher mode
     // TODO: bugs from ryabkov

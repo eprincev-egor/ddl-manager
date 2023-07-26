@@ -8,6 +8,7 @@ declare deleted_units_ids bigint[];
 begin
 
     if TG_OP = 'DELETE' then
+
         if
             old.units_ids is not null
             and
@@ -16,34 +17,37 @@ begin
             old.deleted = 0
         then
             update units set
+                __first_auto_json__ = __first_auto_json__ - old.id::text,
                 (
-                    __first_auto_id,
-                    __first_auto_lvl,
                     first_auto_incoming_date,
                     first_auto_outgoing_date
                 ) = (
                     select
-                            first_auto.id as __first_auto_id,
-                            first_auto.lvl as __first_auto_lvl,
-                            first_auto.incoming_date as first_auto_incoming_date,
-                            first_auto.outgoing_date as first_auto_outgoing_date
-                    from operations as first_auto
+                            source_row.incoming_date as first_auto_incoming_date,
+                            source_row.outgoing_date as first_auto_outgoing_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __first_auto_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
                     where
-                        first_auto.units_ids && ARRAY[units.id] :: bigint[]
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
                         and
-                        first_auto.type = 'auto'
+                        source_row.type = 'auto'
                         and
-                        first_auto.deleted = 0
+                        source_row.deleted = 0
                     order by
-                        first_auto.lvl asc nulls last,
-                        first_auto.id asc nulls last
+                        source_row.lvl asc nulls last,
+                        source_row.id desc nulls first
                     limit 1
                 )
             where
-                units.id = any( old.units_ids )
-                and
-                units.__first_auto_id = old.id;
-
+                units.id = any( old.units_ids::bigint[] );
         end if;
 
         return old;
@@ -111,155 +115,140 @@ begin
             deleted_units_ids = cm_get_deleted_elements(old.units_ids, new.units_ids);
         end if;
 
-
         if not_changed_units_ids is not null then
-            if new.lvl is not distinct from old.lvl then
-                if
-                    new.incoming_date is distinct from old.incoming_date
-                    or
-                    new.outgoing_date is distinct from old.outgoing_date
-                then
-                    update units set
-                        __first_auto_id = new.id,
-                        __first_auto_lvl = new.lvl,
-                        first_auto_incoming_date = new.incoming_date,
-                        first_auto_outgoing_date = new.outgoing_date
-                    where
-                        units.id = any( not_changed_units_ids )
-                        and
-                        units.__first_auto_id = new.id
-                        and
-                        (
-                            units.first_auto_incoming_date is distinct from new.incoming_date
-                            or
-                            units.first_auto_outgoing_date is distinct from new.outgoing_date
-                        );
-                end if;
-            else
-                if
-                    new.lvl is not distinct from old.lvl
-                    and
-                    new.id < old.id
-                    or
-                    new.lvl is not null
-                    and
-                    old.lvl is null
-                    or
-                    new.lvl < old.lvl
-                then
-                    update units set
-                        __first_auto_id = new.id,
-                        __first_auto_lvl = new.lvl,
-                        first_auto_incoming_date = new.incoming_date,
-                        first_auto_outgoing_date = new.outgoing_date
-                    where
-                        units.id = any( not_changed_units_ids )
-                        and
-                        (
-                            units.__first_auto_id = new.id
-                            or
-                            units.__first_auto_id is null
-                            or
-                            units.__first_auto_lvl is not distinct from new.lvl
-                            and
-                            units.__first_auto_id > new.id
-                            or
-                            units.__first_auto_lvl is null
-                            and
-                            new.lvl is not null
-                            or
-                            units.__first_auto_lvl > new.lvl
-                        );
-                else
-                    update units set
-                        (
-                            __first_auto_id,
-                            __first_auto_lvl,
-                            first_auto_incoming_date,
-                            first_auto_outgoing_date
-                        ) = (
-                            select
-                                    first_auto.id as __first_auto_id,
-                                    first_auto.lvl as __first_auto_lvl,
-                                    first_auto.incoming_date as first_auto_incoming_date,
-                                    first_auto.outgoing_date as first_auto_outgoing_date
-                            from operations as first_auto
-                            where
-                                first_auto.units_ids && ARRAY[units.id] :: bigint[]
-                                and
-                                first_auto.type = 'auto'
-                                and
-                                first_auto.deleted = 0
-                            order by
-                                first_auto.lvl asc nulls last,
-                                first_auto.id asc nulls last
-                            limit 1
-                        )
-                    where
-                        units.id = any( not_changed_units_ids );
-                end if;
-            end if;
-        end if;
-
-        if deleted_units_ids is not null then
             update units set
+                __first_auto_json__ = cm_merge_json(
+            __first_auto_json__,
+            jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'incoming_date', new.incoming_date,'lvl', new.lvl,'outgoing_date', new.outgoing_date,'type', new.type,'units_ids', new.units_ids
+            ),
+            TG_OP
+        ),
                 (
-                    __first_auto_id,
-                    __first_auto_lvl,
                     first_auto_incoming_date,
                     first_auto_outgoing_date
                 ) = (
                     select
-                            first_auto.id as __first_auto_id,
-                            first_auto.lvl as __first_auto_lvl,
-                            first_auto.incoming_date as first_auto_incoming_date,
-                            first_auto.outgoing_date as first_auto_outgoing_date
-                    from operations as first_auto
+                            source_row.incoming_date as first_auto_incoming_date,
+                            source_row.outgoing_date as first_auto_outgoing_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __first_auto_json__,
+                jsonb_build_object(
+                    'deleted', new.deleted,'id', new.id,'incoming_date', new.incoming_date,'lvl', new.lvl,'outgoing_date', new.outgoing_date,'type', new.type,'units_ids', new.units_ids
+                ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
                     where
-                        first_auto.units_ids && ARRAY[units.id] :: bigint[]
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
                         and
-                        first_auto.type = 'auto'
+                        source_row.type = 'auto'
                         and
-                        first_auto.deleted = 0
+                        source_row.deleted = 0
                     order by
-                        first_auto.lvl asc nulls last,
-                        first_auto.id asc nulls last
+                        source_row.lvl asc nulls last,
+                        source_row.id desc nulls first
                     limit 1
                 )
             where
-                units.id = any( deleted_units_ids )
-                and
-                units.__first_auto_id = new.id;
+                units.id = any( not_changed_units_ids::bigint[] );
+        end if;
+
+        if deleted_units_ids is not null then
+            update units set
+                __first_auto_json__ = __first_auto_json__ - old.id::text,
+                (
+                    first_auto_incoming_date,
+                    first_auto_outgoing_date
+                ) = (
+                    select
+                            source_row.incoming_date as first_auto_incoming_date,
+                            source_row.outgoing_date as first_auto_outgoing_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    __first_auto_json__ - old.id::text
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
+                        and
+                        source_row.type = 'auto'
+                        and
+                        source_row.deleted = 0
+                    order by
+                        source_row.lvl asc nulls last,
+                        source_row.id desc nulls first
+                    limit 1
+                )
+            where
+                units.id = any( deleted_units_ids::bigint[] );
         end if;
 
         if inserted_units_ids is not null then
             update units set
-                __first_auto_id = new.id,
-                __first_auto_lvl = new.lvl,
-                first_auto_incoming_date = new.incoming_date,
-                first_auto_outgoing_date = new.outgoing_date
-            where
-                units.id = any( inserted_units_ids )
-                and
+                __first_auto_json__ = cm_merge_json(
+            __first_auto_json__,
+            jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'incoming_date', new.incoming_date,'lvl', new.lvl,'outgoing_date', new.outgoing_date,'type', new.type,'units_ids', new.units_ids
+            ),
+            TG_OP
+        ),
                 (
-                    units.__first_auto_id is null
-                    or
-                    units.__first_auto_lvl is not distinct from new.lvl
-                    and
-                    units.__first_auto_id > new.id
-                    or
-                    units.__first_auto_lvl is null
-                    and
-                    new.lvl is not null
-                    or
-                    units.__first_auto_lvl > new.lvl
-                );
+                    first_auto_incoming_date,
+                    first_auto_outgoing_date
+                ) = (
+                    select
+                            source_row.incoming_date as first_auto_incoming_date,
+                            source_row.outgoing_date as first_auto_outgoing_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __first_auto_json__,
+                jsonb_build_object(
+                    'deleted', new.deleted,'id', new.id,'incoming_date', new.incoming_date,'lvl', new.lvl,'outgoing_date', new.outgoing_date,'type', new.type,'units_ids', new.units_ids
+                ),
+                TG_OP
+            )
+) as json_entry
+
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
+                        and
+                        source_row.type = 'auto'
+                        and
+                        source_row.deleted = 0
+                    order by
+                        source_row.lvl asc nulls last,
+                        source_row.id desc nulls first
+                    limit 1
+                )
+            where
+                units.id = any( inserted_units_ids::bigint[] );
         end if;
 
         return new;
     end if;
 
     if TG_OP = 'INSERT' then
+
         if
             new.units_ids is not null
             and
@@ -268,27 +257,49 @@ begin
             new.deleted = 0
         then
             update units set
-                __first_auto_id = new.id,
-                __first_auto_lvl = new.lvl,
-                first_auto_incoming_date = new.incoming_date,
-                first_auto_outgoing_date = new.outgoing_date
-            where
-                units.id = any( new.units_ids )
-                and
+                __first_auto_json__ = cm_merge_json(
+            __first_auto_json__,
+            jsonb_build_object(
+                'deleted', new.deleted,'id', new.id,'incoming_date', new.incoming_date,'lvl', new.lvl,'outgoing_date', new.outgoing_date,'type', new.type,'units_ids', new.units_ids
+            ),
+            TG_OP
+        ),
                 (
-                    units.__first_auto_id is null
-                    or
-                    units.__first_auto_lvl is not distinct from new.lvl
-                    and
-                    units.__first_auto_id > new.id
-                    or
-                    units.__first_auto_lvl is null
-                    and
-                    new.lvl is not null
-                    or
-                    units.__first_auto_lvl > new.lvl
-                );
+                    first_auto_incoming_date,
+                    first_auto_outgoing_date
+                ) = (
+                    select
+                            source_row.incoming_date as first_auto_incoming_date,
+                            source_row.outgoing_date as first_auto_outgoing_date
+                    from (
+                        select
+                                record.*
+                        from jsonb_each(
+    cm_merge_json(
+                __first_auto_json__,
+                jsonb_build_object(
+                    'deleted', new.deleted,'id', new.id,'incoming_date', new.incoming_date,'lvl', new.lvl,'outgoing_date', new.outgoing_date,'type', new.type,'units_ids', new.units_ids
+                ),
+                TG_OP
+            )
+) as json_entry
 
+                        left join lateral jsonb_populate_record(null::public.operations, json_entry.value) as record on
+                            true
+                    ) as source_row
+                    where
+                        source_row.units_ids && ARRAY[units.id] :: bigint[]
+                        and
+                        source_row.type = 'auto'
+                        and
+                        source_row.deleted = 0
+                    order by
+                        source_row.lvl asc nulls last,
+                        source_row.id desc nulls first
+                    limit 1
+                )
+            where
+                units.id = any( new.units_ids::bigint[] );
         end if;
 
         return new;

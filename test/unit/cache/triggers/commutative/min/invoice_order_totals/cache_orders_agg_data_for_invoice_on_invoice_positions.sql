@@ -56,7 +56,6 @@ begin
             update invoice set
                 __orders_agg_data_json__ = cm_merge_json(
             __orders_agg_data_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
             ),
@@ -73,7 +72,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __orders_agg_data_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
                 ),
@@ -136,7 +134,6 @@ begin
             update invoice set
                 __orders_agg_data_json__ = cm_merge_json(
             __orders_agg_data_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
             ),
@@ -153,7 +150,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __orders_agg_data_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
                 ),
@@ -187,7 +183,6 @@ begin
             update invoice set
                 __orders_agg_data_json__ = cm_merge_json(
             __orders_agg_data_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
             ),
@@ -204,7 +199,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __orders_agg_data_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_invoice', new.id_invoice,'id_order', new.id_order
                 ),

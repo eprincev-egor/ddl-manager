@@ -106,7 +106,6 @@ begin
             update orders set
                 __invoices_json__ = cm_merge_json(
             __invoices_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'profit', new.profit
             ),
@@ -123,7 +122,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __invoices_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'profit', new.profit
                 ),
@@ -184,7 +182,6 @@ begin
             update orders set
                 __invoices_json__ = cm_merge_json(
             __invoices_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'profit', new.profit
             ),
@@ -201,7 +198,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __invoices_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'profit', new.profit
                 ),
@@ -239,7 +235,6 @@ begin
             update orders set
                 __invoices_json__ = cm_merge_json(
             __invoices_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'profit', new.profit
             ),
@@ -256,7 +251,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __invoices_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_invoice_type', new.id_invoice_type,'orders_ids', new.orders_ids,'profit', new.profit
                 ),

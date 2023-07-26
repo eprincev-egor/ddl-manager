@@ -45,7 +45,6 @@ begin
             update companies as main_company set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_parent_company', new.id_parent_company
             ),
@@ -62,7 +61,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_parent_company', new.id_parent_company
                 ),
@@ -111,7 +109,6 @@ begin
             update companies as main_company set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_parent_company', new.id_parent_company
             ),
@@ -128,7 +125,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_parent_company', new.id_parent_company
                 ),
@@ -155,7 +151,6 @@ begin
             update companies as main_company set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_parent_company', new.id_parent_company
             ),
@@ -172,7 +167,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_parent_company', new.id_parent_company
                 ),

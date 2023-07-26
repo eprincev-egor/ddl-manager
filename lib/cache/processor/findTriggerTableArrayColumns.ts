@@ -5,10 +5,16 @@ import { buildReferenceMeta } from "./buildReferenceMeta";
 
 export function findTriggerTableArrayColumns(
     cache: Cache,
-    triggerTable: TableID = cache.getFromTable(),
-    expressions = buildReferenceMeta(cache, triggerTable).expressions,
+    inputTriggerTable?: TableID,
+    expressions?: Expression[],
     arrayColumns: string[] = []
 ) {
+    if ( cache.select.from.length === 0 ) {
+        return [];
+    }
+
+    const triggerTable = inputTriggerTable || cache.getFromTable();
+    expressions = expressions || buildReferenceMeta(cache, triggerTable).expressions;
 
     for (const expression of expressions) {
         if ( isArrayBinary(expression) ) {

@@ -56,7 +56,6 @@ begin
             update companies set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
             ),
@@ -76,7 +75,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
                 ),
@@ -128,7 +126,6 @@ begin
             update companies set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
             ),
@@ -148,7 +145,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
                 ),
@@ -175,7 +171,6 @@ begin
             update companies set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
             ),
@@ -195,7 +190,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'credit', new.credit,'debet', new.debet,'id', new.id,'id_client', new.id_client,'quantity', new.quantity
                 ),

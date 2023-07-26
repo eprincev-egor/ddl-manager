@@ -63,7 +63,6 @@ begin
             update owner.unit set
                 __operation_units_json__ = cm_merge_json(
             __operation_units_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
             ),
@@ -80,7 +79,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __operation_units_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
                 ),
@@ -141,7 +139,6 @@ begin
             update owner.unit set
                 __operation_units_json__ = cm_merge_json(
             __operation_units_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
             ),
@@ -158,7 +155,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __operation_units_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
                 ),
@@ -191,7 +187,6 @@ begin
             update owner.unit set
                 __operation_units_json__ = cm_merge_json(
             __operation_units_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
             ),
@@ -208,7 +203,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __operation_units_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_owner_unit', new.id_owner_unit
                 ),

@@ -11,11 +11,11 @@ begin
     select
             count(*) as parent_company_orders_count,
             ('{' || string_agg(
-                                            '"' || public.orders.id::text || '":' || jsonb_build_object(
+                                        '"' || public.orders.id::text || '":' || jsonb_build_object(
                             'id', public.orders.id,'id_client', public.orders.id_client
                         )::text,
-                                            ','
-                                        ) || '}')
+                                        ','
+                                    ) || '}')
             ::
             jsonb as __totals_json__
     from orders

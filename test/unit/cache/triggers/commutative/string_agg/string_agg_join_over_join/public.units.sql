@@ -57,7 +57,6 @@ begin
             update orders set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
             ),
@@ -76,7 +75,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
                 ),
@@ -139,7 +137,6 @@ begin
             update orders set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
             ),
@@ -158,7 +155,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
                 ),
@@ -191,7 +187,6 @@ begin
             update orders set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
             ),
@@ -210,7 +205,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_order', new.id_order,'id_unit_type', new.id_unit_type
                 ),

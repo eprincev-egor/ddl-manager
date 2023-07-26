@@ -11,7 +11,6 @@ import { flatMap } from "lodash";
 import { OneRowTriggerBuilder } from "./OneRowTriggerBuilder";
 import { LastRowByIdTriggerBuilder } from "./one-last-row/LastRowByIdTriggerBuilder";
 import { LastRowByMutableTriggerBuilder } from "./one-last-row/LastRowByMutableTriggerBuilder";
-import { LastRowByArrayReferenceTriggerBuilder } from "./one-last-row/LastRowByArrayReferenceTriggerBuilder";
 import { buildArrVars } from "../processor/buildArrVars";
 import { FilesState } from "../../fs/FilesState";
 
@@ -98,7 +97,7 @@ export class TriggerBuilderFactory {
         else if ( this.oneLastRow(context) ) {
             const arrayVars = buildArrVars(context);
             if ( arrayVars.length ) {
-                return LastRowByArrayReferenceTriggerBuilder;
+                return ArrayRefCommutativeTriggerBuilder;
             }
 
             const orderBy = context.cache.select.orderBy!;

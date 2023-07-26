@@ -1,6 +1,5 @@
 create or replace function cm_merge_json(
     current_json jsonb,
-    old_item jsonb,
     new_item jsonb,
     tg_op text
 )

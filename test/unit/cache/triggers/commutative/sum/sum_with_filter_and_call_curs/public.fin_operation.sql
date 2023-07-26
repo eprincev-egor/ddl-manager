@@ -89,7 +89,6 @@ begin
             update orders set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'date', new.date,'deleted', new.deleted,'id', new.id,'id_currency', new.id_currency,'id_fin_operation_type', new.id_fin_operation_type,'id_order', new.id_order,'sum', new.sum
             ),
@@ -118,7 +117,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'date', new.date,'deleted', new.deleted,'id', new.id,'id_currency', new.id_currency,'id_fin_operation_type', new.id_fin_operation_type,'id_order', new.id_order,'sum', new.sum
                 ),
@@ -203,7 +201,6 @@ begin
             update orders set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'date', new.date,'deleted', new.deleted,'id', new.id,'id_currency', new.id_currency,'id_fin_operation_type', new.id_fin_operation_type,'id_order', new.id_order,'sum', new.sum
             ),
@@ -232,7 +229,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'date', new.date,'deleted', new.deleted,'id', new.id,'id_currency', new.id_currency,'id_fin_operation_type', new.id_fin_operation_type,'id_order', new.id_order,'sum', new.sum
                 ),
@@ -271,7 +267,6 @@ begin
             update orders set
                 __totals_json__ = cm_merge_json(
             __totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'date', new.date,'deleted', new.deleted,'id', new.id,'id_currency', new.id_currency,'id_fin_operation_type', new.id_fin_operation_type,'id_order', new.id_order,'sum', new.sum
             ),
@@ -300,7 +295,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'date', new.date,'deleted', new.deleted,'id', new.id,'id_currency', new.id_currency,'id_fin_operation_type', new.id_fin_operation_type,'id_order', new.id_order,'sum', new.sum
                 ),

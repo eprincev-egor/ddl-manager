@@ -8,11 +8,11 @@ begin
     select
             string_agg(distinct country.name, ', ') as order_countries,
             ('{' || string_agg(
-                                            '"' || public.orders.id::text || '":' || jsonb_build_object(
+                                        '"' || public.orders.id::text || '":' || jsonb_build_object(
                             'id', public.orders.id,'id_country', public.orders.id_country,'id_order_type', public.orders.id_order_type
                         )::text,
-                                            ','
-                                        ) || '}')
+                                        ','
+                                    ) || '}')
             ::
             jsonb as __order_country_json__
     from orders

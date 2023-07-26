@@ -65,7 +65,6 @@ begin
             update operation.unit set
                 __trains_ids_json__ = cm_merge_json(
             __trains_ids_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_train', new.id_train,'id_unit', new.id_unit
             ),
@@ -82,7 +81,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __trains_ids_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_train', new.id_train,'id_unit', new.id_unit
                 ),
@@ -143,7 +141,6 @@ begin
             update operation.unit set
                 __trains_ids_json__ = cm_merge_json(
             __trains_ids_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_train', new.id_train,'id_unit', new.id_unit
             ),
@@ -160,7 +157,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __trains_ids_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_train', new.id_train,'id_unit', new.id_unit
                 ),
@@ -193,7 +189,6 @@ begin
             update operation.unit set
                 __trains_ids_json__ = cm_merge_json(
             __trains_ids_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'id_train', new.id_train,'id_unit', new.id_unit
             ),
@@ -210,7 +205,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __trains_ids_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'id_train', new.id_train,'id_unit', new.id_unit
                 ),

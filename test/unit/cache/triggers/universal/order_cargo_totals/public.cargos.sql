@@ -56,7 +56,6 @@ begin
             update orders set
                 __cargo_totals_json__ = cm_merge_json(
             __cargo_totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
             ),
@@ -75,7 +74,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __cargo_totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
                 ),
@@ -132,7 +130,6 @@ begin
             update orders set
                 __cargo_totals_json__ = cm_merge_json(
             __cargo_totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
             ),
@@ -151,7 +148,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __cargo_totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
                 ),
@@ -181,7 +177,6 @@ begin
             update orders set
                 __cargo_totals_json__ = cm_merge_json(
             __cargo_totals_json__,
-            null::jsonb,
             jsonb_build_object(
                 'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
             ),
@@ -200,7 +195,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __cargo_totals_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'id', new.id,'id_order', new.id_order,'id_product_type', new.id_product_type,'total_weight', new.total_weight
                 ),

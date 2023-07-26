@@ -51,7 +51,6 @@ begin
             update invoice set
                 __payments_json__ = cm_merge_json(
             __payments_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'total', new.total
             ),
@@ -68,7 +67,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __payments_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'total', new.total
                 ),
@@ -121,7 +119,6 @@ begin
             update invoice set
                 __payments_json__ = cm_merge_json(
             __payments_json__,
-            null::jsonb,
             jsonb_build_object(
                 'deleted', new.deleted,'id', new.id,'total', new.total
             ),
@@ -138,7 +135,6 @@ begin
                         from jsonb_each(
     cm_merge_json(
                 __payments_json__,
-                null::jsonb,
                 jsonb_build_object(
                     'deleted', new.deleted,'id', new.id,'total', new.total
                 ),

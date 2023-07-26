@@ -11,11 +11,11 @@ begin
     select
             sum(payment_orders.total) as payments_total,
             ('{' || string_agg(
-                                            '"' || public.payment_orders.id::text || '":' || jsonb_build_object(
+                                        '"' || public.payment_orders.id::text || '":' || jsonb_build_object(
                             'deleted', public.payment_orders.deleted,'id', public.payment_orders.id,'total', public.payment_orders.total
                         )::text,
-                                            ','
-                                        ) || '}')
+                                        ','
+                                    ) || '}')
             ::
             jsonb as __payments_json__
     from payment_orders
