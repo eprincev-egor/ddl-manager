@@ -1,5 +1,5 @@
 import { TableID } from "./TableID";
-import { Type, formatType } from "./Type";
+import { Type } from "./Type";
 import { Comment } from "./Comment";
 import { MAX_NAME_LENGTH } from "../postgres/constants";
 

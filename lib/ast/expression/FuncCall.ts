@@ -48,6 +48,10 @@ export class FuncCall extends AbstractExpressionElement {
         return children;
     }
 
+    getLastArg(): Expression | undefined {
+        return this.args[ this.args.length - 1 ];
+    }
+
     getFuncCalls() {
         return [
             this,

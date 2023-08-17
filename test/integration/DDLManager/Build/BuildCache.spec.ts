@@ -3688,4 +3688,46 @@ describe("integration/DDLManager.build cache", () => {
         });
     });
 
+    it("not null on cache column", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                orders_profit numeric default 0 not null
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer,
+                profit numeric
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/set_note_trigger.sql", `
+            cache totals for companies (
+                select
+                    coalesce(sum( orders.profit ), 0) as orders_profit
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            insert into companies default values
+            returning orders_profit
+        `);
+        assert.deepStrictEqual(result.rows[0], {
+            orders_profit: "0"
+        });
+    });
+
 });

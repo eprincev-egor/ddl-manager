@@ -241,7 +241,14 @@ export class CacheColumnBuilder {
             return "false";
         }
 
-        // TODO: detect coalesce(x, some)
+        if ( selectColumn.expression.isThatFuncCall("coalesce") ) {
+            const [coalesce] = selectColumn.expression.getFuncCalls();
+            const lastArg = coalesce.getLastArg()!;
+            if ( lastArg.isPrimitive() ) {
+                return lastArg.toString();
+            }
+        }
+
         return "null";
     }
 }

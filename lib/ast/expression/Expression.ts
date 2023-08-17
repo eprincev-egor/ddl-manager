@@ -174,6 +174,15 @@ export class Expression extends AbstractExpressionElement {
         );
     }
 
+    isPrimitive() {
+        const elements = this.getElementsWithoutCasts();
+        return (
+            elements.length === 1 &&
+            elements[0] instanceof UnknownExpressionElement &&
+            /^(\d+|'.*')$/.test(elements[0].toString())
+        );
+    }
+
     isBinary(operator: string) {
         const elems = (
             operator === "::" ? 
