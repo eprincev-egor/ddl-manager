@@ -127,11 +127,11 @@ extends AbstractLastRowTriggerBuilder {
                 body: `
     begin
 
-    new.${isLastColumnName} = (
+    new.${isLastColumnName} = coalesce((
         ${this.conditions
             .hasReferenceWithoutJoins("new")!
             .toSQL( Spaces.level(2) )}
-    );
+    ), false);
 
     return new;
     end;

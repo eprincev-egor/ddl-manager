@@ -4992,9 +4992,80 @@ $$;
         }], "update first point in operation");
     });
 
-    // TODO: https://git.g-soft.ru/logos/logisitc-web/merge_requests/4577/diffs
+    it("one last row by id, check special conditions on insert", async() => {
+        // 11595
+        const folderPath = ROOT_TMP_PATH + "/cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key
+            );
+
+            create table operations (
+                id serial primary key,
+                id_order integer,
+                doc_number text,
+                sub_type text,
+                deleted smallint default 0 not null
+            );
+        `);
+
+        fs.writeFileSync(folderPath + "/last_ocean_oper.sql", `
+            cache last_ocea_oper for orders (
+                select
+                    operations.doc_number as last_ocean_oper_number
+                from operations
+                where
+                    operations.id_order = orders.id and
+                    operations.sub_type = 'ocean' and
+                    operations.deleted = 0
+
+                order by operations.id desc
+                limit 1
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            -- order1
+            insert into orders default values;
+
+            insert into operations (id_order)
+            values (1), (1);
+
+            update operations set
+                doc_number = 'a',
+                sub_type = 'ocean'
+            where id = 1;
+
+            update operations set
+                doc_number = 'b',
+                sub_type = 'ocean'
+            where id = 2;
+
+
+            update operations set
+                deleted = 1
+            where id = 2;
+        `);
+        const result = await db.query(`
+            select last_ocean_oper_number
+            from orders
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            last_ocean_oper_number: "a"
+        }]);
+    });
+
     // TODO: update-ddl-cache in watcher mode
-    // TODO: bugs from ryabkov
 
     async function sleep(ms: number) {
         return new Promise(resolve => setTimeout(resolve, ms));
