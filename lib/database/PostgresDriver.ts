@@ -374,8 +374,8 @@ implements IDatabaseDriver {
         const sql = this.buildUpdateSql(update, `
             and
             ${update.table.getIdentifier()}.id >= ${minId} and
-            ${update.table.getIdentifier()}.id < ${maxId}
-        `);
+            ${update.table.getIdentifier()}.id <= ${maxId}
+        `, `(${minId} - ${maxId})`);
         await this.query(sql, timeout);
     }
 
@@ -394,7 +394,8 @@ implements IDatabaseDriver {
     
     private buildUpdateSql(
         update: CacheUpdate,
-        filter: string
+        filter: string,
+        comment?: string
     ) {
         const sets: string[] = [];
         const whereRowIsBroken: string[] = [];
@@ -436,7 +437,7 @@ implements IDatabaseDriver {
                 ${filter}
         `;
 
-        const sql = `-- cache ${update.caches.join(", ")} for ${update.table.table}
+        const sql = `-- cache ${update.caches.join(", ")} for ${update.table.table} ${comment}
             with ddl_manager_tmp as (
                 ${selectBrokenRows}
             )
