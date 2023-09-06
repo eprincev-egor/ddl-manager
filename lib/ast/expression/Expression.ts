@@ -8,6 +8,8 @@ import { Spaces } from "../Spaces";
 import { IColumnsMap, UnknownExpressionElement } from "./UnknownExpressionElement";
 import { ColumnReference } from "./ColumnReference";
 import { Exists } from "./Exists";
+import { CaseWhen } from "./CaseWhen";
+import { strict } from "assert";
 
 export type ConditionElementType = string | IExpressionElement;
 
@@ -113,6 +115,22 @@ export class Expression extends AbstractExpressionElement {
         }
         const funcCall = this.getFuncCalls()[0] as FuncCall;
         return funcCall.name === "coalesce";
+    }
+
+    isCaseWhen() {
+        const elements = this.getElementsWithoutCasts();
+        const firstElem = elements[0];
+        return (
+            elements.length === 1 &&
+            firstElem instanceof CaseWhen
+        )
+    }
+
+    getFirstThen() {
+        strict.ok(this.isCaseWhen());
+        const [caseWhen] = this.getElementsWithoutCasts() as CaseWhen[];
+        const [firstCase] = caseWhen.cases;
+        return firstCase?.then;
     }
 
     isFuncCall(): boolean {

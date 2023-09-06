@@ -50,7 +50,7 @@ export class CacheColumnBuilder {
         return columnToCreate;
     }
 
-    private async getColumnType(cacheColumn: CacheColumn) {
+    private async getColumnType(cacheColumn: CacheColumn): Promise<string> {
         let {expression} = cacheColumn.select.columns[0];
 
         const explicitCastType = expression.getExplicitCastType();
@@ -72,6 +72,15 @@ export class CacheColumnBuilder {
 
         if ( expression.isNotExists() ) {
             return "boolean";
+        }
+
+        if ( expression.isCaseWhen() ) {
+            const firstThen = expression.getFirstThen();
+            if ( firstThen ) {
+                return this.getColumnType(
+                    cacheColumn.replaceExpression(firstThen)
+                );
+            }
         }
 
         if ( expression.isFuncCall() ) {

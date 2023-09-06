@@ -1,4 +1,4 @@
-import { Select } from "../../ast";
+import { Select, Expression, SelectColumn } from "../../ast";
 import { TableReference } from "../../database/schema/TableReference";
 import { uniqBy } from "lodash";
 
@@ -84,5 +84,19 @@ export class CacheColumn {
         // assign self dependencies
         this.dependencies.push(...dependencyColumns);
         this.dependencies = uniqBy(this.dependencies, (column) => column.getId());
+    }
+
+    replaceExpression(newExpression: Expression) {
+        return new CacheColumn({
+            for: this.for,
+            name: this.name,
+            cache: this.cache,
+            select: this.select.clone({
+                columns: [new SelectColumn({
+                    name: this.name,
+                    expression: newExpression
+                })]
+            })
+        });
     }
 }
