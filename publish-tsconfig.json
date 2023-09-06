@@ -3,7 +3,7 @@
         "rootDir": "./lib",
         "outDir": "./dist",
         "sourceMap": true,
-        "target": "esnext",
+        "target": "es3",
         "module": "commonjs",
         "esModuleInterop": true,
         "allowJs": true,
