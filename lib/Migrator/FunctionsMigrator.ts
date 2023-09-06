@@ -28,6 +28,10 @@ export class FunctionsMigrator extends AbstractMigrator {
     private async createCacheHelpersFunctions() {
 
         for (const helperFunctionSQL of Object.values(helperFunctions)) {
+            if ( typeof helperFunctionSQL !== "string" ) { // skip property __esModule: true
+                continue;
+            }
+
             const parsedFunction = FileParser.parseFunction(helperFunctionSQL);
             await this.postgres.createOrReplaceHelperFunc(parsedFunction);
         }
