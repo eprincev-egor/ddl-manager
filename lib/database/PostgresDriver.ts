@@ -350,6 +350,21 @@ implements IDatabaseDriver {
         }
     }
 
+    async selectNextIds(
+        table: TableID,
+        maxId: number,
+        limit: number
+    ): Promise<number[]> {
+        const {rows} = await this.query(`
+            select id
+            from ${table}
+            where id <= ${+maxId}
+            order by id desc
+            limit ${+limit}
+        `);
+        return rows.map(row => row.id).reverse();
+    }
+
     async updateCacheForRows(
         update: CacheUpdate,
         minId: number,

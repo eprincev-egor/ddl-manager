@@ -8,7 +8,7 @@ export const parallelPackagesCount = 8;
 
 export class UpdateMigrator extends AbstractMigrator {
 
-    static timeoutOnDeadlock = 1000;
+    static timeoutOnDeadlock = 3000;
 
     async drop() {}
 
@@ -123,12 +123,21 @@ export class UpdateMigrator extends AbstractMigrator {
         const packageSize = this.migration.getUpdatePackageSize();
 
         while ( startId < endId ) {
+            const ids = await this.postgres.selectNextIds(
+                update.table.table,
+                endId, packageSize
+            );
+
+            if ( ids.length === 0 ) {
+                return;
+            }
+
             await this.tryUpdateCacheRows(
                 update,
-                endId - packageSize,
-                endId
+                ids[0],
+                ids[ ids.length - 1]
             );
-            endId -= packageSize;
+            endId = ids[0] - 1;
         }
     }
 
@@ -150,7 +159,7 @@ export class UpdateMigrator extends AbstractMigrator {
             if ( /deadlock/i.test(err.message) || err.code === "40P01" ) {
                 // next attempt must have more timeout 
                 const timeoutOnDeadlock = (
-                    Math.max(attemptsNumberAfterDeadlock, 5) * 
+                    Math.max(attemptsNumberAfterDeadlock, 10) * 
                     UpdateMigrator.timeoutOnDeadlock
                 );
                 await sleep( timeoutOnDeadlock );
@@ -207,7 +216,7 @@ export class UpdateMigrator extends AbstractMigrator {
                 this.migration.getUpdatePackageSize(),
                 this.migration.getTimeoutPerUpdate()
             );
-        } catch(err) {
+        } catch(err: any) {
             const message = (err as any).message;
             if ( /deadlock/i.test(message) ) {
                 // next attempt must have more timeout 
@@ -223,7 +232,8 @@ export class UpdateMigrator extends AbstractMigrator {
                 );
             }
 
-            throw err;
+            this.logUpdate(update, `failed updating with error: ${err.message}`);
+            return 0;
         }
     }
 

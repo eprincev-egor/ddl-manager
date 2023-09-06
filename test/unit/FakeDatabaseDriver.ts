@@ -158,6 +158,20 @@ implements IDatabaseDriver {
         const minMax = this.tablesIds[ table ] || {min: null, max: null};
         return minMax;
     }
+
+    async selectNextIds(
+        table: TableID,
+        maxId: number,
+        limit: number
+    ): Promise<number[]> {
+        const outputIds: number[] = [];
+
+        while ( outputIds.length <= limit ) {
+            outputIds.push(maxId);
+            maxId--;
+        }
+        return outputIds.reverse();
+    }
     
     async updateCacheForRows(
         update: CacheUpdate,

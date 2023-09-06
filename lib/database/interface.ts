@@ -24,6 +24,11 @@ export interface IDatabaseDriver {
     createOrReplaceColumn(column: Column): Promise<void>;
     dropColumn(column: Column): Promise<void>;
     selectMinMax(table: TableID): Promise<MinMax>;
+    selectNextIds(
+        table: TableID,
+        maxId: number,
+        limit: number
+    ): Promise<number[]>;
     /** update rows where id >= minId and id < maxId */
     updateCacheForRows(
         update: CacheUpdate,
