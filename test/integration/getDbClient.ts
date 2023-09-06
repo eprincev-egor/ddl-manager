@@ -52,7 +52,7 @@ export async function getDBClient(dbConfig: IConfig = {
     });
     try {
         await pool.query("select 1");
-    } catch(err) {
+    } catch(err: any) {
         throw new Error(
             "Failed db connection: " + 
             JSON.stringify(dbConfig, null, 4) + 
@@ -68,7 +68,7 @@ export async function getDBClient(dbConfig: IConfig = {
         const stack = new Error().stack;
         try {
             return await query.call(pool, ...args);
-        } catch(error) {
+        } catch(error: any) {
             error.stack = (error.where || "") + stack;
             throw error;
         }

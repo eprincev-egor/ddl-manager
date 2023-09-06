@@ -27,11 +27,13 @@ export interface IDatabaseDriver {
     /** update rows where id >= minId and id < maxId */
     updateCacheForRows(
         update: CacheUpdate,
-        minId: number, maxId: number
+        minId: number, maxId: number,
+        timeout?: number
     ): Promise<void>;
     updateCacheLimitedPackage(
         update: CacheUpdate,
-        limit: number
+        limit: number,
+        timeout?: number
     ): Promise<number>;
     createOrReplaceHelperFunc(func: DatabaseFunction): Promise<void>;
     dropIndex(index: Index): Promise<void>;

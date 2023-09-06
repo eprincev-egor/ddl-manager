@@ -33,7 +33,12 @@ interface ITimelineParams extends IParams {
 
 export interface IRefreshCacheParams extends IParams {
     concreteTables?: string | string[];
+    timeoutPerUpdate?: number;
+    
+    timeoutBetweenUpdates?: number;
+    /** deprecated, need use timeoutBetweenUpdates */
     timeoutOnUpdate?: number;
+
     updatePackageSize?: number;
     logToFile?: string;
 }
@@ -195,7 +200,7 @@ export class DDLManager {
                     scenario
                 );
             }
-            catch(err) {
+            catch(err: any) {
                 console.error(err);
                 throw new Error("failed scenario " + scenario.name + " with error: " + err.message);
             }
@@ -233,8 +238,13 @@ export class DDLManager {
             params.concreteTables &&
                 params.concreteTables.toString()
         );
-        if ( params.timeoutOnUpdate ) {
-            migration.setTimeoutForUpdates(params.timeoutOnUpdate);
+        
+        const timeoutBetweenUpdates = params.timeoutBetweenUpdates || params.timeoutOnUpdate;
+        if ( timeoutBetweenUpdates ) {
+            migration.setTimeoutBetweenUpdates(timeoutBetweenUpdates);
+        }
+        if ( params.timeoutPerUpdate ) {
+            migration.setTimeoutPerUpdate(params.timeoutPerUpdate);
         }
         if ( params.updatePackageSize ) {
             migration.setUpdatePackageSize(params.updatePackageSize);

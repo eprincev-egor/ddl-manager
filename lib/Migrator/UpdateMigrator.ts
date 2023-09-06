@@ -2,6 +2,7 @@ import { AbstractMigrator } from "./AbstractMigrator";
 import { TableReference } from "../database/schema/TableReference";
 import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
 import { flatMap } from "lodash";
+import { sleep } from "../utils";
 
 export const parallelPackagesCount = 8;
 
@@ -142,7 +143,8 @@ export class UpdateMigrator extends AbstractMigrator {
         try {
             await this.postgres.updateCacheForRows(
                 update,
-                minId, maxId
+                minId, maxId,
+                this.migration.getTimeoutBetweenUpdates()
             );
         } catch(err: any) {
             if ( /deadlock/i.test(err.message) || err.code === "40P01" ) {
@@ -160,10 +162,10 @@ export class UpdateMigrator extends AbstractMigrator {
                 return;
             }
 
-            throw err;
+            this.logUpdate(update, `failed updating ids ${minId} - ${maxId} with error: ${err.message}`);
         }
 
-        const timeout = this.migration.getTimeoutForUpdates();
+        const timeout = this.migration.getTimeoutBetweenUpdates();
         if ( timeout ) {
             await sleep(timeout);
         }
@@ -174,7 +176,7 @@ export class UpdateMigrator extends AbstractMigrator {
         packageIndex = 0
     ) {
         let needUpdateMore = false;
-        const timeout = this.migration.getTimeoutForUpdates();
+        const timeout = this.migration.getTimeoutBetweenUpdates();
 
         do {
             this.logUpdate(update, `updating #${ ++packageIndex }`);
@@ -202,7 +204,8 @@ export class UpdateMigrator extends AbstractMigrator {
         try {
             return await this.postgres.updateCacheLimitedPackage(
                 update,
-                this.migration.getUpdatePackageSize()
+                this.migration.getUpdatePackageSize(),
+                this.migration.getTimeoutPerUpdate()
             );
         } catch(err) {
             const message = (err as any).message;
@@ -262,10 +265,4 @@ export class UpdateMigrator extends AbstractMigrator {
             `cache: ${update.caches.join(", ")} `
         ].join("\n"));
     }
-}
-
-async function sleep(ms: number) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
 }

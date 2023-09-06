@@ -19,7 +19,8 @@ export class Migration {
     readonly toDrop: IChanges;
     readonly toCreate: IChanges;
     private enabledCacheTriggersOnUpdate: boolean;
-    private updateTimeout?: number;
+    private timeoutBetweenUpdates?: number;
+    private timeoutPerUpdate = 0;
     private updatePackageSize = 20000;
     private logFilePath?: string;
 
@@ -47,12 +48,20 @@ export class Migration {
         this.enabledCacheTriggersOnUpdate = true;
     }
 
-    getTimeoutForUpdates() {
-        return this.updateTimeout;
+    getTimeoutBetweenUpdates() {
+        return this.timeoutBetweenUpdates;
     }
 
-    setTimeoutForUpdates(timeout: number) {
-        this.updateTimeout = timeout;
+    setTimeoutBetweenUpdates(timeout: number) {
+        this.timeoutBetweenUpdates = timeout;
+    }
+
+    getTimeoutPerUpdate() {
+        return this.timeoutPerUpdate;
+    }
+
+    setTimeoutPerUpdate(timeout: number) {
+        this.timeoutPerUpdate = timeout;
     }
 
     getUpdatePackageSize() {

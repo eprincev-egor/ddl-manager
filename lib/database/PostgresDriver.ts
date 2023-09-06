@@ -1,5 +1,5 @@
 import fs from "fs";
-import { Pool } from "pg";
+import { Pool, PoolClient, QueryResult, Client } from "pg";
 import { IDatabaseDriver, MinMax } from "./interface";
 import { FileParser } from "../parser";
 import { PGTypes } from "./PGTypes";
@@ -19,6 +19,7 @@ import { wrapText } from "./postgres/wrapText";
 import { IFileContent } from "../fs/File";
 import { Index } from "./schema/Index";
 import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
+import { sleep } from "../utils";
 
 const selectAllFunctionsSQL = fs.readFileSync(__dirname + "/postgres/select-all-functions.sql")
     .toString();
@@ -352,25 +353,27 @@ implements IDatabaseDriver {
     async updateCacheForRows(
         update: CacheUpdate,
         minId: number,
-        maxId: number
+        maxId: number,
+        timeout = 0
     ) {
         const sql = this.buildUpdateSql(update, `
             and
             ${update.table.getIdentifier()}.id >= ${minId} and
             ${update.table.getIdentifier()}.id < ${maxId}
         `);
-        await this.query(sql);
+        await this.query(sql, timeout);
     }
 
     async updateCacheLimitedPackage(
         update: CacheUpdate,
-        limit: number
+        limit: number,
+        timeout = 0
     ) {
         const sql = this.buildUpdateSql(update, `
             order by ${update.table.getIdentifier()}.id asc
             limit ${ limit }
         `) + `\n returning ${update.table.getIdentifier()}.id`;
-        const {rows} = await this.query(sql);
+        const {rows} = await this.query(sql, timeout);
         return rows.length;
     }
     
@@ -469,11 +472,15 @@ implements IDatabaseDriver {
         await this.pgPool.end();
     }
 
-    async query(sql: string) {
+    async query(sql: string, timeout = 0) {
         const stack = new Error().stack;
 
         try {
-            return await this.pgPool.query(sql);
+            const connection = await this.pgPool.connect();
+            const result = await execSqlWithTimeout(connection, sql, timeout);
+
+            connection.release();
+            return result;
         } catch(originalErr) {
             // redefine call stack
             const {message, code} = originalErr as any;
@@ -490,6 +497,57 @@ implements IDatabaseDriver {
             throw err;
         }
     }
+}
+
+function execSqlWithTimeout(
+    connection: PoolClient,
+    sql: string, timeout: number
+): Promise<QueryResult<any>> {
+    const hasTimeout = timeout > 0;
+    if ( !hasTimeout ) {
+        return execSql(connection, sql);
+    }
+
+    const timeoutError = new Error(`reached timeout in ${timeout}ms`);
+    let executed = false;
+
+    return Promise.race([
+        execSql(connection, sql).then((result) => {
+            executed = true;
+            return result;
+        }),
+        sleep(timeout).then(() => {
+            if ( executed ) {
+                return null as any;
+            }
+
+            const pgClient = (connection as any);
+            pgClient.cancel(
+                pgClient,
+                pgClient.activeQuery
+            );
+
+            connection.release();
+
+            throw timeoutError;
+        })
+    ]);
+}
+
+function execSql(
+    connection: PoolClient,
+    sql: string
+): Promise<QueryResult<any>> {
+    return new Promise((resolve, reject) => {
+        connection.query(sql, (err, result) => {
+            if ( err ) {
+                reject(err);
+            }
+            else {
+                resolve(result);
+            }
+        });
+    });
 }
 
 function toNumber(value: string | number | null | undefined): number | null {
