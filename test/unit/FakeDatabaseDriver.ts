@@ -164,11 +164,17 @@ implements IDatabaseDriver {
         maxId: number,
         limit: number
     ): Promise<number[]> {
+        const minMax = this.tablesIds[ table.toString() ] || {};
+
         const outputIds: number[] = [];
 
-        while ( outputIds.length <= limit ) {
-            outputIds.push(maxId);
+        while ( outputIds.length < limit ) {
             maxId--;
+            if ( maxId < (minMax.min ?? 1) ) {
+                break;
+            }
+
+            outputIds.push(maxId);
         }
         return outputIds.reverse();
     }

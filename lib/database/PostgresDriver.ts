@@ -358,7 +358,7 @@ implements IDatabaseDriver {
         const {rows} = await this.query(`
             select id
             from ${table}
-            where id <= ${+maxId}
+            where id < ${+maxId}
             order by id desc
             limit ${+limit}
         `);

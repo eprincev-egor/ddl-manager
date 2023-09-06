@@ -96,7 +96,7 @@ export class UpdateMigrator extends AbstractMigrator {
 
         if ( delta <= this.migration.getUpdatePackageSize() ) {
             await this.tryUpdateCacheRows(
-                update, min, max + 1
+                update, min, max
             );
             return;
         }
@@ -105,7 +105,7 @@ export class UpdateMigrator extends AbstractMigrator {
         const threadStep = Math.ceil(delta / parallelPackagesCount);
         for (let i = 0; i < parallelPackagesCount; i++) {
             const startId = min + threadStep * i;
-            const endId = Math.min(startId + threadStep, max + 1);
+            const endId = Math.min(startId + threadStep - 1, max) + 1;
 
             const threadPromise = this.updateCacheThread(
                 update, startId, endId
@@ -123,10 +123,12 @@ export class UpdateMigrator extends AbstractMigrator {
         const packageSize = this.migration.getUpdatePackageSize();
 
         while ( startId < endId ) {
-            const ids = await this.postgres.selectNextIds(
+            let ids = await this.postgres.selectNextIds(
                 update.table.table,
-                endId, packageSize
+                endId,
+                packageSize
             );
+            ids = ids.filter(id => id >= startId);
 
             if ( ids.length === 0 ) {
                 return;
@@ -135,9 +137,9 @@ export class UpdateMigrator extends AbstractMigrator {
             await this.tryUpdateCacheRows(
                 update,
                 ids[0],
-                ids[ ids.length - 1]
+                ids[ ids.length - 1 ]
             );
-            endId = ids[0] - 1;
+            endId = ids[0];
         }
     }
 
