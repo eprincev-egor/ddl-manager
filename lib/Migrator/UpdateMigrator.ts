@@ -153,7 +153,7 @@ export class UpdateMigrator extends AbstractMigrator {
             await this.postgres.updateCacheForRows(
                 update,
                 minId, maxId,
-                this.migration.getTimeoutBetweenUpdates()
+                this.migration.getTimeoutPerUpdate()
             );
         } catch(err: any) {
             if ( /deadlock/i.test(err.message) || err.code === "40P01" ) {
@@ -185,7 +185,6 @@ export class UpdateMigrator extends AbstractMigrator {
         packageIndex = 0
     ) {
         let needUpdateMore = false;
-        const timeout = this.migration.getTimeoutBetweenUpdates();
 
         do {
             this.logUpdate(update, `updating #${ ++packageIndex }`);
@@ -199,6 +198,7 @@ export class UpdateMigrator extends AbstractMigrator {
             if ( updatedAlsoCount > 0 ) {
                 needUpdateMore = true;
 
+                const timeout = this.migration.getTimeoutBetweenUpdates();
                 if ( timeout ) {
                     await sleep(timeout);
                 }
