@@ -138,4 +138,43 @@ describe("integration/DDLManager.build other tests", () => {
         });
     });
 
+    it("build simple function when exists index with trim both", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-func";
+        fs.mkdirSync(folderPath);
+
+        const rnd = Math.round( 1000 * Math.random() );
+        fs.writeFileSync(folderPath + "/nice.sql", `
+            create or replace function nice(a integer)
+            returns integer as $body$
+                begin
+                    return a * ${ rnd };
+                end
+            $body$
+            language plpgsql;
+        `);
+
+        await db.query(`
+            create table test (
+                id serial primary key,
+                name text
+            );
+            create index test_idx
+            on test
+            using btree ((trim(both from name)))
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        const result = await db.query("select nice(2) as nice");
+        const row = result.rows[0];
+
+        expect(row).to.be.shallowDeepEqual({
+            nice: 2 * rnd
+        });
+    });
+
 });

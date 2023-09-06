@@ -2401,7 +2401,9 @@ describe("integration/DDLManager.build cache", () => {
         `);
 
         const result = await db.query(`
-            select id, transit_period_minute
+            select
+                id,
+                transit_period_minute::integer as transit_period_minute
             from units
             order by id
         `);
