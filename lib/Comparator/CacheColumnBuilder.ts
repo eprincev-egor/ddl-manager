@@ -74,15 +74,6 @@ export class CacheColumnBuilder {
             return "boolean";
         }
 
-        if ( expression.isCaseWhen() ) {
-            const firstThen = expression.getFirstNotNullThenExpression();
-            if ( firstThen ) {
-                return this.getColumnType(
-                    cacheColumn.replaceExpression(firstThen)
-                );
-            }
-        }
-
         if ( expression.isFuncCall() ) {
             const funcCall = expression.getFuncCalls()[0] as FuncCall;
 

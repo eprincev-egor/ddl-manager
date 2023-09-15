@@ -117,41 +117,6 @@ export class Expression extends AbstractExpressionElement {
         return funcCall.name === "coalesce";
     }
 
-    isCaseWhen() {
-        const elements = this.getElementsWithoutCasts();
-        const firstElem = elements[0];
-        return (
-            elements.length === 1 &&
-            firstElem instanceof CaseWhen
-        )
-    }
-
-    getFirstNotNullThenExpression() {
-        strict.ok(this.isCaseWhen());
-        const [caseWhen] = this.getElementsWithoutCasts() as CaseWhen[];
-
-        const thenExpressions = caseWhen.cases.map(caseNode => 
-            caseNode.then
-        );
-        if ( caseWhen.else ) {
-            thenExpressions.push(caseWhen.else);
-        }
-
-        const [firstNotNullThen] = thenExpressions.filter(expression =>
-            !expression.isNull()
-        );
-        return firstNotNullThen;
-    }
-
-    isNull() {
-        const elements = this.getElementsWithoutCasts();
-        return (
-            elements.length === 1 &&
-            elements[0] instanceof UnknownExpressionElement &&
-            elements[0].toString().trim() === "null"
-        )
-    }
-
     isFuncCall(): boolean {
         const elements = this.getElementsWithoutCasts();
         const firstElem = elements[0];

@@ -3776,4 +3776,48 @@ describe("integration/DDLManager.build cache", () => {
         ]);
     });
 
+    it("case when x then 0 else 1::numeric", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table my_table (
+                id serial primary key,
+                quantity integer
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/has_10_quantity.sql", `
+            cache totals for my_table (
+                select
+                    (case
+                    when my_table.quantity < 10
+                    then 0
+                    else my_table.quantity::float / 10
+                    end) as has_10_quantity
+            )
+        `);
+        await db.query(`
+            insert into my_table (quantity)
+            values (5), (13)
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            select id, quantity, has_10_quantity
+            from my_table
+            order by id
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, quantity: 5, has_10_quantity: 0},
+            {id: 2, quantity: 13, has_10_quantity: 1.3}
+        ]);
+    });
+
 });
