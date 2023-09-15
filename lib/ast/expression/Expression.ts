@@ -126,11 +126,30 @@ export class Expression extends AbstractExpressionElement {
         )
     }
 
-    getFirstThen() {
+    getFirstNotNullThenExpression() {
         strict.ok(this.isCaseWhen());
         const [caseWhen] = this.getElementsWithoutCasts() as CaseWhen[];
-        const [firstCase] = caseWhen.cases;
-        return firstCase?.then;
+
+        const thenExpressions = caseWhen.cases.map(caseNode => 
+            caseNode.then
+        );
+        if ( caseWhen.else ) {
+            thenExpressions.push(caseWhen.else);
+        }
+
+        const [firstNotNullThen] = thenExpressions.filter(expression =>
+            !expression.isNull()
+        );
+        return firstNotNullThen;
+    }
+
+    isNull() {
+        const elements = this.getElementsWithoutCasts();
+        return (
+            elements.length === 1 &&
+            elements[0] instanceof UnknownExpressionElement &&
+            elements[0].toString().trim() === "null"
+        )
     }
 
     isFuncCall(): boolean {

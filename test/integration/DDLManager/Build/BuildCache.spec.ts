@@ -3732,4 +3732,48 @@ describe("integration/DDLManager.build cache", () => {
         });
     });
 
+    it.only("case when x then null else integer", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table my_table (
+                id serial primary key,
+                quantity integer
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/has_10_quantity.sql", `
+            cache totals for my_table (
+                select
+                    (case
+                    when my_table.quantity < 10
+                    then null
+                    else 1
+                    end) as has_10_quantity
+            )
+        `);
+        await db.query(`
+            insert into my_table (quantity)
+            values (5), (10)
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            select id, quantity, has_10_quantity
+            from my_table
+            order by id
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, quantity: 5, has_10_quantity: null},
+            {id: 2, quantity: 10, has_10_quantity: 1}
+        ]);
+    });
+
 });
