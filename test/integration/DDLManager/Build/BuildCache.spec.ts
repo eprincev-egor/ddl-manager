@@ -3732,7 +3732,7 @@ describe("integration/DDLManager.build cache", () => {
         });
     });
 
-    it.only("case when x then null else integer", async() => {
+    it("case when x then null else integer", async() => {
         const folderPath = ROOT_TMP_PATH + "/simple-cache";
         fs.mkdirSync(folderPath);
 

@@ -376,7 +376,7 @@ implements IDatabaseDriver {
             ${update.table.getIdentifier()}.id >= ${minId} and
             ${update.table.getIdentifier()}.id <= ${maxId}
         `, `(${minId} - ${maxId})`);
-        await this.query(sql, timeout);
+        await this.queryWithoutTimeout(sql, timeout);
     }
 
     async updateCacheLimitedPackage(
@@ -388,7 +388,7 @@ implements IDatabaseDriver {
             order by ${update.table.getIdentifier()}.id asc
             limit ${ limit }
         `) + `\n returning ${update.table.getIdentifier()}.id`;
-        const {rows} = await this.query(sql, timeout);
+        const {rows} = await this.queryWithoutTimeout(sql, timeout);
         return rows.length;
     }
     
@@ -488,7 +488,7 @@ implements IDatabaseDriver {
         await this.pgPool.end();
     }
 
-    async query(sql: string, timeout = 0) {
+    async queryWithoutTimeout(sql: string, timeout = 0) {
         const stack = new Error().stack;
 
         try {
@@ -498,21 +498,37 @@ implements IDatabaseDriver {
             connection.release();
             return result;
         } catch(originalErr) {
-            // redefine call stack
-            const {message, code} = originalErr as any;
-
-            const err = new Error(message);
-            (err as any).sql = sql;
-            (err as any).code = code;
-            (err as any).originalError = originalErr;
-            (err as any).stack = stack;
-
-            console.error(originalErr);
-            console.error(sql);
-
-            throw err;
+            console.error(originalErr, sql, stack);
+            throw fixErrorStack(sql, originalErr, stack);
         }
     }
+
+    async query(sql: string) {
+        const stack = new Error().stack;
+        try {
+            return await this.pgPool.query(sql);
+        } catch(originalErr) {
+            throw fixErrorStack(sql, originalErr, stack);
+        }
+
+    }
+}
+
+function fixErrorStack(
+    sql: string,
+    originalErr: any,
+    stack: string | undefined
+) {
+    // redefine call stack
+    const {message, code} = originalErr as any;
+
+    const err = new Error(message);
+    (err as any).sql = sql;
+    (err as any).code = code;
+    (err as any).originalError = originalErr;
+    (err as any).stack = stack;
+
+    return err;
 }
 
 function execSqlWithTimeout(
