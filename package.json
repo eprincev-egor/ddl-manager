@@ -1,6 +1,6 @@
 {
   "name": "ddl-manager",
-  "version": "2.2.22-alpha",
+  "version": "2.2.23-alpha",
   "description": "store postgres procedures and triggers in files",
   "main": "dist/DDLManager.js",
   "bin": {
@@ -46,7 +46,7 @@
     "lodash": "^4.17.11",
     "minimist": "^1.2.0",
     "node-watch": "^0.6.0",
-    "pg": "^7.6.1"
+    "pg": "^8.11.3"
   },
   "devDependencies": {
     "@types/chai": "^4.2.14",

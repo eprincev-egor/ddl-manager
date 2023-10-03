@@ -1,5 +1,5 @@
 import fs from "fs";
-import { Pool, PoolClient, QueryResult, Client } from "pg";
+import { Pool, PoolClient, QueryResult } from "pg";
 import { IDatabaseDriver, MinMax } from "./interface";
 import { FileParser } from "../parser";
 import { PGTypes } from "./PGTypes";
@@ -535,35 +535,23 @@ function execSqlWithTimeout(
     connection: PoolClient,
     sql: string, timeout: number
 ): Promise<QueryResult<any>> {
-    const hasTimeout = timeout > 0;
-    if ( !hasTimeout ) {
-        return execSql(connection, sql);
-    }
+    let timer: NodeJS.Timeout | undefined;
 
-    const timeoutError = new Error(`reached timeout in ${timeout}ms`);
-    let executed = false;
-
-    return Promise.race([
-        execSql(connection, sql).then((result) => {
-            executed = true;
-            return result;
-        }),
-        sleep(timeout).then(() => {
-            if ( executed ) {
-                return null as any;
-            }
-
+    if ( timeout > 0 ) {
+        timer = setTimeout(() => {
             const pgClient = (connection as any);
             pgClient.cancel(
                 pgClient,
                 pgClient.activeQuery
             );
+        }, timeout);
+    }
 
-            connection.release();
-
-            throw timeoutError;
-        })
-    ]);
+    
+    return execSql(connection, sql).then((result) => {
+        clearTimeout(timer);
+        return result;
+    });
 }
 
 function execSql(
