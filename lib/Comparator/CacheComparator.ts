@@ -21,7 +21,7 @@ export class CacheComparator extends AbstractComparator {
         driver: IDatabaseDriver,
         database: Database,
         fs: FilesState,
-        migration: Migration
+        migration = Migration.empty()
     ) {
         super(driver, database, fs, migration);
 

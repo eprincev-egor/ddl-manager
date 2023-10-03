@@ -278,8 +278,7 @@ export class DDLManager {
         const cacheComparator = new CacheComparator(
             postgres,
             database,
-            filesState,
-            Migration.empty()
+            filesState
         );
         const columns = cacheComparator.findChangedColumns();
         return columns;
@@ -293,8 +292,7 @@ export class DDLManager {
         const cacheComparator = new CacheComparator(
             postgres,
             database,
-            filesState,
-            Migration.empty()
+            filesState
         );
         const columns = await cacheComparator.findBrokenColumns(params);
         return columns;

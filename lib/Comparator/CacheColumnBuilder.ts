@@ -148,8 +148,7 @@ export class CacheColumnBuilder {
             cacheColumn.for
         );
 
-        const columnType = Object.values(columnsTypes)[0];
-        return columnType;
+        return Object.values(columnsTypes)[0];
     }
 
     private findDbColumnByRef(columnRef: ColumnReference) {
