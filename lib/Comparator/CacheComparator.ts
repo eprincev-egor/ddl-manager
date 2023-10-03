@@ -13,6 +13,7 @@ import { Comment } from "../database/schema/Comment";
 
 export interface IFindBrokenColumnsParams {
     concreteTables?: string | string[];
+    onStartScanColumn?: (column: string) => void,
     onScanColumn?: (result: IColumnScanResult) => void
 }
 
@@ -126,6 +127,10 @@ export class CacheComparator extends AbstractComparator {
 
         for (const column of allCacheColumns) {
             const columnRef = `${column.for.getIdentifier()}.${column.name}`;
+
+            if ( params.onStartScanColumn ) {
+                params.onStartScanColumn(columnRef);
+            }
 
             let whereBroken = `${columnRef} is distinct from tmp.${column.name}`
 
