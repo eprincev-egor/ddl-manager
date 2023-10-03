@@ -11,6 +11,21 @@ import { CacheColumnGraph } from "./graph/CacheColumnGraph";
 import { CacheColumnBuilder } from "./CacheColumnBuilder";
 import { Comment } from "../database/schema/Comment";
 
+export interface IFindBrokenColumnsParams {
+    concreteTables?: string | string[];
+    onScanColumn?: (result: IColumnScanResult) => void
+}
+
+export interface IColumnScanResult {
+    column: string;
+    hasWrongValues: boolean;
+    time: {
+        start: Date;
+        end: Date;
+        duration: number;
+    }
+}
+
 export class CacheComparator extends AbstractComparator {
 
     private graph: CacheColumnGraph;
@@ -104,9 +119,7 @@ export class CacheComparator extends AbstractComparator {
         return changedColumns;
     }
 
-    async findBrokenColumns(params: {
-        concreteTables?: string | string[]
-    } = {}) {
+    async findBrokenColumns(params: IFindBrokenColumnsParams = {}) {
         let allCacheColumns = this.findCacheColumnsForTables(params.concreteTables);
 
         const brokenColumns: CacheColumn[] = [];
@@ -116,7 +129,7 @@ export class CacheComparator extends AbstractComparator {
 
             let whereBroken = `${columnRef} is distinct from tmp.${column.name}`
 
-            const expression = column.select.columns[0].expression;
+            const {expression} = column.select.columns[0];
             if ( expression.isFuncCall() ) {
                 const [call] = expression.getFuncCalls();
                 if ( call.name === "array_agg" ) {
@@ -132,7 +145,6 @@ export class CacheComparator extends AbstractComparator {
                 }
             }
 
-            column.select.columns[0].expression.isFuncCall()
             const selectHasBroken = `
                 select exists(
                     select from ${column.for}
@@ -145,11 +157,26 @@ export class CacheComparator extends AbstractComparator {
                         ${whereBroken}
                 ) as has_broken
             `;
+            const timeStart = new Date();
             const {rows} = await this.driver.query(selectHasBroken);
             const isBroken = rows[0].has_broken;
 
             if ( isBroken ) {
                 brokenColumns.push(column);
+            }
+
+            if ( params.onScanColumn ) {
+                const timeEnd = new Date();
+
+                params.onScanColumn({
+                    column: columnRef,
+                    hasWrongValues: isBroken,
+                    time: {
+                        start: timeStart,
+                        end: timeEnd,
+                        duration: +timeEnd - +timeStart
+                    }
+                });
             }
         }
         

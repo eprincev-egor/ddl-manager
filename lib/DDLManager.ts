@@ -16,7 +16,7 @@ import { FunctionsMigrator } from "./Migrator/FunctionsMigrator";
 import { createCallsTable, clearCallsLogs, downloadLogs } from "./timeline/callsTable";
 import { parseCalls } from "./timeline/Coach";
 import { createTimelineFile } from "./timeline/createTimelineFile";
-import { CacheComparator } from "./Comparator/CacheComparator";
+import { CacheComparator, IFindBrokenColumnsParams } from "./Comparator/CacheComparator";
 
 const watchers: FileWatcher[] = [];
 interface IParams {
@@ -43,9 +43,7 @@ export interface IRefreshCacheParams extends IParams {
     logToFile?: string;
 }
 
-export interface IScanBrokenParams extends IParams {
-    concreteTables?: string | string[];
-}
+export interface IScanBrokenParams extends IParams, IFindBrokenColumnsParams {}
 
 export class DDLManager {
 
