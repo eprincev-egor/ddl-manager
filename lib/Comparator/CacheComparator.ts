@@ -15,11 +15,22 @@ export interface IFindBrokenColumnsParams {
     concreteTables?: string | string[];
     onStartScanColumn?: (column: string) => void,
     onScanColumn?: (result: IColumnScanResult) => void
+    onScanError?: (result: IColumnScanError) => void
 }
 
 export interface IColumnScanResult {
     column: string;
     hasWrongValues: boolean;
+    time: {
+        start: Date;
+        end: Date;
+        duration: number;
+    }
+}
+
+export interface IColumnScanError {
+    column: string;
+    error: Error;
     time: {
         start: Date;
         end: Date;
@@ -126,56 +137,51 @@ export class CacheComparator extends AbstractComparator {
         const brokenColumns: CacheColumn[] = [];
 
         for (const column of allCacheColumns) {
-            const columnRef = `${column.for.getIdentifier()}.${column.name}`;
+            const hasWrongValues = await this.tryScanColumnOnWrongValues(params, column);
 
-            if ( params.onStartScanColumn ) {
-                params.onStartScanColumn(columnRef);
-            }
-
-            let whereBroken = `${columnRef} is distinct from tmp.${column.name}`
-
-            const {expression} = column.select.columns[0];
-            if ( expression.isFuncCall() ) {
-                const [call] = expression.getFuncCalls();
-                if ( call.name === "array_agg" ) {
-                    whereBroken = `
-                        ${columnRef} is distinct from tmp.${column.name} and
-                        not(${columnRef} @> tmp.${column.name} and
-                        ${columnRef} <@ tmp.${column.name})
-                    `
-                }
-
-                if ( call.name === "sum" ) {
-                    whereBroken = `coalesce(${columnRef}, 0) is distinct from coalesce(tmp.${column.name}, 0)`
-                }
-            }
-
-            const selectHasBroken = `
-                select exists(
-                    select from ${column.for}
-                    
-                    left join lateral (
-                        ${column.select.toSQL()}
-                    ) as tmp on true
-                    
-                    where
-                        ${whereBroken}
-                ) as has_broken
-            `;
-            const timeStart = new Date();
-            const {rows} = await this.driver.query(selectHasBroken);
-            const isBroken = rows[0].has_broken;
-
-            if ( isBroken ) {
+            if ( hasWrongValues ) {
                 brokenColumns.push(column);
             }
+        }
+        
+        return brokenColumns;
+    }
 
+    async tryScanColumnOnWrongValues(
+        params: IFindBrokenColumnsParams,
+        column: CacheColumn
+    ) {
+        const timeStart = new Date();
+
+        if ( params.onStartScanColumn ) {
+            params.onStartScanColumn(column.toString());
+        }
+
+        try {
+            const hasWrongValues = await this.scanColumnOnWrongValues(column);
+            
             if ( params.onScanColumn ) {
                 const timeEnd = new Date();
 
                 params.onScanColumn({
-                    column: columnRef,
-                    hasWrongValues: isBroken,
+                    column: column.toString(),
+                    hasWrongValues,
+                    time: {
+                        start: timeStart,
+                        end: timeEnd,
+                        duration: +timeEnd - +timeStart
+                    }
+                });
+            }
+
+            return hasWrongValues;
+        } catch(error) {
+            if ( params.onScanError ) {
+                const timeEnd = new Date();
+
+                params.onScanError({
+                    column: column.toString(),
+                    error: error as any,
                     time: {
                         start: timeStart,
                         end: timeEnd,
@@ -184,8 +190,44 @@ export class CacheComparator extends AbstractComparator {
                 });
             }
         }
-        
-        return brokenColumns;
+    }
+
+    async scanColumnOnWrongValues(column: CacheColumn) {
+        const columnRef = `${column.for.getIdentifier()}.${column.name}`;
+        let whereBroken = `${columnRef} is distinct from tmp.${column.name}`
+
+        const {expression} = column.select.columns[0];
+        if ( expression.isFuncCall() ) {
+            const [call] = expression.getFuncCalls();
+            if ( call.name === "array_agg" ) {
+                whereBroken = `
+                    ${columnRef} is distinct from tmp.${column.name} and
+                    not(${columnRef} @> tmp.${column.name} and
+                    ${columnRef} <@ tmp.${column.name})
+                `
+            }
+
+            if ( call.name === "sum" ) {
+                whereBroken = `coalesce(${columnRef}, 0) is distinct from coalesce(tmp.${column.name}, 0)`
+            }
+        }
+
+        const selectHasBroken = `
+            select exists(
+                select from ${column.for}
+                
+                left join lateral (
+                    ${column.select.toSQL()}
+                ) as tmp on true
+                
+                where
+                    ${whereBroken}
+            ) as has_broken
+        `;
+        const {rows} = await this.driver.query(selectHasBroken);
+
+        const isBroken = rows[0].has_broken;
+        return isBroken;
     }
 
     async createLogFuncs() {

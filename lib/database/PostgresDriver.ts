@@ -526,7 +526,7 @@ function fixErrorStack(
     (err as any).sql = sql;
     (err as any).code = code;
     (err as any).originalError = originalErr;
-    (err as any).stack = stack;
+    (err as any).stack = originalErr.message + "\n" + stack;
 
     return err;
 }

@@ -99,4 +99,8 @@ export class CacheColumn {
             })
         });
     }
+
+    toString() {
+        return `${this.for.getIdentifier()}.${this.name}`;
+    }
 }
