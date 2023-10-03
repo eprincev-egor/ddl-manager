@@ -69,6 +69,10 @@ implements IDatabaseDriver {
         return {rows: []}
     }
 
+    async queryWithTimeout(sql: string, timeout: number) {
+        return {rows: []}
+    }
+
     async enableTrigger(onTable: TableID, triggerName: string): Promise<void> {
     }
 

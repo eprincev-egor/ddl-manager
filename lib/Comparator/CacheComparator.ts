@@ -10,8 +10,10 @@ import { CacheColumn, CacheColumnParams } from "./graph/CacheColumn";
 import { CacheColumnGraph } from "./graph/CacheColumnGraph";
 import { CacheColumnBuilder } from "./CacheColumnBuilder";
 import { Comment } from "../database/schema/Comment";
+import { IScanBrokenParams } from "../DDLManager";
 
 export interface IFindBrokenColumnsParams {
+    timeout?: number;
     concreteTables?: string | string[];
     onStartScanColumn?: (column: string) => void,
     onScanColumn?: (result: IColumnScanResult) => void
@@ -158,7 +160,7 @@ export class CacheComparator extends AbstractComparator {
         }
 
         try {
-            const hasWrongValues = await this.scanColumnOnWrongValues(column);
+            const hasWrongValues = await this.scanColumnOnWrongValues(params, column);
             
             if ( params.onScanColumn ) {
                 const timeEnd = new Date();
@@ -192,7 +194,10 @@ export class CacheComparator extends AbstractComparator {
         }
     }
 
-    async scanColumnOnWrongValues(column: CacheColumn) {
+    async scanColumnOnWrongValues(
+        params: IFindBrokenColumnsParams,
+        column: CacheColumn
+    ) {
         const columnRef = `${column.for.getIdentifier()}.${column.name}`;
         let whereBroken = `${columnRef} is distinct from tmp.${column.name}`
 
@@ -224,10 +229,17 @@ export class CacheComparator extends AbstractComparator {
                     ${whereBroken}
             ) as has_broken
         `;
+
+        if ( params.timeout ) {
+            const {rows} = await this.driver.queryWithTimeout(
+                selectHasBroken,
+                params.timeout
+            );
+            return rows[0].has_broken;
+        }
         const {rows} = await this.driver.query(selectHasBroken);
 
-        const isBroken = rows[0].has_broken;
-        return isBroken;
+        return rows[0].has_broken;
     }
 
     async createLogFuncs() {

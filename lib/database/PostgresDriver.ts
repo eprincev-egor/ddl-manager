@@ -376,7 +376,7 @@ implements IDatabaseDriver {
             ${update.table.getIdentifier()}.id >= ${minId} and
             ${update.table.getIdentifier()}.id <= ${maxId}
         `, `(${minId} - ${maxId})`);
-        await this.queryWithoutTimeout(sql, timeout);
+        await this.queryWithTimeout(sql, timeout);
     }
 
     async updateCacheLimitedPackage(
@@ -388,7 +388,7 @@ implements IDatabaseDriver {
             order by ${update.table.getIdentifier()}.id asc
             limit ${ limit }
         `) + `\n returning ${update.table.getIdentifier()}.id`;
-        const {rows} = await this.queryWithoutTimeout(sql, timeout);
+        const {rows} = await this.queryWithTimeout(sql, timeout);
         return rows.length;
     }
     
@@ -488,7 +488,7 @@ implements IDatabaseDriver {
         await this.pgPool.end();
     }
 
-    async queryWithoutTimeout(sql: string, timeout = 0) {
+    async queryWithTimeout(sql: string, timeout = 0) {
         const stack = new Error().stack;
 
         try {
