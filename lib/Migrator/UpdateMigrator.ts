@@ -1,7 +1,7 @@
 import { AbstractMigrator } from "./AbstractMigrator";
 import { TableReference } from "../database/schema/TableReference";
 import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
-import { flatMap } from "lodash";
+import { flatMap, times } from "lodash";
 import { sleep } from "../utils";
 
 export const parallelPackagesCount = 8;
@@ -151,20 +151,36 @@ export class UpdateMigrator extends AbstractMigrator {
     ) {
         this.logUpdate(update, `parallel updating ids ${minId} - ${maxId}`);
 
+        const timeStart = new Date();
+        if ( this.migration.updateHooks.onStartUpdate ) {
+            this.migration.updateHooks.onStartUpdate({
+                columns: update.getColumnsRefs(),
+                rows: {minId, maxId}
+            });
+        }
+
         try {
             await this.postgres.updateCacheForRows(
                 update,
                 minId, maxId,
                 this.migration.getTimeoutPerUpdate()
             );
+
+            if ( this.migration.updateHooks.onUpdate ) {
+                const timeEnd = new Date();
+                this.migration.updateHooks.onUpdate({
+                    columns: update.getColumnsRefs(),
+                    rows: {minId, maxId},
+                    time: {
+                        start: timeStart,
+                        end: timeEnd,
+                        duration: +timeEnd - +timeStart
+                    }
+                });
+            }
         } catch(err: any) {
-            if ( /deadlock/i.test(err.message) || err.code === "40P01" ) {
-                // next attempt must have more timeout 
-                const timeoutOnDeadlock = (
-                    Math.max(attemptsNumberAfterDeadlock, 10) * 
-                    UpdateMigrator.timeoutOnDeadlock
-                );
-                await sleep( timeoutOnDeadlock );
+            if ( needRepeatUpdate(err, attemptsNumberAfterDeadlock) ) {
+                await sleepOnDeadlock( attemptsNumberAfterDeadlock );
 
                 await this.tryUpdateCacheRows(
                     update, minId, maxId,
@@ -174,6 +190,20 @@ export class UpdateMigrator extends AbstractMigrator {
             }
 
             this.logUpdate(update, `failed updating ids ${minId} - ${maxId} with error: ${err.message}`);
+
+            if ( this.migration.updateHooks.onUpdateError ) {
+                const timeEnd = new Date();
+                this.migration.updateHooks.onUpdateError({
+                    columns: update.getColumnsRefs(),
+                    error: err,
+                    rows: {minId, maxId},
+                    time: {
+                        start: timeStart,
+                        end: timeEnd,
+                        duration: +timeEnd - +timeStart
+                    }
+                });
+            }
         }
 
         const timeout = this.migration.getTimeoutBetweenUpdates();
@@ -212,26 +242,62 @@ export class UpdateMigrator extends AbstractMigrator {
         update: CacheUpdate,
         attemptsNumberAfterDeadlock = 0
     ): Promise<number> {
+        const timeStart = new Date();
+        if ( this.migration.updateHooks.onStartUpdate ) {
+            this.migration.updateHooks.onStartUpdate({
+                columns: update.getColumnsRefs(),
+                rows: "package"
+            });
+        }
+
         try {
-            return await this.postgres.updateCacheLimitedPackage(
+            const updatedIds = await this.postgres.updateCacheLimitedPackage(
                 update,
                 this.migration.getUpdatePackageSize(),
                 this.migration.getTimeoutPerUpdate()
             );
+
+            if ( this.migration.updateHooks.onUpdate ) {
+                const timeEnd = new Date();
+
+                this.migration.updateHooks.onUpdate({
+                    columns: update.getColumnsRefs(),
+                    rows: {
+                        minId: Math.min(...updatedIds),
+                        maxId: Math.max(...updatedIds)
+                    },
+                    time: {
+                        start: timeStart,
+                        end: timeEnd,
+                        duration: +timeEnd - +timeStart
+                    }
+                });
+            }
+
+            return updatedIds.length;
         } catch(err: any) {
-            const message = (err as any).message;
-            if ( /deadlock/i.test(message) ) {
-                // next attempt must have more timeout 
-                const timeoutOnDeadlock = (
-                    Math.max(attemptsNumberAfterDeadlock, 5) * 
-                    UpdateMigrator.timeoutOnDeadlock
-                );
-                await sleep( timeoutOnDeadlock );
+            if ( needRepeatUpdate(err, attemptsNumberAfterDeadlock) ) {
+                await sleepOnDeadlock( attemptsNumberAfterDeadlock );
 
                 return await this.tryUpdateCacheLimitedPackage(
                     update,
                     attemptsNumberAfterDeadlock + 1
                 );
+            }
+
+            if ( this.migration.updateHooks.onUpdateError ) {
+                const timeEnd = new Date();
+
+                this.migration.updateHooks.onUpdateError({
+                    columns: update.getColumnsRefs(),
+                    error: err,
+                    rows: "package",
+                    time: {
+                        start: timeStart,
+                        end: timeEnd,
+                        duration: +timeEnd - +timeStart
+                    }
+                });
             }
 
             this.logUpdate(update, `failed updating with error: ${err.message}`);
@@ -277,4 +343,20 @@ export class UpdateMigrator extends AbstractMigrator {
             `cache: ${update.caches.join(", ")} `
         ].join("\n"));
     }
+}
+
+function needRepeatUpdate(err: any, attemptsCount: number) {
+    const isDeadlock = /deadlock/i.test(err.message) || err.code === "40P01";
+    const isLongBlock = /canceled/.test(err.message) || err.code == "XXX";
+
+    return (isDeadlock || isLongBlock) && attemptsCount < 10;
+}
+
+async function sleepOnDeadlock(attemptsCount: number) {
+    // next attempt must have more timeout 
+    const timeoutOnDeadlock = (
+        Math.max(attemptsCount, 10) * 
+        UpdateMigrator.timeoutOnDeadlock
+    );
+    await sleep( timeoutOnDeadlock );
 }

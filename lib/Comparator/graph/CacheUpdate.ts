@@ -37,6 +37,10 @@ export class CacheUpdate {
         }
     }
 
+    getColumnsRefs() {
+        return this.columns.map(column => column.toString());
+    }
+
     private combineSameCacheSelects() {
         const selects: Select[] = [];
 

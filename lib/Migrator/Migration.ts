@@ -5,6 +5,7 @@ import { Index } from "../database/schema/Index";
 import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
 import { flatMap } from "lodash";
 import fs from "fs";
+import { UpdateHooks as IUpdateHooks } from "../DDLManager";
 
 export interface IChanges {
     functions: DatabaseFunction[];
@@ -18,6 +19,7 @@ export interface IChanges {
 export class Migration {
     readonly toDrop: IChanges;
     readonly toCreate: IChanges;
+    updateHooks: IUpdateHooks = {};
     private enabledCacheTriggersOnUpdate: boolean;
     private timeoutBetweenUpdates?: number;
     private timeoutPerUpdate = 0;
@@ -173,6 +175,10 @@ export class Migration {
 
     logToFile(filePath: string) {
         this.logFilePath = filePath;
+    }
+
+    setUpdateHooks(hooks: IUpdateHooks) {
+        this.updateHooks = hooks;
     }
     
     addLog(log: string) {

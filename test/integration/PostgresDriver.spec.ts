@@ -945,9 +945,9 @@ describe("integration/PostgresDriver.loadState", () => {
         });
 
         let result: any;
-        let updatedCount: any;
+        let updated: any;
 
-        updatedCount = await driver.updateCacheLimitedPackage(
+        updated = await driver.updateCacheLimitedPackage(
             new CacheUpdate([
                 new CacheColumn({
                     for: companiesTableRef,
@@ -959,7 +959,7 @@ describe("integration/PostgresDriver.loadState", () => {
             3
         );
 
-        assert.strictEqual(updatedCount, 3);
+        assert.strictEqual(updated.length, 3);
 
         result = await db.query("select * from companies order by id");
         assert.deepStrictEqual(result.rows, [
@@ -978,7 +978,7 @@ describe("integration/PostgresDriver.loadState", () => {
         // after second update, more rows should be updated
         // also should be update broken rows
         await db.query("update companies set orders_profit = 20 where id in (1,2,3)");
-        updatedCount = await driver.updateCacheLimitedPackage(
+        updated = await driver.updateCacheLimitedPackage(
             new CacheUpdate([
                 new CacheColumn({
                     for: companiesTableRef,
@@ -990,7 +990,7 @@ describe("integration/PostgresDriver.loadState", () => {
             6
         );
 
-        assert.strictEqual(updatedCount, 6);
+        assert.strictEqual(updated.length, 6);
 
         result = await db.query("select * from companies order by id");
         assert.deepStrictEqual(result.rows, [
@@ -1008,7 +1008,7 @@ describe("integration/PostgresDriver.loadState", () => {
 
         
         // last update, all rows should be updated
-        updatedCount = await driver.updateCacheLimitedPackage(
+        updated = await driver.updateCacheLimitedPackage(
             new CacheUpdate([
                 new CacheColumn({
                     for: companiesTableRef,
@@ -1020,7 +1020,7 @@ describe("integration/PostgresDriver.loadState", () => {
             5
         );
 
-        assert.strictEqual(updatedCount, 4);
+        assert.strictEqual(updated.length, 4);
 
         result = await db.query("select * from companies order by id");
         assert.deepStrictEqual(result.rows, [

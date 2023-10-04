@@ -16,7 +16,7 @@ import { FunctionsMigrator } from "./Migrator/FunctionsMigrator";
 import { createCallsTable, clearCallsLogs, downloadLogs } from "./timeline/callsTable";
 import { parseCalls } from "./timeline/Coach";
 import { createTimelineFile } from "./timeline/createTimelineFile";
-import { CacheComparator, IFindBrokenColumnsParams } from "./Comparator/CacheComparator";
+import { CacheComparator, IFindBrokenColumnsParams, TimeRange } from "./Comparator/CacheComparator";
 
 const watchers: FileWatcher[] = [];
 interface IParams {
@@ -31,7 +31,7 @@ interface ITimelineParams extends IParams {
     outputPath: string;
 }
 
-export interface IRefreshCacheParams extends IParams {
+export interface IRefreshCacheParams extends IParams, UpdateHooks {
     concreteTables?: string | string[];
     timeoutPerUpdate?: number;
     
@@ -41,6 +41,25 @@ export interface IRefreshCacheParams extends IParams {
 
     updatePackageSize?: number;
     logToFile?: string;
+}
+
+export interface UpdateHooks {
+    onStartUpdate?: (start: IUpdateStart) => void;
+    onUpdate?: (result: IUpdateResult) => void;
+    onUpdateError?: (result: IUpdateError) => void;
+}
+
+export interface IUpdateStart {
+    columns: string[];
+    rows: "package" | "recursion" | {minId: number; maxId: number};
+}
+
+export interface IUpdateResult extends IUpdateStart {
+    time: TimeRange;
+}
+
+export interface IUpdateError extends IUpdateResult {
+    error: Error;
 }
 
 export interface IScanBrokenParams extends IParams, IFindBrokenColumnsParams {}
@@ -250,6 +269,7 @@ export class DDLManager {
         if ( params.logToFile ) {
             migration.logToFile(params.logToFile);
         }
+        migration.setUpdateHooks(params);
 
         const migrateErrors = await MainMigrator.migrate(
             postgres,

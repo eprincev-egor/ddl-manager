@@ -40,7 +40,7 @@ export interface IDatabaseDriver {
         update: CacheUpdate,
         limit: number,
         timeout?: number
-    ): Promise<number>;
+    ): Promise<number[]>;
     createOrReplaceHelperFunc(func: DatabaseFunction): Promise<void>;
     dropIndex(index: Index): Promise<void>;
     createOrReplaceIndex(index: Index): Promise<void>;

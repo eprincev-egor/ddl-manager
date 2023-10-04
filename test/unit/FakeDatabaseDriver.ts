@@ -198,7 +198,7 @@ implements IDatabaseDriver {
     async updateCacheLimitedPackage(
         update: CacheUpdate,
         limit: number
-    ): Promise<number> {
+    ): Promise<number[]> {
         const table = update.table.table.toString();
         
         const alreadyUpdatedPackages = (this.updatedByLimit[table] || []).slice();
@@ -214,7 +214,12 @@ implements IDatabaseDriver {
         });
         this.updatedByLimit[table] = alreadyUpdatedPackages;
 
-        return Math.min(remainder, limit);
+        const updatedCount = Math.min(remainder, limit);
+        const outputIds: number[] = [];
+        for (let i = 1; i < updatedCount; i++) {
+            outputIds.push(i);
+        }
+        return outputIds;
     }
 
     unfreezeAll(dbState: Database): Promise<void> {

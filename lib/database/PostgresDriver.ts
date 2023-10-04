@@ -406,7 +406,7 @@ implements IDatabaseDriver {
             limit ${ limit }
         `) + `\n returning ${update.table.getIdentifier()}.id`;
         const {rows} = await this.queryWithTimeout(sql, timeout);
-        return rows.length;
+        return rows.map(row => +row.id);
     }
     
     private buildUpdateSql(

@@ -10,34 +10,31 @@ import { CacheColumn, CacheColumnParams } from "./graph/CacheColumn";
 import { CacheColumnGraph } from "./graph/CacheColumnGraph";
 import { CacheColumnBuilder } from "./CacheColumnBuilder";
 import { Comment } from "../database/schema/Comment";
-import { IScanBrokenParams } from "../DDLManager";
 
 export interface IFindBrokenColumnsParams {
     timeout?: number;
     concreteTables?: string | string[];
-    onStartScanColumn?: (column: string) => void,
-    onScanColumn?: (result: IColumnScanResult) => void
-    onScanError?: (result: IColumnScanError) => void
+    onStartScanColumn?: (column: string) => void;
+    onScanColumn?: (result: IColumnScanResult) => void;
+    onScanError?: (result: IColumnScanError) => void;
 }
 
 export interface IColumnScanResult {
     column: string;
     hasWrongValues: boolean;
-    time: {
-        start: Date;
-        end: Date;
-        duration: number;
-    }
+    time: TimeRange;
 }
 
 export interface IColumnScanError {
     column: string;
     error: Error;
-    time: {
-        start: Date;
-        end: Date;
-        duration: number;
-    }
+    time: TimeRange;
+}
+
+export interface TimeRange {
+    start: Date;
+    end: Date;
+    duration: number;
 }
 
 export class CacheComparator extends AbstractComparator {
