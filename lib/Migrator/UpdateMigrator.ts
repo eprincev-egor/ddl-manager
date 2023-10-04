@@ -347,7 +347,7 @@ export class UpdateMigrator extends AbstractMigrator {
 
 function needRepeatUpdate(err: any, attemptsCount: number) {
     const isDeadlock = /deadlock/i.test(err.message) || err.code === "40P01";
-    const isLongBlock = /canceled/.test(err.message) || err.code == "XXX";
+    const isLongBlock = /terminating connection due to administrator/.test(err.message) || err.code == "57P01";
 
     return (isDeadlock || isLongBlock) && attemptsCount < 10;
 }
