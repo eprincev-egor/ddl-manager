@@ -19,7 +19,6 @@ import { wrapText } from "./postgres/wrapText";
 import { IFileContent } from "../fs/File";
 import { Index } from "./schema/Index";
 import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
-import { sleep } from "../utils";
 
 const selectAllFunctionsSQL = fs.readFileSync(__dirname + "/postgres/select-all-functions.sql")
     .toString();
@@ -39,18 +38,36 @@ implements IDatabaseDriver {
     private fileParser: FileParser;
     private types: PGTypes;
 
-    constructor(pgClient: Pool) {
-        this.pgPool = pgClient;
+    constructor(pgPool: Pool) {
+        this.pgPool = pgPool;
+        this.pgPool.on("error", error =>
+            console.error("got pg pool error", error)
+        );
+
+        // hardfix falling process
+        (this.pgPool as any)._releaseOnce = function _releaseOnce(client: any, idleListener: any) {
+            let released = false
+        
+            return (err: Error) => {
+                if (released) {
+                    return;
+                }
+        
+                released = true
+                this._release(client, idleListener, err)
+            };
+        }
+
         this.fileParser = new FileParser();
-        this.types = new PGTypes(pgClient);
+        this.types = new PGTypes(pgPool);
     }
 
     async load() {
         const database = await this.loadTables();
         
         const functions = await this.loadFunctions();
-        database.addFunctions(functions);
 
+        database.addFunctions(functions);
         const triggers = await this.loadTriggers();
         for (const trigger of triggers) {
             database.addTrigger(trigger);
@@ -490,15 +507,62 @@ implements IDatabaseDriver {
 
     async queryWithTimeout(sql: string, timeout = 0) {
         const stack = new Error().stack;
+        let timer;
+        let blocks;
 
         try {
             const connection = await this.pgPool.connect();
-            const result = await execSqlWithTimeout(connection, sql, timeout);
+            const processId = +(connection as any).processID;
 
+            // Fix falling the process
+            connection.on("error", (error) =>
+                console.log("got pg client error", error)
+            );
+
+
+            if ( timeout > 0 ) {
+                timer = setTimeout(async () => {
+                    const {rows} = await this.pgPool.query(`
+                        SELECT blocking_locks.pid     AS blocking_pid,
+                                blocking_activity.query   AS blocking_query
+                        FROM  pg_catalog.pg_locks         blocked_locks
+                            JOIN pg_catalog.pg_stat_activity blocked_activity  ON blocked_activity.pid = blocked_locks.pid
+                            JOIN pg_catalog.pg_locks         blocking_locks 
+                                ON blocking_locks.locktype = blocked_locks.locktype
+                                AND blocking_locks.database IS NOT DISTINCT FROM blocked_locks.database
+                                AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
+                                AND blocking_locks.page IS NOT DISTINCT FROM blocked_locks.page
+                                AND blocking_locks.tuple IS NOT DISTINCT FROM blocked_locks.tuple
+                                AND blocking_locks.virtualxid IS NOT DISTINCT FROM blocked_locks.virtualxid
+                                AND blocking_locks.transactionid IS NOT DISTINCT FROM blocked_locks.transactionid
+                                AND blocking_locks.classid IS NOT DISTINCT FROM blocked_locks.classid
+                                AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
+                                AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
+                                AND blocking_locks.pid != blocked_locks.pid
+
+                            JOIN pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
+                        WHERE
+                            NOT blocked_locks.granted and
+                            blocked_locks.pid = ${processId}
+                    `);
+                    blocks = rows;
+
+                    this.pgPool.query(`
+                        select pg_terminate_backend(${ processId })
+                    `).finally(() =>
+                        connection.release()
+                    );
+                }, timeout);
+            }
+
+            const result = await execSql(connection, sql);
+
+            clearTimeout(timer);
             connection.release();
+
             return result;
         } catch(originalErr) {
-            console.error(originalErr, sql, stack);
+            (originalErr as any).blocks = blocks;
             throw fixErrorStack(sql, originalErr, stack);
         }
     }
@@ -510,7 +574,6 @@ implements IDatabaseDriver {
         } catch(originalErr) {
             throw fixErrorStack(sql, originalErr, stack);
         }
-
     }
 }
 
@@ -518,40 +581,16 @@ function fixErrorStack(
     sql: string,
     originalErr: any,
     stack: string | undefined
-) {
+): Error {
+    const correctError = new Error(originalErr.message) as any;
+    // system info (postgres stack, codes, ...)
+    Object.assign(correctError, originalErr);
+
     // redefine call stack
-    const {message, code} = originalErr as any;
+    correctError.stack = originalErr.message + "\n" + stack;
+    correctError.sql = sql;
 
-    const err = new Error(message);
-    (err as any).sql = sql;
-    (err as any).code = code;
-    (err as any).originalError = originalErr;
-    (err as any).stack = originalErr.message + "\n" + stack;
-
-    return err;
-}
-
-function execSqlWithTimeout(
-    connection: PoolClient,
-    sql: string, timeout: number
-): Promise<QueryResult<any>> {
-    let timer: NodeJS.Timeout | undefined;
-
-    if ( timeout > 0 ) {
-        timer = setTimeout(() => {
-            const pgClient = (connection as any);
-            pgClient.cancel(
-                pgClient,
-                pgClient.activeQuery
-            );
-        }, timeout);
-    }
-
-    
-    return execSql(connection, sql).then((result) => {
-        clearTimeout(timer);
-        return result;
-    });
+    return correctError;
 }
 
 function execSql(
@@ -576,11 +615,3 @@ function toNumber(value: string | number | null | undefined): number | null {
     }
     return +value;
 }
-
-// function parseColumnNulls(columnRow: any) {
-//     if ( columnRow.is_nullable === "YES" ) {
-//         return true;
-//     } else {
-//         return false;
-//     }
-// }
