@@ -85,7 +85,7 @@ export class Comment {
 
     equal(otherComment: Comment) {
         return (
-            this.dev === otherComment.dev &&
+            String(this.dev || "") === String(otherComment.dev || "") &&
             this.cacheSelect === otherComment.cacheSelect &&
             this.cacheSignature === otherComment.cacheSignature
         );
