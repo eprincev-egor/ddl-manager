@@ -84,7 +84,11 @@ export class Comment {
     }
 
     equal(otherComment: Comment) {
-        return this.toString() === otherComment.toString();
+        return (
+            this.dev === otherComment.dev &&
+            this.cacheSelect === otherComment.cacheSelect &&
+            this.cacheSignature === otherComment.cacheSignature
+        );
     }
 
     markAsFrozen() {
@@ -95,10 +99,6 @@ export class Comment {
     }
 
     toString() {
-        if ( this.frozen && !this.dev ) {
-            return "";
-        }
-
         let comment = "";
 
         if ( this.dev ) {
