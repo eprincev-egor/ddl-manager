@@ -8,10 +8,6 @@ import { Database } from "../database/schema/Database";
 import { IndexesMigrator } from "./IndexesMigrator";
 
 export class MainMigrator {
-    private migration: Migration;
-    private postgres: IDatabaseDriver;
-    private database: Database;
-
     static async migrate(
         postgres: IDatabaseDriver,
         database: Database,
@@ -25,82 +21,75 @@ export class MainMigrator {
         return await migrator.migrate();
     }
 
-    private constructor(
-        postgres: IDatabaseDriver,
-        database: Database,
-        migration: Migration
-    ) {
-        this.postgres = postgres;
-        this.database = database;
-        this.migration = migration;
+    constructor(
+        private postgres: IDatabaseDriver,
+        private database: Database,
+        private migration: Migration,
+        private outputErrors: Error[] = [],
+        private aborted = false
+    ) {}
+
+    private functions? = new FunctionsMigrator(
+        this.postgres,
+        this.migration,
+        this.database,
+        this.outputErrors
+    );
+    private triggers? = new TriggersMigrator(
+        this.postgres,
+        this.migration,
+        this.database,
+        this.outputErrors
+    );
+    private columns? = new ColumnsMigrator(
+        this.postgres,
+        this.migration,
+        this.database,
+        this.outputErrors
+    );
+    private updates? = new UpdateMigrator(
+        this.postgres,
+        this.migration,
+        this.database,
+        this.outputErrors
+    );
+    private indexes? = new IndexesMigrator(
+        this.postgres,
+        this.migration,
+        this.database,
+        this.outputErrors
+    );
+
+    async migrate() {
+        await this.triggers?.drop();
+        await this.functions?.drop();
+        await this.indexes?.drop();
+        await this.columns?.drop();
+
+        await this.columns?.create();
+        await this.functions?.create();
+        await this.triggers?.create();
+        await this.indexes?.create();
+
+        await this.updates?.create();
+
+        return this.outputErrors;
     }
 
-    private async migrate() {
-        const {
-            functions,
-            triggers,
-            columns,
-            updates,
-            indexes,
-            outputErrors
-        } = await this.createMigrators();
-
-        await triggers.drop();
-        await functions.drop();
-        await indexes.drop();
-        await columns.drop();
-
-        await columns.create();
-        await functions.create();
-        await triggers.create();
-        await indexes.create();
-        await updates.create();
-
-        return outputErrors;
+    abort() {
+        if ( this.isAborted() ) {
+            return;
+        }
+        this.aborted = true;
+        this.updates?.abort();
+        this.triggers = undefined;
+        this.functions = undefined;
+        this.columns = undefined;
+        this.indexes = undefined;
+        this.updates = undefined;
     }
 
-    private async createMigrators() {
-
-        const outputErrors: Error[] = [];
-
-        const functions = new FunctionsMigrator(
-            this.postgres,
-            this.migration,
-            this.database,
-            outputErrors
-        );
-        const triggers = new TriggersMigrator(
-            this.postgres,
-            this.migration,
-            this.database,
-            outputErrors
-        );
-        const columns = new ColumnsMigrator(
-            this.postgres,
-            this.migration,
-            this.database,
-            outputErrors
-        );
-        const updates = new UpdateMigrator(
-            this.postgres,
-            this.migration,
-            this.database,
-            outputErrors
-        );
-        const indexes = new IndexesMigrator(
-            this.postgres,
-            this.migration,
-            this.database,
-            outputErrors
-        );
-
-        return {
-            functions,
-            triggers,
-            columns,
-            updates,
-            indexes,
-            outputErrors
-        };
+    isAborted() {
+        return this.aborted;
     }
 }

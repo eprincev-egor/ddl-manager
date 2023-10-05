@@ -86,7 +86,19 @@
 - test commutative cache working with insert/deleted ids
   - data fields change and reference fields change
 
+1. autofix for 
+bigint[] && integer[]
 
+auto reverse conditions for index scan
+    1. migrations
+    2. cache search
+
+
+2. fix twice build cache
+cache orders_ids for request_currency_translation
+    changes column type
+    => need rebuild cache trigger 
+    cache orders_numbers for request_currency_translation
 parallel threads by min/max
 combine same cache updates
 disable all triggers

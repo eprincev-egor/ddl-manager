@@ -247,11 +247,6 @@ export class CacheComparator extends AbstractComparator {
         }
     }
 
-    async createWithoutUpdates() {
-        this.createTriggers();
-        await this.createColumns();
-    }
-
     async refreshCache(concreteTables?: string) {
         await this.createColumns();
 

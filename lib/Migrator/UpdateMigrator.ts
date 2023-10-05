@@ -1,7 +1,7 @@
 import { AbstractMigrator } from "./AbstractMigrator";
 import { TableReference } from "../database/schema/TableReference";
 import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
-import { flatMap, times } from "lodash";
+import { flatMap } from "lodash";
 import { sleep } from "../utils";
 
 export const parallelPackagesCount = 8;
@@ -10,12 +10,18 @@ export class UpdateMigrator extends AbstractMigrator {
 
     static timeoutOnDeadlock = 3000;
 
+    private aborted = false;
+
     async drop() {}
 
     async create() {
         for (const update of this.migration.toCreate.updates) {
             await this.toggleTriggersAndDoUpdate(update);
         }
+    }
+
+    abort() {
+        this.aborted = true;
     }
 
     private async toggleTriggersAndDoUpdate(update: CacheUpdate) {
@@ -123,6 +129,10 @@ export class UpdateMigrator extends AbstractMigrator {
         const packageSize = this.migration.getUpdatePackageSize();
 
         while ( startId < endId ) {
+            if ( this.aborted ) {
+                return;
+            }
+
             let ids = await this.postgres.selectNextIds(
                 update.table.table,
                 endId,
@@ -219,6 +229,10 @@ export class UpdateMigrator extends AbstractMigrator {
         let needUpdateMore = false;
 
         do {
+            if ( this.aborted ) {
+                return;
+            }
+
             this.logUpdate(update, `updating #${ ++packageIndex }`);
 
             const updatedCount = await this.tryUpdateCacheLimitedPackage(update);

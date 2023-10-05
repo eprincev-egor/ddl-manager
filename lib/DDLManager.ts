@@ -132,6 +132,7 @@ export class DDLManager {
     private needThrowError: boolean;
     private needCloseConnect: boolean;
     private dbConfig: IDBConfig | pg.Pool;
+    private activeMigrators: MainMigrator[] = [];
 
     private constructor(params: IParams) {
 
@@ -225,7 +226,7 @@ export class DDLManager {
 
         console.log("unlogging all funcs");
         database = await postgres.load();
-        const unlogMigration = await MainComparator.compareWithoutUpdates(
+        const unlogMigration = await MainComparator.compare(
             postgres,
             database,
             filesState
@@ -363,47 +364,55 @@ export class DDLManager {
     private async watch() {
         const postgres = await this.postgres();
         const database = await postgres.load();
-        const watcher = await FileWatcher.watch(this.folders);
+        const fs = await FileWatcher.watch(this.folders);
 
-        watcher.on("change", () => {
-            this.onChangeFS(
-                postgres,
-                database,
-                watcher.state
-            );
+        fs.on("change", () => {
+            void this.onChangeFs(postgres, database, fs.state)
         });
-        watcher.on("error", (err) => {
+        fs.on("error", (err) => {
             console.error(err.message);
         });
 
-        watchers.push(watcher);
+        watchers.push(fs);
 
-        return watcher;
+        return fs;
     }
 
-    private async onChangeFS(
+    private async onChangeFs(
         postgres: IDatabaseDriver,
         database: Database,
-        filesState: FilesState
+        fsState: FilesState
     ) {
-        const migration = await MainComparator.compareWithoutUpdates(
+        for (const migrator of this.activeMigrators) {
+            migrator.abort();
+        }
+
+        const migration = await MainComparator.compare(
             postgres,
             database,
-            filesState
+            fsState
         );
-
-        const migrateErrors = await MainMigrator.migrate(
+        const migrator = new MainMigrator(
             postgres,
             database,
             migration
         );
+        this.activeMigrators.push(migrator);
 
-        database.applyMigration(migration);
+        const migrateErrors = await migrator.migrate();
 
-        migration.log();
-        if ( migrateErrors.length ) {
-            console.error(migrateErrors);
+        if ( !migrator.isAborted() ) {
+            database.applyMigration(migration);
+
+            migration.log();
+            if ( migrateErrors.length ) {
+                console.error(migrateErrors);
+            }
         }
+
+        this.activeMigrators = this.activeMigrators.filter(activeMigrator =>
+            activeMigrator === migrator
+        );        
     }
 
     private async dump(unfreeze: boolean = false) {

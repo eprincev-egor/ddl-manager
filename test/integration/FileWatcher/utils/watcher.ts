@@ -43,7 +43,7 @@ export function watcher(ROOT_TMP_PATH: string) {
 
         if ( onChange ) {
             fsWatcher.on("change", async() => {
-                const migration = await MainComparator.compareWithoutUpdates(
+                const migration = await MainComparator.compare(
                     postgres,
                     database,
                     fsWatcher.state

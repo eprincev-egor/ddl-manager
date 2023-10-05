@@ -54,7 +54,7 @@ describe("integration/FileWatcher watch change cache", () => {
         assert.strictEqual(migration.toCreate.functions.length, 1, "one func to create");
         assert.strictEqual(migration.toCreate.triggers.length, 1, "one trigger to create");
         assert.strictEqual(migration.toCreate.columns.length, 2, "columns to create"); // 2 because exists helper column
-        assert.strictEqual(migration.toCreate.updates.length, 0, "no updates to create");
+        assert.strictEqual(migration.toCreate.updates.length, 1, "one update to create");
     });
 
     it("drop cache", async() => {

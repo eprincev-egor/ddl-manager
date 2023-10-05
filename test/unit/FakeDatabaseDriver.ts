@@ -253,6 +253,10 @@ implements IDatabaseDriver {
         // 
     }
 
+    async terminateActiveCacheUpdates() {
+        // 
+    }
+
     // test methods
     setColumnsTypes(types: {[column: string]: string}) {
         this.columnsTypes = types;

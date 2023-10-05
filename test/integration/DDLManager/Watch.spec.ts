@@ -419,7 +419,7 @@ describe("integration/DDLManager.watch", () => {
         });
     });
 
-    it("don't update cache columns in watcher mode (cpu high load)", async() => {
+    it("update cache columns in watcher mode (cpu high load)", async() => {
         const folderPath = ROOT_TMP_PATH + "/watch-cache";
     
         
@@ -462,7 +462,7 @@ describe("integration/DDLManager.watch", () => {
         `);
 
         assert.deepStrictEqual(result.rows, [
-            {id: 1, orders_count: "0"},
+            {id: 1, orders_count: "2"},
             {id: 2, orders_count: "0"}
         ]);
     });

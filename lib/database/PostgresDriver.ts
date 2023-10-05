@@ -382,6 +382,16 @@ implements IDatabaseDriver {
         return rows.map(row => row.id).reverse();
     }
 
+    async terminateActiveCacheUpdates() {
+        await this.query(`
+            select pg_terminate_backend(pid)
+            from pg_stat_activity
+            where
+                query ilike '-- cache %' and
+                query not ilike '%pg_terminate_backend(pid)%'
+        `);
+    }
+
     async updateCacheForRows(
         update: CacheUpdate,
         minId: number,
