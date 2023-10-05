@@ -8,8 +8,9 @@ export class Column {
     readonly name: string;
     readonly type: Type;
     readonly default: string | null;
-    readonly comment: Comment;
     readonly cacheSignature?: string;
+    readonly frozen?: boolean;
+    comment: Comment;
 
     constructor(
         table: TableID,
@@ -31,6 +32,7 @@ export class Column {
         this.default = defaultValue || null;
         this.comment = comment || Comment.frozen("column");
         this.cacheSignature = this.comment.cacheSignature;
+        this.frozen = this.comment.frozen;
     }
 
     getSignature() {
@@ -84,6 +86,14 @@ export class Column {
             this.default || undefined,
             this.comment
         );
+    }
+
+    isFrozen() {
+        return this.comment.frozen;
+    }
+
+    markAsFrozen() {
+        this.comment = this.comment.markAsFrozen();
     }
 }
 

@@ -3820,4 +3820,61 @@ describe("integration/DDLManager.build cache", () => {
         ]);
     });
 
+
+    it("don't drop column if it's legacy column", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table my_table (
+                id serial primary key,
+                quantity integer
+            );
+        `);
+        
+        fs.writeFileSync(folderPath + "/cache.sql", `
+            cache totals for my_table (
+                select
+                    1 as quantity
+            )
+        `);
+        await db.query(`
+            insert into my_table default values;
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        let result = await db.query(`
+            select id, quantity
+            from my_table
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, quantity: 1,}
+        ]);
+
+
+        // kill cache
+        fs.unlinkSync(folderPath + "/cache.sql");
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        result = await db.query(`
+            select id, quantity
+            from my_table
+        `);
+        assert.deepStrictEqual(result.rows, [
+            {id: 1, quantity: 1,}
+        ]);
+
+    });
+
 });

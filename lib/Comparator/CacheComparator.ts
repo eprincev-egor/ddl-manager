@@ -305,7 +305,8 @@ export class CacheComparator extends AbstractComparator {
 
     private async dropTrashColumns() {
         const dbCacheColumns = flatMap(this.database.tables, table => table.columns)
-            .filter(dbColumn => dbColumn.cacheSignature);
+            .filter(dbColumn => dbColumn.cacheSignature)
+            .filter(dbColumn => !dbColumn.isFrozen()); // don't drop columns, which was created not by ddl-manager
 
         for (const dbColumn of dbCacheColumns) {
             const existsCacheWithSameColumn = await this.existsCacheWithSameColumn(dbColumn);
@@ -402,6 +403,10 @@ export class CacheComparator extends AbstractComparator {
                 existentColumn && 
                 existentColumn.suit( columnToCreate )
             );
+
+            if ( existentColumn ) {
+                columnToCreate.markAsFrozen();
+            }
 
             if ( !existsSameColumn ) {
                 this.migration.create({

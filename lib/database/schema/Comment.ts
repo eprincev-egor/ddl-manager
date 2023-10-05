@@ -1,5 +1,12 @@
 
 type CommentObjectType = "function" | "trigger" | "column" | "index";
+export interface CommentParams {
+    objectType: CommentObjectType;
+    dev?: string;
+    cacheSignature?: string;
+    cacheSelect?: string;
+    frozen?: boolean;
+}
 
 export class Comment {
 
@@ -30,25 +37,16 @@ export class Comment {
             frozen,
             dev,
             cacheSignature,
-            cacheSelect
+            cacheSelect,
         });
         return comment;
     }
 
-    static fromFs(params: {
-        objectType: CommentObjectType;
-        dev?: string;
-        cacheSignature?: string;
-        cacheSelect?: string;
-    }) {
-        const comment = new Comment({
-            objectType: params.objectType,
-            frozen: false,
-            dev: params.dev,
-            cacheSignature: params.cacheSignature,
-            cacheSelect: params.cacheSelect,
+    static fromFs(params: CommentParams) {
+        return new Comment({
+            ...params,
+            frozen: false
         });
-        return comment;
     }
 
     readonly objectType: CommentObjectType;
@@ -56,14 +54,9 @@ export class Comment {
     readonly frozen?: boolean;
     readonly cacheSignature?: string;
     readonly cacheSelect?: string;
+    readonly legacy?: boolean;
 
-    private constructor(params: {
-        objectType: CommentObjectType;
-        dev?: string;
-        frozen?: boolean;
-        cacheSignature?: string;
-        cacheSelect?: string;
-    }) {
+    private constructor(params: CommentParams) {
         this.objectType = params.objectType;
         this.dev = params.dev;
         this.frozen = params.frozen;
@@ -73,18 +66,16 @@ export class Comment {
     }
 
     private validate() {
-        if ( this.cacheSignature && this.frozen ) {
-            throw new Error("cache object cannot be frozen");
+        if ( !this.cacheSelect ) {
+            return;
         }
 
-        if ( this.cacheSelect ) {
-            if ( this.objectType !== "column" ) {
-                throw new Error("cacheSelect can be only for column");
-            }
+        if ( this.objectType !== "column" ) {
+            throw new Error("cacheSelect can be only for column");
+        }
 
-            if ( !this.cacheSignature ) {
-                throw new Error("cacheSelect can be only for cache column");
-            }
+        if ( !this.cacheSignature ) {
+            throw new Error("cacheSelect can be only for cache column");
         }
     }
 
@@ -94,6 +85,13 @@ export class Comment {
 
     equal(otherComment: Comment) {
         return this.toString() === otherComment.toString();
+    }
+
+    markAsFrozen() {
+        return new Comment({
+            ...this,
+            frozen: true
+        });
     }
 
     toString() {
