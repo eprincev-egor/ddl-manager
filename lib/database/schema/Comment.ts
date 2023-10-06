@@ -2,7 +2,6 @@
 type CommentObjectType = "function" | "trigger" | "column" | "index";
 export interface CommentParams {
     objectType: CommentObjectType;
-    dev?: string;
     cacheSignature?: string;
     cacheSelect?: string;
     frozen?: boolean;
@@ -17,11 +16,10 @@ export class Comment {
         });
     }
 
-    static frozen(objectType: CommentObjectType, dev?: string) {
+    static frozen(objectType: CommentObjectType) {
         return new Comment({
             objectType,
-            frozen: true,
-            dev
+            frozen: true
         });
     }
 
@@ -30,12 +28,10 @@ export class Comment {
         const frozen = !total.includes("ddl-manager-sync");
         const cacheSignature = parseCacheSignature(total);
         const cacheSelect = parseCacheSelect(total);
-        const dev = parseDev(total);
 
         const comment = new Comment({
             objectType,
             frozen,
-            dev,
             cacheSignature,
             cacheSelect,
         });
@@ -50,44 +46,26 @@ export class Comment {
     }
 
     readonly objectType: CommentObjectType;
-    readonly dev?: string;
-    readonly frozen?: boolean;
+    readonly frozen: boolean;
     readonly cacheSignature?: string;
     readonly cacheSelect?: string;
     readonly legacy?: boolean;
 
     private constructor(params: CommentParams) {
         this.objectType = params.objectType;
-        this.dev = params.dev;
-        this.frozen = params.frozen;
+        this.frozen = !!params.frozen;
         this.cacheSignature = params.cacheSignature;
         this.cacheSelect = params.cacheSelect;
-        this.validate();
-    }
-
-    private validate() {
-        if ( !this.cacheSelect ) {
-            return;
-        }
-
-        if ( this.objectType !== "column" ) {
-            throw new Error("cacheSelect can be only for column");
-        }
-
-        if ( !this.cacheSignature ) {
-            throw new Error("cacheSelect can be only for cache column");
-        }
     }
 
     isEmpty() {
-        return this.frozen && !this.dev;
+        return this.frozen && !this.cacheSelect;
     }
 
     equal(otherComment: Comment) {
         return (
-            String(this.dev || "") === String(otherComment.dev || "") &&
-            this.cacheSelect === otherComment.cacheSelect &&
-            this.cacheSignature === otherComment.cacheSignature
+            this.cacheSelect == otherComment.cacheSelect &&
+            this.cacheSignature == otherComment.cacheSignature
         );
     }
 
@@ -101,9 +79,6 @@ export class Comment {
     toString() {
         let comment = "";
 
-        if ( this.dev ) {
-            comment += this.dev;
-        }
         if ( !this.frozen ) {
             comment += "\nddl-manager-sync";
         }
@@ -153,9 +128,4 @@ function parseCacheSelect(totalComment: string) {
     }
 
     return cacheSelect;
-}
-
-function parseDev(totalComment: string) {
-    const devComment = (totalComment || "").trim().split("ddl-manager-sync")[0];
-    return devComment.trim();
 }

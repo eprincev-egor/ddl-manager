@@ -26,7 +26,7 @@ begin
                             true
                     ) as source_row
                     where
-                        ARRAY[cache_table.id] :: bigint[] <@ source_row.unknown_ids
+                        ARRAY[cache_table.id]::bigint[] <@ source_row.unknown_ids
                 )
             where
                 cache_table.id = any( old.unknown_ids::bigint[] );
@@ -79,7 +79,7 @@ begin
                             true
                     ) as source_row
                     where
-                        ARRAY[cache_table.id] :: bigint[] <@ source_row.unknown_ids
+                        ARRAY[cache_table.id]::bigint[] <@ source_row.unknown_ids
                 )
             where
                 cache_table.id = any( not_changed_unknown_ids::bigint[] );
@@ -104,7 +104,7 @@ begin
                             true
                     ) as source_row
                     where
-                        ARRAY[cache_table.id] :: bigint[] <@ source_row.unknown_ids
+                        ARRAY[cache_table.id]::bigint[] <@ source_row.unknown_ids
                 )
             where
                 cache_table.id = any( deleted_unknown_ids::bigint[] );
@@ -141,7 +141,7 @@ begin
                             true
                     ) as source_row
                     where
-                        ARRAY[cache_table.id] :: bigint[] <@ source_row.unknown_ids
+                        ARRAY[cache_table.id]::bigint[] <@ source_row.unknown_ids
                 )
             where
                 cache_table.id = any( inserted_unknown_ids::bigint[] );
@@ -183,7 +183,7 @@ begin
                             true
                     ) as source_row
                     where
-                        ARRAY[cache_table.id] :: bigint[] <@ source_row.unknown_ids
+                        ARRAY[cache_table.id]::bigint[] <@ source_row.unknown_ids
                 )
             where
                 cache_table.id = any( new.unknown_ids::bigint[] );

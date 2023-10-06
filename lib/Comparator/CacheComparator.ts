@@ -454,11 +454,12 @@ export class CacheComparator extends AbstractComparator {
     private updateColumns() {
         const changedColumns = this.graph.getAllColumnsFromRootToDeps().filter(column => {
             const existentTable = this.database.getTable(column.for.table);
-            const existentColumn = existentTable && existentTable.getColumn(column.name);
-            if ( !existentColumn ) {
-                return true;
-            }
-            return existentColumn.comment.cacheSelect !== column.select.toString();
+            const existentColumn = existentTable?.getColumn(column.name);
+
+            return (
+                !existentColumn ||
+                existentColumn.comment.cacheSelect !== column.select.toString()
+            );
         });
         const requiredUpdates = this.graph.generateUpdatesFor(changedColumns);
         this.migration.create({

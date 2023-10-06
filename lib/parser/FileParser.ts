@@ -1,18 +1,21 @@
 import {
     CreateFunction,
+    CreateFunctionArgument,
     CreateTrigger,
-    GrapeQLCoach,
-    CacheFor,
-    CacheIndex as CacheIndexSyntax
-} from "grapeql-lang";
+    Cursor,
+    Sql
+} from "psql-lang";
 import { IFileContent } from "../fs/File";
 import { Cache } from "../ast";
 import { CacheParser } from "./CacheParser";
 import { Comment } from "../database/schema/Comment";
-import { DatabaseFunction } from "../database/schema/DatabaseFunction";
+import { DatabaseFunction, IDatabaseFunctionArgument, IDatabaseFunctionReturns } from "../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
-import { replaceComments } from "./replaceComments";
 import assert from "assert";
+import { TableID } from "../database/schema/TableID";
+import { CacheSyntax } from "./CacheSyntax";
+import { DEFAULT_SCHEMA } from "./defaults";
+import { FileSyntax } from "./FileSyntax";
 
 export class FileParser {
 
@@ -41,176 +44,179 @@ export class FileParser {
         return cache;
     }
 
-    static parseIndexColumns(columnsStr: string) {
-        const sql = `index some_type on (${columnsStr})`;
-        const coach = new GrapeQLCoach(sql);
-        const cacheIndex = coach.parse(CacheIndexSyntax);
-        const columns = (cacheIndex.get("on") || []).map(elem => 
-            elem.toString()
-        );
-        return columns;
-    }
-
     parse(sql: string): IFileContent | undefined {
-        const coach = replaceComments(sql);
-        
-        if ( coach.str.trim() === "" ) {
-            return;
-        }
+        const {cursor} = Sql.code(sql);
 
-        const state = this.parseFile(coach);
-        return state;
-    }
-
-
-    private parseFile(coach: GrapeQLCoach) {
-        coach.skipSpace();
+        const content = cursor.parse(FileSyntax);
 
         const state: IFileContent = {
             functions: [],
             triggers: [],
-            cache: []
+            cache: content.row.caches.map(buildCache)
         };
+        for (const funcNode of content.row.functions) {
+            addFunction(cursor, state, funcNode);
+        }
 
-        this.parseFunctions( coach, state );
-
-        this.parseTriggers( coach, state );
-
-        this.parseCache( coach, state );
+        for (const triggerNode of content.row.triggers) {
+            addTrigger(cursor, state, triggerNode);
+        }
 
         return state;
     }
+}
+function addFunction(
+    cursor: Cursor,
+    state: IFileContent,
+    funcNode: CreateFunction
+) {
+    const func = buildFunction(funcNode);
 
-    private parseFunctions(coach: GrapeQLCoach, state: IFileContent) {
-        if ( !coach.is(CreateFunction) ) {
-            return;
-        }
+    // check duplicate
+    const isDuplicate = state.functions.some((prevFunc) =>
+        prevFunc.getSignature()
+        ===
+        func.getSignature()
+    );
 
-        const funcJson = coach.parse(CreateFunction).toJSON() as any;
-        const func = new DatabaseFunction({
-            ...funcJson,
-            body: funcJson.body.content,
-            comment: Comment.fromFs({
-                objectType: "function",
-                dev: (
-                    funcJson.comment ?
-                        funcJson.comment.comment.content : 
-                        undefined
-                )
-            })
-        });
-        
-        // check duplicate
-        const isDuplicate = state.functions.some((prevFunc) =>
-            prevFunc.getSignature()
-            ===
-            func.getSignature()
-        );
-
-        if ( isDuplicate ) {
-            coach.throwError("duplicated function: " + func.getSignature() );
-        }
-
-        // two function inside file, can be with only same name and schema
-        const isWrongName = state.functions.some((prevFunc) =>
-            prevFunc.name !== func.name ||
-            prevFunc.schema !== func.schema
-        );
-
-        if ( isWrongName ) {
-            coach.throwError("two function inside file, can be with only same name and schema");
-        }
-
-        // save func
-        state.functions.push(
-            func
-        );
-
-        coach.skipSpace();
-        coach.read(/[\s;]+/);
-
-        if ( coach.is(CreateFunction) ) {
-            this.parseFunctions( coach, state );
-        }
+    if ( isDuplicate ) {
+        cursor.throwError("duplicated function: " + func.getSignature(), funcNode );
     }
 
-    private parseTriggers(coach: GrapeQLCoach, state: IFileContent) {
-        coach.skipSpace();
+    // two function inside file, can be with only same name and schema
+    const isWrongName = state.functions.some((prevFunc) =>
+        prevFunc.name !== func.name ||
+        prevFunc.schema !== func.schema
+    );
 
-        // skip spaces and some ;
-        coach.read(/[\s;]+/);
-
-        if ( !coach.is(CreateTrigger) ) {
-            return;
-        }
-
-        const triggerJson = coach.parse(CreateTrigger).toJSON() as any;
-        const trigger = new DatabaseTrigger({
-            ...triggerJson,
-            comment: Comment.fromFs({
-                objectType: "trigger",
-                dev: (
-                    triggerJson.comment ?
-                    triggerJson.comment.comment.content : 
-                        undefined
-                )
-            })
-        });
-
-        // validate function name and trigger procedure
-        const firstFunc = state.functions[0];
-        if ( firstFunc ) {
-            if (
-                firstFunc.schema !== trigger.procedure.schema ||
-                firstFunc.name !== trigger.procedure.name
-            ) {
-                throw new Error(`wrong procedure name ${
-                    trigger.procedure.schema
-                }.${
-                    trigger.procedure.name
-                }`);
-            }
-
-            // validate function returns type
-            const hasTriggerFunc = state.functions.some((func: any) =>
-                func.returns.type === "trigger"
-            );
-            if ( !hasTriggerFunc ) {
-                throw new Error("file must contain function with returns type trigger");
-            }
-        }
-
-        // check duplicate
-        const isDuplicate = state.triggers.some((prevTrigger) =>
-            prevTrigger.getSignature()
-            ===
-            trigger.getSignature()
-        );
-
-        if ( isDuplicate ) {
-            coach.throwError("duplicated trigger: " + trigger.getSignature() );
-        }
-
-        state.triggers.push( trigger );
-
-        this.parseTriggers( coach, state );
+    if ( isWrongName ) {
+        cursor.throwError("two function inside file, can be with only same name and schema", funcNode);
     }
 
-    private parseCache(coach: GrapeQLCoach, state: IFileContent) {
-        assert.ok(state.cache);
-        coach.skipSpace();
-
-        // skip spaces and some ;
-        coach.read(/[\s;]+/);
-
-        if ( !coach.is(CacheFor) ) {
-            return;
-        }
-
-        const cache = CacheParser.parse(coach);
-        state.cache.push(cache);
-
-        this.parseCache(coach, state);
-    }
+    state.functions.push(func);
 }
 
+function addTrigger(
+    cursor: Cursor,
+    state: IFileContent,
+    triggerNode: CreateTrigger
+) {
+    const trigger = buildTrigger(triggerNode);
+
+    // validate function name and trigger procedure
+    const firstFunc = state.functions[0];
+    if ( firstFunc ) {
+        if (
+            firstFunc.schema !== trigger.procedure.schema ||
+            firstFunc.name !== trigger.procedure.name
+        ) {
+            const wrongName = `${trigger.procedure.schema}.${trigger.procedure.name}`;
+            cursor.throwError(`wrong procedure name ${wrongName}`, triggerNode);
+        }
+
+        // validate function returns type
+        const hasTriggerFunc = state.functions.some((func: any) =>
+            func.returns.type === "trigger"
+        );
+        if ( !hasTriggerFunc ) {
+            cursor.throwError("file must contain function with returns type trigger", triggerNode);
+        }
+    }
+
+    // check duplicate
+    const isDuplicate = state.triggers.some((prevTrigger) =>
+        prevTrigger.getSignature()
+        ===
+        trigger.getSignature()
+    );
+
+    if ( isDuplicate ) {
+        cursor.throwError("duplicated trigger: " + trigger.getSignature(), triggerNode );
+    }
+
+    state.triggers.push( trigger );
+}
+
+function buildFunction(funcNode: CreateFunction) {
+    return new DatabaseFunction({
+        schema: funcNode.row.schema?.toString() || DEFAULT_SCHEMA,
+        name: funcNode.row.name.toString(),
+        args: funcNode.row.args.map(parseArg),
+        returns: parseReturns(funcNode),
+        body: funcNode.row.body.row.string,
+        language: funcNode.row.language,
+        immutable: funcNode.row.immutability === "immutable",
+        returnsNullOnNull: funcNode.row.inputNullsRule === "returns null on null input",
+        stable: funcNode.row.immutability === "stable",
+        strict: funcNode.row.inputNullsRule === "strict",
+        parallel: funcNode.row.parallel ? [funcNode.row.parallel] : undefined,
+        cost: Number(funcNode.row.cost?.toString()) || undefined,
+        comment: Comment.fromFs({
+            objectType: "function"
+        })
+    });
+}
+
+function buildTrigger(triggerNode: CreateTrigger) {
+    return new DatabaseTrigger({
+        name: triggerNode.row.name.toString(),
+        table: TableID.fromString(
+            triggerNode.row.table.toString()
+        ),
+        procedure: {
+            schema: triggerNode.row.procedure.row.schema?.toString() || DEFAULT_SCHEMA,
+            name: triggerNode.row.procedure.row.name?.toString(),
+            args: []
+        },
+        before: triggerNode.row.events.before,
+        after: !triggerNode.row.events.before,
+        insert: triggerNode.row.events.insert,
+        update: !!triggerNode.row.events.update,
+        updateOf: Array.isArray(triggerNode.row.events.update) ?
+            triggerNode.row.events.update
+                .map(name => name.toValue())
+                .sort() : 
+                undefined,
+        delete: triggerNode.row.events.delete,
+
+        when: triggerNode.row.when?.toString(),
+        constraint: triggerNode.row.constraint,
+        deferrable: triggerNode.row.deferrable,
+        statement: triggerNode.row.statement,
+        initially: triggerNode.row.initially,
+
+        comment: Comment.fromFs({
+            objectType: "trigger"
+        })
+    });
+}
+
+function buildCache(cacheSyntax: CacheSyntax) {
+    return CacheParser.parse(cacheSyntax);
+}
+
+function parseReturns(funcNode: CreateFunction): IDatabaseFunctionReturns {
+    const returns = funcNode.row.returns.row;
+
+    if ( "table" in returns ) {
+        return {
+            setof: returns.setOf,
+            table: returns.table.map(parseArg)
+        }
+    }
+
+    return {
+        setof: returns.setOf,
+        type: returns.type.toString()
+    };
+}
+
+function parseArg(argNode: CreateFunctionArgument): IDatabaseFunctionArgument {
+    return {
+        out: argNode.row.out,
+        in: argNode.row.in,
+        name: argNode.row.name?.toString(),
+        type: argNode.row.type.toString(),
+        default: argNode.row.default?.toString()
+    };
+}

@@ -5,5 +5,5 @@ cache payments for invoice (
     from payment_orders
     where
         payment_orders.deleted = 0 and
-        payment_orders.id = any (invoice.payments_ids)
+        payment_orders.id = any(invoice.payments_ids)
 )

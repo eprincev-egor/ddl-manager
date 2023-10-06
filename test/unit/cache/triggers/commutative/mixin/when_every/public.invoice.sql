@@ -43,7 +43,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.orders_ids && ARRAY[public.order.id] :: bigint[]
+                        source_row.orders_ids && ARRAY[public.order.id]::bigint[]
                         and
                         source_row.id_invoice_type = 2
                         and
@@ -154,7 +154,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.orders_ids && ARRAY[public.order.id] :: bigint[]
+                        source_row.orders_ids && ARRAY[public.order.id]::bigint[]
                         and
                         source_row.id_invoice_type = 2
                         and
@@ -192,7 +192,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.orders_ids && ARRAY[public.order.id] :: bigint[]
+                        source_row.orders_ids && ARRAY[public.order.id]::bigint[]
                         and
                         source_row.id_invoice_type = 2
                         and
@@ -242,7 +242,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.orders_ids && ARRAY[public.order.id] :: bigint[]
+                        source_row.orders_ids && ARRAY[public.order.id]::bigint[]
                         and
                         source_row.id_invoice_type = 2
                         and
@@ -303,7 +303,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.orders_ids && ARRAY[public.order.id] :: bigint[]
+                        source_row.orders_ids && ARRAY[public.order.id]::bigint[]
                         and
                         source_row.id_invoice_type = 2
                         and

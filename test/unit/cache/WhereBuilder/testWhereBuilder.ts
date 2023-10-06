@@ -1,4 +1,4 @@
-import { GrapeQLCoach, Select } from "grapeql-lang";
+import { Sql, Select } from "psql-lang";
 import { CacheParser } from "../../../../lib/parser";
 import assert from "assert";
 import { CacheContext } from "../../../../lib/cache/trigger-builder/CacheContext";
@@ -38,11 +38,11 @@ export function testWhereBuilder(test: ITest) {
         if ( where.toString().trim() ) {
             actualSelect += ` where\n${where}`;
         }
-        const actualSelectSyntax = new GrapeQLCoach(actualSelect).parse(Select);
+        const actualSelectSyntax = Sql.code(actualSelect).parse(Select);
 
         const expectedFromAndWhere = test.where[ changedSchemaTable ];
         const expectedSelect = "select " + expectedFromAndWhere;
-        const expectedSelectSyntax = new GrapeQLCoach(expectedSelect).parse(Select);
+        const expectedSelectSyntax = Sql.code(expectedSelect).parse(Select);
 
         assert.strictEqual(
             actualSelectSyntax.toString(),

@@ -355,7 +355,15 @@ export class Expression extends AbstractExpressionElement {
         let lines: string[] = [];
 
         let line = "";
-        for (const elem of this.elements) {
+        for (let i = 0, n = this.elements.length; i < n; i++) {
+            const elem = this.elements[i];
+
+            if ( elem instanceof Operator && elem.toString() === "::" ) {
+                const nextElem = this.elements[i + 1];
+                line += "::" + nextElem.toString();
+                i++;
+                continue;
+            }
 
             const isConditionOperator = (
                 elem instanceof Operator &&

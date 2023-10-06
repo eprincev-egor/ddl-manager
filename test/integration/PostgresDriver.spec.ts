@@ -390,7 +390,7 @@ describe("integration/PostgresDriver.loadState", () => {
                         {
                             name: "id",
                             type: "bigint",
-                            default: "null :: bigint"
+                            default: "null::bigint"
                         }
                     ],
                     returns: {type: "void"},
@@ -515,7 +515,7 @@ describe("integration/PostgresDriver.loadState", () => {
                     insert: true,
                     updateOf: ["name", "note"],
                     delete: true,
-                    when: "(pg_trigger_depth() = 0)",
+                    when: "((pg_trigger_depth() = 0))",
                     procedure: {
                         schema: "public",
                         name: "test_func"
@@ -737,7 +737,7 @@ describe("integration/PostgresDriver.loadState", () => {
                     schema: "public",
                     name: "some_func",
                     args: [],
-                    returns: {type: "public.company"},
+                    returns: {type: "company"},
                     body: "begin\nend"
                 }
             ],
@@ -769,7 +769,7 @@ describe("integration/PostgresDriver.loadState", () => {
                     args: [],
                     returns: {
                         setof: true,
-                        type: "public.company"
+                        type: "company"
                     },
                     body: "begin\nend"
                 }
@@ -802,7 +802,7 @@ describe("integration/PostgresDriver.loadState", () => {
                     args: [
                         {
                             name: "company",
-                            type: "public.company"
+                            type: "company"
                         }
                     ],
                     returns: {type: "void"},
@@ -832,7 +832,7 @@ describe("integration/PostgresDriver.loadState", () => {
                     name: "some_func",
                     args: [
                         {
-                            name: null,
+                            name: undefined,
                             type: "text"
                         }
                     ],
@@ -1081,7 +1081,7 @@ describe("integration/PostgresDriver.loadState", () => {
             cache.getSignature()
         );
         assert.strictEqual(
-            state.functions[0].frozen,
+            state.functions[0].comment.frozen,
             false
         );
 
@@ -1094,7 +1094,7 @@ describe("integration/PostgresDriver.loadState", () => {
             cache.getSignature()
         );
         assert.strictEqual(
-            state.triggers[0].frozen,
+            state.triggers[0].comment.frozen,
             false
         );
     });
@@ -1147,7 +1147,7 @@ describe("integration/PostgresDriver.loadState", () => {
             index: "btree",
             table: new TableID("public", "some_events"),
             columns: ["event_type"],
-            comment: Comment.frozen("index", "my index")
+            comment: Comment.frozen("index")
         });
         const driver = new PostgresDriver(db);
 
@@ -1173,7 +1173,7 @@ describe("integration/PostgresDriver.loadState", () => {
             index: "btree",
             table: new TableID("public", "some_events"),
             columns: ["event_type"],
-            comment: Comment.frozen("index", "my index")
+            comment: Comment.frozen("index")
         });
         const driver = new PostgresDriver(db);
 
@@ -1207,7 +1207,7 @@ describe("integration/PostgresDriver.loadState", () => {
             index: "btree",
             table: new TableID("public", "some_events"),
             columns: ["event_type"],
-            comment: Comment.frozen("index", "my index")
+            comment: Comment.frozen("index")
         });
         const driver = new PostgresDriver(db);
 

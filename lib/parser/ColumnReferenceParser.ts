@@ -1,4 +1,4 @@
-import { ColumnLink, ObjectName } from "grapeql-lang";
+import { ColumnReference as ColumnLink, Name } from "psql-lang";
 import { ColumnReference, Select } from "../ast";
 import { IReferenceFilter, TableReference } from "../database/schema/TableReference";
 
@@ -10,20 +10,20 @@ export class ColumnReferenceParser {
         additionalTableReferences: TableReference[], 
         columnLink: ColumnLink
     ) {
-        const baseNames = columnLink.get("link") as any[];
+        const baseNames = columnLink.row.column;
         const tableNames = baseNames.slice(0, -1);
 
         let tableReference: TableReference | undefined;
         let refFilter!: IReferenceFilter;
 
         if ( tableNames.length === 1 ) {
-            const aliasOrTableName = (tableNames[0] as ObjectName).toLowerCase() as string;
+            const aliasOrTableName = tableNames[0].toValue()
 
             refFilter = {aliasOrTableName};
         }
         else if ( tableNames.length === 2 ) {
-            const schema = (tableNames[0] as ObjectName).toLowerCase() as string;
-            const aliasOrTableName = (tableNames[1] as ObjectName).toLowerCase() as string;
+            const schema = tableNames[0].toValue();
+            const aliasOrTableName = tableNames[1].toValue();
 
             refFilter = {aliasOrTableName, schema};
         }
@@ -55,8 +55,8 @@ export class ColumnReferenceParser {
         }
 
 
-        const columnNameSyntax = columnLink.last() as ObjectName;
-        const columnName = columnNameSyntax.toLowerCase() as string;
+        const columnNameSyntax = baseNames.slice(-1)[0];
+        const columnName = columnNameSyntax.toValue();
 
         const columnReference = new ColumnReference(tableReference, columnName);
         return columnReference;

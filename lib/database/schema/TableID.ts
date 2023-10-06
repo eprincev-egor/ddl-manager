@@ -1,3 +1,5 @@
+import { DEFAULT_SCHEMA } from "../../parser/defaults";
+
 const keywords = [
     "order",
     "where",
@@ -12,7 +14,7 @@ export class TableID {
 
         if ( !table ) {
             return new TableID(
-                "public",
+                DEFAULT_SCHEMA,
                 schema
             );
         }
@@ -24,8 +26,8 @@ export class TableID {
     readonly name: string;
 
     constructor(schema: string, name: string) {
-        this.schema = schema;
-        this.name = name;
+        this.schema = schema.replace(/"/g, "");
+        this.name = name.replace(/"/g, "");
     }
 
     equal(otherTable: TableID) {

@@ -8,14 +8,15 @@ export class FunctionsComparator extends AbstractComparator {
         for (const dbFunc of this.database.functions) {
             
             // ddl-manager cannot drop frozen function
-            if ( dbFunc.frozen ) {
+            if ( dbFunc.comment.frozen ) {
                 continue;
             }
             if ( dbFunc.cacheSignature ) {
                 continue;
             }
 
-            const existsSameFuncFromFile = flatMap(this.fs.files, file => file.content.functions).some(fileFunc =>
+            const sameNameFsFunctions = this.fs.getFunctionsByName(dbFunc.name);
+            const existsSameFuncFromFile = sameNameFsFunctions.some(fileFunc =>
                 fileFunc.equal(dbFunc)
             );
 
@@ -83,9 +84,9 @@ export class FunctionsComparator extends AbstractComparator {
     }
 
     private createNewFunctions(functions: DatabaseFunction[]) {
-        for (const func of functions) {
+        for (const fsFunc of functions) {
             const existsSameFuncFromDb = this.database.functions.find(dbFunc =>
-                dbFunc.equal(func)
+                dbFunc.equal(fsFunc)
             );
 
             if ( existsSameFuncFromDb ) {
@@ -93,7 +94,7 @@ export class FunctionsComparator extends AbstractComparator {
             }
 
             this.migration.create({
-                functions: [func]
+                functions: [fsFunc]
             });
         }
     }

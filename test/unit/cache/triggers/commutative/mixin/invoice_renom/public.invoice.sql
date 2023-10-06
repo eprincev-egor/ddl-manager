@@ -35,7 +35,7 @@ begin
                 left join list_currency on
                     list_currency.id = source_row.id_list_currency
                 where
-                    source_row.id = any (invoice.renomination_invoices)
+                    source_row.id = any(invoice.renomination_invoices)
             )
         where
             invoice.renomination_invoices && ARRAY[ old.id ]::int8[];
@@ -97,7 +97,7 @@ begin
                 left join list_currency on
                     list_currency.id = source_row.id_list_currency
                 where
-                    source_row.id = any (invoice.renomination_invoices)
+                    source_row.id = any(invoice.renomination_invoices)
             )
         where
             invoice.renomination_invoices && ARRAY[ new.id ]::int8[];

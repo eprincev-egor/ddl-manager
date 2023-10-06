@@ -7,6 +7,9 @@ import { TableID } from "../database/schema/TableID";
 
 export class FilesState {
     readonly files: File[];
+    private cacheMap: Record<string, Cache[]> = {};
+    private functionsMap: Record<string, DatabaseFunction[]> = {};
+    private triggersMap: Record<string, DatabaseTrigger[]> = {};
     
     constructor(files: File[] = []) {
         this.files = files;
@@ -24,16 +27,20 @@ export class FilesState {
         return flatMap(this.files, file => file.content.functions);
     }
 
+    getCachesForTable(forTable: TableID) {
+        return (this.cacheMap[ forTable.toString() ] ?? []).slice();
+    }
+
+    getFunctionsByName(name: string) {
+        return (this.functionsMap[ name ] ?? []).slice();
+    }
+
     getTableTriggers(table: TableID) {
-        const tableTriggers = this.allTriggers().filter(trigger => 
-            trigger.table.equal(table)
-        );
-        return tableTriggers;
+        return (this.triggersMap[ table.toString() ] ?? []).slice();
     }
 
     getTriggerFunction(trigger: DatabaseTrigger) {
-        return this.allFunctions().find(func =>
-            func.name === trigger.procedure.name &&
+        return (this.functionsMap[trigger.procedure.name] || []).find(func =>
             func.schema === trigger.procedure.schema
         );
     }
@@ -49,12 +56,49 @@ export class FilesState {
 
         this.checkDuplicate( file );
         this.files.push(file);
+
+        for (const func of file.content.functions) {
+            this.functionsMap[ func.name ] ??= [];
+            this.functionsMap[ func.name ].push(func);
+        }
+
+        for (const trigger of file.content.triggers) {
+            const table = trigger.table.toString();
+            this.triggersMap[ table ] ??= [];
+            this.triggersMap[ table ].push(trigger);
+        }
+
+        for (const cache of file.content.cache) {
+            const table = cache.for.table.toString();
+            this.cacheMap[ table ] ??= [];
+            this.cacheMap[ table ].push(cache);
+        }
     }
 
     removeFile(file: File) {
         const fileIndex = this.files.indexOf(file);
         if ( fileIndex !== -1 ) {
             this.files.splice(fileIndex, 1);
+        }
+
+        for (const deletedFunc of file.content.functions) {
+            this.functionsMap[ deletedFunc.name ] ??= [];
+            this.functionsMap[ deletedFunc.name ] = this.functionsMap[ deletedFunc.name ]
+                .filter(func => func.getSignature() != deletedFunc.getSignature());
+        }
+
+        for (const deletedTrigger of file.content.triggers) {
+            const table = deletedTrigger.table.toString();
+            this.triggersMap[ table ] ??= [];
+            this.triggersMap[ table ] = this.triggersMap[ table ]
+                .filter(trigger => trigger.getSignature() != deletedTrigger.getSignature());
+        }
+
+        for (const deletedCache of file.content.cache) {
+            const table = deletedCache.for.table.toString();
+            this.cacheMap[ table ] ??= [];
+            this.cacheMap[ table ] = this.cacheMap[ table ]
+                .filter(cache => cache.getSignature() !== deletedCache.getSignature())
         }
     }
 
@@ -74,12 +118,9 @@ export class FilesState {
     private checkDuplicateFunction(func: DatabaseFunction) {
         const identify = func.getSignature();
 
-        const hasDuplicate = this.files.some(someFile => {
-            return someFile.content.functions.some((someFunc) => {
-                const someIdentify = someFunc.getSignature();
-                
-                return identify === someIdentify;
-            });
+        const hasDuplicate = this.getFunctionsByName(func.name).some(someFunc => {
+            const someIdentify = someFunc.getSignature();
+            return identify === someIdentify;
         });
 
         if ( hasDuplicate ) {
@@ -90,16 +131,9 @@ export class FilesState {
     private checkDuplicateTrigger(trigger: DatabaseTrigger) {
         const identify = trigger.getSignature();
 
-        const hasDuplicate = this.files.some(someFile => {
-            const someTriggers = someFile.content.triggers;
-
-            if ( someTriggers ) {
-                return someTriggers.some((someTrigger) => {
-                    const someIdentify = someTrigger.getSignature();
-
-                    return identify === someIdentify;
-                });
-            }
+        const hasDuplicate = this.getTableTriggers(trigger.table).some(someTrigger => {
+            const someIdentify = someTrigger.getSignature();
+            return identify === someIdentify;
         });
 
         if ( hasDuplicate ) {
@@ -111,23 +145,21 @@ export class FilesState {
         const identify = cache.getSignature();
         const cacheColumns = cache.select.columns.map(col => col.name);;
 
-        for (const someFile of this.files) {
-            for (const someCache of someFile.content.cache) {
-                // duplicated cache name
-                if ( someCache.getSignature() === identify ) {
-                    throw new Error(`duplicate ${ identify }`);
-                }
-                // duplicate cache columns
+        for (const someCache of this.getCachesForTable(cache.for.table)) {
+            // duplicated cache name
+            if ( someCache.getSignature() === identify ) {
+                throw new Error(`duplicate ${ identify }`);
+            }
+            // duplicate cache columns
 
-                if ( someCache.for.table.equal(cache.for.table) ) {
-                    const someCacheColumns = someCache.select.columns.map(col => col.name);
-                    const duplicatedColumns = someCacheColumns.filter(columnName =>
-                        cacheColumns.includes(columnName)
-                    );
+            if ( someCache.for.table.equal(cache.for.table) ) {
+                const someCacheColumns = someCache.select.columns.map(col => col.name);
+                const duplicatedColumns = someCacheColumns.filter(columnName =>
+                    cacheColumns.includes(columnName)
+                );
 
-                    if ( duplicatedColumns.length > 0 ) {
-                        throw new Error(`duplicated columns: ${ duplicatedColumns } by cache: ${cache.name}, ${someCache.name}`);
-                    }
+                if ( duplicatedColumns.length > 0 ) {
+                    throw new Error(`duplicated columns: ${ duplicatedColumns } by cache: ${cache.name}, ${someCache.name}`);
                 }
             }
         }

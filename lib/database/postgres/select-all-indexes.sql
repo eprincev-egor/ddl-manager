@@ -10,7 +10,7 @@
      LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
      LEFT JOIN pg_tablespace t ON t.oid = i.reltablespace
   WHERE
-	(c.relkind = ANY (ARRAY['r'::"char", 'm'::"char"])) AND
+	(c.relkind = ANY(ARRAY['r'::"char", 'm'::"char"])) AND
 	i.relkind = 'i'::"char" and
 	n.nspname <> 'pg_catalog' and
 	n.nspname <> 'information_schema'

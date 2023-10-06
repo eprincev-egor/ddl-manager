@@ -10,7 +10,7 @@ import { Database } from "../../../database/schema/Database";
 
 // try using gin-index scan
 // input (cannot use gin-index):
-//     orders.id = any (companies.order_ids)
+//     orders.id = any(companies.order_ids)
 // output (can use gin-index):
 //     array[ orders.id_client ] && companies.order_ids
 export function replaceOperatorAnyToIndexedOperator(

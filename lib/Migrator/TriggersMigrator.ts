@@ -27,6 +27,7 @@ export class TriggersMigrator extends AbstractMigrator {
             try {
                 await this.postgres.createOrReplaceTrigger(trigger);
             } catch(err) {
+                console.log(err);
                 this.onError(trigger, err);
             }
         }

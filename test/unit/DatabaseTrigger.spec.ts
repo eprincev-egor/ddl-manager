@@ -201,39 +201,6 @@ describe("DatabaseTrigger", () => {
         assert.ok( !trigger2.equal(trigger1), "trigger2 != trigger1" );
     });
 
-    it("equal with different comment", () => {
-        const trigger1 = new DatabaseTrigger({
-            name: "my_trigger",
-            procedure: {
-                schema: "public",
-                name: "my_trigger_function",
-                args: []
-            },
-            table: new TableID(
-                "public",
-                "my_table"
-            ),
-            comment: "comment 1"
-        });
-
-        const trigger2 = new DatabaseTrigger({
-            name: "my_trigger",
-            procedure: {
-                schema: "public",
-                name: "my_trigger_function",
-                args: []
-            },
-            table: new TableID(
-                "public",
-                "my_table"
-            ),
-            comment: "comment 2"
-        });
-        
-        assert.ok( !trigger1.equal(trigger2), "trigger1 != trigger2" );
-        assert.ok( !trigger2.equal(trigger1), "trigger2 != trigger1" );
-    });
-
     it("equal comment: null == undefined", () => {
         const trigger1 = new DatabaseTrigger({
             name: "my_trigger",
@@ -265,39 +232,6 @@ describe("DatabaseTrigger", () => {
         
         assert.ok( trigger1.equal(trigger2), "trigger1 == trigger2" );
         assert.ok( trigger2.equal(trigger1), "trigger2 == trigger1" );
-    });
-
-    it("equal with different frozen", () => {
-        const trigger1 = new DatabaseTrigger({
-            name: "my_trigger",
-            procedure: {
-                schema: "public",
-                name: "my_trigger_function",
-                args: []
-            },
-            table: new TableID(
-                "public",
-                "my_table"
-            ),
-            comment: Comment.empty("trigger")
-        });
-
-        const trigger2 = new DatabaseTrigger({
-            name: "my_trigger",
-            procedure: {
-                schema: "public",
-                name: "my_trigger_function",
-                args: []
-            },
-            table: new TableID(
-                "public",
-                "my_table"
-            ),
-            comment: Comment.frozen("trigger")
-        });
-        
-        assert.ok( !trigger1.equal(trigger2), "trigger1 != trigger2" );
-        assert.ok( !trigger2.equal(trigger1), "trigger2 != trigger1" );
     });
 
 })

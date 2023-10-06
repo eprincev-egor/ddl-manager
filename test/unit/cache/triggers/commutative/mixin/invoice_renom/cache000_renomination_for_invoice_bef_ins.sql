@@ -28,7 +28,7 @@ begin
     left join list_currency on
         list_currency.id = renomination_invoice.id_list_currency
     where
-        renomination_invoice.id = any (new.renomination_invoices)
+        renomination_invoice.id = any(new.renomination_invoices)
     into new_totals;
 
 

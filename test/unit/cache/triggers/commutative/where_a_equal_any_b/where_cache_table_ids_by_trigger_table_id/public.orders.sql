@@ -26,7 +26,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.id = any (companies.order_ids)
+                        source_row.id = any(companies.order_ids)
                         and
                         source_row.deleted = 0
                 )
@@ -84,7 +84,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.id = any (companies.order_ids)
+                        source_row.id = any(companies.order_ids)
                         and
                         source_row.deleted = 0
                 )
@@ -116,7 +116,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.id = any (companies.order_ids)
+                        source_row.id = any(companies.order_ids)
                         and
                         source_row.deleted = 0
                 )
@@ -158,7 +158,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.id = any (companies.order_ids)
+                        source_row.id = any(companies.order_ids)
                         and
                         source_row.deleted = 0
                 )

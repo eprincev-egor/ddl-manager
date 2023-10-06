@@ -25,7 +25,7 @@ begin
                     where
                         source_row.deleted = 0
                         and
-                        source_row.id = any (invoice.payments_ids)
+                        source_row.id = any(invoice.payments_ids)
                 )
             where
                 invoice.payments_ids && ARRAY[ old.id ]::int8[];
@@ -80,7 +80,7 @@ begin
                     where
                         source_row.deleted = 0
                         and
-                        source_row.id = any (invoice.payments_ids)
+                        source_row.id = any(invoice.payments_ids)
                 )
             where
                 invoice.payments_ids && ARRAY[ new.id ]::int8[];
@@ -109,7 +109,7 @@ begin
                     where
                         source_row.deleted = 0
                         and
-                        source_row.id = any (invoice.payments_ids)
+                        source_row.id = any(invoice.payments_ids)
                 )
             where
                 invoice.payments_ids && ARRAY[ old.id ]::int8[];
@@ -148,7 +148,7 @@ begin
                     where
                         source_row.deleted = 0
                         and
-                        source_row.id = any (invoice.payments_ids)
+                        source_row.id = any(invoice.payments_ids)
                 )
             where
                 invoice.payments_ids && ARRAY[ new.id ]::int8[];

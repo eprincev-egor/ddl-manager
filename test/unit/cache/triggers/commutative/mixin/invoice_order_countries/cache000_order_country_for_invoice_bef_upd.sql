@@ -23,7 +23,7 @@ begin
     left join country on
         country.id = orders.id_country
     where
-        orders.id = any (new.orders_ids)
+        orders.id = any(new.orders_ids)
         and
         (
             (orders.id_order_type = 1

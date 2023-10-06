@@ -39,12 +39,12 @@ begin
                             true
                     ) as source_row
                     where
-                        companies.id = any (source_row.clients_ids || source_row.partners_ids)
+                        companies.id = any(source_row.clients_ids || source_row.partners_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                companies.id = any (old.clients_ids || old.partners_ids);
+                companies.id = any(old.clients_ids || old.partners_ids);
         end if;
 
         return old;
@@ -148,12 +148,12 @@ begin
                             true
                     ) as source_row
                     where
-                        companies.id = any (source_row.clients_ids || source_row.partners_ids)
+                        companies.id = any(source_row.clients_ids || source_row.partners_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                companies.id = any (not_changed_clients_ids || not_changed_partners_ids);
+                companies.id = any(not_changed_clients_ids || not_changed_partners_ids);
         end if;
 
         if
@@ -179,12 +179,12 @@ begin
                             true
                     ) as source_row
                     where
-                        companies.id = any (source_row.clients_ids || source_row.partners_ids)
+                        companies.id = any(source_row.clients_ids || source_row.partners_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                companies.id = any (deleted_clients_ids || deleted_partners_ids);
+                companies.id = any(deleted_clients_ids || deleted_partners_ids);
         end if;
 
         if
@@ -222,12 +222,12 @@ begin
                             true
                     ) as source_row
                     where
-                        companies.id = any (source_row.clients_ids || source_row.partners_ids)
+                        companies.id = any(source_row.clients_ids || source_row.partners_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                companies.id = any (inserted_clients_ids || inserted_partners_ids);
+                companies.id = any(inserted_clients_ids || inserted_partners_ids);
         end if;
 
         return new;
@@ -274,12 +274,12 @@ begin
                             true
                     ) as source_row
                     where
-                        companies.id = any (source_row.clients_ids || source_row.partners_ids)
+                        companies.id = any(source_row.clients_ids || source_row.partners_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                companies.id = any (new.clients_ids || new.partners_ids);
+                companies.id = any(new.clients_ids || new.partners_ids);
         end if;
 
         return new;

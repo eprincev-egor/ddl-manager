@@ -36,7 +36,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && ARRAY[units.id] :: bigint[]
+                        source_row.units_ids && ARRAY[units.id]::bigint[]
                         and
                         source_row.type = 'auto'
                         and
@@ -148,7 +148,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && ARRAY[units.id] :: bigint[]
+                        source_row.units_ids && ARRAY[units.id]::bigint[]
                         and
                         source_row.type = 'auto'
                         and
@@ -183,7 +183,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && ARRAY[units.id] :: bigint[]
+                        source_row.units_ids && ARRAY[units.id]::bigint[]
                         and
                         source_row.type = 'auto'
                         and
@@ -230,7 +230,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && ARRAY[units.id] :: bigint[]
+                        source_row.units_ids && ARRAY[units.id]::bigint[]
                         and
                         source_row.type = 'auto'
                         and
@@ -288,7 +288,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && ARRAY[units.id] :: bigint[]
+                        source_row.units_ids && ARRAY[units.id]::bigint[]
                         and
                         source_row.type = 'auto'
                         and

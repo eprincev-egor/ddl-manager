@@ -1,4 +1,4 @@
-import assert from "assert";
+import assert, { strict } from "assert";
 import fs from "fs";
 import fse from "fs-extra";
 import { getDBClient } from "../../getDbClient";
@@ -1163,7 +1163,7 @@ describe("integration/DDLManager.build cache", () => {
                 LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
                 LEFT JOIN pg_tablespace t ON t.oid = i.reltablespace
             WHERE
-                (c.relkind = ANY (ARRAY['r'::"char", 'm'::"char"])) AND
+                (c.relkind = ANY(ARRAY['r'::"char", 'm'::"char"])) AND
                 i.relkind = 'i'::"char" and
                 
                 c.relname = 'companies'
@@ -1780,7 +1780,6 @@ describe("integration/DDLManager.build cache", () => {
                         when comments.target_query_name = 'OPERATION_UNIT'
                         then comments.target_row_id
                     end) as unit_id
-            )
             )
         `);
         fs.writeFileSync(folderPath + "/company_crm_id.sql", `
@@ -3875,6 +3874,64 @@ describe("integration/DDLManager.build cache", () => {
             {id: 1, quantity: 1,}
         ]);
 
+    });
+
+    it("don't update column twice", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table updates_counter (
+                count integer
+            );
+            insert into updates_counter (count) values (0);
+
+            create table my_table (
+                id serial primary key,
+                quantity integer
+            );
+            insert into my_table default values;
+        `);
+        fs.writeFileSync(folderPath + "/counter.sql", `
+            create or replace function test()
+            returns trigger as $body$
+            begin
+                update updates_counter set
+                    count = count + 1;
+
+                return new;
+            end
+            $body$ language plpgsql;
+
+            create trigger test
+            before update
+            on my_table
+            for each row execute procedure test()
+        `);
+        fs.writeFileSync(folderPath + "/cache.sql", `
+            cache totals for my_table (
+                select
+                    random() as quantity
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            select count 
+            from updates_counter
+        `);
+        strict.deepEqual(result.rows[0], {count: 1});
     });
 
 });

@@ -35,7 +35,7 @@ export abstract class AbstractMigrator {
             ((err as any).sql || "")
         );
         (newErr as any).originalError = err;
-        
+
         this.outputErrors.push(newErr);
     }
 }

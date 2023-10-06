@@ -66,3 +66,14 @@ export function formatType(someType?: string) {
     }
     return someType;
 }
+
+export function equalType(inputTypeA?: string, inputTypeB?: string) {
+    const typeA = formatType(inputTypeA);
+    const typeB = formatType(inputTypeB);
+
+    return (
+        typeA === typeB ||
+        typeA === "public." + typeB ||
+        "public." + typeA === typeB
+    );
+}

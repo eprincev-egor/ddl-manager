@@ -35,12 +35,12 @@ begin
                             true
                     ) as source_row
                     where
-                        companies.id = any (source_row.companies_ids)
+                        companies.id = any(source_row.companies_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                companies.id = any (old.companies_ids);
+                companies.id = any(old.companies_ids);
         end if;
 
         return old;
@@ -132,12 +132,12 @@ begin
                             true
                     ) as source_row
                     where
-                        companies.id = any (source_row.companies_ids)
+                        companies.id = any(source_row.companies_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                companies.id = any (not_changed_companies_ids);
+                companies.id = any(not_changed_companies_ids);
         end if;
 
         if deleted_companies_ids is not null then
@@ -162,12 +162,12 @@ begin
                             true
                     ) as source_row
                     where
-                        companies.id = any (source_row.companies_ids)
+                        companies.id = any(source_row.companies_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                companies.id = any (deleted_companies_ids);
+                companies.id = any(deleted_companies_ids);
         end if;
 
         if inserted_companies_ids is not null then
@@ -204,12 +204,12 @@ begin
                             true
                     ) as source_row
                     where
-                        companies.id = any (source_row.companies_ids)
+                        companies.id = any(source_row.companies_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                companies.id = any (inserted_companies_ids);
+                companies.id = any(inserted_companies_ids);
         end if;
 
         return new;
@@ -255,12 +255,12 @@ begin
                             true
                     ) as source_row
                     where
-                        companies.id = any (source_row.companies_ids)
+                        companies.id = any(source_row.companies_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                companies.id = any (new.companies_ids);
+                companies.id = any(new.companies_ids);
         end if;
 
         return new;

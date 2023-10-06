@@ -186,32 +186,6 @@ describe("Comparator: compare functions", async() => {
         });
     });
 
-    it("create function with comment", async() => {
-        const func = new DatabaseFunction({
-            ...someFuncParams,
-            comment: "test"
-        });
-        fs.addFile({
-            ...someFileParams,
-            content: {
-                functions: [func]
-            }
-        });
-
-        const migration = await MainComparator.compare(postgres, database, fs);
-
-        deepStrictEqualMigration(migration, {
-            drop: {
-                functions: []
-            },
-            create: {
-                functions: [
-                    func
-                ]
-            }
-        });
-    });
-
     it("empty migration on frozen function in db", async() => {
         const func = new DatabaseFunction({
             ...someFuncParams,

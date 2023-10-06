@@ -17,8 +17,8 @@ begin
                     select
                             (invoice.invoice_summ -                             sum(
                                 round(
-                                    source_row.total_sum_with_vat_in_curs :: numeric,
-                                    - 2
+                                    source_row.total_sum_with_vat_in_curs::numeric,
+                                    -2
                                     )
                                                         )) as balance
                     from (
@@ -81,8 +81,8 @@ begin
                     select
                             (invoice.invoice_summ -                             sum(
                                 round(
-                                    source_row.total_sum_with_vat_in_curs :: numeric,
-                                    - 2
+                                    source_row.total_sum_with_vat_in_curs::numeric,
+                                    -2
                                     )
                                                         )) as balance
                     from (
@@ -125,8 +125,8 @@ begin
                     select
                             (invoice.invoice_summ -                             sum(
                                 round(
-                                    source_row.total_sum_with_vat_in_curs :: numeric,
-                                    - 2
+                                    source_row.total_sum_with_vat_in_curs::numeric,
+                                    -2
                                     )
                                                         )) as balance
                     from (
@@ -167,8 +167,8 @@ begin
                     select
                             (invoice.invoice_summ -                             sum(
                                 round(
-                                    source_row.total_sum_with_vat_in_curs :: numeric,
-                                    - 2
+                                    source_row.total_sum_with_vat_in_curs::numeric,
+                                    -2
                                     )
                                                         )) as balance
                     from (
@@ -220,8 +220,8 @@ begin
                     select
                             (invoice.invoice_summ -                             sum(
                                 round(
-                                    source_row.total_sum_with_vat_in_curs :: numeric,
-                                    - 2
+                                    source_row.total_sum_with_vat_in_curs::numeric,
+                                    -2
                                     )
                                                         )) as balance
                     from (

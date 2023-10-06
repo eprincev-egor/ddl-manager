@@ -22,7 +22,7 @@ begin
                         true
                 ) as source_row
                 where
-                    source_row.id = any (companies.bigint_orders_ids)
+                    source_row.id = any(companies.bigint_orders_ids)
             )
         where
             companies.bigint_orders_ids && ARRAY[ old.id ]::bigint[];
@@ -65,7 +65,7 @@ begin
                         true
                 ) as source_row
                 where
-                    source_row.id = any (companies.bigint_orders_ids)
+                    source_row.id = any(companies.bigint_orders_ids)
             )
         where
             companies.bigint_orders_ids && ARRAY[ new.id ]::bigint[];

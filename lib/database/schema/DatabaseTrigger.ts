@@ -1,4 +1,3 @@
-import { wrapText } from "../postgres/wrapText";
 import { MAX_NAME_LENGTH } from "../postgres/constants";
 import { TableID } from "./TableID";
 import { Comment } from "./Comment";
@@ -26,7 +25,7 @@ export interface IDatabaseTriggerParams {
     statement?: boolean;
     initially?: "immediate" | "deferred";
 
-    comment?: Comment | string;
+    comment?: Comment;
 }
 
 export class DatabaseTrigger {
@@ -58,10 +57,6 @@ export class DatabaseTrigger {
 
     constructor(json: IDatabaseTriggerParams) {
         Object.assign(this, json);
-        // tslint:disable-next-line: no-console
-        // if ( this.name.length > MAX_NAME_LENGTH ) {
-        //     console.error(`name "${this.name}" too long (> 64 symbols)`);
-        // }
         this.name = this.name.slice(0, MAX_NAME_LENGTH);
 
         if ( !(this.table instanceof TableID) ) {
@@ -72,17 +67,9 @@ export class DatabaseTrigger {
             );
         }
 
-        if ( !json.comment ) {
-            this.comment = Comment.fromFs({
-                objectType: "trigger"
-            });
-        }
-        else if ( typeof json.comment === "string" ) {
-            this.comment = Comment.fromFs({
-                objectType: "trigger",
-                dev: json.comment
-            });
-        }
+        this.comment = json.comment || Comment.fromFs({
+            objectType: "trigger",
+        });
         this.frozen = this.comment.frozen;
         this.cacheSignature = this.comment.cacheSignature;
     }
@@ -105,9 +92,6 @@ export class DatabaseTrigger {
             // null == undefined
             // tslint:disable-next-line: triple-equals
             this.when == otherTrigger.when &&
-            // null == undefined == false
-            !!this.frozen === !!otherTrigger.frozen
-            &&
             !!this.constraint === !!otherTrigger.constraint &&
             !!this.deferrable === !!otherTrigger.deferrable &&
             !!this.notDeferrable === !!otherTrigger.notDeferrable &&
@@ -221,18 +205,5 @@ export class DatabaseTrigger {
         }${ this.procedure.name }()`;
 
         return out;
-    }
-
-    toSQLWithComment() {
-        let sql = this.toSQL();
-
-        if ( this.comment.dev ) {
-            sql += ";\n";
-            sql += "\n";
-
-            sql += `comment on trigger ${this.getSignature()} is ${ wrapText(this.comment.dev) }`;
-        }
-
-        return sql;
     }
 }

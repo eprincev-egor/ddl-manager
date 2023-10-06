@@ -32,7 +32,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && ARRAY[operation.unit.id] :: bigint[]
+                        source_row.units_ids && ARRAY[operation.unit.id]::bigint[]
                         and
                         source_row.deleted = 0
                 )
@@ -126,7 +126,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && ARRAY[operation.unit.id] :: bigint[]
+                        source_row.units_ids && ARRAY[operation.unit.id]::bigint[]
                         and
                         source_row.deleted = 0
                 )
@@ -153,7 +153,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && ARRAY[operation.unit.id] :: bigint[]
+                        source_row.units_ids && ARRAY[operation.unit.id]::bigint[]
                         and
                         source_row.deleted = 0
                 )
@@ -192,7 +192,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && ARRAY[operation.unit.id] :: bigint[]
+                        source_row.units_ids && ARRAY[operation.unit.id]::bigint[]
                         and
                         source_row.deleted = 0
                 )
@@ -240,7 +240,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && ARRAY[operation.unit.id] :: bigint[]
+                        source_row.units_ids && ARRAY[operation.unit.id]::bigint[]
                         and
                         source_row.deleted = 0
                 )

@@ -60,6 +60,7 @@ export class FunctionsMigrator extends AbstractMigrator {
             try {
                 await this.postgres.createOrReplaceFunction(func);
             } catch(err) {
+                console.log(err);
                 this.onError(func, err);
             }
         }

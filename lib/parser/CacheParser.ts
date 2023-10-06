@@ -1,105 +1,90 @@
-import { 
-    GrapeQLCoach, 
-    CacheFor, 
-    ObjectName, 
-    TableLink, 
-    Select as SelectSyntax
-} from "grapeql-lang";
-import { TableReferenceParser } from "./TableReferenceParser";
+import {
+    Sql,
+    ColumnReference,
+    TableReference as TableLink
+} from "psql-lang";
 import { SelectParser } from "./SelectParser";
 import { Cache, Select } from "../ast";
-import { TableReference } from "../database/schema/TableReference";
-import { Expression as ExpressionSyntax } from "grapeql-lang";
-import { CacheIndex } from "../ast/CacheIndex";
+import { CacheIndex, IndexTarget } from "../ast/CacheIndex";
 import { ExpressionParser } from "./ExpressionParser";
+import { CacheSyntax } from "./CacheSyntax";
+import { TableID } from "../database/schema/TableID";
+import { TableReference } from "../database/schema/TableReference";
+import { DEFAULT_SCHEMA } from "./defaults";
+import { parseFromTable } from "./utils";
 
 export class CacheParser {
 
-    static parse(cacheSQL: string | GrapeQLCoach) {
+    static parse(cacheSQL: string | Sql | CacheSyntax) {
         const parser = new CacheParser(cacheSQL);
         return parser.parse();
     }
 
-    private syntax: CacheFor;
+    private syntax: CacheSyntax;
     private selectParser: SelectParser;
     private expressionParser: ExpressionParser;
-    private tableParser: TableReferenceParser;
-    private constructor(cacheSQLOrCoach: string | GrapeQLCoach) {
-
-        let coach: GrapeQLCoach = cacheSQLOrCoach as GrapeQLCoach;
-        if ( typeof cacheSQLOrCoach === "string" ) {
-            const cacheSQL = cacheSQLOrCoach;
-            coach = new GrapeQLCoach(cacheSQL);
-        }
-
-        this.syntax = coach.parse(CacheFor);
+    private constructor(input: string | Sql | CacheSyntax) {
         this.selectParser = new SelectParser();
-        this.tableParser = new TableReferenceParser();
         this.expressionParser = new ExpressionParser();
+
+        if ( input instanceof CacheSyntax ) {
+            this.syntax = input;
+        }
+        else if ( input instanceof Sql ) {
+            this.syntax = input.parse(CacheSyntax);
+        }
+        else {
+            this.syntax = Sql.code(input).parse(CacheSyntax);
+        }
     }
 
     parse() {
-        const forTable = this.tableParser.parse(
-            this.syntax.get("for") as TableLink,
-            this.syntax.get("as")
+        const forTable = new TableReference(
+            new TableID(
+                this.syntax.row.for.row.schema?.toValue() || DEFAULT_SCHEMA,
+                this.syntax.row.for.row.name.toValue()
+            ),
+            this.syntax.row.as?.toString()
         );
         const select = this.parseSelect(forTable);
 
         const cache = new Cache(
-            this.parseCacheName(),
+            this.syntax.row.name.toString(),
             forTable,
             select,
-            this.parseWithoutTriggers(),
-            this.parseWithoutInserts(),
+            this.parseTables(this.syntax.row.withoutTriggersOn),
+            this.parseTables(this.syntax.row.withoutInsertOn),
             this.parseIndexes(select, forTable)
         );
         return cache;
     }
 
-    private parseCacheName() {
-        const nameSyntax = this.syntax.get("name") as ObjectName;
-        const name = nameSyntax.toLowerCase() as string;
-        return name;
-    }
-
     private parseSelect(cacheFor: TableReference) {
-        const selectSyntax = this.syntax.get("cache") as SelectSyntax;
-        const select = this.selectParser.parse(cacheFor, selectSyntax);
-        return select;
+        const selectSyntax = this.syntax.row.cache;
+        return this.selectParser.parse(cacheFor, selectSyntax);
     }
 
-    private parseWithoutTriggers() {
-        const withoutTriggersSyntaxes = this.syntax.get("withoutTriggers") || [];
-        const withoutTriggers = withoutTriggersSyntaxes.map(onTableSyntax =>
-            this.tableParser.parse(onTableSyntax).table.toString()
+    private parseTables(tables: TableLink[] = []) {
+        return tables.map(table =>
+            parseFromTable(table).table.toString()
         );
-        return withoutTriggers;
-    }
-
-    private parseWithoutInserts() {
-        const withoutInsertSyntaxes = this.syntax.get("withoutInsertOn") || [];
-        const withoutInserts = withoutInsertSyntaxes.map(onTableSyntax =>
-            this.tableParser.parse(onTableSyntax).table.toString()
-        );
-        return withoutInserts;
     }
 
     private parseIndexes(select: Select, cacheFor: TableReference) {
-        const indexesSyntaxes = this.syntax.get("indexes") || [];
+        const indexesSyntaxes = this.syntax.row.indexes || [];
         const indexes = indexesSyntaxes.map(cacheIndexSyntax => {
-            const index = cacheIndexSyntax.get("index") as string;
-            const onSyntaxes = cacheIndexSyntax.get("on") || [];
+            const index = cacheIndexSyntax.row.index;
+            const onSyntaxes = cacheIndexSyntax.row.columns || [];
 
-            const on = onSyntaxes.map(onSyntax => {
-                if ( onSyntax instanceof ObjectName ) {
-                    return onSyntax.toString();
+            const on: IndexTarget[] = onSyntaxes.map(onSyntax => {
+                if ( onSyntax.row.expression instanceof ColumnReference ) {
+                    return onSyntax.row.expression.toString();
                 }
 
-                const expressionSyntax = onSyntax as ExpressionSyntax;
                 const expression = this.expressionParser.parse(
                     select,
                     [cacheFor],
-                    expressionSyntax
+                    onSyntax.row.expression.toString()
                 );
                 return expression;
             });

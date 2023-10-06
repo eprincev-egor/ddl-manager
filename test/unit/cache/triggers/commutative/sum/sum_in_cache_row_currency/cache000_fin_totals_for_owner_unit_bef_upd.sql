@@ -17,8 +17,8 @@ begin
                 round(
                     coalesce(
                         fin_operation.sum_vat,
-                        0 :: bigint
-                        ) :: numeric *     get_curs(
+                        0::bigint
+                        )::numeric *     get_curs(
                         fin_operation.id_currency,
                         new.id_currency_fin_oper,
                         fin_operation.curs,
@@ -27,9 +27,9 @@ begin
                             now_utc()
                             ),
                         fin_operation.is_euro_zone_curs
-                        ) :: numeric,
+                        )::numeric,
                     - 2
-                    ) :: bigint /     array_length(
+                    )::bigint /     array_length(
                     fin_operation.units_ids,
                     1
                     )

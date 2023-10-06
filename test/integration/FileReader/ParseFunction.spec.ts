@@ -143,7 +143,7 @@ describe("integration/FileReader parse functions", () => {
                         },
                         {
                             name: "total",
-                            type: "numeric(10,3)"
+                            type: "numeric(10, 3)"
                         }
                     ]
                 },
@@ -317,34 +317,6 @@ describe("integration/FileReader parse functions", () => {
         const actualResult = flatMap(state.files, file => file.content.functions);
 
         expect(actualResult).to.be.shallowDeepEqual(expectedResult);
-    });
-
-    it("parse file with comment on function", () => {
-        const sql = `
-            create or replace function public.test()
-            returns integer as $body$select 1$body$
-            language sql;
-
-            comment on function test() is $$yes$$;
-        `.trim();
-        
-        const filePath = ROOT_TMP_PATH + "/test-file.sql";
-        fs.writeFileSync(filePath, sql);
-
-        
-        const state = FileReader.read([ROOT_TMP_PATH]);
-
-        expect(flatMap(state.files, file => file.content.functions)).to.be.shallowDeepEqual([
-            {
-                language: "sql",
-                schema: "public",
-                name: "test",
-                args: [],
-                returns: {type: "integer"},
-                body: "select 1",
-                comment: {dev: "yes"}
-            }
-        ]);
     });
 
 });

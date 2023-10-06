@@ -19,6 +19,8 @@ import { wrapText } from "./postgres/wrapText";
 import { IFileContent } from "../fs/File";
 import { Index } from "./schema/Index";
 import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
+import { parseIndexColumns } from "../parser/parseIndexColumns";
+import { fixErrorStack } from "../utils";
 
 const selectAllFunctionsSQL = fs.readFileSync(__dirname + "/postgres/select-all-functions.sql")
     .toString();
@@ -124,7 +126,7 @@ implements IDatabaseDriver {
             const columnsStr = row.indexdef
                 .split("(").slice(1).join("(")
                 .split(")").slice(0, -1).join(")");
-            const columns = FileParser.parseIndexColumns(columnsStr);
+            const columns = parseIndexColumns(columnsStr);
 
             const index = new Index({
                 name: row.indexname,
@@ -585,22 +587,6 @@ implements IDatabaseDriver {
             throw fixErrorStack(sql, originalErr, stack);
         }
     }
-}
-
-function fixErrorStack(
-    sql: string,
-    originalErr: any,
-    stack: string | undefined
-): Error {
-    const correctError = new Error(originalErr.message) as any;
-    // system info (postgres stack, codes, ...)
-    Object.assign(correctError, originalErr);
-
-    // redefine call stack
-    correctError.stack = originalErr.message + "\n" + stack;
-    correctError.sql = sql;
-
-    return correctError;
 }
 
 function execSql(

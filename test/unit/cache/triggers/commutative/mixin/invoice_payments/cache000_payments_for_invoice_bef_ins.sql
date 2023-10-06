@@ -19,7 +19,7 @@ begin
     where
         payment_orders.deleted = 0
         and
-        payment_orders.id = any (new.payments_ids)
+        payment_orders.id = any(new.payments_ids)
     into new_totals;
 
 

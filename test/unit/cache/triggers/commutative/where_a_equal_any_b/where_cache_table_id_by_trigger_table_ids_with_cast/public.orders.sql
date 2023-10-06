@@ -35,12 +35,12 @@ begin
                             true
                     ) as source_row
                     where
-                        companies.id = any (source_row.companies_ids :: bigint[])
+                        companies.id = any(source_row.companies_ids::bigint[])
                         and
                         source_row.deleted = 0
                 )
             where
-                companies.id = any (old.companies_ids :: bigint[]);
+                companies.id = any(old.companies_ids::bigint[]);
         end if;
 
         return old;
@@ -132,12 +132,12 @@ begin
                             true
                     ) as source_row
                     where
-                        companies.id = any (source_row.companies_ids :: bigint[])
+                        companies.id = any(source_row.companies_ids::bigint[])
                         and
                         source_row.deleted = 0
                 )
             where
-                companies.id = any (not_changed_companies_ids :: bigint[]);
+                companies.id = any(not_changed_companies_ids::bigint[]);
         end if;
 
         if deleted_companies_ids is not null then
@@ -162,12 +162,12 @@ begin
                             true
                     ) as source_row
                     where
-                        companies.id = any (source_row.companies_ids :: bigint[])
+                        companies.id = any(source_row.companies_ids::bigint[])
                         and
                         source_row.deleted = 0
                 )
             where
-                companies.id = any (deleted_companies_ids :: bigint[]);
+                companies.id = any(deleted_companies_ids::bigint[]);
         end if;
 
         if inserted_companies_ids is not null then
@@ -204,12 +204,12 @@ begin
                             true
                     ) as source_row
                     where
-                        companies.id = any (source_row.companies_ids :: bigint[])
+                        companies.id = any(source_row.companies_ids::bigint[])
                         and
                         source_row.deleted = 0
                 )
             where
-                companies.id = any (inserted_companies_ids :: bigint[]);
+                companies.id = any(inserted_companies_ids::bigint[]);
         end if;
 
         return new;
@@ -255,12 +255,12 @@ begin
                             true
                     ) as source_row
                     where
-                        companies.id = any (source_row.companies_ids :: bigint[])
+                        companies.id = any(source_row.companies_ids::bigint[])
                         and
                         source_row.deleted = 0
                 )
             where
-                companies.id = any (new.companies_ids :: bigint[]);
+                companies.id = any(new.companies_ids::bigint[]);
         end if;
 
         return new;

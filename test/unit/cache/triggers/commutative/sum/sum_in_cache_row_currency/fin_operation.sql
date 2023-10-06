@@ -24,8 +24,8 @@ begin
                                 round(
                                     coalesce(
                                         source_row.sum_vat,
-                                        0 :: bigint
-                                        ) :: numeric *     get_curs(
+                                        0::bigint
+                                        )::numeric *     get_curs(
                                         source_row.id_currency,
                                         own_unit.id_currency_fin_oper,
                                         source_row.curs,
@@ -34,9 +34,9 @@ begin
                                             now_utc()
                                             ),
                                         source_row.is_euro_zone_curs
-                                        ) :: numeric,
+                                        )::numeric,
                                     - 2
-                                    ) :: bigint /     array_length(source_row.units_ids, 1)
+                                    )::bigint /     array_length(source_row.units_ids, 1)
                                                         ) as fin_sum
                     from (
                         select
@@ -137,8 +137,8 @@ begin
                                 round(
                                     coalesce(
                                         source_row.sum_vat,
-                                        0 :: bigint
-                                        ) :: numeric *     get_curs(
+                                        0::bigint
+                                        )::numeric *     get_curs(
                                         source_row.id_currency,
                                         own_unit.id_currency_fin_oper,
                                         source_row.curs,
@@ -147,9 +147,9 @@ begin
                                             now_utc()
                                             ),
                                         source_row.is_euro_zone_curs
-                                        ) :: numeric,
+                                        )::numeric,
                                     - 2
-                                    ) :: bigint /     array_length(source_row.units_ids, 1)
+                                    )::bigint /     array_length(source_row.units_ids, 1)
                                                         ) as fin_sum
                     from (
                         select
@@ -188,8 +188,8 @@ begin
                                 round(
                                     coalesce(
                                         source_row.sum_vat,
-                                        0 :: bigint
-                                        ) :: numeric *     get_curs(
+                                        0::bigint
+                                        )::numeric *     get_curs(
                                         source_row.id_currency,
                                         own_unit.id_currency_fin_oper,
                                         source_row.curs,
@@ -198,9 +198,9 @@ begin
                                             now_utc()
                                             ),
                                         source_row.is_euro_zone_curs
-                                        ) :: numeric,
+                                        )::numeric,
                                     - 2
-                                    ) :: bigint /     array_length(source_row.units_ids, 1)
+                                    )::bigint /     array_length(source_row.units_ids, 1)
                                                         ) as fin_sum
                     from (
                         select
@@ -239,8 +239,8 @@ begin
                                 round(
                                     coalesce(
                                         source_row.sum_vat,
-                                        0 :: bigint
-                                        ) :: numeric *     get_curs(
+                                        0::bigint
+                                        )::numeric *     get_curs(
                                         source_row.id_currency,
                                         own_unit.id_currency_fin_oper,
                                         source_row.curs,
@@ -249,9 +249,9 @@ begin
                                             now_utc()
                                             ),
                                         source_row.is_euro_zone_curs
-                                        ) :: numeric,
+                                        )::numeric,
                                     - 2
-                                    ) :: bigint /     array_length(source_row.units_ids, 1)
+                                    )::bigint /     array_length(source_row.units_ids, 1)
                                                         ) as fin_sum
                     from (
                         select
@@ -305,8 +305,8 @@ begin
                                 round(
                                     coalesce(
                                         source_row.sum_vat,
-                                        0 :: bigint
-                                        ) :: numeric *     get_curs(
+                                        0::bigint
+                                        )::numeric *     get_curs(
                                         source_row.id_currency,
                                         own_unit.id_currency_fin_oper,
                                         source_row.curs,
@@ -315,9 +315,9 @@ begin
                                             now_utc()
                                             ),
                                         source_row.is_euro_zone_curs
-                                        ) :: numeric,
+                                        )::numeric,
                                     - 2
-                                    ) :: bigint /     array_length(source_row.units_ids, 1)
+                                    )::bigint /     array_length(source_row.units_ids, 1)
                                                         ) as fin_sum
                     from (
                         select

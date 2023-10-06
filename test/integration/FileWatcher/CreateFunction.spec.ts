@@ -158,40 +158,4 @@ describe("integration/FileWatcher watch create functions", () => {
         ]);
     });
 
-    it("create function with comment", async() => {
-        
-        const filePath = ROOT_TMP_PATH + "/create-func.sql";
-        
-        let migration!: Migration;
-        let counter = 0;
-
-        const fsWatcher = await watch((_migration) => {
-            migration = _migration;
-            counter++;
-        });
-        
-        fs.writeFileSync(filePath, TEST_FUNC1_SQL + `
-            comment on function test_func1() is 'sweet'
-        `);
-        await sleep(50);
-        
-        assert.equal(counter, 1);
-        
-        expect(migration).to.be.shallowDeepEqual({
-            toDrop: {
-                functions: [],
-                triggers: []
-            },
-            toCreate: {
-                functions: [
-                    {...TEST_FUNC1, comment: {dev: "sweet"}}
-                ],
-                triggers: []
-            }
-        });
-        
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
-            {...TEST_FUNC1, comment: {dev: "sweet"}}
-        ]);
-    });
 });

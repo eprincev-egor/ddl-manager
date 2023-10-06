@@ -1,4 +1,5 @@
 import pg from "pg";
+import {fixErrorStack} from "../../lib/utils";
 
 interface IConfig {
     database: string | false;
@@ -69,8 +70,7 @@ export async function getDBClient(dbConfig: IConfig = {
         try {
             return await query.call(pool, ...args);
         } catch(error: any) {
-            error.stack = (error.where || "") + stack;
-            throw error;
+            throw fixErrorStack(args[0], error, stack);
         }
     } as any;
 

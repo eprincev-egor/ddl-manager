@@ -164,41 +164,6 @@ describe("integration/FileWatcher watch remove functions", () => {
             .to.deep.equal([]);
     });
 
-    it("remove function with comments", async() => {
-        
-        const filePath = ROOT_TMP_PATH + "/test-file.sql";
-
-        fs.writeFileSync(filePath, TEST_FUNC1_SQL +  `
-            comment on function test_func1() is 'awesome'
-        `);
-
-        let migration!: Migration;
-        const fsWatcher = await watch((_migration) => {
-            migration = _migration;
-        });
-
-
-        fs.unlinkSync(filePath);
-        await sleep(50);
-
-        expect(migration).to.be.shallowDeepEqual({
-            toDrop: {
-                functions: [
-                    TEST_FUNC1
-                ],
-                triggers: []
-            },
-            toCreate: {
-                functions: [],
-                triggers: []
-            }
-        });
-
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
-            .to.deep.equal([]);
-    });
-
-
     it("remove function with default arg", async() => {
         const FUNC_SQL = `
             create or replace function test_func1(x integer default null)

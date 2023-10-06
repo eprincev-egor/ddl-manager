@@ -470,7 +470,7 @@ export class DDLManager {
                     sql += "\n";
                 }
 
-                sql += sameFunc.toSQLWithComment();
+                sql += sameFunc.toSQL();
             });
             
             // file can contain triggers
@@ -495,7 +495,7 @@ export class DDLManager {
                         sql += ";\n";
                         sql += "\n";
         
-                        sql += trigger.toSQLWithComment();
+                        sql += trigger.toSQL();
                     });
                 }
             }

@@ -1,70 +1,66 @@
-import { 
-    Select as SelectSyntax, 
-    Column,
-    Expression as ExpressionSyntax,
-    FromItem,
-    Join as JoinSyntax,
-    TableLink,
-    ObjectName,
-    FunctionCall
-} from "grapeql-lang";
+import {
+    Select as SelectSyntax,
+    FunctionCall,
+    FromTable,
+    TableReference as TableLink,
+    Join as JoinSyntax
+} from "psql-lang";
 import { ExpressionParser } from "./ExpressionParser";
-import { TableReferenceParser } from "./TableReferenceParser";
 import {
     From, Join, Select,
     SelectColumn,
     OrderBy, OrderByItem
 } from "../ast";
 import { TableReference } from "../database/schema/TableReference";
-import assert from "assert";
+import { strict } from "assert";
+import { parseFromTable } from "./utils";
 
 export class SelectParser {
 
     private expressionParser = new ExpressionParser();
-    private tableParser = new TableReferenceParser();
     
-    parse(cacheFor: TableReference, selectSyntax: SelectSyntax) {
-
+    parse(cacheFor: TableReference, selectNode: SelectSyntax) {
+        const selectData = selectNode.row;
         let select = new Select();
 
-        if ( selectSyntax.get("with") ) {
+        if ( selectData.with ) {
             throw new Error("CTE (with queries) are not supported");
         }
-        if ( selectSyntax.get("union") ) {
+        if ( selectData.union ) {
             throw new Error("UNION are not supported");
         }
-        const hasSubQuery = selectSyntax.filterChildrenByInstance(SelectSyntax).length > 0;
+        const hasSubQuery = selectNode.filterChildrenByInstance(SelectSyntax).length > 0;
         if ( hasSubQuery ) {
             throw new Error("SUB QUERIES are not supported");
         }
-        if ( selectSyntax.get("groupBy") ) {
+        if ( selectData.groupBy ) {
             throw new Error("GROUP BY are not supported");
         }
 
-        const columns = selectSyntax.get("columns");
+        const columns = selectData.select;
         if ( !columns || !columns.length ) {
             throw new Error("required select any columns or expressions");
         }
 
         for (let i = 0, n = columns.length; i < n; i++) {
-            const column = columns[i];
-            const columnAlias = (column.get("as") || "").toString();
+            const columnNode = columns[i];
+            const columnAlias = (columnNode.row.as || "").toString();
 
             for (let j = i + 1; j < n; j++) {
                 const nextColumn = columns[j];
-                const nextColumnAlias = (nextColumn.get("as") || "").toString();
+                const nextColumnAlias = (nextColumn.row.as || "").toString();
 
                 if ( columnAlias === nextColumnAlias ) {
                     throw new Error(`duplicated cache column ${cacheFor.toString()}\.${columnAlias}`);
                 }
             }
 
-            const funcCalls = column.filterChildrenByInstance(FunctionCall);
+            const funcCalls = columnNode.filterChildrenByInstance(FunctionCall);
             for (const funcCall of funcCalls) {
-                const name = String(funcCall.get("function"));
+                const name = String(funcCall.row.call);
 
                 if ( name == "string_agg" ) {
-                    const args = funcCall.get("arguments") || [];
+                    const args = funcCall.row.arguments || [];
 
                     if ( args.length === 1 ) {
                         throw new Error(`required delimiter for string_agg, column: ${columnAlias}`);
@@ -74,22 +70,23 @@ export class SelectParser {
         }
 
 
-        select = this.parseFromItems(cacheFor, selectSyntax, select);
-        select = this.parseColumns(cacheFor, selectSyntax, select);
-        select = this.parseWhere(cacheFor, selectSyntax, select);
-        select = this.parseOrderBy(cacheFor, selectSyntax, select);
-        select = this.parseLimit(selectSyntax, select);
+        select = this.parseFromItems(cacheFor, selectNode, select);
+        select = this.parseColumns(cacheFor, selectNode, select);
+        select = this.parseWhere(cacheFor, selectNode, select);
+        select = this.parseOrderBy(cacheFor, selectNode, select);
+        select = this.parseLimit(selectNode, select);
 
         return select;
     }
 
     private parseFromItems(
         cacheFor: TableReference,
-        selectSyntax: SelectSyntax,
+        selectNode: SelectSyntax,
         select: Select
     ) {
-        const fromItems = selectSyntax.get("from") || [];
+        const fromItems = selectNode.row.from || [];
         fromItems.forEach(fromItem => {
+            strict.ok(fromItem instanceof FromTable, "supported only from table");
             select = this.parseFromItem(cacheFor, select, fromItem)
         });
 
@@ -99,17 +96,17 @@ export class SelectParser {
     private parseFromItem(
         cacheFor: TableReference,
         select: Select,
-        fromItem: FromItem
+        fromItem: FromTable
     ) {
-        const alias = fromItem.get("as");
-        const tableLink = fromItem.get("table") as TableLink;
+        const alias = fromItem.row.as;
+        const tableLink = fromItem.row.table as TableLink;
 
-        assert.ok(tableLink, "sub queries are not supported");
+        strict.ok(tableLink, "sub queries are not supported");
 
-        const tableRef = this.tableParser.parse(tableLink, alias);
+        const tableRef = parseFromTable(tableLink, alias);
         let fromTable = new From({source: tableRef});
 
-        const joinsSyntaxes = fromItem.get("joins") || [];
+        const joinsSyntaxes = fromItem.row.joins || [];
         joinsSyntaxes.forEach(joinSyntax =>  {
             fromTable = this.parseJoin(cacheFor, select, fromTable, joinSyntax)
         });
@@ -119,18 +116,24 @@ export class SelectParser {
         return select;
     }
 
-    private parseJoin(cacheFor: TableReference, select: Select, from: From, joinSyntax: JoinSyntax) {
-        const fromItem = joinSyntax.get("from") as FromItem;
-        const alias = fromItem.get("as");
-        const tableLink = fromItem.get("table") as TableLink;
+    private parseJoin(
+        cacheFor: TableReference,
+        select: Select,
+        from: From,
+        joinSyntax: JoinSyntax
+    ) {
+        const fromItem = joinSyntax.row.from as FromTable;
+        const alias = fromItem.row.as;
+        const tableLink = fromItem.row.table as TableLink;
 
-        assert.ok(tableLink, "supported only 'join table'");
+        strict.ok(tableLink, "supported only 'join table'");
 
-        const type = joinSyntax.get("type") as string;
+        const type = joinSyntax.row.type as string;
 
-        const tableRef = this.tableParser.parse(tableLink, alias);
+        const tableRef = parseFromTable(tableLink, alias);
 
-        const onSql = (joinSyntax.get("on") as ExpressionSyntax).toString();
+        strict.ok("on" in joinSyntax.row, "supported only joins with on condition")
+        const onSql = joinSyntax.row.on.toString();
         const on = this.expressionParser.parse(
             select,
             [
@@ -155,16 +158,16 @@ export class SelectParser {
         selectSyntax: SelectSyntax,
         select: Select
     ) {
-        const columns = selectSyntax.get("columns") as Column[];
+        const columns = selectSyntax.row.select;
 
         for (const column of columns) {
-            const nameSyntax = column.get("as") as ObjectName;
+            const nameSyntax = column.row.as;
 
-            assert.ok(nameSyntax, "required alias for every cache column: " + column.toString());
+            strict.ok(nameSyntax, "required alias for every cache column: " + column.toString());
 
-            const name = nameSyntax.toLowerCase() as string;
+            const name = nameSyntax.toString();
 
-            const expressionSyntax = column.get("expression") as ExpressionSyntax;
+            const expressionSyntax = column.row.expression;
 
             const selectColumn = new SelectColumn({
                 name,

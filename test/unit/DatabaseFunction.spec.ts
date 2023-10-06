@@ -46,6 +46,29 @@ describe("DatabaseFunction", () => {
         assert.ok( !func2.equal(func1), "func2 != func1" );
     });
 
+    it("equal with different parallel", () => {
+        const func1 = new DatabaseFunction({
+            schema: "public",
+            name: "my_func",
+            args: [],
+            returns: {type: "bigint"},
+            body: "body",
+            parallel: ["safe"]
+        });
+
+        const func2 = new DatabaseFunction({
+            schema: "public",
+            name: "my_func",
+            args: [],
+            returns: {type: "bigint"},
+            body: "body",
+            parallel: ["safe"]
+        });
+        
+        assert.ok( func1.equal(func2), "func1 == func2" );
+        assert.ok( func2.equal(func1), "func2 == func1" );
+    });
+
     it("equal with different args", () => {
         const func1 = new DatabaseFunction({
             schema: "public",
@@ -61,29 +84,6 @@ describe("DatabaseFunction", () => {
             args: [{name: "hello", type: "bigint"}],
             returns: {type: "bigint"},
             body: "body"
-        });
-        
-        assert.ok( !func1.equal(func2), "func1 != func2" );
-        assert.ok( !func2.equal(func1), "func2 != func1" );
-    });
-
-    it("equal with different comment", () => {
-        const func1 = new DatabaseFunction({
-            schema: "public",
-            name: "my_func",
-            args: [],
-            returns: {type: "bigint"},
-            body: "body",
-            comment: "comment 1"
-        });
-
-        const func2 = new DatabaseFunction({
-            schema: "public",
-            name: "my_func",
-            args: [{name: "hello", type: "bigint"}],
-            returns: {type: "bigint"},
-            body: "body",
-            comment: "comment 2"
         });
         
         assert.ok( !func1.equal(func2), "func1 != func2" );
@@ -155,29 +155,6 @@ describe("DatabaseFunction", () => {
         assert.ok( !func2.equal(func1), "func2 != func1" );
     });
 
-    it("equal with different frozen", () => {
-        const func1 = new DatabaseFunction({
-            schema: "public",
-            name: "my_func",
-            args: [],
-            returns: {type: "bigint"},
-            body: "body",
-            comment: Comment.frozen("function")
-        });
-
-        const func2 = new DatabaseFunction({
-            schema: "public",
-            name: "my_func",
-            args: [],
-            returns: {type: "bigint"},
-            body: "body",
-            comment: Comment.empty("function")
-        });
-        
-        assert.ok( !func1.equal(func2), "func1 != func2" );
-        assert.ok( !func2.equal(func1), "func2 != func1" );
-    });
-
     it("equal args with similar default", () => {
         interface IArgCompare {
             argA: IDatabaseFunctionArgument;
@@ -194,7 +171,7 @@ describe("DatabaseFunction", () => {
                 argB: {
                     name: "_start_date",
                     type: "timestamp without time zone",
-                    default: "null :: timestamp without time zone"
+                    default: "null::timestamp without time zone"
                 }, 
                 equal: true
             },
@@ -220,7 +197,7 @@ describe("DatabaseFunction", () => {
                 argB: {
                     name: "_start_date",
                     type: "timestamp WITHOUT time zone",
-                    default: "null :: timestamp without time zone "
+                    default: "null::timestamp without time zone "
                 }, 
                 equal: true
             },
@@ -234,7 +211,7 @@ describe("DatabaseFunction", () => {
                 argB: {
                     name: "_start_date",
                     type: "timestamp without  time zone",
-                    default: "null :: timestamp without time zone "
+                    default: "null::timestamp without time zone "
                 }, 
                 equal: true
             },
@@ -249,7 +226,7 @@ describe("DatabaseFunction", () => {
                 argB: {
                     name: "_start_date",
                     type: "numeric",
-                    default: "null :: numeric"
+                    default: "null::numeric"
                 }, 
                 equal: true
             },
@@ -258,7 +235,7 @@ describe("DatabaseFunction", () => {
                 argA: {
                     name: "name",
                     type: "text",
-                    default: "'' :: text"
+                    default: "''::text"
                 },
                 argB: {
                     name: "name",
@@ -271,7 +248,7 @@ describe("DatabaseFunction", () => {
                 argA: {
                     name: "name",
                     type: "jsonb",
-                    default: "{} :: jsonb"
+                    default: "{}::jsonb"
                 },
                 argB: {
                     name: "name",
@@ -284,7 +261,7 @@ describe("DatabaseFunction", () => {
                 argA: {
                     name: "name",
                     type: "jsonb",
-                    default: "'{}' :: jsonb"
+                    default: "'{}'::jsonb"
                 },
                 argB: {
                     name: "name",
@@ -297,7 +274,7 @@ describe("DatabaseFunction", () => {
                 argA: {
                     name: "name",
                     type: "jsonb",
-                    default: "{} :: jsonb"
+                    default: "{}::jsonb"
                 },
                 argB: {
                     name: "name",
@@ -323,7 +300,7 @@ describe("DatabaseFunction", () => {
                 argA: {
                     name: "name",
                     type: "boolean",
-                    default: "false :: boolean"
+                    default: "false::boolean"
                 },
                 argB: {
                     name: "name",
@@ -336,7 +313,7 @@ describe("DatabaseFunction", () => {
                 argA: {
                     name: "name",
                     type: "boolean",
-                    default: "false :: boolean"
+                    default: "false::boolean"
                 },
                 argB: {
                     name: "name",
@@ -362,7 +339,7 @@ describe("DatabaseFunction", () => {
                 argA: {
                     name: "name",
                     type: "smallint",
-                    default: "0 :: smallint"
+                    default: "0::smallint"
                 },
                 argB: {
                     name: "name",
@@ -375,7 +352,7 @@ describe("DatabaseFunction", () => {
                 argA: {
                     name: "name",
                     type: "text",
-                    default: "'both' :: text"
+                    default: "'both'::text"
                 },
                 argB: {
                     name: "name",
@@ -388,7 +365,7 @@ describe("DatabaseFunction", () => {
                 argA: {
                     name: "name",
                     type: "text[]",
-                    default: "'both' :: text[]"
+                    default: "'both'::text[]"
                 },
                 argB: {
                     name: "name",
@@ -449,6 +426,27 @@ describe("DatabaseFunction", () => {
         assert.ok( func2.equal(func1), "func2 == func1" );
     });
 
+    it("returns company == returns public.company", () => {
+        const func1 = new DatabaseFunction({
+            schema: "public",
+            name: "my_func",
+            args: [],
+            returns: {setof: true, type: "company"},
+            body: "body"
+        });
+
+        const func2 = new DatabaseFunction({
+            schema: "public",
+            name: "my_func",
+            args: [],
+            returns: {setof: true, type: "public.company"},
+            body: "body"
+        });
+        
+        assert.ok( func1.equal(func2), "func1 == func2" );
+        assert.ok( func2.equal(func1), "func2 == func1" );
+    });
+
     it("equal arg type: numeric(14, 2) == numeric", () => {
         const func1 = new DatabaseFunction({
             schema: "public",
@@ -485,7 +483,6 @@ describe("DatabaseFunction", () => {
             body: "begin\nend",
             comment: Comment.fromFs({
                 objectType: "function",
-                dev: "hello"
             })
         });
 

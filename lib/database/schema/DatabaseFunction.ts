@@ -2,7 +2,7 @@ import { wrapText } from "../postgres/wrapText";
 import { MAX_NAME_LENGTH } from "../postgres/constants";
 import { Comment } from "./Comment";
 import { uniq } from "lodash";
-import { formatType } from "./Type";
+import { equalType, formatType } from "./Type";
 
 export interface IDatabaseFunctionParams {
     schema: string;
@@ -17,10 +17,10 @@ export interface IDatabaseFunctionParams {
     strict?: boolean;
     parallel?: ("safe" | "unsafe" | "restricted")[];
     cost?: number;
-    comment?: Comment | string;
+    comment?: Comment;
 }
 
-interface IDatabaseFunctionReturns {
+export interface IDatabaseFunctionReturns {
     setof?: boolean;
     table?: IDatabaseFunctionArgument[];
     type?: string;
@@ -43,8 +43,8 @@ export class DatabaseFunction  {
     readonly language: "plpgsql" | "sql";
 
     readonly comment!: Comment;
-    readonly frozen: boolean;
     readonly cacheSignature?: string;
+    readonly frozen?: boolean;
     
     readonly immutable?: boolean;
     readonly returnsNullOnNull?: boolean;
@@ -58,26 +58,13 @@ export class DatabaseFunction  {
         Object.assign(this, json);
         this.language = json.language || "plpgsql";
 
-        // if ( this.name.length > MAX_NAME_LENGTH ) {
-        //     // tslint:disable-next-line: no-console
-        //     console.error(`name "${this.name}" too long (> 64 symbols)`);
-        // }
         this.name = this.name.slice(0, MAX_NAME_LENGTH);
 
-        if ( !json.comment ) {
-            this.comment = Comment.fromFs({
-                objectType: "function"
-            });
-        }
-        else if ( typeof json.comment === "string" ) {
-            this.comment = Comment.fromFs({
-                objectType: "function",
-                dev: json.comment
-            });
-        }
-        
-        this.frozen = this.comment.frozen || false;
+        this.comment = json.comment || Comment.fromFs({
+            objectType: "function"
+        });
         this.cacheSignature = this.comment.cacheSignature;
+        this.frozen = this.comment.frozen;
     }
 
     equalName(schemaName: string): boolean {
@@ -106,11 +93,9 @@ export class DatabaseFunction  {
             !!this.stable === !!otherFunc.stable &&
             !!this.strict === !!otherFunc.strict &&
 
-            !!this.frozen === !!otherFunc.frozen &&
-
             // null == undefined
             // tslint:disable-next-line: triple-equals
-            this.parallel == otherFunc.parallel &&
+            String(this.parallel) == String(otherFunc.parallel) &&
 
             this.comment.equal(otherFunc.comment)
         );
@@ -257,19 +242,6 @@ language ${this.language}
         const sql = this.toSQL(body);
         return sql;
     }
-
-    toSQLWithComment() {
-        let sql = this.toSQL();
-
-        if ( this.comment.dev ) {
-            sql += ";\n";
-            sql += "\n";
-
-            sql += `comment on function ${this.getSignature()} is ${ wrapText(this.comment.dev) }`;
-        }
-
-        return sql;
-    }
 }
 
 
@@ -323,7 +295,7 @@ function equalArgument(argA: IDatabaseFunctionArgument, argB: IDatabaseFunctionA
         // null == undefined
         // tslint:disable-next-line: triple-equals
         argA.name == argB.name &&
-        formatType(argA.type) === formatType(argB.type) &&
+        equalType(argA.type, argB.type) &&
         equalArgumentDefault(argA, argB) &&
         !!argA.in === !!argB.in &&
         !!argA.out === !!argB.out
@@ -364,7 +336,7 @@ function formatDefault(someArg: IDatabaseFunctionArgument) {
 
 function equalReturns(returnsA: IDatabaseFunctionReturns, returnsB: IDatabaseFunctionReturns) {
     return (
-        formatType(returnsA.type) === formatType(returnsB.type) &&
+        equalType(returnsA.type, returnsB.type) &&
         !!returnsA.setof === !!returnsB.setof &&
         (
             returnsA.table && returnsB.table &&

@@ -170,47 +170,4 @@ describe("integration/FileWatcher watch change functions", () => {
             ]);
     });
 
-    it("change comment on function", async() => {
-        
-        const filePath = ROOT_TMP_PATH + "/change-func.sql";
-        fs.writeFileSync(filePath, TEST_FUNC1_SQL + `
-            comment on function test_func1() is 'nice'
-        `);
-        
-
-        let migration!: Migration;
-        let counter = 0;
-
-        const fsWatcher = await watch((_migration) => {
-            migration = _migration;
-            counter++;
-        });
-        
-        
-        fs.writeFileSync(filePath, TEST_FUNC1_SQL + `
-            comment on function test_func1() is 'good'
-        `);
-        await sleep(50);
-        
-        expect(migration).to.be.shallowDeepEqual({
-            toDrop: {
-                functions: [
-                    TEST_FUNC1
-                ],
-                triggers: []
-            },
-            toCreate: {
-                functions: [
-                    {...TEST_FUNC1, comment: {dev: "good"}}
-                ],
-                triggers: []
-            }
-        });
-        assert.equal(counter, 1);
-        
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
-            .to.be.shallowDeepEqual([
-                {...TEST_FUNC1, comment: {dev: "good"}}
-            ]);
-    });
 });

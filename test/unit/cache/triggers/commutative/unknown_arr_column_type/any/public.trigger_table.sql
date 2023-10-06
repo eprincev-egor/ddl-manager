@@ -26,10 +26,10 @@ begin
                             true
                     ) as source_row
                     where
-                        cache_table.id = any (source_row.unknown_ids)
+                        cache_table.id = any(source_row.unknown_ids)
                 )
             where
-                cache_table.id = any (old.unknown_ids);
+                cache_table.id = any(old.unknown_ids);
         end if;
 
         return old;
@@ -79,10 +79,10 @@ begin
                             true
                     ) as source_row
                     where
-                        cache_table.id = any (source_row.unknown_ids)
+                        cache_table.id = any(source_row.unknown_ids)
                 )
             where
-                cache_table.id = any (not_changed_unknown_ids);
+                cache_table.id = any(not_changed_unknown_ids);
         end if;
 
         if deleted_unknown_ids is not null then
@@ -104,10 +104,10 @@ begin
                             true
                     ) as source_row
                     where
-                        cache_table.id = any (source_row.unknown_ids)
+                        cache_table.id = any(source_row.unknown_ids)
                 )
             where
-                cache_table.id = any (deleted_unknown_ids);
+                cache_table.id = any(deleted_unknown_ids);
         end if;
 
         if inserted_unknown_ids is not null then
@@ -141,10 +141,10 @@ begin
                             true
                     ) as source_row
                     where
-                        cache_table.id = any (source_row.unknown_ids)
+                        cache_table.id = any(source_row.unknown_ids)
                 )
             where
-                cache_table.id = any (inserted_unknown_ids);
+                cache_table.id = any(inserted_unknown_ids);
         end if;
 
         return new;
@@ -183,10 +183,10 @@ begin
                             true
                     ) as source_row
                     where
-                        cache_table.id = any (source_row.unknown_ids)
+                        cache_table.id = any(source_row.unknown_ids)
                 )
             where
-                cache_table.id = any (new.unknown_ids);
+                cache_table.id = any(new.unknown_ids);
         end if;
 
         return new;

@@ -10,6 +10,7 @@ import { TableID } from "../../database/schema/TableID";
 import { TableReference } from "../../database/schema/TableReference";
 import { CacheContext } from "./CacheContext";
 import { ConditionBuilder } from "./condition/ConditionBuilder";
+import { DEFAULT_SCHEMA } from "../../parser/defaults";
 
 export interface ICacheTrigger {
     trigger: DatabaseTrigger;
@@ -62,7 +63,7 @@ export abstract class AbstractTriggerBuilder {
                 args: []
             },
             table: new TableID(
-                this.context.triggerTable.schema || "public",
+                this.context.triggerTable.schema || DEFAULT_SCHEMA,
                 this.context.triggerTable.name
             ),
             comment: Comment.fromFs({

@@ -1,12 +1,12 @@
-import { ColumnLink } from "grapeql-lang";
+import { AbstractNode, ColumnReference as ColumnLink } from "psql-lang";
 import { ColumnReferenceParser } from "./ColumnReferenceParser";
 import {
     UnknownExpressionElement,
-    IUnknownSyntax,
     IColumnsMap,
     Select
 } from "../ast";
 import { TableReference } from "../database/schema/TableReference"
+import { flatMap } from "lodash";
 
 export class UnknownExpressionElementParser {
 
@@ -15,11 +15,25 @@ export class UnknownExpressionElementParser {
     parse(
         select: Select,
         additionalTableReferences: TableReference[],
-        syntax: IUnknownSyntax
+        syntax: AbstractNode<any>
     ) {
+        const columnsMap = this.buildColumnsMap(select, additionalTableReferences, syntax);
+        return new UnknownExpressionElement(syntax, columnsMap);
+    }
+
+    buildColumnsMap(
+        select: Select,
+        additionalTableReferences: TableReference[],
+        syntax: AbstractNode<any> | AbstractNode<any>[]
+    ) {
+        const syntaxes = (
+            Array.isArray(syntax) ? 
+                syntax : [syntax]
+        );
         const columnsMap: IColumnsMap = {};
-        
-        const columnLinks = (syntax as any).filterChildrenByInstance(ColumnLink) as ColumnLink[];
+
+        const columnLinks = flatMap(syntaxes, scanColumnLinks);
+
         columnLinks.forEach(columnLink => {
             const columnReference = this.columnReferenceParser.parse(
                 select, 
@@ -30,6 +44,16 @@ export class UnknownExpressionElementParser {
             columnsMap[ columnLink.toString() ] = columnReference;
         });
 
-        return new UnknownExpressionElement(syntax, columnsMap);
+        return columnsMap
     }
+}
+
+function scanColumnLinks(syntax: AbstractNode<any>) {
+    const columnLinks = syntax.filterChildrenByInstance(ColumnLink);
+
+    if ( syntax instanceof ColumnLink ) {
+        columnLinks.push(syntax);
+    }
+
+    return columnLinks;
 }

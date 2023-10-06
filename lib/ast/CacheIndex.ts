@@ -1,6 +1,6 @@
 import { Expression } from "./expression";
 
-type IndexTarget = Expression | string;
+export type IndexTarget = Expression | string;
 
 export class CacheIndex {
     readonly index: string;

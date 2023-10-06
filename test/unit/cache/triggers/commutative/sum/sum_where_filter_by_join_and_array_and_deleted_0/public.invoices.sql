@@ -35,7 +35,7 @@ begin
                     left join invoice_type on
                         invoice_type.id = source_row.id_invoice_type
                     where
-                        source_row.orders_ids @> ARRAY[orders.id] :: bigint[]
+                        source_row.orders_ids @> ARRAY[orders.id]::bigint[]
                         and
                         source_row.deleted = 0
                         and
@@ -136,7 +136,7 @@ begin
                     left join invoice_type on
                         invoice_type.id = source_row.id_invoice_type
                     where
-                        source_row.orders_ids @> ARRAY[orders.id] :: bigint[]
+                        source_row.orders_ids @> ARRAY[orders.id]::bigint[]
                         and
                         source_row.deleted = 0
                         and
@@ -168,7 +168,7 @@ begin
                     left join invoice_type on
                         invoice_type.id = source_row.id_invoice_type
                     where
-                        source_row.orders_ids @> ARRAY[orders.id] :: bigint[]
+                        source_row.orders_ids @> ARRAY[orders.id]::bigint[]
                         and
                         source_row.deleted = 0
                         and
@@ -212,7 +212,7 @@ begin
                     left join invoice_type on
                         invoice_type.id = source_row.id_invoice_type
                     where
-                        source_row.orders_ids @> ARRAY[orders.id] :: bigint[]
+                        source_row.orders_ids @> ARRAY[orders.id]::bigint[]
                         and
                         source_row.deleted = 0
                         and
@@ -265,7 +265,7 @@ begin
                     left join invoice_type on
                         invoice_type.id = source_row.id_invoice_type
                     where
-                        source_row.orders_ids @> ARRAY[orders.id] :: bigint[]
+                        source_row.orders_ids @> ARRAY[orders.id]::bigint[]
                         and
                         source_row.deleted = 0
                         and

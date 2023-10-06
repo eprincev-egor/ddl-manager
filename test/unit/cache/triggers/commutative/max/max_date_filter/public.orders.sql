@@ -8,9 +8,9 @@ begin
             old.id_client is not null
             and
             (
-                coalesce(old.id_order_type = any (array[1, 2, 3, 4] :: bigint[]), false)
+                coalesce(old.id_order_type = any(array[1, 2, 3, 4]::bigint[]), false)
                 or
-                coalesce(old.id_order_type = any (array[5, 6, 7, 8] :: bigint[]), false)
+                coalesce(old.id_order_type = any(array[5, 6, 7, 8]::bigint[]), false)
             )
         then
             update companies set
@@ -20,8 +20,8 @@ begin
                     max_combiner_order_date
                 ) = (
                     select
-                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[1, 2, 3, 4] :: bigint[])) as max_general_order_date,
-                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[5, 6, 7, 8] :: bigint[])) as max_combiner_order_date
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any(array[1, 2, 3, 4]::bigint[])) as max_general_order_date,
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any(array[5, 6, 7, 8]::bigint[])) as max_combiner_order_date
                     from (
                         select
                                 record.*
@@ -71,8 +71,8 @@ begin
                     max_combiner_order_date
                 ) = (
                     select
-                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[1, 2, 3, 4] :: bigint[])) as max_general_order_date,
-                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[5, 6, 7, 8] :: bigint[])) as max_combiner_order_date
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any(array[1, 2, 3, 4]::bigint[])) as max_general_order_date,
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any(array[5, 6, 7, 8]::bigint[])) as max_combiner_order_date
                     from (
                         select
                                 record.*
@@ -102,9 +102,9 @@ begin
             old.id_client is not null
             and
             (
-                coalesce(old.id_order_type = any (array[1, 2, 3, 4] :: bigint[]), false)
+                coalesce(old.id_order_type = any(array[1, 2, 3, 4]::bigint[]), false)
                 or
-                coalesce(old.id_order_type = any (array[5, 6, 7, 8] :: bigint[]), false)
+                coalesce(old.id_order_type = any(array[5, 6, 7, 8]::bigint[]), false)
             )
         then
             update companies set
@@ -114,8 +114,8 @@ begin
                     max_combiner_order_date
                 ) = (
                     select
-                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[1, 2, 3, 4] :: bigint[])) as max_general_order_date,
-                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[5, 6, 7, 8] :: bigint[])) as max_combiner_order_date
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any(array[1, 2, 3, 4]::bigint[])) as max_general_order_date,
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any(array[5, 6, 7, 8]::bigint[])) as max_combiner_order_date
                     from (
                         select
                                 record.*
@@ -137,9 +137,9 @@ begin
             new.id_client is not null
             and
             (
-                coalesce(new.id_order_type = any (array[1, 2, 3, 4] :: bigint[]), false)
+                coalesce(new.id_order_type = any(array[1, 2, 3, 4]::bigint[]), false)
                 or
-                coalesce(new.id_order_type = any (array[5, 6, 7, 8] :: bigint[]), false)
+                coalesce(new.id_order_type = any(array[5, 6, 7, 8]::bigint[]), false)
             )
         then
             update companies set
@@ -155,8 +155,8 @@ begin
                     max_combiner_order_date
                 ) = (
                     select
-                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[1, 2, 3, 4] :: bigint[])) as max_general_order_date,
-                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[5, 6, 7, 8] :: bigint[])) as max_combiner_order_date
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any(array[1, 2, 3, 4]::bigint[])) as max_general_order_date,
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any(array[5, 6, 7, 8]::bigint[])) as max_combiner_order_date
                     from (
                         select
                                 record.*
@@ -189,9 +189,9 @@ begin
             new.id_client is not null
             and
             (
-                coalesce(new.id_order_type = any (array[1, 2, 3, 4] :: bigint[]), false)
+                coalesce(new.id_order_type = any(array[1, 2, 3, 4]::bigint[]), false)
                 or
-                coalesce(new.id_order_type = any (array[5, 6, 7, 8] :: bigint[]), false)
+                coalesce(new.id_order_type = any(array[5, 6, 7, 8]::bigint[]), false)
             )
         then
             update companies set
@@ -207,8 +207,8 @@ begin
                     max_combiner_order_date
                 ) = (
                     select
-                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[1, 2, 3, 4] :: bigint[])) as max_general_order_date,
-                            max(source_row.order_date) filter (where     source_row.id_order_type = any (array[5, 6, 7, 8] :: bigint[])) as max_combiner_order_date
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any(array[1, 2, 3, 4]::bigint[])) as max_general_order_date,
+                            max(source_row.order_date) filter (where     source_row.id_order_type = any(array[5, 6, 7, 8]::bigint[])) as max_combiner_order_date
                     from (
                         select
                                 record.*
