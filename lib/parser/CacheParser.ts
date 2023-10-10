@@ -44,12 +44,12 @@ export class CacheParser {
                 this.syntax.row.for.row.schema?.toValue() || DEFAULT_SCHEMA,
                 this.syntax.row.for.row.name.toValue()
             ),
-            this.syntax.row.as?.toString()
+            this.syntax.row.as?.toValue()
         );
         const select = this.parseSelect(forTable);
 
         const cache = new Cache(
-            this.syntax.row.name.toString(),
+            this.syntax.row.name.toValue(),
             forTable,
             select,
             this.parseTables(this.syntax.row.withoutTriggersOn),

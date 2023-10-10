@@ -44,11 +44,11 @@ export class SelectParser {
 
         for (let i = 0, n = columns.length; i < n; i++) {
             const columnNode = columns[i];
-            const columnAlias = (columnNode.row.as || "").toString();
+            const columnAlias = columnNode.row.as?.toValue();
 
             for (let j = i + 1; j < n; j++) {
                 const nextColumn = columns[j];
-                const nextColumnAlias = (nextColumn.row.as || "").toString();
+                const nextColumnAlias = nextColumn.row.as?.toValue()
 
                 if ( columnAlias === nextColumnAlias ) {
                     throw new Error(`duplicated cache column ${cacheFor.toString()}\.${columnAlias}`);
@@ -133,7 +133,7 @@ export class SelectParser {
         const tableRef = parseFromTable(tableLink, alias);
 
         strict.ok("on" in joinSyntax.row, "supported only joins with on condition")
-        const onSql = joinSyntax.row.on.toString();
+
         const on = this.expressionParser.parse(
             select,
             [
@@ -144,7 +144,7 @@ export class SelectParser {
                 ),
                 tableRef
             ],
-            onSql 
+            joinSyntax.row.on
         );
         
         const join = new Join(type, tableRef, on);
@@ -174,7 +174,7 @@ export class SelectParser {
                 expression: this.expressionParser.parse(
                     select, 
                     [cacheFor], 
-                    expressionSyntax.toString()
+                    expressionSyntax
                 )
             });
 
@@ -190,8 +190,10 @@ export class SelectParser {
         select: Select
     ) {
         if ( selectSyntax.row.where ) {
-            const whereSql = selectSyntax.row.where.toString();
-            const whereExpression = this.expressionParser.parse(select, [cacheFor], whereSql);
+            const whereExpression = this.expressionParser.parse(
+                select, [cacheFor],
+                selectSyntax.row.where
+            );
 
             select = select.addWhere(whereExpression);
         }
@@ -207,14 +209,14 @@ export class SelectParser {
         const orderBySyntax = selectSyntax.row.orderBy || [];
         if ( orderBySyntax.length ) {
             const orderByItems: OrderByItem[] = orderBySyntax.map(orderItemSyntax => {
-                const itemExpressionSql = orderItemSyntax.row.expression!.toString();
                 const type = (orderItemSyntax.row.vector || "asc")
                     .toLowerCase() as "asc" | "desc";
 
                 const orderItem = new OrderByItem({
                     type,
                     expression: this.expressionParser.parse(
-                        select, [cacheFor], itemExpressionSql
+                        select, [cacheFor],
+                        orderItemSyntax.row.expression
                     ),
                     nulls: orderItemSyntax.row.nulls as any
                 });
