@@ -1,6 +1,5 @@
 import assert from "assert";
 import {
-    Cache,
     Expression,
     Operator,
     ColumnReference,
@@ -8,15 +7,16 @@ import {
     UnknownExpressionElement,
     IColumnsMap
 } from "../../../ast";
+import { TableReference } from "../../../database/schema/TableReference";
 
 // try using btree-index scan
 // input (cannot use btree-index):
-//     new.companies_ids && array[ companies.id ]
-//     new.companies_ids @> array[ companies.id ]
+//     from companies where new.companies_ids && array[ companies.id ]
+//     from companies where new.companies_ids @> array[ companies.id ]
 // output (can use btree-index):
-//     companies.id = any( new.companies_ids )
+//     from companies where companies.id = any( new.companies_ids )
 export function replaceAmpArrayToAny(
-    cache: Cache,
+    cacheFor: TableReference,
     input: Expression
 ): Expression {
     if ( !input.isBinary("&&") && !input.isBinary("@>") && !input.isBinary("<@") ) {
@@ -35,7 +35,7 @@ export function replaceAmpArrayToAny(
     const isCacheId = (
         columnRefs.length === 1 &&
         columnRefs[0].name === "id" &&
-        columnRefs[0].tableReference.equal(cache.for)
+        columnRefs[0].tableReference.equal(cacheFor)
     )
     if ( !isCacheId ) {
         return input;

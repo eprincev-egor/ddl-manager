@@ -16,7 +16,6 @@ import {
 import { 
     IExpressionElement,
     FuncCall,
-    Select,
     Operator,
     CaseWhen,
     Expression,
@@ -27,7 +26,6 @@ import {
 } from "../ast";
 import { UnknownExpressionElementParser } from "./UnknownExpressionElementParser";
 import { ColumnReferenceParser } from "./ColumnReferenceParser";
-import { TableReference } from "../database/schema/TableReference";
 import { ArrayElement } from "../ast/expression/ArrayElement";
 import {strict} from "assert";
 
@@ -51,14 +49,10 @@ export class ExpressionParser {
     private columnReferenceParser = new ColumnReferenceParser();
     private unknownExpressionElementParser = new UnknownExpressionElementParser();
 
-    parse(
-        select: Select,
-        additionalTableReferences: TableReference[],
-        input: string | ExpressionSyntax | Operand
-    ): Expression {
+    parse(input: string | ExpressionSyntax | Operand): Expression {
         const sql = toOperand(input);
 
-        const elements = this.parseElements(select, additionalTableReferences, sql);
+        const elements = this.parseElements(sql);
         if ( elements.length === 1 && elements[0] instanceof Expression ) {
             return elements[0] as Expression;
         }
@@ -66,46 +60,35 @@ export class ExpressionParser {
         return new Expression(elements);
     }
 
-    private parseElements(
-        select: Select,
-        additionalTableReferences: TableReference[],
-        elemSyntax: any
-    ): IExpressionElement[] {
+    private parseElements(elemSyntax: any): IExpressionElement[] {
         if ( elemSyntax instanceof SubExpression ) {
             return [new Expression(
                 this.parseElements(
-                    select, additionalTableReferences,
                     elemSyntax.row.subExpression
                 ), true
             )];
         }
 
-        return this.tryParseBinaryOperator(select, additionalTableReferences, elemSyntax) || [
-            this.tryParseFunctionCall(select, additionalTableReferences, elemSyntax) ||
-            this.tryParsePgArray(select, additionalTableReferences, elemSyntax) ||
-            this.tryParseExtract(select, additionalTableReferences, elemSyntax) ||
-            this.tryParseCaseWhen(select, additionalTableReferences, elemSyntax) ||
-            this.tryParseColumnRef(select, additionalTableReferences, elemSyntax) ||
-            this.parseUnknown(select, additionalTableReferences, elemSyntax)
+        return this.tryParseBinaryOperator( elemSyntax) || [
+            this.tryParseFunctionCall(elemSyntax) ||
+            this.tryParsePgArray(elemSyntax) ||
+            this.tryParseExtract(elemSyntax) ||
+            this.tryParseCaseWhen(elemSyntax) ||
+            this.tryParseColumnRef(elemSyntax) ||
+            this.parseUnknown(elemSyntax)
         ];
     }
 
-    private tryParseBinaryOperator(
-        select: Select,
-        additionalTableReferences: TableReference[],
-        elemSyntax: any
-    ) {
+    private tryParseBinaryOperator(elemSyntax: any) {
         if ( elemSyntax instanceof BinaryOperator ) {
             return [
                 ...this.parseElements(
-                    select, additionalTableReferences,
                     elemSyntax.row.left
                 ),
                 new Operator(
                     elemSyntax.row.operator
                 ),
                 ...this.parseElements(
-                    select, additionalTableReferences,
                     elemSyntax.row.right
                 )
             ];
@@ -117,7 +100,6 @@ export class ExpressionParser {
                     elemSyntax.row.preOperator
                 ),
                 ...this.parseElements(
-                    select, additionalTableReferences,
                     elemSyntax.row.operand
                 )
             ];
@@ -126,7 +108,6 @@ export class ExpressionParser {
         if ( elemSyntax instanceof PostUnaryOperator ) {
             return [
                 ...this.parseElements(
-                    select, additionalTableReferences,
                     elemSyntax.row.operand
                 ),
                 new Operator(
@@ -138,7 +119,6 @@ export class ExpressionParser {
         if ( elemSyntax instanceof CastTo ) {
             return [
                 ...this.parseElements(
-                    select, additionalTableReferences,
                     elemSyntax.row.cast
                 ),
                 new Operator("::"),
@@ -149,7 +129,6 @@ export class ExpressionParser {
         if ( elemSyntax instanceof SquareBrackets ) {
             return [
                 ...this.parseElements(
-                    select, additionalTableReferences,
                     elemSyntax.row.operand
                 ),
                 UnknownExpressionElement.fromSql(
@@ -161,14 +140,12 @@ export class ExpressionParser {
         if ( elemSyntax instanceof EqualAny ) {
             return [
                 ...this.parseElements(
-                    select, additionalTableReferences,
                     elemSyntax.row.operand
                 ),
                 new Operator("="),
                 UnknownExpressionElement.fromSql(
                     "any(" + elemSyntax.row.equalAny.toString() + ")",
                     this.unknownExpressionElementParser.buildColumnsMap(
-                        select, additionalTableReferences,
                         elemSyntax.row.equalAny
                     )
                 )
@@ -182,13 +159,11 @@ export class ExpressionParser {
 
             return [
                 ...this.parseElements(
-                    select, additionalTableReferences,
                     elemSyntax.row.operand
                 ),
                 UnknownExpressionElement.fromSql(
                     unknownSql,
                     this.unknownExpressionElementParser.buildColumnsMap(
-                        select, additionalTableReferences,
                         elemSyntax.row.in
                     )
                 )
@@ -196,11 +171,7 @@ export class ExpressionParser {
         }
     }
 
-    private tryParseFunctionCall(
-        select: Select,
-        additionalTableReferences: TableReference[],
-        funcCallSyntax: any
-    ) {
+    private tryParseFunctionCall(funcCallSyntax: any) {
         if ( !(funcCallSyntax instanceof FunctionCall) ) {
             return;
         }
@@ -210,8 +181,6 @@ export class ExpressionParser {
 
         let args = funcCallSyntax.row.arguments.map(argSql =>
             this.parseFunctionCallArgument(
-                select,
-                additionalTableReferences,
                 funcName,
                 argSql
             )
@@ -220,8 +189,6 @@ export class ExpressionParser {
         let where: Expression | undefined;
         if ( funcCallSyntax.row.filter ) {
             where = this.parse(
-                select,
-                additionalTableReferences,
                 funcCallSyntax.row.filter
             );
         }
@@ -232,8 +199,6 @@ export class ExpressionParser {
                 const nulls = itemSyntax.row.nulls as ("first" | "last" | undefined);
                 const vector = itemSyntax.row.vector as ("asc" | "desc" | undefined);
                 const expression = this.parse(
-                    select,
-                    additionalTableReferences,
                     itemSyntax.row.expression
                 );
 
@@ -289,47 +254,30 @@ export class ExpressionParser {
         return funcCall;
     }
 
-    private tryParsePgArray(
-        select: Select,
-        additionalTableReferences: TableReference[],
-        elemSyntax: any
-    ) {
+    private tryParsePgArray(elemSyntax: any) {
         if ( !(elemSyntax instanceof PgArray) ) {
             return;
         }
 
-        const content = elemSyntax.row.array.map(expressionSyntax =>
-            this.parse(
-                select,
-                additionalTableReferences, 
-                expressionSyntax.toString()
-            )
+        const content = elemSyntax.row.array.map(expression => 
+            this.parse(expression)
         );
         return new ArrayElement(content);
     }
 
-    private tryParseExtract(
-        select: Select,
-        additionalTableReferences: TableReference[],
-        elemSyntax: any
-    ) {
+    private tryParseExtract(elemSyntax: any) {
         if ( !(elemSyntax instanceof ExtractSyntax) ) {
             return;
         }
 
         const extract = elemSyntax.row.extract;
         const from = this.parse(
-            select, additionalTableReferences,
             elemSyntax.row.from
         );
         return new Extract(extract, from);
     }
 
-    private tryParseCaseWhen(
-        select: Select,
-        additionalTableReferences: TableReference[],
-        elemSyntax: any
-    ) {
+    private tryParseCaseWhen(elemSyntax: any) {
         if ( !(elemSyntax instanceof CaseWhenSyntax) ) {
             return;
         }
@@ -337,55 +285,32 @@ export class ExpressionParser {
         return new CaseWhen({
             cases: elemSyntax.row.case.map(caseSyntax => ({
                 when: this.parse(
-                    select,
-                    additionalTableReferences, 
                     caseSyntax.row.when
                 ),
                 then: this.parse(
-                    select,
-                    additionalTableReferences, 
                     caseSyntax.row.then
                 )
             })),
             else: elemSyntax.row.else ? this.parse(
-                select,
-                additionalTableReferences, 
                 elemSyntax.row.else
             ) : undefined
         });
     }
 
-    private tryParseColumnRef(
-        select: Select,
-        additionalTableReferences: TableReference[],
-        elemSyntax: any
-    ) {
+    private tryParseColumnRef(elemSyntax: any) {
         if ( !(elemSyntax instanceof ColumnLink) ) {
             return;
         }
 
         strict.ok( !elemSyntax.row.allColumns );
-        return this.columnReferenceParser.parse(
-            select, additionalTableReferences,
-            elemSyntax
-        );
+        return this.columnReferenceParser.parse(elemSyntax);
     }
 
-    private parseUnknown(
-        select: Select,
-        additionalTableReferences: TableReference[],
-        elemSyntax: any
-    ) {
-        return this.unknownExpressionElementParser.parse(
-            select,
-            additionalTableReferences,
-            elemSyntax 
-        );
+    private parseUnknown(elemSyntax: any) {
+        return this.unknownExpressionElementParser.parse(elemSyntax);
     }
 
     private parseFunctionCallArgument(
-        select: Select,
-        additionalTableReferences: TableReference[],
         funcName: string,
         argSql: Operand
     ) {
@@ -399,11 +324,7 @@ export class ExpressionParser {
             ]);
         }
 
-        return this.parse(
-            select,
-            additionalTableReferences,
-            argSql
-        );
+        return this.parse(argSql);
     }
 }
 

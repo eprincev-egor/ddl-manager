@@ -81,7 +81,7 @@ describe("integration/FileWatcher watch change functions", () => {
             ]);
     });
 
-    it("expected error on duplicate functions", async() => {
+    it("expected error on duplicated functions", async() => {
         const filePath1 = ROOT_TMP_PATH + "/change-func1.sql";
         const filePath2 = ROOT_TMP_PATH + "/change-func2.sql";
         fs.writeFileSync(filePath1, TEST_FUNC1_SQL);
@@ -97,7 +97,7 @@ describe("integration/FileWatcher watch change functions", () => {
         fs.writeFileSync(filePath2, TEST_FUNC1_SQL);
         await sleep(50);
         
-        assert.equal(error && error.message, "duplicate function public.test_func1()");
+        assert.equal(error && error.message, "duplicated function public.test_func1()");
 
         expect( flatMap(fsWatcher.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             TEST_FUNC1

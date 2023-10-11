@@ -124,7 +124,7 @@ export class FilesState {
         });
 
         if ( hasDuplicate ) {
-            throw new Error(`duplicate function ${ identify }`);
+            throw new Error(`duplicated function ${ identify }`);
         }
     }
 
@@ -137,7 +137,7 @@ export class FilesState {
         });
 
         if ( hasDuplicate ) {
-            throw new Error(`duplicate trigger ${ identify }`);
+            throw new Error(`duplicated trigger ${ identify }`);
         }
     }
 
@@ -148,7 +148,7 @@ export class FilesState {
         for (const someCache of this.getCachesForTable(cache.for.table)) {
             // duplicated cache name
             if ( someCache.getSignature() === identify ) {
-                throw new Error(`duplicate ${ identify }`);
+                throw new Error(`duplicated ${ identify }`);
             }
             // duplicate cache columns
 

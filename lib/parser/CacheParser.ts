@@ -1,12 +1,10 @@
 import {
     Sql,
-    ColumnReference,
     TableReference as TableLink
 } from "psql-lang";
 import { SelectParser } from "./SelectParser";
-import { Cache, Select } from "../ast";
-import { CacheIndex, IndexTarget } from "../ast/CacheIndex";
-import { ExpressionParser } from "./ExpressionParser";
+import { Cache } from "../ast";
+import { CacheIndex } from "../ast/CacheIndex";
 import { CacheSyntax } from "./CacheSyntax";
 import { TableID } from "../database/schema/TableID";
 import { TableReference } from "../database/schema/TableReference";
@@ -22,10 +20,8 @@ export class CacheParser {
 
     private syntax: CacheSyntax;
     private selectParser: SelectParser;
-    private expressionParser: ExpressionParser;
     private constructor(input: string | Sql | CacheSyntax) {
         this.selectParser = new SelectParser();
-        this.expressionParser = new ExpressionParser();
 
         if ( input instanceof CacheSyntax ) {
             this.syntax = input;
@@ -46,7 +42,7 @@ export class CacheParser {
             ),
             this.syntax.row.as?.toValue()
         );
-        const select = this.parseSelect(forTable);
+        const select = this.parseSelect();
 
         const cache = new Cache(
             this.syntax.row.name.toValue(),
@@ -54,14 +50,14 @@ export class CacheParser {
             select,
             this.parseTables(this.syntax.row.withoutTriggersOn),
             this.parseTables(this.syntax.row.withoutInsertOn),
-            this.parseIndexes(select, forTable)
+            this.parseIndexes()
         );
         return cache;
     }
 
-    private parseSelect(cacheFor: TableReference) {
+    private parseSelect() {
         const selectSyntax = this.syntax.row.cache;
-        return this.selectParser.parse(cacheFor, selectSyntax);
+        return this.selectParser.parse(selectSyntax);
     }
 
     private parseTables(tables: TableLink[] = []) {
@@ -70,32 +66,19 @@ export class CacheParser {
         );
     }
 
-    private parseIndexes(select: Select, cacheFor: TableReference) {
-        const indexesSyntaxes = this.syntax.row.indexes || [];
-        const indexes = indexesSyntaxes.map(cacheIndexSyntax => {
+    private parseIndexes() {
+        return this.syntax.row.indexes?.map(cacheIndexSyntax => {
             const index = cacheIndexSyntax.row.index;
             const onSyntaxes = cacheIndexSyntax.row.columns || [];
 
-            const on: IndexTarget[] = onSyntaxes.map(onSyntax => {
-                if ( onSyntax.row.expression instanceof ColumnReference ) {
-                    return onSyntax.row.expression.toString();
-                }
+            const on = onSyntaxes.map(onSyntax => 
+                onSyntax.row.expression.toString()
+            );
 
-                const expression = this.expressionParser.parse(
-                    select,
-                    [cacheFor],
-                    onSyntax.row.expression.toString()
-                );
-                return expression;
-            });
-
-            const cacheIndex = new CacheIndex(
+            return new CacheIndex(
                 index,
                 on
             );
-            return cacheIndex;
         });
-
-        return indexes;
     }
 }

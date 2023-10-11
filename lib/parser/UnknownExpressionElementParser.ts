@@ -2,28 +2,20 @@ import { AbstractNode, ColumnReference as ColumnLink } from "psql-lang";
 import { ColumnReferenceParser } from "./ColumnReferenceParser";
 import {
     UnknownExpressionElement,
-    IColumnsMap,
-    Select
+    IColumnsMap
 } from "../ast";
-import { TableReference } from "../database/schema/TableReference"
 import { flatMap } from "lodash";
 
 export class UnknownExpressionElementParser {
 
     private columnReferenceParser = new ColumnReferenceParser();
 
-    parse(
-        select: Select,
-        additionalTableReferences: TableReference[],
-        syntax: AbstractNode<any>
-    ) {
-        const columnsMap = this.buildColumnsMap(select, additionalTableReferences, syntax);
+    parse(syntax: AbstractNode<any>) {
+        const columnsMap = this.buildColumnsMap(syntax);
         return new UnknownExpressionElement(syntax, columnsMap);
     }
 
     buildColumnsMap(
-        select: Select,
-        additionalTableReferences: TableReference[],
         syntax: AbstractNode<any> | AbstractNode<any>[]
     ) {
         const syntaxes = (
@@ -35,12 +27,7 @@ export class UnknownExpressionElementParser {
         const columnLinks = flatMap(syntaxes, scanColumnLinks);
 
         columnLinks.forEach(columnLink => {
-            const columnReference = this.columnReferenceParser.parse(
-                select, 
-                additionalTableReferences, 
-                columnLink
-            );
-
+            const columnReference = this.columnReferenceParser.parse(columnLink);
             columnsMap[ columnLink.toString() ] = columnReference;
         });
 

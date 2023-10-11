@@ -1,5 +1,4 @@
 import {
-    Cache,
     Expression,
     Operator,
     ColumnReference,
@@ -7,14 +6,15 @@ import {
     UnknownExpressionElement
 } from "../../../ast";
 import { Database } from "../../../database/schema/Database";
+import { TableReference } from "../../../database/schema/TableReference";
 
 // try using gin-index scan
 // input (cannot use gin-index):
-//     orders.id = any(companies.order_ids)
+//     from companies where orders.id = any(companies.order_ids)
 // output (can use gin-index):
-//     array[ orders.id_client ] && companies.order_ids
+//     from companies where array[ orders.id_client ] && companies.order_ids
 export function replaceOperatorAnyToIndexedOperator(
-    cache: Cache,
+    cacheFor: TableReference,
     database: Database,
     input: Expression
 ): Expression {
@@ -30,7 +30,7 @@ export function replaceOperatorAnyToIndexedOperator(
         return input;
     }
 
-    if ( columnOperand.tableReference.equal(cache.for) ) {
+    if ( columnOperand.tableReference.equal(cacheFor) ) {
         return input;
     }
 

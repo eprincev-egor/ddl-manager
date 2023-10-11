@@ -2,7 +2,7 @@ import assert from "assert";
 import {
     findDependencies, IDependencies
 } from "../../../../lib/cache/processor/findDependencies";
-import { CacheParser } from "../../../../lib/parser/CacheParser";
+import { FileParser } from "../../../../lib/parser";
 
 interface ITest {
     cache: string;
@@ -29,7 +29,8 @@ export function testDependencies(test: ITest) {
             const regExp = test.error;
             assert.throws(
                 () => {
-                    const cache = CacheParser.parse(test.cache);
+                    const file = FileParser.parse(test.cache);
+                    const cache = file?.cache[0]!;
                     findDependencies(cache);
                 },
                 (err: Error) =>
@@ -37,7 +38,8 @@ export function testDependencies(test: ITest) {
             );
         }
         else {
-            const cache = CacheParser.parse(test.cache);
+            const file = FileParser.parse(test.cache);
+            const cache = file?.cache[0]!;
             const json = findDependencies(cache);
             assert.deepStrictEqual(json, test.dependencies);
         }

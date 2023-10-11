@@ -160,7 +160,7 @@ describe("integration/FileReader parse functions", () => {
 
 
 
-    it("expected error on duplicate functions", () => {
+    it("expected error on duplicated functions", () => {
         const sql1 = `
             create or replace function func1()
             returns bigint as $body$select 1$body$
@@ -182,7 +182,7 @@ describe("integration/FileReader parse functions", () => {
             err = _err;
         });
 
-        assert.equal(err.message, "duplicate function public.func1()");
+        assert.equal(err.message, "duplicated function public.func1()");
     });
 
     it("same functions, but another args", () => {

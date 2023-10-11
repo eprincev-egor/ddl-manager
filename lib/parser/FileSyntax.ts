@@ -3,6 +3,7 @@ import {
     CreateFunction, CreateTrigger
 } from "psql-lang";
 import { CacheSyntax } from "./CacheSyntax";
+import { CacheLinter } from "./CacheLinter";
 
 export interface FileSyntaxRow {
     functions: CreateFunction[];
@@ -40,6 +41,8 @@ export class FileSyntax extends AbstractNode<FileSyntaxRow> {
             }
             else if ( cursor.before(CacheSyntax) ) {
                 const cache = cursor.parse(CacheSyntax);
+                CacheLinter.lint(cursor, cache);
+
                 output.caches.push(cache);
             }
             else if ( !cursor.beforeEnd() ) {

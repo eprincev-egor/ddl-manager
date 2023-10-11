@@ -136,7 +136,7 @@ describe("integration/FileReader parse functions and triggers", () => {
         assert.ok(err.message.includes("file must contain function with returns type trigger"));
     });
 
-    it("expected error on duplicate trigger", () => {
+    it("expected error on duplicated trigger", () => {
         const sql1 = `
             create or replace function func1()
             returns trigger as $body$select 1$body$
@@ -171,7 +171,7 @@ describe("integration/FileReader parse functions and triggers", () => {
             err = _err;
         });
         
-        assert.ok(err.message.includes("duplicate trigger some_trigger on public.company"));
+        assert.ok(err.message.includes("duplicated trigger some_trigger on public.company"));
         
     });
 

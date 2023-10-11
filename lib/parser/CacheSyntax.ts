@@ -1,10 +1,10 @@
 import {
-    AbstractNode, Cursor, TemplateElement,
+    AbstractScopeNode,
+    Cursor,
     Name,
     TableReference,
     Select,
-    keyword,
-    eol
+    TemplateElement, keyword, eol
 } from "psql-lang";
 import { CacheOption } from "./CacheOption";
 import { CacheIndex } from "./CacheIndex";
@@ -21,7 +21,7 @@ export interface CacheRow {
     indexes?: CacheIndex[];
 }
 
-export class CacheSyntax extends AbstractNode<CacheRow> {
+export class CacheSyntax extends AbstractScopeNode<CacheRow> {
 
     static entry(cursor: Cursor): boolean {
         return cursor.beforeWord("cache");
@@ -44,7 +44,7 @@ export class CacheSyntax extends AbstractNode<CacheRow> {
         cursor.readValue("(");
         cursor.skipSpaces();
 
-        const cache = cursor.parse(Select);
+        const cacheSelect = cursor.parse(Select);
         
         cursor.skipSpaces();
         cursor.readValue(")");
@@ -55,7 +55,7 @@ export class CacheSyntax extends AbstractNode<CacheRow> {
         return {
             name,
             for: destinationTable, as: alias,
-            cache,
+            cache: cacheSelect,
             ...options
         };
     }
@@ -94,6 +94,10 @@ export class CacheSyntax extends AbstractNode<CacheRow> {
         }
 
         return {indexes, withoutInsertOn, withoutTriggersOn};
+    }
+
+    hasClojure() {
+        return true;
     }
 
     template(): TemplateElement[] {

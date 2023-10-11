@@ -98,10 +98,6 @@ export class CacheTriggersBuilder {
 
     createTriggers() {
         const output: IOutputTrigger[] = [];
-
-        // throws warning
-        this.validate();
-
         const allDeps = findDependencies(this.cache, false);
 
         for (const schemaTable of this.cache.withoutTriggers) {
@@ -182,39 +178,5 @@ export class CacheTriggersBuilder {
         }
 
         return output;
-    }
-
-    private validate() {
-        const {select} = this.cache;
-        const {orderBy} = select;
-        if ( orderBy ) {
-            if ( !select.limit ) {
-                throw new Error("required limit 1");
-            }
-
-            if ( orderBy.items.length !== 1 ) {
-                throw new Error("order by many items is not supported");
-            }
-
-            
-            if ( select.from.length === 0 ) {
-                throw new Error("required: from ...");
-            }
-            if ( select.from.length > 1 ) {
-                throw new Error("multi from is not supported here");
-            }
-            if ( select.from[0].joins.length ) {
-                throw new Error("joins is not supported here");
-            }
-        }
-
-        if ( select.limit ) {
-            if ( !select.orderBy ) {
-                throw new Error("required order by");
-            }
-            if ( select.limit !== 1 ) {
-                throw new Error(`invalid limit: ${select.limit}, limit can be only 1`);
-            }
-        }
     }
 }

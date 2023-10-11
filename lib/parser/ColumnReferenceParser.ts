@@ -1,64 +1,53 @@
-import { ColumnReference as ColumnLink, Name } from "psql-lang";
-import { ColumnReference, Select } from "../ast";
-import { IReferenceFilter, TableReference } from "../database/schema/TableReference";
+import { ColumnReference as ColumnLink, FromTable, Select } from "psql-lang";
+import { ColumnReference } from "../ast";
+import { CacheSyntax } from "./CacheSyntax";
+import { strict } from "assert";
+import { parseFromTable } from "./utils";
 
 export class ColumnReferenceParser {
 
-    parse(
-        select: Select, 
-        // cacheFor, or "join" tableReference while he parsing
-        additionalTableReferences: TableReference[], 
-        columnLink: ColumnLink
-    ) {
-        const baseNames = columnLink.row.column;
-        const tableNames = baseNames.slice(0, -1);
+    parse(columnLink: ColumnLink) {
+        const columnName = columnLink.last()!.toValue();
+        const tableReference = this.findTableReference(columnLink);
+        return new ColumnReference(tableReference, columnName);
+    }
 
-        let tableReference: TableReference | undefined;
-        let refFilter!: IReferenceFilter;
-
-        if ( tableNames.length === 1 ) {
-            const aliasOrTableName = tableNames[0].toValue()
-
-            refFilter = {aliasOrTableName};
-        }
-        else if ( tableNames.length === 2 ) {
-            const schema = tableNames[0].toValue();
-            const aliasOrTableName = tableNames[1].toValue();
-
-            refFilter = {aliasOrTableName, schema};
-        }
-        else if ( tableNames.length === 0 ) {
-            const allSources = select.getAllTableReferences();
-
-            if ( allSources.length !== 1 ) {
-                throw new Error(`required table for columnLink ${columnLink}, in select with not one source`);
-            }
-
-            tableReference = allSources[0];
-        }
-        else {
-            throw new Error("invalid column link: " + columnLink);
+    private findTableReference(columnLink: ColumnLink) {
+        const isStar = (
+            columnLink.row.allColumns &&
+            columnLink.row.column.length === 0
+        );
+        if ( isStar ) {
+            return this.findFirstFrom(columnLink);
         }
 
-
-        if ( !tableReference ) {
-            tableReference = select.findTableReference(refFilter);
-        }
-        if ( !tableReference ) {
-            tableReference = additionalTableReferences.find(tableRef =>
-                tableRef.matched(refFilter)
+        const fromItem = columnLink.findDeclaration() as FromTable | undefined;
+        if ( fromItem ) {
+            return parseFromTable(
+                fromItem.row.table,
+                fromItem.row.as
             );
         }
 
-        if ( !tableReference ) {
-            throw new Error(`source for column ${columnLink} not found`);
+        if ( columnLink.row.column.length === 1 ) {
+            return this.findFirstFrom(columnLink);
         }
 
+        const cache = columnLink.findParentInstance(CacheSyntax);
+        strict.ok(cache, `source for column ${columnLink} not found`);
 
-        const columnNameSyntax = baseNames.slice(-1)[0];
-        const columnName = columnNameSyntax.toValue();
+        return parseFromTable(
+            cache.row.for,
+            cache.row.as
+        );
+    }
 
-        const columnReference = new ColumnReference(tableReference, columnName);
-        return columnReference;
+    private findFirstFrom(columnLink: ColumnLink) {
+        const select = columnLink.findParentInstance(Select)!;
+        const fromItem = select.row.from[0] as FromTable;
+        return parseFromTable(
+            fromItem.row.table,
+            fromItem.row.as
+        );
     }
 }

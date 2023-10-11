@@ -2444,7 +2444,7 @@ describe("integration/DDLManager.build cache", () => {
                 select
                     (
                         CASE
-                            WHEN units.has_exped IS TRUE AND has_our_service_in_forward_operation = 1 THEN 'Наша услуга'
+                            WHEN units.has_exped IS TRUE AND units.has_our_service_in_forward_operation = 1 THEN 'Наша услуга'
                             WHEN units.has_exped IS TRUE THEN 'Да'
                             ELSE 'Нет'
                         END

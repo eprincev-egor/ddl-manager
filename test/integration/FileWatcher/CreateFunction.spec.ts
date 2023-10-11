@@ -55,7 +55,7 @@ describe("integration/FileWatcher watch create functions", () => {
         ]);
     });
         
-    it("expected error on duplicate functions", async() => {
+    it("expected error on duplicated functions", async() => {
         const filePath1 = ROOT_TMP_PATH + "/create-func1.sql";
         const filePath2 = ROOT_TMP_PATH + "/create-func2.sql";
         
@@ -74,7 +74,7 @@ describe("integration/FileWatcher watch create functions", () => {
         await sleep(50);
 
         
-        assert.equal(error && error.message, "duplicate function public.test_func1()");
+        assert.equal(error && error.message, "duplicated function public.test_func1()");
 
         expect( flatMap(fsWatcher.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             TEST_FUNC1

@@ -187,12 +187,12 @@ export class ConditionBuilder {
                 subExpression = subExpression.extrude();
 
                 subExpression = replaceOperatorAnyToIndexedOperator(
-                    this.context.cache,
+                    this.context.cache.for,
                     this.context.database,
                     subExpression
                 );
                 subExpression = replaceAmpArrayToAny(
-                    this.context.cache,
+                    this.context.cache.for,
                     subExpression
                 );
 

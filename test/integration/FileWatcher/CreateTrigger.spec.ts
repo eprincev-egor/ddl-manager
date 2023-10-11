@@ -58,7 +58,7 @@ describe("integration/FileWatcher watch create functions", () => {
         ]);
     });
 
-    it("expected error on duplicate triggers", async() => {
+    it("expected error on duplicated triggers", async() => {
         const filePath1 = ROOT_TMP_PATH + "/create-trigger1.sql";
         const filePath2 = ROOT_TMP_PATH + "/create-trigger2.sql";
         
@@ -87,7 +87,7 @@ describe("integration/FileWatcher watch create functions", () => {
         await sleep(50);
 
         
-        assert.equal(error && error.message, "duplicate trigger some_trigger on operation.company");
+        assert.equal(error && error.message, "duplicated trigger some_trigger on operation.company");
 
         expect(flatMap(fsWatcher.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
             TEST_FUNC1

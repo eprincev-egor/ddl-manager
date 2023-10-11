@@ -277,7 +277,7 @@ describe("CacheDependencies", () => {
             select 
                 sum( profit ) as orders_profit_sum
         )`,
-        error: /required table for columnLink profit/i
+        error: /implicit table reference: profit/i
     });
 
     testDependencies({
@@ -295,9 +295,9 @@ describe("CacheDependencies", () => {
         cache: `cache test for companies (
             select 
                 sum( profit ) as orders_profit_sum
-            from a, b
+            from a left join b on true
         )`,
-        error: /required table for columnLink profit/i
+        error: /implicit table reference: profit/i
     });
 
     testDependencies({
@@ -673,7 +673,7 @@ describe("CacheDependencies", () => {
     testDependencies({
         cache: `cache test for my_table (
             select 
-                a.name || b.name || c.name || d.name as abcd
+                string_agg(a.name || b.name || c.name || d.name, '') as abcd
             from a
             
             left join b on 
@@ -684,8 +684,6 @@ describe("CacheDependencies", () => {
 
             inner join d 
             on d.id = c.id_d
-
-            limit 1
         )`,
         dependencies: {
             "public.my_table": {
