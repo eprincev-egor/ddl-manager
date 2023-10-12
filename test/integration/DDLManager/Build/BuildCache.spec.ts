@@ -4156,6 +4156,21 @@ describe("integration/DDLManager.build cache", () => {
             {id: 2, invoices_numbers: "UPDATED-INVOICE-2, UPDATED-INVOICE-3"}
         ]);
     });
+    
+    it("stop build ddl on failed parsing", async() => {
+        fs.writeFileSync(ROOT_TMP_PATH + "/invoice_numbers.sql", `
+            cache invoice_numbers for orders (
+                select
+                    1
+            )
+        `);
+
+        await strict.rejects(DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        }), /required alias/);
+    });
 
     // TODO: return back old column type?
     // TODO: columns defaults can use column (check change column type)

@@ -185,7 +185,7 @@ export class DDLManager {
 
 
         const db = await getDbClient(this.dbConfig);
-        const filesState = this.readFS();
+        const filesState = await this.readFS();
         const postgres = await this.postgres();
         let database = await postgres.load();
 
@@ -245,7 +245,7 @@ export class DDLManager {
             fs.writeFileSync(params.logToFile, `[${new Date().toISOString()}] started\n`);
         }
 
-        const filesState = this.readFS();
+        const filesState = await this.readFS();
         const postgres = await this.postgres();
         const database = await postgres.load();
 
@@ -290,7 +290,7 @@ export class DDLManager {
     }
 
     private async compareCache() {
-        const filesState = this.readFS();
+        const filesState = await this.readFS();
         const postgres = await this.postgres();
         const database = await postgres.load();
 
@@ -304,7 +304,7 @@ export class DDLManager {
     }
 
     private async scanBrokenColumns(params: IScanBrokenParams) {
-        const filesState = this.readFS();
+        const filesState = await this.readFS();
         const postgres = await this.postgres();
         const database = await postgres.load();
 
@@ -318,7 +318,7 @@ export class DDLManager {
     }
 
     private async compareDbAndFs() {
-        const filesState = this.readFS();
+        const filesState = await this.readFS();
         const postgres = await this.postgres();
         const database = await postgres.load();
 
@@ -330,15 +330,21 @@ export class DDLManager {
         return {migration, postgres, database};
     }
 
-    private readFS() {
-        const filesState = FileReader.read(
-            this.folders,
-            (err: Error) => {
-                // tslint:disable-next-line: no-console
-                console.error((err as any).subPath + ": " + err.message);
-            }
-        );
-        return filesState;
+    private readFS(): Promise<FilesState> {
+        return new Promise((resolve, reject) => {
+            const filesState = FileReader.read(
+                this.folders,
+                (err: Error) => {
+                    if ( this.needThrowError ) {
+                        reject(err);
+                    }
+                    else {
+                        console.log(err);
+                    }
+                }
+            );
+            resolve(filesState);
+        })
     }
 
     private onMigrate(
