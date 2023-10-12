@@ -188,7 +188,6 @@ export class ConditionBuilder {
 
                 subExpression = replaceOperatorAnyToIndexedOperator(
                     this.context.cache.for,
-                    this.context.database,
                     subExpression
                 );
                 subExpression = replaceAmpArrayToAny(

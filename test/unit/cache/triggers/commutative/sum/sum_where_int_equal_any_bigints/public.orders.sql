@@ -25,7 +25,11 @@ begin
                     source_row.id = any(companies.bigint_orders_ids)
             )
         where
-            companies.bigint_orders_ids && ARRAY[ old.id ]::bigint[];
+            companies.bigint_orders_ids &&             cm_build_array_for((
+                        select bigint_orders_ids
+                        from public.companies
+                        where false
+                    ), old.id);
 
         return old;
     end if;
@@ -68,7 +72,11 @@ begin
                     source_row.id = any(companies.bigint_orders_ids)
             )
         where
-            companies.bigint_orders_ids && ARRAY[ new.id ]::bigint[];
+            companies.bigint_orders_ids &&             cm_build_array_for((
+                        select bigint_orders_ids
+                        from public.companies
+                        where false
+                    ), new.id);
 
 
 

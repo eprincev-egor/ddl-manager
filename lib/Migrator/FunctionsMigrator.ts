@@ -32,8 +32,10 @@ export class FunctionsMigrator extends AbstractMigrator {
                 continue;
             }
 
-            const parsedFunction = FileParser.parseFunction(helperFunctionSQL);
-            await this.postgres.createOrReplaceHelperFunc(parsedFunction);
+            const {functions} = FileParser.parse(helperFunctionSQL)!;
+            for (const parsedFunction of functions) {
+                await this.postgres.createOrReplaceHelperFunc(parsedFunction);
+            }
         }
     }
 

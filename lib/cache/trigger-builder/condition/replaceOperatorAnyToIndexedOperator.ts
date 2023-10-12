@@ -5,7 +5,6 @@ import {
     IExpressionElement,
     UnknownExpressionElement
 } from "../../../ast";
-import { Database } from "../../../database/schema/Database";
 import { TableReference } from "../../../database/schema/TableReference";
 
 // try using gin-index scan
@@ -15,7 +14,6 @@ import { TableReference } from "../../../database/schema/TableReference";
 //     from companies where array[ orders.id_client ] && companies.order_ids
 export function replaceOperatorAnyToIndexedOperator(
     cacheFor: TableReference,
-    database: Database,
     input: Expression
 ): Expression {
     if ( !input.isBinary("=") ) {
@@ -36,17 +34,18 @@ export function replaceOperatorAnyToIndexedOperator(
 
     const arrOperand = executeAnyContent( anyOperand as UnknownExpressionElement );
 
-    let castingSQL = "";
+    let arrayLiteral = `ARRAY[${columnOperand}]`;
 
-    const arrOperandColumnRefs = arrOperand.getColumnReferences();
-    if ( arrOperandColumnRefs.length === 1 ) {
-        const arrColumnRef = arrOperandColumnRefs[0];
-        const table = database.getTable( arrColumnRef.tableReference.table );
-        const arrColumn = table && table.getColumn( arrColumnRef.name );
+    const arrColumns = arrOperand.getColumnReferences();
+    if ( arrColumns.length === 1 ) {
+        const table = arrColumns[0].tableReference.table;
+        const columnName = arrColumns[0].name;
 
-        if ( arrColumn ) {
-            castingSQL = "::" + arrColumn.type;
-        }
+        arrayLiteral = `cm_build_array_for((
+            select ${columnName}
+            from ${table.schema}.${table.name}
+            where false
+        ), ${columnOperand})`;
     }
 
     const output = new Expression([
@@ -55,7 +54,7 @@ export function replaceOperatorAnyToIndexedOperator(
         // TODO: cast bigint to same type with array
         // array[]::bigint[] && some_bigint_ids
         UnknownExpressionElement.fromSql(
-            `ARRAY[ ${ columnOperand } ]${ castingSQL }`,
+            arrayLiteral,
             {[columnOperand.toString()]: columnOperand}
         )
     ]);

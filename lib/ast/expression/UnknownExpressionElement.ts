@@ -4,6 +4,7 @@ import { TableID } from "../../database/schema/TableID";
 import { TableReference } from "../../database/schema/TableReference";
 import { Spaces } from "../Spaces";
 import { IExpressionElement } from "./interface";
+import { escapeRegExp } from "lodash";
 
 export interface IUnknownSyntax {
     toString(): string;
@@ -88,7 +89,7 @@ export class UnknownExpressionElement extends AbstractExpressionElement {
         for (const column in this.columnsMap) {
             const columnReference = this.columnsMap[ column ];
             sql = sql.replace(
-                new RegExp(column, "g"),
+                new RegExp(escapeRegExp(column), "g"),
                 columnReference.toString()
             );
         }

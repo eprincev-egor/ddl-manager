@@ -38,7 +38,11 @@ begin
                     source_row.id = any(invoice.renomination_invoices)
             )
         where
-            invoice.renomination_invoices && ARRAY[ old.id ]::int8[];
+            invoice.renomination_invoices &&             cm_build_array_for((
+                        select renomination_invoices
+                        from public.invoice
+                        where false
+                    ), old.id);
 
         return old;
     end if;
@@ -100,7 +104,11 @@ begin
                     source_row.id = any(invoice.renomination_invoices)
             )
         where
-            invoice.renomination_invoices && ARRAY[ new.id ]::int8[];
+            invoice.renomination_invoices &&             cm_build_array_for((
+                        select renomination_invoices
+                        from public.invoice
+                        where false
+                    ), new.id);
 
 
 

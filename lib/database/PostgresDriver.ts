@@ -338,6 +338,10 @@ implements IDatabaseDriver {
             alter table ${column.table} 
                 alter column ${column.name}
                     set default ${ column.default };
+            
+            alter table ${column.table}
+                alter column ${column.name}
+                    set data type ${column.type} using null;
         `;
         if ( !column.comment.isEmpty() ) {
             sql += `comment on column ${ column.getSignature() } is ${wrapText( column.comment.toString() )}`;

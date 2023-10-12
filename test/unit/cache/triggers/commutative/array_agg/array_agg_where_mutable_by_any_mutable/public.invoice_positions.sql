@@ -32,7 +32,11 @@ begin
                         source_row.deleted = 0
                 )
             where
-                gtd.operation_units_ids && ARRAY[ old.id_operation_unit ]::bigint[];
+                gtd.operation_units_ids &&                 cm_build_array_for((
+                            select operation_units_ids
+                            from public.list_gtd
+                            where false
+                        ), old.id_operation_unit);
         end if;
 
         return old;
@@ -97,7 +101,11 @@ begin
                         source_row.deleted = 0
                 )
             where
-                gtd.operation_units_ids && ARRAY[ new.id_operation_unit ]::bigint[];
+                gtd.operation_units_ids &&                 cm_build_array_for((
+                            select operation_units_ids
+                            from public.list_gtd
+                            where false
+                        ), new.id_operation_unit);
 
             return new;
         end if;
@@ -130,7 +138,11 @@ begin
                         source_row.deleted = 0
                 )
             where
-                gtd.operation_units_ids && ARRAY[ old.id_operation_unit ]::bigint[];
+                gtd.operation_units_ids &&                 cm_build_array_for((
+                            select operation_units_ids
+                            from public.list_gtd
+                            where false
+                        ), old.id_operation_unit);
         end if;
 
         if
@@ -173,7 +185,11 @@ begin
                         source_row.deleted = 0
                 )
             where
-                gtd.operation_units_ids && ARRAY[ new.id_operation_unit ]::bigint[];
+                gtd.operation_units_ids &&                 cm_build_array_for((
+                            select operation_units_ids
+                            from public.list_gtd
+                            where false
+                        ), new.id_operation_unit);
         end if;
 
         return new;
@@ -221,7 +237,11 @@ begin
                         source_row.deleted = 0
                 )
             where
-                gtd.operation_units_ids && ARRAY[ new.id_operation_unit ]::bigint[];
+                gtd.operation_units_ids &&                 cm_build_array_for((
+                            select operation_units_ids
+                            from public.list_gtd
+                            where false
+                        ), new.id_operation_unit);
         end if;
 
         return new;

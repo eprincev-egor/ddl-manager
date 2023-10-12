@@ -146,7 +146,7 @@ export class CacheComparator extends AbstractComparator {
         return brokenColumns;
     }
 
-    async tryScanColumnOnWrongValues(
+    private async tryScanColumnOnWrongValues(
         params: IFindBrokenColumnsParams,
         column: CacheColumn
     ) {
@@ -191,7 +191,7 @@ export class CacheComparator extends AbstractComparator {
         }
     }
 
-    async scanColumnOnWrongValues(
+    private async scanColumnOnWrongValues(
         params: IFindBrokenColumnsParams,
         column: CacheColumn
     ) {
@@ -421,7 +421,6 @@ export class CacheComparator extends AbstractComparator {
     // fix: cannot drop column because other objects depend on it
     private recreateDepsTriggersToChangedColumns() {
         const allTriggers = flatMap(this.database.tables, table => table.triggers)
-            .filter(dbTrigger => !dbTrigger.frozen)
             .filter(dbTrigger => !this.migration.toDrop.triggers
                 .some(dropTrigger =>
                     dropTrigger.name === dbTrigger.name &&
@@ -432,12 +431,15 @@ export class CacheComparator extends AbstractComparator {
             const table = dbTrigger.table;
             const hasDepsToCacheColumn = (dbTrigger.updateOf || [])
                 .some(triggerDepsColumnName => {
-                    const thisColumnNeedDrop = this.migration.toDrop.columns
-                        .some(columnToDrop =>
-                            columnToDrop.equalName(triggerDepsColumnName) &&
-                            columnToDrop.table.equal(table)
-                        );
-                    return thisColumnNeedDrop;
+                    const thisColumnNeedDrop = this.migration.toDrop.columns.some(columnToDrop =>
+                        columnToDrop.equalName(triggerDepsColumnName) &&
+                        columnToDrop.table.equal(table)
+                    );
+                    const thisColumnNeedChangeType = this.migration.toCreate.columns.some(columnToDrop =>
+                        columnToDrop.equalName(triggerDepsColumnName) &&
+                        columnToDrop.table.equal(table)
+                    );
+                    return thisColumnNeedDrop || thisColumnNeedChangeType;
                 });
 
             if ( hasDepsToCacheColumn ) {

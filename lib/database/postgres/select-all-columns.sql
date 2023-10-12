@@ -5,7 +5,7 @@ select
     pg_columns.table_schema || '.' || pg_columns.table_name as table_identify,
     pg_columns.column_name,
     pg_columns.column_default,
-    pg_type.oid as column_type_oid,
+    pg_type.oid as column_type_oid, -- TODO: to_regtype(pg_columns.udt_name)
     pg_columns.is_nullable,
     (
         SELECT

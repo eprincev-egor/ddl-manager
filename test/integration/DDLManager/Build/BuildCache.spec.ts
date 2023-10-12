@@ -5,13 +5,14 @@ import { getDBClient } from "../../getDbClient";
 import { DDLManager } from "../../../../lib/DDLManager";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
+import { Pool } from "pg";
 
 use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
 describe("integration/DDLManager.build cache", () => {
-    let db: any;
+    let db: Pool;
     
     beforeEach(async() => {
         db = await getDBClient();
@@ -3933,5 +3934,232 @@ describe("integration/DDLManager.build cache", () => {
         `);
         strict.deepEqual(result.rows[0], {count: 1});
     });
+
+    it("need change column type", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                value integer,
+                some_column text,
+                changes_counter integer default 0
+            );
+            insert into orders (value) values (1);
+
+            
+            create function test()
+            returns trigger as $body$
+            begin
+                if new.some_column is distinct from old.some_column then
+                    new.changes_counter = new.changes_counter + 1;
+                end if;
+
+                return new;
+            end
+            $body$
+            language plpgsql;
+
+            create trigger test
+            before update of some_column, value
+            on orders
+            for each row
+            execute procedure test();
+        `);
+        fs.writeFileSync(folderPath + "/some_column.sql", `
+            cache totals for orders (
+                select
+                    orders.value * 2 as some_column
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+        // check that old trigger works
+        await db.query(`
+            update orders set
+                value = 2;
+        `);
+        const result = await db.query(`
+            select id, some_column, changes_counter
+            from orders
+        `);
+        strict.deepEqual(result.rows, [
+            {id: 1, some_column: 4, changes_counter: 2}
+        ]);
+    });
+
+    it("using old array column (bigint[] => integer[])", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                invoices_ids bigint[],
+                order_number text
+            );
+            create table invoices (
+                id serial primary key,
+                orders_ids bigint[],
+                doc_number text
+            );
+            create table invoice_order_link (
+                id serial primary key,
+                id_order integer,
+                id_invoice integer
+            );
+
+            insert into orders (order_number, invoices_ids)
+            values
+                ('ORDER-1', ARRAY[1]::bigint[]),
+                ('ORDER-2', ARRAY[2, 3]::bigint[]);
+
+            insert into invoices (doc_number, orders_ids)
+            values
+                ('INVOICE-1', ARRAY[1]::bigint[]),
+                ('INVOICE-2', ARRAY[2]::bigint[]),
+                ('INVOICE-3', ARRAY[2]::bigint[]);
+
+            insert into invoice_order_link (id_order, id_invoice)
+            values (1, 1), (2, 2), (2, 3);
+        `);
+        fs.writeFileSync(folderPath + "/invoices_ids.sql", `
+            cache invoices_ids for orders (
+                select
+                    array_agg(link.id_invoice) as invoices_ids
+                from invoice_order_link as link
+                where
+                    link.id_order = orders.id
+            )
+        `);
+        fs.writeFileSync(folderPath + "/invoice_numbers.sql", `
+            cache invoice_numbers for orders (
+                select
+                    string_agg(
+                        distinct invoices.doc_number,
+                        ', '
+                        order by invoices.doc_number
+                    ) as invoices_numbers
+                from invoices
+                where
+                    invoices.id = any( orders.invoices_ids )
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            update invoices set
+                doc_number = 'UPDATED-' || doc_number;
+        `);
+        const result = await db.query(`
+            select id, invoices_numbers
+            from orders
+            order by id
+        `);
+        strict.deepEqual(result.rows, [
+            {id: 1, invoices_numbers: "UPDATED-INVOICE-1"},
+            {id: 2, invoices_numbers: "UPDATED-INVOICE-2, UPDATED-INVOICE-3"}
+        ]);
+    });
+
+    it("using old array column (integer[] => bigint[])", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-cache";
+        fs.mkdirSync(folderPath);
+
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                invoices_ids integer[],
+                order_number text
+            );
+            create table invoices (
+                id serial primary key,
+                orders_ids integer[],
+                doc_number text
+            );
+            create table invoice_order_link (
+                id serial primary key,
+                id_order bigint,
+                id_invoice bigint
+            );
+
+            insert into orders (order_number, invoices_ids)
+            values
+                ('ORDER-1', ARRAY[1]::bigint[]),
+                ('ORDER-2', ARRAY[2, 3]::bigint[]);
+
+            insert into invoices (doc_number, orders_ids)
+            values
+                ('INVOICE-1', ARRAY[1]::bigint[]),
+                ('INVOICE-2', ARRAY[2]::bigint[]),
+                ('INVOICE-3', ARRAY[2]::bigint[]);
+
+            insert into invoice_order_link (id_order, id_invoice)
+            values (1, 1), (2, 2), (2, 3);
+        `);
+        fs.writeFileSync(folderPath + "/invoices_ids.sql", `
+            cache invoices_ids for orders (
+                select
+                    array_agg(link.id_invoice) as invoices_ids
+                from invoice_order_link as link
+                where
+                    link.id_order = orders.id
+            )
+        `);
+        fs.writeFileSync(folderPath + "/invoice_numbers.sql", `
+            cache invoice_numbers for orders (
+                select
+                    string_agg(
+                        distinct invoices.doc_number,
+                        ', '
+                        order by invoices.doc_number
+                    ) as invoices_numbers
+                from invoices
+                where
+                    invoices.id = any( orders.invoices_ids )
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath,
+            throwError: true
+        });
+
+
+        await db.query(`
+            update invoices set
+                doc_number = 'UPDATED-' || doc_number;
+        `);
+        const result = await db.query(`
+            select id, invoices_numbers
+            from orders
+            order by id
+        `);
+        strict.deepEqual(result.rows, [
+            {id: 1, invoices_numbers: "UPDATED-INVOICE-1"},
+            {id: 2, invoices_numbers: "UPDATED-INVOICE-2, UPDATED-INVOICE-3"}
+        ]);
+    });
+
+    // TODO: return back old column type?
+    // TODO: columns defaults can use column (check change column type)
+    // TODO: views can use column (check change column type)
+    // TODO: only frozen columns should be frozen
 
 });
