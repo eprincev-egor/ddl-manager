@@ -52,7 +52,7 @@ export class DatabaseFunction  {
     readonly strict?: boolean;
     readonly parallel?: ("safe" | "unsafe" | "restricted")[];
     readonly cost?: number;
-
+    private assignedColumns?: string[];
 
     constructor(json: IDatabaseFunctionParams) {
         Object.assign(this, json);
@@ -114,15 +114,14 @@ export class DatabaseFunction  {
     }
 
     findAssignColumns() {
-        if ( !this.body.includes("new.") ) {
-            return []
+        if ( this.assignedColumns ) {
+            return this.assignedColumns;
         }
-
         const body = this.body
             .replace(/--[^\n\r]+/g, "")
             .replace(/\/\*.+?\*\//g, "");
 
-        const matches = body.match(/((begin|then|loop)\s*;?|;)\s*new\.(\w+)\s*=/g) || [];
+        const matches = body.match(/(begin|then|loop|;)\s*;?\s*new\.(\w+)\s*=/g) || [];
         const assignedColumns = matches.map(str =>
             str
                 .replace(/^((begin|then|loop)\s*;?|;)\s*new\./, "")
@@ -130,7 +129,8 @@ export class DatabaseFunction  {
                 .toLowerCase()
         );
 
-        return uniq(assignedColumns).sort();
+        this.assignedColumns = uniq(assignedColumns).sort();
+        return this.assignedColumns;
     }
 
     toSQL(body = this.body) {
