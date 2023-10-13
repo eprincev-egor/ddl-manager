@@ -316,18 +316,36 @@ implements IDatabaseDriver {
                 add column if not exists ${column.name} ${column.type}
                     default ${ column.default };
 
-            alter table ${column.table} 
-                alter column ${column.name}
-                    set default ${ column.default };
-            
+            comment on column ${ column.getSignature() } is ${
+                column.comment.isEmpty() ? 
+                    "null" : wrapText( column.comment.toString() )
+            };
+
             alter table ${column.table}
                 alter column ${column.name}
-                    set data type ${column.type} using null;
-        `;
-        if ( !column.comment.isEmpty() ) {
-            sql += `comment on column ${ column.getSignature() } is ${wrapText( column.comment.toString() )}`;
-        }
+                    set default ${ column.default },
+                alter column ${column.name}
+                    drop not null;
 
+            create or replace function ddl_manager__try_cast_to(
+                input_value text,
+                INOUT output_value ${column.type}
+            ) AS
+            $body$
+            begin
+                select cast( input_value as ${column.type} )
+                into output_value;
+                exception when others then
+            end
+            $body$ language plpgsql;
+
+            alter table ${column.table}
+                alter column ${column.name}
+                    set data type ${column.type}
+                        using ddl_manager__try_cast_to(${column.name}::text, null::${column.type});
+
+            drop function ddl_manager__try_cast_to(text, ${column.type});
+        `;
         await this.query(sql);
     }
 

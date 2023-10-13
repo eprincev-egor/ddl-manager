@@ -4261,10 +4261,95 @@ describe("integration/DDLManager.build cache", () => {
             {id: 1, z: 1}
         ]);
     });
+
+    describe("using old column with not null and changing that column type", () => {
+
+        it("integer => numeric", async() => {
+            await db.query(`
+                create table orders (
+                    id serial primary key,
+                    sales integer not null,
+                    buys integer not null,
+                    profit integer not null
+                );
     
+                insert into orders (sales, buys, profit)
+                values (1000, 800, 200);
+            `);
+            fs.writeFileSync(ROOT_TMP_PATH + "/profit.sql", `
+                cache profit for orders (
+                    select
+                        (orders.sales - orders.buys)::numeric(14, 2) as profit
+                )
+            `);
+    
+            await DDLManager.build({
+                db, 
+                folder: ROOT_TMP_PATH,
+                throwError: true
+            });
+    
+            strict.ok(true, "no error: column \"profit\" contains null values");
+        });
+
+        it("integer => text", async() => {
+            await db.query(`
+                create table orders (
+                    id serial primary key,
+                    some_column integer not null
+                );
+    
+                insert into orders (some_column)
+                values (123);
+            `);
+            fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+                cache cache for orders (
+                    select
+                        orders.id::text as some_column
+                )
+            `);
+    
+            await DDLManager.build({
+                db, 
+                folder: ROOT_TMP_PATH,
+                throwError: true
+            });
+    
+            strict.ok(true, "no error: column \"some_column\" contains null values");
+        });
+
+        it("text => integer", async() => {
+            await db.query(`
+                create table orders (
+                    id serial primary key,
+                    some_column text not null
+                );
+    
+                insert into orders (some_column)
+                values ('123'), ('abc');
+            `);
+            fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+                cache cache for orders (
+                    select
+                        orders.id::integer as some_column
+                )
+            `);
+    
+            await DDLManager.build({
+                db, 
+                folder: ROOT_TMP_PATH,
+                throwError: true
+            });
+    
+            strict.ok(true, "no error: invalid input syntax for integer: \"abc\"")
+        });
+
+    })
+   
     // TODO: return back old column type?
     // TODO: columns defaults can use column (check change column type)
     // TODO: views can use column (check change column type)
     // TODO: only frozen columns should be frozen
+    // TODO: try return not null on cache columns
 
 });
