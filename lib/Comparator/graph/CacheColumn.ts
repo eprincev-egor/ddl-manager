@@ -100,6 +100,10 @@ export class CacheColumn {
         });
     }
 
+    getColumnExpression() {
+        return this.select.columns[0].expression;
+    }
+
     toString() {
         return `${this.for.getIdentifier()}.${this.name}`;
     }

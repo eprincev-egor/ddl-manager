@@ -1,4 +1,4 @@
-import { Select } from "../ast";
+import { Expression } from "../ast";
 import { Database } from "./schema/Database";
 import { Column } from "./schema/Column";
 import { TableReference } from "./schema/TableReference";
@@ -19,9 +19,7 @@ export interface IDatabaseDriver {
     dropFunction(func: DatabaseFunction): Promise<void>;
     createOrReplaceTrigger(trigger: DatabaseTrigger): Promise<void>;
     dropTrigger(trigger: DatabaseTrigger): Promise<void>;
-    getCacheColumnsTypes(select: Select, forTable: TableReference): Promise<{
-        [columnName: string]: string
-    }>;
+    getType(expression: Expression): Promise<string>;
     createOrReplaceColumn(column: Column): Promise<void>;
     dropColumn(column: Column): Promise<void>;
     selectMinMax(table: TableID): Promise<MinMax>;

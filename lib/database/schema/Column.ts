@@ -57,11 +57,7 @@ export class Column {
         const otherName = typeof column === "string" ? 
             column : column.name;
 
-        return (
-            this.name.slice(0, MAX_NAME_LENGTH) 
-            ==
-            otherName.slice(0, MAX_NAME_LENGTH)
-        )
+        return equalColumnName(this.name, otherName);
     }
 
     suit(newColumn: Column) {
@@ -108,4 +104,11 @@ export function formatDefault(arg: {type?: string, default?: string | null}) {
     }
 
     return someDefault;
+}
+
+export function equalColumnName(nameA: string, nameB: string) {
+    return (
+        nameA.slice(0, MAX_NAME_LENGTH) ==
+        nameB.slice(0, MAX_NAME_LENGTH)
+    )
 }

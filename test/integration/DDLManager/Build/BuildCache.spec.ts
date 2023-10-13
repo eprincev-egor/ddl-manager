@@ -751,50 +751,19 @@ describe("integration/DDLManager.build cache", () => {
         fs.mkdirSync(folderPath);
 
         await db.query(`
+            CREATE OR REPLACE FUNCTION array_union(a ANYARRAY, b ANYARRAY)
+            RETURNS ANYARRAY AS
+            $$
+                SELECT array_agg(distinct x order by x)
+                FROM unnest(a || b) as x
+            $$ LANGUAGE SQL;
 
-            create or replace function max_or_null_date(
-                prev_date timestamp with time zone,
-                next_date timestamp with time zone
-            ) returns timestamp with time zone as $body$
-            begin
-                if prev_date = '0001-01-01 00:00:00' then
-                    return next_date;
-                end if;
-            
-                if prev_date is null then
-                    return null;
-                end if;
-            
-                if next_date is null then
-                    return null;
-                end if;
-            
-                return greatest(prev_date, next_date);
-            end
-            $body$
-            language plpgsql;
-                    
-            create or replace function max_or_null_date_final(
-                final_date timestamp with time zone
-            ) returns timestamp with time zone as $body$
-            begin
-                if final_date = '0001-01-01 00:00:00' then
-                    return null;
-                end if;
-
-                return final_date;
-            end
-            $body$
-            language plpgsql;
-
-
-            CREATE AGGREGATE max_or_null_date_agg (timestamp with time zone)
-            (
-                sfunc = max_or_null_date,
-                finalfunc = max_or_null_date_final,
-                stype = timestamp with time zone,
-                initcond = '0001-01-01T00:00:00.000Z'
+            CREATE AGGREGATE array_union_agg(ANYARRAY) (
+                SFUNC = array_union,
+                STYPE = ANYARRAY,
+                INITCOND = '{}'
             );
+        
               
             create table companies (
                 id serial primary key
@@ -802,16 +771,16 @@ describe("integration/DDLManager.build cache", () => {
             create table orders (
                 id serial primary key,
                 id_client integer,
-                customs_date timestamp with time zone
+                countries_ids integer[]
             );
 
             insert into companies default values;
         `);
         
-        fs.writeFileSync(folderPath + "/set_note_trigger.sql", `
+        fs.writeFileSync(folderPath + "/totals.sql", `
             cache totals for companies (
                 select
-                    max_or_null_date_agg( orders.customs_date ) as orders_customs_date
+                    array_union_agg( orders.countries_ids ) as orders_countries_ids
                 from orders
                 where
                     orders.id_client = companies.id
@@ -826,39 +795,32 @@ describe("integration/DDLManager.build cache", () => {
         });
 
         let result;
-        let row;
-        const date = new Date();
-
 
         // create one date
         await db.query(`
-            insert into orders (id_client, customs_date)
-            values (1, '${date.toISOString()}'::timestamp with time zone);
+            insert into orders (id_client, countries_ids)
+            values (1, array[1, 2]);
         `);
         result = await db.query(`
-            select orders_customs_date
+            select orders_countries_ids
             from companies
         `);
-        row = result.rows[0];
-        assert.strictEqual(
-            row.orders_customs_date && row.orders_customs_date.toISOString(),
-            date.toISOString()
-        );
+        assert.deepStrictEqual(result.rows, [{
+            orders_countries_ids: [1, 2]
+        }]);
 
-        // add null
+        // add more
         await db.query(`
-            insert into orders (id_client, customs_date)
-            values (1, null);
+            insert into orders (id_client, countries_ids)
+            values (1, array[2, 3]);
         `);
         result = await db.query(`
-            select orders_customs_date
+            select orders_countries_ids
             from companies
         `);
-        row = result.rows[0];
-        assert.strictEqual(
-            row.orders_customs_date,
-            null
-        );
+        assert.deepStrictEqual(result.rows, [{
+            orders_countries_ids: [1, 2, 3]
+        }]);
     });
 
     it("test cache universal triggers working", async() => {
@@ -4172,6 +4134,134 @@ describe("integration/DDLManager.build cache", () => {
         }), /required alias/);
     });
 
+    it("change column types from text to math formulas", async() => {
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                column_a text,
+                column_b text
+            );
+            insert into orders default values;
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+            cache totals for orders (
+                select
+                    orders.id * 2 as column_a,
+                    orders.column_a * 3 as column_b
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            select id, column_a, column_b
+            from orders
+            order by id
+        `);
+        strict.deepEqual(result.rows, [
+            {id: 1, column_a: 2, column_b: 6}
+        ]);
+    });
+
+    it("twice build column with recursion deps in order by/limit", async() => {
+        await db.query(`
+            create table orders (
+                id serial primary key
+            );
+            create table operations (
+                id serial primary key,
+                id_order integer,
+                id_parent_oper integer,
+                sale integer,
+                buy integer
+            );
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/parent_lvl.sql", `
+            cache parent_lvl for operations (
+                select
+                    parent_oper.lvl as parent_lvl
+                from operations as parent_oper
+                where parent_oper.id = operations.id_parent_oper
+            )
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/lvl.sql", `
+            cache lvl for operations (
+                select
+                    coalesce(
+                        operations.parent_lvl + 1,
+                        1
+                    )::integer as lvl
+            )
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/first_oper.sql", `
+            cache first_oper for orders (
+                select
+                    operations.sale as first_sale,
+                    operations.buy as first_buy
+
+                from operations
+                where
+                    operations.id_order = orders.id
+
+                order by operations.lvl asc
+                limit 1
+            )
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/profit.sql", `
+            cache profit for orders (
+                select
+                    coalesce(orders.first_sale, 0) - coalesce(orders.first_buy, 0)
+                        as profit
+            )
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/self.sql", `
+            cache self for orders (
+                select
+                    orders.profit / orders.first_sale as x,
+                    orders.profit / orders.first_buy as y,
+                    orders.x + orders.y as z
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into orders default values;
+
+            insert into operations (
+                id_order,
+                id_parent_oper,
+                buy, sale
+            )
+            values
+                (1, null, 100, 200),
+                (1, 1, 300, 400);
+        `);
+        const result = await db.query(`
+            select id, z
+            from orders
+        `);
+        strict.deepEqual(result.rows, [
+            {id: 1, z: 1}
+        ]);
+    });
+    
     // TODO: return back old column type?
     // TODO: columns defaults can use column (check change column type)
     // TODO: views can use column (check change column type)

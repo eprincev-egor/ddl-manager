@@ -93,7 +93,8 @@ export class CacheComparator extends AbstractComparator {
         this.columnBuilder = new CacheColumnBuilder({
             database: this.database,
             graph: this.graph,
-            migration: this.migration,
+            fs: this.fs,
+            //migration: this.migration,
             driver: this.driver
         })
     }
@@ -198,7 +199,7 @@ export class CacheComparator extends AbstractComparator {
         const columnRef = `${column.for.getIdentifier()}.${column.name}`;
         let whereBroken = `${columnRef} is distinct from tmp.${column.name}`
 
-        const {expression} = column.select.columns[0];
+        const expression = column.getColumnExpression();
         if ( expression.isFuncCall() ) {
             const [call] = expression.getFuncCalls();
             if ( call.name === "array_agg" ) {
@@ -319,8 +320,7 @@ export class CacheComparator extends AbstractComparator {
     }
 
     private async existsCacheWithSameColumn(column: Column) {
-        const cacheColumn = this.graph.getColumns(column.table)
-            .find(cacheColumn => column.equalName(cacheColumn));
+        const cacheColumn = this.graph.getColumn(column.table, column.name);
 
         if ( cacheColumn ) {
             const newColumn = await this.columnBuilder.build(cacheColumn);

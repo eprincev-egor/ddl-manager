@@ -48,6 +48,14 @@ export class FuncCall extends AbstractExpressionElement {
         return children;
     }
 
+    getOnlyName() {
+        return this.name.split(".").pop()!;
+    }
+
+    getFirstArg(): Expression | undefined {
+        return this.args[ 0 ];
+    }
+
     getLastArg(): Expression | undefined {
         return this.args[ this.args.length - 1 ];
     }

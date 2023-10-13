@@ -3,36 +3,37 @@ import { Comment } from "../database/schema/Comment";
 import {
     Select,
     SelectColumn,
-    FuncCall,
     Expression,
     ColumnReference,
-    UnknownExpressionElement
+    FuncCall
 } from "../ast";
-import { Migration } from "../Migrator/Migration";
 import { IDatabaseDriver } from "../database/interface";
 import { Database } from "../database/schema/Database";
 import { CacheColumnGraph } from "./graph/CacheColumnGraph";
 import { CacheColumn } from "./graph/CacheColumn";
+import { FilesState } from "../fs/FilesState";
 
 export interface CacheColumnBuilderParams {
     driver: IDatabaseDriver;
-    migration: Migration;
     database: Database;
+    fs: FilesState;
     graph: CacheColumnGraph;
 }
 
 export class CacheColumnBuilder {
 
     private driver: IDatabaseDriver;
-    private migration: Migration;
+    private fs: FilesState;
     private database: Database;
     private graph: CacheColumnGraph;
+    private knownTypes: Record<string, string>;
 
     constructor(params: CacheColumnBuilderParams) {
         this.driver = params.driver;
-        this.migration = params.migration;
         this.database = params.database;
+        this.fs = params.fs;
         this.graph = params.graph;
+        this.knownTypes = {};
     }
 
     async build(cacheColumn: CacheColumn) {
@@ -40,7 +41,7 @@ export class CacheColumnBuilder {
             cacheColumn.for.table,
             cacheColumn.name,
             await this.getColumnType(cacheColumn),
-            this.getColumnDefault(cacheColumn.select),
+            getColumnDefault(cacheColumn.select),
             Comment.fromFs({
                 objectType: "column",
                 cacheSignature: cacheColumn.cache.signature,
@@ -51,203 +52,180 @@ export class CacheColumnBuilder {
     }
 
     private async getColumnType(cacheColumn: CacheColumn): Promise<string> {
-        let {expression} = cacheColumn.select.columns[0];
+        const knownType = this.knownTypes[ cacheColumn.getId() ];
+        if ( knownType ) {
+            return knownType;
+        }
 
+        const calculatedType = this.tryDetectTypeByExpression(
+            cacheColumn.getColumnExpression()
+        );
+        if ( calculatedType ) {
+            this.knownTypes[ cacheColumn.getId() ] = calculatedType;
+            return calculatedType;
+        }
+
+        this.knownTypes[ cacheColumn.getId() ] = "!recursion!";
+
+        const expression = await this.replaceDeps(
+            cacheColumn.getColumnExpression()
+        );
+        const loadedType = await this.driver.getType(expression);
+
+        this.knownTypes[ cacheColumn.getId() ] = loadedType;
+        return loadedType;
+    }
+
+    private async replaceDeps(expression: Expression) {
+        for (const funcCall of expression.getFuncCalls()) {
+            const type = this.tryDetectFuncCallType(funcCall);
+            if ( type ) {
+                expression = expression.replaceFuncCall(
+                    funcCall, `(null::${type})`
+                );
+            }
+        }
+
+        for (const columnRef of expression.getColumnReferences()) {
+            const typeExpression = await this.calculateColumnRefTypeExpression(columnRef);
+
+            expression = expression.replaceColumn(
+                columnRef,
+                Expression.unknown(`(${typeExpression})`)
+            );
+        }
+
+        const unknownAggregations = expression.getFuncCalls().filter(funcCall =>
+            this.database.aggregators.includes(funcCall.name)
+        );
+        for (const aggCall of unknownAggregations) {
+            expression = expression.replaceFuncCall(
+                aggCall, `(select ${aggCall})`
+            );
+        }
+
+        return expression;
+    }
+
+    private async calculateColumnRefTypeExpression(columnRef: ColumnReference) {
+        const dbColumn = this.database.getColumn(
+            columnRef.tableReference.table,
+            columnRef.name
+        );
+
+        if ( columnRef.name === "id" ) {
+            return `null::${dbColumn?.type || "integer"}`;
+        }
+
+        const cacheColumn = this.graph.getColumn(
+            columnRef.tableReference,
+            columnRef.name
+        );
+        if ( cacheColumn ) {
+            const type = await this.getColumnType(cacheColumn);
+            if ( type === "!recursion!" ) {
+                return "null";
+            }
+
+            return `null::${type}`;
+        }
+
+        if ( dbColumn ) {
+            return `null::${dbColumn.type}`;
+        }
+
+        throw new Error(`table "${columnRef.tableReference.table}" does not have column "${columnRef.name}"`);
+    }
+
+    private tryDetectTypeByExpression(expression: Expression): string | undefined {
         const explicitCastType = expression.getExplicitCastType();
         if ( explicitCastType ) {
             return explicitCastType;
         }
 
-        if ( expression.isCoalesce() ) {
-            const funcCall = expression.getFuncCalls()[0] as FuncCall;
-            expression = funcCall.args[0] as Expression;
+        if ( expression.isFuncCall() ) {
+            const funcCall = expression.getFuncCalls()[0];
+            return this.tryDetectFuncCallType(funcCall);
         }
 
-        if ( expression.isFuncCall() ) {
-            const funcCall = expression.getFuncCalls()[0] as FuncCall;
-            if ( funcCall.name === "max" || funcCall.name === "min" ) {
-                expression = funcCall.args[0] as Expression;
+        if ( expression.isColumnReference() ) {
+            const columnRef = expression.getColumnReferences()[0];
+
+            const dbColumn = this.database.getColumn(
+                columnRef.tableReference.table,
+                columnRef.name
+            );
+            if ( dbColumn?.isFrozen() ) {
+                return dbColumn.type.toString();
+            }
+
+            if ( columnRef.name === "id" ) {
+                return "integer";
             }
         }
 
         if ( expression.isNotExists() ) {
             return "boolean";
         }
-
-        if ( expression.isFuncCall() ) {
-            const funcCall = expression.getFuncCalls()[0] as FuncCall;
-
-            if ( funcCall.name === "count" ) {
-                return "bigint";
-            }
-
-            if ( funcCall.name === "string_agg" ) {
-                return "text";
-            }
-
-            if ( funcCall.name === "sum" ) {
-                return "numeric";
-            }
-
-            if ( funcCall.name === "bool_or" || funcCall.name === "bool_and" ) {
-                return "boolean";
-            }
-
-            if ( funcCall.name === "array_agg" ) {
-                const firstArg = funcCall.args[0] as Expression;
-                const columnRef = firstArg.getColumnReferences()[0];
-    
-                if ( columnRef && firstArg.elements.length === 1 ) {        
-                    const dbColumn = this.findDbColumnByRef(columnRef);
-                    
-                    if ( dbColumn ) {
-                        return dbColumn.type + "[]";
-                    }
-
-                    if ( columnRef.name === "id" ) {
-                        return "integer[]";
-                    }
-                }
-            }
-
-            const newFunc = this.migration.toCreate.functions.find(func =>
-                func.equalName(funcCall.name)
-            );
-            if ( newFunc && newFunc.returns.type ) {
-                return newFunc.returns.type;
-            }
-        }
-
-        if ( expression.isColumnReference() ) {
-            const columnRef = expression.elements[0] as ColumnReference;
-            const dbColumn = this.findDbColumnByRef(columnRef);
-            if ( dbColumn ) {
-                return dbColumn.type.toString();
-            }
-        }
-
-        if ( expression.isArrayItemOfColumnReference() ) {
-            const columnRef = expression.elements[0] as ColumnReference;
-            const dbColumn = this.findDbColumnByRef(columnRef);
-
-            if ( dbColumn && dbColumn.type.isArray() ) {
-                const arrayType = dbColumn.type.toString();
-                const elemType = arrayType.slice(0, -2);
-                return elemType;
-            }
-        }
-
-        const selectWithReplacedColumns = await this.replaceUnknownColumns(cacheColumn.select);
-        const columnsTypes = await this.driver.getCacheColumnsTypes(
-            new Select({
-                columns: [
-                    selectWithReplacedColumns.columns[0]
-                ],
-                from: selectWithReplacedColumns.from
-            }),
-            cacheColumn.for
-        );
-
-        return Object.values(columnsTypes)[0];
     }
 
-    private findDbColumnByRef(columnRef: ColumnReference) {
-        const dbTable = this.database.getTable(
-            columnRef.tableReference.table
-        );
-        const dbColumn = dbTable && dbTable.getColumn(columnRef.name);
+    private tryDetectFuncCallType(funcCall: FuncCall) {
+        const funcName = funcCall.getOnlyName();
+        const firstArg = funcCall.getFirstArg();
 
-        if ( dbColumn ) {
-            return dbColumn;
+        if ( funcName === "string_agg" ) {
+            return "text";
         }
 
-        const maybeIsCreatingNow = this.migration.toCreate.columns.find(newColumn =>
-            newColumn.equalName(columnRef) &&
-            newColumn.table.equal(columnRef.tableReference.table)
-        );
-        if ( maybeIsCreatingNow ) {
-            return maybeIsCreatingNow;
+        if ( funcName === "sum" ) {
+            return "numeric";
+        }
+
+        if ( funcName === "max_or_null_date_agg" || funcName === "min_or_null_date_agg" ) {
+            return "timestamp without time zone";
+        }
+
+        if ( ["min", "max", "first", "last", "coalesce"].includes(funcName) ) {
+            return firstArg ? this.tryDetectTypeByExpression(firstArg) : undefined;
+        }
+
+        if ( funcName === "count" ) {
+            return "bigint";
+        }
+
+        if ( ["bool_or", "bool_and", "every"].includes(funcName) ) {
+            return "boolean";
+        }
+
+        if ( funcName === "array_agg" ) {
+            const argType = firstArg && this.tryDetectTypeByExpression(firstArg);
+            return argType ? `${argType}[]` : undefined;
+        }
+
+        const fsFuncs = this.fs.getFunctionsByName(funcName);
+        if ( fsFuncs.length === 1 && fsFuncs[0].returns.type ) {
+            return fsFuncs[0].returns.type;
+        }
+    }
+}
+
+function getColumnDefault(select: Select) {
+    const selectColumn = select.columns[0] as SelectColumn;
+
+    if ( selectColumn.expression.isThatFuncCall("count") ) {
+        return "0";
+    }
+    if ( selectColumn.expression.isNotExists() ) {
+        return "false";
+    }
+
+    if ( selectColumn.expression.isThatFuncCall("coalesce") ) {
+        const [coalesce] = selectColumn.expression.getFuncCalls();
+        const lastArg = coalesce.getLastArg()!;
+        if ( lastArg.isPrimitive() ) {
+            return lastArg.toString();
         }
     }
 
-    private async replaceUnknownColumns(select: Select) {
-        let replacedSelect = select;
-
-        for (const selectColumn of select.columns) {
-            const columnRefs = selectColumn.expression.getColumnReferences();
-            for (const columnRef of columnRefs) {
-                const dbTable = this.database.getTable(
-                    columnRef.tableReference.table
-                );
-                const dbColumn = dbTable && dbTable.getColumn(columnRef.name);
-                if ( dbColumn ) {
-                    continue;
-                }
-
-                const maybeIsCreatingNow = this.migration.toCreate.columns.find(newColumn =>
-                    newColumn.equalName(columnRef) &&
-                    newColumn.table.equal(columnRef.tableReference.table)
-                );
-                if ( maybeIsCreatingNow ) {
-                    replace(
-                        columnRef,
-                        maybeIsCreatingNow.type.toString()
-                    );
-                    continue;
-                }
-
-                const toUpdateThatColumn = this.graph.getColumns(columnRef.tableReference)
-                    .find(cacheColumn => cacheColumn.name === columnRef.name);
-                if ( toUpdateThatColumn ) {
-                    const newColumnType = await this.getColumnType(toUpdateThatColumn);
-
-                    replace(
-                        columnRef,
-                        newColumnType
-                    );
-                }
-            }
-        }
-
-        function replace(
-            columnRef: ColumnReference,
-            columnType: string
-        ) {
-            replacedSelect = replacedSelect.clone({
-                columns: replacedSelect.columns.map(selectColumn => {
-                    const newExpression = selectColumn.expression.replaceColumn(
-                        columnRef,
-                        UnknownExpressionElement.fromSql(
-                            `(null::${ columnType })`
-                        )
-                    );
-
-                    return selectColumn.replaceExpression(newExpression);
-                })
-            });
-        }
-
-        return replacedSelect;
-    }
-
-    private getColumnDefault(select: Select) {
-        const selectColumn = select.columns[0] as SelectColumn;
-
-        if ( selectColumn.expression.isThatFuncCall("count") ) {
-            return "0";
-        }
-        if ( selectColumn.expression.isNotExists() ) {
-            return "false";
-        }
-
-        if ( selectColumn.expression.isThatFuncCall("coalesce") ) {
-            const [coalesce] = selectColumn.expression.getFuncCalls();
-            const lastArg = coalesce.getLastArg()!;
-            if ( lastArg.isPrimitive() ) {
-                return lastArg.toString();
-            }
-        }
-
-        return "null";
-    }
+    return "null";
 }

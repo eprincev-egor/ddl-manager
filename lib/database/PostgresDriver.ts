@@ -3,7 +3,7 @@ import { Pool, PoolClient, QueryResult } from "pg";
 import { IDatabaseDriver, MinMax } from "./interface";
 import { FileParser } from "../parser";
 import { PGTypes } from "./PGTypes";
-import { Select } from "../ast";
+import { Expression, Select } from "../ast";
 import { getUnfreezeFunctionSql } from "./postgres/getUnfreezeFunctionSql";
 import { getUnfreezeTriggerSql } from "./postgres/getUnfreezeTriggerSql";
 import { Database } from "./schema/Database";
@@ -302,31 +302,12 @@ implements IDatabaseDriver {
         await this.query(sql);
     }
 
-    async getCacheColumnsTypes(select: Select, forTable: TableReference) {
-        await this.types.load();
-
+    async getType(expression: Expression) {
         const sql = `
-            select
-                ddl_manager_dmp.*
-            from ${forTable.toString()}
-
-            left join lateral (
-                ${ select }
-                where false
-            ) as ddl_manager_dmp on true
-
-            where false
+            select pg_typeof(${expression}) as type
         `;
-        const {fields} = await this.query(sql);
-
-        const columnsTypes: {[columnName: string]: string} = {};
-        for (const field of fields) {
-            const typeId = field.dataTypeID;
-            const type = this.types.getTypeById(typeId) as string;
-
-            columnsTypes[ field.name ] = type;
-        }
-        return columnsTypes;
+        const {rows} = await this.query(sql);
+        return rows[0].type;
     }
 
     async createOrReplaceColumn(column: Column) {

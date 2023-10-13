@@ -70,4 +70,8 @@ export class ColumnReference extends AbstractExpressionElement {
         }
         return [`${this.tableReference.table.toStringWithoutPublic()}.${this.name}`];
     }
+
+    toId() {
+        return `${this.tableReference.table}.${this.name}`;
+    }
 }

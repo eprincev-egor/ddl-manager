@@ -33,4 +33,22 @@ describe("Column", () => {
         assert.ok( column3.suit(column3), "column3 equal column3");
     });
 
+    it("suit float8 and double precision", () => {
+        const column1 = new Column(
+            new TableID("public", "test"),
+            "my_column",
+            "float8",
+            null
+        );
+        const column2 = new Column(
+            new TableID("public", "test"),
+            "my_column",
+            "double precision",
+            "null"
+        );
+
+        assert.ok( column1.suit(column2), "column1 equal column2");
+        assert.ok( column2.suit(column1), "column2 equal column1");
+    });
+
 })

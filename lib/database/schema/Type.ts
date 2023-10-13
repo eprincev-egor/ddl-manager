@@ -38,6 +38,12 @@ export function formatType(someType?: string) {
     if ( someType.startsWith("numeric") ) {
         return "numeric";
     }
+    if ( someType === "float8" ) {
+        return "double precision";
+    }
+    if ( someType === "float8[]" ) {
+        return "double precision[]";
+    }
 
     if ( someType === "timestamp" ) {
         return "timestamp without time zone";

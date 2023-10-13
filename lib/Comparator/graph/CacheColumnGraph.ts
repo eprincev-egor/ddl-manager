@@ -5,6 +5,7 @@ import { ColumnReference } from "../../ast";
 import { flatMap, uniqBy } from "lodash";
 import { CacheUpdate } from "./CacheUpdate";
 import { buildDependencyMatrix, groupByTables } from "./utils";
+import { equalColumnName } from "../../database/schema/Column";
 
 export class CacheColumnGraph {
 
@@ -59,6 +60,12 @@ export class CacheColumnGraph {
         return allUpdates;
     }
 
+    getColumn(tableRef: TableReference | TableID | string, columnName: string) {
+        return this.getColumns(tableRef).find(cacheColumn => 
+            equalColumnName(cacheColumn.name, columnName)
+        );
+    }
+
     getColumns(tableRef: TableReference | TableID | string) {
         if ( typeof tableRef === "string" ) {
             tableRef = TableID.fromString(tableRef);
@@ -102,15 +109,11 @@ export class CacheColumnGraph {
     }
 
     private findDependencies(column: CacheColumn) {
-        const dependencyColumns = flatMap(column.getColumnRefs(), (depColumnRef) => 
-            this.findDependenciesByRef(depColumnRef)
-        );
-        return uniqBy(dependencyColumns, (column) => column.getId());
-    }
+        const dependencyColumns = column.getColumnRefs().map((depColumnRef) => 
+            this.getColumn(depColumnRef.tableReference, depColumnRef.name)!
+        ).filter(column => !!column);
 
-    private findDependenciesByRef(columnRef: ColumnReference) {
-        return this.getColumns(columnRef.tableReference)
-            .filter(column => column.name == columnRef.name);
+        return uniqBy(dependencyColumns, (column) => column.getId());
     }
 }
 

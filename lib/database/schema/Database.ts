@@ -30,6 +30,14 @@ export class Database {
         ];
     }
 
+    getColumn(tableId: TableID, column: string) {
+        const dbTable = this.tables.find(table => 
+            table.name === tableId.name &&
+            table.schema === tableId.schema
+        );
+        return dbTable?.getColumn(column);
+    }
+
     getTable(tableId: TableID) {
         return this.tables.find(table => 
             table.name === tableId.name &&

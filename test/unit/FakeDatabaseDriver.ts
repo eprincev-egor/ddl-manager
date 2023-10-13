@@ -1,9 +1,8 @@
-import { Select } from "../../lib/ast";
+import { Expression, Select } from "../../lib/ast";
 import { IDatabaseDriver, MinMax } from "../../lib/database/interface";
 import { Database } from "../../lib/database/schema/Database";
 import { Table } from "../../lib/database/schema/Table";
 import { DatabaseFunction } from "../../lib/database/schema/DatabaseFunction";
-import { TableReference } from "../../lib/database/schema/TableReference";
 import { DatabaseTrigger } from "../../lib/database/schema/DatabaseTrigger";
 import { Column } from "../../lib/database/schema/Column";
 import { IFileContent } from "../../lib/fs/File";
@@ -24,7 +23,6 @@ implements IDatabaseDriver {
     };
     readonly indexes: {[table: string]: Index[]};
 
-    private columnsTypes: {[column: string]: string};
     private rowsCountByTable: {[table: string]: number};
     private updatedByLimit: {[table: string]: {
         limit: number;
@@ -40,7 +38,6 @@ implements IDatabaseDriver {
             cache: []
         };
         this.columns = {};
-        this.columnsTypes = {};
         this.rowsCountByTable = {};
         this.updatedByLimit = {};
         this.updatedByMinMax = {};
@@ -133,15 +130,8 @@ implements IDatabaseDriver {
         }
     }
 
-    async getCacheColumnsTypes(select: Select, forTable: TableReference): Promise<{ [columnName: string]: string; }> {
-        const outputTypes: {[columnName: string]: string} = {};
-        
-        for (const column of select.columns) {
-            const type = this.columnsTypes[ column.name ];
-            outputTypes[ column.name ] = type;
-        }
-
-        return outputTypes;
+    async getType(expression: Expression): Promise<string> {
+        return "";
     }
 
     async createOrReplaceColumn(column: Column): Promise<void> {
@@ -258,10 +248,6 @@ implements IDatabaseDriver {
     }
 
     // test methods
-    setColumnsTypes(types: {[column: string]: string}) {
-        this.columnsTypes = types;
-    }
-
     setRowsCount(table: string, rowsCount: number) {
         this.rowsCountByTable[ table ] = rowsCount;
     }
