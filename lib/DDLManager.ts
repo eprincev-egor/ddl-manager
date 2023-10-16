@@ -372,8 +372,12 @@ export class DDLManager {
         const database = await postgres.load();
         const fs = await FileWatcher.watch(this.folders);
 
+        const state = {
+            database, fs
+        };
+
         fs.on("change", () => {
-            void this.onChangeFs(postgres, database, fs.state)
+            void this.onChangeFs(postgres, state)
         });
         fs.on("error", (err) => {
             console.error(err.message);
@@ -386,29 +390,38 @@ export class DDLManager {
 
     private async onChangeFs(
         postgres: IDatabaseDriver,
-        database: Database,
-        fsState: FilesState
+        state: {
+            database: Database,
+            fs: FileWatcher
+        }
     ) {
-        for (const migrator of this.activeMigrators) {
-            migrator.abort();
+        const needAbort = this.activeMigrators.length > 0;
+
+        if ( needAbort ) {
+            state.database = await postgres.load();
         }
 
         const migration = await MainComparator.compare(
             postgres,
-            database,
-            fsState
+            state.database,
+            state.fs.state
         );
         const migrator = new MainMigrator(
             postgres,
-            database,
+            state.database,
             migration
         );
-        this.activeMigrators.push(migrator);
+
+        for (const migrator of this.activeMigrators) {
+            console.log("-- aborted migration --")
+            migrator.abort();
+        }
+        this.activeMigrators = [migrator];
 
         const migrateErrors = await migrator.migrate();
 
         if ( !migrator.isAborted() ) {
-            database.applyMigration(migration);
+            state.database.applyMigration(migration);
 
             migration.log();
             if ( migrateErrors.length ) {
@@ -417,8 +430,8 @@ export class DDLManager {
         }
 
         this.activeMigrators = this.activeMigrators.filter(activeMigrator =>
-            activeMigrator === migrator
-        );        
+            activeMigrator !== migrator
+        );
     }
 
     private async dump(unfreeze: boolean = false) {
