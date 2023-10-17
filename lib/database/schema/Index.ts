@@ -1,5 +1,6 @@
 import { TableID } from "./TableID";
 import { Comment } from "./Comment";
+import { MAX_NAME_LENGTH } from "../postgres/constants";
 
 interface IndexParams {
     name: string;
@@ -17,7 +18,7 @@ export class Index {
     readonly comment: Comment;
 
     constructor(params: IndexParams) {
-        this.name = params.name;
+        this.name = params.name.slice(0, MAX_NAME_LENGTH);
         this.table = params.table;
         this.index = params.index;
         this.columns = params.columns;

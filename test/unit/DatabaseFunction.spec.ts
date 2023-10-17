@@ -499,6 +499,33 @@ describe("DatabaseFunction", () => {
         assert.ok( func2.equal(func1), "func2 == func1" );
     });
 
+    it("equal arg type: \"order\" == public.order", () => {
+        const func1 = new DatabaseFunction({
+            schema: "public",
+            name: "my_func",
+            args: [{
+                name: "test",
+                type: "public.order"
+            }],
+            returns: {type: "public.order"},
+            body: "body"
+        });
+
+        const func2 = new DatabaseFunction({
+            schema: "public",
+            name: "my_func",
+            args: [{
+                name: "test",
+                type: "\"order\""
+            }],
+            returns: {type: "\"order\""},
+            body: "body"
+        });
+        
+        assert.ok( func1.equal(func2), "func1 == func2" );
+        assert.ok( func2.equal(func1), "func2 == func1" );
+    });
+
     describe("findAssignColumns", () => {
 
         it("empty function", () => {

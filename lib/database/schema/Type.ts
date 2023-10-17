@@ -33,7 +33,10 @@ export function formatType(someType?: string) {
         return null;
     }
 
-    someType = someType.trim().toLowerCase().replace(/\s+/g, " ");
+    someType = someType.trim()
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .replace(/"/g, "");
 
     if ( someType.startsWith("numeric") ) {
         return "numeric";
