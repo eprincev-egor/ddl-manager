@@ -154,7 +154,7 @@ implements IDatabaseDriver {
         const {rows} = await this.query(selectAllObjectsSQL);
         for (const row of rows) {
 
-            const fileContent = this.fileParser.parse(row.ddl) as IFileContent;
+            const fileContent = this.fileParser.parseSql(row.ddl) as IFileContent;
             
             const funcJson = fileContent.functions[0];
             if ( funcJson ) {

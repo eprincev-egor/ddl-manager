@@ -34,14 +34,7 @@ export class FileReader extends EventEmitter {
     }
 
     parseFile(rootFolderPath: string, filePath: string): File | undefined {
-        const sql = fs.readFileSync(filePath).toString();
-        
-        const sqlFile = this.fileParser.parse(sql);
-        
-        if ( !sqlFile ) {
-            return;
-        }
-
+        const sqlFile = this.fileParser.parseFile(filePath);
         const subPath = getSubPath(rootFolderPath, filePath);
 
         const fileName = filePath.split(/[/\\]/).pop() as string;

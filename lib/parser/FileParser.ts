@@ -11,17 +11,17 @@ import { CacheParser } from "./CacheParser";
 import { Comment } from "../database/schema/Comment";
 import { DatabaseFunction, IDatabaseFunctionArgument, IDatabaseFunctionReturns } from "../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
-import assert from "assert";
 import { TableID } from "../database/schema/TableID";
 import { CacheSyntax } from "./CacheSyntax";
 import { DEFAULT_SCHEMA } from "./defaults";
 import { FileSyntax } from "./FileSyntax";
+import assert from "assert";
 
 export class FileParser {
 
     static parse(sql: string) {
         const parser = new FileParser();
-        return parser.parse(sql);
+        return parser.parseSql(sql);
     }
 
     static parseFunction(sql: string) {
@@ -44,9 +44,17 @@ export class FileParser {
         return cache;
     }
 
-    parse(sql: string): IFileContent | undefined {
-        const {cursor} = Sql.code(sql);
+    parseFile(filePath: string) {
+        const {cursor} = Sql.file(filePath);
+        return this.parse(cursor);
+    }
 
+    parseSql(sql: string): IFileContent | undefined {        
+        const {cursor} = Sql.code(sql);
+        return this.parse(cursor);
+    }
+
+    private parse(cursor: Cursor) {
         const content = cursor.parse(FileSyntax);
 
         const state: IFileContent = {
@@ -65,6 +73,7 @@ export class FileParser {
         return state;
     }
 }
+
 function addFunction(
     cursor: Cursor,
     state: IFileContent,
