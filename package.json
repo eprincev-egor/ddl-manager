@@ -46,7 +46,7 @@
     "minimist": "^1.2.0",
     "node-watch": "^0.6.0",
     "pg": "^8.11.3",
-    "psql-lang": "0.0.28"
+    "psql-lang": "0.0.29"
   },
   "devDependencies": {
     "@types/chai": "^4.2.14",

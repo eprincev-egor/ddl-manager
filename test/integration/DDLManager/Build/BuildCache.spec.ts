@@ -4262,6 +4262,46 @@ describe("integration/DDLManager.build cache", () => {
         ]);
     });
 
+    it("correct build cache with make_interval", async() => {
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                date_start timestamp without time zone,
+                expected_days integer
+            );
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/self.sql", `
+            cache self for orders (
+                select
+                    orders.date_start + make_interval(days => 
+                        orders.expected_days
+                    ) as expected_date_end
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into orders (date_start, expected_days)
+            values (now(), 10);
+        `);
+        const result = await db.query(`
+            select 
+                orders.expected_date_end = orders.date_start + make_interval(days => 
+                    orders.expected_days
+                ) as is_valid_cache_value
+            from orders
+        `);
+        strict.deepEqual(result.rows, [
+            {is_valid_cache_value: true}
+        ]);
+    });
+
     describe("using old column with not null and changing that column type", () => {
 
         it("integer => numeric", async() => {
