@@ -31,7 +31,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                companies.order_ids &&                 cm_build_array_for((
+                companies.order_ids && cm_build_array_for((
                             select order_ids
                             from public.companies
                             where false
@@ -93,7 +93,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                companies.order_ids &&                 cm_build_array_for((
+                companies.order_ids && cm_build_array_for((
                             select order_ids
                             from public.companies
                             where false
@@ -129,7 +129,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                companies.order_ids &&                 cm_build_array_for((
+                companies.order_ids && cm_build_array_for((
                             select order_ids
                             from public.companies
                             where false
@@ -175,7 +175,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                companies.order_ids &&                 cm_build_array_for((
+                companies.order_ids && cm_build_array_for((
                             select order_ids
                             from public.companies
                             where false

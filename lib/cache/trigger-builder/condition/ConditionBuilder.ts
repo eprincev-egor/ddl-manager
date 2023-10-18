@@ -10,6 +10,7 @@ import { buildJoinVariables } from "../../processor/buildJoinVariables";
 import { Table } from "../../../database/schema/Table";
 import { Column } from "../../../database/schema/Column";
 import { CoalesceFalseExpression } from "../../../ast/expression/CoalesceFalseExpression";
+import { fixArraySearchForDifferentArrayTypesInCondition } from "./fixArraySearchForDifferentArrayTypes";
 
 
 export type RowType = "new" | "old";
@@ -191,6 +192,10 @@ export class ConditionBuilder {
                     subExpression
                 );
                 subExpression = replaceAmpArrayToAny(
+                    this.context.cache.for,
+                    subExpression
+                );
+                subExpression = fixArraySearchForDifferentArrayTypesInCondition(
                     this.context.cache.for,
                     subExpression
                 );

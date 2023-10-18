@@ -94,15 +94,16 @@ export class UnknownExpressionElement extends AbstractExpressionElement {
             );
         }
 
-        const lines = sql.split("\n").map(line =>
-            line.trim() ?
-                spaces + line :
-                ""
-        );
+        const lines = sql.split("\n");
         if ( lines.length === 1 ) {
             return [lines[0].trim()];
         }
 
-        return lines;
+        return [
+            lines[0],
+            ...lines.slice(1).map(line => 
+                line.trim() ? spaces + line : ""
+            )
+        ];
     }
 }

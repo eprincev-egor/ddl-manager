@@ -28,7 +28,7 @@ begin
                         source_row.id = any(invoice.payments_ids)
                 )
             where
-                invoice.payments_ids &&                 cm_build_array_for((
+                invoice.payments_ids && cm_build_array_for((
                             select payments_ids
                             from public.invoice
                             where false
@@ -87,7 +87,7 @@ begin
                         source_row.id = any(invoice.payments_ids)
                 )
             where
-                invoice.payments_ids &&                 cm_build_array_for((
+                invoice.payments_ids && cm_build_array_for((
                             select payments_ids
                             from public.invoice
                             where false
@@ -120,7 +120,7 @@ begin
                         source_row.id = any(invoice.payments_ids)
                 )
             where
-                invoice.payments_ids &&                 cm_build_array_for((
+                invoice.payments_ids && cm_build_array_for((
                             select payments_ids
                             from public.invoice
                             where false
@@ -163,7 +163,7 @@ begin
                         source_row.id = any(invoice.payments_ids)
                 )
             where
-                invoice.payments_ids &&                 cm_build_array_for((
+                invoice.payments_ids && cm_build_array_for((
                             select payments_ids
                             from public.invoice
                             where false

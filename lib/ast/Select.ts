@@ -8,6 +8,7 @@ import { TableReference, IReferenceFilter } from "../database/schema/TableRefere
 import { OrderBy } from "./OrderBy";
 import { TableID } from "../database/schema/TableID";
 import { strict } from "assert";
+import { fixArraySearchForDifferentArrayTypes } from "../cache/trigger-builder/condition/fixArraySearchForDifferentArrayTypes";
 
 interface ISelectParams {
     columns: SelectColumn[];
@@ -94,6 +95,19 @@ export class Select extends AbstractAstElement {
             ...params
         });
         return clone;
+    }
+
+    fixArraySearchForDifferentArrayTypes(fromTable?: TableReference) {
+        if ( this.where?.hasArraySearchOperator() ) {
+            return this.clone({
+                where: fixArraySearchForDifferentArrayTypes(
+                    fromTable ?? this.getFromTable(),
+                    this.where
+                )
+            });
+        }
+
+        return this;
     }
 
     findTableReference(filter: IReferenceFilter) {

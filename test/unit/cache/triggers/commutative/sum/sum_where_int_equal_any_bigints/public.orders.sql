@@ -25,7 +25,7 @@ begin
                     source_row.id = any(companies.bigint_orders_ids)
             )
         where
-            companies.bigint_orders_ids &&             cm_build_array_for((
+            companies.bigint_orders_ids && cm_build_array_for((
                         select bigint_orders_ids
                         from public.companies
                         where false
@@ -72,7 +72,7 @@ begin
                     source_row.id = any(companies.bigint_orders_ids)
             )
         where
-            companies.bigint_orders_ids &&             cm_build_array_for((
+            companies.bigint_orders_ids && cm_build_array_for((
                         select bigint_orders_ids
                         from public.companies
                         where false

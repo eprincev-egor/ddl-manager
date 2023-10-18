@@ -1,4 +1,4 @@
-import { Expression, NotExpression, Select } from "../../ast";
+import { Expression, NotExpression } from "../../ast";
 import { AbstractTriggerBuilder } from "./AbstractTriggerBuilder";
 import { buildSelfUpdateByOtherTablesBody } from "./body/buildSelfUpdateByOtherTablesBody";
 import { buildSelfAssignBeforeInsertByOtherTablesBody } from "./body/buildSelfAssignBeforeInsertByOtherTablesBody";

@@ -185,6 +185,13 @@ export class Expression extends AbstractExpressionElement {
         );
     }
 
+    hasArraySearchOperator() {
+        return this.elements.some(element => 
+            element instanceof Operator &&
+            element.toString() === "&&"
+        );
+    }
+
     isBinary(operator: string) {
         const elems = (
             operator === "::" ? 
@@ -299,7 +306,7 @@ export class Expression extends AbstractExpressionElement {
         return this.clone(newElements);
     }
 
-    splitBy(operator: string) {
+    splitBy(operator: string): Expression[] {
         const conditions: Expression[] = [];
         
         let currentCondition: any[] = [];

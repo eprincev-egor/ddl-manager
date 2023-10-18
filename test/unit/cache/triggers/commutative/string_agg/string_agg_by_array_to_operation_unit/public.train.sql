@@ -2,9 +2,9 @@ create or replace function cache_trains_for_unit_on_train()
 returns trigger as $body$
 declare matched_old boolean;
 declare matched_new boolean;
-declare inserted_units_ids int8[];
-declare not_changed_units_ids int8[];
-declare deleted_units_ids int8[];
+declare inserted_units_ids bigint[];
+declare not_changed_units_ids bigint[];
+declare deleted_units_ids bigint[];
 begin
 
     if TG_OP = 'DELETE' then
@@ -32,7 +32,11 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && ARRAY[operation.unit.id]::bigint[]
+                        source_row.units_ids && cm_build_array_for((
+                                        select units_ids
+                                        from public.train
+                                        where false
+                                    ), ARRAY[operation.unit.id]::bigint[])
                         and
                         source_row.deleted = 0
                 )
@@ -126,7 +130,11 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && ARRAY[operation.unit.id]::bigint[]
+                        source_row.units_ids && cm_build_array_for((
+                                        select units_ids
+                                        from public.train
+                                        where false
+                                    ), ARRAY[operation.unit.id]::bigint[])
                         and
                         source_row.deleted = 0
                 )
@@ -153,7 +161,11 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && ARRAY[operation.unit.id]::bigint[]
+                        source_row.units_ids && cm_build_array_for((
+                                        select units_ids
+                                        from public.train
+                                        where false
+                                    ), ARRAY[operation.unit.id]::bigint[])
                         and
                         source_row.deleted = 0
                 )
@@ -192,7 +204,11 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && ARRAY[operation.unit.id]::bigint[]
+                        source_row.units_ids && cm_build_array_for((
+                                        select units_ids
+                                        from public.train
+                                        where false
+                                    ), ARRAY[operation.unit.id]::bigint[])
                         and
                         source_row.deleted = 0
                 )
@@ -240,7 +256,11 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && ARRAY[operation.unit.id]::bigint[]
+                        source_row.units_ids && cm_build_array_for((
+                                        select units_ids
+                                        from public.train
+                                        where false
+                                    ), ARRAY[operation.unit.id]::bigint[])
                         and
                         source_row.deleted = 0
                 )

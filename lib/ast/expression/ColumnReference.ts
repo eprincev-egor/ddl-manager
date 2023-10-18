@@ -60,6 +60,10 @@ export class ColumnReference extends AbstractExpressionElement {
         );
     }
 
+    isFrom(table: TableReference) {
+        return this.tableReference.equal(table);
+    }
+
     template(spaces: Spaces) {
         if ( this.tableReference.alias ) {
             return [`${this.tableReference.alias}.${this.name}`];

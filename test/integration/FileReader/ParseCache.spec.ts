@@ -162,7 +162,7 @@ describe("integration/FileReader parse cache", () => {
         
                 throws([
                     "your condition is slow SeqScan, condition should be:",
-                    "orders.clients_ids && ARRAY[ companies.id ]::integer[]"
+                    "orders.clients_ids && ARRAY[ companies.id ]"
                 ].join("\n"));
             });
 
@@ -179,7 +179,7 @@ describe("integration/FileReader parse cache", () => {
         
                 throws([
                     "your condition is slow SeqScan, condition should be:",
-                    "my_table.clients_ids && ARRAY[ companies.id ]::integer[]"
+                    "my_table.clients_ids && ARRAY[ companies.id ]"
                 ].join("\n"));
             });
 
@@ -196,7 +196,7 @@ describe("integration/FileReader parse cache", () => {
         
                 throws([
                     "your condition is slow SeqScan, condition should be:",
-                    "orders.clients_ids && ARRAY[ companies.id ]::integer[]"
+                    "orders.clients_ids && ARRAY[ companies.id ]"
                 ].join("\n"));
             });
 

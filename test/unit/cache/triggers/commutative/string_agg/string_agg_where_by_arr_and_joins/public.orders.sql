@@ -2,9 +2,9 @@ create or replace function cache_totals_for_companies_on_orders()
 returns trigger as $body$
 declare matched_old boolean;
 declare matched_new boolean;
-declare inserted_clients_ids integer[];
-declare not_changed_clients_ids integer[];
-declare deleted_clients_ids integer[];
+declare inserted_clients_ids bigint[];
+declare not_changed_clients_ids bigint[];
+declare deleted_clients_ids bigint[];
 begin
 
     if TG_OP = 'DELETE' then
@@ -35,7 +35,11 @@ begin
                     left join countries as country on
                         country.id = source_row.id_country
                     where
-                        source_row.clients_ids && ARRAY[companies.id]
+                        source_row.clients_ids && cm_build_array_for((
+                                        select clients_ids
+                                        from public.orders
+                                        where false
+                                    ), ARRAY[companies.id])
                         and
                         source_row.deleted = 0
                 )
@@ -132,7 +136,11 @@ begin
                     left join countries as country on
                         country.id = source_row.id_country
                     where
-                        source_row.clients_ids && ARRAY[companies.id]
+                        source_row.clients_ids && cm_build_array_for((
+                                        select clients_ids
+                                        from public.orders
+                                        where false
+                                    ), ARRAY[companies.id])
                         and
                         source_row.deleted = 0
                 )
@@ -162,7 +170,11 @@ begin
                     left join countries as country on
                         country.id = source_row.id_country
                     where
-                        source_row.clients_ids && ARRAY[companies.id]
+                        source_row.clients_ids && cm_build_array_for((
+                                        select clients_ids
+                                        from public.orders
+                                        where false
+                                    ), ARRAY[companies.id])
                         and
                         source_row.deleted = 0
                 )
@@ -204,7 +216,11 @@ begin
                     left join countries as country on
                         country.id = source_row.id_country
                     where
-                        source_row.clients_ids && ARRAY[companies.id]
+                        source_row.clients_ids && cm_build_array_for((
+                                        select clients_ids
+                                        from public.orders
+                                        where false
+                                    ), ARRAY[companies.id])
                         and
                         source_row.deleted = 0
                 )
@@ -255,7 +271,11 @@ begin
                     left join countries as country on
                         country.id = source_row.id_country
                     where
-                        source_row.clients_ids && ARRAY[companies.id]
+                        source_row.clients_ids && cm_build_array_for((
+                                        select clients_ids
+                                        from public.orders
+                                        where false
+                                    ), ARRAY[companies.id])
                         and
                         source_row.deleted = 0
                 )

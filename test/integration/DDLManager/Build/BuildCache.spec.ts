@@ -4302,6 +4302,110 @@ describe("integration/DDLManager.build cache", () => {
         ]);
     });
 
+    it("cache with && operator in where and mutable cache row dep", async() => {
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                nomenclature text
+            );
+            create table invoices (
+                id serial primary key,
+                orders_ids bigint[],
+                nomenclature text,
+                sum numeric
+            );
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/invoices.sql", `
+            cache invoices for orders (
+                select sum(invoices.sum) as invoices_sum
+                from invoices
+                where
+                    invoices.orders_ids && ARRAY[ orders.id ] and
+                    invoices.nomenclature = orders.nomenclature
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into invoices
+                (orders_ids, nomenclature, sum)
+            values
+                (array[1], 'red', 100),
+                (array[1, 2], 'red', 200),
+                (array[1], 'green', 400);
+        `);
+        await db.query(`
+            insert into orders (nomenclature)
+            values ('red');
+        `);
+
+        const result = await db.query(`
+            select 
+                invoices_sum
+            from orders
+        `);
+        strict.deepEqual(result.rows, [
+            {invoices_sum: "300"}
+        ]);
+    });
+
+    it("two tables references to third by array", async() => {
+        await db.query(`
+            create table orders (
+                id serial primary key,
+                units_ids integer[]
+            );
+            create table invoices (
+                id serial primary key,
+                units_ids bigint[],
+                sum numeric
+            );
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/invoices.sql", `
+            cache invoices for orders (
+                select sum(invoices.sum) as invoices_sum
+                from invoices
+                where
+                    invoices.units_ids && orders.units_ids
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into invoices
+                (units_ids, sum)
+            values
+                (array[1], 100),
+                (array[1, 2], 200),
+                (array[1], 400);
+        `);
+        await db.query(`
+            insert into orders (units_ids)
+            values (array[2]);
+        `);
+        const result = await db.query(`
+            select 
+                invoices_sum
+            from orders
+        `);
+        strict.deepEqual(result.rows, [
+            {invoices_sum: "200"}
+        ]);
+    });
+
     describe("using old column with not null and changing that column type", () => {
 
         it("integer => numeric", async() => {

@@ -49,12 +49,20 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && own_unit.units_ids
+                        source_row.units_ids && cm_build_array_for((
+                                        select units_ids
+                                        from public.fin_operation
+                                        where false
+                                    ), own_unit.units_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                old.units_ids && own_unit.units_ids;
+                own_unit.units_ids && cm_build_array_for((
+                                select units_ids
+                                from operation.owner_unit
+                                where false
+                            ), old.units_ids);
         end if;
 
         return old;
@@ -168,13 +176,20 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && own_unit.units_ids
+                        source_row.units_ids && cm_build_array_for((
+                                        select units_ids
+                                        from public.fin_operation
+                                        where false
+                                    ), own_unit.units_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                not_changed_units_ids
-                && own_unit.units_ids;
+                own_unit.units_ids && cm_build_array_for((
+                                select units_ids
+                                from operation.owner_unit
+                                where false
+                            ), not_changed_units_ids);
         end if;
 
         if deleted_units_ids is not null then
@@ -213,13 +228,20 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && own_unit.units_ids
+                        source_row.units_ids && cm_build_array_for((
+                                        select units_ids
+                                        from public.fin_operation
+                                        where false
+                                    ), own_unit.units_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                deleted_units_ids
-                && own_unit.units_ids;
+                own_unit.units_ids && cm_build_array_for((
+                                select units_ids
+                                from operation.owner_unit
+                                where false
+                            ), deleted_units_ids);
         end if;
 
         if inserted_units_ids is not null then
@@ -270,13 +292,20 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && own_unit.units_ids
+                        source_row.units_ids && cm_build_array_for((
+                                        select units_ids
+                                        from public.fin_operation
+                                        where false
+                                    ), own_unit.units_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                inserted_units_ids
-                && own_unit.units_ids;
+                own_unit.units_ids && cm_build_array_for((
+                                select units_ids
+                                from operation.owner_unit
+                                where false
+                            ), inserted_units_ids);
         end if;
 
         return new;
@@ -336,12 +365,20 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && own_unit.units_ids
+                        source_row.units_ids && cm_build_array_for((
+                                        select units_ids
+                                        from public.fin_operation
+                                        where false
+                                    ), own_unit.units_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                new.units_ids && own_unit.units_ids;
+                own_unit.units_ids && cm_build_array_for((
+                                select units_ids
+                                from operation.owner_unit
+                                where false
+                            ), new.units_ids);
         end if;
 
         return new;

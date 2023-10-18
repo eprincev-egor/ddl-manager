@@ -19,22 +19,11 @@ export function buildArrVars(
         context.referenceMeta.expressions
     );
 
-    const dbTable = context.database.getTable(context.triggerTable);
-    context.referenceMeta.columns.forEach(columnName => {
-        const dbColumn = dbTable && dbTable.getColumn(columnName);
-
-        if ( dbColumn && dbColumn.type.isArray() ) {
-            arrayColumns.push(columnName);
-        }
-    });
-
     const arrVars: IArrVar[] = [];
     uniq(arrayColumns).forEach(columnName => {
-        const dbColumn = dbTable && dbTable.getColumn(columnName);
-
         arrVars.push({
             name: prefix + columnName,
-            type: dbColumn ? dbColumn.type.toString() : "bigint[]",
+            type: "bigint[]",
             triggerColumn: columnName
         });
     });

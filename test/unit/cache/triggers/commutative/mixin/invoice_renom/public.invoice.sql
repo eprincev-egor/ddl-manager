@@ -38,7 +38,7 @@ begin
                     source_row.id = any(invoice.renomination_invoices)
             )
         where
-            invoice.renomination_invoices &&             cm_build_array_for((
+            invoice.renomination_invoices && cm_build_array_for((
                         select renomination_invoices
                         from public.invoice
                         where false
@@ -104,7 +104,7 @@ begin
                     source_row.id = any(invoice.renomination_invoices)
             )
         where
-            invoice.renomination_invoices &&             cm_build_array_for((
+            invoice.renomination_invoices && cm_build_array_for((
                         select renomination_invoices
                         from public.invoice
                         where false

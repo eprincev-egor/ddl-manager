@@ -42,7 +42,11 @@ begin
                         and
                         source_row.deleted = 0
                         and
-                        source_row.units_ids && ARRAY[units.id]::bigint[]
+                        source_row.units_ids && cm_build_array_for((
+                                        select units_ids
+                                        from public.operations
+                                        where false
+                                    ), ARRAY[units.id]::bigint[])
                     order by
                         source_row.id desc nulls first
                     limit 1
@@ -155,7 +159,11 @@ begin
                         and
                         source_row.deleted = 0
                         and
-                        source_row.units_ids && ARRAY[units.id]::bigint[]
+                        source_row.units_ids && cm_build_array_for((
+                                        select units_ids
+                                        from public.operations
+                                        where false
+                                    ), ARRAY[units.id]::bigint[])
                     order by
                         source_row.id desc nulls first
                     limit 1
@@ -195,7 +203,11 @@ begin
                         and
                         source_row.deleted = 0
                         and
-                        source_row.units_ids && ARRAY[units.id]::bigint[]
+                        source_row.units_ids && cm_build_array_for((
+                                        select units_ids
+                                        from public.operations
+                                        where false
+                                    ), ARRAY[units.id]::bigint[])
                     order by
                         source_row.id desc nulls first
                     limit 1
@@ -247,7 +259,11 @@ begin
                         and
                         source_row.deleted = 0
                         and
-                        source_row.units_ids && ARRAY[units.id]::bigint[]
+                        source_row.units_ids && cm_build_array_for((
+                                        select units_ids
+                                        from public.operations
+                                        where false
+                                    ), ARRAY[units.id]::bigint[])
                     order by
                         source_row.id desc nulls first
                     limit 1
@@ -308,7 +324,11 @@ begin
                         and
                         source_row.deleted = 0
                         and
-                        source_row.units_ids && ARRAY[units.id]::bigint[]
+                        source_row.units_ids && cm_build_array_for((
+                                        select units_ids
+                                        from public.operations
+                                        where false
+                                    ), ARRAY[units.id]::bigint[])
                     order by
                         source_row.id desc nulls first
                     limit 1

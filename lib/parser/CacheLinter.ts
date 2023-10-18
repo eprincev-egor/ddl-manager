@@ -200,7 +200,7 @@ export class CacheLinter {
         if ( isWrongSide ) {
             this.throwError([
                 "your condition is slow SeqScan, condition should be:",
-                `${node.row.equalAny} && ARRAY[ ${ node.row.operand } ]::integer[]`
+                `${node.row.equalAny} && ARRAY[ ${ node.row.operand } ]`
             ].join("\n"), node);
         }
     }

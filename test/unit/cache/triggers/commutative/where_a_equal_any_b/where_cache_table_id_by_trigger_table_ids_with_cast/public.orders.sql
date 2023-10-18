@@ -2,9 +2,9 @@ create or replace function cache_totals_for_companies_on_orders()
 returns trigger as $body$
 declare matched_old boolean;
 declare matched_new boolean;
-declare inserted_companies_ids integer[];
-declare not_changed_companies_ids integer[];
-declare deleted_companies_ids integer[];
+declare inserted_companies_ids bigint[];
+declare not_changed_companies_ids bigint[];
+declare deleted_companies_ids bigint[];
 begin
 
     if TG_OP = 'DELETE' then

@@ -32,12 +32,20 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.orders_ids && gtd.orders_ids
+                        source_row.orders_ids && cm_build_array_for((
+                                        select orders_ids
+                                        from public.units
+                                        where false
+                                    ), gtd.orders_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                old.orders_ids && gtd.orders_ids;
+                gtd.orders_ids && cm_build_array_for((
+                                select orders_ids
+                                from public.gtd
+                                where false
+                            ), old.orders_ids);
         end if;
 
         return old;
@@ -124,13 +132,20 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.orders_ids && gtd.orders_ids
+                        source_row.orders_ids && cm_build_array_for((
+                                        select orders_ids
+                                        from public.units
+                                        where false
+                                    ), gtd.orders_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                not_changed_orders_ids
-                && gtd.orders_ids;
+                gtd.orders_ids && cm_build_array_for((
+                                select orders_ids
+                                from public.gtd
+                                where false
+                            ), not_changed_orders_ids);
         end if;
 
         if deleted_orders_ids is not null then
@@ -152,13 +167,20 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.orders_ids && gtd.orders_ids
+                        source_row.orders_ids && cm_build_array_for((
+                                        select orders_ids
+                                        from public.units
+                                        where false
+                                    ), gtd.orders_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                deleted_orders_ids
-                && gtd.orders_ids;
+                gtd.orders_ids && cm_build_array_for((
+                                select orders_ids
+                                from public.gtd
+                                where false
+                            ), deleted_orders_ids);
         end if;
 
         if inserted_orders_ids is not null then
@@ -192,13 +214,20 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.orders_ids && gtd.orders_ids
+                        source_row.orders_ids && cm_build_array_for((
+                                        select orders_ids
+                                        from public.units
+                                        where false
+                                    ), gtd.orders_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                inserted_orders_ids
-                && gtd.orders_ids;
+                gtd.orders_ids && cm_build_array_for((
+                                select orders_ids
+                                from public.gtd
+                                where false
+                            ), inserted_orders_ids);
         end if;
 
         return new;
@@ -241,12 +270,20 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.orders_ids && gtd.orders_ids
+                        source_row.orders_ids && cm_build_array_for((
+                                        select orders_ids
+                                        from public.units
+                                        where false
+                                    ), gtd.orders_ids)
                         and
                         source_row.deleted = 0
                 )
             where
-                new.orders_ids && gtd.orders_ids;
+                gtd.orders_ids && cm_build_array_for((
+                                select orders_ids
+                                from public.gtd
+                                where false
+                            ), new.orders_ids);
         end if;
 
         return new;

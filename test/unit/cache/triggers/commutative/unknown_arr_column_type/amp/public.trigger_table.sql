@@ -26,7 +26,11 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.unknown_ids && ARRAY[cache_table.id]
+                        source_row.unknown_ids && cm_build_array_for((
+                                        select unknown_ids
+                                        from public.trigger_table
+                                        where false
+                                    ), ARRAY[cache_table.id])
                 )
             where
                 cache_table.id = any( old.unknown_ids );
@@ -79,7 +83,11 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.unknown_ids && ARRAY[cache_table.id]
+                        source_row.unknown_ids && cm_build_array_for((
+                                        select unknown_ids
+                                        from public.trigger_table
+                                        where false
+                                    ), ARRAY[cache_table.id])
                 )
             where
                 cache_table.id = any( not_changed_unknown_ids );
@@ -104,7 +112,11 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.unknown_ids && ARRAY[cache_table.id]
+                        source_row.unknown_ids && cm_build_array_for((
+                                        select unknown_ids
+                                        from public.trigger_table
+                                        where false
+                                    ), ARRAY[cache_table.id])
                 )
             where
                 cache_table.id = any( deleted_unknown_ids );
@@ -141,7 +153,11 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.unknown_ids && ARRAY[cache_table.id]
+                        source_row.unknown_ids && cm_build_array_for((
+                                        select unknown_ids
+                                        from public.trigger_table
+                                        where false
+                                    ), ARRAY[cache_table.id])
                 )
             where
                 cache_table.id = any( inserted_unknown_ids );
@@ -183,7 +199,11 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.unknown_ids && ARRAY[cache_table.id]
+                        source_row.unknown_ids && cm_build_array_for((
+                                        select unknown_ids
+                                        from public.trigger_table
+                                        where false
+                                    ), ARRAY[cache_table.id])
                 )
             where
                 cache_table.id = any( new.unknown_ids );

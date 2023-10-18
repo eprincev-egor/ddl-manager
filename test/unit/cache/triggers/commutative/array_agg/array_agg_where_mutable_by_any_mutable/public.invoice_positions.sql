@@ -32,7 +32,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                gtd.operation_units_ids &&                 cm_build_array_for((
+                gtd.operation_units_ids && cm_build_array_for((
                             select operation_units_ids
                             from public.list_gtd
                             where false
@@ -101,7 +101,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                gtd.operation_units_ids &&                 cm_build_array_for((
+                gtd.operation_units_ids && cm_build_array_for((
                             select operation_units_ids
                             from public.list_gtd
                             where false
@@ -138,7 +138,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                gtd.operation_units_ids &&                 cm_build_array_for((
+                gtd.operation_units_ids && cm_build_array_for((
                             select operation_units_ids
                             from public.list_gtd
                             where false
@@ -185,7 +185,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                gtd.operation_units_ids &&                 cm_build_array_for((
+                gtd.operation_units_ids && cm_build_array_for((
                             select operation_units_ids
                             from public.list_gtd
                             where false
@@ -237,7 +237,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                gtd.operation_units_ids &&                 cm_build_array_for((
+                gtd.operation_units_ids && cm_build_array_for((
                             select operation_units_ids
                             from public.list_gtd
                             where false

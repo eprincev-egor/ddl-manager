@@ -13,7 +13,9 @@ export function createSelectForUpdate(
     database: Database,
     cache: Cache
 ) {
-    let select = cache.select;
+    let {select} = cache;
+
+    select = select.fixArraySearchForDifferentArrayTypes();
 
     if ( select.orderBy && cache.hasArrayReference(database) ) {
         select = replaceOrderByLimitToArrayAgg(select);
@@ -25,7 +27,7 @@ export function createSelectForUpdate(
         return addAggHelperColumns(cache, select);
     }
 
-    if ( cache.select.orderBy ) {
+    if ( select.orderBy ) {
         return addOrderByHelperColumns(cache, select);
     }
 

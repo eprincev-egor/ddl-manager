@@ -57,7 +57,7 @@ export class SetItemsFactory {
                 columns: cache.select.columns
                     .map(column => column.name),
 
-                select: cache.select.clone({
+                select: cache.select.fixArraySearchForDifferentArrayTypes().clone({
                     from: [new From({
                         source: new Select({
                             columns: [
