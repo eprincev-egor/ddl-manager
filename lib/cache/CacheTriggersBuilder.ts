@@ -6,7 +6,6 @@ import { DatabaseFunction } from "../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
 import { TableID } from "../database/schema/TableID";
 import { TriggerBuilderFactory } from "./trigger-builder/TriggerBuilderFactory";
-import { createSelectForUpdate } from "./processor/createSelectForUpdate";
 import { SelfUpdateByOtherTablesTriggerBuilder } from "./trigger-builder/SelfUpdateByOtherTablesTriggerBuilder";
 import { CacheContext } from "./trigger-builder/CacheContext";
 import { SelfUpdateBySelfRowTriggerBuilder } from "./trigger-builder/SelfUpdateBySelfRowTriggerBuilder";
@@ -62,9 +61,8 @@ export class CacheTriggersBuilder {
 
         output.push({
             for: this.cache.for,
-            select: createSelectForUpdate(
-                this.database,
-                this.cache
+            select: this.cache.createSelectForUpdate(
+                this.database.aggregators
             )
         });
 

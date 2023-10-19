@@ -97,6 +97,10 @@ export class Select extends AbstractAstElement {
         return clone;
     }
 
+    hasArraySearchOperator() {
+        return this.where?.hasArraySearchOperator();
+    }
+
     fixArraySearchForDifferentArrayTypes(fromTable?: TableReference) {
         if ( this.where?.hasArraySearchOperator() ) {
             return this.clone({

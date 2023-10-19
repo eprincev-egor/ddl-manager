@@ -3,14 +3,12 @@ import { CacheColumnGraph } from "../../Comparator/graph/CacheColumnGraph";
 import {
     Cache,
     ColumnReference,
-    SelectColumn,
-    Select
+    SelectColumn
 } from "../../ast";
 import { MAX_NAME_LENGTH } from "../../database/postgres/constants";
 import { Database } from "../../database/schema/Database";
 import { TableID } from "../../database/schema/TableID";
 import { TableReference } from "../../database/schema/TableReference";
-import { createSelectForUpdate } from "../processor/createSelectForUpdate";
 import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
 import { leadingZero } from "./utils";
 import { groupBy } from "lodash";
@@ -29,7 +27,6 @@ export class CacheContext {
     readonly referenceMeta: IReferenceMeta;
     readonly excludeRef: TableReference | false
     private graph?: CacheColumnGraph;
-    private selectForUpdate?: Select;
     
     constructor(
         allCache: Cache[],
@@ -206,14 +203,9 @@ export class CacheContext {
     }
 
     createSelectForUpdate() {
-        if ( !this.selectForUpdate ) {
-            this.selectForUpdate = createSelectForUpdate(
-                this.database,
-                this.cache
-            );
-        }
-
-        return this.selectForUpdate;
+        return this.cache.createSelectForUpdate(
+            this.database.aggregators
+        );
     }
 
     createSelectForUpdateNewRow() {
@@ -247,7 +239,7 @@ export class CacheContext {
     }
 
     hasAgg() {
-        return this.cache.hasAgg(this.database)
+        return this.cache.hasAgg(this.database.aggregators)
     }
 
     private getGraphColumn(columnName: string) {
@@ -263,7 +255,7 @@ export class CacheContext {
         if ( !this.graph ) {
             const allCacheColumns: CacheColumnParams[] = [];
             for (const cache of this.allCacheForCacheTable) {
-                const selectForUpdate = createSelectForUpdate(this.database, cache);
+                const selectForUpdate = cache.createSelectForUpdate(this.database.aggregators);
 
                 for (const selectColumn of selectForUpdate.columns) {
                     allCacheColumns.push({

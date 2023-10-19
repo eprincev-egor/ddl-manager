@@ -1,9 +1,10 @@
 import { Select } from "./Select";
+import { FuncCall, ColumnReference, Expression } from "./expression";
+import { SelectColumn } from "./SelectColumn";
 import { TableReference } from "../database/schema/TableReference";
 import { CacheIndex } from "./CacheIndex";
 import { findDependenciesTo, findDependenciesToCacheTable } from "../cache/processor/findDependencies";
-import { Database } from "../database/schema/Database";
-import { findTriggerTableArrayColumns } from "../cache/processor/findTriggerTableArrayColumns";
+import { fromPairs } from "lodash";
 
 export class Cache {
     readonly name: string;
@@ -12,6 +13,7 @@ export class Cache {
     readonly withoutTriggers: string[];
     readonly withoutInserts: string[];
     readonly indexes: CacheIndex[];
+    private selectForUpdate?: Select;
 
     constructor(
         name: string,
@@ -27,6 +29,33 @@ export class Cache {
         this.withoutTriggers = withoutTriggers;
         this.withoutInserts = withoutInserts;
         this.indexes = indexes;
+    }
+
+    createSelectForUpdate(aggFunctions: string[]) {
+        if ( this.selectForUpdate ) {
+            return this.selectForUpdate;
+        }
+
+        let {select} = this;
+    
+        select = select.fixArraySearchForDifferentArrayTypes();
+    
+        if ( select.orderBy && this.hasArrayReference() ) {
+            select = replaceOrderByLimitToArrayAgg(select);
+            select = addAggHelperColumns(this, select);
+            return select;
+        }
+    
+        if ( this.hasAgg(aggFunctions) ) {
+            return addAggHelperColumns(this, select);
+        }
+    
+        if ( select.orderBy ) {
+            return addOrderByHelperColumns(this, select);
+        }
+    
+        this.selectForUpdate = select;
+        return select;
     }
 
     equal(otherCache: Cache) {
@@ -88,25 +117,13 @@ export class Cache {
         return deps;
     }
 
-    hasArrayReference(database: Database) {
-        const arrayExprColumns = findTriggerTableArrayColumns(this);
-        if ( arrayExprColumns.length === 0 ) {
-            return false;
-        }
-
-        const dbTable = database.getTable(this.getFromTable());
-
-        const arrayColumns = arrayExprColumns.filter(columnName => {
-            const dbColumn = dbTable && dbTable.getColumn(columnName);
-            return dbColumn && dbColumn.type.isArray();
-        });
-
-        return arrayColumns.length > 0;
+    hasArrayReference() {
+        return this.select.hasArraySearchOperator();
     }
 
-    hasAgg(database: Database) {
+    hasAgg(aggFunctions: string[]) {
         return this.select.columns.some(column => 
-            column.getAggregations(database).length > 0
+            column.getAggregations(aggFunctions).length > 0
         );
     }
 
@@ -128,4 +145,88 @@ ${ this.withoutInserts.map(onTable =>
 ${ this.indexes.join("\n") }
         `;
     }
+}
+
+function replaceOrderByLimitToArrayAgg(select: Select) {
+    const orderBy = select.getDeterministicOrderBy();
+    return select.clone({
+        columns: select.columns.map(selectColumn => 
+            selectColumn.clone({
+                // building expression (like are order by/limit 1):
+                // (array_agg( source.column order by source.sort ))[1]
+                expression: new Expression([
+                    new Expression([
+                        new FuncCall("array_agg", [
+                            selectColumn.expression
+                        ], undefined, false, orderBy),
+                    ], true),
+                    Expression.unknown("[1]")
+                ])
+            })
+        ),
+        orderBy: undefined,
+        limit: undefined
+    });
+}
+
+function addAggHelperColumns(cache: Cache, select: Select) {
+    const fromRef = cache.select.getFromTable();
+    const from = fromRef.getIdentifier();
+
+    const rowJson = cache.getSourceRowJson();
+    const deps = cache.getSourceJsonDeps().map(column =>
+        new ColumnReference(fromRef, column)
+    );
+    const depsMap = fromPairs(deps.map(column =>
+        [column.toString(), column]
+    ));
+
+    return select.clone({
+        columns: [
+            ...select.columns,
+            new SelectColumn({
+                name: cache.jsonColumnName(),
+                expression: new Expression([
+                    Expression.unknown(`
+                        ('{' || string_agg(
+                            '"' || ${from}.id::text || '":' || ${rowJson}::text,
+                            ','
+                        ) || '}')
+                    `, depsMap),
+                    Expression.unknown("::"),
+                    Expression.unknown("jsonb")
+                ])
+            })
+        ]
+    });
+}
+
+function addOrderByHelperColumns(cache: Cache, select: Select) {
+    const helperColumns = getOrderByColumnsRefs(select).map(columnRef =>
+        new SelectColumn({
+            name: helperColumnName(cache, columnRef.name),
+            expression: new Expression([
+                new ColumnReference(
+                    select.getFromTable(),
+                    columnRef.name
+                )
+            ])
+        })
+    );
+
+    return select.clone({
+        columns: [
+            ...select.columns,
+            ...helperColumns
+        ]
+    })
+}
+
+export function getOrderByColumnsRefs(select: Select) {
+    const orderBy = select.getDeterministicOrderBy()!;
+    return orderBy.getColumnReferences();
+}
+
+export function helperColumnName(cache: Cache, columnName: string) {
+    return `__${cache.name}_${columnName}`;
 }

@@ -3,10 +3,10 @@ import {
     Update, SetItem,
     SelectColumn,
     ColumnReference, UnknownExpressionElement,
-    SetSelectItem, Spaces,
-    OrderByItem, OrderBy
+    SetSelectItem, 
+    OrderByItem, OrderBy,
+    getOrderByColumnsRefs, helperColumnName
 } from "../../../ast";
-import { getOrderByColumnsRefs, helperColumnName } from "../../processor/createSelectForUpdate";
 import { AbstractTriggerBuilder } from "../AbstractTriggerBuilder";
 
 export abstract class AbstractLastRowTriggerBuilder 

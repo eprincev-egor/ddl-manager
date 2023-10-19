@@ -71,10 +71,10 @@ export class SelectColumn extends AbstractAstElement {
         );
     }
 
-    getAggregations(database: Database) {
+    getAggregations(aggFunctions: string[]) {
         const funcs = this.expression.getFuncCalls();
         const aggFuncs = funcs.filter(funcCall =>
-            database.aggregators.includes(funcCall.name)
+            aggFunctions.includes(funcCall.name)
         );
         return aggFuncs;
     }
