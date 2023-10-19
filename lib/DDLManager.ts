@@ -33,6 +33,7 @@ interface ITimelineParams extends IParams {
 
 export interface IRefreshCacheParams extends IParams, UpdateHooks {
     concreteTables?: string | string[];
+    concreteColumns?: string | string[];
     timeoutPerUpdate?: number;
     
     timeoutBetweenUpdates?: number;
@@ -253,8 +254,8 @@ export class DDLManager {
             postgres,
             database,
             filesState,
-            params.concreteTables &&
-                params.concreteTables.toString()
+            params.concreteTables?.toString() ?? 
+                params.concreteColumns?.toString()
         );
         
         const timeoutBetweenUpdates = params.timeoutBetweenUpdates || params.timeoutOnUpdate;

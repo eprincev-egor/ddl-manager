@@ -132,7 +132,7 @@ export class CacheComparator extends AbstractComparator {
     }
 
     async findBrokenColumns(params: IFindBrokenColumnsParams = {}) {
-        let allCacheColumns = this.findCacheColumnsForTables(params.concreteTables);
+        let allCacheColumns = this.findCacheColumnsForTablesOrColumns(params.concreteTables);
 
         const brokenColumns: CacheColumn[] = [];
 
@@ -248,11 +248,11 @@ export class CacheComparator extends AbstractComparator {
         }
     }
 
-    async refreshCache(concreteTables?: string) {
+    async refreshCache(targetTablesOrColumns?: string) {
         await this.createColumns();
 
-        if ( concreteTables ) {
-            const concreteColumns = this.findCacheColumnsForTables(concreteTables);
+        if ( targetTablesOrColumns ) {
+            const concreteColumns = this.findCacheColumnsForTablesOrColumns(targetTablesOrColumns);
 
             this.migration.create({
                 updates: this.graph.generateUpdatesFor(concreteColumns)
@@ -469,18 +469,32 @@ export class CacheComparator extends AbstractComparator {
         });
     }
 
-    private findCacheColumnsForTables(
-        concreteTables?: string | string[]
+    private findCacheColumnsForTablesOrColumns(
+        targetTablesOrColumns?: string | string[]
     ) {
-        if ( !concreteTables ) {
+        if ( !targetTablesOrColumns ) {
             return this.graph.getAllColumns();
         }
 
         const concreteColumns: CacheColumn[] = [];
     
-        for (const table of String(concreteTables).split(/\s*,\s*/) ) {
-            const tableColumns = this.graph.getColumns(table);
-            concreteColumns.push(...tableColumns);
+        for (const tableOrColumn of String(targetTablesOrColumns).split(/\s*,\s*/) ) {
+            const path = tableOrColumn.trim().toLowerCase().split(".");
+            const tableId = path.slice(0, 2).join(".");
+            const tableColumns = this.graph.getColumns(tableId);
+
+            if ( path.length === 3 ) {
+                const columnName = path.slice(-1)[0];
+                const column = tableColumns.find(cacheColumn => 
+                    cacheColumn.name === columnName
+                );
+                if ( column ) {
+                    concreteColumns.push(column);
+                }
+            }
+            else {
+                concreteColumns.push(...tableColumns);
+            }
         }
 
         return concreteColumns;
