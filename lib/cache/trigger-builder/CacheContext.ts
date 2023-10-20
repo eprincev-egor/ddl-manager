@@ -1,4 +1,3 @@
-import { CacheColumnParams } from "../../Comparator/graph/CacheColumn";
 import { CacheColumnGraph } from "../../Comparator/graph/CacheColumnGraph";
 import {
     Cache,
@@ -18,18 +17,15 @@ import { strict } from "assert";
 
 export class CacheContext {
     readonly cache: Cache;
-    readonly allCacheForTriggerTable: Cache[];
-    readonly allCacheForCacheTable: Cache[];
     readonly triggerTable: TableID;
     readonly triggerTableColumns: string[];
     readonly database: Database;
-    readonly fs: FilesState;
     readonly referenceMeta: IReferenceMeta;
-    readonly excludeRef: TableReference | false
-    private graph?: CacheColumnGraph;
+    private excludeRef: TableReference | false
+    private fs: FilesState;
+    private graph: CacheColumnGraph;
     
     constructor(
-        allCache: Cache[],
         cache: Cache,
 
         // TODO: calculate it automatically
@@ -38,16 +34,11 @@ export class CacheContext {
 
         database: Database,
         fs: FilesState,
+        graph: CacheColumnGraph,
 
         // TODO: split to two classes
         excludeRef: boolean = true
     ) {
-        this.allCacheForTriggerTable = allCache.filter(someCache =>
-            someCache.for.table.equal(triggerTable)
-        );
-        this.allCacheForCacheTable = allCache.filter(someCache =>
-            someCache.for.table.equal(cache.for.table)
-        );
         this.cache = cache;
         this.triggerTable = triggerTable;
         this.triggerTableColumns = triggerTableColumns;
@@ -59,16 +50,21 @@ export class CacheContext {
             cache, triggerTable,
             this.excludeRef
         );
+        this.graph = graph;
+    }
+
+    getAllCacheForTriggerTable() {
+        return this.fs.getCachesForTable(this.triggerTable);
     }
 
     private getDependencyLevel(columnName: string) {
         const column = this.getGraphColumn(columnName);
-        return this.getGraph().getDependencyLevel(column);
+        return this.graph.getDependencyLevel(column);
     }
 
     getDependencyIndex(columnName: string) {
         const column = this.getGraphColumn(columnName);
-        return this.getGraph().getDependencyIndex(column);
+        return this.graph.getDependencyIndex(column);
     }
 
     getTableReferencesToTriggerTable() {
@@ -189,7 +185,7 @@ export class CacheContext {
     }
 
     getTriggerFunction(trigger: DatabaseTrigger) {
-        const dbFunction = this.database.functions.find(func =>
+        const dbFunction = this.database.getFunctions(trigger.procedure.name).find(func =>
             //func.frozen &&
             func.name === trigger.procedure.name &&
             func.schema === trigger.procedure.schema
@@ -243,40 +239,10 @@ export class CacheContext {
     }
 
     private getGraphColumn(columnName: string) {
-        const column = this.getGraph().getAllColumns().find(column => 
-            column.name == columnName
-        );
+        const column = this.graph.getColumn(this.cache.for, columnName);
     
         strict.ok(column, "unknown column: " + columnName);
         return column;
-    }
-
-    private getGraph() {
-        if ( !this.graph ) {
-            const allCacheColumns: CacheColumnParams[] = [];
-            for (const cache of this.allCacheForCacheTable) {
-                const selectForUpdate = cache.createSelectForUpdate(this.database.aggregators);
-
-                for (const selectColumn of selectForUpdate.columns) {
-                    allCacheColumns.push({
-                        for: cache.for,
-                        name: selectColumn.name,
-                        cache: {
-                            name: cache.name,
-                            signature: cache.getSignature()
-                        },
-                        select: selectForUpdate.clone({
-                            columns: [
-                                selectColumn
-                            ]
-                        })
-                    })
-                }
-            }
-            this.graph = new CacheColumnGraph(allCacheColumns);
-        }
-
-        return this.graph;
     }
 }
 

@@ -2,12 +2,7 @@ import {
     Update, SetItem,
     Expression,
     SimpleSelect,
-    Spaces,
-    ColumnReference,
-    UnknownExpressionElement,
-    SelectColumn,
-    Select,
-    From
+    Spaces
 } from "../../../ast";
 import { Exists } from "../../../ast/expression/Exists";
 import { Comment } from "../../../database/schema/Comment";
@@ -15,66 +10,9 @@ import { DatabaseFunction } from "../../../database/schema/DatabaseFunction";
 import { DatabaseTrigger } from "../../../database/schema/DatabaseTrigger";
 import { AbstractLastRowTriggerBuilder } from "./AbstractLastRowTriggerBuilder";
 import { buildOneLastRowByIdBody } from "../body/buildOneLastRowByIdBody";
-import { TableReference } from "../../../database/schema/TableReference";
 
 export class LastRowByIdTriggerBuilder 
 extends AbstractLastRowTriggerBuilder {
-
-    createSelectForUpdateHelperColumn() {
-        const fromTable = this.context.triggerTable;
-        const fromRef = new TableReference(fromTable);
-        const prevRef = new TableReference(
-            fromTable,
-            `prev_${ fromTable.name }`
-        );
-        const orderBy = this.context.cache.select.orderBy!.items[0]!;
-
-        const select = new Select({
-            columns: [new SelectColumn({
-                name: this.getIsLastColumnName(),
-                expression: new Expression([
-                    UnknownExpressionElement.fromSql(`not`),
-                    new Exists({
-                        select: new Select({
-                            columns: [],
-                            from: [
-                                new From({source: prevRef})
-                            ],
-                            where: Expression.and([
-                                ...this.context.referenceMeta.columns.map(column =>
-                                    new Expression([
-                                        new ColumnReference(prevRef, column),
-                                        UnknownExpressionElement.fromSql("="),
-                                        new ColumnReference(fromRef, column),
-                                    ])
-                                ),
-                                ...this.context.referenceMeta.filters.map(filter =>
-                                    filter.replaceTable(
-                                        this.fromTable(),
-                                        prevRef
-                                    )
-                                ),
-                                new Expression([
-                                    new ColumnReference(prevRef, "id"),
-                                    UnknownExpressionElement.fromSql(
-                                        orderBy.type === "desc" ? 
-                                            ">" : "<"
-                                    ),
-                                    new ColumnReference(fromRef, "id"),
-                                ])
-                            ])
-                        })
-                    })
-                ])
-            })],
-            from: []
-        });
-
-        return {
-            select,
-            for: fromRef
-        };
-    }
 
     createTriggers() {
         return [{

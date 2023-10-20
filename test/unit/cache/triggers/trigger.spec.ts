@@ -27,8 +27,8 @@ describe("TriggerFactory", () => {
                 fileName.replace(".sql", "")
             );
 
-        it(testDir.replace(__dirname, ""), () => {
-            testTriggers({
+        it(testDir.replace(__dirname, ""), async () => {
+            await testTriggers({
                 testDir,
                 tables
             });

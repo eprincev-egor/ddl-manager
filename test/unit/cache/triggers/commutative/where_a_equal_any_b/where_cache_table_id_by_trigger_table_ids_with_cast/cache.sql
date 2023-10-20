@@ -4,6 +4,6 @@ cache totals for companies (
     
     from orders
     where
-        companies.id = any( orders.companies_ids::bigint[] ) and
+        orders.id = any( companies.orders_ids::bigint[] ) and
         orders.deleted = 0
 )

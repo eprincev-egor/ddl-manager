@@ -24,6 +24,11 @@ export class FileParser {
         return parser.parseSql(sql);
     }
 
+    static parseFile(filePath: string) {
+        const parser = new FileParser();
+        return parser.parseFile(filePath);
+    }
+
     static parseFunction(sql: string) {
         const fileContent = FileParser.parse(sql) as IFileContent;
         assert.ok( fileContent, "should be not empty sql" );

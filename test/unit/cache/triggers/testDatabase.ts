@@ -3,263 +3,111 @@ import { Table } from "../../../../lib/database/schema/Table";
 import { Column } from "../../../../lib/database/schema/Column";
 import { TableID } from "../../../../lib/database/schema/TableID";
 
-const companiesID = new TableID(
-    "public",
-    "companies",
-);
-const ordersID = new TableID(
-    "public",
-    "orders",
-);
-const vatsID = new TableID(
-    "public",
-    "vats",
-);
-const unitTypesID = new TableID(
-    "public",
-    "unit_type",
-);
-const invoiceID = new TableID(
-    "public",
-    "invoice",
-);
-const trainID = new TableID(
-    "public",
-    "train",
-);
-const gtdID = new TableID(
-    "public",
-    "list_gtd",
-);
-const operationID = new TableID(
-    "operation",
-    "operation",
-);
-const operationsID = new TableID(
-    "public",
-    "operations",
-);
-const userTaskID = new TableID(
-    "public",
-    "user_task",
-);
-const unitsID = new TableID(
-    "public",
-    "units",
-);
-
 export const testDatabase = new Database([
-    new Table(
-        companiesID.schema,
-        companiesID.name,
-        [
-            new Column(
-                companiesID,
-                "bigint_orders_ids",
-                "bigint[]"
-            )
-        ]
-    ),
-    new Table(
-        ordersID.schema,
-        ordersID.name,
-        [
-            new Column(
-                ordersID,
-                "companies_ids",
-                "integer[]"
-            ),
-            new Column(
-                ordersID,
-                "clients_ids",
-                "integer[]"
-            ),
-            new Column(
-                ordersID,
-                "partners_ids",
-                "integer[]"
-            ),
-            new Column(
-                ordersID,
-                "order_date",
-                "date"
-            )
-        ]
-    ),
-    new Table(
-        vatsID.schema,
-        vatsID.name,
-        [
-            new Column(
-                vatsID,
-                "vat_value",
-                "numeric"
-            )
-        ]
-    ),
-    new Table(
-        unitTypesID.schema,
-        unitTypesID.name,
-        [
-            new Column(
-                unitTypesID,
-                "id",
-                "integer"
-            ),
-            new Column(
-                unitTypesID,
-                "id_category",
-                "integer"
-            ),
-            new Column(
-                unitTypesID,
-                "name",
-                "text"
-            )
-        ]
-    ),
-    new Table(
-        invoiceID.schema,
-        invoiceID.name,
-        [
-            new Column(
-                invoiceID,
-                "id",
-                "integer"
-            ),
-            new Column(
-                invoiceID,
-                "renomination_invoices",
-                "int8[]"
-            ),
-            new Column(
-                invoiceID,
-                "payments_ids",
-                "int8[]"
-            ),
-            new Column(
-                invoiceID,
-                "orders_ids",
-                "bigint[]"
-            )
-        ]
-    ),
-    new Table(
-        trainID.schema,
-        trainID.name,
-        [
-            new Column(
-                trainID,
-                "id",
-                "integer"
-            ),
-            new Column(
-                trainID,
-                "units_ids",
-                "int8[]"
-            )
-        ]
-    ),
-    new Table(
-        gtdID.schema,
-        gtdID.name,
-        [
-            new Column(
-                gtdID,
-                "id",
-                "integer"
-            ),
-            new Column(
-                gtdID,
-                "orders_ids",
-                "bigint[]"
-            ),
-            new Column(
-                gtdID,
-                "operation_units_ids",
-                "bigint[]"
-            )
-        ]
-    ),
-    new Table(
-        operationID.schema,
-        operationID.name,
-        [
-            new Column(
-                operationID,
-                "id",
-                "integer"
-            ),
-            new Column(
-                operationID,
-                "doc_parent_id_order",
-                "bigint"
-            ),
-            new Column(
-                operationID,
-                "id_order",
-                "bigint"
-            ),
-            new Column(
-                operationID,
-                "units_ids",
-                "bigint[]"
-            )
-        ]
-    ),
-    new Table(
-        userTaskID.schema,
-        userTaskID.name,
-        [
-            new Column(
-                userTaskID,
-                "id",
-                "integer"
-            ),
-            new Column(
-                userTaskID,
-                "query_name",
-                "text"
-            ),
-            new Column(
-                userTaskID,
-                "row_id",
-                "int8"
-            )
-        ]
-    ),
-
-    new Table(
-        operationsID.schema,
-        operationsID.name,
-        [
-            new Column(
-                operationsID,
-                "id",
-                "integer"
-            ),
-            new Column(
-                operationsID,
-                "units_ids",
-                "bigint[]"
-            )
-        ]
-    ),
-
-    new Table(
-        unitsID.schema,
-        unitsID.name,
-        [
-            new Column(
-                unitsID,
-                "id",
-                "integer"
-            ),
-            new Column(
-                unitsID,
-                "orders_ids",
-                "bigint[]"
-            )
-        ]
-    )
+    table("companies", {
+        bigint_orders_ids: "bigint[]",
+        total_profit: "numeric"
+    }),
+    table("orders", {
+        doc_number: "text",
+        companies_ids: "integer[]",
+        clients_ids: "integer[]",
+        partners_ids: "integer[]",
+        order_date: "date",
+        date: "date",
+        profit: "numeric",
+    }),
+    table("order", {
+        some_date: "date"
+    }),
+    table("vats", {vat_value: "numeric"}),
+    table("unit_type", {
+        id_category: "integer",
+        name: "Text"
+    }),
+    table("invoice", {
+        renomination_invoices: "int8[]",
+        payments_ids: "int8[]",
+        orders_ids: "bigint[]",
+        invoice_summ: "numeric"
+    }),
+    table("invoice_positions", {
+        id_invoice: "integer"
+    }),
+    table("train", { units_ids: "int8[]" }),
+    table("train_unit_link", {
+        id_train: "integer"
+    }),
+    table("list_gtd", {
+        orders_ids: "bigint[]",
+        operation_units_ids: "bigint[]",
+        date_clear: "date"
+    }),
+    table("operation.operation", {
+        id_operation_type: "integer",
+        doc_parent_id_order: "bigint",
+        id_order: "bigint",
+        units_ids: "bigint[]",
+        end_expected_date: "date",
+        cost_sale: "numeric",
+        deleted: "smallint"
+    }),
+    table("operations", {
+        units_ids: "bigint[]",
+        incoming_date: "date",
+        outgoing_date: "date",
+        doc_number: "text"
+    }),
+    table("arrival_points", {
+        id_point: "integer",
+        actual_date: "date",
+        expected_date: "date",
+        sort: "integer"
+    }),
+    table("user_task", {
+        query_name: "text",
+        row_id: "int8"
+    }),
+    table("tasks", {
+        watchers_ids: "text",
+        orders_managers_ids: "text"
+    }),
+    table("user_task_watcher_link", {
+        id_user: "integer"
+    }),
+    table("units", { orders_ids: "bigint[]" }),
+    table("log_oper", {
+        orders_ids: "bigint[]",
+        buy_vat_type: "integer",
+        buy_vat_value: "numeric",
+        sale_vat_type: "integer",
+        sale_vat_value: "numeric"
+    }),
+    table("rates", {
+        price: "numeric",
+        quantity: "integer",
+        vat_type: "integer",
+        vat_value: "numeric"
+    }),
+    table("countries", {
+        has_surveyor_inspection: "boolean"
+    }),
+    table("comments", {
+        message: "text"
+    }),
+    table("list_contracts", {
+        date_contract: "date"
+    })
 ]);
+
+function table(schemaName: string, columns: Record<string, string>) {
+    const tableID = TableID.fromString(schemaName);
+    return new Table(
+        tableID.schema,
+        tableID.name,
+        Object.entries(columns).map(([key, type]) => new Column(
+            tableID,
+            key, type
+        ))
+    );
+}

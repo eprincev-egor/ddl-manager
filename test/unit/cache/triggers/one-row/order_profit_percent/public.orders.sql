@@ -4,11 +4,11 @@ begin
 
     if TG_OP = 'DELETE' then
         update orders set
-            percent_of_client_profit = 100 * orders.profit / null
+            percent_of_client_profit = 100 * orders.profit / (null::numeric)
         where
             old.id = orders.id_client
             and
-            orders.percent_of_client_profit is distinct from (100 * orders.profit / null);
+            orders.percent_of_client_profit is distinct from (100 * orders.profit / (null::numeric));
 
         return old;
     end if;

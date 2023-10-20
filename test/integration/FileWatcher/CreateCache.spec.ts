@@ -76,7 +76,7 @@ describe("integration/FileWatcher watch change cache", () => {
         
 
         fs.unlinkSync(filePath);
-        await sleep(50);
+        await sleep(150);
 
         assert.strictEqual(counter, 1);
         assert.strictEqual(migration.toDrop.functions.length, 1, "one func to drop");

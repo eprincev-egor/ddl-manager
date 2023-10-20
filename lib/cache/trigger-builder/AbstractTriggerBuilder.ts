@@ -140,7 +140,7 @@ export abstract class AbstractTriggerBuilder {
     }
 
     private addCacheBeforeUpdateTriggerDeps(updateOfColumns: string[]) {
-        const depsCaches = this.context.allCacheForTriggerTable.filter(cache =>
+        const depsCaches = this.context.getAllCacheForTriggerTable().filter(cache =>
             cache.select.columns.some(column => 
                 updateOfColumns.includes(column.name)
             )

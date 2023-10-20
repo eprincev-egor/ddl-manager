@@ -8,14 +8,22 @@ import { Index } from "./Index";
 
 export class Database {
     readonly tables: Table[];
-    readonly functions: DatabaseFunction[];
+    functions: DatabaseFunction[];
     readonly aggregators: string[];
+    private tablesMap: Record<string, Table>;
+    private functionsMap: Record<string, DatabaseFunction[]>;
     
     constructor(tables: Table[] = []) {
-        this.tables = tables.map(table => 
-            table.clone()
-        );
+        this.tablesMap = {};
+        this.tables = [];
+        for (let table of tables) {
+            table = table.clone();
+            this.tables.push(table);
+            this.tablesMap[ table.toString() ] = table;
+        }
+
         this.functions = [];
+        this.functionsMap = {};
         this.aggregators = [
             "count",
             "max",
@@ -39,10 +47,7 @@ export class Database {
     }
 
     getTable(tableId: TableID) {
-        return this.tables.find(table => 
-            table.name === tableId.name &&
-            table.schema === tableId.schema
-        );
+        return this.tablesMap[ tableId.toString() ];
     }
 
     getTriggersByProcedure(procedure: {schema: string, name: string, args: string[]}) {
@@ -55,16 +60,19 @@ export class Database {
     }
 
     setTable(table: Table) {
-        const hasTable = this.getTable(table);
-        if ( !hasTable ) {
-            this.tables.push( table.clone() );
+        if ( !this.tablesMap[ table.toString() ] ) {
+            table = table.clone();
+            this.tables.push( table );
+            this.tablesMap[ table.toString() ] = table;
         }
     }
 
     addFunctions(functions: DatabaseFunction[]) {
-        this.functions.push(
-            ...functions
-        );
+        for (const func of functions) {
+            this.functions.push(func);
+            this.functionsMap[ func.name ] ??= [];
+            this.functionsMap[ func.name ].push(func);
+        }
     }
 
     addTrigger(trigger: DatabaseTrigger) {
@@ -99,14 +107,15 @@ export class Database {
             }
         }
 
+        this.functions = this.functions.filter(existentFunc =>
+            !migration.toDrop.functions.some(dropFunc =>
+                existentFunc.getSignature() === dropFunc.getSignature()
+            )
+        );
         for (const dropFunc of migration.toDrop.functions) {
-            const funcIndex = this.functions.findIndex(existentFunc => 
-                existentFunc.equal(dropFunc)
+            this.functionsMap[dropFunc.name] = this.functionsMap[dropFunc.name].filter(existentFunc =>
+                existentFunc.getSignature() !== dropFunc.getSignature()
             );
-
-            if ( funcIndex !== -1 ) {
-                this.functions.splice(funcIndex, 1);
-            }
         }
 
         for (const trigger of migration.toDrop.triggers) {
@@ -135,6 +144,10 @@ export class Database {
     allCacheTriggers() {
         return flatMap(this.tables, table => table.triggers)
             .filter(trigger => !!trigger.cacheSignature);
+    }
+
+    getFunctions(name: string) {
+        return this.functionsMap[ name ] ?? [];
     }
 
 }

@@ -10,8 +10,8 @@ import { SelfUpdateByOtherTablesTriggerBuilder } from "./trigger-builder/SelfUpd
 import { CacheContext } from "./trigger-builder/CacheContext";
 import { SelfUpdateBySelfRowTriggerBuilder } from "./trigger-builder/SelfUpdateBySelfRowTriggerBuilder";
 import { TableReference } from "../database/schema/TableReference";
-import { LastRowByIdTriggerBuilder } from "./trigger-builder/one-last-row/LastRowByIdTriggerBuilder";
 import { FilesState } from "../fs/FilesState";
+import { CacheColumnGraph } from "../Comparator/graph/CacheColumnGraph";
 
 export interface ISelectForUpdate {
     for: TableReference;
@@ -31,13 +31,16 @@ export class CacheTriggersBuilder {
     private readonly builderFactory: TriggerBuilderFactory;
     private readonly database: Database;
     private readonly fs: FilesState;
+    private readonly graph: CacheColumnGraph;
 
     constructor(
         allCache: Cache[],
         cacheOrSQL: string | Cache,
-        database: Database,
+        database: Database = new Database(),
+        graph: CacheColumnGraph = new CacheColumnGraph([]),
         fs: FilesState = new FilesState()
     ) {
+        this.graph = graph;
         this.allCache = allCache;
 
         let cache: Cache = cacheOrSQL as Cache;
@@ -52,46 +55,9 @@ export class CacheTriggersBuilder {
             this.allCache,
             cache,
             database,
-            this.fs
+            this.fs,
+            this.graph
         );
-    }
-
-    createSelectsForUpdate(): ISelectForUpdate[] {
-        const output: ISelectForUpdate[] = [];
-
-        output.push({
-            for: this.cache.for,
-            select: this.cache.createSelectForUpdate(
-                this.database.aggregators
-            )
-        });
-
-        const cacheSelect = this.cache.select;
-        const needLastRowColumn = (
-            cacheSelect.from.length === 1 &&
-            cacheSelect.orderBy &&
-            cacheSelect.limit === 1
-        );
-        if ( needLastRowColumn ) {
-            const allDeps = findDependencies(this.cache, false);
-            const fromTable = cacheSelect.getFromTableId();
-            const fromTableDeps = allDeps[ fromTable.toString() ]!;
-
-            const lastRowBuilder = this.builderFactory.tryCreateBuilder(
-                fromTable,
-                fromTableDeps.columns
-            );
-            if ( lastRowBuilder instanceof LastRowByIdTriggerBuilder ) {
-                const helper = lastRowBuilder.createSelectForUpdateHelperColumn();
-    
-                output.push({
-                    for: helper.for,
-                    select: helper.select
-                });
-            }
-        }
-
-        return output;
     }
 
     createTriggers() {
@@ -113,12 +79,12 @@ export class CacheTriggersBuilder {
                 col != "id"
             );
             const context = new CacheContext(
-                this.allCache,
                 this.cache,
                 this.cache.for.table,
                 mutableColumns,
                 this.database,
                 this.fs,
+                this.graph,
                 false
             );
 

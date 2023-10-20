@@ -85,10 +85,9 @@ export class FunctionsComparator extends AbstractComparator {
 
     private createNewFunctions(functions: DatabaseFunction[]) {
         for (const fsFunc of functions) {
-            const existsSameFuncFromDb = this.database.functions.find(dbFunc =>
+            const existsSameFuncFromDb = this.database.getFunctions(fsFunc.name).some(dbFunc =>
                 dbFunc.equal(fsFunc)
             );
-
             if ( existsSameFuncFromDb ) {
                 continue;
             }

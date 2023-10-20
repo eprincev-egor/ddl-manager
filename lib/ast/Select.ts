@@ -7,8 +7,10 @@ import { Spaces } from "./Spaces";
 import { TableReference, IReferenceFilter } from "../database/schema/TableReference";
 import { OrderBy } from "./OrderBy";
 import { TableID } from "../database/schema/TableID";
-import { strict } from "assert";
 import { fixArraySearchForDifferentArrayTypes } from "../cache/trigger-builder/condition/fixArraySearchForDifferentArrayTypes";
+import { UnknownExpressionElement } from "./expression";
+import { Exists } from "./expression/Exists";
+import { strict } from "assert";
 
 interface ISelectParams {
     columns: SelectColumn[];
@@ -21,6 +23,28 @@ interface ISelectParams {
 }
 
 export class Select extends AbstractAstElement {
+
+    static notExists(
+        notExists: Omit<ISelectParams, "columns">,
+        as: string
+    ) {
+        return new Select({
+            columns: [new SelectColumn({
+                name: as,
+                expression: new Expression([
+                    UnknownExpressionElement.fromSql(`not`),
+                    new Exists({
+                        select: new Select({
+                            ...notExists,
+                            columns: []
+                        })
+                    })
+                ])
+            })],
+            from: []
+        });
+    }
+
     readonly columns!: SelectColumn[];
     readonly where?: Expression;
     readonly from!: From[];

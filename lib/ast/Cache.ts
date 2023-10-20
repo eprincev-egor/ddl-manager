@@ -31,6 +31,16 @@ export class Cache {
         this.indexes = indexes;
     }
 
+    getIsLastColumnName() {
+        const helperColumnName = [
+            "_",
+            this.name,
+            "for",
+            this.for.table.name
+        ].join("_");
+        return helperColumnName;
+    }
+
     createSelectForUpdate(aggFunctions: string[]) {
         if ( this.selectForUpdate ) {
             return this.selectForUpdate;

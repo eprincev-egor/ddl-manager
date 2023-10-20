@@ -13,13 +13,7 @@ export abstract class AbstractLastRowTriggerBuilder
 extends AbstractTriggerBuilder {
 
     protected getIsLastColumnName() {
-        const helperColumnName = [
-            "_",
-            this.context.cache.name,
-            "for",
-            this.context.cache.for.table.name
-        ].join("_");
-        return helperColumnName;
+        return this.context.cache.getIsLastColumnName();
     }
 
     protected whereDistinctRowValues(row: string) {

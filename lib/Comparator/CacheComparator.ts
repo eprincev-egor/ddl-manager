@@ -10,6 +10,9 @@ import { CacheColumn, CacheColumnParams } from "./graph/CacheColumn";
 import { CacheColumnGraph } from "./graph/CacheColumnGraph";
 import { CacheColumnBuilder } from "./CacheColumnBuilder";
 import { Comment } from "../database/schema/Comment";
+import { ColumnReference, Expression, From, Select, SelectColumn, UnknownExpressionElement } from "../ast";
+import { TableReference } from "../database/schema/TableReference";
+import { buildReferenceMeta } from "../cache/processor/buildReferenceMeta";
 
 export interface IFindBrokenColumnsParams {
     timeout?: number;
@@ -57,10 +60,88 @@ export class CacheComparator extends AbstractComparator {
         const allCache = this.fs.allCache();
 
         for (const cache of allCache) {
+            const selectForUpdate = cache.createSelectForUpdate(database.aggregators);
+
+            for (const updateColumn of selectForUpdate.columns) {
+                cacheColumns.push({
+                    for: cache.for,
+                    name: updateColumn.name,
+                    cache: {
+                        name: cache.name,
+                        signature: cache.getSignature()
+                    },
+                    select: selectForUpdate.clone({
+                        columns: [
+                            updateColumn
+                        ]
+                    })
+                });
+            }
+
+            const needLastRowColumn = (
+                cache.select.from.length === 1 &&
+                cache.select.orderBy &&
+                cache.select.limit === 1
+            );
+            if ( needLastRowColumn ) {
+                const fromRef = cache.select.getFromTable();
+                const prevRef = new TableReference(
+                    fromRef.table,
+                    `prev_${ fromRef.table.name }`
+                );
+                const orderBy = cache.select.orderBy!.items[0]!;
+                const columnName = cache.getIsLastColumnName();
+                const referenceMeta = buildReferenceMeta(
+                    cache, fromRef.table
+                );
+
+                cacheColumns.push({
+                    for: fromRef,
+                    name: columnName,
+                    cache: {
+                        name: cache.name,
+                        signature: cache.getSignature()
+                    },
+                    select: Select.notExists({
+                        from: [
+                            new From({source: prevRef})
+                        ],
+                        where: Expression.and([
+                            ...referenceMeta.columns.map(column =>
+                                new Expression([
+                                    new ColumnReference(prevRef, column),
+                                    UnknownExpressionElement.fromSql("="),
+                                    new ColumnReference(fromRef, column),
+                                ])
+                            ),
+                            ...referenceMeta.filters.map(filter =>
+                                filter.replaceTable(
+                                    fromRef,
+                                    prevRef
+                                )
+                            ),
+                            new Expression([
+                                new ColumnReference(prevRef, "id"),
+                                UnknownExpressionElement.fromSql(
+                                    orderBy.type === "desc" ? 
+                                        ">" : "<"
+                                ),
+                                new ColumnReference(fromRef, "id"),
+                            ])
+                        ])
+                    }, columnName)
+                });
+            }
+        }
+
+        this.graph = new CacheColumnGraph(cacheColumns);
+
+        for (const cache of allCache) {
             const cacheTriggerFactory = new CacheTriggersBuilder(
                 allCache, cache,
                 this.database,
-                this.fs
+                this.graph,
+                this.fs,
             );
 
             const cacheTriggers = cacheTriggerFactory.createTriggers();
@@ -68,33 +149,12 @@ export class CacheComparator extends AbstractComparator {
             for (const trigger of cacheTriggers) {
                 this.allCacheTriggers.push(trigger);
             }
-
-            for (const toUpdate of cacheTriggerFactory.createSelectsForUpdate()) {
-                for (const updateColumn of toUpdate.select.columns) {
-                    cacheColumns.push({
-                        for: toUpdate.for,
-                        name: updateColumn.name,
-                        cache: {
-                            name: cache.name,
-                            signature: cache.getSignature()
-                        },
-                        select: toUpdate.select.clone({
-                            columns: [
-                                updateColumn
-                            ]
-                        })
-                    });
-                }
-            }
         }
-
-        this.graph = new CacheColumnGraph(cacheColumns);
 
         this.columnBuilder = new CacheColumnBuilder({
             database: this.database,
             graph: this.graph,
             fs: this.fs,
-            //migration: this.migration,
             driver: this.driver
         })
     }
@@ -332,7 +392,7 @@ export class CacheComparator extends AbstractComparator {
     private createTriggers() {
         for (const {trigger, function: func} of this.allCacheTriggers) {
             
-            const existFunc = this.database.functions.some(existentFunc =>
+            const existFunc = this.database.getFunctions(func.name).some(existentFunc =>
                 existentFunc.equal(func)
             );
             const table = this.database.getTable( trigger.table );

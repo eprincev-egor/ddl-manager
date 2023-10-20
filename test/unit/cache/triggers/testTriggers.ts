@@ -1,27 +1,35 @@
+import { testDatabase } from "./testDatabase";
+import { FakeDatabaseDriver } from "../../FakeDatabaseDriver";
+import { FileParser } from "../../../../lib/parser";
+import { FilesState } from "../../../../lib/fs/FilesState";
+import { MainComparator } from "../../../../lib/Comparator/MainComparator";
 import fs from "fs";
 import path from "path";
 import assert from "assert";
-import { CacheTriggersBuilder } from "../../../../lib/cache/CacheTriggersBuilder";
-import { testDatabase } from "./testDatabase";
-import { CacheParser } from "../../../../lib/parser";
 
 export interface ITest {
     testDir: string;
     tables: string[];
 }
 
-export function testTriggers(test: ITest) {
+export async function testTriggers(test: ITest) {
     
     const cacheFilePath = path.join(test.testDir, "cache.sql");
-    const cacheSQL = fs.readFileSync(cacheFilePath).toString();
-    const cache = CacheParser.parse(cacheSQL);
+    const cacheFileContent = FileParser.parseFile(cacheFilePath);
 
-
-    const builder = new CacheTriggersBuilder(
-        [cache], cache,
-        testDatabase
+    const fsState = new FilesState();
+    fsState.addFile({
+        name: "cache.sql",
+        folder: test.testDir,
+        path: cacheFilePath,
+        content: cacheFileContent
+    });
+    
+    const migration = await MainComparator.compare(
+        new FakeDatabaseDriver(),
+        testDatabase,
+        fsState
     );
-    const triggers = builder.createTriggers();
 
     for (let fileName of test.tables) {
         const triggerFilePath = path.join(test.testDir, fileName + ".sql");
@@ -29,15 +37,21 @@ export function testTriggers(test: ITest) {
 
         const triggerName = fileName.replace(".sql", "");
 
-        const output = triggers.find(trigger => 
+        const actualTrigger = migration.toCreate.triggers.find(trigger => 
             expectedTriggerDDL.includes(trigger.name)
         );
-        assert.ok(output, "should be trigger: " + triggerName);
+        const actualProcedure = migration.toCreate.functions.find(trigger => 
+            expectedTriggerDDL.includes(trigger.name)
+        );
+        assert.ok(
+            actualTrigger && actualProcedure, 
+            "should be trigger: " + triggerName
+        );
 
         const actualTriggerDDL = (
-            output.function.toSQL() + 
+            actualProcedure.toSQL() + 
             ";\n\n" + 
-            output.trigger.toSQL() +
+            actualTrigger.toSQL() +
             ";"
         );
 

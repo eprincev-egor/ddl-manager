@@ -4,5 +4,5 @@ cache totals for cache_table (
     
     from trigger_table
     where
-        cache_table.id = any( trigger_table.unknown_ids )
+        trigger_table.id = any( cache_table.unknown_ids )
 )

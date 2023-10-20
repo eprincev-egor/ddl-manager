@@ -6,11 +6,11 @@ begin
     if TG_OP = 'DELETE' then
         if old.deleted = 0 then
             update orders_positions as positions set
-                has_surveyor_inspection = coalesce(null, 0)
+                has_surveyor_inspection = coalesce((null::boolean), 0)
             where
                 old.id = positions.id_supply_order
                 and
-                positions.has_surveyor_inspection is distinct from (coalesce(null, 0));
+                positions.has_surveyor_inspection is distinct from (coalesce((null::boolean), 0));
         end if;
 
         return old;

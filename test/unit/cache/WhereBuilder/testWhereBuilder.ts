@@ -7,6 +7,7 @@ import { Database } from "../../../../lib/database/schema/Database";
 import { buildUniversalWhere } from "../../../../lib/cache/processor/buildUniversalWhere";
 import { buildFrom } from "../../../../lib/cache/processor/buildFrom";
 import { FilesState } from "../../../../lib/fs/FilesState";
+import { CacheColumnGraph } from "../../../../lib/Comparator/graph/CacheColumnGraph";
 
 interface ITest {
     cache: string;
@@ -24,12 +25,12 @@ export function testWhereBuilder(test: ITest) {
         const triggerTable = new TableID(schemaName, tableName);
 
         const context = new CacheContext(
-            [cache],
             cache,
             triggerTable,
             [],
             new Database(),
-            new FilesState()
+            new FilesState(),
+            new CacheColumnGraph([])
         );
         const from = buildFrom(context);
         const where = buildUniversalWhere(context);
