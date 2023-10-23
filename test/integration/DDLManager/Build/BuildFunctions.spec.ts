@@ -6,13 +6,15 @@ import { DDLManager } from "../../../../lib/DDLManager";
 import {expect, use} from "chai";
 import chaiShallowDeepEqualPlugin from "chai-shallow-deep-equal";
 import { PostgresDriver } from "../../../../lib/database/PostgresDriver";
+import { Pool } from "pg";
+import { IDBConfig } from "../../../../lib/database/getDbClient";
 
 use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
 describe("integration/DDLManager.build functions", () => {
-    let db: any;
+    let db: Pool;
     
     beforeEach(async() => {
         db = await getDBClient();
@@ -364,7 +366,7 @@ describe("integration/DDLManager.build functions", () => {
         `);
 
         await DDLManager.dump({
-            db,
+            db: db as IDBConfig,
             folder: folderPath,
             unfreeze: true
         });
@@ -557,7 +559,7 @@ language plpgsql;
         fs.mkdirSync(folderPath);
 
         await DDLManager.dump({
-            db,
+            db: db as IDBConfig,
             folder: folderPath,
             unfreeze: true
         });
@@ -678,7 +680,10 @@ language plpgsql;
         });
 
         const postgres = new PostgresDriver(db);
-        const funcs = (await postgres.load()).functions;
+        const dbState = await postgres.load();
+        const funcs = dbState.functions.filter(func => 
+            !func.name.startsWith("cm_")
+        );
 
         expect(funcs[0]).to.be.shallowDeepEqual({
             name: "func1",
@@ -704,7 +709,7 @@ language plpgsql;
         fs.mkdirSync(folderPath);
 
         await DDLManager.dump({
-            db,
+            db: db as IDBConfig,
             folder: folderPath
         });
 
@@ -779,4 +784,60 @@ language plpgsql;
             numb: 2
         });
     });
+
+    it("drop old helper function", async() => {
+        await db.query(`
+            create or replace function cm_equal_arrays()
+            returns boolean as $body$
+            begin
+                return false;
+            end
+            $body$
+            language plpgsql;
+
+            comment on function cm_equal_arrays()
+            is 'ddl-manager-helper';
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+        await assert.rejects(
+            db.query("select cm_equal_arrays()"),
+            /function cm_equal_arrays\(\) does not exist/
+        );
+    });
+
+    it("replace old helper function", async() => {
+        await db.query(`
+            create or replace function cm_equal_arrays(
+                old_values anyarray,
+                new_values anyarray
+            )
+            returns boolean as $body$
+            begin
+                return false;
+            end
+            $body$
+            language plpgsql;
+
+            comment on function cm_equal_arrays(anyarray, anyarray)
+            is 'ddl-manager-helper';
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+        const result = await db.query(`
+            select cm_equal_arrays(array[1, 2], array[2, 1]) as equal
+        `);
+        assert.deepStrictEqual(result.rows, [{equal: true}])
+    });
+
 });

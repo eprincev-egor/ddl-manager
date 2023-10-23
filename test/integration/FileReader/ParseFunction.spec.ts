@@ -28,7 +28,7 @@ describe("integration/FileReader parse functions", () => {
 
         const state = FileReader.read([ROOT_TMP_PATH]);
 
-        const functions = flatMap(state.files, file => file.content.functions);
+        const functions = state.allNotHelperFunctions();
 
         expect(functions).to.deep.equal([]);
     });
@@ -75,7 +75,7 @@ describe("integration/FileReader parse functions", () => {
 
         const state = FileReader.read([ROOT_TMP_PATH]);
 
-        const actualResult = flatMap(state.files, file => file.content.functions);
+        const actualResult = state.allNotHelperFunctions();
 
         expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
@@ -104,7 +104,7 @@ describe("integration/FileReader parse functions", () => {
         
         const state = FileReader.read([ROOT_TMP_PATH]);
 
-        const actualResult = flatMap(state.files, file => file.content.functions);
+        const actualResult = state.allNotHelperFunctions();
 
         expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
@@ -153,7 +153,7 @@ describe("integration/FileReader parse functions", () => {
         
         const state = FileReader.read([ROOT_TMP_PATH]);
 
-        const actualResult = flatMap(state.files, file => file.content.functions);
+        const actualResult = state.allNotHelperFunctions();
 
         expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
@@ -226,7 +226,7 @@ describe("integration/FileReader parse functions", () => {
 
         const state = FileReader.read([ROOT_TMP_PATH]);
         
-        expect(flatMap(state.files, file => file.content.functions)).to.be.shallowDeepEqual([
+        expect(state.allNotHelperFunctions()).to.be.shallowDeepEqual([
             func1,
             func2
         ]);
@@ -279,7 +279,7 @@ describe("integration/FileReader parse functions", () => {
 
         const state = FileReader.read([ROOT_TMP_PATH]);
 
-        const actualResult = flatMap(state.files, file => file.content.functions);
+        const actualResult = state.allNotHelperFunctions();
 
         expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });
@@ -314,7 +314,7 @@ describe("integration/FileReader parse functions", () => {
 
         const state = FileReader.read([ROOT_TMP_PATH]);
 
-        const actualResult = flatMap(state.files, file => file.content.functions);
+        const actualResult = state.allNotHelperFunctions();
 
         expect(actualResult).to.be.shallowDeepEqual(expectedResult);
     });

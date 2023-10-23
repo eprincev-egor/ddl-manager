@@ -50,7 +50,7 @@ describe("integration/FileWatcher watch create functions", () => {
             }
         });
         
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
+        expect(fsWatcher.state.allNotHelperFunctions()).to.be.shallowDeepEqual([
             TEST_FUNC1
         ]);
     });
@@ -76,7 +76,7 @@ describe("integration/FileWatcher watch create functions", () => {
         
         assert.equal(error && error.message, "duplicated function public.test_func1()");
 
-        expect( flatMap(fsWatcher.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
+        expect(fsWatcher.state.allNotHelperFunctions()).to.be.shallowDeepEqual([
             TEST_FUNC1
         ]);
     });
@@ -96,7 +96,7 @@ describe("integration/FileWatcher watch create functions", () => {
         
         assert.strictEqual(counter, 0);
         
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions)).to.deep.equal([]);
+        expect(fsWatcher.state.allNotHelperFunctions()).to.deep.equal([]);
     });
 
 
@@ -131,7 +131,7 @@ describe("integration/FileWatcher watch create functions", () => {
             }
         });
         
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
+        expect(fsWatcher.state.allNotHelperFunctions()).to.be.shallowDeepEqual([
             TEST_FUNC1
         ]);
 
@@ -152,7 +152,7 @@ describe("integration/FileWatcher watch create functions", () => {
             }
         });
         
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
+        expect(fsWatcher.state.allNotHelperFunctions()).to.be.shallowDeepEqual([
             TEST_FUNC1,
             TEST_FUNC2
         ]);

@@ -64,7 +64,7 @@ describe("integration/FileWatcher watch change triggers", () => {
         });
         assert.equal(counter, 1);
         
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.be.shallowDeepEqual([
                 TEST_FUNC2
             ]);
@@ -91,7 +91,7 @@ describe("integration/FileWatcher watch change triggers", () => {
         
         assert.equal(counter, 0);
         
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.be.shallowDeepEqual([
                 TEST_FUNC1
             ]);
@@ -132,7 +132,7 @@ describe("integration/FileWatcher watch change triggers", () => {
         
         assert.equal(error && error.message, "duplicated trigger some_trigger on operation.company");
 
-        expect( flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect( fsWatcher.state.allNotHelperFunctions() )
             .to.be.shallowDeepEqual([
                 TEST_FUNC1
             ]);
@@ -181,7 +181,7 @@ describe("integration/FileWatcher watch change triggers", () => {
         });
         assert.equal(counter, 1);
         
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.be.shallowDeepEqual([
                 TEST_FUNC2
             ]);
@@ -215,7 +215,7 @@ describe("integration/FileWatcher watch change triggers", () => {
         });
         assert.equal(counter, 2);
         
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.be.shallowDeepEqual([
                 TEST_FUNC1
             ]);
@@ -262,7 +262,7 @@ describe("integration/FileWatcher watch change triggers", () => {
         });
         assert.equal(counter, 1);
         
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.be.shallowDeepEqual([
                 ONLY_FUNCTION
             ]);
@@ -306,7 +306,7 @@ describe("integration/FileWatcher watch change triggers", () => {
         });
         assert.equal(counter, 1);
         
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.be.shallowDeepEqual([
                 TEST_FUNC1
             ]);

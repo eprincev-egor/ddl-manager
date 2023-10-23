@@ -15,6 +15,13 @@ export class FilesState {
         this.files = files;
     }
 
+    allNotHelpersFiles() {
+        return this.files.filter(file => 
+            file.folder !== "HELPERS" &&
+            !file.name.startsWith("CM_")
+        );
+    }
+
     allCache() {
         return flatMap(this.files, file => file.content.cache)    
     }
@@ -25,6 +32,10 @@ export class FilesState {
 
     allFunctions() {
         return flatMap(this.files, file => file.content.functions);
+    }
+
+    allNotHelperFunctions() {
+        return flatMap(this.allNotHelpersFiles(), file => file.content.functions);
     }
 
     getCachesForTable(forTable: TableID) {

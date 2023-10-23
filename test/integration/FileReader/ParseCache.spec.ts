@@ -27,7 +27,7 @@ describe("integration/FileReader parse cache", () => {
 
         const state = FileReader.read([ROOT_TMP_PATH]);
 
-        expect(flatMap(state.files, file => file.content.cache)).to.be.shallowDeepEqual([
+        expect(flatMap(state.allNotHelpersFiles(), file => file.content.cache)).to.be.shallowDeepEqual([
             {
                 name: "totals",
                 for: {
@@ -109,7 +109,7 @@ describe("integration/FileReader parse cache", () => {
         `);
 
         const state = FileReader.read([ROOT_TMP_PATH]);
-        assert.strictEqual(state.files.length, 2);
+        assert.strictEqual(state.allNotHelpersFiles().length, 2);
     });
 
     it("parse cache with index", () => {
@@ -126,7 +126,7 @@ describe("integration/FileReader parse cache", () => {
         `);
 
         const state = FileReader.read([ROOT_TMP_PATH]);
-        const actualCache = state.files[0].content.cache[0];
+        const actualCache = state.allNotHelpersFiles()[0].content.cache[0];
 
         assert.strictEqual(actualCache.indexes.length, 2, "should be two indexes");
         assert.ok( actualCache.indexes[0] instanceof CacheIndex, "first index instance is correct" );

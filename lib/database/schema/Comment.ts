@@ -25,7 +25,10 @@ export class Comment {
 
     static fromTotalString(objectType: CommentObjectType, total: string | null) {
         total = total || "";
-        const frozen = !total.includes("ddl-manager-sync");
+        const frozen = (
+            !total.includes("ddl-manager-sync") &&
+            !total.includes("ddl-manager-helper")
+        );
         const cacheSignature = parseCacheSignature(total);
         const cacheSelect = parseCacheSelect(total);
 

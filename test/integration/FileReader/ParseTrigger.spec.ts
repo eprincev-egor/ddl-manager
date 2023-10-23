@@ -66,7 +66,7 @@ describe("integration/FileReader parse functions and triggers", () => {
         
         const state = FileReader.read([ROOT_TMP_PATH]);
 
-        const actualFunctions = flatMap(state.files, file => file.content.functions);
+        const actualFunctions = state.allNotHelperFunctions();
         const actualTriggers = flatMap(state.files, file => file.content.triggers);
 
         expect(actualFunctions).to.be.shallowDeepEqual(expectedFunctions);

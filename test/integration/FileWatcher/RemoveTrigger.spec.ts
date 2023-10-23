@@ -50,7 +50,7 @@ describe("integration/FileWatcher watch remove triggers", () => {
             }
         });
 
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.deep.equal([]);
         expect(flatMap(fsWatcher.state.files, file => file.content.triggers))
             .to.deep.equal([]);
@@ -90,7 +90,7 @@ describe("integration/FileWatcher watch remove triggers", () => {
         });
 
 
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.be.shallowDeepEqual([
                 TEST_FUNC2
             ]);
@@ -119,7 +119,7 @@ describe("integration/FileWatcher watch remove triggers", () => {
         });
 
 
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.deep.equal([]);
         expect(flatMap(fsWatcher.state.files, file => file.content.triggers))
             .to.deep.equal([]);

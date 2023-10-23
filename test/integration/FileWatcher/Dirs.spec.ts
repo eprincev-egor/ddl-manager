@@ -39,7 +39,7 @@ describe("integration/FileWatcher watch for directories", () => {
         await sleep(50);
 
         assert.equal(counter, 0);
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.deep.equal([]);
     });
 
@@ -57,7 +57,7 @@ describe("integration/FileWatcher watch for directories", () => {
         await sleep(50);
 
         assert.equal(counter, 0);
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.deep.equal([]);
     });
 
@@ -75,7 +75,7 @@ describe("integration/FileWatcher watch for directories", () => {
         await sleep(50);
 
         assert.equal(counter, 0);
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.deep.equal([]);
     });
 
@@ -93,7 +93,7 @@ describe("integration/FileWatcher watch for directories", () => {
         await sleep(50);
 
         assert.equal(counter, 0);
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.deep.equal([]);
     });
 
@@ -118,7 +118,7 @@ describe("integration/FileWatcher watch for directories", () => {
         await sleep(50);
 
         assert.equal(counter, 1);
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.be.shallowDeepEqual([
                 TEST_FUNC1
             ]);
@@ -158,7 +158,7 @@ describe("integration/FileWatcher watch for directories", () => {
         await sleep(50);
 
         assert.equal(counter, 1);
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.deep.equal([]);
 
         expect(migration).to.be.shallowDeepEqual({
@@ -195,7 +195,7 @@ describe("integration/FileWatcher watch for directories", () => {
         await sleep(50);
 
         // check
-        expect(fsWatcher.state.files).to.be.shallowDeepEqual([
+        expect(fsWatcher.state.allNotHelpersFiles()).to.be.shallowDeepEqual([
             {
                 name: "some.sql",
                 path: "some.sql",
@@ -236,7 +236,7 @@ describe("integration/FileWatcher watch for directories", () => {
         await sleep(50);
 
         // check
-        expect(fsWatcher.state.files).to.be.shallowDeepEqual([
+        expect(fsWatcher.state.allNotHelpersFiles()).to.be.shallowDeepEqual([
             {
                 name: "some.sql",
                 path: "some.sql",
@@ -270,7 +270,7 @@ describe("integration/FileWatcher watch for directories", () => {
         await sleep(50);
 
         // check
-        expect(fsWatcher.state.files).to.be.shallowDeepEqual([
+        expect(fsWatcher.state.allNotHelpersFiles()).to.be.shallowDeepEqual([
             {
                 name: "some.sql",
                 path: "some.sql",

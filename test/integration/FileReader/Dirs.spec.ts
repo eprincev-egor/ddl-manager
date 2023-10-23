@@ -40,7 +40,7 @@ describe("integration/FileReader read dirs", () => {
         ]);
 
         // check
-        expect(state.files).to.be.shallowDeepEqual([
+        expect(state.allNotHelpersFiles()).to.be.shallowDeepEqual([
             {
                 name: "some.sql",
                 path: "some.sql",
@@ -72,7 +72,7 @@ describe("integration/FileReader read dirs", () => {
         const state = FileReader.read([ROOT_TMP_PATH]);
 
         // check
-        expect(state.files).to.be.shallowDeepEqual([
+        expect(state.allNotHelpersFiles()).to.be.shallowDeepEqual([
             {
                 name: "some.sql",
                 folder: ROOT_TMP_PATH,
@@ -83,7 +83,7 @@ describe("integration/FileReader read dirs", () => {
             }
         ]);
 
-        expect(flatMap(state.files, file => file.content.functions))
+        expect(state.allNotHelperFunctions())
             .to.be.shallowDeepEqual([
                 VOID_FUNC1
             ]);
@@ -104,7 +104,7 @@ describe("integration/FileReader read dirs", () => {
         const state = FileReader.read([ROOT_TMP_PATH]);
 
         // check
-        expect(state.files).to.be.shallowDeepEqual([
+        expect(state.allNotHelpersFiles()).to.be.shallowDeepEqual([
             {
                 name: "some1.sql",
                 path: "some1.sql",
@@ -164,7 +164,7 @@ describe("integration/FileReader read dirs", () => {
         // parse folder
         const state = FileReader.read([ROOT_TMP_PATH]);
 
-        let files = state.files;
+        let files = state.allNotHelpersFiles();
         
         // for test stability we sorting result
         files = files.sort((file1, file2) => 

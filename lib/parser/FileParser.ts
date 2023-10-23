@@ -54,7 +54,7 @@ export class FileParser {
         return this.parse(cursor);
     }
 
-    parseSql(sql: string): IFileContent | undefined {        
+    parseSql(sql: string) {        
         const {cursor} = Sql.code(sql);
         return this.parse(cursor);
     }

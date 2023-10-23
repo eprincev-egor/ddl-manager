@@ -482,19 +482,6 @@ implements IDatabaseDriver {
         return sql;
     }
 
-    async createOrReplaceHelperFunc(func: DatabaseFunction) {
-        const sql = `
-            drop function if exists ${ func.getSignature() };
-
-            ${ func.toSQL() };
-
-            comment on function ${ func.getSignature() }
-            is 'ddl-manager-helper';
-        `;
-
-        await this.query(sql);
-    }
-
     async dropIndex(index: Index) {
         const sql = `
             drop index if exists ${ index.getSignature() };

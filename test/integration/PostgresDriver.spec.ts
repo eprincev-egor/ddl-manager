@@ -45,7 +45,9 @@ describe("integration/PostgresDriver.loadState", () => {
         const driver = new PostgresDriver(db);
         const database = await driver.load();
         const state = {
-            functions: database.functions,
+            functions: database.functions.filter(func =>
+                !func.name.startsWith("cm_") // helper functions
+            ),
             triggers: flatMap(database.tables, table => table.triggers),
             cache: []
         };

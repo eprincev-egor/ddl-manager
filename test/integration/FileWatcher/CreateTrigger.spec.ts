@@ -50,7 +50,7 @@ describe("integration/FileWatcher watch create functions", () => {
             }
         });
         
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
+        expect(fsWatcher.state.allNotHelperFunctions()).to.be.shallowDeepEqual([
             TEST_FUNC1
         ]);
         expect(flatMap(fsWatcher.state.files, file => file.content.triggers)).to.be.shallowDeepEqual([
@@ -89,7 +89,7 @@ describe("integration/FileWatcher watch create functions", () => {
         
         assert.equal(error && error.message, "duplicated trigger some_trigger on operation.company");
 
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
+        expect(fsWatcher.state.allNotHelperFunctions()).to.be.shallowDeepEqual([
             TEST_FUNC1
         ]);
         expect(flatMap(fsWatcher.state.files, file => file.content.triggers)).to.be.shallowDeepEqual([
@@ -128,7 +128,7 @@ describe("integration/FileWatcher watch create functions", () => {
             }
         });
         
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
+        expect(fsWatcher.state.allNotHelperFunctions()).to.be.shallowDeepEqual([
             TEST_FUNC1
         ]);
         expect(flatMap(fsWatcher.state.files, file => file.content.triggers)).to.be.shallowDeepEqual([
@@ -154,7 +154,7 @@ describe("integration/FileWatcher watch create functions", () => {
             }
         });
         
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions)).to.be.shallowDeepEqual([
+        expect(fsWatcher.state.allNotHelperFunctions()).to.be.shallowDeepEqual([
             TEST_FUNC1,
             TEST_FUNC2
         ]);

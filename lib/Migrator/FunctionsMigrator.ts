@@ -1,6 +1,4 @@
-import { FileParser } from "../parser";
 import { AbstractMigrator } from "./AbstractMigrator";
-import * as helperFunctions from "../database/postgres/helper-functions";
 
 export class FunctionsMigrator extends AbstractMigrator {
 
@@ -9,32 +7,15 @@ export class FunctionsMigrator extends AbstractMigrator {
     }
 
     async create() {
-        await this.createCacheHelpersFunctions();
         await this.createFunctions();
     }
 
     async createLogFuncs() {
-        await this.createCacheHelpersFunctions();
-        
         for (const func of this.migration.toCreate.functions) {
             try {
                 await this.postgres.createOrReplaceLogFunction(func);
-            } catch(err) {
-                this.onError(func, err);
-            }
-        }
-    }
-
-    private async createCacheHelpersFunctions() {
-
-        for (const helperFunctionSQL of Object.values(helperFunctions)) {
-            if ( typeof helperFunctionSQL !== "string" ) { // skip property __esModule: true
-                continue;
-            }
-
-            const {functions} = FileParser.parse(helperFunctionSQL)!;
-            for (const parsedFunction of functions) {
-                await this.postgres.createOrReplaceHelperFunc(parsedFunction);
+            } catch(error) {
+                this.onError(func, error);
             }
         }
     }
@@ -45,12 +26,12 @@ export class FunctionsMigrator extends AbstractMigrator {
             // 2BP01
             try {
                 await this.postgres.dropFunction(func);
-            } catch(err) {
+            } catch(error) {
                 // https://www.postgresql.org/docs/12/errcodes-appendix.html
                 // cannot drop function my_func() because other objects depend on it
-                const isCascadeError = err.code === "2BP01";
+                const isCascadeError = error.code === "2BP01";
                 if ( !isCascadeError ) {
-                    this.onError(func, err);
+                    this.onError(func, error);
                 }
             }
         }
@@ -61,9 +42,9 @@ export class FunctionsMigrator extends AbstractMigrator {
         for (const func of this.migration.toCreate.functions) {
             try {
                 await this.postgres.createOrReplaceFunction(func);
-            } catch(err) {
-                console.log(err);
-                this.onError(func, err);
+            } catch(error) {
+                console.log(error);
+                this.onError(func, error);
             }
         }
     }

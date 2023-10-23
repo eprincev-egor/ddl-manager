@@ -5,6 +5,7 @@ import { FileParser } from "../parser";
 import { File } from "./File";
 import { FilesState } from "./FilesState";
 import { formatPath, getSubPath, prepareError } from "./utils";
+import * as helperFunctions from "../database/postgres/helper-functions";
 
 export class FileReader extends EventEmitter {
 
@@ -31,6 +32,16 @@ export class FileReader extends EventEmitter {
         this.state = new FilesState();
 
         this.rootFolders = rootFolders;
+
+        for (const [name, fileContent] of Object.entries(helperFunctions)) {
+            const file = new File({
+                name: name + ".sql",
+                folder: "HELPERS",
+                path: `HELPERS/${name}.sql`,
+                content: this.fileParser.parseSql(fileContent)
+            })
+            this.state.addFile(file);
+        }
     }
 
     parseFile(rootFolderPath: string, filePath: string): File | undefined {

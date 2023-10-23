@@ -47,8 +47,8 @@ describe("integration/FileWatcher watch remove functions", () => {
                 triggers: []
             }
         });
-
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.deep.equal([]);
     });
 
@@ -71,7 +71,7 @@ describe("integration/FileWatcher watch remove functions", () => {
 
         assert.strictEqual(counter, 0);
 
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.be.shallowDeepEqual([TEST_FUNC1]);
     });
 
@@ -103,7 +103,7 @@ describe("integration/FileWatcher watch remove functions", () => {
             }
         });
 
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.deep.equal([]);
     });
 
@@ -138,7 +138,7 @@ describe("integration/FileWatcher watch remove functions", () => {
         });
 
 
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.be.shallowDeepEqual([
                 TEST_FUNC2
             ]);
@@ -160,7 +160,7 @@ describe("integration/FileWatcher watch remove functions", () => {
         });
 
 
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.deep.equal([]);
     });
 
@@ -208,7 +208,7 @@ describe("integration/FileWatcher watch remove functions", () => {
             }
         });
 
-        expect(flatMap(fsWatcher.state.files, file => file.content.functions))
+        expect(fsWatcher.state.allNotHelperFunctions())
             .to.deep.equal([]);
     });
 

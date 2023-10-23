@@ -216,10 +216,6 @@ implements IDatabaseDriver {
         throw new Error("Method not implemented.");
     }
 
-    async createOrReplaceHelperFunc() {
-
-    }
-
     async dropIndex(index: Index) {
         const table = index.table.toString();
         const tableIndexes = this.indexes[ table ] || [];
