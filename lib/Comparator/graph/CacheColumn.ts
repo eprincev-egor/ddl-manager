@@ -1,4 +1,4 @@
-import { Select, Expression, SelectColumn } from "../../ast";
+import { Select, Expression, SelectColumn, ColumnReference } from "../../ast";
 import { TableReference } from "../../database/schema/TableReference";
 import { uniqBy } from "lodash";
 
@@ -54,7 +54,8 @@ export class CacheColumn {
     }
 
     getColumnRefs() {
-        return this.select.getAllColumnReferences();
+        return this.select.getAllColumnReferences()
+            .filter(columnRef => !this.isRef(columnRef));
     }
 
     hasForeignTablesDeps() {
@@ -106,5 +107,12 @@ export class CacheColumn {
 
     toString() {
         return `${this.for.getIdentifier()}.${this.name}`;
+    }
+
+    private isRef(ref: ColumnReference) {
+        return (
+            ref.name === this.name &&
+            ref.tableReference.equal(this.for)
+        );
     }
 }

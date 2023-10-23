@@ -68,8 +68,8 @@ extends AbstractTriggerBuilder {
     private buildSelectValues() {
         const columns = this.context.createSelectForUpdateNewRow().columns;
         return columns.sort((columnA, columnB) =>
-            this.context.getDependencyIndex(columnA.name) -
-            this.context.getDependencyIndex(columnB.name)
+            this.context.getDependencyLevel(columnA.name) -
+            this.context.getDependencyLevel(columnB.name)
         );
     }
 }

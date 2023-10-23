@@ -5,11 +5,11 @@ begin
     if TG_OP = 'DELETE' then
         if coalesce(old.lvl, 0) + 1 is not null then
             update operation.operation as child_oper set
-                lvl = coalesce(null, 0) + 1
+                lvl = coalesce((null::integer), 0) + 1
             where
                 old.id = child_oper.id_parent_operation
                 and
-                child_oper.lvl is distinct from (coalesce(null, 0) + 1);
+                child_oper.lvl is distinct from (coalesce((null::integer), 0) + 1);
         end if;
 
         return old;

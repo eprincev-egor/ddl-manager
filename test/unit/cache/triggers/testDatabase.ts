@@ -50,7 +50,8 @@ export const testDatabase = new Database([
         units_ids: "bigint[]",
         end_expected_date: "date",
         cost_sale: "numeric",
-        deleted: "smallint"
+        deleted: "smallint",
+        lvl: "integer"
     }),
     table("operations", {
         units_ids: "bigint[]",

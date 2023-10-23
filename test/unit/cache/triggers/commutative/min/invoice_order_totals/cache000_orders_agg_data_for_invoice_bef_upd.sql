@@ -17,7 +17,6 @@ begin
 
 
     select
-            min(orders.some_date) as order_some_date,
             ('{' || string_agg(
                                         '"' || public.invoice_positions.id::text || '":' || jsonb_build_object(
                             'id', public.invoice_positions.id,'id_invoice', public.invoice_positions.id_invoice,'id_order', public.invoice_positions.id_order
@@ -25,7 +24,8 @@ begin
                                         ','
                                     ) || '}')
             ::
-            jsonb as __orders_agg_data_json__
+            jsonb as __orders_agg_data_json__,
+            min(orders.some_date) as order_some_date
     from invoice_positions
 
     left join public.order as orders on
@@ -37,8 +37,8 @@ begin
     into new_totals;
 
 
-    new.order_some_date = new_totals.order_some_date;
     new.__orders_agg_data_json__ = new_totals.__orders_agg_data_json__;
+    new.order_some_date = new_totals.order_some_date;
 
 
     return new;

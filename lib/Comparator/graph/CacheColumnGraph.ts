@@ -1,7 +1,6 @@
 import { CacheColumn, CacheColumnParams } from "./CacheColumn";
 import { TableReference } from "../../database/schema/TableReference";
 import { TableID } from "../../database/schema/TableID";
-import { ColumnReference } from "../../ast";
 import { flatMap, uniqBy } from "lodash";
 import { CacheUpdate } from "./CacheUpdate";
 import { buildDependencyMatrix, groupByTables } from "./utils";
@@ -84,13 +83,6 @@ export class CacheColumnGraph {
                 levelColumn.name === column.name &&
                 levelColumn.for.table.equal(column.for.table)
             )
-        );
-    }
-
-    getDependencyIndex(column: CacheColumn) {
-        return flatMap(this.dependencyMatrix).findIndex(levelColumn =>
-            levelColumn.name === column.name &&
-            levelColumn.for.table.equal(column.for.table)
         );
     }
 

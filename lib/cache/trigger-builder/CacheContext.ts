@@ -57,14 +57,9 @@ export class CacheContext {
         return this.fs.getCachesForTable(this.triggerTable);
     }
 
-    private getDependencyLevel(columnName: string) {
+    getDependencyLevel(columnName: string) {
         const column = this.getGraphColumn(columnName);
         return this.graph.getDependencyLevel(column);
-    }
-
-    getDependencyIndex(columnName: string) {
-        const column = this.getGraphColumn(columnName);
-        return this.graph.getDependencyIndex(column);
     }
 
     getTableReferencesToTriggerTable() {
@@ -133,13 +128,13 @@ export class CacheContext {
         columns: SelectColumn[],
         postfix: string
     ) {
-        const dependencyIndexes = columns.map(column =>
-            this.getDependencyIndex(column.name)
+        const dependencyLevels = columns.map(column =>
+            this.getDependencyLevel(column.name)
         );
-        const minDependencyIndex = Math.min(...dependencyIndexes);
+        const minDependencyLevel = Math.min(...dependencyLevels);
 
         let triggerName = [
-            `cache${leadingZero(minDependencyIndex, 3)}`,
+            `cache${leadingZero(minDependencyLevel, 3)}`,
             this.cache.name,
             "for",
             this.cache.for.table.name,
@@ -154,7 +149,7 @@ export class CacheContext {
                 );
 
             triggerName = [
-                `cache${leadingZero(minDependencyIndex, 3)}`,
+                `cache${leadingZero(minDependencyLevel, 3)}`,
 
                 shortName(this.cache.name),
 
@@ -221,8 +216,7 @@ export class CacheContext {
         return levels.map(level => 
             selectValues.clone({
                 columns: columnsByLevel[level].sort((columnA, columnB) =>
-                    this.getDependencyIndex(columnA.name) >
-                    this.getDependencyIndex(columnB.name) ? 1 : -1
+                    columnA.name > columnB.name ? 1 : -1
                 )
             })
         );

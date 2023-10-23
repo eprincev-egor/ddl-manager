@@ -6,7 +6,6 @@ begin
 
 
     select
-            string_agg(distinct orders.doc_number, ', ') as orders_numbers,
             ('{' || string_agg(
                                         '"' || public.orders.id::text || '":' || jsonb_build_object(
                             'doc_number', public.orders.doc_number,'id', public.orders.id,'id_country', public.orders.id_country
@@ -14,15 +13,16 @@ begin
                                         ','
                                     ) || '}')
             ::
-            jsonb as __totals_json__
+            jsonb as __totals_json__,
+            string_agg(distinct orders.doc_number, ', ') as orders_numbers
     from orders
     where
         orders.id_country = new.id_country
     into new_totals;
 
 
-    new.orders_numbers = new_totals.orders_numbers;
     new.__totals_json__ = new_totals.__totals_json__;
+    new.orders_numbers = new_totals.orders_numbers;
 
 
     return new;

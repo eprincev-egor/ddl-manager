@@ -10,14 +10,14 @@ begin
         then
             update operation.operation as child_oper set
                 parent_id_order = null,
-                lvl = coalesce(null, 0) + 1
+                parent_lvl = coalesce((null::integer), 0) + 1
             where
                 old.id = child_oper.id_parent_operation
                 and
                 (
                     child_oper.parent_id_order is distinct from (null)
                     or
-                    child_oper.lvl is distinct from (coalesce(null, 0) + 1)
+                    child_oper.parent_lvl is distinct from (coalesce((null::integer), 0) + 1)
                 );
         end if;
 
@@ -35,14 +35,14 @@ begin
 
         update operation.operation as child_oper set
             parent_id_order = new.id_order,
-            lvl = coalesce(new.lvl, 0) + 1
+            parent_lvl = coalesce(new.lvl, 0) + 1
         where
             new.id = child_oper.id_parent_operation
             and
             (
                 child_oper.parent_id_order is distinct from (new.id_order)
                 or
-                child_oper.lvl is distinct from (coalesce(new.lvl, 0) + 1)
+                child_oper.parent_lvl is distinct from (coalesce(new.lvl, 0) + 1)
             );
 
         return new;
@@ -56,14 +56,14 @@ begin
         then
             update operation.operation as child_oper set
                 parent_id_order = new.id_order,
-                lvl = coalesce(new.lvl, 0) + 1
+                parent_lvl = coalesce(new.lvl, 0) + 1
             where
                 new.id = child_oper.id_parent_operation
                 and
                 (
                     child_oper.parent_id_order is distinct from (new.id_order)
                     or
-                    child_oper.lvl is distinct from (coalesce(new.lvl, 0) + 1)
+                    child_oper.parent_lvl is distinct from (coalesce(new.lvl, 0) + 1)
                 );
         end if;
 
@@ -75,7 +75,7 @@ $body$
 language plpgsql;
 
 create trigger cache_parent_row_for_operation_on_operation
-after insert or update of id_order, id_parent_operation, lvl or delete
+after insert or update of id_order, lvl or delete
 on operation.operation
 for each row
 execute procedure cache_parent_row_for_operation_on_operation();

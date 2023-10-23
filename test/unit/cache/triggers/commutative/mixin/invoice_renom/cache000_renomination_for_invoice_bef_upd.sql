@@ -9,15 +9,6 @@ begin
 
 
     select
-            sum(renomination_invoice.sum) as renomination_sum,
-            string_agg(
-                renomination_invoice.account_no_doc_number,
-                ', '
-                        ) as renomination_link,
-            string_agg(distinct 
-                list_currency.charcode,
-                ', '
-                        ) as renomination_currencies,
             ('{' || string_agg(
                                         '"' || renomination_invoice.id::text || '":' || jsonb_build_object(
                             'account_no_doc_number', renomination_invoice.account_no_doc_number,'id', renomination_invoice.id,'id_list_currency', renomination_invoice.id_list_currency,'sum', renomination_invoice.sum
@@ -25,7 +16,16 @@ begin
                                         ','
                                     ) || '}')
             ::
-            jsonb as __renomination_json__
+            jsonb as __renomination_json__,
+            string_agg(distinct 
+                list_currency.charcode,
+                ', '
+                        ) as renomination_currencies,
+            string_agg(
+                renomination_invoice.account_no_doc_number,
+                ', '
+                        ) as renomination_link,
+            sum(renomination_invoice.sum) as renomination_sum
     from invoice as renomination_invoice
 
     left join list_currency on
@@ -35,10 +35,10 @@ begin
     into new_totals;
 
 
-    new.renomination_sum = new_totals.renomination_sum;
-    new.renomination_link = new_totals.renomination_link;
-    new.renomination_currencies = new_totals.renomination_currencies;
     new.__renomination_json__ = new_totals.__renomination_json__;
+    new.renomination_currencies = new_totals.renomination_currencies;
+    new.renomination_link = new_totals.renomination_link;
+    new.renomination_sum = new_totals.renomination_sum;
 
 
     return new;

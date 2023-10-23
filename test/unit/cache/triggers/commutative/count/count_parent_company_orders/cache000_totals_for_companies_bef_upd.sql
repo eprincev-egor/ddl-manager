@@ -9,7 +9,6 @@ begin
 
 
     select
-            count(*) as parent_company_orders_count,
             ('{' || string_agg(
                                         '"' || public.orders.id::text || '":' || jsonb_build_object(
                             'id', public.orders.id,'id_client', public.orders.id_client
@@ -17,15 +16,16 @@ begin
                                         ','
                                     ) || '}')
             ::
-            jsonb as __totals_json__
+            jsonb as __totals_json__,
+            count(*) as parent_company_orders_count
     from orders
     where
         orders.id_client = new.id_parent_company
     into new_totals;
 
 
-    new.parent_company_orders_count = new_totals.parent_company_orders_count;
     new.__totals_json__ = new_totals.__totals_json__;
+    new.parent_company_orders_count = new_totals.parent_company_orders_count;
 
 
     return new;

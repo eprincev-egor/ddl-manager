@@ -1,5 +1,5 @@
 import { CacheColumn } from "./CacheColumn";
-import { flatMap } from "lodash";
+import { flatMap, flatten } from "lodash";
 
 export function groupByTables(columns: CacheColumn[]) {
     const byTables: Record<string, CacheColumn[]> = {};
@@ -19,53 +19,53 @@ export function groupByTables(columns: CacheColumn[]) {
 export function buildDependencyMatrix(
     rootColumns: CacheColumn[]
 ): CacheColumn[][] {
-    let matrix: CacheColumn[][] = [];
+    const matrix: CacheColumn[][] = [];
 
-    const firstLevel = addCircularDependencies(rootColumns);
-    matrix.push(firstLevel);
-
-    addNextLevels(matrix, firstLevel);
-
-    matrix = removeDuplicates(matrix);
-    return matrix;
+    addNextLevels(matrix, rootColumns);
+    return removeDuplicates(matrix);
 }
 
 function addNextLevels(
     matrix: CacheColumn[][],
     prevLevel: CacheColumn[]
 ) {
-    let nextLevel = flatMap(prevLevel, column => 
+    const circularLevels = splitByCircularDeps(prevLevel);
+    matrix.push(...circularLevels);
+
+    const nextLevel = flatMap(flatten(circularLevels), column => 
         column.findNotCircularUses()
     );
-    nextLevel = addCircularDependencies(nextLevel);
-
-    if ( nextLevel.length === 0 ) {
-        return;
+    if ( nextLevel.length > 0 ) {
+        addNextLevels(
+            matrix, nextLevel
+        );
     }
-
-    matrix.push(nextLevel);
-    addNextLevels(
-        matrix, nextLevel
-    );
 }
 
-function addCircularDependencies(level: CacheColumn[]): CacheColumn[] {
-    const output: CacheColumn[] = [];
+function splitByCircularDeps(level: CacheColumn[]) {
+    const prevLevel: CacheColumn[] = [];
+    const nextLevel: CacheColumn[] = [];
 
     for (const column of level) {
-        const circularColumns = [
-            column,
-            ...column.findCircularUses()
-        ].sort((columnA, columnB) =>
-            // if no deps to other tables, then be last in array
-            +columnB.hasForeignTablesDeps() -
-            +columnA.hasForeignTablesDeps()
-        );
+        const circularDeps = column.findCircularUses();
+        if ( circularDeps.length === 0 ) {
+            prevLevel.push(column);
+            continue;
+        }
 
-        output.push(...circularColumns);
+        if ( column.hasForeignTablesDeps() ) {
+            prevLevel.push(column);
+            nextLevel.push(...circularDeps);
+        }
+        else {
+            prevLevel.push(...circularDeps);
+            nextLevel.push(column);
+        }
     }
 
-    return output;
+    return [prevLevel, nextLevel].filter(level => 
+        level.length > 0
+    );
 }
 
 function removeDuplicates(matrix: CacheColumn[][]) {

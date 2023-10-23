@@ -9,7 +9,6 @@ begin
 
 
     select
-            string_agg(distinct country.name, ', ') as order_countries,
             ('{' || string_agg(
                                         '"' || public.orders.id::text || '":' || jsonb_build_object(
                             'id', public.orders.id,'id_country', public.orders.id_country,'id_order_type', public.orders.id_order_type
@@ -17,7 +16,8 @@ begin
                                         ','
                                     ) || '}')
             ::
-            jsonb as __order_country_json__
+            jsonb as __order_country_json__,
+            string_agg(distinct country.name, ', ') as order_countries
     from orders
 
     left join country on
@@ -33,8 +33,8 @@ begin
     into new_totals;
 
 
-    new.order_countries = new_totals.order_countries;
     new.__order_country_json__ = new_totals.__order_country_json__;
+    new.order_countries = new_totals.order_countries;
 
 
     return new;
