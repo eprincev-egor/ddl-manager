@@ -30,3 +30,25 @@ begin
 end
 $body$ language plpgsql
 immutable;
+
+create or replace function cm_build_array_for(
+    some_array anyarray,
+    some_item text
+)
+returns anyarray as $body$
+begin
+    return ARRAY[ some_item ];
+end
+$body$ language plpgsql
+immutable;
+
+create or replace function cm_build_array_for(
+    some_array anyarray,
+    some_item text[]
+)
+returns anyarray as $body$
+begin
+    return some_item;
+end
+$body$ language plpgsql
+immutable;

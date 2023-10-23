@@ -4406,6 +4406,54 @@ describe("integration/DDLManager.build cache", () => {
         ]);
     });
 
+    it("search by text[] column", async() => {
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                name text,
+                role text[],
+                terminals_ids integer[]
+            );
+            create table terminals (
+                id serial primary key
+            );
+            
+            insert into terminals default values;
+            insert into companies (name, role, terminals_ids)
+            values ('test', array['client'], array[1]);
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+            cache clients for terminals (
+                select
+                    string_agg(distinct client.name, ', ') as clients
+                from companies as client
+                where
+                    client.terminals_ids && array[terminals.id] and
+                    client.role && array['client']::text[]
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+
+        await db.query(`
+            update companies set
+                name = 'UPDATED-' || companies.name;
+        `);
+        const result = await db.query(`
+            select id, clients
+            from terminals
+        `);
+        strict.deepEqual(result.rows, [
+            {id: 1, clients: "UPDATED-test"}
+        ]);
+    });
+
     describe("using old column with not null and changing that column type", () => {
 
         it("integer => numeric", async() => {
