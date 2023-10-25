@@ -4,4 +4,8 @@ select
 from pg_trigger
 where
     pg_trigger.tgisinternal = false and
-    pg_catalog.obj_description( pg_trigger.oid ) is distinct from 'ddl-manager-helper'
+    (
+        pg_trigger.tgenabled != 'D'
+        or
+        pg_catalog.obj_description( pg_trigger.oid ) !~* 'ddl-manager-cache'
+    )

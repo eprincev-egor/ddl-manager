@@ -4724,6 +4724,41 @@ describe("integration/DDLManager.build cache", () => {
         strict.ok(true, "no errors");
     });
 
+    it("enable cache triggers on build ddl", async() => {
+        await db.query(`
+            create table companies (
+                id serial primary key
+            );
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+            cache self for companies (
+                select
+                    companies.id * 2 as id2
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+        await db.query(`
+            alter table companies
+                disable trigger all;
+        `);
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            insert into companies default values
+            returning id2
+        `);
+        assert.deepStrictEqual(result.rows, [{id2: 2}])
+    });
+
     // TODO: views can use column (check change column type)
 
 });
