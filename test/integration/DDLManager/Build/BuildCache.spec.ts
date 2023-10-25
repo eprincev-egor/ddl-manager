@@ -4536,12 +4536,89 @@ describe("integration/DDLManager.build cache", () => {
             strict.ok(true, "no error: invalid input syntax for integer: \"abc\"")
         });
 
-    })
-   
+    });
+
+    it("need drop cache column if it was created by ddl-manager", async() => {
+        await db.query(`
+            create table companies (
+                id serial primary key
+            );
+            insert into companies default values;
+        `);
+        
+        fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+            cache self for companies (
+                select
+                    companies.id + 2 as id2
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+        fs.unlinkSync(ROOT_TMP_PATH + "/cache.sql");
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+
+        const result = await db.query("select * from companies");
+        assert.deepStrictEqual(result.rows[0], {
+            id: 1
+        });
+    });
+
+    it("need drop cache column if it was created by ddl-manager older version", async() => {
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                id2 integer
+            );
+            insert into companies default values;
+
+            comment on column companies.id2 is 'ddl-manager-sync';
+        `);
+        
+        fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+            cache self for companies (
+                select
+                    companies.id + 2 as id2
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+        fs.unlinkSync(ROOT_TMP_PATH + "/cache.sql");
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+
+        const result = await db.query("select * from companies");
+        assert.deepStrictEqual(result.rows[0], {
+            id: 1
+        });
+    });
+
     // TODO: return back old column type?
     // TODO: columns defaults can use column (check change column type)
     // TODO: views can use column (check change column type)
-    // TODO: only frozen columns should be frozen
     // TODO: try return not null on cache columns
 
 });

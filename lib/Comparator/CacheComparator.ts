@@ -366,27 +366,16 @@ export class CacheComparator extends AbstractComparator {
 
     private async dropTrashColumns() {
         const dbCacheColumns = flatMap(this.database.tables, table => table.columns)
-            .filter(dbColumn => dbColumn.cacheSignature)
             .filter(dbColumn => !dbColumn.isFrozen()); // don't drop columns, which was created not by ddl-manager
 
         for (const dbColumn of dbCacheColumns) {
-            const existsCacheWithSameColumn = await this.existsCacheWithSameColumn(dbColumn);
-            if ( !existsCacheWithSameColumn ) {
+            const cacheColumn = this.graph.getColumn(dbColumn.table, dbColumn.name);
+            if ( !cacheColumn ) {
                 this.migration.drop({
                     columns: [dbColumn]
                 });
             }
         }
-    }
-
-    private async existsCacheWithSameColumn(column: Column) {
-        const cacheColumn = this.graph.getColumn(column.table, column.name);
-
-        if ( cacheColumn ) {
-            const newColumn = await this.columnBuilder.build(cacheColumn);
-            return column.type.suit(newColumn.type);
-        }
-        return false;
     }
 
     private createTriggers() {
@@ -455,27 +444,30 @@ export class CacheComparator extends AbstractComparator {
 
     private async createColumns() {
         for (const cacheColumn of this.graph.getAllColumnsFromRootToDeps()) {
-            const columnToCreate = await this.columnBuilder.build(cacheColumn);
-
-            const table = this.database.getTable( cacheColumn.for.table );
-            const existentColumn = table && table.getColumn(cacheColumn.name);
-            const existsSameColumn = (
-                existentColumn && 
-                existentColumn.suit( columnToCreate )
-            );
-
-            if ( existentColumn ) {
-                columnToCreate.markAsFrozen();
-            }
-
-            if ( !existsSameColumn ) {
-                this.migration.create({
-                    columns: [columnToCreate]
-                });
-            }
+            await this.createColumn(cacheColumn);
         }
 
         this.recreateDepsTriggersToChangedColumns();
+    }
+
+    private async createColumn(cacheColumn: CacheColumn) {
+        const existentColumn = this.database.getColumn(
+            cacheColumn.for.table,
+            cacheColumn.name
+        );
+        const columnToCreate = await this.columnBuilder.build(cacheColumn);
+
+        if ( existentColumn?.same( columnToCreate ) ) {
+            return;
+        }
+        
+        if ( existentColumn?.isFrozen() ) {
+            columnToCreate.markAsFrozen();
+        }
+
+        this.migration.create({
+            columns: [columnToCreate]
+        });
     }
 
     // fix: cannot drop column because other objects depend on it

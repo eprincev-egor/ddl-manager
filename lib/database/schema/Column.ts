@@ -60,7 +60,7 @@ export class Column {
         return equalColumnName(this.name, otherName);
     }
 
-    suit(newColumn: Column) {
+    same(newColumn: Column) {
         return (
             this.type.suit(newColumn.type) &&
             formatDefault({

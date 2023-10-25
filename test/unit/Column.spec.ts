@@ -24,16 +24,16 @@ describe("Column", () => {
             "''::text"
         );
 
-        assert.ok( column1.suit(column2), "column1 equal column2");
-        assert.ok( column2.suit(column1), "column2 equal column1");
+        assert.ok( column1.same(column2), "column1 equal column2");
+        assert.ok( column2.same(column1), "column2 equal column1");
 
-        assert.ok( !column1.suit(column3), "column1 !equal column3");
-        assert.ok( !column2.suit(column3), "column2 !equal column3");
+        assert.ok( !column1.same(column3), "column1 !equal column3");
+        assert.ok( !column2.same(column3), "column2 !equal column3");
 
-        assert.ok( column3.suit(column3), "column3 equal column3");
+        assert.ok( column3.same(column3), "column3 equal column3");
     });
 
-    it("suit float8 and double precision", () => {
+    it("same float8 and double precision", () => {
         const column1 = new Column(
             new TableID("public", "test"),
             "my_column",
@@ -47,8 +47,8 @@ describe("Column", () => {
             "null"
         );
 
-        assert.ok( column1.suit(column2), "column1 equal column2");
-        assert.ok( column2.suit(column1), "column2 equal column1");
+        assert.ok( column1.same(column2), "column1 equal column2");
+        assert.ok( column2.same(column1), "column2 equal column1");
     });
 
 })
