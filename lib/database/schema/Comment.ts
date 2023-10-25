@@ -5,6 +5,7 @@ export interface CommentParams {
     cacheSignature?: string;
     cacheSelect?: string;
     frozen?: boolean;
+    legacyInfo?: Record<string, any>;
 }
 
 export class Comment {
@@ -31,12 +32,14 @@ export class Comment {
         );
         const cacheSignature = parseCacheSignature(total);
         const cacheSelect = parseCacheSelect(total);
+        const legacyInfo = parseLegacyInfo(total);
 
         const comment = new Comment({
             objectType,
             frozen,
             cacheSignature,
             cacheSelect,
+            legacyInfo
         });
         return comment;
     }
@@ -52,13 +55,14 @@ export class Comment {
     readonly frozen: boolean;
     readonly cacheSignature?: string;
     readonly cacheSelect?: string;
-    readonly legacy?: boolean;
+    readonly legacyInfo?: Readonly<Record<string, any>>;
 
     private constructor(params: CommentParams) {
         this.objectType = params.objectType;
         this.frozen = !!params.frozen;
         this.cacheSignature = params.cacheSignature;
         this.cacheSelect = params.cacheSelect;
+        this.legacyInfo = params.legacyInfo;
     }
 
     isEmpty() {
@@ -72,10 +76,11 @@ export class Comment {
         );
     }
 
-    markAsFrozen() {
+    markAsFrozen(legacyInfo: Record<string, any>) {
         return new Comment({
             ...this,
-            frozen: true
+            frozen: true,
+            legacyInfo
         });
     }
 
@@ -91,6 +96,9 @@ export class Comment {
         if ( this.cacheSignature ) {
             comment += `\nddl-manager-cache(${ this.cacheSignature })`;
         }
+        if ( this.legacyInfo ) {
+            comment += `\nddl-manager-legacy-info(${ JSON.stringify(this.legacyInfo) })`;
+        }
 
         return comment;
     }
@@ -104,15 +112,38 @@ function parseCacheSignature(totalComment: string) {
 }
 
 function parseCacheSelect(totalComment: string) {
+    return extractContent({
+        totalComment,
+        codePhrase: "ddl-manager-select"
+    });
+}
+
+function parseLegacyInfo(totalComment: string) {
+    const legacyInfoStr = extractContent({
+        totalComment,
+        codePhrase: "ddl-manager-legacy-info"
+    });
+    if ( legacyInfoStr ) {
+        try {
+            return JSON.parse(legacyInfoStr);
+        } catch {}
+    }
+}
+
+function extractContent({
+    totalComment, codePhrase
+}: {
+    codePhrase: string;
+    totalComment: string
+}) {
     const comment = (totalComment || "").trim();
 
-    const codePhrase = "ddl-manager-select";
     const startParsing = comment.indexOf(codePhrase + "(");
     if ( startParsing === -1 ) {
         return undefined;
     }
 
-    let cacheSelect = "";
+    let content = "";
     let openedBracketsCount = 1;
     for (let i = startParsing + codePhrase.length + 1; i < comment.length; i++) {
         const symbol = comment[i];
@@ -127,8 +158,8 @@ function parseCacheSelect(totalComment: string) {
             }
         }
 
-        cacheSelect += symbol;
+        content += symbol;
     }
 
-    return cacheSelect;
+    return content;
 }

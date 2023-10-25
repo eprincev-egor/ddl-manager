@@ -502,8 +502,7 @@ export class DDLManager {
             if ( isTrigger ) {
                 const triggers = dbState.getTriggersByProcedure({
                     schema: func.schema,
-                    name: func.name,
-                    args: func.args.map(arg => arg.type)
+                    name: func.name
                 });
 
                 if ( triggers.length ) {

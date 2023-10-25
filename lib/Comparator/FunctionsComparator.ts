@@ -28,8 +28,7 @@ export class FunctionsComparator extends AbstractComparator {
             if ( dbFunc.returns.type === "trigger" ) {
                 const depsTriggers = this.database.getTriggersByProcedure({
                     schema: dbFunc.schema,
-                    name: dbFunc.name,
-                    args: dbFunc.args.map(arg => arg.type)
+                    name: dbFunc.name
                 }).filter(dbTrigger => {
                     const isDepsTrigger = (
                         dbTrigger.procedure.schema === dbFunc.schema &&

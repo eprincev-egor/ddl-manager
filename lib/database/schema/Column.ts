@@ -74,11 +74,13 @@ export class Column {
         );
     }
 
-    clone() {
+    clone(newParams: {
+        type?: string
+    } = {}) {
         return new Column(
             this.table,
             this.name,
-            this.type.toString(),
+            newParams.type ?? this.type.toString(),
             this.default || undefined,
             this.comment
         );
@@ -88,8 +90,10 @@ export class Column {
         return this.comment.frozen;
     }
 
-    markAsFrozen() {
-        this.comment = this.comment.markAsFrozen();
+    markColumnAsFrozen(oldColumn: Column) {
+        this.comment = this.comment.markAsFrozen({
+            oldType: oldColumn.type.toString()
+        });
     }
 }
 

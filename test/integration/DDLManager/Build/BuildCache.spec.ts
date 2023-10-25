@@ -4616,7 +4616,46 @@ describe("integration/DDLManager.build cache", () => {
         });
     });
 
-    // TODO: return back old column type?
+    it("need return back old column type", async() => {
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                some_column text
+            );
+        `);
+        
+        fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+            cache self for companies (
+                select
+                    companies.id + 2 as some_column
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+        fs.unlinkSync(ROOT_TMP_PATH + "/cache.sql");
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+
+        const result = await db.query(`
+            insert into companies (some_column) 
+            values ('test')
+            returning id, some_column
+        `);
+        assert.deepStrictEqual(result.rows[0], {
+            id: 1,
+            some_column: "test"
+        });
+    });
+
     // TODO: columns defaults can use column (check change column type)
     // TODO: views can use column (check change column type)
     // TODO: try return not null on cache columns

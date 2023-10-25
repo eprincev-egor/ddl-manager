@@ -38,6 +38,10 @@ export class Database {
         ];
     }
 
+    getAllColumns() {
+        return flatMap(this.tables, table => table.columns);
+    }
+
     getColumn(tableId: TableID, column: string) {
         const dbTable = this.tables.find(table => 
             table.name === tableId.name &&
@@ -50,7 +54,7 @@ export class Database {
         return this.tablesMap[ tableId.toString() ];
     }
 
-    getTriggersByProcedure(procedure: {schema: string, name: string, args: string[]}) {
+    getTriggersByProcedure(procedure: {schema: string, name: string}) {
         return flatMap(this.tables, (table) => {
             return table.triggers.filter(trigger =>
                 trigger.procedure.schema === procedure.schema &&

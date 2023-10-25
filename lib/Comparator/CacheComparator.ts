@@ -349,8 +349,7 @@ export class CacheComparator extends AbstractComparator {
                 item.function.equal( dbCacheFunc )
             );
             if ( !existsSameCacheFunc ) {
-                const needDropTrigger = flatMap(this.database.tables, table => table.triggers)
-                    .find(trigger => trigger.procedure.name === dbCacheFunc.name);
+                const [needDropTrigger] = this.database.getTriggersByProcedure(dbCacheFunc);
                 const alreadyDropped = needDropTrigger && this.migration.toDrop.triggers.some(trigger =>
                     trigger.equal(needDropTrigger)
                 );
@@ -364,17 +363,34 @@ export class CacheComparator extends AbstractComparator {
 
     }
 
-    private async dropTrashColumns() {
-        const dbCacheColumns = flatMap(this.database.tables, table => table.columns)
-            .filter(dbColumn => !dbColumn.isFrozen()); // don't drop columns, which was created not by ddl-manager
+    private dropTrashColumns() {
+        for (const dbColumn of this.database.getAllColumns()) {
+            this.tryDropColumn(dbColumn)
+        }
+    }
 
-        for (const dbColumn of dbCacheColumns) {
-            const cacheColumn = this.graph.getColumn(dbColumn.table, dbColumn.name);
-            if ( !cacheColumn ) {
-                this.migration.drop({
-                    columns: [dbColumn]
-                });
-            }
+    private tryDropColumn(dbColumn: Column) {
+        const cacheColumn = this.graph.getColumn(dbColumn.table, dbColumn.name);
+        if ( cacheColumn ) {
+            return;
+        }
+
+        if ( !dbColumn.isFrozen() ) {
+            this.migration.drop({
+                columns: [dbColumn]
+            });
+            return;
+        }
+
+        const {legacyInfo} = dbColumn.comment ?? {};
+
+        if ( legacyInfo?.oldType ) {
+            const oldDbColumn = dbColumn.clone({
+                type: legacyInfo.oldType
+            });
+            this.migration.create({
+                columns: [oldDbColumn]
+            });
         }
     }
 
@@ -462,7 +478,7 @@ export class CacheComparator extends AbstractComparator {
         }
         
         if ( existentColumn?.isFrozen() ) {
-            columnToCreate.markAsFrozen();
+            columnToCreate.markColumnAsFrozen(existentColumn);
         }
 
         this.migration.create({
