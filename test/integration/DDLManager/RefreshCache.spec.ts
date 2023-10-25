@@ -31,9 +31,6 @@ describe("integration/DDLManager.refreshCache", () => {
     });
 
     it("refresh simple cache", async() => {
-        const folderPath = ROOT_TMP_PATH + "/some cache";
-        fs.mkdirSync(folderPath);
-
         await db.query(`
             create table companies (
                 id serial primary key
@@ -51,10 +48,10 @@ describe("integration/DDLManager.refreshCache", () => {
 
         await DDLManager.build({
             db, 
-            folder: folderPath,
+            folder: ROOT_TMP_PATH,
             throwError: true
         });
-        fs.writeFileSync(folderPath + "/some_cache.sql", `
+        fs.writeFileSync(ROOT_TMP_PATH + "/some_cache.sql", `
             cache totals for companies (
                 select
                     count(*) as orders_count
@@ -68,7 +65,7 @@ describe("integration/DDLManager.refreshCache", () => {
 
         await DDLManager.refreshCache({
             db, 
-            folder: folderPath
+            folder: ROOT_TMP_PATH
         });
 
         const result = await db.query(`
@@ -85,9 +82,6 @@ describe("integration/DDLManager.refreshCache", () => {
 
 
     it("refresh cache values if no changes in triggers", async() => {
-        const folderPath = ROOT_TMP_PATH + "/some cache";
-        fs.mkdirSync(folderPath);
-
         await db.query(`
             create table companies (
                 id serial primary key
@@ -111,7 +105,7 @@ describe("integration/DDLManager.refreshCache", () => {
             insert into cargos (id_order, gross_weight) values (2, 400);
         `);
 
-        fs.writeFileSync(folderPath + "/companies_cache.sql", `
+        fs.writeFileSync(ROOT_TMP_PATH + "/companies_cache.sql", `
             cache totals for companies (
                 select
                     count(*) as orders_count,
@@ -122,7 +116,7 @@ describe("integration/DDLManager.refreshCache", () => {
                     orders.id_client = companies.id
             )
         `);
-        fs.writeFileSync(folderPath + "/orders_cache.sql", `
+        fs.writeFileSync(ROOT_TMP_PATH + "/orders_cache.sql", `
             cache totals for orders (
                 select
                     sum( cargos.gross_weight ) as cargos_gross_weight
@@ -134,7 +128,7 @@ describe("integration/DDLManager.refreshCache", () => {
         `);
         await DDLManager.build({
             db, 
-            folder: folderPath,
+            folder: ROOT_TMP_PATH,
             throwError: true
         });
 
@@ -161,7 +155,7 @@ describe("integration/DDLManager.refreshCache", () => {
 
         await DDLManager.refreshCache({
             db, 
-            folder: folderPath
+            folder: ROOT_TMP_PATH
         });
 
 
@@ -188,10 +182,7 @@ describe("integration/DDLManager.refreshCache", () => {
     });
 
     it("compare cache columns when not exists table", async() => {
-        const folderPath = ROOT_TMP_PATH + "/some cache";
-        fs.mkdirSync(folderPath);
-
-        fs.writeFileSync(folderPath + "/new_cache.sql", `
+        fs.writeFileSync(ROOT_TMP_PATH + "/new_cache.sql", `
             cache totals for companies (
                 select
                     array_agg(orders.name) as orders_names
@@ -203,7 +194,7 @@ describe("integration/DDLManager.refreshCache", () => {
         `);
         const changed = await DDLManager.compareCache({
             db, 
-            folder: folderPath,
+            folder: ROOT_TMP_PATH,
             throwError: true
         });
 
