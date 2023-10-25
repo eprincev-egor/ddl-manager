@@ -30,9 +30,6 @@ export function getSubPath(rootFolderPath: string, fullFilePath: string) {
 
 export function prepareError(err: Error, subPath: string) {
     const outError = new Error(err.message) as any;
-        
     outError.subPath = subPath;
-    outError.originalError = err;
-
     return outError;
 }

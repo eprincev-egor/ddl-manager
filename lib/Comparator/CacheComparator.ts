@@ -162,7 +162,7 @@ export class CacheComparator extends AbstractComparator {
     async drop() {
         this.dropTrashTriggers();
         this.dropTrashFuncs();
-        await this.dropTrashColumns();
+        this.dropTrashColumns();
     }
 
     async create() {
@@ -382,11 +382,12 @@ export class CacheComparator extends AbstractComparator {
             return;
         }
 
-        const {legacyInfo} = dbColumn.comment ?? {};
+        const legacyInfo = dbColumn.comment.legacyInfo ?? {};
 
-        if ( legacyInfo?.oldType ) {
+        if ( legacyInfo.type || "nulls" in legacyInfo ) {
             const oldDbColumn = dbColumn.clone({
-                type: legacyInfo.oldType
+                type: legacyInfo.type,
+                nulls: legacyInfo.nulls
             });
             this.migration.create({
                 columns: [oldDbColumn]

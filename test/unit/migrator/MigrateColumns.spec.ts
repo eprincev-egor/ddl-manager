@@ -34,6 +34,7 @@ describe("Migrator", () => {
         ),
         "new_col",
         "text",
+        true,
         "'nice'"
     );
 

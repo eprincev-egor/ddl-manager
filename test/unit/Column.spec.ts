@@ -9,18 +9,21 @@ describe("Column", () => {
             new TableID("public", "test"),
             "my_column",
             "text",
+            true,
             null
         );
         const column2 = new Column(
             new TableID("public", "test"),
             "my_column",
             "text",
+            true,
             "null"
         );
         const column3 = new Column(
             new TableID("public", "test"),
             "my_column",
             "text",
+            true,
             "''::text"
         );
 
@@ -38,12 +41,14 @@ describe("Column", () => {
             new TableID("public", "test"),
             "my_column",
             "float8",
+            true,
             null
         );
         const column2 = new Column(
             new TableID("public", "test"),
             "my_column",
             "double precision",
+            true,
             "null"
         );
 

@@ -41,6 +41,7 @@ export class CacheColumnBuilder {
             cacheColumn.for.table,
             cacheColumn.name,
             await this.getColumnType(cacheColumn),
+            true,
             getColumnDefault(cacheColumn.select),
             Comment.fromFs({
                 objectType: "column",

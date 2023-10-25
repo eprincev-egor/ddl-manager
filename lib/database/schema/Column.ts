@@ -7,6 +7,7 @@ export class Column {
     readonly table: TableID;
     readonly name: string;
     readonly type: Type;
+    readonly nulls: boolean;
     readonly default: string | null;
     readonly cacheSignature?: string;
     readonly frozen?: boolean;
@@ -16,20 +17,15 @@ export class Column {
         table: TableID,
         name: string,
         type: string,
+        nulls?: boolean,
         defaultValue?: string | null,
         comment?: Comment
     ) {
         this.table = table;
-
-        // if ( name.length > MAX_NAME_LENGTH ) {
-        //     // tslint:disable-next-line: no-console
-        //     console.error(`name "${name}" too long (> 64 symbols)`);
-        // }
         this.name = name.slice(0, MAX_NAME_LENGTH);
-        this.name = name;
-
         this.type = new Type(type);
         this.default = defaultValue || null;
+        this.nulls = nulls ?? true;
         this.comment = comment || Comment.frozen("column");
         this.cacheSignature = this.comment.cacheSignature;
         this.frozen = this.comment.frozen;
@@ -75,13 +71,15 @@ export class Column {
     }
 
     clone(newParams: {
-        type?: string
+        type?: string;
+        nulls?: boolean
     } = {}) {
         return new Column(
             this.table,
             this.name,
             newParams.type ?? this.type.toString(),
-            this.default || undefined,
+            newParams.nulls ?? this.nulls ?? true,
+            this.default,
             this.comment
         );
     }
@@ -92,7 +90,8 @@ export class Column {
 
     markColumnAsFrozen(oldColumn: Column) {
         this.comment = this.comment.markAsFrozen({
-            oldType: oldColumn.type.toString()
+            type: oldColumn.type.toString(),
+            nulls: oldColumn.nulls
         });
     }
 }

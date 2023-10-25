@@ -3897,7 +3897,7 @@ describe("integration/DDLManager.build cache", () => {
         strict.deepEqual(result.rows[0], {count: 1});
     });
 
-    it("need change column type", async() => {
+    it("need change column type even if column used in custom trigger", async() => {
         const folderPath = ROOT_TMP_PATH + "/simple-cache";
         fs.mkdirSync(folderPath);
 
@@ -4656,8 +4656,75 @@ describe("integration/DDLManager.build cache", () => {
         });
     });
 
-    // TODO: columns defaults can use column (check change column type)
+    it("need return not null for old column", async() => {
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                some_column text not null
+            );
+        `);
+        
+        fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+            cache self for companies (
+                select
+                    companies.id + 2 as some_column
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+        fs.unlinkSync(ROOT_TMP_PATH + "/cache.sql");
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+        await assert.rejects(db.query(`
+            insert into companies default values
+        `), /not-null constraint/);
+    });
+
+    it("column can contain nulls, try return not null constraint", async() => {
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                x integer,
+                some_column text not null
+            );
+        `);
+        
+        fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+            cache self for companies (
+                select
+                    companies.x + 2 as some_column
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+        await db.query(`
+            insert into companies (x) values (null);
+        `);
+
+
+        fs.unlinkSync(ROOT_TMP_PATH + "/cache.sql");
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+        strict.ok(true, "no errors");
+    });
+
+    // TODO: dont create columns on update cache
     // TODO: views can use column (check change column type)
-    // TODO: try return not null on cache columns
 
 });

@@ -212,6 +212,7 @@ implements IDatabaseDriver {
                 tableId,
                 columnRow.column_name,
                 columnType,
+                columnRow.is_nullable === "YES",
                 columnRow.column_default,
                 Comment.fromTotalString( "column", columnRow.comment )
             );
@@ -322,12 +323,32 @@ implements IDatabaseDriver {
                 column.comment.isEmpty() ? 
                     "null" : wrapText( column.comment.toString() )
             };
+        `;
+
+        if ( column.nulls ) {
+            sql += `
+            alter table ${column.table}
+                alter column ${column.name}
+                    drop not null;
+            `;
+        }
+        else {
+            sql += `
+            do $$
+            begin
 
             alter table ${column.table}
                 alter column ${column.name}
-                    set default ${ column.default },
+                    set not null;
+
+            exception when others then
+            end $$;
+            `;
+        }
+        sql += `
+            alter table ${column.table}
                 alter column ${column.name}
-                    drop not null;
+                    set default ${ column.default };
 
             create or replace function ddl_manager__try_cast_to(
                 input_value text,
@@ -348,6 +369,7 @@ implements IDatabaseDriver {
 
             drop function ddl_manager__try_cast_to(text, ${column.type});
         `;
+
         await this.query(sql);
     }
 

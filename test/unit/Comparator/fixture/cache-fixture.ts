@@ -194,6 +194,7 @@ export const testCacheColumn = new Column(
     companiesId,
     "orders_profit",
     "numeric",
+    true,
     "null",
     Comment.fromFs({
         objectType: "column",
