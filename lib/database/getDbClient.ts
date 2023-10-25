@@ -28,6 +28,7 @@ export async function getDbClient(dbConfig: IDBConfig | pg.Pool) {
     const DAY = 24 * 60 * 60 * 1000;
 
     const pool = new pg.Pool({
+        max: 100,
         ...config,
         idleTimeoutMillis: DAY,
         connectionTimeoutMillis: DAY

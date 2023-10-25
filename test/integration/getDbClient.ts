@@ -7,14 +7,16 @@ interface IConfig {
     password: string | false;
     host: string;
     port: number;
+    maxParallelConnections?: number;
 }
 
-export async function getDBClient(dbConfig: IConfig = {
+export async function getDBClient(dbConfig: Partial<IConfig> = {
     database: false,
     user: false,
     password: false,
     host: "localhost",
-    port: 5432
+    port: 5432,
+    maxParallelConnections: 100
 }) {
     if ( !dbConfig.database || !dbConfig.user ) {
         let dbConfigFromFile;
@@ -48,7 +50,7 @@ export async function getDBClient(dbConfig: IConfig = {
 
     const pool = new pg.Pool({
         ...(dbConfig as any),
-        min: 16,
+        min: dbConfig.maxParallelConnections,
         max: 100
     });
     try {

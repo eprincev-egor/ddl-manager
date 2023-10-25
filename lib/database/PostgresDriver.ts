@@ -39,6 +39,8 @@ implements IDatabaseDriver {
     private pgPool: Pool;
     private fileParser: FileParser;
     private types: PGTypes;
+    private reservedConnection?: PoolClient;
+    private reservingConnection?: Promise<any>;
 
     constructor(pgPool: Pool) {
         this.pgPool = pgPool;
@@ -389,11 +391,11 @@ implements IDatabaseDriver {
 
     async terminateActiveCacheUpdates() {
         await this.query(`
-            select pg_terminate_backend(pid)
+            select pg_cancel_backend(pid)
             from pg_stat_activity
             where
                 query ilike '-- cache %' and
-                query not ilike '%pg_terminate_backend(pid)%'
+                query not ilike '%pg_cancel_backend(pid)%'
         `);
     }
 
@@ -504,64 +506,49 @@ implements IDatabaseDriver {
     }
 
     async end() {
-        await this.pgPool.end();
+        try {
+            this.reservedConnection?.release(); // can throw strange errors
+        } catch {}
+        try {
+            await this.pgPool.end();
+        } catch {}
     }
 
     async queryWithTimeout(sql: string, timeout = 0) {
-        const stack = new Error().stack;
-        let timer;
+        if ( timeout <= 0 ) {
+            return await this.query(sql);
+        }
+        await this.getReservedConnection();
+
+
+        const stack = new Error().stack!;
         let blocks;
 
+        const connection = await this.getConnection();
+        const processId = +(connection as any).processID;
+
         try {
-            const connection = await this.pgPool.connect();
-            const processId = +(connection as any).processID;
+            let wasReleased = false;
 
-            // Fix falling the process
-            connection.on("error", (error) =>
-                console.log("got pg client error", error)
-            );
+            const timer = setTimeout(async () => {
+                const selectBlocks = selectBlocksQuery(processId);
+                blocks = await this.queryInReservedConnection(selectBlocks)
+                    .catch(error => [error]); // return error instead of blocks
 
+                if ( wasReleased ) {
+                    return;
+                }
 
-            if ( timeout > 0 ) {
-                timer = setTimeout(async () => {
-                    const {rows} = await this.pgPool.query(`
-                        SELECT blocking_locks.pid     AS blocking_pid,
-                                blocking_activity.query   AS blocking_query
-                        FROM  pg_catalog.pg_locks         blocked_locks
-                            JOIN pg_catalog.pg_stat_activity blocked_activity  ON blocked_activity.pid = blocked_locks.pid
-                            JOIN pg_catalog.pg_locks         blocking_locks 
-                                ON blocking_locks.locktype = blocked_locks.locktype
-                                AND blocking_locks.database IS NOT DISTINCT FROM blocked_locks.database
-                                AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
-                                AND blocking_locks.page IS NOT DISTINCT FROM blocked_locks.page
-                                AND blocking_locks.tuple IS NOT DISTINCT FROM blocked_locks.tuple
-                                AND blocking_locks.virtualxid IS NOT DISTINCT FROM blocked_locks.virtualxid
-                                AND blocking_locks.transactionid IS NOT DISTINCT FROM blocked_locks.transactionid
-                                AND blocking_locks.classid IS NOT DISTINCT FROM blocked_locks.classid
-                                AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
-                                AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
-                                AND blocking_locks.pid != blocked_locks.pid
+                await this.queryInReservedConnection(`
+                    select pg_cancel_backend(${ processId })
+                `);
+            }, timeout);
 
-                            JOIN pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
-                        WHERE
-                            NOT blocked_locks.granted and
-                            blocked_locks.pid = ${processId}
-                    `);
-                    blocks = rows;
-
-                    this.pgPool.query(`
-                        select pg_terminate_backend(${ processId })
-                    `).finally(() =>
-                        connection.release()
-                    );
-                }, timeout);
-            }
-
-            const result = await execSql(connection, sql);
-
-            clearTimeout(timer);
-            connection.release();
-
+            const result = await execSql(connection, sql).finally(() => {
+                wasReleased = true;
+                clearTimeout(timer);
+                connection.release();
+            });
             return result;
         } catch(originalErr) {
             (originalErr as any).blocks = blocks;
@@ -577,6 +564,65 @@ implements IDatabaseDriver {
             throw fixErrorStack(sql, originalErr, stack);
         }
     }
+
+    private async queryInReservedConnection(sql: string) {
+        const reservedConnection = await this.getReservedConnection();
+        const {rows} = await execSql(reservedConnection, sql);
+        return rows;
+    }
+
+    private async getReservedConnection() {
+        if ( this.reservedConnection ) {
+            return this.reservedConnection;
+        }
+        if ( this.reservingConnection ) {
+            return await this.reservingConnection;
+        }
+
+        this.reservingConnection = this.getConnection();
+
+        this.reservedConnection = await this.reservingConnection;
+        return this.reservedConnection;
+    }
+
+    private async getConnection(): Promise<PoolClient> {
+        const stack = new Error().stack!;
+        const connection = await this.pgPool.connect()
+            .catch(onGetConnectionError.bind(this, stack));
+        
+        // Fix falling the process
+        connection.on("error", (error) =>
+            console.log("got pg client error", error)
+        );
+
+        return connection;
+    }
+}
+
+function selectBlocksQuery(processId: number) {
+    return `
+        SELECT blocking_locks.pid     AS blocking_pid,
+                blocking_activity.query   AS blocking_query
+        FROM  pg_catalog.pg_locks         blocked_locks
+            JOIN pg_catalog.pg_stat_activity blocked_activity  ON blocked_activity.pid = blocked_locks.pid
+            JOIN pg_catalog.pg_locks         blocking_locks 
+                ON blocking_locks.locktype = blocked_locks.locktype
+                AND blocking_locks.database IS NOT DISTINCT FROM blocked_locks.database
+                AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
+                AND blocking_locks.page IS NOT DISTINCT FROM blocked_locks.page
+                AND blocking_locks.tuple IS NOT DISTINCT FROM blocked_locks.tuple
+                AND blocking_locks.virtualxid IS NOT DISTINCT FROM blocked_locks.virtualxid
+                AND blocking_locks.transactionid IS NOT DISTINCT FROM blocked_locks.transactionid
+                AND blocking_locks.classid IS NOT DISTINCT FROM blocked_locks.classid
+                AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
+                AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
+                AND blocking_locks.pid != blocked_locks.pid
+
+            JOIN pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
+        WHERE
+            NOT blocked_locks.granted and
+            blocked_locks.pid = ${+processId}
+    `.trim();
 }
 
 function execSql(
@@ -593,6 +639,10 @@ function execSql(
             }
         });
     });
+}
+
+function onGetConnectionError(stack: string, error: Error): never {
+    throw fixErrorStack("<getting connection>", error, stack);
 }
 
 function toNumber(value: string | number | null | undefined): number | null {

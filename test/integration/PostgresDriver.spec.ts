@@ -15,13 +15,14 @@ import { flatMap } from "lodash";
 import { Comment } from "../../lib/database/schema/Comment";
 import { CacheUpdate } from "../../lib/Comparator/graph/CacheUpdate";
 import { CacheColumn } from "../../lib/Comparator/graph/CacheColumn";
+import { Pool, PoolClient, Client } from "pg";
 
 use(chaiShallowDeepEqualPlugin);
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
 describe("integration/PostgresDriver.loadState", () => {
-    let db: any;
+    let db: Pool;
 
     beforeEach(async() => {
         if ( fs.existsSync(ROOT_TMP_PATH) ) {
@@ -29,7 +30,9 @@ describe("integration/PostgresDriver.loadState", () => {
         }
         fs.mkdirSync(ROOT_TMP_PATH);
 
-        db = await getDBClient();
+        db = await getDBClient({
+            maxParallelConnections: 9
+        });
 
         await db.query(`
             drop schema public cascade;
@@ -38,6 +41,11 @@ describe("integration/PostgresDriver.loadState", () => {
     });
 
     afterEach(async() => {
+        // missed release
+        for (const client of (db as any)._clients as PoolClient[]) {
+            client.release();
+        }
+
         await db.end();
     });
 
@@ -1246,6 +1254,113 @@ describe("integration/PostgresDriver.loadState", () => {
         assert.strictEqual(table.columns.length, 2);
         assert.strictEqual(table.columns[0].name, "deleted");
         assert.strictEqual(table.columns[1].name, "name");
+    });
+
+    describe("queryWithTimeout", () => {
+        let connection: PoolClient;
+        let driver: PostgresDriver;
+
+        function queryWithTimeout() {
+            return driver.queryWithTimeout(`
+                update my_table set
+                    name = 'test timeout'
+            `, 50);
+        }
+
+        beforeEach(async() => {
+            await db.query(`
+                create table my_table (
+                    id integer,
+                    name text
+                );
+                insert into my_table (name) values ('test');
+            `);
+    
+            connection = await db.connect();
+            connection.query(`
+                begin;
+                update my_table set
+                    name = 'blocking'
+            `);
+
+            driver = new PostgresDriver(db);
+        });
+
+        it("terminate connection after timeout", async() => {
+            await assert.rejects(
+                queryWithTimeout(),
+                /canceling statement due to user request/
+            );
+        });
+    
+        it("show blocks in error", async() => {
+            await assert.rejects(
+                queryWithTimeout(),
+                error => error.blocks.some((block: any) => 
+                    /update my_table set/i.test(block.blocking_query)
+                )
+            );
+        });
+
+        it("can query new select after one timeout", async() => {
+            await queryWithTimeout().catch(() => {});
+
+            const result = await driver.queryWithTimeout(
+                "select 1 as value", 100
+            );
+
+            assert.deepStrictEqual(result.rows, [{value: 1}]);
+        });
+
+        it("can query new select after many timeouts", async() => {
+            const promises: Promise<any>[] = [];
+            for (let i = 0; i < 50; i++) {
+                promises.push(
+                    queryWithTimeout()
+                        .catch(error => {})
+                );
+            }
+            await Promise.all(promises);
+
+            const result = await driver.queryWithTimeout(
+                "select 1 as value", 100
+            );
+
+            assert.deepStrictEqual(result.rows, [{value: 1}]);
+        });
+
+        it("cancel query even if all connections is busy", async() => {
+            const promise = queryWithTimeout();
+
+            // filling all connections
+            for (let i = 0; i < 100; i++) {
+                queryWithTimeout()
+                    .catch(() => {})
+            }
+
+            await assert.rejects(
+                promise,
+                /canceling statement due to user request/
+            );
+        });
+
+        it("cancel query even if cannot fetch blocks", async() => {
+            const original = Client.prototype.query as any;
+            Client.prototype.query = function(...args: any[]) {
+                const [sql, callback] = args;
+                if ( /pg_locks/.test(sql) ) {
+                    callback(new Error("some error"));
+                }
+
+                return original.call(this, ...args);
+            }
+
+            await assert.rejects(
+                queryWithTimeout(),
+                /canceling statement due to user request/
+            );
+        });
+
     });
 
 });
