@@ -309,8 +309,6 @@ export class CacheComparator extends AbstractComparator {
     }
 
     async refreshCache(targetTablesOrColumns?: string) {
-        await this.createColumns();
-
         if ( targetTablesOrColumns ) {
             const concreteColumns = this.findCacheColumnsForTablesOrColumns(targetTablesOrColumns);
 
@@ -323,8 +321,6 @@ export class CacheComparator extends AbstractComparator {
                 updates: this.graph.generateAllUpdates()
             });
         }
-
-        this.migration.enableCacheTriggersOnUpdate();
     }
 
     private dropTrashTriggers() {

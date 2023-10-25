@@ -4724,7 +4724,6 @@ describe("integration/DDLManager.build cache", () => {
         strict.ok(true, "no errors");
     });
 
-    // TODO: dont create columns on update cache
     // TODO: views can use column (check change column type)
 
 });

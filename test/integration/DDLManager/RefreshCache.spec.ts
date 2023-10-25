@@ -3,12 +3,14 @@ import fs from "fs";
 import fse from "fs-extra";
 import { getDBClient } from "../getDbClient";
 import { DDLManager } from "../../../lib/DDLManager";
+import { Pool } from "pg";
 import { sleep } from "../sleep";
+import { PostgresDriver } from "../../../lib/database/PostgresDriver";
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
 describe("integration/DDLManager.refreshCache", () => {
-    let db: any;
+    let db: Pool;
     
     beforeEach(async() => {
         db = await getDBClient();
@@ -45,12 +47,6 @@ describe("integration/DDLManager.refreshCache", () => {
             insert into orders (id_client) values (1);
             insert into orders (id_client) values (1);
         `);
-
-        await DDLManager.build({
-            db, 
-            folder: ROOT_TMP_PATH,
-            throwError: true
-        });
         fs.writeFileSync(ROOT_TMP_PATH + "/some_cache.sql", `
             cache totals for companies (
                 select
@@ -61,6 +57,12 @@ describe("integration/DDLManager.refreshCache", () => {
                     orders.id_client = companies.id
             )
         `);
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
         await sleep(100);
 
         await DDLManager.refreshCache({
@@ -199,6 +201,41 @@ describe("integration/DDLManager.refreshCache", () => {
         });
 
         assert.strictEqual(changed[0].name, "orders_names");
+    });
+
+    it("dont create columns, do only updates", async() => {
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                some_cache_column text
+            );
+            insert into companies default values;
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/some_cache.sql", `
+            cache totals for companies (
+                select
+                    1 as some_cache_column
+            )
+        `);
+
+        let wasAlterTable = false;
+
+        const original = PostgresDriver.prototype.createOrReplaceColumn as any;
+        PostgresDriver.prototype.createOrReplaceColumn = function(...args: any[]) {
+            wasAlterTable = true;
+            return original.call(this, ...args);
+        };
+
+        await DDLManager.refreshCache({
+            db, 
+            folder: ROOT_TMP_PATH
+        });
+
+
+        assert.ok(
+            !wasAlterTable,
+            "alter table on live db can freeze table for users on long time"
+        );
     });
 
 });

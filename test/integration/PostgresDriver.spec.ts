@@ -1348,7 +1348,7 @@ describe("integration/PostgresDriver.loadState", () => {
             const original = Client.prototype.query as any;
             Client.prototype.query = function(...args: any[]) {
                 const [sql, callback] = args;
-                if ( /pg_locks/.test(sql) ) {
+                if ( /pg_locks/i.test(sql) ) {
                     callback(new Error("some error"));
                 }
 
