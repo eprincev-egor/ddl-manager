@@ -3,15 +3,14 @@ import { CacheColumnGraph } from "../Comparator/graph/CacheColumnGraph";
 import { Cache, Expression, SelectColumn } from "../ast";
 import { IDatabaseDriver } from "../database/interface";
 import { Database } from "../database/schema/Database";
-import { FilesState } from "../fs/FilesState";
 
 export interface IFindBrokenColumnsParams {
     timeout?: number;
     concreteTables?: string | string[];
-    onStartScanColumn?: (column: string) => void;
-    onScanColumn?: (result: IColumnScanResult) => void;
-    onScanError?: (result: IColumnScanError) => void;
-    onFinish?: () => void;
+    onStartScanColumn?: (column: string) => void | Promise<void>;
+    onScanColumn?: (result: IColumnScanResult) => void | Promise<void>;
+    onScanError?: (result: IColumnScanError) => void | Promise<void>;
+    onFinish?: () => void | Promise<void>;
 }
 
 export interface IColumnScanResult {
@@ -23,7 +22,7 @@ export interface IColumnScanResult {
         table: string;
         selectExpectedForThatRow: string;
         row: Record<string, any>;
-        sourceRows: Record<string, any>[];
+        sourceRows?: Record<string, any>[];
     };
     time: TimeRange;
 }
@@ -44,12 +43,8 @@ export class CacheScanner {
 
     constructor(
         private driver: IDatabaseDriver,
-        private fs: FilesState,
         private database: Database,
-        private graph = CacheColumnGraph.build(
-            database.aggregators,
-            fs.allCache()
-        )
+        private graph: CacheColumnGraph
     ) {}
 
     async scan(params: IFindBrokenColumnsParams = {}) {
@@ -66,7 +61,7 @@ export class CacheScanner {
         }
         
         if ( params.onFinish ) {
-            params.onFinish();
+            await params.onFinish();
         }
 
         return brokenColumns;
@@ -80,7 +75,7 @@ export class CacheScanner {
         const timeStart = new Date();
 
         if ( params.onStartScanColumn ) {
-            params.onStartScanColumn(column.toString());
+            await params.onStartScanColumn(column.toString());
         }
 
         try {
@@ -89,7 +84,7 @@ export class CacheScanner {
             if ( params.onScanColumn ) {
                 const timeEnd = new Date();
 
-                params.onScanColumn({
+                await params.onScanColumn({
                     column: column.getId(),
                     hasWrongValues: !!wrongExample,
                     wrongExample,
@@ -106,7 +101,7 @@ export class CacheScanner {
             if ( params.onScanError ) {
                 const timeEnd = new Date();
 
-                params.onScanError({
+                await params.onScanError({
                     column: column.toString(),
                     error: error as any,
                     time: {

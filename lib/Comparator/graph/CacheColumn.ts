@@ -64,6 +64,14 @@ export class CacheColumn {
         );
     }
 
+    getSchemaName() {
+        return this.getTableId().split(".")[0];
+    }
+
+    getTableName() {
+        return this.getTableId().split(".")[1];
+    }
+
     getId() {
         return `${this.getTableId()}.${this.name}`;
     }

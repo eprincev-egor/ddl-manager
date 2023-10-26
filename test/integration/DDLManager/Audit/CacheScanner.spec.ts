@@ -1,50 +1,15 @@
 import { Pool } from "pg";
 import fs from "fs";
-import fse from "fs-extra";
-import { PostgresDriver } from "../../../lib/database/PostgresDriver";
-import { CacheScanner, IColumnScanResult, IFindBrokenColumnsParams } from "../../../lib/Auditor/CacheScanner";
-import { getDBClient } from "../getDbClient";
-import { FileReader } from "../../../lib/fs/FileReader";
-import { Database } from "../../../lib/database/schema/Database";
+import { createScanner, prepare, ROOT_TMP_PATH, buildDDL } from "./fixture";
+import { deepEqualRows } from "./utils";
 import { strict } from "assert";
-import { DDLManager } from "../../../lib/DDLManager";
+import { IColumnScanResult, IFindBrokenColumnsParams } from "../../../../lib/Auditor";
 
-const ROOT_TMP_PATH = __dirname + "/tmp";
+describe.only("CacheScanner", () => {
 
-describe("CacheScanner", () => {
     let db: Pool;
-
     beforeEach(async () => {
-        db = await getDBClient();
-
-        await db.query(`
-            drop schema public cascade;
-            create schema public;
-
-            create table companies (
-                id serial primary key,
-                name text
-            );
-            create table orders (
-                id serial primary key,
-                id_client integer,
-                doc_number text,
-                profit integer
-            );
-
-            insert into companies (name) 
-            values ('client'), ('partner');
-            insert into orders (id_client, doc_number)
-            values
-                (1, 'order-1'),
-                (1, 'order-2'),
-                (2, 'order-3');
-        `);
-
-        if ( fs.existsSync(ROOT_TMP_PATH) ) {
-            fse.removeSync(ROOT_TMP_PATH);
-        }
-        fs.mkdirSync(ROOT_TMP_PATH);
+        db = await prepare();
     });
 
     describe("scan simple cache without errors, now wrong values", () => {
@@ -407,25 +372,13 @@ describe("CacheScanner", () => {
     // TODO: source rows filter by reference only
 
     async function build() {
-        await DDLManager.build({
-            db,
-            folder: ROOT_TMP_PATH,
-            throwError: true,
-            needLogs: false
-        });
+        await buildDDL(db);
     }
 
     async function scan(
         params: IFindBrokenColumnsParams = {}
     ): Promise<IColumnScanResult> {
-        const fsState = FileReader.read([ROOT_TMP_PATH]);
-        const dbState = new Database();
-
-        const scanner = new CacheScanner(
-            new PostgresDriver(db),
-            fsState,
-            dbState
-        );
+        const scanner = createScanner(db);
 
         const scans: IColumnScanResult[] = [];
         return new Promise((resolve, reject) => {
@@ -446,30 +399,4 @@ describe("CacheScanner", () => {
         });
     }
 
-    function deepEqualRows(
-        actualRows: Record<string, any>[] | undefined,
-        expectedRows: Record<string, any>[]
-    ) {
-        strict.ok(actualRows, "required rows");
-
-        if ( expectedRows.length === 0 ) {
-            strict.equal(actualRows.length, 0);
-            return;
-        }
-
-        const keys = Object.keys(expectedRows[0]);
-        const actual = actualRows
-            .sort((a, b) => a.id - b.id)
-            .map(row => pick(row, ...keys));
-
-        strict.deepEqual(actual, expectedRows);
-    }
-
-    function pick(row: Record<string, any>, ...keys: string[]) {
-        const partial: Record<string, any> = {};
-        for (const key of keys) {
-            partial[ key ] = row[ key ];
-        }
-        return partial;
-    }
 })

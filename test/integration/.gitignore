@@ -2,5 +2,6 @@ tmp/*
 tmp/**/*
 */tmp/*
 */tmp/**/*
+**/*/tmp/**/*
 DDLManager/Build/tmp/*
 DDLManager/Build/tmp/**/*

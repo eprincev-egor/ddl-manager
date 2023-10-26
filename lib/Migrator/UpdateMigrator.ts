@@ -3,10 +3,30 @@ import { TableReference } from "../database/schema/TableReference";
 import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
 import { flatMap } from "lodash";
 import { sleep } from "../utils";
+import { Migration } from "./Migration";
+import { IDatabaseDriver } from "../database/interface";
+import { Database } from "../database/schema/Database";
 
 export const parallelPackagesCount = 8;
 
 export class UpdateMigrator extends AbstractMigrator {
+
+    static async migrate(
+        driver: IDatabaseDriver,
+        database: Database,
+        updates: CacheUpdate[],
+    ) {
+        const migration = Migration.empty();
+        migration.create({ updates });
+
+        const migrator = new UpdateMigrator(
+            driver,
+            migration,
+            database,
+            []
+        );
+        await migrator.create();
+    }
 
     static timeoutOnDeadlock = 3000;
 

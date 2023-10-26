@@ -18,6 +18,7 @@ import { parseCalls } from "./timeline/Coach";
 import { createTimelineFile } from "./timeline/createTimelineFile";
 import { CacheComparator } from "./Comparator/CacheComparator";
 import { CacheScanner, IFindBrokenColumnsParams, TimeRange } from "./Auditor";
+import { CacheColumnGraph } from "./Comparator/graph/CacheColumnGraph";
 
 const watchers: FileWatcher[] = [];
 interface IParams {
@@ -315,8 +316,11 @@ export class DDLManager {
 
         const scanner = new CacheScanner(
             postgres,
-            filesState,
             database,
+            CacheColumnGraph.build(
+                new Database().aggregators,
+                filesState.allCache()
+            )
         );
         const columns = await scanner.scan(params);
         return columns;
