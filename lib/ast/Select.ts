@@ -25,7 +25,8 @@ interface ISelectParams {
 export class Select extends AbstractAstElement {
 
     static notExists(
-        notExists: Omit<ISelectParams, "columns">,
+        from: TableReference,
+        where: Expression,
         as: string
     ) {
         return new Select({
@@ -35,8 +36,9 @@ export class Select extends AbstractAstElement {
                     UnknownExpressionElement.fromSql(`not`),
                     new Exists({
                         select: new Select({
-                            ...notExists,
-                            columns: []
+                            columns: [],
+                            from: [new From({source: from})],
+                            where
                         })
                     })
                 ])
@@ -123,6 +125,12 @@ export class Select extends AbstractAstElement {
 
     hasArraySearchOperator() {
         return this.where?.hasArraySearchOperator();
+    }
+
+    hasAgg(aggFunctions: string[]) {
+        return this.columns.some(column => 
+            column.getAggregations(aggFunctions).length > 0
+        );
     }
 
     fixArraySearchForDifferentArrayTypes(fromTable?: TableReference) {

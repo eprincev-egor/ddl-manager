@@ -16,13 +16,15 @@ import { FunctionsMigrator } from "./Migrator/FunctionsMigrator";
 import { createCallsTable, clearCallsLogs, downloadLogs } from "./timeline/callsTable";
 import { parseCalls } from "./timeline/Coach";
 import { createTimelineFile } from "./timeline/createTimelineFile";
-import { CacheComparator, IFindBrokenColumnsParams, TimeRange } from "./Comparator/CacheComparator";
+import { CacheComparator } from "./Comparator/CacheComparator";
+import { CacheScanner, IFindBrokenColumnsParams, TimeRange } from "./Auditor";
 
 const watchers: FileWatcher[] = [];
 interface IParams {
     db: IDBConfig | pg.Pool;
     folder: string | string[];
     throwError?: boolean;
+    needLogs?: boolean;
 }
 
 interface ITimelineParams extends IParams {
@@ -132,6 +134,7 @@ export class DDLManager {
     private folders: string[];
     private needThrowError: boolean;
     private needCloseConnect: boolean;
+    private needLogs: boolean;
     private dbConfig: IDBConfig | pg.Pool;
     private activeMigrators: MainMigrator[] = [];
 
@@ -151,6 +154,7 @@ export class DDLManager {
         this.needCloseConnect = !("query" in params.db);
         this.dbConfig = params.db;
         this.needThrowError = !!params.throwError;
+        this.needLogs = params.needLogs ?? true;
     }
 
     private async build() {
@@ -309,12 +313,12 @@ export class DDLManager {
         const postgres = await this.postgres();
         const database = await postgres.load();
 
-        const cacheComparator = new CacheComparator(
+        const scanner = new CacheScanner(
             postgres,
+            filesState,
             database,
-            filesState
         );
-        const columns = await cacheComparator.findBrokenColumns(params);
+        const columns = await scanner.scan(params);
         return columns;
     }
 
@@ -328,6 +332,9 @@ export class DDLManager {
             database,
             filesState
         );
+        if ( this.needLogs === false ) {
+            migration.silent();
+        }
         return {migration, postgres, database};
     }
 
@@ -357,13 +364,16 @@ export class DDLManager {
             postgres.end();
         }
 
-        migration.log();
-        
-        if ( !migrateErrors.length ) {
-            // tslint:disable-next-line: no-console
-            console.log("ddl-manager build success");
+        if ( this.needLogs ) {
+            migration.log();
+
+            if ( !migrateErrors.length ) {
+                // tslint:disable-next-line: no-console
+                console.log("ddl-manager build success");
+            }
         }
-        else if ( this.needThrowError ) {
+        
+        if ( this.needThrowError && migrateErrors.length ) {
             throw migrateErrors[0];
         }
     }

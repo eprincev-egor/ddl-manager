@@ -25,6 +25,7 @@ export class Migration {
     private timeoutPerUpdate = 0;
     private updatePackageSize = 20000;
     private logFilePath?: string;
+    private needLogs = true;
 
     static empty() {
         return new Migration();
@@ -130,6 +131,10 @@ export class Migration {
         return this;
     }
 
+    silent() {
+        this.needLogs = false;
+    }
+
     log() {
         console.log( new Date().toLocaleTimeString() );
 
@@ -182,7 +187,9 @@ export class Migration {
     }
     
     addLog(log: string) {
-        console.log(log);
+        if ( this.needLogs ) {
+            console.log(log);
+        }
 
         if ( this.logFilePath ){ 
             fs.appendFileSync(this.logFilePath, log + "\n");

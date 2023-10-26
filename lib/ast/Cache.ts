@@ -7,6 +7,12 @@ import { findDependenciesTo, findDependenciesToCacheTable } from "../cache/proce
 import { fromPairs } from "lodash";
 
 export class Cache {
+
+    // @see also jsonColumnName
+    static generateJsonHelperColumnName(cacheName: string) {
+        return `__${cacheName}_json__`;
+    }
+
     readonly name: string;
     readonly for: TableReference;
     readonly select: Select;
@@ -95,8 +101,9 @@ export class Cache {
         return this.select.getFromTable();
     }
 
+    // @see also isJsonHelperColumn
     jsonColumnName() {
-        return `__${this.name}_json__`
+        return Cache.generateJsonHelperColumnName(this.name);
     }
 
     getSourceRowJson(recordAlias?: string) {
@@ -132,9 +139,7 @@ export class Cache {
     }
 
     hasAgg(aggFunctions: string[]) {
-        return this.select.columns.some(column => 
-            column.getAggregations(aggFunctions).length > 0
-        );
+        return this.select.hasAgg(aggFunctions);
     }
 
     getSignature() {

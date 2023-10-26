@@ -6,39 +6,10 @@ import { Migration } from "../Migrator/Migration";
 import { IDatabaseDriver } from "../database/interface";
 import { Database } from "../database/schema/Database";
 import { FilesState } from "../fs/FilesState";
-import { CacheColumn, CacheColumnParams } from "./graph/CacheColumn";
+import { CacheColumn } from "./graph/CacheColumn";
 import { CacheColumnGraph } from "./graph/CacheColumnGraph";
 import { CacheColumnBuilder } from "./CacheColumnBuilder";
 import { Comment } from "../database/schema/Comment";
-import { ColumnReference, Expression, From, Select, SelectColumn, UnknownExpressionElement } from "../ast";
-import { TableReference } from "../database/schema/TableReference";
-import { buildReferenceMeta } from "../cache/processor/buildReferenceMeta";
-
-export interface IFindBrokenColumnsParams {
-    timeout?: number;
-    concreteTables?: string | string[];
-    onStartScanColumn?: (column: string) => void;
-    onScanColumn?: (result: IColumnScanResult) => void;
-    onScanError?: (result: IColumnScanError) => void;
-}
-
-export interface IColumnScanResult {
-    column: string;
-    hasWrongValues: boolean;
-    time: TimeRange;
-}
-
-export interface IColumnScanError {
-    column: string;
-    error: Error;
-    time: TimeRange;
-}
-
-export interface TimeRange {
-    start: Date;
-    end: Date;
-    duration: number;
-}
 
 export class CacheComparator extends AbstractComparator {
 
@@ -56,85 +27,8 @@ export class CacheComparator extends AbstractComparator {
 
         this.allCacheTriggers = [];
 
-        const cacheColumns: CacheColumnParams[] = [];
         const allCache = this.fs.allCache();
-
-        for (const cache of allCache) {
-            const selectForUpdate = cache.createSelectForUpdate(database.aggregators);
-
-            for (const updateColumn of selectForUpdate.columns) {
-                cacheColumns.push({
-                    for: cache.for,
-                    name: updateColumn.name,
-                    cache: {
-                        name: cache.name,
-                        signature: cache.getSignature()
-                    },
-                    select: selectForUpdate.clone({
-                        columns: [
-                            updateColumn
-                        ]
-                    })
-                });
-            }
-
-            const needLastRowColumn = (
-                cache.select.from.length === 1 &&
-                cache.select.orderBy &&
-                cache.select.limit === 1
-            );
-            if ( needLastRowColumn ) {
-                const fromRef = cache.select.getFromTable();
-                const prevRef = new TableReference(
-                    fromRef.table,
-                    `prev_${ fromRef.table.name }`
-                );
-                const orderBy = cache.select.orderBy!.items[0]!;
-                const columnName = cache.getIsLastColumnName();
-                const referenceMeta = buildReferenceMeta(
-                    cache, fromRef.table
-                );
-
-                cacheColumns.push({
-                    for: fromRef,
-                    name: columnName,
-                    cache: {
-                        name: cache.name,
-                        signature: cache.getSignature()
-                    },
-                    select: Select.notExists({
-                        from: [
-                            new From({source: prevRef})
-                        ],
-                        where: Expression.and([
-                            ...referenceMeta.columns.map(column =>
-                                new Expression([
-                                    new ColumnReference(prevRef, column),
-                                    UnknownExpressionElement.fromSql("="),
-                                    new ColumnReference(fromRef, column),
-                                ])
-                            ),
-                            ...referenceMeta.filters.map(filter =>
-                                filter.replaceTable(
-                                    fromRef,
-                                    prevRef
-                                )
-                            ),
-                            new Expression([
-                                new ColumnReference(prevRef, "id"),
-                                UnknownExpressionElement.fromSql(
-                                    orderBy.type === "desc" ? 
-                                        ">" : "<"
-                                ),
-                                new ColumnReference(fromRef, "id"),
-                            ])
-                        ])
-                    }, columnName)
-                });
-            }
-        }
-
-        this.graph = new CacheColumnGraph(cacheColumns);
+        this.graph = CacheColumnGraph.build(database.aggregators, allCache);
 
         for (const cache of allCache) {
             const cacheTriggerFactory = new CacheTriggersBuilder(
@@ -191,115 +85,6 @@ export class CacheComparator extends AbstractComparator {
         return changedColumns;
     }
 
-    async findBrokenColumns(params: IFindBrokenColumnsParams = {}) {
-        let allCacheColumns = this.findCacheColumnsForTablesOrColumns(params.concreteTables);
-
-        const brokenColumns: CacheColumn[] = [];
-
-        for (const column of allCacheColumns) {
-            const hasWrongValues = await this.tryScanColumnOnWrongValues(params, column);
-
-            if ( hasWrongValues ) {
-                brokenColumns.push(column);
-            }
-        }
-        
-        return brokenColumns;
-    }
-
-    private async tryScanColumnOnWrongValues(
-        params: IFindBrokenColumnsParams,
-        column: CacheColumn
-    ) {
-        const timeStart = new Date();
-
-        if ( params.onStartScanColumn ) {
-            params.onStartScanColumn(column.toString());
-        }
-
-        try {
-            const hasWrongValues = await this.scanColumnOnWrongValues(params, column);
-            
-            if ( params.onScanColumn ) {
-                const timeEnd = new Date();
-
-                params.onScanColumn({
-                    column: column.toString(),
-                    hasWrongValues,
-                    time: {
-                        start: timeStart,
-                        end: timeEnd,
-                        duration: +timeEnd - +timeStart
-                    }
-                });
-            }
-
-            return hasWrongValues;
-        } catch(error) {
-            if ( params.onScanError ) {
-                const timeEnd = new Date();
-
-                params.onScanError({
-                    column: column.toString(),
-                    error: error as any,
-                    time: {
-                        start: timeStart,
-                        end: timeEnd,
-                        duration: +timeEnd - +timeStart
-                    }
-                });
-            }
-        }
-    }
-
-    private async scanColumnOnWrongValues(
-        params: IFindBrokenColumnsParams,
-        column: CacheColumn
-    ) {
-        const columnRef = `${column.for.getIdentifier()}.${column.name}`;
-        let whereBroken = `${columnRef} is distinct from tmp.${column.name}`
-
-        const expression = column.getColumnExpression();
-        if ( expression.isFuncCall() ) {
-            const [call] = expression.getFuncCalls();
-            if ( call.name === "array_agg" ) {
-                whereBroken = `
-                    ${columnRef} is distinct from tmp.${column.name} and
-                    not(${columnRef} @> tmp.${column.name} and
-                    ${columnRef} <@ tmp.${column.name})
-                `
-            }
-
-            if ( call.name === "sum" ) {
-                whereBroken = `coalesce(${columnRef}, 0) is distinct from coalesce(tmp.${column.name}, 0)`
-            }
-        }
-
-        const selectHasBroken = `
-            select exists(
-                select from ${column.for}
-                
-                left join lateral (
-                    ${column.select.toSQL()}
-                ) as tmp on true
-                
-                where
-                    ${whereBroken}
-            ) as has_broken
-        `;
-
-        if ( params.timeout ) {
-            const {rows} = await this.driver.queryWithTimeout(
-                selectHasBroken,
-                params.timeout
-            );
-            return rows[0].has_broken;
-        }
-        const {rows} = await this.driver.query(selectHasBroken);
-
-        return rows[0].has_broken;
-    }
-
     async createLogFuncs() {
         for (const trigger of this.allCacheTriggers) {
             this.migration.create({
@@ -310,7 +95,7 @@ export class CacheComparator extends AbstractComparator {
 
     async refreshCache(targetTablesOrColumns?: string) {
         if ( targetTablesOrColumns ) {
-            const concreteColumns = this.findCacheColumnsForTablesOrColumns(targetTablesOrColumns);
+            const concreteColumns = this.graph.findCacheColumnsForTablesOrColumns(targetTablesOrColumns);
 
             this.migration.create({
                 updates: this.graph.generateUpdatesFor(concreteColumns)
@@ -532,36 +317,5 @@ export class CacheComparator extends AbstractComparator {
         this.migration.create({
             updates: requiredUpdates
         });
-    }
-
-    private findCacheColumnsForTablesOrColumns(
-        targetTablesOrColumns?: string | string[]
-    ) {
-        if ( !targetTablesOrColumns ) {
-            return this.graph.getAllColumns();
-        }
-
-        const concreteColumns: CacheColumn[] = [];
-    
-        for (const tableOrColumn of String(targetTablesOrColumns).split(/\s*,\s*/) ) {
-            const path = tableOrColumn.trim().toLowerCase().split(".");
-            const tableId = path.slice(0, 2).join(".");
-            const tableColumns = this.graph.getColumns(tableId);
-
-            if ( path.length === 3 ) {
-                const columnName = path.slice(-1)[0];
-                const column = tableColumns.find(cacheColumn => 
-                    cacheColumn.name === columnName
-                );
-                if ( column ) {
-                    concreteColumns.push(column);
-                }
-            }
-            else {
-                concreteColumns.push(...tableColumns);
-            }
-        }
-
-        return concreteColumns;
     }
 }
