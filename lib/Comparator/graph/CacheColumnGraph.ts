@@ -199,6 +199,21 @@ export class CacheColumnGraph {
         return concreteColumns;
     }
 
+    findCacheColumnsDependentOn(table: TableID): CacheColumn[] {
+        const dependencyColumns: CacheColumn[] = [];
+
+        for (const column of this.getAllColumns()) {
+            const isDependency = column.select.getAllColumnReferences().some(depRef =>
+                depRef.isFromTable(table)
+            );
+            if (  isDependency ) {
+                dependencyColumns.push(column);
+            }
+        }
+
+        return dependencyColumns;
+    }
+
     private assignAllDependencies() {
         const allColumns = flatMap(Object.values(this.tables));
         for (const column of allColumns) {

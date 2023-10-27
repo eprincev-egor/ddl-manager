@@ -5,7 +5,10 @@ import { UpdateMigrator } from "../Migrator/UpdateMigrator";
 import { Database } from "../database/schema/Database";
 import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
 import { wrapText } from "../database/postgres/wrapText";
+import { buildReferenceMeta } from "../cache/processor/buildReferenceMeta";
+import { FilesState } from "../fs/FilesState";
 import { strict } from "assert";
+import { flatMap, uniq } from "lodash";
 
 export interface IAuditParams {
     timeout?: number;
@@ -17,6 +20,7 @@ export class CacheAuditor {
     constructor(
         private driver: IDatabaseDriver,
         private database: Database,
+        private fs: FilesState,
         private graph: CacheColumnGraph,
         private scanner: CacheScanner
     ) {}
@@ -24,6 +28,7 @@ export class CacheAuditor {
     async audit(params: IAuditParams = {}) {
         await this.createTables();
         await this.scanner.scan({
+            ...params,
             onScanColumn: this.onScanColumn.bind(this)
         });
     }
@@ -51,10 +56,20 @@ export class CacheAuditor {
         await this.driver.query(`
             create table if not exists ddl_manager_audit_column_changes (
                 id bigserial primary key,
-                source_table text not null,
-                source_row_id bigint not null,
+
+                cache_columns text[],
+                cache_rows_ids text[],
+
+                changed_table text not null,
+                changed_row_id bigint not null,
+                changed_old_row json,
+                changed_new_row json,
+
+                changes_type text not null,
                 transaction_date timestamp without time zone not null,
                 changes_date timestamp without time zone not null,
+
+                entry_query text not null,
                 callstack text[]
             );
         `);
@@ -108,16 +123,49 @@ export class CacheAuditor {
 
     private async logChanges(event: IColumnScanResult) {
         const cacheColumn = this.findCacheColumn(event);
+        const cache = this.fs.getCache( cacheColumn.cache.signature );
         const wrongExample = event.wrongExample;
-        strict.ok(wrongExample, "required wrongExample");
+        strict.ok(wrongExample && cacheColumn && cache, "something wrong");
 
-        const fromTable = cacheColumn.select.getFromTableId();
+
+        const fromTable = cache.hasForeignTablesDeps() ?  // TODO: polymorphism
+            cache.select.getFromTableId() :
+            cache.for.table;
+        const depsCacheColumns = this.graph.findCacheColumnsDependentOn(fromTable);
+
+        let fromTableColumns = flatMap(depsCacheColumns, column => 
+            column.select.getAllColumnReferences()
+        ).filter(columnRef => columnRef.isFromTable(fromTable))
+        .map(column => column.name)
+        .sort();
+
+        if ( !cache.hasForeignTablesDeps() ) {
+            fromTableColumns.push(cacheColumn.name);
+        }
+        fromTableColumns = uniq(fromTableColumns);
+
+    
+        const depsCacheColumnsIds = depsCacheColumns.map(column => column.getId());
+
+        const reference = buildReferenceMeta(cache, fromTable);
+        const referenceColumns = cache.hasForeignTablesDeps() ? 
+            reference.columns : ["id"];
+        const thisRowReferenceColumns = referenceColumns.map(column =>
+            `this_row.${column}`
+        );
 
         await this.driver.query(`
-            create or replace function ddl_manager_audit_changes_source_listener()
+            create or replace function ddl_manager_audit_changes_listener()
             returns trigger as $body$
-            declare callstack text;            
+            declare callstack text;
+            declare this_row record;
             begin
+                this_row = case when TG_OP = 'DELETE' then old else new end;
+
+                if current_query() ~* '-- cache' then
+                    return this_row;
+                end if;
+
                 begin
                     raise exception 'callstack';
                 exception when others then
@@ -125,18 +173,39 @@ export class CacheAuditor {
                     callstack = PG_EXCEPTION_CONTEXT;
                 end;
 
-
                 insert into ddl_manager_audit_column_changes (
-                    source_table,
-                    source_row_id,
+                    cache_columns,
+                    cache_rows_ids,
+
+                    changed_table,
+                    changed_row_id,
+                    changed_old_row,
+                    changed_new_row,
+
+                    changes_type,
                     transaction_date,
                     changes_date,
+
+                    entry_query,
                     callstack
                 ) values (
+                    ARRAY[${depsCacheColumnsIds.map(name => wrapText(name))}],
+                    ARRAY[${thisRowReferenceColumns}],
+                    
                     '${fromTable}',
-                    new.id,
+                    this_row.id,
+                    case when TG_OP in ('UPDATE', 'DELETE') then
+                        ${pickJson("old", fromTableColumns)}
+                    end,
+                    case when TG_OP in ('UPDATE', 'INSERT') then
+                        ${pickJson("new", fromTableColumns)}
+                    end,
+                    
+                    TG_OP,
                     transaction_timestamp()::timestamp with time zone at time zone 'UTC',
                     clock_timestamp()::timestamp with time zone at time zone 'UTC',
+
+                    current_query(),
                     (
                         select
                             array_agg(
@@ -147,21 +216,21 @@ export class CacheAuditor {
                             regexp_split_to_array(callstack, '[\\n\\r]+')
                         ) as line
                         where
-                            line !~* 'ddl_manager_audit_changes_source_listener' 
+                            line !~* 'ddl_manager_audit_changes_listener' 
                             and
                             line ~* '(function|функция) '
                     )
                 );
 
-                return new;
+                return this_row;
             end
             $body$ language plpgsql;
 
-            create trigger zzzzz_ddl_manager_audit_changes_source_listener
-            after update
+            create trigger zzzzz_ddl_manager_audit_changes_listener
+            after insert or update of ${fromTableColumns} or delete
             on ${fromTable}
             for each row
-            execute procedure ddl_manager_audit_changes_source_listener();
+            execute procedure ddl_manager_audit_changes_listener();
         `);
     }
 
@@ -176,12 +245,19 @@ export class CacheAuditor {
     }
 }
 
-// TODO: indexes
+function pickJson(row: string, columns: string[]) {
+    return `json_build_object(
+        ${columns.map(column => `'${column}', ${row}.${column}`)}
+    )`.trim();
+}
+
 // TODO: remove changes listener
 // TODO: cache columns can be changed (change cache file)
 // TODO: cache columns can be dropped
-// TODO: command update-ddl-cache can spawn a lot of changes
-// TODO: test recreating table
-// TODO: catch bugs with parallel transactions
-// TODO: log all changes columns inside incident (can be helpful to find source of bug)
 // TODO: test many broken columns on one table
+// TODO: test cache with array ref
+// TODO: log all changes columns inside incident (can be helpful to find source of bug)
+// TODO: test recreating table
+    // TODO: indexes
+    // TODO: dont loose old data
+// TODO: test timeout

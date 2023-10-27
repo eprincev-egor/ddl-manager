@@ -8,10 +8,11 @@ import { PostgresDriver } from "../../../../lib/database/PostgresDriver";
 import { CacheColumnGraph } from "../../../../lib/Comparator/graph/CacheColumnGraph";
 import { deepEqualRow, shouldBeBetween } from "./utils";
 import { strict } from "assert";
+import { DDLManager } from "../../../../lib/DDLManager";
 
 const ROOT_TMP_PATH = __dirname + "/tmp";
 
-describe.only("CacheAuditor", () => {
+describe("CacheAuditor", () => {
     
     let db: Pool;
     beforeEach(async () => {
@@ -53,14 +54,14 @@ describe.only("CacheAuditor", () => {
             it("save schema, table, column", async() => {
                 await audit();
 
-                await equalReportColumn("cache_column", "public.companies.some_column");
+                await expectedReport("cache_column", "public.companies.some_column");
             });
 
             it("save expected, actual cache value", async() => {
                 await audit();
 
-                await equalReportColumn("expected_value", 1);
-                await equalReportColumn("actual_value", 0);
+                await expectedReport("expected_value", 1);
+                await expectedReport("actual_value", 0);
             });
             
             it("save scan date", async() => {
@@ -131,10 +132,94 @@ describe.only("CacheAuditor", () => {
                 select main_func();
             `);
 
-            await equalChangesColumn("callstack", [
+            await expectedChanges("callstack", [
                 "inner_func:6",
                 "main_func:3"
             ]);
+        });
+
+        it("log entry query", async() => {
+            const sql = `/* test */update orders set doc_number = 'test!'/* test */`;
+            await db.query(sql);
+            
+            await expectedChanges("entry_query", sql);
+        });
+
+        describe("log insert into source table", () => {
+            beforeEach(async () => {
+                await db.query(`
+                    insert into orders (id_client, doc_number)
+                    values (2, 'order-3');
+                `);
+            });
+
+            it("log TG_OP", async () => {
+                await expectedChanges("changes_type", "INSERT");
+            });
+
+            it("log source table", async () => {
+                await expectedChanges("changed_table", "public.orders");
+            });
+
+            it("log source row id", async () => {
+                await expectedChanges("changed_row_id", "4");
+            });
+
+            it("log cache rows ids", async () => { 
+                await expectedChanges("cache_rows_ids", ["2"]);
+            });
+
+            it("log source changes (need columns for cache only)", async () => {
+                await expectedChanges("changed_old_row", null);
+                await expectedChanges("changed_new_row", {
+                    id: 4,
+                    id_client: 2,
+                    doc_number: "order-3",
+                    profit: null
+                });
+            });
+        });
+
+        describe("log delete from source table", () => {
+            beforeEach(async () => {
+                await db.query(`
+                    delete from orders 
+                    where id_client = 2;
+                `);
+            });
+
+            it("log TG_OP", async () => {
+                await expectedChanges("changes_type", "DELETE");
+            });
+
+            it("log source table", async () => {
+                await expectedChanges("changed_table", "public.orders");
+            });
+
+            it("log source row id", async () => {
+                await expectedChanges("changed_row_id", "3");
+            });
+
+            it("log cache rows ids", async () => { 
+                await expectedChanges("cache_rows_ids", ["2"]);
+            });
+
+            it("log source changes (need columns for cache only)", async () => {
+                await expectedChanges("changed_old_row", {
+                    id: 3,
+                    id_client: 2,
+                    doc_number: "order-3",
+                    profit: null
+                });
+                await expectedChanges("changed_new_row", null);
+            });
+        });
+
+        it("ignore update not cache columns", async() => {
+            await db.query(`update orders set note = 'test'`);
+            
+            const lastChanges = await loadLastColumnChanges();
+            strict.equal(lastChanges, undefined);
         });
 
         describe("log update of source column", () => {
@@ -146,14 +231,149 @@ describe.only("CacheAuditor", () => {
                 `);
             });
 
-            it("log source row id", async () => {
-                await equalChangesColumn("source_row_id", "1");
+            it("log TG_OP", async () => {
+                await expectedChanges("changes_type", "UPDATE");
             });
 
             it("log source table", async () => {
-                await equalChangesColumn("source_table", "public.orders");
+                await expectedChanges("changed_table", "public.orders");
             });
 
+            it("log source row id", async () => {
+                await expectedChanges("changed_row_id", "1");
+            });
+
+            it("log cache columns", async () => {
+                const lastChanges = await loadLastColumnChanges();
+                const cacheColumns: string[] = lastChanges?.cache_columns || [];
+
+                strict.ok(cacheColumns.includes(
+                    "public.companies.orders_numbers"
+                ), "has orders_numbers");
+
+                strict.ok(cacheColumns.includes(
+                    "public.companies.orders_profit"
+                ), "has orders_profit");
+            });
+
+            it("log cache rows ids", async () => { 
+                await expectedChanges("cache_rows_ids", ["1"]);
+            });
+
+            it("log source changes (need columns for cache only)", async () => {
+                await expectedChanges("changed_old_row", {
+                    id: 1,
+                    id_client: 1,
+                    doc_number: "order-1",
+                    profit: null
+                });
+                await expectedChanges("changed_new_row", {
+                    id: 1,
+                    id_client: 1,
+                    doc_number: "update order 1",
+                    profit: null
+                });
+            });
+
+            it("log changes date", async () => {
+                const dateStart = new Date();
+                await db.query(`
+                    update orders set
+                        doc_number = 'order A'
+                    where id = 1
+                `);
+                const dateEnd = new Date();
+
+                const lastChanges = await loadLastColumnChanges();
+                shouldBeBetween(lastChanges.changes_date, dateStart, dateEnd);
+                shouldBeBetween(lastChanges.transaction_date, dateStart, dateEnd);
+            });
+
+        });
+
+    });
+
+    describe("log self row cache", () => {
+        beforeEach(async() => {
+            fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+                cache totals for companies (
+                    select
+                        '#' || companies.id || 
+                        coalesce(' ' || companies.name, '') as ref_name
+                )
+            `);
+            await build();
+
+            await db.query(`
+                update companies set
+                    ref_name = 'wrong'
+            `);
+            await audit();
+        });
+
+        it("log update of cache row", async () => {
+            await db.query(`
+                update companies set
+                    name = 'new name'
+                where id = 1;
+            `);
+
+            await expectedChanges("changed_old_row", {
+                id: 1,
+                name: "client",
+                ref_name: "#1 client"
+            });
+            await expectedChanges("changed_new_row", {
+                id: 1,
+                name: "new name",
+                ref_name: "#1 new name"
+            });
+        });
+
+        it("log insert of cache row", async () => {
+            await db.query(`
+                insert into companies (name)
+                values ('test');
+            `);
+
+            await expectedChanges("changes_type", "INSERT");
+            await expectedChanges("changed_new_row", {
+                id: 3,
+                name: "test",
+                ref_name: "#3 test"
+            });
+        });
+
+        it("log delete of cache row", async () => {
+            await db.query(`
+                delete from companies
+                where id = 1;
+            `);
+
+            await expectedChanges("changes_type", "DELETE");
+            await expectedChanges("changed_old_row", {
+                id: 1,
+                name: "client",
+                ref_name: "#1 client"
+            });
+        });
+
+        it("ignore update-ddl-cache operation (big migration)", async() => {
+            await db.query(`
+                alter table companies disable trigger all;
+                update companies set
+                    ref_name = null;
+                alter table companies enable trigger all;
+            `);
+            await DDLManager.refreshCache({
+                db,
+                folder: ROOT_TMP_PATH,
+                throwError: true,
+                needLogs: false
+            });
+            
+            const lastChanges = await loadLastColumnChanges();
+            strict.equal(lastChanges, undefined);
         });
 
     });
@@ -179,6 +399,7 @@ describe.only("CacheAuditor", () => {
         const auditor = new CacheAuditor(
             postgres,
             dbState,
+            fsState,
             graph,
             scanner,
         );
@@ -186,7 +407,7 @@ describe.only("CacheAuditor", () => {
         await auditor.audit();
     }
 
-    async function equalReportColumn(column: string, expected: any) {
+    async function expectedReport(column: string, expected: any) {
         const lastReport = await loadLastReport();
 
         strict.ok(lastReport, "report should be saved");
@@ -212,7 +433,7 @@ describe.only("CacheAuditor", () => {
         return rows[0];
     }
 
-    async function equalChangesColumn(column: string, expected: any) {
+    async function expectedChanges(column: string, expected: any) {
         const lastChanges = await loadLastColumnChanges();
 
         strict.ok(lastChanges, "changes should be saved");

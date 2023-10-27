@@ -64,6 +64,10 @@ export class ColumnReference extends AbstractExpressionElement {
         return this.tableReference.equal(table);
     }
 
+    isFromTable(table: TableID) {
+        return this.tableReference.table.equal(table);
+    }
+
     template(spaces: Spaces) {
         if ( this.tableReference.alias ) {
             return [`${this.tableReference.alias}.${this.name}`];
@@ -75,7 +79,7 @@ export class ColumnReference extends AbstractExpressionElement {
         return [`${this.tableReference.table.toStringWithoutPublic()}.${this.name}`];
     }
 
-    toId() {
+    getId() {
         return `${this.tableReference.table}.${this.name}`;
     }
 }

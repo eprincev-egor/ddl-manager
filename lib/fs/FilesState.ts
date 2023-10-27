@@ -38,6 +38,12 @@ export class FilesState {
         return flatMap(this.allNotHelpersFiles(), file => file.content.functions);
     }
 
+    getCache(signature: string) {
+        return this.allCache().find(cache => 
+            cache.getSignature() === signature
+        );
+    }
+
     getCachesForTable(forTable: TableID) {
         return (this.cacheMap[ forTable.toString() ] ?? []).slice();
     }
