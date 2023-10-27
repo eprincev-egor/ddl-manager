@@ -49,7 +49,41 @@ describe("CacheAuditor", () => {
             ]);
         });
 
-        describe("should save report", async () => { 
+        it("need recreate report columns", async() => {
+            await db.query(`
+                create table ddl_manager_audit_report (
+                    id bigserial primary key
+                );
+                update companies set 
+                    some_column = 0;
+            `);
+
+            await audit();
+
+            await expectedReport("cache_column", "public.companies.some_column");
+        });
+
+        it("need recreate changes columns", async() => {
+            await db.query(`
+                create table ddl_manager_audit_column_changes (
+                    id bigserial primary key
+                );
+            `);
+            await audit();
+            
+            await db.query(`
+                update companies set
+                    some_column = 0
+                where id = 1;
+            `);
+
+            await expectedChanges("changed_new_row", {
+                id: 1,
+                some_column: 0
+            });
+        });
+
+        describe("should save report", async () => {
 
             it("save schema, table, column", async() => {
                 await audit();

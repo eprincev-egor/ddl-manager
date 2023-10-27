@@ -29,7 +29,11 @@ export class CacheAuditor {
         await this.createTables();
         await this.scanner.scan({
             ...params,
-            onScanColumn: this.onScanColumn.bind(this)
+            onScanColumn: async (event) => {
+                await this.onScanColumn(event).catch(error =>
+                    console.log("failed handler onScanColumn", error)
+                );
+            }
         });
     }
 
@@ -41,37 +45,78 @@ export class CacheAuditor {
     private async createReportTable() {
         await this.driver.query(`
             create table if not exists ddl_manager_audit_report (
-                id serial primary key,
-                scan_date timestamp without time zone,
-                cache_column text not null,
-                cache_row json not null,
-                source_rows json,
-                actual_value json,
-                expected_value json
+                id serial primary key
             );
+            alter table ddl_manager_audit_report
+
+                add column if not exists scan_date timestamp without time zone,
+                    alter column scan_date set not null,
+
+                add column if not exists cache_column text,
+                    alter column cache_column set not null,
+
+                add column if not exists cache_row json,
+                    alter column cache_row set not null,
+
+                add column if not exists source_rows json,
+                add column if not exists actual_value json,
+                add column if not exists expected_value json;
+            
+            create index if not exists ddl_manager_audit_report_column_idx
+            on ddl_manager_audit_report
+            using btree (cache_column);
+            
+            create index if not exists ddl_manager_audit_report_cache_row_idx
+            on ddl_manager_audit_report
+            using btree (((cache_row->'id')::text::bigint));
         `);
     }
 
     private async createChangesTable() {
         await this.driver.query(`
             create table if not exists ddl_manager_audit_column_changes (
-                id bigserial primary key,
-
-                cache_columns text[],
-                cache_rows_ids text[],
-
-                changed_table text not null,
-                changed_row_id bigint not null,
-                changed_old_row json,
-                changed_new_row json,
-
-                changes_type text not null,
-                transaction_date timestamp without time zone not null,
-                changes_date timestamp without time zone not null,
-
-                entry_query text not null,
-                callstack text[]
+                id bigserial primary key
             );
+
+            alter table ddl_manager_audit_column_changes
+
+                add column if not exists cache_columns text[],
+                add column if not exists cache_rows_ids text[],
+
+                add column if not exists changed_table text,
+                    alter column changed_table set not null,
+
+                add column if not exists changed_row_id bigint,
+                    alter column changed_row_id set not null,
+
+                add column if not exists changed_old_row json,
+                add column if not exists changed_new_row json,
+
+                add column if not exists changes_type text,
+                    alter column changes_type set not null,
+
+                add column if not exists transaction_date timestamp without time zone,
+                    alter column transaction_date set not null,
+
+                add column if not exists changes_date timestamp without time zone,
+                    alter column changes_date set not null,
+
+                add column if not exists entry_query text not null,
+                    alter column entry_query set not null,
+
+                add column if not exists callstack text[];
+
+            create index if not exists ddl_manager_audit_column_changes_cache_columns_idx
+            on ddl_manager_audit_column_changes
+            using gin (cache_columns);
+
+            create index if not exists ddl_manager_audit_column_changes_cache_rows_ids_idx
+            on ddl_manager_audit_column_changes
+            using gin (cache_rows_ids);
+
+            create index if not exists ddl_manager_audit_column_changes_row_idx
+            on ddl_manager_audit_column_changes
+            using btree (changed_table, changed_row_id);
         `);
     }
 
@@ -141,6 +186,7 @@ export class CacheAuditor {
 
         if ( !cache.hasForeignTablesDeps() ) {
             fromTableColumns.push(cacheColumn.name);
+            fromTableColumns.push("id");
         }
         fromTableColumns = uniq(fromTableColumns);
 
@@ -189,9 +235,9 @@ export class CacheAuditor {
                     entry_query,
                     callstack
                 ) values (
-                    ARRAY[${depsCacheColumnsIds.map(name => wrapText(name))}],
-                    ARRAY[${thisRowReferenceColumns}],
-                    
+                    ARRAY[${depsCacheColumnsIds.map(name => wrapText(name))}]::text[],
+                    ARRAY[${thisRowReferenceColumns}]::bigint[],
+
                     '${fromTable}',
                     this_row.id,
                     case when TG_OP in ('UPDATE', 'DELETE') then
@@ -251,13 +297,10 @@ function pickJson(row: string, columns: string[]) {
     )`.trim();
 }
 
-// TODO: remove changes listener
-// TODO: cache columns can be changed (change cache file)
-// TODO: cache columns can be dropped
+// TODO: test timeout
 // TODO: test many broken columns on one table
 // TODO: test cache with array ref
 // TODO: log all changes columns inside incident (can be helpful to find source of bug)
-// TODO: test recreating table
-    // TODO: indexes
-    // TODO: dont loose old data
-// TODO: test timeout
+// TODO: cache columns can be changed (change cache file)
+// TODO: cache columns can be dropped
+// TODO: remove changes listener
