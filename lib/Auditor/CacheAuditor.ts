@@ -22,25 +22,40 @@ export class CacheAuditor {
     ) {}
 
     async audit(params: IAuditParams = {}) {
-        await this.createTable();
+        await this.createTables();
         await this.scanner.scan({
             onScanColumn: this.onScanColumn.bind(this)
         });
     }
 
-    private async createTable() {
+    private async createTables() {
+        await this.createReportTable();
+        await this.createChangesTable();
+    }
+
+    private async createReportTable() {
         await this.driver.query(`
-            create table ddl_manager_audit_report (
+            create table if not exists ddl_manager_audit_report (
                 id serial primary key,
                 scan_date timestamp without time zone,
-                cache_name text not null,
-                schema_name text not null,
-                table_name text not null,
-                column_name text not null,
+                cache_column text not null,
                 cache_row json not null,
                 source_rows json,
                 actual_value json,
                 expected_value json
+            );
+        `);
+    }
+
+    private async createChangesTable() {
+        await this.driver.query(`
+            create table if not exists ddl_manager_audit_column_changes (
+                id bigserial primary key,
+                source_table text not null,
+                source_row_id bigint not null,
+                transaction_date timestamp without time zone not null,
+                changes_date timestamp without time zone not null,
+                callstack text[]
             );
         `);
     }
@@ -53,32 +68,25 @@ export class CacheAuditor {
 
         await this.saveReport(event);
         await this.fixData(event);
+        await this.logChanges(event);
     }
 
     private async saveReport(event: IColumnScanResult) {
         const wrongExample = event.wrongExample;
         strict.ok(wrongExample, "required wrongExample");
 
-        const cacheColumn = this.parseColumn(event);
-
         await this.driver.query(`
             insert into ddl_manager_audit_report (
                 scan_date,
-                cache_name,
-                schema_name,
-                table_name,
-                column_name,
+                cache_column,
                 cache_row,
                 source_rows,
                 actual_value,
                 expected_value
             ) values (
                 now()::timestamp with time zone at time zone 'UTC',
-                ${wrapText(cacheColumn.cache.name)},
-                ${wrapText(cacheColumn.getSchemaName())},
-                ${wrapText(cacheColumn.getTableName())},
-                ${wrapText(cacheColumn.name)},
-                ${wrapText(JSON.stringify(wrongExample.row))}::json,
+                ${wrapText(event.column)},
+                ${wrapText(JSON.stringify(wrongExample.cacheRow))}::json,
                 ${wrapText(JSON.stringify(wrongExample.sourceRows ?? null))}::json,
                 ${wrapText(JSON.stringify(wrongExample.actual))}::json,
                 ${wrapText(JSON.stringify(wrongExample.expected))}::json
@@ -87,7 +95,7 @@ export class CacheAuditor {
     }
 
     private async fixData(event: IColumnScanResult) {
-        const cacheColumn = this.parseColumn(event);
+        const cacheColumn = this.findCacheColumn(event);
 
         const updates = CacheUpdate.fromManyTables([cacheColumn])
 
@@ -98,7 +106,66 @@ export class CacheAuditor {
         );
     }
 
-    private parseColumn(event: IColumnScanResult) {
+    private async logChanges(event: IColumnScanResult) {
+        const cacheColumn = this.findCacheColumn(event);
+        const wrongExample = event.wrongExample;
+        strict.ok(wrongExample, "required wrongExample");
+
+        const fromTable = cacheColumn.select.getFromTableId();
+
+        await this.driver.query(`
+            create or replace function ddl_manager_audit_changes_source_listener()
+            returns trigger as $body$
+            declare callstack text;            
+            begin
+                begin
+                    raise exception 'callstack';
+                exception when others then
+                get stacked diagnostics
+                    callstack = PG_EXCEPTION_CONTEXT;
+                end;
+
+
+                insert into ddl_manager_audit_column_changes (
+                    source_table,
+                    source_row_id,
+                    transaction_date,
+                    changes_date,
+                    callstack
+                ) values (
+                    '${fromTable}',
+                    new.id,
+                    transaction_timestamp()::timestamp with time zone at time zone 'UTC',
+                    clock_timestamp()::timestamp with time zone at time zone 'UTC',
+                    (
+                        select
+                            array_agg(
+                                (regexp_match(line, '(function|функция) ([\\w+.]+)'))[2] || ':' ||
+                                (regexp_match(line, '(line|строка) (\\d+)'))[2]
+                            )
+                        from unnest(
+                            regexp_split_to_array(callstack, '[\\n\\r]+')
+                        ) as line
+                        where
+                            line !~* 'ddl_manager_audit_changes_source_listener' 
+                            and
+                            line ~* '(function|функция) '
+                    )
+                );
+
+                return new;
+            end
+            $body$ language plpgsql;
+
+            create trigger zzzzz_ddl_manager_audit_changes_source_listener
+            after update
+            on ${fromTable}
+            for each row
+            execute procedure ddl_manager_audit_changes_source_listener();
+        `);
+    }
+
+    private findCacheColumn(event: IColumnScanResult) {
         const [schemaName, tableName, columnName] = event.column.split(".");
         const tableId = schemaName + "." + tableName;
 
@@ -108,3 +175,13 @@ export class CacheAuditor {
         return cacheColumn;
     }
 }
+
+// TODO: indexes
+// TODO: remove changes listener
+// TODO: cache columns can be changed (change cache file)
+// TODO: cache columns can be dropped
+// TODO: command update-ddl-cache can spawn a lot of changes
+// TODO: test recreating table
+// TODO: catch bugs with parallel transactions
+// TODO: log all changes columns inside incident (can be helpful to find source of bug)
+// TODO: test many broken columns on one table

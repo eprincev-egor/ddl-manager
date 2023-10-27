@@ -5,7 +5,7 @@ import { deepEqualRows } from "./utils";
 import { strict } from "assert";
 import { IColumnScanResult, IFindBrokenColumnsParams } from "../../../../lib/Auditor";
 
-describe.only("CacheScanner", () => {
+describe("CacheScanner", () => {
 
     let db: Pool;
     beforeEach(async () => {
@@ -156,12 +156,12 @@ describe.only("CacheScanner", () => {
 
         it("should return wrong row id", async () => {
             const result = await scan();
-            strict.equal(result.wrongExample?.row.id, 1);
+            strict.equal(result.wrongExample?.cacheRow.id, 1);
         });
 
         it("should return other fields of broken row", async () => {
             const result = await scan();
-            strict.equal(result.wrongExample?.row.name, "client");
+            strict.equal(result.wrongExample?.cacheRow.name, "client");
         });
     });
 

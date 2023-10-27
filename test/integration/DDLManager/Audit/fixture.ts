@@ -20,13 +20,15 @@ export async function prepare() {
 
         create table companies (
             id serial primary key,
-            name text
+            name text,
+            note text
         );
         create table orders (
             id serial primary key,
             id_client integer,
             doc_number text,
-            profit integer
+            profit integer,
+            note text
         );
 
         insert into companies (name) 

@@ -17,11 +17,17 @@ export interface IColumnScanResult {
     column: string;
     hasWrongValues: boolean;
     wrongExample?: {
+        /** wrong cache value on cache row */
         actual: any;
+        /** correct cache value on cache row */
         expected: any;
+        /** schema.table of cache row */
         table: string;
+        /** how to fetch correct data (cache select) */
         selectExpectedForThatRow: string;
-        row: Record<string, any>;
+        /** full state of cache row */
+        cacheRow: Record<string, any>;
+        /** full state of sources rows, which used for calculate cache */
         sourceRows?: Record<string, any>[];
     };
     time: TimeRange;
@@ -192,7 +198,7 @@ export class CacheScanner {
                 ${columnRef} as "actual",
                 tmp.${column.name} as "expected",
                 '${column.getTableId()}' as "table",
-                row_to_json(${column.for.getIdentifier()}.*) as "row",
+                row_to_json(${column.for.getIdentifier()}.*) as "cacheRow",
                 tmp.__cache_source_row_details__ as "sourceRows"
             from ${column.for}
             
@@ -227,7 +233,7 @@ export class CacheScanner {
                 ) as tmp on true
                 
                 where
-                    ${column.for.getIdentifier()}.id = ${wrongExample.row.id} and
+                    ${column.for.getIdentifier()}.id = ${wrongExample.cacheRow.id} and
                     ${columnRef} is distinct from tmp.${column.name}
             `;
         }
