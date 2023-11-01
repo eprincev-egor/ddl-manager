@@ -5,10 +5,12 @@ import { UpdateMigrator } from "../Migrator/UpdateMigrator";
 import { Database } from "../database/schema/Database";
 import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
 import { wrapText } from "../database/postgres/wrapText";
-import { buildReferenceMeta } from "../cache/processor/buildReferenceMeta";
 import { FilesState } from "../fs/FilesState";
-import { strict } from "assert";
 import { flatMap, uniq } from "lodash";
+import { TableID } from "../database/schema/TableID";
+import { FileParser } from "../parser";
+import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
+import { strict } from "assert";
 
 export interface IAuditParams {
     timeout?: number;
@@ -27,6 +29,8 @@ export class CacheAuditor {
 
     async audit(params: IAuditParams = {}) {
         await this.createTables();
+        await this.removeUnnecessaryLoggers();
+
         await this.scanner.scan({
             ...params,
             onScanColumn: async (event) => {
@@ -81,7 +85,6 @@ export class CacheAuditor {
             alter table ddl_manager_audit_column_changes
 
                 add column if not exists cache_columns text[],
-                add column if not exists cache_rows_ids text[],
 
                 add column if not exists changed_table text,
                     alter column changed_table set not null,
@@ -109,10 +112,6 @@ export class CacheAuditor {
             create index if not exists ddl_manager_audit_column_changes_cache_columns_idx
             on ddl_manager_audit_column_changes
             using gin (cache_columns);
-
-            create index if not exists ddl_manager_audit_column_changes_cache_rows_ids_idx
-            on ddl_manager_audit_column_changes
-            using gin (cache_rows_ids);
 
             create index if not exists ddl_manager_audit_column_changes_row_idx
             on ddl_manager_audit_column_changes
@@ -168,46 +167,74 @@ export class CacheAuditor {
 
     private async logChanges(event: IColumnScanResult) {
         const cacheColumn = this.findCacheColumn(event);
-        const cache = this.fs.getCache( cacheColumn.cache.signature );
-        const wrongExample = event.wrongExample;
-        strict.ok(wrongExample && cacheColumn && cache, "something wrong");
+        const cache = required(this.fs.getCache( cacheColumn.cache.signature ));
 
+        if ( cache.hasForeignTablesDeps() ) {
+            const fromTable = cache.select.getFromTableId();
+            await this.buildLoggerFor(fromTable);
 
-        const fromTable = cache.hasForeignTablesDeps() ?  // TODO: polymorphism
-            cache.select.getFromTableId() :
-            cache.for.table;
-        const depsCacheColumns = this.graph.findCacheColumnsDependentOn(fromTable);
-
-        let fromTableColumns = flatMap(depsCacheColumns, column => 
-            column.select.getAllColumnReferences()
-        ).filter(columnRef => columnRef.isFromTable(fromTable))
-        .map(column => column.name)
-        .sort();
-
-        if ( !cache.hasForeignTablesDeps() ) {
-            fromTableColumns.push(cacheColumn.name);
-            fromTableColumns.push("id");
+            if ( !fromTable.equal(cache.for.table) ) {
+                await this.buildLoggerFor(cache.for.table);
+            }
         }
-        fromTableColumns = uniq(fromTableColumns);
+        else {
+            await this.buildLoggerFor(cache.for.table);
+        }
+    }
 
-    
-        const depsCacheColumnsIds = depsCacheColumns.map(column => column.getId());
+    private async buildLoggerFor(table: TableID) {
+        const depsCacheColumns = this.graph.findCacheColumnsDependentOn(table);
 
-        const reference = buildReferenceMeta(cache, fromTable);
-        const referenceColumns = cache.hasForeignTablesDeps() ? 
-            reference.columns : ["id"];
-        const thisRowReferenceColumns = referenceColumns.map(column =>
-            `this_row.${column}`
-        );
+        const tableColumns = flatMap(depsCacheColumns, 
+            column => column.select.getAllColumnReferences()
+        )
+            .filter(columnRef => columnRef.isFromTable(table))
+            .map(column => column.name)
+            .sort();
+
+        const depsCacheColumnsOnTriggerTable = depsCacheColumns.filter(someCacheColumn =>
+            someCacheColumn.for.table.equal(table)
+        ).map(column => column.name);
+        tableColumns.push(...depsCacheColumnsOnTriggerTable);
+
+        tableColumns.push("id");
+
+        await this.buildLoggerOn({
+            triggerTable: table,
+            triggerTableColumns: uniq(tableColumns),
+            cacheColumns: depsCacheColumns
+                .map(column => column.getId())
+        });
+    }
+
+    private async buildLoggerOn({
+        triggerTable, triggerTableColumns,
+        cacheColumns,
+    }: {
+        triggerTable: TableID,
+        cacheColumns: string[],
+        triggerTableColumns: string[]
+    }) {
+        const triggerName = `ddl_audit_changes_${triggerTable.schema}_${triggerTable.name}`;
+        const noChanges = triggerTableColumns.map(column =>
+            `new.${column} is not distinct from old.${column}`
+        ).join(" and ");
 
         await this.driver.query(`
-            create or replace function ddl_manager_audit_changes_listener()
+            create or replace function ${triggerName}()
             returns trigger as $body$
             declare callstack text;
             declare this_row record;
             begin
                 this_row = case when TG_OP = 'DELETE' then old else new end;
 
+                if TG_OP = 'UPDATE' then
+                    if ${noChanges} then
+                        return new;
+                    end if;
+                end if;
+
+                -- ignore update-ddl-cache
                 if current_query() ~* '-- cache' then
                     return this_row;
                 end if;
@@ -221,7 +248,6 @@ export class CacheAuditor {
 
                 insert into ddl_manager_audit_column_changes (
                     cache_columns,
-                    cache_rows_ids,
 
                     changed_table,
                     changed_row_id,
@@ -235,16 +261,15 @@ export class CacheAuditor {
                     entry_query,
                     callstack
                 ) values (
-                    ARRAY[${depsCacheColumnsIds.map(name => wrapText(name))}]::text[],
-                    ARRAY[${thisRowReferenceColumns}]::bigint[],
+                    ARRAY[${cacheColumns.map(name => wrapText(name))}]::text[],
 
-                    '${fromTable}',
+                    '${triggerTable}',
                     this_row.id,
                     case when TG_OP in ('UPDATE', 'DELETE') then
-                        ${pickJson("old", fromTableColumns)}
+                        ${pickJson("old", triggerTableColumns)}
                     end,
                     case when TG_OP in ('UPDATE', 'INSERT') then
-                        ${pickJson("new", fromTableColumns)}
+                        ${pickJson("new", triggerTableColumns)}
                     end,
                     
                     TG_OP,
@@ -262,7 +287,7 @@ export class CacheAuditor {
                             regexp_split_to_array(callstack, '[\\n\\r]+')
                         ) as line
                         where
-                            line !~* 'ddl_manager_audit_changes_listener' 
+                            line !~* '${triggerName}' 
                             and
                             line ~* '(function|функция) '
                     )
@@ -272,11 +297,15 @@ export class CacheAuditor {
             end
             $body$ language plpgsql;
 
-            create trigger zzzzz_ddl_manager_audit_changes_listener
-            after insert or update of ${fromTableColumns} or delete
-            on ${fromTable}
+            drop trigger if exists zzzzz_${triggerName} on ${triggerTable};
+            create trigger zzzzz_${triggerName}
+            after insert or update or delete
+            on ${triggerTable}
             for each row
-            execute procedure ddl_manager_audit_changes_listener();
+            execute procedure ${triggerName}();
+
+            comment on trigger zzzzz_${triggerName} on ${triggerTable}
+            is 'ddl-manager-audit';
         `);
     }
 
@@ -289,6 +318,56 @@ export class CacheAuditor {
 
         return cacheColumn;
     }
+
+    private async removeUnnecessaryLoggers() {
+        const {rows: triggers} = await this.driver.query(`
+            select
+                pg_get_triggerdef( pg_trigger.oid ) as ddl
+            from pg_trigger
+            where
+                pg_trigger.tgisinternal = false and
+                pg_catalog.obj_description( pg_trigger.oid ) = 'ddl-manager-audit'
+        `);
+        for (const {ddl} of triggers) {
+            const parsed = FileParser.parse(ddl);
+            const [trigger] = parsed.triggers;
+
+            await this.removeLoggerTriggerIfUnnecessary(trigger);
+        }
+    }
+
+    private async removeLoggerTriggerIfUnnecessary(trigger: DatabaseTrigger) {
+        const needDrop = await this.isUnnecessaryLoggerTrigger(trigger);
+        if ( needDrop ) {
+            await this.driver.dropTrigger(trigger);
+        }
+    }
+    
+    private async isUnnecessaryLoggerTrigger(trigger: DatabaseTrigger) {
+        const existentCacheColumns = this.graph.findCacheColumnsDependentOn(trigger.table);
+        if ( existentCacheColumns.length === 0 ) {
+            return true;
+        }
+
+        const cacheColumns = existentCacheColumns
+            .map(column => column.getId());
+
+        const {rows: reports} = await this.driver.query(`
+            select * from ddl_manager_audit_report as last_report
+            where
+                last_report.cache_column in (${
+                    cacheColumns.map(column => wrapText(column))
+                        .join(", ")
+                })
+
+            order by last_report.scan_date desc
+            limit 1
+        `);
+        const lastReport = reports[0];
+        const MONTH = 30 * 24 * 60 * 60 * 1000;
+        const isOld = Date.now() - lastReport.scan_date > 3 * MONTH;
+        return isOld
+    }
 }
 
 function pickJson(row: string, columns: string[]) {
@@ -297,10 +376,11 @@ function pickJson(row: string, columns: string[]) {
     )`.trim();
 }
 
-// TODO: test timeout
-// TODO: test many broken columns on one table
-// TODO: test cache with array ref
-// TODO: log all changes columns inside incident (can be helpful to find source of bug)
+function required<T>(value: T): NonNullable<T> {
+    strict.ok(value, "required value");
+    return value as any;
+}
+
 // TODO: cache columns can be changed (change cache file)
-// TODO: cache columns can be dropped
-// TODO: remove changes listener
+// TODO: test timeout
+// TODO: log all changes columns inside incident (can be helpful to find source of bug)

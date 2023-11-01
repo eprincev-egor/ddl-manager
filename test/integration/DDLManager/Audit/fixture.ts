@@ -20,6 +20,7 @@ export async function prepare() {
 
         create table companies (
             id serial primary key,
+            id_parent integer,
             name text,
             note text
         );
@@ -30,14 +31,25 @@ export async function prepare() {
             profit integer,
             note text
         );
+        create table payments (
+            id serial primary key,
+            payment numeric(14, 2),
+            doc_number text
+        );
+        create table order_payment_link (
+            id serial primary key,
+            id_order integer,
+            id_payment integer,
+            part_of_payment numeric(14, 2)
+        );
 
         insert into companies (name) 
         values ('client'), ('partner');
-        insert into orders (id_client, doc_number)
+        insert into orders (id_client, doc_number, profit)
         values
-            (1, 'order-1'),
-            (1, 'order-2'),
-            (2, 'order-3');
+            (1, 'order-1', 100),
+            (1, 'order-2', 200),
+            (2, 'order-3', 300);
     `);
 
     if ( fs.existsSync(ROOT_TMP_PATH) ) {

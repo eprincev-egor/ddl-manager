@@ -206,7 +206,7 @@ export class CacheColumnGraph {
             const isDependency = column.select.getAllColumnReferences().some(depRef =>
                 depRef.isFromTable(table)
             );
-            if (  isDependency ) {
+            if ( isDependency || column.for.table.equal(table) ) {
                 dependencyColumns.push(column);
             }
         }

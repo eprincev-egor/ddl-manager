@@ -17,7 +17,7 @@ import { createCallsTable, clearCallsLogs, downloadLogs } from "./timeline/calls
 import { parseCalls } from "./timeline/Coach";
 import { createTimelineFile } from "./timeline/createTimelineFile";
 import { CacheComparator } from "./Comparator/CacheComparator";
-import { CacheScanner, IFindBrokenColumnsParams, TimeRange } from "./Auditor";
+import { CacheAuditor, CacheScanner, IFindBrokenColumnsParams, TimeRange } from "./Auditor";
 import { CacheColumnGraph } from "./Comparator/graph/CacheColumnGraph";
 
 const watchers: FileWatcher[] = [];
@@ -79,6 +79,11 @@ export class DDLManager {
         const ddlManager = new DDLManager(params);
         const {migration} = await ddlManager.compareDbAndFs();
         return migration;
+    }
+
+    static async audit(params: IParams) {
+        const ddlManager = new DDLManager(params);
+        await ddlManager.audit();
     }
 
     static async compareCache(params: IParams) {
@@ -293,6 +298,32 @@ export class DDLManager {
         if ( params.logToFile ) {
             fs.appendFileSync(params.logToFile, `\n[${new Date().toISOString()}] finished`);
         }
+    }
+
+    private async audit() {
+        const filesState = await this.readFS();
+        const postgres = await this.postgres();
+        const database = await postgres.load();
+
+        const graph = CacheColumnGraph.build(
+            database.aggregators,
+            filesState.allCache()
+        );
+
+        const scanner = new CacheScanner(
+            postgres,
+            database,
+            graph
+        );
+        const auditor = new CacheAuditor(
+            postgres,
+            database,
+            filesState,
+            graph,
+            scanner,
+        );
+
+        await auditor.audit();
     }
 
     private async compareCache() {

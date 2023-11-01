@@ -4760,5 +4760,6 @@ describe("integration/DDLManager.build cache", () => {
     });
 
     // TODO: views can use column (check change column type)
+    // TODO: custom before update trigger can be without "update of" list of columns
 
 });
