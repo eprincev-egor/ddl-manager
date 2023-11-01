@@ -1,6 +1,6 @@
 import { CacheColumnGraph } from "../Comparator/graph/CacheColumnGraph";
 import { IDatabaseDriver } from "../database/interface";
-import { CacheScanner, IColumnScanResult } from "./CacheScanner";
+import { CacheScanner, IFindBrokenColumnsParams, IColumnScanResult } from "./CacheScanner";
 import { UpdateMigrator } from "../Migrator/UpdateMigrator";
 import { Database } from "../database/schema/Database";
 import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
@@ -11,11 +11,9 @@ import { TableID } from "../database/schema/TableID";
 import { FileParser } from "../parser";
 import { DatabaseTrigger } from "../database/schema/DatabaseTrigger";
 import { strict } from "assert";
+import { Migration } from "../Migrator/Migration";
 
-export interface IAuditParams {
-    timeout?: number;
-    concreteTables?: string | string[];
-}
+export type IAuditParams = IFindBrokenColumnsParams;
 
 export class CacheAuditor {
 
@@ -34,9 +32,12 @@ export class CacheAuditor {
         await this.scanner.scan({
             ...params,
             onScanColumn: async (event) => {
-                await this.onScanColumn(event).catch(error =>
+                await this.onScanColumn(params, event).catch(error =>
                     console.log("failed handler onScanColumn", error)
                 );
+                if ( params.onScanColumn ) {
+                    await params.onScanColumn(event);
+                }
             }
         });
     }
@@ -119,14 +120,17 @@ export class CacheAuditor {
         `);
     }
 
-    private async onScanColumn(event: IColumnScanResult) {
+    private async onScanColumn(
+        params: IAuditParams,
+        event: IColumnScanResult
+    ) {
         const wrongExample = event.wrongExample;
         if ( !wrongExample ) {
             return;
         }
 
         await this.saveReport(event);
-        await this.fixData(event);
+        await this.fixData(params, event);
         await this.logChanges(event);
     }
 
@@ -153,16 +157,29 @@ export class CacheAuditor {
         `);
     }
 
-    private async fixData(event: IColumnScanResult) {
+    private async fixData(
+        params: IAuditParams,
+        event: IColumnScanResult
+    ) {
         const cacheColumn = this.findCacheColumn(event);
 
-        const updates = CacheUpdate.fromManyTables([cacheColumn])
+        const updates = CacheUpdate.fromManyTables([cacheColumn]);
 
-        await UpdateMigrator.migrate(
+        const migration = Migration.empty();
+        migration.create({ updates });
+
+        migration.setTimeoutBetweenUpdates(3 * 1000);
+        if ( params.timeout ) {
+            migration.setTimeoutPerUpdate(params.timeout);
+        }
+
+        const migrator = new UpdateMigrator(
             this.driver,
+            migration,
             this.database,
-            updates,
+            []
         );
+        await migrator.create();
     }
 
     private async logChanges(event: IColumnScanResult) {

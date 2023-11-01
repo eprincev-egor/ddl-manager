@@ -81,7 +81,7 @@ export class DDLManager {
         return migration;
     }
 
-    static async audit(params: IParams) {
+    static async audit(params: IScanBrokenParams) {
         const ddlManager = new DDLManager(params);
         await ddlManager.audit();
     }
