@@ -18,6 +18,21 @@ describe("CacheAuditor: fix data and save report", () => {
         db = await prepare();
     });
 
+    it("no reports if all ok", async() => {
+        fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+            cache totals for companies (
+                select
+                    1 as some_column
+            )
+        `);
+        await build();
+
+        await audit();
+
+        const lastReport = await loadLastReport();
+        strict.equal(lastReport, undefined);
+    });
+
     describe("audit simple broken cache", () => {
         beforeEach(async() => {
             fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `

@@ -6,7 +6,7 @@ import { FileReader } from "../../../../lib/fs/FileReader";
 import { Database } from "../../../../lib/database/schema/Database";
 import { PostgresDriver } from "../../../../lib/database/PostgresDriver";
 import { CacheColumnGraph } from "../../../../lib/Comparator/graph/CacheColumnGraph";
-import { deepEqualRow, shouldBeBetween } from "./utils";
+import { shouldBeBetween } from "./utils";
 import { strict } from "assert";
 import { DDLManager } from "../../../../lib/DDLManager";
 
@@ -708,10 +708,7 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
             `);
             await build();
 
-            await db.query(`
-                update companies set
-                    note = 'wrong'
-            `);
+            await breakCache();
             await audit();
         });
 
@@ -720,12 +717,8 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
 
             await audit();
 
-            await db.query(`
-                update companies set
-                    note = 'wrong 2'
-            `);
-            const lastChanges = await loadLastColumnChanges();
-            strict.equal(lastChanges, undefined);
+            await breakCache();
+            await noColumnLogs();
         });
 
         it("remove logger if long time no reports", async () => {
@@ -736,14 +729,73 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
 
             await audit();
 
-            await db.query(`
-                update companies set
-                    note = 'wrong 2'
-            `);
-            const lastChanges = await loadLastColumnChanges();
-            strict.equal(lastChanges, undefined);
+            await breakCache();
+            await noColumnLogs();
         });
 
+        it("remove if no reports", async() => {
+            await audit();
+            await db.query(`
+                delete from ddl_manager_audit_report
+            `);
+    
+            await audit();
+            
+            await breakCache();
+            await noColumnLogs();
+        });
+    
+        async function breakCache() {
+            await db.query(`
+                update companies set
+                    note = 'wrong ' || now()::text
+            `);
+        }
+    });
+
+    it("log 110 fields", async() => {
+        let columns: string[] = [];
+        for (let i = 0; i < 110; i++) {
+            columns.push(`column_${i}`);
+        }
+
+        await db.query(`
+            alter table orders
+                ${columns.map(column => 
+                    `add column ${column} text`
+                ).join(",")};
+        `);
+
+        fs.writeFileSync(`${ROOT_TMP_PATH}/totals.sql`, `
+            cache totals for companies (
+                select
+                    ${columns.map(column =>
+                        `string_agg(orders.${column}, ', ') as ${column}`
+                    ).join(", ")}
+                from orders
+                where
+                    orders.id_client = companies.id
+            )
+        `);
+        await build();
+        await db.query(`
+            update companies set
+                (${columns}) = (${columns.map(() => "'wrong'").join(", ")})
+        `);
+        await audit();
+
+
+        await db.query(`
+            update orders set
+                column_0 = 'test'
+            where id = 1;
+        `);
+
+
+        await expectedChanges("changed_new_row", {
+            id: 1,
+            column_0: "test"
+        });
     });
 
     async function build() {
@@ -789,6 +841,14 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
                     expected
             )
         });
+    }
+
+    async function noColumnLogs() {
+        const lastChanges = await loadLastColumnChanges();
+        strict.equal(
+            lastChanges, undefined,
+            "expected no changes"
+        );
     }
 
     async function loadLastColumnChanges() {

@@ -168,9 +168,9 @@ export class CacheAuditor {
         const migration = Migration.empty();
         migration.create({ updates });
 
-        migration.setTimeoutBetweenUpdates(3 * 1000);
         if ( params.timeout ) {
             migration.setTimeoutPerUpdate(params.timeout);
+            migration.setTimeoutBetweenUpdates(3 * 1000);
         }
 
         const migrator = new UpdateMigrator(
@@ -381,16 +381,30 @@ export class CacheAuditor {
             limit 1
         `);
         const lastReport = reports[0];
+        if ( !lastReport ) {
+            return true;
+        }
+
         const MONTH = 30 * 24 * 60 * 60 * 1000;
         const isOld = Date.now() - lastReport.scan_date > 3 * MONTH;
         return isOld
     }
 }
 
+const maxColumnsPerCall = 50;
 function pickJson(row: string, columns: string[]) {
-    return `json_build_object(
-        ${columns.map(column => `'${column}', ${row}.${column}`)}
-    )`.trim();
+    let output: string[] = [];
+
+    for (let i = 0; i < columns.length; i += maxColumnsPerCall) {
+        const partOfColumns = columns.slice(i, i + maxColumnsPerCall);
+        const jsonArgs = partOfColumns.map(column => 
+            `'${column}', ${row}.${column}`
+        );
+
+        output.push(`jsonb_build_object(${jsonArgs.join(", ")})`);
+    }
+
+    return output.join(" || ");
 }
 
 function required<T>(value: T): NonNullable<T> {
