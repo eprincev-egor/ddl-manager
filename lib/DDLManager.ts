@@ -83,7 +83,7 @@ export class DDLManager {
 
     static async audit(params: IScanBrokenParams) {
         const ddlManager = new DDLManager(params);
-        await ddlManager.audit();
+        await ddlManager.audit(params);
     }
 
     static async compareCache(params: IParams) {
@@ -300,7 +300,7 @@ export class DDLManager {
         }
     }
 
-    private async audit() {
+    private async audit(params: IScanBrokenParams) {
         const filesState = await this.readFS();
         const postgres = await this.postgres();
         const database = await postgres.load();
@@ -323,7 +323,7 @@ export class DDLManager {
             scanner,
         );
 
-        await auditor.audit();
+        await auditor.audit(params);
     }
 
     private async compareCache() {
