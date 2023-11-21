@@ -133,13 +133,17 @@ export class DatabaseFunction  {
         return this.assignedColumns;
     }
 
-    toSQL(body = this.body) {
+    toSQL(params: {
+        body?: string;
+        immutable?: boolean;
+        stable?: boolean;
+    } = {}) {
         let additionalParams = "";
         
-        if ( this.immutable ) {
+        if ( coalesce(params.immutable, this.immutable) ) {
             additionalParams += " immutable";
         }
-        else if ( this.stable ) {
+        else if ( coalesce(params.stable, this.stable) ) {
             additionalParams += " stable";
         }
 
@@ -182,7 +186,7 @@ create or replace function ${
         "" : 
         this.schema + "." 
 }${ this.name }(${argsSql})
-returns ${ returnsSql }${ additionalParams } as ${ wrapText(body, "body") }
+returns ${ returnsSql }${ additionalParams } as ${ wrapText(coalesce(params.body, this.body), "body") }
 language ${this.language}
     `.trim();
     }
@@ -239,7 +243,12 @@ language ${this.language}
             );
         }
         
-        const sql = this.toSQL(body);
+        const sql = this.toSQL({
+            body,
+            // INSERT is not allowed in a non-volatile function
+            immutable: false,
+            stable: false
+        });
         return sql;
     }
 }
@@ -349,4 +358,8 @@ function equalReturns(returnsA: IDatabaseFunctionReturns, returnsB: IDatabaseFun
             returnsA.table == returnsB.table
         )
     );
+}
+
+function coalesce<T>(...values: (T | null | undefined)[]): T {
+    return values.find(value => value != null) as T;
 }
