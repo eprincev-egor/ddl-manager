@@ -46,11 +46,7 @@ export function fixArraySearchForDifferentArrayTypesInCondition(
         new Operator("&&"),
         // array[]::bigint[] && some_bigint_ids
         UnknownExpressionElement.fromSql(
-            `cm_build_array_for((
-                select ${columnName}
-                from ${table.schema}.${table.name}
-                where false
-            ), ${otherOperand})`,
+            `cm_build_array_for((null::${table.schema}.${table.name}).${columnName}, ${otherOperand})`,
             getColumnReferencesMap(otherOperand)
         )
     ]);

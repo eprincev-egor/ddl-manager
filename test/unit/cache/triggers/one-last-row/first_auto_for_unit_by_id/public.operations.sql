@@ -36,11 +36,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && cm_build_array_for((
-                                        select units_ids
-                                        from public.operations
-                                        where false
-                                    ), ARRAY[units.id]::bigint[])
+                        source_row.units_ids && cm_build_array_for((null::public.operations).units_ids, ARRAY[units.id]::bigint[])
                         and
                         source_row.type = 'auto'
                         and
@@ -149,11 +145,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && cm_build_array_for((
-                                        select units_ids
-                                        from public.operations
-                                        where false
-                                    ), ARRAY[units.id]::bigint[])
+                        source_row.units_ids && cm_build_array_for((null::public.operations).units_ids, ARRAY[units.id]::bigint[])
                         and
                         source_row.type = 'auto'
                         and
@@ -187,11 +179,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && cm_build_array_for((
-                                        select units_ids
-                                        from public.operations
-                                        where false
-                                    ), ARRAY[units.id]::bigint[])
+                        source_row.units_ids && cm_build_array_for((null::public.operations).units_ids, ARRAY[units.id]::bigint[])
                         and
                         source_row.type = 'auto'
                         and
@@ -237,11 +225,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && cm_build_array_for((
-                                        select units_ids
-                                        from public.operations
-                                        where false
-                                    ), ARRAY[units.id]::bigint[])
+                        source_row.units_ids && cm_build_array_for((null::public.operations).units_ids, ARRAY[units.id]::bigint[])
                         and
                         source_row.type = 'auto'
                         and
@@ -298,11 +282,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && cm_build_array_for((
-                                        select units_ids
-                                        from public.operations
-                                        where false
-                                    ), ARRAY[units.id]::bigint[])
+                        source_row.units_ids && cm_build_array_for((null::public.operations).units_ids, ARRAY[units.id]::bigint[])
                         and
                         source_row.type = 'auto'
                         and

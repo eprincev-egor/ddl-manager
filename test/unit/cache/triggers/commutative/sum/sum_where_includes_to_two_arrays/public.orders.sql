@@ -37,17 +37,9 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.clients_ids && cm_build_array_for((
-                                        select clients_ids
-                                        from public.orders
-                                        where false
-                                    ), ARRAY[companies.id])
+                        source_row.clients_ids && cm_build_array_for((null::public.orders).clients_ids, ARRAY[companies.id])
                         and
-                        source_row.partners_ids && cm_build_array_for((
-                                        select partners_ids
-                                        from public.orders
-                                        where false
-                                    ), ARRAY[companies.id])
+                        source_row.partners_ids && cm_build_array_for((null::public.orders).partners_ids, ARRAY[companies.id])
                         and
                         source_row.deleted = 0
                 )
@@ -158,17 +150,9 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.clients_ids && cm_build_array_for((
-                                        select clients_ids
-                                        from public.orders
-                                        where false
-                                    ), ARRAY[companies.id])
+                        source_row.clients_ids && cm_build_array_for((null::public.orders).clients_ids, ARRAY[companies.id])
                         and
-                        source_row.partners_ids && cm_build_array_for((
-                                        select partners_ids
-                                        from public.orders
-                                        where false
-                                    ), ARRAY[companies.id])
+                        source_row.partners_ids && cm_build_array_for((null::public.orders).partners_ids, ARRAY[companies.id])
                         and
                         source_row.deleted = 0
                 )
@@ -201,17 +185,9 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.clients_ids && cm_build_array_for((
-                                        select clients_ids
-                                        from public.orders
-                                        where false
-                                    ), ARRAY[companies.id])
+                        source_row.clients_ids && cm_build_array_for((null::public.orders).clients_ids, ARRAY[companies.id])
                         and
-                        source_row.partners_ids && cm_build_array_for((
-                                        select partners_ids
-                                        from public.orders
-                                        where false
-                                    ), ARRAY[companies.id])
+                        source_row.partners_ids && cm_build_array_for((null::public.orders).partners_ids, ARRAY[companies.id])
                         and
                         source_row.deleted = 0
                 )
@@ -256,17 +232,9 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.clients_ids && cm_build_array_for((
-                                        select clients_ids
-                                        from public.orders
-                                        where false
-                                    ), ARRAY[companies.id])
+                        source_row.clients_ids && cm_build_array_for((null::public.orders).clients_ids, ARRAY[companies.id])
                         and
-                        source_row.partners_ids && cm_build_array_for((
-                                        select partners_ids
-                                        from public.orders
-                                        where false
-                                    ), ARRAY[companies.id])
+                        source_row.partners_ids && cm_build_array_for((null::public.orders).partners_ids, ARRAY[companies.id])
                         and
                         source_row.deleted = 0
                 )
@@ -318,17 +286,9 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.clients_ids && cm_build_array_for((
-                                        select clients_ids
-                                        from public.orders
-                                        where false
-                                    ), ARRAY[companies.id])
+                        source_row.clients_ids && cm_build_array_for((null::public.orders).clients_ids, ARRAY[companies.id])
                         and
-                        source_row.partners_ids && cm_build_array_for((
-                                        select partners_ids
-                                        from public.orders
-                                        where false
-                                    ), ARRAY[companies.id])
+                        source_row.partners_ids && cm_build_array_for((null::public.orders).partners_ids, ARRAY[companies.id])
                         and
                         source_row.deleted = 0
                 )

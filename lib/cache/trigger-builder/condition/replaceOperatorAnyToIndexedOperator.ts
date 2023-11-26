@@ -41,11 +41,7 @@ export function replaceOperatorAnyToIndexedOperator(
         const table = arrColumns[0].tableReference.table;
         const columnName = arrColumns[0].name;
 
-        arrayLiteral = `cm_build_array_for((
-            select ${columnName}
-            from ${table.schema}.${table.name}
-            where false
-        ), ${columnOperand})`;
+        arrayLiteral = `cm_build_array_for((null::${table.schema}.${table.name}).${columnName}, ${columnOperand})`;
     }
 
     const output = new Expression([

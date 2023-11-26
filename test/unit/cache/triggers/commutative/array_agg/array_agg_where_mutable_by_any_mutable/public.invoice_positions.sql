@@ -32,11 +32,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                gtd.operation_units_ids && cm_build_array_for((
-                            select operation_units_ids
-                            from public.list_gtd
-                            where false
-                        ), old.id_operation_unit);
+                gtd.operation_units_ids && cm_build_array_for((null::public.list_gtd).operation_units_ids, old.id_operation_unit);
         end if;
 
         return old;
@@ -101,11 +97,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                gtd.operation_units_ids && cm_build_array_for((
-                            select operation_units_ids
-                            from public.list_gtd
-                            where false
-                        ), new.id_operation_unit);
+                gtd.operation_units_ids && cm_build_array_for((null::public.list_gtd).operation_units_ids, new.id_operation_unit);
 
             return new;
         end if;
@@ -138,11 +130,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                gtd.operation_units_ids && cm_build_array_for((
-                            select operation_units_ids
-                            from public.list_gtd
-                            where false
-                        ), old.id_operation_unit);
+                gtd.operation_units_ids && cm_build_array_for((null::public.list_gtd).operation_units_ids, old.id_operation_unit);
         end if;
 
         if
@@ -185,11 +173,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                gtd.operation_units_ids && cm_build_array_for((
-                            select operation_units_ids
-                            from public.list_gtd
-                            where false
-                        ), new.id_operation_unit);
+                gtd.operation_units_ids && cm_build_array_for((null::public.list_gtd).operation_units_ids, new.id_operation_unit);
         end if;
 
         return new;
@@ -237,11 +221,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                gtd.operation_units_ids && cm_build_array_for((
-                            select operation_units_ids
-                            from public.list_gtd
-                            where false
-                        ), new.id_operation_unit);
+                gtd.operation_units_ids && cm_build_array_for((null::public.list_gtd).operation_units_ids, new.id_operation_unit);
         end if;
 
         return new;

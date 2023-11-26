@@ -31,11 +31,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                companies.order_ids && cm_build_array_for((
-                            select order_ids
-                            from public.companies
-                            where false
-                        ), old.id);
+                companies.order_ids && cm_build_array_for((null::public.companies).order_ids, old.id);
         end if;
 
         return old;
@@ -93,11 +89,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                companies.order_ids && cm_build_array_for((
-                            select order_ids
-                            from public.companies
-                            where false
-                        ), new.id);
+                companies.order_ids && cm_build_array_for((null::public.companies).order_ids, new.id);
 
             return new;
         end if;
@@ -129,11 +121,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                companies.order_ids && cm_build_array_for((
-                            select order_ids
-                            from public.companies
-                            where false
-                        ), old.id);
+                companies.order_ids && cm_build_array_for((null::public.companies).order_ids, old.id);
         end if;
 
         if new.deleted = 0 then
@@ -175,11 +163,7 @@ begin
                         source_row.deleted = 0
                 )
             where
-                companies.order_ids && cm_build_array_for((
-                            select order_ids
-                            from public.companies
-                            where false
-                        ), new.id);
+                companies.order_ids && cm_build_array_for((null::public.companies).order_ids, new.id);
         end if;
 
         return new;

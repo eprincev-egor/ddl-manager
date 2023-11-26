@@ -25,11 +25,7 @@ begin
                     source_row.id = any(cache_table.unknown_ids)
             )
         where
-            cache_table.unknown_ids && cm_build_array_for((
-                        select unknown_ids
-                        from public.cache_table
-                        where false
-                    ), old.id);
+            cache_table.unknown_ids && cm_build_array_for((null::public.cache_table).unknown_ids, old.id);
 
         return old;
     end if;
@@ -72,11 +68,7 @@ begin
                     source_row.id = any(cache_table.unknown_ids)
             )
         where
-            cache_table.unknown_ids && cm_build_array_for((
-                        select unknown_ids
-                        from public.cache_table
-                        where false
-                    ), new.id);
+            cache_table.unknown_ids && cm_build_array_for((null::public.cache_table).unknown_ids, new.id);
 
 
 

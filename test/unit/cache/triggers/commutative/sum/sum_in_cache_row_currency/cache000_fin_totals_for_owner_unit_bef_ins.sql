@@ -37,11 +37,7 @@ begin
                         ) as fin_sum
     from fin_operation
     where
-        fin_operation.units_ids && cm_build_array_for((
-                        select units_ids
-                        from public.fin_operation
-                        where false
-                    ), new.units_ids)
+        fin_operation.units_ids && cm_build_array_for((null::public.fin_operation).units_ids, new.units_ids)
         and
         fin_operation.deleted = 0
     into new_totals;

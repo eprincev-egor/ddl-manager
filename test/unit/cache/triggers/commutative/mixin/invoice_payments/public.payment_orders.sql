@@ -28,11 +28,7 @@ begin
                         source_row.id = any(invoice.payments_ids)
                 )
             where
-                invoice.payments_ids && cm_build_array_for((
-                            select payments_ids
-                            from public.invoice
-                            where false
-                        ), old.id);
+                invoice.payments_ids && cm_build_array_for((null::public.invoice).payments_ids, old.id);
         end if;
 
         return old;
@@ -87,11 +83,7 @@ begin
                         source_row.id = any(invoice.payments_ids)
                 )
             where
-                invoice.payments_ids && cm_build_array_for((
-                            select payments_ids
-                            from public.invoice
-                            where false
-                        ), new.id);
+                invoice.payments_ids && cm_build_array_for((null::public.invoice).payments_ids, new.id);
 
             return new;
         end if;
@@ -120,11 +112,7 @@ begin
                         source_row.id = any(invoice.payments_ids)
                 )
             where
-                invoice.payments_ids && cm_build_array_for((
-                            select payments_ids
-                            from public.invoice
-                            where false
-                        ), old.id);
+                invoice.payments_ids && cm_build_array_for((null::public.invoice).payments_ids, old.id);
         end if;
 
         if new.deleted = 0 then
@@ -163,11 +151,7 @@ begin
                         source_row.id = any(invoice.payments_ids)
                 )
             where
-                invoice.payments_ids && cm_build_array_for((
-                            select payments_ids
-                            from public.invoice
-                            where false
-                        ), new.id);
+                invoice.payments_ids && cm_build_array_for((null::public.invoice).payments_ids, new.id);
         end if;
 
         return new;

@@ -32,11 +32,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && cm_build_array_for((
-                                        select units_ids
-                                        from public.train
-                                        where false
-                                    ), ARRAY[operation.unit.id]::bigint[])
+                        source_row.units_ids && cm_build_array_for((null::public.train).units_ids, ARRAY[operation.unit.id]::bigint[])
                         and
                         source_row.deleted = 0
                 )
@@ -130,11 +126,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && cm_build_array_for((
-                                        select units_ids
-                                        from public.train
-                                        where false
-                                    ), ARRAY[operation.unit.id]::bigint[])
+                        source_row.units_ids && cm_build_array_for((null::public.train).units_ids, ARRAY[operation.unit.id]::bigint[])
                         and
                         source_row.deleted = 0
                 )
@@ -161,11 +153,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && cm_build_array_for((
-                                        select units_ids
-                                        from public.train
-                                        where false
-                                    ), ARRAY[operation.unit.id]::bigint[])
+                        source_row.units_ids && cm_build_array_for((null::public.train).units_ids, ARRAY[operation.unit.id]::bigint[])
                         and
                         source_row.deleted = 0
                 )
@@ -204,11 +192,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && cm_build_array_for((
-                                        select units_ids
-                                        from public.train
-                                        where false
-                                    ), ARRAY[operation.unit.id]::bigint[])
+                        source_row.units_ids && cm_build_array_for((null::public.train).units_ids, ARRAY[operation.unit.id]::bigint[])
                         and
                         source_row.deleted = 0
                 )
@@ -256,11 +240,7 @@ begin
                             true
                     ) as source_row
                     where
-                        source_row.units_ids && cm_build_array_for((
-                                        select units_ids
-                                        from public.train
-                                        where false
-                                    ), ARRAY[operation.unit.id]::bigint[])
+                        source_row.units_ids && cm_build_array_for((null::public.train).units_ids, ARRAY[operation.unit.id]::bigint[])
                         and
                         source_row.deleted = 0
                 )
