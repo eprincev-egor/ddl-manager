@@ -8,6 +8,7 @@ import { Database } from "../database/schema/Database";
 import { IndexesMigrator } from "./IndexesMigrator";
 
 export class MainMigrator {
+
     static async migrate(
         postgres: IDatabaseDriver,
         database: Database,
@@ -61,18 +62,29 @@ export class MainMigrator {
     );
 
     async migrate() {
+        await this.dropOld();
+        await this.createNew();
+
+        return this.outputErrors;
+    }
+
+    async dropOld() {
         await this.triggers?.drop();
         await this.functions?.drop();
         await this.indexes?.drop();
         await this.columns?.drop();
 
+        return this.outputErrors;
+    }
+
+    async createNew() {
         await this.columns?.create();
         await this.functions?.create();
         await this.triggers?.create();
         await this.indexes?.create();
 
         await this.updates?.create();
-
+        
         return this.outputErrors;
     }
 

@@ -75,6 +75,16 @@ export class DDLManager {
         return await ddlManager.build();
     }
 
+    static async buildNew(params: IParams) {
+        const ddlManager = new DDLManager(params);
+        return await ddlManager.buildNew();
+    }
+
+    static async dropOld(params: IParams) {
+        const ddlManager = new DDLManager(params);
+        return await ddlManager.dropOld();
+    }
+
     static async compare(params: IParams) {
         const ddlManager = new DDLManager(params);
         const {migration} = await ddlManager.compareDbAndFs();
@@ -171,6 +181,36 @@ export class DDLManager {
             database,
             migration
         );
+
+        this.onMigrate(
+            postgres,
+            migration,
+            migrateErrors
+        );
+    }
+
+    private async buildNew() {
+        const {migration, database, postgres} = await this.compareDbAndFs();
+
+        const migrator = new MainMigrator(
+            postgres, database, migration
+        );
+        const migrateErrors = await migrator.createNew();
+
+        this.onMigrate(
+            postgres,
+            migration,
+            migrateErrors
+        );
+    }
+
+    private async dropOld() {
+        const {migration, database, postgres} = await this.compareDbAndFs();
+
+        const migrator = new MainMigrator(
+            postgres, database, migration
+        );
+        const migrateErrors = await migrator.dropOld();
 
         this.onMigrate(
             postgres,

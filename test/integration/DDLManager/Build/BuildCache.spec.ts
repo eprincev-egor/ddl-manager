@@ -4759,6 +4759,141 @@ describe("integration/DDLManager.build cache", () => {
         assert.deepStrictEqual(result.rows, [{id2: 2}])
     });
 
+    describe("buildNew/dropOld", () => {
+
+        it("build new columns without deleting old", async() => {
+            await db.query(`
+                create table companies (
+                    id serial primary key
+                );
+                insert into companies default values;
+            `);
+            fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+                cache self for companies (
+                    select
+                        companies.id * 2 as id2
+                )
+            `);
+            await DDLManager.build({
+                db, 
+                folder: ROOT_TMP_PATH,
+                throwError: true
+            });
+            fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+                cache self for companies (
+                    select
+                        companies.id * 3 as id3
+                )
+            `);
+    
+            await DDLManager.buildNew({
+                db, 
+                folder: ROOT_TMP_PATH,
+                throwError: true
+            });
+    
+            const result = await db.query(`
+                select id2, id3
+                from companies
+            `);
+            assert.deepStrictEqual(result.rows, [{id2: 2, id3: 3}])
+        });
+    
+        it("buildNew: dont drop old function", async() => {
+            fs.writeFileSync(ROOT_TMP_PATH + "/func.sql", `
+                create or replace function old_func()
+                returns text as $body$
+                begin
+                    return 'old';
+                end
+                $body$ language plpgsql;
+            `);
+            await DDLManager.build({
+                db, 
+                folder: ROOT_TMP_PATH,
+                throwError: true
+            });
+            fs.unlinkSync(ROOT_TMP_PATH + "/func.sql");
+    
+            await DDLManager.buildNew({
+                db, 
+                folder: ROOT_TMP_PATH,
+                throwError: true
+            });
+    
+            const result = await db.query(`
+                select old_func() as result
+            `);
+            assert.deepStrictEqual(result.rows, [{result: "old"}])
+        });
+    
+        it("dropOld: drop old function", async() => {
+            fs.writeFileSync(ROOT_TMP_PATH + "/func.sql", `
+                create or replace function old_func()
+                returns text as $body$
+                begin
+                    return 'old';
+                end
+                $body$ language plpgsql;
+            `);
+            await DDLManager.build({
+                db, 
+                folder: ROOT_TMP_PATH,
+                throwError: true
+            });
+            fs.unlinkSync(ROOT_TMP_PATH + "/func.sql");
+    
+            await DDLManager.dropOld({
+                db, 
+                folder: ROOT_TMP_PATH,
+                throwError: true
+            });
+    
+            await assert.rejects(db.query(`
+                select old_func() as result
+            `), /error: function old_func\(\) does not exist/);
+        });
+    
+        it("delete old columns without building new", async() => {
+            await db.query(`
+                create table companies (
+                    id serial primary key
+                );
+                insert into companies default values;
+            `);
+            fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+                cache self for companies (
+                    select
+                        companies.id * 2 as id2
+                )
+            `);
+            await DDLManager.build({
+                db, 
+                folder: ROOT_TMP_PATH,
+                throwError: true
+            });
+            fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+                cache self for companies (
+                    select
+                        companies.id * 3 as id3
+                )
+            `);
+    
+            await DDLManager.dropOld({
+                db, 
+                folder: ROOT_TMP_PATH,
+                throwError: true
+            });
+    
+            const result = await db.query(`
+                select *
+                from companies
+            `);
+            assert.deepStrictEqual(result.rows, [{id: 1}])
+        });
+
+    });
+
     // TODO: views can use column (check change column type)
     // TODO: custom before update trigger can be without "update of" list of columns
 
