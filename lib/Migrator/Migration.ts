@@ -20,10 +20,9 @@ export class Migration {
     readonly toDrop: IChanges;
     readonly toCreate: IChanges;
     updateHooks: IUpdateHooks = {};
-    private enabledCacheTriggersOnUpdate: boolean;
     private timeoutBetweenUpdates?: number;
     private timeoutPerUpdate = 0;
-    private updatePackageSize = 20000;
+    private updatePackageSize = 100;
     private logFilePath?: string;
     private needLogs = true;
 
@@ -32,7 +31,6 @@ export class Migration {
     }
 
     private constructor() {
-        this.enabledCacheTriggersOnUpdate = false;
         this.toDrop = {
             functions: [], triggers: [], columns: [],
             updates: [], indexes: []
@@ -41,14 +39,6 @@ export class Migration {
             functions: [], triggers: [], columns: [],
             updates: [], indexes: []
         };
-    }
-
-    needDisableCacheTriggersOnUpdate() {
-        return !this.enabledCacheTriggersOnUpdate;
-    }
-
-    enableCacheTriggersOnUpdate() {
-        this.enabledCacheTriggersOnUpdate = true;
     }
 
     getTimeoutBetweenUpdates() {

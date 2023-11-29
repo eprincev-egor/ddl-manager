@@ -1,11 +1,7 @@
 import { AbstractMigrator } from "./AbstractMigrator";
-import { TableReference } from "../database/schema/TableReference";
 import { CacheUpdate } from "../Comparator/graph/CacheUpdate";
 import { flatMap } from "lodash";
 import { sleep } from "../utils";
-import { Migration } from "./Migration";
-import { IDatabaseDriver } from "../database/interface";
-import { Database } from "../database/schema/Database";
 
 export const parallelPackagesCount = 8;
 
@@ -19,27 +15,12 @@ export class UpdateMigrator extends AbstractMigrator {
 
     async create() {
         for (const update of this.migration.toCreate.updates) {
-            await this.toggleTriggersAndDoUpdate(update);
+            await this.tryUpdate(update);
         }
     }
 
     abort() {
         this.aborted = true;
-    }
-
-    private async toggleTriggersAndDoUpdate(update: CacheUpdate) {
-        if ( this.migration.needDisableCacheTriggersOnUpdate() ) {
-            const cacheTriggers = this.findCacheTriggers(update.table);
-            await this.disableTriggers(update.table, cacheTriggers);
-    
-            await this.tryUpdate(update);
-
-            await this.enableTriggers(update.table, cacheTriggers);
-            // TODO: пока шло обновление, могли изменится записи
-        }
-        else {
-            await this.tryUpdate(update);
-        }
     }
 
     private async tryUpdate(update: CacheUpdate) {
@@ -59,40 +40,6 @@ export class UpdateMigrator extends AbstractMigrator {
         }
         else {
             await this.parallelUpdateCacheByIds(update);
-        }
-    }
-
-    private findCacheTriggers(onTableRef: TableReference): string[] {
-        const onTable = onTableRef.table;
-        const table = this.database.getTable(onTable);
-        if ( !table ) {
-            return []
-        }
-
-        const oldTriggers = table.triggers
-            .filter(trigger => 
-                !this.migration.toDrop.triggers
-                    .some(removed => removed.name == trigger.name)
-            );
-        const newTriggers = this.migration.toCreate.triggers
-            .filter(trigger => trigger.table.equal(onTable));
-
-        return [...oldTriggers, ...newTriggers]
-            .filter(trigger => trigger.cacheSignature)
-            .map(trigger => trigger.name);
-    }
-
-    private async disableTriggers(onTableRef: TableReference, triggers: string[]) {
-        const onTable = onTableRef.table;
-        for (const triggerName of triggers) {
-            await this.postgres.disableTrigger(onTable, triggerName);
-        }
-    }
-
-    private async enableTriggers(onTableRef: TableReference, triggers: string[]) {
-        const onTable = onTableRef.table;
-        for (const triggerName of triggers) {
-            await this.postgres.enableTrigger(onTable, triggerName);
         }
     }
 
