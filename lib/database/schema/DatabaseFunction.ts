@@ -192,56 +192,54 @@ language ${this.language}
     }
 
     toSQLWithLog() {
-        let body = this.body;
-
         const DONT_LOG_FUNCS = [
             "log",
+            "cm_build_array_for",
             "get_options"
         ];
-        if (
-            !DONT_LOG_FUNCS.includes(this.name) && 
-            this.language != "sql" 
-        ) {
-            // вставляем в самый первый begin
-            body = (" " + body).replace(
-                /(([^\w_])begin[^\w_])/i, 
-                `$2
-                declare ___call_id integer;
-                begin
-                insert into system_calls (
-                    tid,
-                    func_name,
-                    call_time
-                ) values (
-                    txid_current(),
-                    '${ this.schema }.${ this.name }',
-                    extract(epoch from timeofday()::timestamp without time zone)
-                )
-                returning id into ___call_id;
-                `
-            );
-
-            // перед каждым return
-            body = body.replace(
-                /([^\w_]return[^\w_]|[^\w_]end\s*;?\s*(\$\w+\$)?\s*$)/ig, 
-                `
-                insert into system_calls (
-                    tid,
-                    end_time,
-                    end_id
-                ) values (
-                    txid_current(),
-                    extract(epoch from timeofday()::timestamp without time zone),
-                    ___call_id
-                )
-                on conflict (end_id)
-                do update set
-                    end_time = excluded.end_time,
-                    id = excluded.id;
-                $1
-                `
-            );
+        if ( DONT_LOG_FUNCS.includes(this.name) || this.language === "sql" ) {
+            return this.toSQL();
         }
+        
+        // вставляем в самый первый begin
+        let body = (" " + this.body).replace(
+            /(([^\w_])begin[^\w_])/i, 
+            `$2
+            declare ___call_id integer;
+            begin
+            insert into system_calls (
+                tid,
+                func_name,
+                call_time
+            ) values (
+                txid_current(),
+                '${ this.schema }.${ this.name }',
+                extract(epoch from timeofday()::timestamp without time zone)
+            )
+            returning id into ___call_id;
+            `
+        );
+
+        // перед каждым return
+        body = body.replace(
+            /([^\w_]return[^\w_]|[^\w_]end\s*;?\s*(\$\w+\$)?\s*$)/ig, 
+            `
+            insert into system_calls (
+                tid,
+                end_time,
+                end_id
+            ) values (
+                txid_current(),
+                extract(epoch from timeofday()::timestamp without time zone),
+                ___call_id
+            )
+            on conflict (end_id)
+            do update set
+                end_time = excluded.end_time,
+                id = excluded.id;
+            $1
+            `
+        );
         
         const sql = this.toSQL({
             body,
