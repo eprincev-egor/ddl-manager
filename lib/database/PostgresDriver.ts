@@ -350,24 +350,69 @@ implements IDatabaseDriver {
                 alter column ${column.name}
                     set default ${ column.default };
 
-            create or replace function ddl_manager__try_cast_to(
-                input_value text,
-                INOUT output_value ${column.type}
-            ) AS
-            $body$
+            do $$
+            declare current_column_type text;
+            declare trigger_name text;
+            declare triggers_names text[];
+            declare trigger_definition text;
+            declare triggers_definitions text[];
             begin
-                select cast( input_value as ${column.type} )
-                into output_value;
-                exception when others then
+                current_column_type = (
+                    select to_regtype(column_info.udt_name)::text
+                    from information_schema.columns as column_info
+                    where
+                        column_info.table_schema = '${column.table.schema}' and
+                        column_info.table_name = '${column.table.name}' and
+                        column_info.column_name = '${column.name}'
+                );
+                if current_column_type is distinct from '${column.type.normalized}' then
+
+                    create or replace function ddl_manager__try_cast_to(
+                        input_value text,
+                        INOUT output_value ${column.type}
+                    ) AS
+                    $body$
+                    begin
+                        select cast( input_value as ${column.type} )
+                        into output_value;
+                        exception when others then
+                    end
+                    $body$ language plpgsql immutable;
+
+                    select
+                        array_agg( pg_trigger.tgname ),
+                        array_agg( pg_get_triggerdef( pg_trigger.oid ) )
+                    into
+                        triggers_names
+                        triggers_definitions
+                    from pg_trigger
+                    where
+                        pg_trigger.tgisinternal = false and
+                        pg_get_triggerdef( pg_trigger.oid ) ~* ' ON ${column.table} '
+                    ;
+
+                    if triggers_names is not null then
+                        foreach trigger_name in array triggers_names loop
+                            execute 'drop trigger if exists '  || trigger_name || ' on ${column.table};';
+                        end loop;
+                    end if;
+
+                    alter table ${column.table}
+                        alter column ${column.name}
+                            set data type ${column.type}
+                                using ddl_manager__try_cast_to(${column.name}::text, null::${column.type});
+
+                    drop function ddl_manager__try_cast_to(text, ${column.type});
+
+                    if triggers_definitions is not null then
+                        foreach trigger_definition in array triggers_definitions loop
+                            execute trigger_definition;
+                        end loop;
+                    end if;
+
+                end if;
             end
-            $body$ language plpgsql;
-
-            alter table ${column.table}
-                alter column ${column.name}
-                    set data type ${column.type}
-                        using ddl_manager__try_cast_to(${column.name}::text, null::${column.type});
-
-            drop function ddl_manager__try_cast_to(text, ${column.type});
+            $$;
         `;
 
         await this.query(sql);
