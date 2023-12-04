@@ -4880,6 +4880,59 @@ describe("integration/DDLManager.build cache", () => {
             assert.deepStrictEqual(result.rows, [{idx: "1"}])
         });
     
+        it("build columns types with unknown triggers on table with keyword name", async() => {
+            await db.query(`
+                create table public.order (
+                    id serial primary key,
+                    idx integer
+                );
+                insert into public.order default values;
+
+                create or replace function bad_unknown_trigger()
+                returns trigger as $body$
+                begin
+                    return new;
+                end
+                $body$ language plpgsql;
+
+                create trigger bad_unknown_trigger
+                after update of idx
+                on public.order
+                for each row
+                execute procedure bad_unknown_trigger();
+
+            `);
+            fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+                cache self for public.order (
+                    select
+                    public.order.id * 2 as idx
+                )
+            `);
+            await DDLManager.build({
+                db, 
+                folder: ROOT_TMP_PATH,
+                throwError: true
+            });
+            fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+                cache self for public.order (
+                    select
+                    public.order.id::text as idx
+                )
+            `);
+    
+            await DDLManager.buildNew({
+                db, 
+                folder: ROOT_TMP_PATH,
+                throwError: true
+            });
+    
+            const result = await db.query(`
+                select idx
+                from public.order
+            `);
+            assert.deepStrictEqual(result.rows, [{idx: "1"}])
+        });
+    
         it("dropOld: drop old function", async() => {
             fs.writeFileSync(ROOT_TMP_PATH + "/func.sql", `
                 create or replace function old_func()

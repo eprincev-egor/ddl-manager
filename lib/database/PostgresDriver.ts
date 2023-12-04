@@ -388,7 +388,7 @@ implements IDatabaseDriver {
                     from pg_trigger
                     where
                         pg_trigger.tgisinternal = false and
-                        pg_get_triggerdef( pg_trigger.oid ) ~* ' ON ${column.table} '
+                        pg_get_triggerdef( pg_trigger.oid ) ~* ' ON "?${column.table.schema}"?\."?${column.table.name}"? '
                     ;
 
                     if triggers_names is not null then
