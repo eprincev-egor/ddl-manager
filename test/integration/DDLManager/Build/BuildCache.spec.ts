@@ -4820,6 +4820,56 @@ describe("integration/DDLManager.build cache", () => {
         }])
     });
 
+    it("changing column type and testing one-row-trigger", async() => {
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                some_column text
+            );
+            create table orders (
+                id serial primary key,
+                id_client integer
+            );
+            insert into companies default values;
+            insert into orders (id_client) values (1);
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+            cache totals for orders (
+                select
+                    coalesce(companies.some_column, companies.some_column) as some_column
+                from companies
+                where
+                    companies.id = orders.id_client
+            )
+        `);
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+        await db.query(`
+            drop trigger if exists cache_totals_for_orders_on_companies 
+                on public.companies;
+
+            alter table companies
+                drop column some_column;
+
+            alter table companies
+                add column some_column integer;
+
+            create trigger cache_totals_for_orders_on_companies 
+            after insert or delete or update of some_column 
+            on public.companies 
+            for each row 
+            execute procedure cache_totals_for_orders_on_companies();
+        `);
+        
+        await db.query(`
+            delete from companies
+        `);
+    });
+
     describe("buildNew/dropOld", () => {
 
         it("build new columns without deleting old", async() => {
