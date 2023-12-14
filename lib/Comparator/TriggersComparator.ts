@@ -1,5 +1,4 @@
 import { AbstractComparator } from "./AbstractComparator";
-import { flatMap } from "lodash";
 
 export class TriggersComparator 
 extends AbstractComparator {
@@ -15,12 +14,10 @@ extends AbstractComparator {
                     continue;
                 }
 
-                const existsSameTriggerFromFile = flatMap(this.fs.files, file => 
-                    file.content.triggers
-                ).some(fileTrigger =>
+                const fsTriggers = this.fs.getTableTriggers(dbTrigger.table);
+                const existsSameTriggerFromFile = fsTriggers.some(fileTrigger =>
                     fileTrigger.equal(dbTrigger)
                 );
-
                 if ( !existsSameTriggerFromFile ) {
                     this.migration.drop({
                         triggers: [dbTrigger]
@@ -34,18 +31,15 @@ extends AbstractComparator {
         for (const trigger of this.fs.allTriggers()) {
 
             const dbTable = this.database.getTable(trigger.table);
-
-            const existsSameTriggerFromDb = dbTable && dbTable.triggers.some(dbTrigger =>
+            const existsSameTriggerFromDb = dbTable?.triggers.some(dbTrigger =>
                 dbTrigger.equal(trigger)
             );
 
-            if ( existsSameTriggerFromDb ) {
-                continue;
+            if ( !existsSameTriggerFromDb ) {
+                this.migration.create({
+                    triggers: [trigger]
+                });
             }
-
-            this.migration.create({
-                triggers: [trigger]
-            });
         }
     }
 }

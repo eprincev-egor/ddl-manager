@@ -130,13 +130,7 @@ export class CacheComparator extends AbstractComparator {
                 item.function.equal( dbCacheFunc )
             );
             if ( !existsSameCacheFunc ) {
-                const [needDropTrigger] = this.database.getTriggersByProcedure(dbCacheFunc);
-                const alreadyDropped = needDropTrigger && this.migration.toDrop.triggers.some(trigger =>
-                    trigger.equal(needDropTrigger)
-                );
-    
                 this.migration.drop({
-                    triggers: needDropTrigger && !alreadyDropped ? [needDropTrigger] : [],
                     functions: [dbCacheFunc]
                 });
             }
@@ -244,8 +238,6 @@ export class CacheComparator extends AbstractComparator {
         for (const cacheColumn of this.graph.getAllColumnsFromRootToDeps()) {
             await this.createColumn(cacheColumn);
         }
-
-        this.recreateDepsTriggersToChangedColumns();
     }
 
     private async createColumn(cacheColumn: CacheColumn) {
@@ -266,41 +258,6 @@ export class CacheComparator extends AbstractComparator {
         this.migration.create({
             columns: [columnToCreate]
         });
-    }
-
-    // fix: cannot drop column because other objects depend on it
-    private recreateDepsTriggersToChangedColumns() {
-        const allTriggers = flatMap(this.database.tables, table => table.triggers)
-            .filter(dbTrigger => !this.migration.toDrop.triggers
-                .some(dropTrigger =>
-                    dropTrigger.name === dbTrigger.name &&
-                    dropTrigger.table.equal(dbTrigger.table)
-            ));
-
-        for (const dbTrigger of allTriggers) {
-            const table = dbTrigger.table;
-            const hasDepsToCacheColumn = (dbTrigger.updateOf || [])
-                .some(triggerDepsColumnName => {
-                    const thisColumnNeedDrop = this.migration.toDrop.columns.some(columnToDrop =>
-                        columnToDrop.equalName(triggerDepsColumnName) &&
-                        columnToDrop.table.equal(table)
-                    );
-                    const thisColumnNeedChangeType = this.migration.toCreate.columns.some(columnToDrop =>
-                        columnToDrop.equalName(triggerDepsColumnName) &&
-                        columnToDrop.table.equal(table)
-                    );
-                    return thisColumnNeedDrop || thisColumnNeedChangeType;
-                });
-
-            if ( hasDepsToCacheColumn ) {
-                this.migration.drop({
-                    triggers: [dbTrigger]
-                });
-                this.migration.create({
-                    triggers: [dbTrigger]
-                });
-            }
-        }
     }
 
     private updateColumns() {

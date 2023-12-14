@@ -381,9 +381,9 @@ implements IDatabaseDriver {
 
                     select
                         array_agg( pg_trigger.tgname ),
-                        array_agg( pg_get_triggerdef( pg_trigger.oid ) )
+                        array_agg( pg_get_triggerdef( pg_trigger.oid )::text )
                     into
-                        triggers_names
+                        triggers_names,
                         triggers_definitions
                     from pg_trigger
                     where

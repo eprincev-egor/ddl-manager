@@ -185,56 +185,6 @@ describe("Comparator: compare triggers", async() => {
         });
     });
 
-
-    it("drop trigger, if function has change, but trigger not", async() => {
-        const func1 = new DatabaseFunction({
-            ...someTriggerFuncParams,
-            body: `begin
-                return new;
-            end`
-        });
-        const func2 = new DatabaseFunction({
-            ...someTriggerFuncParams,
-            body: `begin
-                -- some change
-                return new;
-            end`
-        });
-
-        database.addFunctions([func1]);
-        database.setTable(new Table(testTrigger.table.schema, testTrigger.table.name));
-        database.addTrigger(testTrigger);
-
-        fs.addFile({
-            ...someFileParams,
-            content: {
-                functions: [func2],
-                triggers: [testTrigger]
-            }
-        });
-
-        const migration = await MainComparator.compare(postgres, database, fs);
-
-        deepStrictEqualMigration(migration, {
-            drop: {
-                triggers: [
-                    testTrigger
-                ],
-                functions: [
-                    func1
-                ]
-            },
-            create: {
-                triggers: [
-                    testTrigger
-                ],
-                functions: [
-                    func2
-                ]
-            }
-        });
-    });
-
     it("trigger with long name inside fs and db", async() => {
         const longName = "long_name_0123456789012345678901234567890123456789012345678901234567890123456789";
 
