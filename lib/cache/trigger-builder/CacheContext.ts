@@ -163,36 +163,6 @@ export class CacheContext {
         return triggerName;
     }
 
-    getBeforeUpdateTriggers() {
-        const triggerDbTable = this.database.getTable(this.triggerTable) || {triggers: []};
-
-        const dbBeforeUpdateTriggers = triggerDbTable.triggers.filter(trigger =>
-            trigger.frozen &&
-            trigger.before &&
-            trigger.update
-        );
-        const fsBeforeUpdateTriggers = this.fs.getTableTriggers(this.triggerTable).filter(trigger => 
-            trigger.before &&
-            trigger.update
-        );
-
-        return [...fsBeforeUpdateTriggers, ...dbBeforeUpdateTriggers];
-    }
-
-    getTriggerFunction(trigger: DatabaseTrigger) {
-        const dbFunction = this.database.getFunctions(trigger.procedure.name).find(func =>
-            //func.frozen &&
-            func.name === trigger.procedure.name &&
-            func.schema === trigger.procedure.schema
-        );
-        const fsFunction = this.fs.getTriggerFunction(trigger);
-
-        const func = dbFunction || fsFunction;
-
-        strict.ok(func);
-        return func;
-    }
-
     createSelectForUpdate() {
         return this.cache.createSelectForUpdate(
             this.database.aggregators

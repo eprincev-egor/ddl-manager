@@ -4454,6 +4454,81 @@ describe("integration/DDLManager.build cache", () => {
         ]);
     });
 
+    it("four levels of triggers, rebuilding custom triggers when it dependent on cache", async() => {
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                a text,
+                b text,
+                c text,
+                d text,
+                e text
+            );
+            insert into companies default values;
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/custom1.sql", `
+            create or replace function custom1()
+            returns trigger as $body$
+            begin
+                new.b = new.a || '-b';
+                return new;
+            end
+            $body$ language plpgsql;
+
+            create trigger a_custom1
+            before insert or update of a
+            on companies
+            for each row
+            execute procedure custom1();
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/cache1.sql", `
+            cache cache_z for companies (
+                select
+                    companies.b || '-c' as c
+            )
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/cache2.sql", `
+            cache cache_a for companies (
+                select
+                    companies.c || '-d' as d
+            )
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/custom2.sql", `
+            create or replace function custom2()
+            returns trigger as $body$
+            begin
+                new.e = new.d || '-e';
+                return new;
+            end
+            $body$ language plpgsql;
+
+            create trigger z_custom2
+            before insert or update of d
+            on companies
+            for each row
+            execute procedure custom2();
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            update companies set
+                a = 'a'
+            returning a, b, c, d, e
+        `);
+        strict.deepEqual(result.rows, [{
+            a: "a",
+            b: "a-b",
+            c: "a-b-c",
+            d: "a-b-c-d",
+            e: "a-b-c-d-e"
+        }]);
+    });
+
     describe("using old column with not null and changing that column type", () => {
 
         it("integer => numeric", async() => {

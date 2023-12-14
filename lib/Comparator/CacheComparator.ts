@@ -1,7 +1,6 @@
 import { AbstractComparator } from "./AbstractComparator";
 import { Column } from "../database/schema/Column";
 import { CacheTriggersBuilder, IOutputTrigger } from "../cache/CacheTriggersBuilder";
-import { flatMap, uniq } from "lodash";
 import { Migration } from "../Migrator/Migration";
 import { IDatabaseDriver } from "../database/interface";
 import { Database } from "../database/schema/Database";
@@ -63,6 +62,10 @@ export class CacheComparator extends AbstractComparator {
         this.createTriggers();
         await this.createColumns();
         this.updateColumns();
+    }
+
+    getAllCacheTriggers() {
+        return this.allCacheTriggers;
     }
 
     findChangedColumns() {
@@ -185,52 +188,6 @@ export class CacheComparator extends AbstractComparator {
                 triggers: existFunc && existsTrigger ? [] : [trigger],
                 functions: existFunc ? [] : [func]
             });
-        }
-
-        for (const trigger of this.fs.allTriggers()) {
-            if ( !trigger.updateOf ) {
-                continue;
-            }
-
-            const beforeUpdateTriggers = this.allCacheTriggers.filter(item =>
-                item.trigger.before &&
-                item.trigger.updateOf &&
-                item.trigger.table.equal(trigger.table) &&
-                item.function.findAssignColumns().some(column =>
-                    trigger.updateOf!.includes(column)
-                )
-            );
-            if ( beforeUpdateTriggers.length === 0 ) {
-                continue;
-            }
-
-            const alsoNeedListenColumns = flatMap(beforeUpdateTriggers, ({trigger}) => 
-                trigger.updateOf!
-            );
-
-            const fixedTrigger = trigger.clone({
-                updateOf: uniq(
-                    trigger.updateOf
-                        .concat(alsoNeedListenColumns)
-                        .sort()
-                )
-            });
-
-            const dbTrigger = this.database
-                .getTable(fixedTrigger.table)!
-                .getTrigger(fixedTrigger.name);
-
-            const existsSameInDb = dbTrigger && 
-                dbTrigger.equal(fixedTrigger);
-
-
-            if ( existsSameInDb ) {
-                this.migration.unDropTrigger(trigger);
-                this.migration.unCreateTrigger(trigger);
-            } else {
-                this.migration.drop({triggers: [trigger]});
-                this.migration.create({triggers: [fixedTrigger]});
-            }
         }
     }
 

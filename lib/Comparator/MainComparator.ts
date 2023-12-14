@@ -56,17 +56,18 @@ export class MainComparator {
             fs,
             this.migration
         );
-        this.triggers = new TriggersComparator(
-            driver,
-            database,
-            fs,
-            this.migration
-        );
         this.cache = new CacheComparator(
             driver,
             database,
             fs,
             this.migration
+        );
+        this.triggers = new TriggersComparator(
+            driver,
+            database,
+            fs,
+            this.migration,
+            this.cache.getAllCacheTriggers()
         );
         this.indexes = new IndexComparator(
             driver,
@@ -83,8 +84,9 @@ export class MainComparator {
 
         await this.dropOldObjects();
 
-        this.triggers.create();
         await this.cache.create();
+        this.triggers.create(); // should be after cache.create()
+
         this.indexes.create();
 
         return this.migration;

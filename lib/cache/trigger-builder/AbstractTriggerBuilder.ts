@@ -1,4 +1,4 @@
-import { flatMap, uniq } from "lodash";
+import { uniq } from "lodash";
 import {
     AbstractAstElement,
     Expression
@@ -115,48 +115,6 @@ export abstract class AbstractTriggerBuilder {
     protected buildUpdateOfColumns() {
         const updateOfColumns = this.context.triggerTableColumns
             .filter(column =>  column !== "id" );
-
-        this.addCustomBeforeUpdateTriggerDeps(updateOfColumns);
-        this.addCacheBeforeUpdateTriggerDeps(updateOfColumns);
-
         return uniq(updateOfColumns).sort();
-    }
-
-    private addCustomBeforeUpdateTriggerDeps(updateOfColumns: string[]) {
-        const beforeUpdateTriggers = this.context.getBeforeUpdateTriggers();
-
-        for (const beforeUpdateTrigger of beforeUpdateTriggers) {
-            const dbFunction = this.context.getTriggerFunction(beforeUpdateTrigger);
-
-            const changedColumns = dbFunction.findAssignColumns() || [];
-            const hasDepsColumns = changedColumns.some(columnName =>
-                updateOfColumns.includes(columnName)
-            );
-
-            if ( hasDepsColumns && beforeUpdateTrigger.updateOf ) {
-                updateOfColumns.push(...beforeUpdateTrigger.updateOf);
-            }
-        }
-    }
-
-    private addCacheBeforeUpdateTriggerDeps(updateOfColumns: string[]) {
-        const depsCaches = this.context.getAllCacheForTriggerTable().filter(cache =>
-            cache.select.columns.some(column => 
-                updateOfColumns.includes(column.name)
-            )
-        );
-
-        const depsColumns = flatMap(depsCaches, cache =>
-            cache.getTargetTablesDepsColumns()
-        ).filter(column => column != "id");
-
-        const newColumns = depsColumns.filter(depColumn =>
-            !updateOfColumns.includes(depColumn)
-        );
-        if ( newColumns.length ) {
-            updateOfColumns.push( ...depsColumns );
-
-            this.addCacheBeforeUpdateTriggerDeps(updateOfColumns)
-        }
     }
 }
