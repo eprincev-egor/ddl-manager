@@ -4759,6 +4759,67 @@ describe("integration/DDLManager.build cache", () => {
         assert.deepStrictEqual(result.rows, [{id2: 2}])
     });
 
+    it("old custom trigger dependent on old column", async() => {
+        await db.query(`
+            create table companies (
+                id serial primary key,
+                name text,
+                note text
+            );
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/old_cache.sql", `
+            cache self for companies (
+                select
+                    companies.id * 2 as id2
+            )
+        `);
+        fs.writeFileSync(ROOT_TMP_PATH + "/old_custom_trigger.sql", `
+            function old_custom_trigger()
+            returns trigger as $body$
+            begin
+                new.note = 'hello';
+                return new;
+            end
+            $body$ language plpgsql;
+
+            create trigger old_custom_trigger
+            before update of id2
+            on companies
+            for each row
+            execute procedure old_custom_trigger();
+        `);
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+        fs.unlinkSync(ROOT_TMP_PATH + "/old_cache.sql");
+        fs.unlinkSync(ROOT_TMP_PATH + "/old_custom_trigger.sql");
+
+        fs.writeFileSync(ROOT_TMP_PATH + "/new_cache.sql", `
+            cache self2 for companies (
+                select
+                    companies.name || coalesce(companies.note, '--') as name_note
+            )
+        `);
+        
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+        const result = await db.query(`
+            insert into companies (name)
+            values ('test')
+            returning name_note
+        `);
+        assert.deepStrictEqual(result.rows, [{
+            name_note: "test--"
+        }])
+    });
+
     describe("buildNew/dropOld", () => {
 
         it("build new columns without deleting old", async() => {
@@ -4996,6 +5057,51 @@ describe("integration/DDLManager.build cache", () => {
                 from companies
             `);
             assert.deepStrictEqual(result.rows, [{id: 1}])
+        });
+    
+        it("build new cache without dropping custom triggers", async() => {
+            await db.query(`
+                create table companies (
+                    id serial primary key,
+                    name text
+                );
+            `);
+            fs.writeFileSync(ROOT_TMP_PATH + "/cache.sql", `
+                cache self for companies (
+                    select
+                        companies.id * 2 as id2
+                )
+            `);
+            fs.writeFileSync(ROOT_TMP_PATH + "/custom_trigger.sql", `
+                create or replace function custom_trigger()
+                returns trigger as $body$
+                begin
+                    new.name = 'test';
+                    return new;
+                end;
+                $body$ language plpgsql;
+
+                create trigger custom_trigger
+                before insert or update of name
+                on companies
+                for each row execute procedure
+                custom_trigger();
+
+            `);
+            await DDLManager.buildNew({
+                db, 
+                folder: ROOT_TMP_PATH,
+                throwError: true
+            });
+    
+            const result = await db.query(`
+                insert into companies default values
+                returning id, id2, name
+            `);
+            assert.deepStrictEqual(result.rows, [{
+                id: 1, id2: 2,
+                name: "test"
+            }])
         });
 
     });

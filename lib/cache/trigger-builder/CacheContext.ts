@@ -167,7 +167,7 @@ export class CacheContext {
         const triggerDbTable = this.database.getTable(this.triggerTable) || {triggers: []};
 
         const dbBeforeUpdateTriggers = triggerDbTable.triggers.filter(trigger =>
-            //trigger.frozen &&
+            trigger.frozen &&
             trigger.before &&
             trigger.update
         );
