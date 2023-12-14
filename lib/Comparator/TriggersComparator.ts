@@ -12,6 +12,7 @@ import { DatabaseFunction } from "../database/schema/DatabaseFunction";
 export class TriggersComparator 
 extends AbstractComparator {
 
+    private fixedTriggersByTable: Record<string, DatabaseTrigger[]> = {};
     constructor(
         driver: IDatabaseDriver,
         database: Database,
@@ -19,35 +20,32 @@ extends AbstractComparator {
         migration: Migration,
         private allCacheTriggers: IOutputTrigger[]
     ) {
-        super(driver, database, fs, migration)
+        super(driver, database, fs, migration);
+        this.fixBeforeUpdateTriggers();
     }
 
     drop() {
-        for (const table of this.database.tables) {
-            for (const dbTrigger of table.triggers) {
-                
-                if ( dbTrigger.frozen ) {
-                    continue;
-                }
-                if ( dbTrigger.cacheSignature ) {
-                    continue;
-                }
+        for (const dbTrigger of this.database.getAllTriggers()) {
+            if ( dbTrigger.frozen ) {
+                continue;
+            }
 
-                const fsTriggers = this.fs.getTableTriggers(dbTrigger.table);
-                const existsSameTriggerFromFile = fsTriggers.some(fileTrigger =>
-                    fileTrigger.equal(dbTrigger)
-                );
-                if ( !existsSameTriggerFromFile ) {
-                    this.migration.drop({
-                        triggers: [dbTrigger]
-                    });
-                }
+            const fsTrigger = this.findFsTrigger(dbTrigger);
+            if ( !fsTrigger?.equal(dbTrigger) ) {
+                this.migration.drop({
+                    triggers: [dbTrigger]
+                });
             }
         }
     }
 
     create() {
-        for (const trigger of this.fs.allTriggers()) {
+        const allTriggers = [
+            ...this.fs.allTriggers(),
+            ...this.allCacheTriggers.map(item => item.trigger)
+        ].map(trigger => this.tryFindFixedTrigger(trigger));
+
+        for (const trigger of allTriggers) {
             const dbTable = this.database.getTable(trigger.table);
             const existsSameTriggerFromDb = dbTable?.triggers.some(dbTrigger =>
                 dbTrigger.equal(trigger)
@@ -59,8 +57,25 @@ extends AbstractComparator {
                 });
             }
         }
+    }
 
-        this.fixBeforeUpdateTriggers();
+    private findFsTrigger(dbTrigger: DatabaseTrigger) {
+        const fsTriggers = this.fs.getTableTriggers(dbTrigger.table);
+        const cacheTriggers = this.allCacheTriggers.map(item => item.trigger)
+            .filter(trigger => trigger.table.equal(dbTrigger.table));
+
+        const fsTrigger = [...fsTriggers, ...cacheTriggers].find(trigger =>
+            trigger.name === dbTrigger.name
+        );
+        if ( fsTrigger ) {
+            return this.tryFindFixedTrigger(fsTrigger)
+        }
+    }
+
+    private tryFindFixedTrigger(trigger: DatabaseTrigger) {
+        const fixedTriggers = this.fixedTriggersByTable[ trigger.table.toString() ] || [];
+        const fixedTrigger = fixedTriggers.find(fixed => fixed.name === trigger.name);
+        return fixedTrigger || trigger;
     }
 
     private fixBeforeUpdateTriggers() {
@@ -133,14 +148,8 @@ extends AbstractComparator {
             ]).sort()
         });
 
-        const existsSameTriggerFromDb = dbTable.triggers.some(dbTrigger =>
-            dbTrigger.equal(trigger)
-        );
-        if ( !existsSameTriggerFromDb ) {
-            this.migration.create({
-                triggers: [fixedTrigger]
-            });
-        }
+        this.fixedTriggersByTable[ dbTable.toString() ] ??= [];
+        this.fixedTriggersByTable[ dbTable.toString() ].push(fixedTrigger);
     }
 }
 

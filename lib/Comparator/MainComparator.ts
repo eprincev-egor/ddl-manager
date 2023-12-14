@@ -50,17 +50,18 @@ export class MainComparator {
     ) {
         this.migration = Migration.empty();
 
-        this.functions = new FunctionsComparator(
-            driver,
-            database,
-            fs,
-            this.migration
-        );
         this.cache = new CacheComparator(
             driver,
             database,
             fs,
             this.migration
+        );
+        this.functions = new FunctionsComparator(
+            driver,
+            database,
+            fs,
+            this.migration,
+            this.cache.getAllCacheTriggers()
         );
         this.triggers = new TriggersComparator(
             driver,
@@ -85,8 +86,7 @@ export class MainComparator {
         await this.dropOldObjects();
 
         await this.cache.create();
-        this.triggers.create(); // should be after cache.create()
-
+        this.triggers.create();
         this.indexes.create();
 
         return this.migration;
@@ -94,8 +94,6 @@ export class MainComparator {
 
     private async logAllFuncsMigration() {
         this.functions.createLogFuncs();
-        await this.cache.createLogFuncs();
-
         return this.migration;
     }
 

@@ -42,6 +42,10 @@ export class Database {
         return flatMap(this.tables, table => table.columns);
     }
 
+    getAllTriggers() {
+        return flatMap(this.tables, table => table.triggers);
+    }
+
     getColumn(tableId: TableID, column: string) {
         const dbTable = this.tables.find(table => 
             table.name === tableId.name &&

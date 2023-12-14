@@ -53,13 +53,10 @@ export class CacheComparator extends AbstractComparator {
     }
 
     async drop() {
-        this.dropTrashTriggers();
-        this.dropTrashFuncs();
         this.dropTrashColumns();
     }
 
     async create() {
-        this.createTriggers();
         await this.createColumns();
         this.updateColumns();
     }
@@ -88,14 +85,6 @@ export class CacheComparator extends AbstractComparator {
         return changedColumns;
     }
 
-    async createLogFuncs() {
-        for (const trigger of this.allCacheTriggers) {
-            this.migration.create({
-                functions: [trigger.function]
-            });
-        }
-    }
-
     async refreshCache(targetTablesOrColumns?: string) {
         if ( targetTablesOrColumns ) {
             const concreteColumns = this.graph.findCacheColumnsForTablesOrColumns(targetTablesOrColumns);
@@ -109,36 +98,6 @@ export class CacheComparator extends AbstractComparator {
                 updates: this.graph.generateAllUpdates()
             });
         }
-    }
-
-    private dropTrashTriggers() {
-        for (const dbCacheTrigger of this.database.allCacheTriggers()) {
-            const existsSameCacheTrigger = this.allCacheTriggers.some(item => 
-                item.trigger.equal( dbCacheTrigger )
-            );
-            if ( !existsSameCacheTrigger ) {
-                this.migration.drop({
-                    triggers: [dbCacheTrigger]
-                });
-            }
-        }
-    }
-
-    private dropTrashFuncs() {
-        const allCacheFuncs = this.database.functions.filter(func =>
-            !!func.cacheSignature
-        );
-        for (const dbCacheFunc of allCacheFuncs) {
-            const existsSameCacheFunc = this.allCacheTriggers.some(item =>
-                item.function.equal( dbCacheFunc )
-            );
-            if ( !existsSameCacheFunc ) {
-                this.migration.drop({
-                    functions: [dbCacheFunc]
-                });
-            }
-        }
-
     }
 
     private dropTrashColumns() {
@@ -169,24 +128,6 @@ export class CacheComparator extends AbstractComparator {
             });
             this.migration.create({
                 columns: [oldDbColumn]
-            });
-        }
-    }
-
-    private createTriggers() {
-        for (const {trigger, function: func} of this.allCacheTriggers) {
-            
-            const existFunc = this.database.getFunctions(func.name).some(existentFunc =>
-                existentFunc.equal(func)
-            );
-            const table = this.database.getTable( trigger.table );
-            const existsTrigger = table && table.triggers.some(existentTrigger =>
-                existentTrigger.equal( trigger )
-            );
-
-            this.migration.create({
-                triggers: existFunc && existsTrigger ? [] : [trigger],
-                functions: existFunc ? [] : [func]
             });
         }
     }
