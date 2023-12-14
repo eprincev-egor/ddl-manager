@@ -352,10 +352,8 @@ implements IDatabaseDriver {
 
             do $$
             declare current_column_type text;
-            declare trigger_name text;
-            declare triggers_names text[];
-            declare trigger_definition text;
-            declare triggers_definitions text[];
+            declare dep_trigger jsonb;
+            declare dep_triggers jsonb[];
             begin
                 current_column_type = (
                     select to_regtype(column_info.udt_name)::text
@@ -379,21 +377,22 @@ implements IDatabaseDriver {
                     end
                     $body$ language plpgsql immutable;
 
-                    select
-                        array_agg( pg_trigger.tgname ),
-                        array_agg( pg_get_triggerdef( pg_trigger.oid )::text )
-                    into
-                        triggers_names,
-                        triggers_definitions
-                    from pg_trigger
-                    where
-                        pg_trigger.tgisinternal = false and
-                        pg_get_triggerdef( pg_trigger.oid ) ~* ' ON "?${column.table.schema}"?\."?${column.table.name}"? '
-                    ;
+                    dep_triggers = (
+                        select
+                            array_agg( json_build_object(
+                                'name', pg_trigger.tgname,
+                                'definition', pg_get_triggerdef( pg_trigger.oid )::text,
+                                'comment', pg_catalog.obj_description( pg_trigger.oid )::text
+                            )::jsonb )
+                        from pg_trigger
+                        where
+                            pg_trigger.tgisinternal = false and
+                            pg_get_triggerdef( pg_trigger.oid ) ~* ' ON "?${column.table.schema}"?\."?${column.table.name}"? '
+                    );
 
-                    if triggers_names is not null then
-                        foreach trigger_name in array triggers_names loop
-                            execute 'drop trigger if exists '  || trigger_name || ' on ${column.table};';
+                    if dep_triggers is not null then
+                        foreach dep_trigger in array dep_triggers loop
+                            execute 'drop trigger if exists '  || (dep_trigger->>'name')::text || ' on ${column.table};';
                         end loop;
                     end if;
 
@@ -404,9 +403,17 @@ implements IDatabaseDriver {
 
                     drop function ddl_manager__try_cast_to(text, ${column.type});
 
-                    if triggers_definitions is not null then
-                        foreach trigger_definition in array triggers_definitions loop
-                            execute trigger_definition;
+                    if dep_triggers is not null then
+                        foreach dep_trigger in array dep_triggers loop
+
+                            execute (dep_trigger->>'definition')::text;
+
+                            if dep_trigger->>'comment' is not null then
+                                execute (
+                                    'comment on trigger ' || (dep_trigger->>'name')::text || ' on ${column.table} ' ||
+                                    'is $ddl_comment_tmp$' || (dep_trigger->>'comment')::text || '$ddl_comment_tmp$'
+                                );
+                            end if;
                         end loop;
                     end if;
 
