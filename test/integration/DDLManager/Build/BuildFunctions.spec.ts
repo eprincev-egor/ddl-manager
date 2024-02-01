@@ -840,4 +840,35 @@ language plpgsql;
         assert.deepStrictEqual(result.rows, [{equal: true}])
     });
 
+    it("function file with comment on function", async() => {
+        const folderPath = ROOT_TMP_PATH + "/simple-func";
+        fs.mkdirSync(folderPath);
+
+        const rnd = Math.round( 1000 * Math.random() );
+        fs.writeFileSync(folderPath + "/nice.sql", `
+            comment on function nice() is 'hello world';
+
+            create or replace function nice(a integer)
+            returns integer as $body$
+                begin
+                    return a * ${ rnd };
+                end
+            $body$
+            language plpgsql;
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: folderPath
+        });
+
+        const result = await db.query("select nice(2) as nice");
+        const row = result.rows[0];
+
+        expect(row).to.be.shallowDeepEqual({
+            nice: 2 * rnd
+        });
+    });
+
 });

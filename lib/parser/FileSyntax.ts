@@ -4,6 +4,7 @@ import {
 } from "psql-lang";
 import { CacheSyntax } from "./CacheSyntax";
 import { CacheLinter } from "./CacheLinter";
+import { CommentSyntax } from "./CommentSyntax";
 
 export interface FileSyntaxRow {
     functions: CreateFunction[];
@@ -44,6 +45,9 @@ export class FileSyntax extends AbstractNode<FileSyntaxRow> {
                 CacheLinter.lint(cursor, cache);
 
                 output.caches.push(cache);
+            }
+            else if ( cursor.before(CommentSyntax) ) {
+                cursor.parse(CommentSyntax); // just ignore
             }
             else if ( !cursor.beforeEnd() ) {
                 cursor.throwError("expected function or trigger or cache")
