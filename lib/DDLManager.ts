@@ -447,7 +447,7 @@ export class DDLManager {
 
             if ( !migrateErrors.length ) {
                 // tslint:disable-next-line: no-console
-                console.log("ddl-manager build success");
+                console.log(`ddl-manager v${packageJson.version} build success`);
             }
         }
         
