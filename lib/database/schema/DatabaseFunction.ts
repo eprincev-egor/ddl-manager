@@ -126,13 +126,13 @@ export class DatabaseFunction  {
         return `${ this.schema }.${ this.name }(${ argsTypes.join(", ") })`;
     }
 
-    toSQL(body = this.body) {
+    toSQL(body = this.body, options: Partial<DatabaseFunction> = {}) {
         let additionalParams = "";
         
-        if ( this.immutable ) {
+        if ( this.immutable && options.immutable !== false ) {
             additionalParams += " immutable";
         }
-        else if ( this.stable ) {
+        else if ( this.stable && options.stable !== false ) {
             additionalParams += " stable";
         }
 
@@ -232,7 +232,10 @@ language ${this.language}
             );
         }
         
-        const sql = this.toSQL(body);
+        const sql = this.toSQL(body, {
+            immutable: false,
+            stable: false
+        });
         return sql;
     }
 
