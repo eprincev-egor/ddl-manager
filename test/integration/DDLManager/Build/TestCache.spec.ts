@@ -5137,6 +5137,160 @@ $$;
         }]);
     });
 
+    it("test cache with (and) or (and) with mistake", async() => {
+        await db.query(`
+            create table invoices (
+                id serial primary key,
+                invoice_type text,
+                id_buyer integer,
+                id_seller integer
+            );
+            create table companies (
+                id serial primary key,
+                name text,
+                deleted integer default 0
+            );
+        `);
+
+        fs.writeFileSync(ROOT_TMP_PATH + "/our_company.sql", `
+            cache our_company for invoices (
+                select
+                    companies.name as our_company_name
+                from companies
+                where
+                    (
+                        invoices.invoice_type = 'incoming' and
+                        companies.id = invoices.id_buyer
+                    )
+                    or
+                    (
+                        invoices.invoice_type = 'outgoing' and
+                        companies.id = invoices.id_seller
+                    )
+                    -- mistake
+                    and companies.deleted = 0 
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+
+        await db.query(`
+            insert into companies (name) values ('our company');
+
+            insert into invoices
+                (invoice_type, id_buyer, id_seller)
+            values
+                ('incoming', 1, null),
+                ('outgoing', null, 1)
+        `);
+        const result = await db.query(`
+            select
+                id, our_company_name
+            from invoices
+            order by id
+        `);
+
+        assert.deepStrictEqual(result.rows, [{
+            id: 1,
+            our_company_name: "our company"
+        }, {
+            id: 2,
+            our_company_name: "our company"
+        }]);
+    });
+
+    it("test cache with (and) or (and) without mistake", async() => {
+        await db.query(`
+            create table invoices (
+                id serial primary key,
+                invoice_type text,
+                id_buyer integer,
+                id_seller integer
+            );
+            create table companies (
+                id serial primary key,
+                name text,
+                deleted integer default 0
+            );
+        `);
+
+        fs.writeFileSync(ROOT_TMP_PATH + "/our_company.sql", `
+            cache our_company for invoices (
+                select
+                    companies.name as our_company_name
+                from companies
+                where
+                    (
+                        invoices.invoice_type = 'incoming' and
+                        companies.id = invoices.id_buyer
+                        or
+                        invoices.invoice_type = 'outgoing' and
+                        companies.id = invoices.id_seller
+                    )
+                    -- mistake
+                    and companies.deleted = 0 
+            )
+        `);
+
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+        // create invoices and company
+        await db.query(`
+            insert into companies (name) values ('our company');
+
+            insert into invoices
+                (invoice_type, id_buyer, id_seller)
+            values
+                ('incoming', 1, null),
+                ('outgoing', null, 1);
+            
+        `);
+        const result1 = await db.query(`
+            select
+                id, our_company_name
+            from invoices
+            order by id
+        `);
+        assert.deepStrictEqual(result1.rows, [{
+            id: 1,
+            our_company_name: "our company"
+        }, {
+            id: 2,
+            our_company_name: "our company"
+        }], "company.deleted = 0");
+
+        // trash company
+        await db.query(`
+            update companies set
+                deleted = 1
+        `);
+        const result2 = await db.query(`
+            select
+                id, our_company_name
+            from invoices
+            order by id
+        `);
+
+        assert.deepStrictEqual(result2.rows, [{
+            id: 1,
+            our_company_name: null
+        }, {
+            id: 2,
+            our_company_name: null
+        }], "company.deleted = 1");
+    });
+
     // TODO: update-ddl-cache in watcher mode
 
     async function sleep(ms: number) {
