@@ -20,6 +20,8 @@ import { CacheComparator } from "./Comparator/CacheComparator";
 import { CacheAuditor, CacheScanner, IFindBrokenColumnsParams, TimeRange } from "./Auditor";
 import { CacheColumnGraph } from "./Comparator/graph/CacheColumnGraph";
 
+const packageJson = require("../package.json");
+
 const watchers: FileWatcher[] = [];
 interface IParams {
     db: IDBConfig | pg.Pool;
@@ -71,6 +73,7 @@ export interface IScanBrokenParams extends IParams, IFindBrokenColumnsParams {}
 export class DDLManager {
 
     static async build(params: IParams) {
+        console.log("ddl-manager v" + packageJson.version);
         const ddlManager = new DDLManager(params);
         return await ddlManager.build();
     }
