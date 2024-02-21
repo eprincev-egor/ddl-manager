@@ -1,16 +1,16 @@
 import { ColumnReference, Expression, IExpressionElement, UnknownExpressionElement } from "../../../ast";
 import { CacheContext } from "../CacheContext";
 
-export function hasReference(context: CacheContext) {
-    return hasReferenceCondition(context, "is not null");
+export function buildHasReferenceCondition(context: CacheContext) {
+    return buildCheckReferenceCondition(context, "is not null");
 }
 
-export function hasNoReference(context: CacheContext) {
-    return hasReferenceCondition(context, "is null");
+export function buildNoReferenceCondition(context: CacheContext) {
+    return buildCheckReferenceCondition(context, "is null");
 }
 
 type CheckType = "is not null" | "is null";
-function hasReferenceCondition(context: CacheContext, check: CheckType) {
+function buildCheckReferenceCondition(context: CacheContext, check: CheckType) {
     if ( !context.referenceMeta.expressions ) {
         return;
     }

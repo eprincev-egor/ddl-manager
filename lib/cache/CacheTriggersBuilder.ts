@@ -96,7 +96,7 @@ export class CacheTriggersBuilder {
             if ( !this.cache.hasForeignTablesDeps() ) {
                 TriggerBuilderConstructor = SelfUpdateBySelfRowTriggerBuilder;
             }
-            else if ( context.triggerTableColumns.length ) {
+            else {
                 TriggerBuilderConstructor = SelfUpdateByOtherTablesTriggerBuilder;
             }
 

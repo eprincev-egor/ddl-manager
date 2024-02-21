@@ -2,7 +2,7 @@ import { AbstractExpressionElement, ColumnReference, Expression, NotExpression, 
 import { CacheContext } from "../CacheContext";
 import { TableReference } from "../../../database/schema/TableReference";
 import { flatMap } from "lodash";
-import { hasNoReference, hasReference } from "./hasReference";
+import { buildNoReferenceCondition, buildHasReferenceCondition } from "./buildHasReferenceCondition";
 import { replaceOperatorAnyToIndexedOperator } from "./replaceOperatorAnyToIndexedOperator";
 import { replaceAmpArrayToAny } from "./replaceAmpArrayToAny";
 import { findJoinsMeta } from "../../processor/findJoinsMeta";
@@ -46,10 +46,10 @@ export class ConditionBuilder {
         return this.buildNoChanges( triggerTableColumnsRefs );
     }
 
-    hasNoReference(row: string) {
-        const hasReferenceCondition = hasNoReference(this.context);
+    buildNoReference(row: string) {
+        const condition = buildNoReferenceCondition(this.context);
         const output = this.replaceTriggerTableRefsTo(
-            hasReferenceCondition,
+            condition,
             row
         );
         return output;
@@ -108,7 +108,7 @@ export class ConditionBuilder {
             )
         );
 
-        const hasNoReference = this.hasNoReference("new");
+        const hasNoReference = this.buildNoReference("new");
         if ( hasNoReference && !hasNoReference.isEmpty() ) {
             conditions.unshift( hasNoReference );
         }
@@ -222,7 +222,7 @@ export class ConditionBuilder {
 
     private buildNeedUpdateConditionOnUpdate() {
         const conditions = [
-            hasReference(this.context),
+            buildHasReferenceCondition(this.context),
             Expression.and(this.context.referenceMeta.filters),
             this.matchedAllAggFilters()
         ].filter(condition => 
@@ -239,7 +239,7 @@ export class ConditionBuilder {
     private buildHasReferenceWithoutJoins() {
         let conditions: Expression[] = [];
 
-        const refCondition = hasReference(this.context);
+        const refCondition = buildHasReferenceCondition(this.context);
         if ( refCondition ) {
             conditions.push(refCondition);
         }

@@ -4,7 +4,7 @@ import { ColumnReference, Expression, Update } from "../../../ast";
 import { buildArrVars, IArrVar } from "../../processor/buildArrVars";
 import { CoalesceFalseExpression } from "../../../ast/expression/CoalesceFalseExpression";
 import { TableReference } from "../../../database/schema/TableReference";
-import { hasReference } from "../condition/hasReference";
+import { buildHasReferenceCondition } from "../condition/buildHasReferenceCondition";
 import { SetItemsFactory } from "../../processor/SetItemsFactory";
 
 export class ArrayRefCommutativeTriggerBuilder
@@ -116,7 +116,7 @@ extends AbstractTriggerBuilder {
     
     private hasReferenceWithArrVars(arrVars: IArrVar[]) {
         const refCondition = this.conditions.replaceTriggerTableRefsTo(
-            hasReference(this.context)!, "new"
+            buildHasReferenceCondition(this.context)!, "new"
         )!;
         return this.replaceArrayColumnsToVariables(
             refCondition,

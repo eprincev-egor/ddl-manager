@@ -5291,6 +5291,51 @@ $$;
         }], "company.deleted = 1");
     });
 
+    it("set self value on insert for commutative cache", async() => {
+        await db.query(`
+            create table invoices (
+                id serial primary key
+            );
+            create table invoice_positions (
+                id serial primary key,
+                id_invoice integer,
+                profit integer
+            );
+        `);
+
+        fs.writeFileSync(ROOT_TMP_PATH + "/totals.sql", `
+            cache totals for invoices (
+                select
+                    case when sum(pos.profit) > 0
+                    then 1
+                    else 0
+                    end as exist_profit
+                from invoice_positions as pos
+                where
+                    pos.id_invoice = invoices.id
+            )
+        `);
+
+        await DDLManager.build({
+            db, 
+            folder: ROOT_TMP_PATH,
+            throwError: true
+        });
+
+        // test insert
+        await db.query(`
+            insert into invoices default values;
+        `);
+        const result = await db.query(`
+            select exist_profit
+            from invoices
+        `);
+
+        assert.deepStrictEqual(result.rows, [{
+            exist_profit: 0
+        }]);
+    });
+
     // TODO: update-ddl-cache in watcher mode
 
     async function sleep(ms: number) {

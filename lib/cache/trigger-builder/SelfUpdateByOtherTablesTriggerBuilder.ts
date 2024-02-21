@@ -106,11 +106,18 @@ extends AbstractTriggerBuilder {
             return false;
         }
 
-        const hasReference = this.conditions.hasNoReference("new");
-        if ( !hasReference || hasReference.isEmpty() ) {
-            return false;
+        const condition = this.conditions.buildNoReference("new");
+        if ( condition && !condition.isEmpty() ) {
+            return true;
         }
 
-        return true;
+        const isOnlySimpleAggregations = this.context.cache.select.columns.every(column =>{
+            const funcs = column.expression.getFuncCalls();
+            return (
+                column.expression.isFuncCall() &&
+                ["count", "sum", "avg", "min", "max", "string_agg", "array_agg"].includes(funcs[0].name)
+            );
+        });
+        return !isOnlySimpleAggregations;
     }
 }

@@ -8,7 +8,6 @@ import { MAX_NAME_LENGTH } from "../../database/postgres/constants";
 import { Database } from "../../database/schema/Database";
 import { TableID } from "../../database/schema/TableID";
 import { TableReference } from "../../database/schema/TableReference";
-import { DatabaseTrigger } from "../../database/schema/DatabaseTrigger";
 import { leadingZero } from "./utils";
 import { groupBy } from "lodash";
 import { FilesState } from "../../fs/FilesState";
