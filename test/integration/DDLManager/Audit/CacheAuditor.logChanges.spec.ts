@@ -102,7 +102,7 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
                 select main_func();
             `);
 
-            await expectedChanges("callstack", [
+            await expectedChangesFor("public.orders", 1, "callstack", [
                 "inner_func:6",
                 "main_func:3"
             ]);
@@ -136,29 +136,35 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
             beforeEach(async () => {
                 await db.query(`
                     insert into orders (id_client, doc_number)
-                    values (2, 'order-3');
+                    values (2, 'order-4');
                 `);
             });
 
             it("log TG_OP", async () => {
-                await expectedChanges("changes_type", "INSERT");
+                await expectedChangesFor("public.orders", 4, "changes_type", "INSERT");
             });
 
             it("log source table", async () => {
-                await expectedChanges("changed_table", "public.orders");
+                await expectedChangesFor("public.orders", 4, "changed_table", "public.orders");
             });
 
             it("log source row id", async () => {
-                await expectedChanges("changed_row_id", "4");
+                await expectedChangesFor("public.orders", 4, "changed_row_id", "4");
             });
 
             it("log source changes (need columns for cache only)", async () => {
-                await expectedChanges("changed_old_row", null);
-                await expectedChanges("changed_new_row", {
+                await expectedChangesFor("public.orders", 4, "changed_old_row", null);
+                await expectedChangesFor("public.orders", 4, "changed_new_row", {
                     id: 4,
                     id_client: 2,
-                    doc_number: "order-3",
+                    doc_number: "order-4",
                     profit: null
+                });
+            });
+
+            it("log update cache row", async () => {
+                await expectedChangesFor("public.companies", 2, "changed_new_row", {
+                    orders_numbers: "order-3, order-4"
                 });
             });
         });
@@ -172,33 +178,32 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
             });
 
             it("log TG_OP", async () => {
-                await expectedChanges("changes_type", "DELETE");
+                await expectedChangesFor("public.orders", 3, "changes_type", "DELETE");
             });
 
             it("log source table", async () => {
-                await expectedChanges("changed_table", "public.orders");
+                await expectedChangesFor("public.orders", 3, "changed_table", "public.orders");
             });
 
             it("log source row id", async () => {
-                await expectedChanges("changed_row_id", "3");
+                await expectedChangesFor("public.orders", 3, "changed_row_id", "3");
             });
 
             it("log source changes (need columns for cache only)", async () => {
-                await expectedChanges("changed_old_row", {
+                await expectedChangesFor("public.orders", 3, "changed_old_row", {
                     id: 3,
                     id_client: 2,
                     doc_number: "order-3",
                     profit: 300
                 });
-                await expectedChanges("changed_new_row", null);
+                await expectedChangesFor("public.orders", 3, "changed_new_row", null);
             });
-        });
 
-        it("ignore update not cache columns", async() => {
-            await db.query(`update orders set note = 'test'`);
-            
-            const lastChanges = await loadLastColumnChanges();
-            strict.equal(lastChanges, undefined);
+            it("log update cache row", async () => {
+                await expectedChangesFor("public.companies", 2, "changed_new_row", {
+                    orders_numbers: null
+                });
+            });
         });
 
         describe("log update of source column", () => {
@@ -211,38 +216,25 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
             });
 
             it("log TG_OP", async () => {
-                await expectedChanges("changes_type", "UPDATE");
+                await expectedChangesFor("public.orders", 1, "changes_type", "UPDATE");
             });
 
             it("log source table", async () => {
-                await expectedChanges("changed_table", "public.orders");
+                await expectedChangesFor("public.orders", 1, "changed_table", "public.orders");
             });
 
             it("log source row id", async () => {
-                await expectedChanges("changed_row_id", "1");
-            });
-
-            it("log cache columns", async () => {
-                const lastChanges = await loadLastColumnChanges();
-                const cacheColumns: string[] = lastChanges?.cache_columns || [];
-
-                strict.ok(cacheColumns.includes(
-                    "public.companies.orders_numbers"
-                ), "has orders_numbers");
-
-                strict.ok(cacheColumns.includes(
-                    "public.companies.orders_profit"
-                ), "has orders_profit");
+                await expectedChangesFor("public.orders", 1, "changed_row_id", "1");
             });
 
             it("log source changes (need columns for cache only)", async () => {
-                await expectedChanges("changed_old_row", {
+                await expectedChangesFor("public.orders", 1, "changed_old_row", {
                     id: 1,
                     id_client: 1,
                     doc_number: "order-1",
                     profit: 100
                 });
-                await expectedChanges("changed_new_row", {
+                await expectedChangesFor("public.orders", 1, "changed_new_row", {
                     id: 1,
                     id_client: 1,
                     doc_number: "update order 1",
@@ -264,6 +256,11 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
                 shouldBeBetween(lastChanges.transaction_date, dateStart, dateEnd);
             });
 
+            it("log update cache row", async () => {
+                await expectedChangesFor("public.companies", 1, "changed_new_row", {
+                    orders_numbers: "order-2, update order 1"
+                });
+            });
         });
 
     });
@@ -333,7 +330,7 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
             });
         });
 
-        it("ignore update-ddl-cache operation (big migration)", async() => {
+        it("don't ignore update-ddl-cache operation (big migration)", async() => {
             await db.query(`
                 alter table companies disable trigger all;
                 update companies set
@@ -348,7 +345,7 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
             });
             
             const lastChanges = await loadLastColumnChanges();
-            strict.equal(lastChanges, undefined);
+            strict.ok(lastChanges, "exists log");
         });
 
     });
@@ -397,17 +394,9 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
                 where id = 3
             `);
             
-            const lastChanges = await loadLastColumnChanges();
-            strict.ok(
-                lastChanges.cache_columns
-                    .includes("public.companies.orders_profit"),
-                "cache_columns includes orders_profit"
-            );
-            strict.ok(
-                lastChanges.cache_columns
-                    .includes("public.companies.orders_numbers"),
-                "cache_columns includes orders_numbers"
-            );
+            await expectedChangesFor("public.orders", 3, "changed_new_row", {
+                profit: 303
+            });
         });
 
         it("log update self cache table", async() => {
@@ -417,17 +406,9 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
                 where id = 1
             `);
             
-            const lastChanges = await loadLastColumnChanges();
-            strict.ok(
-                lastChanges.cache_columns
-                    .includes("public.companies.index"),
-                "cache_columns includes index"
-            );
-            strict.ok(
-                lastChanges.cache_columns
-                    .includes("public.companies.not_null_name"),
-                "cache_columns includes not_null_name"
-            );
+            await expectedChangesFor("public.companies", 1, "changed_new_row", {
+                name: "test"
+            });
         });
     });
 
@@ -504,19 +485,17 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
                 where id = 1;
             `);
 
-            await expectedChanges("changed_old_row", {
+            await expectedChangesFor("public.orders", 1, "changed_old_row", {
                 id: 1,
                 id_client: 1,
                 doc_number: "order-1",
-                profit: 100,
-                __totals_for_companies: false // private field, TODO: remove from test
+                profit: 100
             });
-            await expectedChanges("changed_new_row", {
+            await expectedChangesFor("public.orders", 1, "changed_new_row", {
                 id: 1,
                 id_client: 1,
                 doc_number: "order-1",
-                profit: 350,
-                __totals_for_companies: false // private field, TODO: remove from test
+                profit: 350
             });
         });
     });
@@ -558,36 +537,20 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
         });
 
         it("log cache values", async () => {
-            await expectedChanges("changed_old_row", {
+            await expectedChangesFor("public.companies", 2, "changed_old_row", {
                 id: 2,
                 id_parent: null,
                 name: "partner",
                 parent_company_name: null,
-                children_companies_names: null,
-                __children_json__: null // private field, TODO: remove from test
+                children_companies_names: null
             });
-            await expectedChanges("changed_new_row", {
+            await expectedChangesFor("public.companies", 2, "changed_new_row", {
                 id: 2,
                 id_parent: 1,
                 name: "partner",
                 parent_company_name: "client",
-                children_companies_names: null,
-                __children_json__: null // private field, TODO: remove from test
+                children_companies_names: null
             });
-        });
-
-        it("log cache_columns", async () => {
-            const lastChanges = await loadLastColumnChanges();
-            strict.ok(
-                lastChanges.cache_columns
-                    .includes("public.companies.children_companies_names"),
-                "cache_columns includes children_companies_names"
-            );
-            strict.ok(
-                lastChanges.cache_columns
-                    .includes("public.companies.parent_company_name"),
-                "cache_columns includes parent_company_name"
-            );
         });
     });
 
@@ -832,6 +795,25 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
         strict.ok(lastChanges, "changes should be saved");
 
         const actual = lastChanges[column];
+
+        if ( isObject(expected) ) {
+            strict.deepEqual(actual, {
+                ...actual,
+                ...expected
+            }, `lastChanges[${column}]`);    
+        }
+        else {
+            strict.deepEqual(
+                actual, expected, 
+                `lastChanges["${column}"]`
+            );
+        }
+    }
+    async function expectedChangesFor(table: string, rowId: number, column: string, expected: any) {
+        const lastChanges = await loadLastColumnChanges(table, rowId);
+        strict.ok(lastChanges, "changes should be saved");
+
+        const actual = lastChanges[column];
         strict.deepEqual({
             [column]: actual
         }, {
@@ -851,7 +833,18 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
         );
     }
 
-    async function loadLastColumnChanges() {
+    async function loadLastColumnChanges(table?: string, forRowId?: number) {
+        const conditions: string[] = [];
+        if ( table ) {
+            conditions.push(`changed_table = '${table}'`);
+        }
+        if ( forRowId ) {
+            conditions.push(`changed_row_id = ${+forRowId}`);
+        }
+        const where = conditions.length ? 
+            `where ${conditions.join(" and ")}` :  "";
+
+
         const {rows} = await db.query(`
             select
                 *,
@@ -865,6 +858,7 @@ describe("CacheAuditor: create/recreate logger for broken columns", () => {
                 ) as changes_date
 
             from ddl_manager_audit_column_changes
+            ${where}
             order by ddl_manager_audit_column_changes.id desc
             limit 1
         `);

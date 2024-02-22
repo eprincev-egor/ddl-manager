@@ -85,16 +85,14 @@ export class CacheAuditor {
 
             alter table ddl_manager_audit_column_changes
 
-                add column if not exists cache_columns text[],
-
                 add column if not exists changed_table text,
                     alter column changed_table set not null,
 
                 add column if not exists changed_row_id bigint,
                     alter column changed_row_id set not null,
 
-                add column if not exists changed_old_row json,
-                add column if not exists changed_new_row json,
+                add column if not exists changed_old_row jsonb,
+                add column if not exists changed_new_row jsonb,
 
                 add column if not exists changes_type text,
                     alter column changes_type set not null,
@@ -102,21 +100,30 @@ export class CacheAuditor {
                 add column if not exists transaction_date timestamp without time zone,
                     alter column transaction_date set not null,
 
+                add column if not exists transaction_id bigint,
+                add column if not exists process_id integer,
+                add column if not exists active_processes_ids integer[],
+
                 add column if not exists changes_date timestamp without time zone,
                     alter column changes_date set not null,
 
                 add column if not exists entry_query text not null,
                     alter column entry_query set not null,
-
-                add column if not exists callstack text[];
-
-            create index if not exists ddl_manager_audit_column_changes_cache_columns_idx
-            on ddl_manager_audit_column_changes
-            using gin (cache_columns);
+                add column if not exists pg_trigger_depth integer,
+                add column if not exists callstack text[],
+                add column if not exists triggers json[];
 
             create index if not exists ddl_manager_audit_column_changes_row_idx
             on ddl_manager_audit_column_changes
             using btree (changed_table, changed_row_id);
+
+            create index if not exists ddl_manager_audit_column_changes_old_row_idx
+            on ddl_manager_audit_column_changes
+            using gin (changed_old_row jsonb_path_ops);
+
+            create index if not exists ddl_manager_audit_column_changes_new_row_idx
+            on ddl_manager_audit_column_changes
+            using gin (changed_new_row jsonb_path_ops);
         `);
     }
 
@@ -216,26 +223,11 @@ export class CacheAuditor {
 
         tableColumns.push("id");
 
-        await this.buildLoggerOn({
-            triggerTable: table,
-            triggerTableColumns: uniq(tableColumns),
-            cacheColumns: depsCacheColumns
-                .map(column => column.getId())
-        });
+        await this.buildLoggerOn(table);
     }
 
-    private async buildLoggerOn({
-        triggerTable, triggerTableColumns,
-        cacheColumns,
-    }: {
-        triggerTable: TableID,
-        cacheColumns: string[],
-        triggerTableColumns: string[]
-    }) {
+    private async buildLoggerOn(triggerTable: TableID) {
         const triggerName = `ddl_audit_changes_${triggerTable.schema}_${triggerTable.name}`;
-        const noChanges = triggerTableColumns.map(column =>
-            `new.${column} is not distinct from old.${column}`
-        ).join(" and ");
 
         await this.driver.query(`
             create or replace function ${triggerName}()
@@ -245,17 +237,6 @@ export class CacheAuditor {
             begin
                 this_row = case when TG_OP = 'DELETE' then old else new end;
 
-                if TG_OP = 'UPDATE' then
-                    if ${noChanges} then
-                        return new;
-                    end if;
-                end if;
-
-                -- ignore update-ddl-cache
-                if current_query() ~* '-- cache' then
-                    return this_row;
-                end if;
-
                 begin
                     raise exception 'callstack';
                 exception when others then
@@ -264,36 +245,43 @@ export class CacheAuditor {
                 end;
 
                 insert into ddl_manager_audit_column_changes (
-                    cache_columns,
-
                     changed_table,
                     changed_row_id,
                     changed_old_row,
                     changed_new_row,
 
                     changes_type,
-                    transaction_date,
                     changes_date,
 
-                    entry_query,
-                    callstack
-                ) values (
-                    ARRAY[${cacheColumns.map(name => wrapText(name))}]::text[],
+                    transaction_date,
+                    transaction_id,
+                    process_id,
+                    active_processes_ids,
 
+                    entry_query,
+                    pg_trigger_depth,
+                    callstack,
+                    triggers
+                ) values (
                     '${triggerTable}',
                     this_row.id,
                     case when TG_OP in ('UPDATE', 'DELETE') then
-                        ${pickJson("old", triggerTableColumns)}
+                        row_to_json(old)::jsonb
                     end,
                     case when TG_OP in ('UPDATE', 'INSERT') then
-                        ${pickJson("new", triggerTableColumns)}
+                        row_to_json(new)::jsonb
                     end,
                     
                     TG_OP,
-                    transaction_timestamp()::timestamp with time zone at time zone 'UTC',
                     clock_timestamp()::timestamp with time zone at time zone 'UTC',
 
+                    transaction_timestamp()::timestamp with time zone at time zone 'UTC',
+                    txid_current(),
+                    pg_backend_pid(),
+                    (select array_agg(pid) from pg_stat_activity),
+
                     current_query(),
+                    pg_trigger_depth(),
                     (
                         select
                             array_agg(
@@ -307,6 +295,26 @@ export class CacheAuditor {
                             line !~* '${triggerName}' 
                             and
                             line ~* '(function|функция) '
+                    ),
+                    (
+                        select
+                            array_agg( json_build_object(
+                                'name', pg_trigger.tgname,
+                                'enabled', pg_trigger.tgenabled != 'D',
+                                'comment',pg_catalog.obj_description( pg_trigger.oid )
+                            ) )
+                        from pg_trigger
+
+                        left join pg_class as table_name on
+                            table_name.oid = pg_trigger.tgrelid
+
+                        left join pg_namespace as schema_name on
+                            schema_name.oid = table_name.relnamespace
+
+                        where
+                            pg_trigger.tgisinternal = false and
+                            schema_name.nspname = '${triggerTable.schema}' and
+                            table_name.relname = '${triggerTable.name}'
                     )
                 );
 
@@ -314,14 +322,14 @@ export class CacheAuditor {
             end
             $body$ language plpgsql;
 
-            drop trigger if exists zzzzz_${triggerName} on ${triggerTable};
-            create trigger zzzzz_${triggerName}
+            drop trigger if exists ___aaa___${triggerName} on ${triggerTable};
+            create trigger ___aaa___${triggerName}
             after insert or update or delete
             on ${triggerTable}
             for each row
             execute procedure ${triggerName}();
 
-            comment on trigger zzzzz_${triggerName} on ${triggerTable}
+            comment on trigger ___aaa___${triggerName} on ${triggerTable}
             is 'ddl-manager-audit';
         `);
     }
@@ -389,22 +397,6 @@ export class CacheAuditor {
         const isOld = Date.now() - lastReport.scan_date > 3 * MONTH;
         return isOld
     }
-}
-
-const maxColumnsPerCall = 50;
-function pickJson(row: string, columns: string[]) {
-    let output: string[] = [];
-
-    for (let i = 0; i < columns.length; i += maxColumnsPerCall) {
-        const partOfColumns = columns.slice(i, i + maxColumnsPerCall);
-        const jsonArgs = partOfColumns.map(column => 
-            `'${column}', ${row}.${column}`
-        );
-
-        output.push(`jsonb_build_object(${jsonArgs.join(", ")})`);
-    }
-
-    return output.join(" || ");
 }
 
 function required<T>(value: T): NonNullable<T> {
