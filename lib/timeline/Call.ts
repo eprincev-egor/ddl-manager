@@ -29,16 +29,22 @@ export class Call {
         this.total_time = this.end_time - this.start_time;
     }
 
-    toSample(): ISample {
-        let parent = 1;
-        if ( this.parentId ) {
-            parent = this.parentId + 1;
+    getLastChildEndTime() {
+        let lastChildEndTime = this.start_time;
+        if ( this.children.length ) {
+            let lastChild = this.children[ this.children.length - 1 ];
+            lastChildEndTime = lastChild.end_time;
         }
+        return lastChildEndTime;
+    }
 
+    toSample(): ISample {
         return {
             id: this.id + 1,
-            parent,
+            parent: this.parentId ? 
+                this.parentId + 1 : 1,
             callFrame: {
+                codeType: "SQL",
                 functionName: this.func,
                 url: this.func + ".sql",
                 scriptId: 1,
